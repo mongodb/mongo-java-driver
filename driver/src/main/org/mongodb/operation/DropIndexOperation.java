@@ -16,7 +16,6 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoFuture;
@@ -26,8 +25,9 @@ import org.mongodb.session.Session;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.ignoreNameSpaceErrors;
+import static org.mongodb.operation.OperationHelper.ignoreResult;
 
-public class DropIndexOperation implements AsyncOperation<CommandResult>, Operation<CommandResult> {
+public class DropIndexOperation implements AsyncOperation<Void>, Operation<Void> {
     private final MongoNamespace namespace;
     private final String indexName;
 
@@ -37,17 +37,18 @@ public class DropIndexOperation implements AsyncOperation<CommandResult>, Operat
     }
 
     @Override
-    public CommandResult execute(final Session session) {
+    public Void execute(final Session session) {
         try {
-            return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), session);
+            executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), session);
         } catch (MongoCommandFailureException e) {
-            return ignoreNameSpaceErrors(e);
+            ignoreNameSpaceErrors(e);
         }
+        return null;
     }
 
     @Override
-    public MongoFuture<CommandResult> executeAsync(final Session session) {
-        return ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), session));
+    public MongoFuture<Void> executeAsync(final Session session) {
+        return ignoreResult(ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), session)));
     }
 
     private Document getCommand() {
