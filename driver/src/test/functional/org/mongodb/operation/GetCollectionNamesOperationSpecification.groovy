@@ -29,7 +29,7 @@ class GetCollectionNamesOperationSpecification extends FunctionalSpecification {
         def operation = new GetCollectionNamesOperation('MadeUpDatabase')
 
         when:
-        Set<String> names = operation.execute(getSession())
+        List<String> names = operation.execute(getSession())
 
         then:
         names.isEmpty()
@@ -42,7 +42,7 @@ class GetCollectionNamesOperationSpecification extends FunctionalSpecification {
         def operation = new GetCollectionNamesOperation('MadeUpDatabase')
 
         when:
-        Set<String> names = operation.executeAsync(getSession()).get()
+        List<String> names = operation.executeAsync(getSession()).get()
 
         then:
         names.isEmpty()
@@ -54,7 +54,7 @@ class GetCollectionNamesOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
 
         when:
-        Set<String> names = operation.execute(getSession())
+        List<String> names = operation.execute(getSession())
 
         then:
         names.containsAll(['system.indexes', collectionName])
@@ -68,7 +68,7 @@ class GetCollectionNamesOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
 
         when:
-        Set<String> names = operation.executeAsync(getSession()).get()
+        List<String> names = operation.executeAsync(getSession()).get()
 
         then:
         names.containsAll(['system.indexes', collectionName])

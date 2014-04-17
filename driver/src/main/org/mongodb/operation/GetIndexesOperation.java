@@ -27,8 +27,6 @@ import java.util.EnumSet;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.operation.OperationHelper.executeProtocol;
-import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.queryResultToList;
 import static org.mongodb.operation.OperationHelper.queryResultToListAsync;
 
@@ -41,12 +39,12 @@ public class GetIndexesOperation implements AsyncOperation<List<Document>>, Oper
 
     @Override
     public List<Document> execute(final Session session) {
-        return queryResultToList(executeProtocol(getProtocol(), session), session, getIndexNamespace(), new DocumentCodec());
+        return queryResultToList(getProtocol(), session, getIndexNamespace(), new DocumentCodec());
     }
 
     @Override
     public MongoFuture<List<Document>> executeAsync(final Session session) {
-        return queryResultToListAsync(executeProtocolAsync(getProtocol(), session), session, getIndexNamespace(), new DocumentCodec());
+        return queryResultToListAsync(getProtocol(), session, getIndexNamespace(), new DocumentCodec());
     }
 
     private Document asQueryDocument() {

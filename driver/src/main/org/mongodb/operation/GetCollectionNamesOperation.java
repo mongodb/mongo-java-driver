@@ -22,15 +22,12 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.protocol.QueryProtocol;
-import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.Session;
 
 import java.util.EnumSet;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.operation.OperationHelper.executeProtocol;
-import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.queryResultToList;
 import static org.mongodb.operation.OperationHelper.queryResultToListAsync;
 
@@ -43,14 +40,12 @@ public class GetCollectionNamesOperation implements AsyncOperation<List<String>>
 
     @Override
     public List<String> execute(final Session session) {
-        final QueryResult<Document> queryResult = executeProtocol(getProtocol(), session);
-        return queryResultToList(queryResult, session, getNamespace(), new DocumentCodec(), transformer());
+        return queryResultToList(getProtocol(), session, getNamespace(), new DocumentCodec(), transformer());
     }
 
     @Override
     public MongoFuture<List<String>> executeAsync(final Session session) {
-        final MongoFuture<QueryResult<Document>> queryResult = executeProtocolAsync(getProtocol(), session);
-        return queryResultToListAsync(queryResult, session, getNamespace(), new DocumentCodec(), transformer());
+        return queryResultToListAsync(getProtocol(), session, getNamespace(), new DocumentCodec(), transformer());
     }
 
     private Function<Document, String> transformer() {

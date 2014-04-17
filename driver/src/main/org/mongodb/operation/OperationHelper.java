@@ -35,6 +35,7 @@ import org.mongodb.connection.ServerVersion;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.Protocol;
+import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 import org.mongodb.selector.PrimaryServerSelector;
 import org.mongodb.selector.ReadPreferenceServerSelector;
@@ -382,9 +383,21 @@ final class OperationHelper {
         return retVal;
     }
 
-    static <T> List<T> queryResultToList(final QueryResult<T> queryResult, final Session session,
+    static <T> List<T> queryResultToList(final QueryProtocol<T> queryProtocol, final Session session, final MongoNamespace namespace,
+                                         final Decoder<T> decoder) {
+        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
+        return queryResultToList(executeProtocol(queryProtocol, connectionProvider), connectionProvider, namespace, decoder);
+    }
+
+    static <T, V> List<V> queryResultToList(final QueryProtocol<T> queryProtocol, final Session session, final MongoNamespace namespace,
+                                         final Decoder<T> decoder, final Function<T, V> block) {
+        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
+        return queryResultToList(executeProtocol(queryProtocol, connectionProvider), connectionProvider, namespace, decoder, block);
+    }
+
+    static <T> List<T> queryResultToList(final QueryResult<T> queryResult, final ServerConnectionProvider connectionProvider,
                                          final MongoNamespace namespace, final Decoder<T> decoder) {
-        return queryResultToList(queryResult, session, namespace, decoder, new Function<T, T>() {
+        return queryResultToList(queryResult, connectionProvider, namespace, decoder, new Function<T, T>() {
             @Override
             public T apply(final T t) {
                 return t;
@@ -392,11 +405,11 @@ final class OperationHelper {
         });
     }
 
-    static <T, V> List<V> queryResultToList(final QueryResult<T> queryResult, final Session session,
+    static <T, V> List<V> queryResultToList(final QueryResult<T> queryResult, final ServerConnectionProvider connectionProvider,
                                             final MongoNamespace namespace, final Decoder<T> decoder,
                                             final Function<T, V> block) {
         MongoCursor<T> cursor = new MongoQueryCursor<T>(namespace, queryResult,
-                                                        0, 0, decoder, getPrimaryConnectionProvider(session));
+                                                        0, 0, decoder, connectionProvider);
         try {
             List<V> retVal = new ArrayList<V>();
             while (cursor.hasNext()) {
@@ -411,9 +424,24 @@ final class OperationHelper {
         }
     }
 
-    static <T> MongoFuture<List<T>> queryResultToListAsync(final MongoFuture<QueryResult<T>> queryResult, final Session session,
+    static <T> MongoFuture<List<T>> queryResultToListAsync(final QueryProtocol<T> queryProtocol, final Session session,
                                                            final MongoNamespace namespace, final Decoder<T> decoder) {
-        return queryResultToListAsync(queryResult, session, namespace, decoder, new Function<T, T>() {
+        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
+        return queryResultToListAsync(executeProtocolAsync(queryProtocol, connectionProvider), connectionProvider, namespace, decoder);
+    }
+
+    static <T, V> MongoFuture<List<V>> queryResultToListAsync(final QueryProtocol<T> queryProtocol, final Session session,
+                                                           final MongoNamespace namespace, final Decoder<T> decoder,
+                                                           final Function<T, V> block) {
+        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
+        return queryResultToListAsync(executeProtocolAsync(queryProtocol, connectionProvider), connectionProvider, namespace, decoder,
+                                      block);
+    }
+
+    static <T> MongoFuture<List<T>> queryResultToListAsync(final MongoFuture<QueryResult<T>> queryResult,
+                                                           final ServerConnectionProvider connectionProvider,
+                                                           final MongoNamespace namespace, final Decoder<T> decoder) {
+        return queryResultToListAsync(queryResult, connectionProvider, namespace, decoder, new Function<T, T>() {
             @Override
             public T apply(final T t) {
                 return t;
@@ -421,25 +449,16 @@ final class OperationHelper {
         });
     }
 
-    static <T, V> MongoFuture<List<V>> queryResultToListAsync(final MongoFuture<QueryResult<T>> queryResult, final Session session,
+    static <T, V> MongoFuture<List<V>> queryResultToListAsync(final MongoFuture<QueryResult<T>> queryResult,
+                                                              final ServerConnectionProvider connectionProvider,
                                                               final MongoNamespace namespace, final Decoder<T> decoder,
                                                               final Function<T, V> block) {
         final SingleResultFuture<List<V>> retVal = new SingleResultFuture<List<V>>();
-        getPrimaryConnectionProviderAsync(session)
-        .register(new SingleResultCallback<ServerConnectionProvider>() {
+        connectionProvider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
             @Override
-            public void onResult(final ServerConnectionProvider connectionProvider, final MongoException e) {
-                if (e != null) {
-                    retVal.init(null, e);
-                } else {
-                    connectionProvider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
-                        @Override
-                        public void onResult(final Connection connection, final MongoException e) {
-                            queryResult.register(new QueryResultToListCallback<T, V>(retVal, namespace, decoder, connectionProvider,
-                                                                                     connection, block));
-                        }
-                    });
-                }
+            public void onResult(final Connection connection, final MongoException e) {
+                queryResult.register(new QueryResultToListCallback<T, V>(retVal, namespace, decoder, connectionProvider,
+                                                                         connection, block));
             }
         });
         return retVal;
