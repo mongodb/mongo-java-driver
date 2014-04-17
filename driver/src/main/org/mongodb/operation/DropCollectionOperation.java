@@ -26,12 +26,13 @@ import org.mongodb.session.Session;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.ignoreNameSpaceErrors;
+import static org.mongodb.operation.OperationHelper.ignoreResult;
 
 /**
  * Operation to drop a Collection in MongoDB.  The {@code execute} method throws MongoCommandFailureException if something goes wrong, but
  * it will not throw an Exception if the collection does not exist before trying to drop it.
  */
-public class DropCollectionOperation implements AsyncOperation<CommandResult>, Operation<CommandResult> {
+public class DropCollectionOperation implements AsyncOperation<Void>, Operation<Void> {
     private final MongoNamespace namespace;
 
     /**
@@ -44,19 +45,20 @@ public class DropCollectionOperation implements AsyncOperation<CommandResult>, O
     }
 
     @Override
-    public CommandResult execute(final Session session) {
+    public Void execute(final Session session) {
         try {
-            return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), session);
+            executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), session);
         } catch (MongoCommandFailureException e) {
-            return ignoreNameSpaceErrors(e);
+            ignoreNameSpaceErrors(e);
         }
+        return null;
     }
 
     @Override
-    public MongoFuture<CommandResult> executeAsync(final Session session) {
+    public MongoFuture<Void> executeAsync(final Session session) {
         MongoFuture<CommandResult> futureDropOperation = executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
                                                                                             session);
-        return ignoreNameSpaceErrors(futureDropOperation);
+        return ignoreResult(ignoreNameSpaceErrors(futureDropOperation));
     }
 
     private Document getCommand() {
