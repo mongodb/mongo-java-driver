@@ -20,6 +20,8 @@ import org.mongodb.Codec;
 import org.mongodb.Document;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.binding.ClusterBinding;
+import org.mongodb.binding.ReadWriteBinding;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
@@ -34,6 +36,7 @@ import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.management.JMXConnectionPoolListener;
 import org.mongodb.operation.GetDatabaseNamesOperation;
 import org.mongodb.operation.Operation;
+import org.mongodb.operation.ReadOperation;
 import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.KillCursorProtocol;
 import org.mongodb.selector.CompositeServerSelector;
@@ -707,7 +710,8 @@ public class Mongo {
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                             .serverSelector(createServerSelector())
                                             .build(),
-                             credentialsList, options);
+                             credentialsList, options
+                            );
     }
 
     private static Cluster createCluster(final ClusterSettings settings, final List<MongoCredential> credentialsList,
@@ -792,6 +796,17 @@ public class Mongo {
             return operation.execute(getSession());
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
+        }
+    }
+
+    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
+        ReadWriteBinding binding = new ClusterBinding(cluster, readPreference.toNew(), options.getMaxWaitTime(), MILLISECONDS);
+        try {
+            return operation.execute(binding);
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        } finally {
+            binding.release();
         }
     }
 

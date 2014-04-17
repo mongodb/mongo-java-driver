@@ -31,6 +31,7 @@ import org.mongodb.operation.DropUserOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
+import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.UpdateUserOperation;
 import org.mongodb.operation.User;
 import org.mongodb.operation.UserExistsOperation;
@@ -234,7 +235,8 @@ public class DB {
         MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
         Find findAll = new Find().readPreference(org.mongodb.ReadPreference.primary());
         // TODO: Should use an operation
-        MongoCursor<Document> cursor = execute(new QueryOperation<Document>(namespacesCollection, findAll, commandCodec, commandCodec));
+        MongoCursor<Document> cursor = execute(new QueryOperation<Document>(namespacesCollection, findAll, commandCodec, commandCodec),
+                                               ReadPreference.primary());
 
         try {
             HashSet<String> collections = new HashSet<String>();
@@ -606,5 +608,9 @@ public class DB {
 
     private <T> T execute(final Operation<T> operation) {
         return getMongo().execute(operation);
+    }
+
+    private <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
+        return getMongo().execute(operation, readPreference);
     }
 }

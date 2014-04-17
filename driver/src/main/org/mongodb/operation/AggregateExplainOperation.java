@@ -20,39 +20,41 @@ import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ReadPreference;
-import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.session.Session;
+import org.mongodb.binding.ReadBinding;
 
 import java.util.List;
+
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 
 /**
  * An operation that executes an explain on an aggregation pipeline.
  *
  * @since 3.0
  */
-public class AggregateExplainOperation extends AggregateBaseOperation<Document> implements Operation<CommandResult> {
+public class AggregateExplainOperation implements ReadOperation<CommandResult> {
+    private final MongoNamespace namespace;
+    private final List<Document> pipeline;
+    private final AggregationOptions options;
+
     /**
      * Constructs a new instance.
-     *
-     * @param namespace the namespace
+     *  @param namespace the namespace
      * @param pipeline the aggregation pipeline
      * @param options the aggregation options
-     * @param readPreference the read preference
      */
-    public AggregateExplainOperation(final MongoNamespace namespace, final List<Document> pipeline, final AggregationOptions options,
-                                     final ReadPreference readPreference) {
-        super(namespace, pipeline, new DocumentCodec(), options, readPreference);
+    public AggregateExplainOperation(final MongoNamespace namespace, final List<Document> pipeline, final AggregationOptions options) {
+        this.namespace = namespace;
+        this.pipeline = pipeline;
+        this.options = options;
     }
 
     @Override
-    public CommandResult execute(final Session session) {
-        return sendAndReceiveMessage(session);
+    public CommandResult execute(final ReadBinding binding) {
+        return executeWrappedCommandProtocol(namespace, asCommandDocument(), binding);
     }
 
-    @Override
-    protected Document asCommandDocument() {
-        Document command = super.asCommandDocument();
+    private Document asCommandDocument() {
+        Document command = AggregateHelper.asCommandDocument(namespace, pipeline, options);
         command.put("explain", true);
         return command;
     }

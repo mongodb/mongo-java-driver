@@ -25,13 +25,15 @@ import org.mongodb.operation.RenameCollectionOperation;
 
 import java.util.List;
 
+import static org.mongodb.ReadPreference.primary;
+
 /**
  * Runs the admin commands for a selected database.  This should be accessed from MongoDatabase.  The methods here are not implemented in
  * MongoDatabase in order to keep the API very simple, these should be the methods that are not commonly used by clients of the driver.
  */
 class DatabaseAdministrationImpl implements DatabaseAdministration {
     private static final Document DROP_DATABASE = new Document("dropDatabase", 1);
-    private static final Find FIND_ALL = new Find().readPreference(ReadPreference.primary());
+    private static final Find FIND_ALL = new Find().readPreference(primary());
 
     private final String databaseName;
     private final Codec<Document> commandCodec = new DocumentCodec();
@@ -44,13 +46,12 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public void drop() {
-        //TODO: should inspect the CommandResult to make sure it went OK
-        client.execute(new CommandOperation(databaseName, DROP_DATABASE, ReadPreference.primary(), commandCodec, commandCodec));
+        client.execute(new CommandOperation(databaseName, DROP_DATABASE, primary(), commandCodec, commandCodec));
     }
 
     @Override
     public List<String> getCollectionNames() {
-        return client.execute(new GetCollectionNamesOperation(databaseName));
+        return client.execute(new GetCollectionNamesOperation(databaseName), primary());
     }
 
     @Override

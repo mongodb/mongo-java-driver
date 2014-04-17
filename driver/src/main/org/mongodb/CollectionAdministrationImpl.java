@@ -52,7 +52,7 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public List<Document> getIndexes() {
-        return client.execute(new GetIndexesOperation(collectionNamespace));
+        return client.execute(new GetIndexesOperation(collectionNamespace), ReadPreference.primary());
     }
 
     @Override

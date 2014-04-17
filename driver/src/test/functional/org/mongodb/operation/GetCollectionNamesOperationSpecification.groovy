@@ -20,6 +20,7 @@ import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 
 class GetCollectionNamesOperationSpecification extends FunctionalSpecification {
@@ -29,7 +30,7 @@ class GetCollectionNamesOperationSpecification extends FunctionalSpecification {
         def operation = new GetCollectionNamesOperation('MadeUpDatabase')
 
         when:
-        List<String> names = operation.execute(getSession())
+        List<String> names = operation.execute(getBinding())
 
         then:
         names.isEmpty()
@@ -53,7 +54,7 @@ class GetCollectionNamesOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
 
         when:
-        List<String> names = operation.execute(getSession())
+        List<String> names = operation.execute(getBinding())
 
         then:
         names.containsAll(['system.indexes', collectionName])

@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.asList;
+import static org.mongodb.Fixture.getBinding;
 import static org.mongodb.Fixture.getSession;
 
 public final class CollectionHelper<T> {
@@ -57,7 +58,7 @@ public final class CollectionHelper<T> {
     }
 
     public List<T> find() {
-        MongoCursor<T> cursor = new QueryOperation<T>(namespace, new Find(), queryEncoder, codec).execute(getSession());
+        MongoCursor<T> cursor = new QueryOperation<T>(namespace, new Find(), queryEncoder, codec).execute(getBinding());
         List<T> results = new ArrayList<T>();
         while (cursor.hasNext()) {
             results.add(cursor.next());
