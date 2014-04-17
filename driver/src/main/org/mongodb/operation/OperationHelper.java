@@ -151,16 +151,22 @@ final class OperationHelper {
     }
 
     static <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol, final Session session) {
-        SingleResultFuture<T> future = new SingleResultFuture<T>();
-        getPrimaryConnectionProviderAsync(session)
-        .register(new ProtocolExecutingCallback<T>(protocol, future));
-        return future;
+        return executeProtocolAsync(protocol, getPrimaryConnectionProviderAsync(session));
     }
 
     static <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol, final ReadPreference readPreference, final Session session) {
+        return executeProtocolAsync(protocol, getConnectionProviderAsync(readPreference, session));
+    }
+
+    static <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol, final ServerConnectionProvider connectionProvider) {
+        SingleResultFuture<ServerConnectionProvider> futureProvider = new SingleResultFuture<ServerConnectionProvider>(connectionProvider);
+        return executeProtocolAsync(protocol, futureProvider);
+    }
+
+    static <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol,
+                                                   final MongoFuture<ServerConnectionProvider> connectionProvider) {
         SingleResultFuture<T> future = new SingleResultFuture<T>();
-        getConnectionProviderAsync(readPreference, session)
-        .register(new ProtocolExecutingCallback<T>(protocol, future));
+        connectionProvider.register(new ProtocolExecutingCallback<T>(protocol, future));
         return future;
     }
 
@@ -173,6 +179,15 @@ final class OperationHelper {
                                                   readPreference, session);
     }
 
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
+                                                                         final Encoder<Document> commandEncoder,
+                                                                         final Decoder<Document> commandResultDecoder,
+                                                                         final ReadPreference readPreference,
+                                                                         final ServerConnectionProvider connectionProvider) {
+        SingleResultFuture<ServerConnectionProvider> futureProvider = new SingleResultFuture<ServerConnectionProvider>(connectionProvider);
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), command, commandEncoder, commandResultDecoder,
+                                                  readPreference, futureProvider);
+    }
 
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
                                                                          final Encoder<Document> commandEncoder,
@@ -182,15 +197,46 @@ final class OperationHelper {
                                                   ReadPreference.primary(), session);
     }
 
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
+                                                                         final Encoder<Document> commandEncoder,
+                                                                         final Decoder<Document> commandResultDecoder,
+                                                                         final ServerConnectionProvider connectionProvider) {
+        SingleResultFuture<ServerConnectionProvider> futureProvider = new SingleResultFuture<ServerConnectionProvider>(connectionProvider);
+        return executeWrappedCommandProtocolAsync(database, command, commandEncoder, commandResultDecoder,
+                                                  ReadPreference.primary(), futureProvider);
+    }
 
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
                                                                          final Encoder<Document> commandEncoder,
                                                                          final Decoder<Document> commandResultDecoder,
                                                                          final ReadPreference readPreference,
                                                                          final Session session) {
+        return executeWrappedCommandProtocolAsync(database, command, commandEncoder, commandResultDecoder,
+                                                  readPreference, getConnectionProviderAsync(readPreference, session));
+    }
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
+                                                                         final Encoder<Document> commandEncoder,
+                                                                         final Decoder<Document> commandResultDecoder,
+                                                                         final ReadPreference readPreference,
+                                                                         final ServerConnectionProvider connectionProvider) {
+        SingleResultFuture<ServerConnectionProvider> futureProvider = new SingleResultFuture<ServerConnectionProvider>(connectionProvider);
+        return executeWrappedCommandProtocolAsync(database, command, commandEncoder, commandResultDecoder, readPreference,
+                                                  futureProvider);
+    }
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
+                                                                         final Encoder<Document> commandEncoder,
+                                                                         final Decoder<Document> commandResultDecoder,
+                                                                         final ReadPreference readPreference,
+                                                                         final MongoFuture<ServerConnectionProvider> connectionProvider) {
         SingleResultFuture<CommandResult> future = new SingleResultFuture<CommandResult>();
-        getConnectionProviderAsync(readPreference, session)
-        .register(new CommandProtocolExecutingCallback(database, command, commandEncoder, commandResultDecoder, readPreference, future));
+        connectionProvider.register(new CommandProtocolExecutingCallback(database,
+                                                                         command,
+                                                                         commandEncoder,
+                                                                         commandResultDecoder,
+                                                                         readPreference,
+                                                                         future));
         return future;
     }
 
