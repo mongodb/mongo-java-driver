@@ -22,12 +22,14 @@ import org.mongodb.BulkWriteResult;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoDuplicateKeyException;
+import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoWriteException;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.connection.ServerVersion;
+import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.AcknowledgedWriteResult;
 import org.mongodb.protocol.WriteCommandProtocol;
 import org.mongodb.protocol.WriteProtocol;
@@ -81,7 +83,23 @@ public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>,
 
     @Override
     public MongoFuture<WriteResult> executeAsync(final Session session) {
-        return executeProtocolAsync(getWriteProtocol(), session);
+        // Todo handle async command protocol
+        final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
+        executeProtocolAsync(getWriteProtocol(), session).register(new SingleResultCallback<WriteResult>() {
+            @Override
+            public void onResult(final WriteResult result, final MongoException e) {
+                if (e != null) {
+                    MongoException checkedError = e;
+                    if (e instanceof BulkWriteException) {
+                        checkedError = convertBulkWriteException((BulkWriteException) e);
+                    }
+                    retVal.init(null, checkedError);
+                } else {
+                    retVal.init(result, null);
+                }
+            }
+        });
+       return retVal;
     }
 
     public MongoNamespace getNamespace() {
