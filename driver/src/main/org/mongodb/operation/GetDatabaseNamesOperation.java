@@ -19,6 +19,7 @@ package org.mongodb.operation;
 import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
+import org.mongodb.MongoFuture;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.session.Session;
 
@@ -27,11 +28,13 @@ import java.util.List;
 
 import static java.util.Collections.unmodifiableList;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.OperationHelper.transformResult;
 
 /**
  * Execute this operation to return a List of Strings of the names of all the databases for the current MongoDB instance.
  */
-public class GetDatabaseNamesOperation implements Operation<List<String>> {
+public class GetDatabaseNamesOperation implements AsyncOperation<List<String>>, Operation<List<String>> {
     private final Codec<Document> commandCodec = new DocumentCodec();
 
     /**
@@ -42,17 +45,40 @@ public class GetDatabaseNamesOperation implements Operation<List<String>> {
      */
     @Override
     public List<String> execute(final Session session) {
-        CommandResult listDatabasesResult = executeWrappedCommandProtocol("admin", new Document("listDatabases", 1), commandCodec,
-                                                                          commandCodec, session);
-
-        @SuppressWarnings("unchecked")
-        List<Document> databases = (List<Document>) listDatabasesResult.getResponse().get("databases");
-
-        List<String> databaseNames = new ArrayList<String>();
-        for (final Document database : databases) {
-            databaseNames.add(database.get("name", String.class));
-        }
-        return unmodifiableList(databaseNames);
+        CommandResult result = executeWrappedCommandProtocol("admin", new Document("listDatabases", 1), commandCodec, commandCodec,
+                                                             session);
+        return transformResult(result, transformer());
     }
 
+    /**
+     * Executing this will return a Future list of all the databases names in the MongoDB instance.
+     *
+     * @return a Future List of Strings of the names of all the databases in the MongoDB instance
+     * @param session
+     */
+    @Override
+    public MongoFuture<List<String>> executeAsync(final Session session) {
+        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync("admin",
+                                                                               new Document("listDatabases", 1),
+                                                                               commandCodec,
+                                                                               commandCodec,
+                                                                               session);
+        return transformResult(result, transformer());
+    }
+
+    private TransformBlock<CommandResult, List<String>> transformer() {
+        return new TransformBlock<CommandResult, List<String>>() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public List<String> apply(final CommandResult result) {
+                List<Document> databases = (List<Document>) result.getResponse().get("databases");
+
+                List<String> databaseNames = new ArrayList<String>();
+                for (final Document database : databases) {
+                    databaseNames.add(database.get("name", String.class));
+                }
+                return unmodifiableList(databaseNames);
+            }
+        };
+    }
 }
