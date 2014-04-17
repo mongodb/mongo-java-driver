@@ -57,8 +57,7 @@ public class CreateUserOperation implements AsyncOperation<Void>, Operation<Void
     public Void execute(final Session session) {
         ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
         if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-            executeWrappedCommandProtocol(user.getCredential().getSource(), asCommandDocument(user, "createUser"),
-                                          new DocumentCodec(), new DocumentCodec(), connectionProvider);
+            executeWrappedCommandProtocol(user.getCredential().getSource(), getCommand(), connectionProvider);
         } else {
             executeProtocol(getCollectionBasedProtocol(), connectionProvider);
         }
@@ -69,10 +68,7 @@ public class CreateUserOperation implements AsyncOperation<Void>, Operation<Void
     public MongoFuture<Void> executeAsync(final Session session) {
         ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
         if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-            MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(user.getCredential().getSource(),
-                                                                                   asCommandDocument(user, "createUser"),
-                                                                                   new DocumentCodec(),
-                                                                                   new DocumentCodec(),
+            MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(user.getCredential().getSource(), getCommand(),
                                                                                    connectionProvider);
             return ignoreResult(result);
         } else {
@@ -82,11 +78,14 @@ public class CreateUserOperation implements AsyncOperation<Void>, Operation<Void
     }
 
     @SuppressWarnings("unchecked")
-    Protocol<WriteResult> getCollectionBasedProtocol() {
+    private Protocol<WriteResult> getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(user.getCredential().getSource(), "system.users");
         return new InsertProtocol<Document>(namespace, true, WriteConcern.ACKNOWLEDGED,
                 asList(new InsertRequest<Document>(asCollectionDocument(user))),
                 new DocumentCodec());
     }
 
+    private Document getCommand() {
+        return asCommandDocument(user, "createUser");
+    }
 }

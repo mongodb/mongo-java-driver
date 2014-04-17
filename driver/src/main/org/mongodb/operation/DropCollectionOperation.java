@@ -16,13 +16,11 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.session.Session;
 
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
@@ -35,8 +33,6 @@ import static org.mongodb.operation.OperationHelper.ignoreNameSpaceErrors;
  */
 public class DropCollectionOperation implements AsyncOperation<CommandResult>, Operation<CommandResult> {
     private final MongoNamespace namespace;
-    private final Document dropCollectionCommand;
-    private final Codec<Document> commandCodec = new DocumentCodec();
 
     /**
      * Create the Operation to drop a Collection from MongoDB.
@@ -45,13 +41,12 @@ public class DropCollectionOperation implements AsyncOperation<CommandResult>, O
      */
     public DropCollectionOperation(final MongoNamespace namespace) {
         this.namespace = namespace;
-        dropCollectionCommand = new Document("drop", namespace.getCollectionName());
     }
 
     @Override
     public CommandResult execute(final Session session) {
         try {
-            return executeWrappedCommandProtocol(namespace.getDatabaseName(), dropCollectionCommand, commandCodec, commandCodec, session);
+            return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), session);
         } catch (MongoCommandFailureException e) {
             return ignoreNameSpaceErrors(e);
         }
@@ -59,10 +54,13 @@ public class DropCollectionOperation implements AsyncOperation<CommandResult>, O
 
     @Override
     public MongoFuture<CommandResult> executeAsync(final Session session) {
-        MongoFuture<CommandResult> futureDropOperation = executeWrappedCommandProtocolAsync(namespace.getDatabaseName(),
-                dropCollectionCommand, commandCodec, commandCodec, session);
+        MongoFuture<CommandResult> futureDropOperation = executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
+                                                                                            session);
         return ignoreNameSpaceErrors(futureDropOperation);
     }
 
+    private Document getCommand() {
+        return new Document("drop", namespace.getCollectionName());
+    }
 
 }

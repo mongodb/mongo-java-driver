@@ -21,7 +21,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.session.Session;
 
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
@@ -40,8 +39,7 @@ public class DropIndexOperation implements AsyncOperation<CommandResult>, Operat
     @Override
     public CommandResult execute(final Session session) {
         try {
-            return executeWrappedCommandProtocol(namespace.getDatabaseName(), asCommandDocument(),
-                                                 new DocumentCodec(), new DocumentCodec(), session);
+            return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), session);
         } catch (MongoCommandFailureException e) {
             return ignoreNameSpaceErrors(e);
         }
@@ -49,11 +47,10 @@ public class DropIndexOperation implements AsyncOperation<CommandResult>, Operat
 
     @Override
     public MongoFuture<CommandResult> executeAsync(final Session session) {
-        return ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), asCommandDocument(),
-                                                                        new DocumentCodec(), new DocumentCodec(), session));
+        return ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), session));
     }
 
-    private Document asCommandDocument() {
+    private Document getCommand() {
         return new Document("dropIndexes", namespace.getCollectionName()).append("index", indexName);
     }
 }

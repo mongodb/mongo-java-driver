@@ -24,7 +24,6 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.session.Session;
 
 import java.util.List;
@@ -66,8 +65,7 @@ public class GroupOperation implements AsyncOperation<MongoAsyncCursor<Document>
     @Override
     @SuppressWarnings("unchecked")
     public MongoCursor<Document> execute(final Session session) {
-        CommandResult result = executeWrappedCommandProtocol(namespace, asCommandDocument(), new DocumentCodec(), new DocumentCodec(),
-                                                             readPreference, session);
+        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), readPreference, session);
         return transformResult(result, transform());
     }
 
@@ -80,8 +78,7 @@ public class GroupOperation implements AsyncOperation<MongoAsyncCursor<Document>
     @Override
     @SuppressWarnings("unchecked")
     public MongoFuture<MongoAsyncCursor<Document>> executeAsync(final Session session) {
-        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace, asCommandDocument(), new DocumentCodec(),
-                                                                               new DocumentCodec(), readPreference, session);
+        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace, getCommand(), readPreference, session);
         return transformResult(result, transformAsync());
     }
 
@@ -106,7 +103,7 @@ public class GroupOperation implements AsyncOperation<MongoAsyncCursor<Document>
     }
 
 
-    private Document asCommandDocument() {
+    private Document getCommand() {
 
         Document document = new Document("ns", namespace.getCollectionName());
 

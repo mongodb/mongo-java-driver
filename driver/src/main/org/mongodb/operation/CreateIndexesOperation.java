@@ -63,8 +63,7 @@ public class CreateIndexesOperation implements AsyncOperation<Void>, Operation<V
         ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
         if (connectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             try {
-                executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), new DocumentCodec(), new DocumentCodec(),
-                                              connectionProvider);
+                executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), connectionProvider);
             } catch (MongoCommandFailureException e) {
                 throw checkForDuplicateKeyError(e);
             }
@@ -83,8 +82,7 @@ public class CreateIndexesOperation implements AsyncOperation<Void>, Operation<V
             @Override
             public void onResult(final ServerConnectionProvider connectionProvider, final MongoException e) {
                 if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), new DocumentCodec(), new DocumentCodec(),
-                                                       connectionProvider)
+                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), connectionProvider)
                     .register(new SingleResultCallback<CommandResult>() {
                         @Override
                         public void onResult(final CommandResult result, final MongoException e1) {

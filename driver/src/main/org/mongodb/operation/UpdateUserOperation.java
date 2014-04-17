@@ -56,8 +56,7 @@ public class UpdateUserOperation implements AsyncOperation<Void>, Operation<Void
     public Void execute(final Session session) {
         ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
         if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-            executeWrappedCommandProtocol(user.getCredential().getSource(), asCommandDocument(user, "updateUser"),
-                                          new DocumentCodec(), new DocumentCodec(), connectionProvider);
+            executeWrappedCommandProtocol(user.getCredential().getSource(), getCommand(), connectionProvider);
         } else {
             executeProtocol(getCollectionBasedProtocol(), connectionProvider);
         }
@@ -69,10 +68,7 @@ public class UpdateUserOperation implements AsyncOperation<Void>, Operation<Void
         ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
         if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
             MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(user.getCredential().getSource(),
-                                                                                   asCommandDocument(user, "updateUser"),
-                                                                                   new DocumentCodec(),
-                                                                                   new DocumentCodec(),
-                                                                                   connectionProvider);
+                                                                                   getCommand(), connectionProvider);
             return ignoreResult(result);
         } else {
             MongoFuture<WriteResult> result = executeProtocolAsync(getCollectionBasedProtocol(), session);
@@ -81,12 +77,16 @@ public class UpdateUserOperation implements AsyncOperation<Void>, Operation<Void
     }
 
     @SuppressWarnings("unchecked")
-    ReplaceProtocol<Document> getCollectionBasedProtocol() {
+    private ReplaceProtocol<Document> getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(user.getCredential().getSource(), "system.users");
         DocumentCodec codec = new DocumentCodec();
         return new ReplaceProtocol<Document>(namespace, true, WriteConcern.ACKNOWLEDGED,
                 asList(new ReplaceRequest<Document>(asCollectionQueryDocument(user), asCollectionDocument(user))),
                 codec, codec);
+    }
+
+    private Document getCommand() {
+        return asCommandDocument(user, "updateUser");
     }
 
 }

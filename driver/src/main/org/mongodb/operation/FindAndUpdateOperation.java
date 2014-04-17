@@ -50,18 +50,14 @@ public class FindAndUpdateOperation<T> implements AsyncOperation<T>, Operation<T
     @Override
     public T execute(final Session session) {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        CommandResult result = executeWrappedCommandProtocol(namespace, createFindAndUpdateDocument(), commandEncoder, resultDecoder,
-                                                             session);
+        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), commandEncoder, resultDecoder, session);
         return transformResult(result, transformer());
     }
 
     @Override
     public MongoFuture<T> executeAsync(final Session session) {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace,
-                                                                               createFindAndUpdateDocument(),
-                                                                               commandEncoder,
-                                                                               resultDecoder,
+        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace, getCommand(), commandEncoder, resultDecoder,
                                                                                session);
         return transformResult(result, transformer());
     }
@@ -86,7 +82,7 @@ public class FindAndUpdateOperation<T> implements AsyncOperation<T>, Operation<T
                                                   + "Document: %s", value));
     }
 
-    private Document createFindAndUpdateDocument() {
+    private Document getCommand() {
         Document command = new Document("findandmodify", namespace.getCollectionName());
         putIfNotNull(command, "query", findAndUpdate.getFilter());
         putIfNotNull(command, "fields", findAndUpdate.getSelector());

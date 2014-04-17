@@ -56,8 +56,7 @@ public class DropUserOperation implements AsyncOperation<Void>, Operation<Void> 
     public Void execute(final Session session) {
         ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
         if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-            executeWrappedCommandProtocol(database, new Document("dropUser", userName),
-                                          new DocumentCodec(), new DocumentCodec(), connectionProvider);
+            executeWrappedCommandProtocol(database, getCommand(), connectionProvider);
         } else {
             executeProtocol(getCollectionBasedProtocol(), connectionProvider);
         }
@@ -68,11 +67,7 @@ public class DropUserOperation implements AsyncOperation<Void>, Operation<Void> 
     public MongoFuture<Void> executeAsync(final Session session) {
         ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
         if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-            MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(database,
-                                                                                   new Document("dropUser", userName),
-                                                                                   new DocumentCodec(),
-                                                                                   new DocumentCodec(),
-                                                                                   connectionProvider);
+            MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(database, getCommand(), connectionProvider);
             return ignoreResult(result);
         } else {
             MongoFuture<WriteResult> result = executeProtocolAsync(getCollectionBasedProtocol(), session);
@@ -80,11 +75,14 @@ public class DropUserOperation implements AsyncOperation<Void>, Operation<Void> 
         }
     }
 
-    DeleteProtocol getCollectionBasedProtocol() {
+    private DeleteProtocol getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         return new DeleteProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
                 asList(new RemoveRequest(new Document("user", userName))),
                 new DocumentCodec());
     }
 
+    private Document getCommand() {
+        return new Document("dropUser", userName);
+    }
 }

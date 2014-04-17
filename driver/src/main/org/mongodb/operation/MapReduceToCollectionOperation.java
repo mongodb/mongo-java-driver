@@ -16,14 +16,12 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MapReduceStatistics;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.session.Session;
 
@@ -44,10 +42,8 @@ import static org.mongodb.operation.OperationHelper.transformResult;
  * @since 3.0
  */
 public class MapReduceToCollectionOperation implements AsyncOperation<MapReduceStatistics>, Operation<MapReduceStatistics> {
-    private final Document command;
+    private final MapReduce mapReduce;
     private final MongoNamespace namespace;
-    private final Codec<Document> commandCodec = new DocumentCodec();
-
     private ServerAddress serverUsed;
 
     /**
@@ -62,7 +58,7 @@ public class MapReduceToCollectionOperation implements AsyncOperation<MapReduceS
                                                + "collection.  Invalid MapReduce: " + mapReduce);
         }
         this.namespace = notNull("namespace", namespace);
-        this.command = createMapReduce(namespace.getCollectionName(), mapReduce);
+        this.mapReduce = mapReduce;
     }
 
     /**
@@ -73,18 +69,23 @@ public class MapReduceToCollectionOperation implements AsyncOperation<MapReduceS
      */
     @Override
     public MapReduceStatistics execute(final Session session) {
-        CommandResult result = executeWrappedCommandProtocol(namespace.getDatabaseName(), command, commandCodec, commandCodec, session);
+        CommandResult result = executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), session);
         return transformResult(result, transformer());
     }
 
     @Override
     public MongoFuture<MapReduceStatistics> executeAsync(final Session session) {
-        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace.getDatabaseName(),
-                                                                               command,
-                                                                               commandCodec,
-                                                                               commandCodec,
-                                                                               session);
+        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), session);
         return transformResult(result, transformer());
+    }
+
+    /**
+     * Returns the server that the map reduce operation ran against.
+     *
+     * @return the server that the results of the map reduce were obtained from
+     */
+    public ServerAddress getServerUsed() {
+        return serverUsed;
     }
 
     private Function<CommandResult, MapReduceStatistics> transformer() {
@@ -98,13 +99,7 @@ public class MapReduceToCollectionOperation implements AsyncOperation<MapReduceS
         };
     }
 
-    /**
-     * Returns the server that the map reduce operation ran against.
-     *
-     * @return the server that the results of the map reduce were obtained from
-     */
-    public ServerAddress getServerUsed() {
-        return serverUsed;
+    private Document getCommand() {
+        return createMapReduce(namespace.getCollectionName(), mapReduce);
     }
-
 }

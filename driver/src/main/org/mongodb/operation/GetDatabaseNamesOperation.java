@@ -16,12 +16,10 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.session.Session;
 
 import java.util.ArrayList;
@@ -36,7 +34,6 @@ import static org.mongodb.operation.OperationHelper.transformResult;
  * Execute this operation to return a List of Strings of the names of all the databases for the current MongoDB instance.
  */
 public class GetDatabaseNamesOperation implements AsyncOperation<List<String>>, Operation<List<String>> {
-    private final Codec<Document> commandCodec = new DocumentCodec();
 
     /**
      * Executing this will return a list of all the databases names in the MongoDB instance.
@@ -46,8 +43,7 @@ public class GetDatabaseNamesOperation implements AsyncOperation<List<String>>, 
      */
     @Override
     public List<String> execute(final Session session) {
-        CommandResult result = executeWrappedCommandProtocol("admin", new Document("listDatabases", 1), commandCodec, commandCodec,
-                                                             session);
+        CommandResult result = executeWrappedCommandProtocol("admin", getCommand(), session);
         return transformResult(result, transformer());
     }
 
@@ -59,11 +55,7 @@ public class GetDatabaseNamesOperation implements AsyncOperation<List<String>>, 
      */
     @Override
     public MongoFuture<List<String>> executeAsync(final Session session) {
-        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync("admin",
-                                                                               new Document("listDatabases", 1),
-                                                                               commandCodec,
-                                                                               commandCodec,
-                                                                               session);
+        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync("admin", getCommand(), session);
         return transformResult(result, transformer());
     }
 
@@ -81,5 +73,9 @@ public class GetDatabaseNamesOperation implements AsyncOperation<List<String>>, 
                 return unmodifiableList(databaseNames);
             }
         };
+    }
+
+    private Document getCommand() {
+        return new Document("listDatabases", 1);
     }
 }

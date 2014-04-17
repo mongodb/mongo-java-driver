@@ -49,17 +49,13 @@ public class FindAndReplaceOperation<T> implements AsyncOperation<T>, Operation<
 
     @Override
     public T execute(final Session session) {
-        CommandResult result = executeWrappedCommandProtocol(namespace, createFindAndReplaceDocument(), commandEncoder, resultDecoder,
-                                                             session);
+        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), commandEncoder, resultDecoder, session);
         return transformResult(result, transformer());
     }
 
     @Override
     public MongoFuture<T> executeAsync(final Session session) {
-        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace,
-                                                                               createFindAndReplaceDocument(),
-                                                                               commandEncoder,
-                                                                               resultDecoder,
+        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace, getCommand(), commandEncoder, resultDecoder,
                                                                                session);
         return transformResult(result, transformer());
     }
@@ -74,7 +70,7 @@ public class FindAndReplaceOperation<T> implements AsyncOperation<T>, Operation<
         };
     }
 
-    private Document createFindAndReplaceDocument() {
+    private Document getCommand() {
         Document command = new Document("findandmodify", namespace.getCollectionName());
         putIfNotNull(command, "query", findAndReplace.getFilter());
         putIfNotNull(command, "fields", findAndReplace.getSelector());

@@ -58,8 +58,7 @@ public class UserExistsOperation implements AsyncOperation<Boolean>, Operation<B
     public Boolean execute(final Session session) {
         ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
         if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-            CommandResult result = executeWrappedCommandProtocol(database, new Document("usersInfo", userName),
-                                                                        new DocumentCodec(), new DocumentCodec(), connectionProvider);
+            CommandResult result = executeWrappedCommandProtocol(database, getCommand(), connectionProvider);
             return transformResult(result, transformCommandResult());
         } else {
             QueryResult<Document> result = executeProtocol(getCollectionBasedProtocol(), connectionProvider);
@@ -71,11 +70,7 @@ public class UserExistsOperation implements AsyncOperation<Boolean>, Operation<B
     public MongoFuture<Boolean> executeAsync(final Session session) {
         ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
         if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-            MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(database,
-                                                                                   new Document("usersInfo", userName),
-                                                                                   new DocumentCodec(),
-                                                                                   new DocumentCodec(),
-                                                                                   connectionProvider);
+            MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(database, getCommand(), connectionProvider);
             return transformResult(result, transformCommandResult());
         } else {
             MongoFuture<QueryResult<Document>> result = executeProtocolAsync(getCollectionBasedProtocol(), session);
@@ -106,6 +101,10 @@ public class UserExistsOperation implements AsyncOperation<Boolean>, Operation<B
         DocumentCodec codec = new DocumentCodec();
         return new QueryProtocol<Document>(namespace, EnumSet.noneOf(QueryFlag.class), 0, 1,
                 new Document("user", userName), null, codec, codec);
+    }
+
+    private Document getCommand() {
+        return new Document("usersInfo", userName);
     }
 
 }

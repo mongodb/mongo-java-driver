@@ -46,7 +46,7 @@ import static org.mongodb.operation.OperationHelper.transformResult;
  * @since 3.0
  */
 public class MapReduceWithInlineResultsOperation<T> implements AsyncOperation<MapReduceAsyncCursor<T>>, Operation<MapReduceCursor<T>> {
-    private final Document command;
+    private final MapReduce mapReduce;
     private final MongoNamespace namespace;
     private final ReadPreference readPreference;
     private final Codec<Document> commandCodec = new DocumentCodec();
@@ -69,7 +69,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncOperation<Ma
         }
         this.namespace = notNull("namespace", namespace);
         this.readPreference = readPreference;
-        this.command = createMapReduce(namespace.getCollectionName(), mapReduce);
+        this.mapReduce = mapReduce;
     }
 
     /**
@@ -81,22 +81,18 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncOperation<Ma
     @Override
     @SuppressWarnings("unchecked")
     public MapReduceCursor<T> execute(final Session session) {
-        CommandResult result = executeWrappedCommandProtocol(namespace, command,
-                                                                    commandCodec,
-                                                                    new CommandResultWithPayloadDecoder<T>(decoder, "results"),
-                                                                    readPreference, session);
+        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), commandCodec,
+                                                             new CommandResultWithPayloadDecoder<T>(decoder, "results"),
+                                                             readPreference, session);
 
         return transformResult(result, transform());
     }
 
     @Override
     public MongoFuture<MapReduceAsyncCursor<T>> executeAsync(final Session session) {
-        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace,
-                                                                               command,
-                                                                               commandCodec,
+        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace, getCommand(), commandCodec,
                                                                                new CommandResultWithPayloadDecoder<T>(decoder, "results"),
-                                                                               readPreference,
-                                                                               session);
+                                                                               readPreference, session);
         return transformResult(result, transformAsync());
     }
 
@@ -118,6 +114,10 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncOperation<Ma
                 return new MapReduceInlineResultsAsyncCursor<T>(result);
             }
         };
+    }
+
+    private Document getCommand() {
+        return createMapReduce(namespace.getCollectionName(), mapReduce);
     }
 
 }

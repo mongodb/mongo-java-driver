@@ -28,6 +28,7 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerVersion;
@@ -109,6 +110,10 @@ final class OperationHelper {
         return executeProtocol(protocol, getConnectionProvider(readPreference, session));
     }
 
+    static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command, final Session session) {
+        return executeWrappedCommandProtocol(namespace, command, new DocumentCodec(), new DocumentCodec(), session);
+    }
+
     static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command,
                                                        final Encoder<Document> commandEncoder,
                                                        final Decoder<Document> commandResultDecoder,
@@ -117,12 +122,21 @@ final class OperationHelper {
                                              getConnectionProvider(ReadPreference.primary(), session));
     }
 
+    static CommandResult executeWrappedCommandProtocol(final String database, final Document command, final Session session) {
+        return executeWrappedCommandProtocol(database, command, new DocumentCodec(), new DocumentCodec(), session);
+    }
+
     static CommandResult executeWrappedCommandProtocol(final String database, final Document command,
                                                        final Encoder<Document> commandEncoder,
                                                        final Decoder<Document> commandResultDecoder,
                                                        final Session session) {
         return executeWrappedCommandProtocol(database, command, commandEncoder, commandResultDecoder, ReadPreference.primary(),
                                              getConnectionProvider(ReadPreference.primary(), session));
+    }
+
+    static CommandResult executeWrappedCommandProtocol(final String database, final Document command,
+                                                       final ServerConnectionProvider connectionProvider) {
+        return executeWrappedCommandProtocol(database, command, new DocumentCodec(), new DocumentCodec(), connectionProvider);
     }
 
     static CommandResult executeWrappedCommandProtocol(final String database, final Document command,
@@ -134,11 +148,21 @@ final class OperationHelper {
     }
 
     static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command,
+                                                       final ReadPreference readPreference, final Session session) {
+        return executeWrappedCommandProtocol(namespace, command, new DocumentCodec(), new DocumentCodec(), readPreference, session);
+    }
+
+    static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command,
                                                        final Encoder<Document> commandEncoder,
                                                        final Decoder<Document> commandResultDecoder, final ReadPreference readPreference,
                                                        final Session session) {
         return executeWrappedCommandProtocol(namespace, command, commandEncoder, commandResultDecoder, readPreference,
                                              getConnectionProvider(readPreference, session));
+    }
+
+    static CommandResult executeWrappedCommandProtocol(final String database, final Document command,
+                                                       final ReadPreference readPreference, final Session session) {
+        return executeWrappedCommandProtocol(database, command, new DocumentCodec(), new DocumentCodec(), readPreference, session);
     }
 
     static CommandResult executeWrappedCommandProtocol(final String database, final Document command,
@@ -164,7 +188,8 @@ final class OperationHelper {
         return executeProtocol(new CommandProtocol(database,
                                                    wrapCommand(command, readPreference, connectionProvider.getServerDescription()),
                                                    getQueryFlags(readPreference), commandEncoder, commandResultDecoder),
-                               connectionProvider);
+                               connectionProvider
+                              );
     }
 
     static <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol, final Session session) {
@@ -184,6 +209,17 @@ final class OperationHelper {
         SingleResultFuture<T> future = new SingleResultFuture<T>();
         connectionProvider.register(new ProtocolExecutingCallback<T>(protocol, future));
         return future;
+    }
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
+                                                                         final Session session) {
+        return executeWrappedCommandProtocolAsync(namespace, command, new DocumentCodec(), new DocumentCodec(), session);
+    }
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
+                                                                         final ReadPreference readPreference, final Session session) {
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), command, new DocumentCodec(), new DocumentCodec(),
+                                                  readPreference, session);
     }
 
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
@@ -214,11 +250,21 @@ final class OperationHelper {
     }
 
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
+                                                                         final Session session) {
+        return executeWrappedCommandProtocolAsync(database, command, new DocumentCodec(), new DocumentCodec(), session);
+    }
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
                                                                          final Encoder<Document> commandEncoder,
                                                                          final Decoder<Document> commandResultDecoder,
                                                                          final Session session) {
         return executeWrappedCommandProtocolAsync(database, command, commandEncoder, commandResultDecoder,
                                                   ReadPreference.primary(), session);
+    }
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
+                                                                         final ServerConnectionProvider connectionProvider) {
+        return executeWrappedCommandProtocolAsync(database, command, new DocumentCodec(), new DocumentCodec(), connectionProvider);
     }
 
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
