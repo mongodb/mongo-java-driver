@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.CommandWriteOperation;
 import org.mongodb.operation.CreateCollectionOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.GetCollectionNamesOperation;
@@ -46,7 +46,7 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public void drop() {
-        client.execute(new CommandOperation(databaseName, DROP_DATABASE, primary(), commandCodec, commandCodec));
+        client.execute(new CommandWriteOperation(databaseName, DROP_DATABASE, commandCodec, commandCodec));
     }
 
     @Override

@@ -36,7 +36,6 @@ import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.management.JMXConnectionPoolListener;
 import org.mongodb.operation.GetDatabaseNamesOperation;
-import org.mongodb.operation.Operation;
 import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.WriteOperation;
 import org.mongodb.protocol.KillCursor;
@@ -792,14 +791,6 @@ public class Mongo {
 
     void addOrphanedCursor(final ServerCursor serverCursor) {
         orphanedCursors.add(serverCursor);
-    }
-
-    <V> V execute(final Operation<V> operation) {
-        try {
-            return operation.execute(getSession());
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
-        }
     }
 
     public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {

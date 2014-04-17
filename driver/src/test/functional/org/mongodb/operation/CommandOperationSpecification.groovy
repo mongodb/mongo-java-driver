@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 package org.mongodb.operation
 import category.Async
 import org.junit.experimental.categories.Category
@@ -38,9 +39,9 @@ class CommandOperationSpecification extends FunctionalSpecification {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 
         given:
-        def commandOperation = new CommandOperation(getNamespace().databaseName,
-                                                    new Document('count', getCollectionName()).append('maxTimeMS', 1),
-                                                    ReadPreference.primary(), new DocumentCodec(), new DocumentCodec())
+        def commandOperation = new CommandReadOperation(getNamespace().databaseName,
+                                                        new Document('count', getCollectionName()).append('maxTimeMS', 1),
+                                                        ReadPreference.primary(), new DocumentCodec(), new DocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
@@ -59,9 +60,9 @@ class CommandOperationSpecification extends FunctionalSpecification {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 
         given:
-        def commandOperation = new CommandOperation(getNamespace().databaseName,
-                                                    new Document('count', getCollectionName()).append('maxTimeMS', 1),
-                                                    ReadPreference.primary(), new DocumentCodec(), new DocumentCodec())
+        def commandOperation = new CommandReadOperation(getNamespace().databaseName,
+                                                        new Document('count', getCollectionName()).append('maxTimeMS', 1),
+                                                        ReadPreference.primary(), new DocumentCodec(), new DocumentCodec())
         enableMaxTimeFailPoint()
 
         when:

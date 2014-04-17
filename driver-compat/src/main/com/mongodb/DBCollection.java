@@ -57,7 +57,6 @@ import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceToCollectionOperation;
 import org.mongodb.operation.MapReduceWithInlineResultsOperation;
 import org.mongodb.operation.MixedBulkWriteOperation;
-import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.RemoveOperation;
@@ -1737,9 +1736,7 @@ public class DBCollection {
      * @mongodb.driver.manual /reference/command/collStats/ collStats command
      */
     public CommandResult getStats() {
-        org.mongodb.CommandResult commandResult = getDB().executeCommand(new Document("collStats", getName()),
-                                                                         ReadPreference.primary().toNew());
-        return new CommandResult(commandResult);
+        return getDB().executeCommand(new Document("collStats", getName()));
     }
 
     /**
@@ -1840,10 +1837,6 @@ public class DBCollection {
                                                                                       ordered, writeConcern.toNew(),
                                                                                       getObjectCodec()
         )));
-    }
-
-    <T> T execute(final Operation<T> operation) {
-        return getDB().getMongo().execute(operation);
     }
 
     <T> T execute(final WriteOperation<T> operation) {

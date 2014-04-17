@@ -18,7 +18,6 @@ package org.mongodb;
 
 import org.mongodb.binding.ClusterBinding;
 import org.mongodb.connection.Cluster;
-import org.mongodb.operation.Operation;
 import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.WriteOperation;
 import org.mongodb.session.ClusterSession;
@@ -78,10 +77,6 @@ class MongoClientImpl implements MongoClient {
 
     public Executor getExecutor() {
         return executorService;
-    }
-
-    <V> V execute(final Operation<V> operation) {
-        return operation.execute(getSession());
     }
 
     public <V> V execute(final ReadOperation<V> readOperation, final ReadPreference readPreference) {
