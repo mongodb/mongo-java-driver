@@ -247,7 +247,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public long count() {
-            return execute(new CountOperation(getNamespace(), findOp, getDocumentCodec()));
+            return execute(new CountOperation(getNamespace(), findOp, getDocumentCodec()), findOp.getReadPreference());
         }
 
         @Override

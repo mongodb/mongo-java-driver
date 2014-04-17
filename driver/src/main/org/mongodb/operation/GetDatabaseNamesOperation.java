@@ -20,6 +20,7 @@ import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
+import org.mongodb.binding.ReadBinding;
 import org.mongodb.session.Session;
 
 import java.util.ArrayList;
@@ -33,17 +34,17 @@ import static org.mongodb.operation.OperationHelper.transformResult;
 /**
  * Execute this operation to return a List of Strings of the names of all the databases for the current MongoDB instance.
  */
-public class GetDatabaseNamesOperation implements AsyncOperation<List<String>>, Operation<List<String>> {
+public class GetDatabaseNamesOperation implements AsyncOperation<List<String>>, ReadOperation<List<String>> {
 
     /**
      * Executing this will return a list of all the databases names in the MongoDB instance.
      *
      * @return a List of Strings of the names of all the databases in the MongoDB instance
-     * @param session
+     * @param binding
      */
     @Override
-    public List<String> execute(final Session session) {
-        CommandResult result = executeWrappedCommandProtocol("admin", getCommand(), session);
+    public List<String> execute(final ReadBinding binding) {
+        CommandResult result = executeWrappedCommandProtocol("admin", getCommand(), binding);
         return transformResult(result, transformer());
     }
 

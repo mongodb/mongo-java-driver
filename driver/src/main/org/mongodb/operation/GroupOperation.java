@@ -24,6 +24,7 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
+import org.mongodb.binding.ReadBinding;
 import org.mongodb.session.Session;
 
 import java.util.List;
@@ -39,7 +40,7 @@ import static org.mongodb.operation.OperationHelper.transformResult;
  * @mongodb.driver.manual reference/command/group Group Command
  * @since 3.0
  */
-public class GroupOperation implements AsyncOperation<MongoAsyncCursor<Document>>, Operation<MongoCursor<Document>> {
+public class GroupOperation implements AsyncOperation<MongoAsyncCursor<Document>>, ReadOperation<MongoCursor<Document>> {
     private final MongoNamespace namespace;
     private final Group group;
     private final ReadPreference readPreference;
@@ -60,12 +61,12 @@ public class GroupOperation implements AsyncOperation<MongoAsyncCursor<Document>
      * Will return a cursor of Documents containing the results of the group operation.
      *
      * @return a MongoCursor of T, the results of the group operation in a form to be iterated over
-     * @param session the session
+     * @param binding the binding
      */
     @Override
     @SuppressWarnings("unchecked")
-    public MongoCursor<Document> execute(final Session session) {
-        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), readPreference, session);
+    public MongoCursor<Document> execute(final ReadBinding binding) {
+        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), binding);
         return transformResult(result, transform());
     }
 

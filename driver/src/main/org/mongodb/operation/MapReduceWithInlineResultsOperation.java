@@ -26,6 +26,7 @@ import org.mongodb.MapReduceCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
+import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.session.Session;
 
@@ -45,7 +46,7 @@ import static org.mongodb.operation.OperationHelper.transformResult;
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0
  */
-public class MapReduceWithInlineResultsOperation<T> implements AsyncOperation<MapReduceAsyncCursor<T>>, Operation<MapReduceCursor<T>> {
+public class MapReduceWithInlineResultsOperation<T> implements AsyncOperation<MapReduceAsyncCursor<T>>, ReadOperation<MapReduceCursor<T>> {
     private final MapReduce mapReduce;
     private final MongoNamespace namespace;
     private final ReadPreference readPreference;
@@ -75,15 +76,15 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncOperation<Ma
     /**
      * Executing this will return a cursor with your results and the statistics in.
      *
-     * @param session the session
+     * @param binding the binding
      * @return a MapReduceCursor that can be iterated over to find all the results of the Map Reduce operation.
      */
     @Override
     @SuppressWarnings("unchecked")
-    public MapReduceCursor<T> execute(final Session session) {
+    public MapReduceCursor<T> execute(final ReadBinding binding) {
         CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), commandCodec,
                                                              new CommandResultWithPayloadDecoder<T>(decoder, "results"),
-                                                             readPreference, session);
+                                                             binding);
 
         return transformResult(result, transform());
     }

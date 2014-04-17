@@ -31,6 +31,7 @@ import org.mongodb.selector.PrimaryServerSelector
 
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
 import static org.mongodb.Fixture.getSession
@@ -51,7 +52,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         new CreateUserOperation(readOnlyUser).execute(getSession())
 
         when:
-        def found = new UserExistsOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        def found = new UserExistsOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
 
         then:
         found

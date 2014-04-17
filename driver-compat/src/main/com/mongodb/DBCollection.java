@@ -921,7 +921,7 @@ public class DBCollection {
                                                .readPreference(readPreference.toNew())
                                                .maxTime(maxTime, maxTimeUnit);
 
-        return execute(new CountOperation(getNamespace(), find, getDocumentCodec()));
+        return execute(new CountOperation(getNamespace(), find, getDocumentCodec()), readPreference);
     }
 
     /**
@@ -1021,10 +1021,8 @@ public class DBCollection {
      */
     public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
         //TODO: test read preference
-        MongoCursor<Document> cursor = execute(new GroupOperation(getNamespace(),
-                                                                  cmd.toNew(),
-                                                                  readPreference.toNew()
-        ));
+        MongoCursor<Document> cursor = execute(new GroupOperation(getNamespace(), cmd.toNew(), readPreference.toNew()),
+                                               readPreference);
         return toDBList(cursor);
     }
 
@@ -1075,7 +1073,7 @@ public class DBCollection {
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
         Find find = new Find().filter(toDocument(query))
                               .readPreference(readPreference.toNew());
-        MongoCursor<String> result = execute(new DistinctOperation(getNamespace(), fieldName, find));
+        MongoCursor<String> result = execute(new DistinctOperation(getNamespace(), fieldName, find), readPreference);
 
         List<String> results = new ArrayList<String>();
         while (result.hasNext()) {
@@ -1147,15 +1145,14 @@ public class DBCollection {
      * @mongodb.driver.manual core/map-reduce/ Map-Reduce
      */
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
-        org.mongodb.ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference().toNew()
-                                                                                        : command.getReadPreference().toNew();
+        ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference() : command.getReadPreference();
         MapReduce mapReduce = command.getMapReduce();
         if (mapReduce.isInline()) {
             MapReduceCursor<DBObject> executionResult = execute(new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(),
                                                                                                                   mapReduce,
                                                                                                                   objectCodec,
-                                                                                                                  readPreference
-            ));
+                                                                                                                  readPreference.toNew()),
+                                                                readPreference);
             return new MapReduceOutput(command.toDBObject(), executionResult, executionResult.getServerAddress());
         } else {
             MapReduceToCollectionOperation mapReduceOperation = new MapReduceToCollectionOperation(getNamespace(), mapReduce

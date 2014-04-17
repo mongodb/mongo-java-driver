@@ -37,7 +37,7 @@ class MapReduceResultsIterable<T, V> implements MongoIterable<V> {
 
     @Override
     public MongoCursor<V> iterator() {
-        return collection.execute(operation);
+        return collection.execute(operation, collection.getOptions().getReadPreference());
     }
 
     @Override

@@ -31,6 +31,7 @@ import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.SingleResultCallback
 import org.mongodb.test.CollectionHelper
 
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 
 class MapReduceWithInlineResultsOperationFunctionalSpecification extends FunctionalSpecification {
@@ -54,7 +55,7 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
         def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec, ReadPreference.primary())
 
         when:
-        MapReduceCursor<Document> results = operation.execute(getSession())
+        MapReduceCursor<Document> results = operation.execute(getBinding())
 
         then:
         results.iterator().toList() == expectedResults

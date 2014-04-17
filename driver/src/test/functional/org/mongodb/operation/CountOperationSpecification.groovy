@@ -29,6 +29,7 @@ import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.disableMaxTimeFailPoint
 import static org.mongodb.Fixture.enableMaxTimeFailPoint
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.Fixture.serverVersionAtLeast
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
@@ -53,7 +54,7 @@ class CountOperationSpecification extends FunctionalSpecification {
 
     def 'should get the count'() {
         expect:
-        new CountOperation(getNamespace(), new Find(), new DocumentCodec()).execute(getSession()) == insertDocumentList.size()
+        new CountOperation(getNamespace(), new Find(), new DocumentCodec()).execute(getBinding()) == insertDocumentList.size()
     }
 
     def 'should get the count asynchronously'() {
@@ -71,7 +72,7 @@ class CountOperationSpecification extends FunctionalSpecification {
         enableMaxTimeFailPoint()
 
         when:
-        countOperation.execute(getSession())
+        countOperation.execute(getBinding())
 
         then:
         thrown(MongoExecutionTimeoutException)

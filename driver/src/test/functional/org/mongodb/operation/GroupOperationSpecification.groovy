@@ -27,6 +27,7 @@ import org.mongodb.MongoException
 import org.mongodb.ReadPreference
 import org.mongodb.connection.SingleResultCallback
 
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 
 class GroupOperationSpecification extends FunctionalSpecification {
@@ -42,7 +43,7 @@ class GroupOperationSpecification extends FunctionalSpecification {
 
         when:
         GroupOperation op = new GroupOperation(getNamespace(), group, ReadPreference.primary())
-        def result = op.execute(getSession());
+        def result = op.execute(getBinding());
 
         then:
         List<String> results = result.iterator()*.getString('name')

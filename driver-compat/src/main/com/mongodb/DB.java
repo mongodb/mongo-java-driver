@@ -43,6 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.MongoExceptions.mapException;
+import static com.mongodb.ReadPreference.primary;
 import static org.mongodb.MongoCredential.createMongoCRCredential;
 
 /**
@@ -236,7 +237,7 @@ public class DB {
         Find findAll = new Find().readPreference(org.mongodb.ReadPreference.primary());
         // TODO: Should use an operation
         MongoCursor<Document> cursor = execute(new QueryOperation<Document>(namespacesCollection, findAll, commandCodec, commandCodec),
-                                               ReadPreference.primary());
+                                               primary());
 
         try {
             HashSet<String> collections = new HashSet<String>();
@@ -507,7 +508,7 @@ public class DB {
     @Deprecated
     public WriteResult addUser(final String userName, final char[] password, final boolean readOnly) {
         User user = new User(createMongoCRCredential(userName, getName(), password), readOnly);
-        if (execute(new UserExistsOperation(getName(), userName))) {
+        if (execute(new UserExistsOperation(getName(), userName), primary())) {
             execute(new UpdateUserOperation(user));
             return new WriteResult(1, false, null, getWriteConcern());
 

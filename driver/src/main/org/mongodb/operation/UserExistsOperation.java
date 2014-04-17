@@ -21,7 +21,9 @@ import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
@@ -32,20 +34,21 @@ import java.util.EnumSet;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
 import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
 import static org.mongodb.operation.OperationHelper.transformResult;
+import static org.mongodb.operation.OperationHelper.withConnection;
 
 /**
  * An operation that determines if a user exists.
  *
  * @since 3.0
  */
-public class UserExistsOperation implements AsyncOperation<Boolean>, Operation<Boolean> {
+public class UserExistsOperation implements AsyncOperation<Boolean>, ReadOperation<Boolean> {
 
     private final String database;
     private final String userName;
@@ -55,15 +58,19 @@ public class UserExistsOperation implements AsyncOperation<Boolean>, Operation<B
         this.userName = notNull("userName", userName);
     }
     @Override
-    public Boolean execute(final Session session) {
-        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
-        if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-            CommandResult result = executeWrappedCommandProtocol(database, getCommand(), connectionProvider);
-            return transformResult(result, transformCommandResult());
-        } else {
-            QueryResult<Document> result = executeProtocol(getCollectionBasedProtocol(), connectionProvider);
-            return transformResult(result, transformQueryResult());
-        }
+    public Boolean execute(final ReadBinding binding) {
+        return withConnection(binding, new CallableWithConnection<Boolean>() {
+            @Override
+            public Boolean call(final Connection connection) {
+                if (serverVersionIsAtLeast(connection, new ServerVersion(2, 6))) {
+                    CommandResult result = executeWrappedCommandProtocol(database, getCommand(), connection, binding.getReadPreference());
+                    return transformResult(result, transformCommandResult());
+                } else {
+                    QueryResult<Document> result = getCollectionBasedProtocol().execute(connection);
+                    return transformResult(result, transformQueryResult());
+                }
+            }
+        });
     }
 
     @Override

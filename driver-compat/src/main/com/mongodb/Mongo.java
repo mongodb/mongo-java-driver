@@ -66,6 +66,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.MongoExceptions.mapException;
+import static com.mongodb.ReadPreference.primary;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -340,7 +341,7 @@ public class Mongo {
         this.cluster = cluster;
         this.documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
         this.options = options;
-        this.readPreference = options.getReadPreference() != null ? options.getReadPreference() : ReadPreference.primary();
+        this.readPreference = options.getReadPreference() != null ? options.getReadPreference() : primary();
         this.writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : WriteConcern.UNACKNOWLEDGED;
         this.optionHolder = new Bytes.OptionHolder(null);
         this.credentialsList = unmodifiableList(credentialsList);
@@ -473,7 +474,7 @@ public class Mongo {
      * @throws MongoException
      */
     public List<String> getDatabaseNames() {
-        return execute(new GetDatabaseNamesOperation());
+        return execute(new GetDatabaseNamesOperation(), primary());
     }
 
     /**

@@ -22,6 +22,8 @@ import org.mongodb.operation.GetDatabaseNamesOperation;
 
 import java.util.List;
 
+import static org.mongodb.ReadPreference.primary;
+
 /**
  * Contains the commands that can be run on MongoDB that do not require a database to be selected first.  These commands can be accessed via
  * MongoClient.
@@ -50,6 +52,6 @@ class ClientAdministrationImpl implements ClientAdministration {
 
     @Override
     public List<String> getDatabaseNames() {
-        return client.execute(new GetDatabaseNamesOperation());
+        return client.execute(new GetDatabaseNamesOperation(), primary());
     }
 }

@@ -20,8 +20,7 @@ import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
-import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.session.Session;
+import org.mongodb.binding.ReadBinding;
 
 import java.util.List;
 
@@ -36,7 +35,7 @@ import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtoco
  * @mongodb.driver.manual reference/command/distinct Distinct Command
  * @since 3.0
  */
-public class DistinctOperation implements Operation<MongoCursor<String>> {
+public class DistinctOperation implements ReadOperation<MongoCursor<String>> {
     private final MongoNamespace namespace;
     private final String fieldName;
     private final Find find;
@@ -56,9 +55,8 @@ public class DistinctOperation implements Operation<MongoCursor<String>> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public MongoCursor<String> execute(final Session session) {
-        CommandResult commandResult = executeWrappedCommandProtocol(namespace, asCommandDocument(), new DocumentCodec(),
-                                                                    new DocumentCodec(), find.getReadPreference(), session);
+    public MongoCursor<String> execute(final ReadBinding binding) {
+        CommandResult commandResult = executeWrappedCommandProtocol(namespace, asCommandDocument(), binding);
 
         return new InlineMongoCursor<String>(commandResult.getAddress(), (List<String>) commandResult.getResponse().get("values"));
     }

@@ -47,7 +47,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 import static org.mongodb.Fixture.disableMaxTimeFailPoint;
 import static org.mongodb.Fixture.enableMaxTimeFailPoint;
-import static org.mongodb.Fixture.getSession;
+import static org.mongodb.Fixture.getBinding;
 import static org.mongodb.Fixture.isDiscoverableReplicaSet;
 import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.Fixture.serverVersionAtLeast;
@@ -233,7 +233,7 @@ public class DBTest extends DatabaseTestCase {
         char[] password = "123".toCharArray();
         boolean readOnly = true;
         database.addUser(userName, password, readOnly);
-        assertTrue(new UserExistsOperation(database.getName(), userName).execute(getSession()));
+        assertTrue(new UserExistsOperation(database.getName(), userName).execute(getBinding()));
     }
 
     @Test
@@ -248,7 +248,7 @@ public class DBTest extends DatabaseTestCase {
         boolean newReadOnly = false;
         database.addUser(userName, newPassword, newReadOnly);
 
-        assertTrue(new UserExistsOperation(database.getName(), userName).execute(getSession()));
+        assertTrue(new UserExistsOperation(database.getName(), userName).execute(getBinding()));
     }
 
     @Test
@@ -261,7 +261,7 @@ public class DBTest extends DatabaseTestCase {
 
         database.removeUser(userName);
 
-        assertFalse(new UserExistsOperation(database.getName(), userName).execute(getSession()));
+        assertFalse(new UserExistsOperation(database.getName(), userName).execute(getBinding()));
     }
 
     @Test
@@ -295,7 +295,7 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldNotThrowAnExceptionwhenRequestDoneIsCalledWithoutFirstCallingRequestStart() throws UnknownHostException {
+    public void shouldNotThrowAnExceptionWhenRequestDoneIsCalledWithoutFirstCallingRequestStart() throws UnknownHostException {
         database.requestDone();
     }
 

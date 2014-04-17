@@ -22,6 +22,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.session.Session;
@@ -35,7 +36,7 @@ import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtoco
  *
  * @since 3.0
  */
-public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
+public class CountOperation implements ReadOperation<Long>, AsyncOperation<Long> {
     private final DocumentCodec commandEncoder = new DocumentCodec();
     private final Codec<Document> codec;
     private final MongoNamespace namespace;
@@ -48,8 +49,8 @@ public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
     }
 
 
-    public Long execute(final Session session) {
-        return getCount(executeWrappedCommandProtocol(namespace, asDocument(), commandEncoder, codec, find.getReadPreference(), session));
+    public Long execute(final ReadBinding session) {
+        return getCount(executeWrappedCommandProtocol(namespace, asDocument(), commandEncoder, codec, session));
     }
 
     @Override

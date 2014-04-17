@@ -65,6 +65,29 @@ final class OperationHelper {
     }
 
 
+
+    interface CallableWithConnection<T> {
+        T call(Connection connection);
+    }
+
+    static <T> T withConnection(final ReadBinding binding, final CallableWithConnection<T> callable) {
+        ConnectionSource source = binding.getReadConnectionSource();
+        try {
+            Connection connection = source.getConnection();
+            try {
+                return callable.call(connection);
+            } finally {
+                connection.close();
+            }
+        } finally {
+            source.release();
+        }
+    }
+
+    static boolean serverVersionIsAtLeast(final Connection connection, final ServerVersion serverVersion) {
+        return connection.getServerDescription().getVersion().compareTo(serverVersion) >= 0;
+    }
+
     static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command,
                                                        final ConnectionSource source, final ReadPreference readPreference) {
         return executeWrappedCommandProtocol(namespace, command, new DocumentCodec(), new DocumentCodec(), source, readPreference);
@@ -82,9 +105,12 @@ final class OperationHelper {
         return executeWrappedCommandProtocol(namespace.getDatabaseName(), command, encoder, decoder, source, readPreference);
     }
 
-
     static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command, final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, command, new DocumentCodec(), new DocumentCodec(), binding);
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), command, binding);
+    }
+
+    static CommandResult executeWrappedCommandProtocol(final String database, final Document command, final ReadBinding binding) {
+        return executeWrappedCommandProtocol(database, command, new DocumentCodec(), new DocumentCodec(), binding);
     }
 
     static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command,
@@ -110,13 +136,23 @@ final class OperationHelper {
                                                        final ConnectionSource source, final ReadPreference readPreference) {
         Connection connection = source.getConnection();
         try {
-            return new CommandProtocol(database, wrapCommand(command, readPreference, connection.getServerDescription()),
-                                       getQueryFlags(readPreference), encoder, decoder).execute(connection);
+            return executeWrappedCommandProtocol(database, command, encoder, decoder, connection, readPreference);
         } finally {
             connection.close();
         }
     }
 
+    static CommandResult executeWrappedCommandProtocol(final String database, final Document command,
+                                                       final Connection connection, final ReadPreference readPreference) {
+        return executeWrappedCommandProtocol(database, command, new DocumentCodec(), new DocumentCodec(), connection, readPreference);
+    }
+
+    static CommandResult executeWrappedCommandProtocol(final String database, final Document command,
+                                                       final Encoder<Document> encoder, final Decoder<Document> decoder,
+                                                       final Connection connection, final ReadPreference readPreference) {
+        return new CommandProtocol(database, wrapCommand(command, readPreference, connection.getServerDescription()),
+                                   getQueryFlags(readPreference), encoder, decoder).execute(connection);
+    }
 
     static <T> List<T> queryResultToList(final QueryProtocol<T> queryProtocol, final ReadBinding binding, final MongoNamespace namespace,
                                          final Decoder<T> decoder) {
