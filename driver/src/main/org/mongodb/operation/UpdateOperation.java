@@ -30,6 +30,11 @@ import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
+/**
+ * An operation that updates a document in a collection.
+ *
+ * @since 3.0
+ */
 public class UpdateOperation extends BaseWriteOperation {
     private final List<UpdateRequest> updates;
     private final Encoder<Document> queryEncoder;

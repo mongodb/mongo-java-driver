@@ -31,6 +31,11 @@ import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.queryResultToList;
 import static org.mongodb.operation.OperationHelper.queryResultToListAsync;
 
+/**
+ * An operation that gets the names of all the collections in a database.
+ *
+ * @since 3.0
+ */
 public class GetCollectionNamesOperation implements AsyncOperation<List<String>>, Operation<List<String>> {
     private final String databaseName;
 

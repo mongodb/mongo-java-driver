@@ -31,6 +31,8 @@ import static org.mongodb.operation.OperationHelper.ignoreResult;
 /**
  * Operation to drop a Collection in MongoDB.  The {@code execute} method throws MongoCommandFailureException if something goes wrong, but
  * it will not throw an Exception if the collection does not exist before trying to drop it.
+ *
+ * @since 3.0
  */
 public class DropCollectionOperation implements AsyncOperation<Void>, Operation<Void> {
     private final MongoNamespace namespace;

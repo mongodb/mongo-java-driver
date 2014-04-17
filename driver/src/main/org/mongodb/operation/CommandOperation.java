@@ -28,6 +28,11 @@ import static org.mongodb.operation.CommandReadPreferenceHelper.isQuery;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 
+/**
+ * An operation that executes a command.
+ *
+ * @since 3.0
+ */
 public class CommandOperation implements AsyncOperation<CommandResult>, Operation<CommandResult> {
     private final Encoder<Document> commandEncoder;
     private final Decoder<Document> commandDecoder;

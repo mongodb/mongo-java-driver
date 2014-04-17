@@ -30,6 +30,11 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 
+/**
+ * An operation that executes a count.
+ *
+ * @since 3.0
+ */
 public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
     private final DocumentCodec commandEncoder = new DocumentCodec();
     private final Codec<Document> codec;
@@ -41,6 +46,7 @@ public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
         this.find = find;
         this.codec = codec;
     }
+
 
     public Long execute(final Session session) {
         return getCount(executeWrappedCommandProtocol(namespace, asDocument(), commandEncoder, codec, find.getReadPreference(), session));

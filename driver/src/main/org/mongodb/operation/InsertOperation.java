@@ -29,6 +29,13 @@ import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
+/**
+ * An operation that inserts one or more documents into a collection.
+ *
+ * @param <T> the document type
+ *
+ * @since 3.0
+ */
 public class InsertOperation<T> extends BaseWriteOperation {
     private final List<InsertRequest<T>> insertRequestList;
     private final Encoder<T> encoder;

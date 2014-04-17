@@ -41,7 +41,7 @@ import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
 import static org.mongodb.operation.OperationHelper.transformResult;
 
 /**
- * An operation to determine if a user exists.
+ * An operation that determines if a user exists.
  *
  * @since 3.0
  */

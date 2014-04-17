@@ -30,6 +30,11 @@ import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.queryResultToList;
 import static org.mongodb.operation.OperationHelper.queryResultToListAsync;
 
+/**
+ * An operation that gets the indexes that have been created on a collection.
+ *
+ * @since 3.0
+ */
 public class GetIndexesOperation implements AsyncOperation<List<Document>>, Operation<List<Document>> {
     private final MongoNamespace collectionNamespace;
 

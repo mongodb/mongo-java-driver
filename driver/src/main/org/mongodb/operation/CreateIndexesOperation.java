@@ -47,6 +47,11 @@ import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider
 import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProviderAsync;
 import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
 
+/**
+ * An operation that creates one or more indexes.
+ *
+ * @since 3.0
+ */
 public class CreateIndexesOperation implements AsyncOperation<Void>, Operation<Void> {
     private final List<Index> indexes;
     private final MongoNamespace namespace;

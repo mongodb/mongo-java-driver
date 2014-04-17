@@ -41,7 +41,7 @@ import static org.mongodb.operation.UserOperationHelper.asCollectionQueryDocumen
 import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
 
 /**
- * An operation to update a user.
+ * An operation that updates a user.
  *
  * @since 3.0
  */

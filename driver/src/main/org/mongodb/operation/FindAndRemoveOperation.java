@@ -33,6 +33,11 @@ import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtoco
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.transformResult;
 
+/**
+ * An operation that atomically finds and removes a single document.
+ *
+ *  @since 3.0
+ */
 public class FindAndRemoveOperation<T> implements AsyncOperation<T>, Operation<T> {
     private final MongoNamespace namespace;
     private final FindAndRemove<T> findAndRemove;

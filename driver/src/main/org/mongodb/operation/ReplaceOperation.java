@@ -30,6 +30,12 @@ import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
+/**
+ * An operation that atomically replaces a document in a collection with a new document.
+ * @param <T> the document type
+ *
+ * @since 3.0
+ */
 public class ReplaceOperation<T> extends BaseWriteOperation {
     private final List<ReplaceRequest<T>> replaceRequests;
     private final Encoder<Document> queryEncoder;

@@ -27,6 +27,11 @@ import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtoco
 import static org.mongodb.operation.OperationHelper.ignoreNameSpaceErrors;
 import static org.mongodb.operation.OperationHelper.ignoreResult;
 
+/**
+ * An operation that drops an index.
+ *
+ * @since 3.0
+ */
 public class DropIndexOperation implements AsyncOperation<Void>, Operation<Void> {
     private final MongoNamespace namespace;
     private final String indexName;

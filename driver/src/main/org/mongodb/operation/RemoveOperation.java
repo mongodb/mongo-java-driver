@@ -30,6 +30,11 @@ import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
+/**
+ * An operation that removes one or more documents from a collection.
+ *
+ * @since 3.0
+ */
 public class RemoveOperation extends BaseWriteOperation {
     private final List<RemoveRequest> removeRequests;
     private final Encoder<Document> queryEncoder;

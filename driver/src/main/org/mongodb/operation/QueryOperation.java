@@ -39,6 +39,13 @@ import static org.mongodb.connection.ServerType.SHARD_ROUTER;
 import static org.mongodb.operation.OperationHelper.getConnectionProvider;
 import static org.mongodb.operation.OperationHelper.getConnectionProviderAsync;
 
+/**
+ * An operation that queries a collection using the provided criteria.
+ *
+ * @param <T> the document type
+ *
+ * @since 3.0
+ */
 public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, Operation<MongoCursor<T>> {
     private final Find find;
     private final Encoder<Document> queryEncoder;

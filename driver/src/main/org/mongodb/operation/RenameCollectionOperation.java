@@ -26,9 +26,11 @@ import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtoco
 import static org.mongodb.operation.OperationHelper.ignoreResult;
 
 /**
- * Executing this operation will rename the given collection to the new name.  If the new name is the same as an existing collection and
+ * An operation that renames the given collection to the new name.  If the new name is the same as an existing collection and
  * dropTarget is true, this existing collection will be dropped. If dropTarget is false and the newCollectionName is the same as an existing
  * collection, a MongoServerException will be thrown.
+ *
+ * @3.0
  */
 public class RenameCollectionOperation implements AsyncOperation<Void>, Operation<Void> {
     private final String originalCollectionName;
