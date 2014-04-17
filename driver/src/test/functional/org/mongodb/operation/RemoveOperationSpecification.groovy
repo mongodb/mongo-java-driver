@@ -14,27 +14,20 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
 package org.mongodb.operation
-
 import org.mongodb.Document
+import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 
-import static java.util.Arrays.asList
+import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
 class RemoveOperationSpecification extends FunctionalSpecification {
     def 'should remove a document'() {
         given:
-        def insert = new InsertRequest<Document>(new Document('_id', 1))
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec()).execute(session)
+        getCollectionHelper().insertDocuments(new Document('_id', 1))
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
                                      [new RemoveRequest(new Document('_id', 1))],
                                      new DocumentCodec())
@@ -43,23 +36,59 @@ class RemoveOperationSpecification extends FunctionalSpecification {
         op.execute(getSession())
 
         then:
-        collection.find().count() == 0
+        getCollectionHelper().count() == 0
+    }
+
+    def 'should remove a document asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+
+        given:
+        getCollectionHelper().insertDocuments(new Document('_id', 1))
+        def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     [new RemoveRequest(new Document('_id', 1))],
+                                     new DocumentCodec())
+
+        when:
+        op.executeAsync(getSession()).get()
+
+        then:
+        getCollectionHelper().count() == 0
     }
 
     def 'should split removes into batches'() {
         given:
-        def insert = new InsertRequest<Document>(new Document('_id', 1))
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert),
-                                      new DocumentCodec())
-                .execute(session)
+        Document bigDoc = new Document('bytes', new byte[1024 * 1024 * 16 - 2127])
+        Document smallerDoc = new Document('bytes', new byte[1024 * 16 + 1980])
+        Document simpleDoc = new Document('_id', 1)
+        getCollectionHelper().insertDocuments(simpleDoc)
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     [new RemoveRequest(new Document('_id', 1))], new DocumentCodec())
+                                     [new RemoveRequest(bigDoc), new RemoveRequest(smallerDoc),  new RemoveRequest(simpleDoc)],
+                                     new DocumentCodec())
 
         when:
         op.execute(getSession())
 
         then:
-        collection.find().count() == 0
-
+        getCollectionHelper().count() == 0
     }
+
+    def 'should split removes into batches asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+
+        given:
+        Document bigDoc = new Document('bytes', new byte[1024 * 1024 * 16 - 2127])
+        Document smallerDoc = new Document('bytes', new byte[1024 * 16 + 1980])
+        Document simpleDoc = new Document('_id', 1)
+        getCollectionHelper().insertDocuments(simpleDoc)
+        def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     [new RemoveRequest(bigDoc), new RemoveRequest(smallerDoc),  new RemoveRequest(simpleDoc)],
+                                     new DocumentCodec())
+
+        when:
+        op.executeAsync(getSession()).get()
+
+        then:
+        getCollectionHelper().count() == 0
+    }
+
 }
