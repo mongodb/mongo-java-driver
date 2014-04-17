@@ -23,6 +23,8 @@ import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.ClusterBinding;
+import org.mongodb.binding.ReadWriteBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterSettings;
@@ -35,15 +37,18 @@ import org.mongodb.session.ClusterSession;
 import org.mongodb.session.Session;
 
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
+import static org.mongodb.Fixture.getBinding;
+import static org.mongodb.Fixture.getExecutor;
 import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.getSSLSettings;
 import static org.mongodb.Fixture.getSession;
 import static org.mongodb.Fixture.isAuthenticated;
-import static org.mongodb.Fixture.getExecutor;
 import static org.mongodb.MongoCredential.createMongoCRCredential;
+import static org.mongodb.ReadPreference.primary;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
 // This test is here because the assertion is conditional on auth being enabled, and there"s no way to do that in Spock
@@ -110,7 +115,7 @@ public class UserOperationTest extends DatabaseTestCase {
             assertEquals(1L, (long) new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()), new Find(),
                                                        new DocumentCodec()
             )
-                                    .execute(session));
+                                    .execute(getBinding()));
         } finally {
             // cleanup
             new DropUserOperation("admin", adminUser.getCredential().getUserName()).execute(getSession());
@@ -153,14 +158,13 @@ public class UserOperationTest extends DatabaseTestCase {
         new CreateUserOperation(adminUser).execute(getSession());
 
         Cluster cluster = createCluster(adminUser);
-        Session session = new ClusterSession(cluster, getExecutor());
-
+        ReadWriteBinding binding = new ClusterBinding(cluster, primary(), 1, SECONDS);
         try {
             // when
             long result = new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()),
                                              new Find(),
-                                             new DocumentCodec()
-            ).execute(session);
+                                             new DocumentCodec())
+                          .execute(binding);
             // then
             assertEquals(0, result);
         } finally {

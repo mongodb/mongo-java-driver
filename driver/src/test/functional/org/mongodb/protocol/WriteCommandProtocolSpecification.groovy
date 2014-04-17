@@ -21,7 +21,6 @@
 
 
 package org.mongodb.protocol
-
 import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
@@ -36,9 +35,9 @@ import org.mongodb.selector.PrimaryServerSelector
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeTrue
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getCluster
 import static org.mongodb.Fixture.getPrimary
-import static org.mongodb.Fixture.getSession
 import static org.mongodb.Fixture.serverVersionAtLeast
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
@@ -133,7 +132,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
         then:
         result.insertedCount == 4
-        documents.size() == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec()).execute(getSession())
+        documents.size() == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec()).execute(getBinding())
     }
 
     def 'should have correct list of processed and unprocessed requests after error on split'() {
