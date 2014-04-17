@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import org.mongodb.binding.ClusterBinding;
+import org.mongodb.binding.ReadWriteBinding;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterType;
@@ -124,6 +126,11 @@ public final class Fixture {
     public static Session getSession() {
         getMongoClient();
         return mongoClient.getSession();
+    }
+
+    public static ReadWriteBinding getBinding() {
+        getMongoClient();
+        return new ClusterBinding(getCluster(), ReadPreference.primary(), 1, SECONDS);
     }
 
     public static Cluster getCluster() {
