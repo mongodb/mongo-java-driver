@@ -20,8 +20,6 @@ package org.mongodb;
 import org.mongodb.annotations.ThreadSafe;
 
 import java.io.Closeable;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.
@@ -41,20 +39,6 @@ public interface MongoClient extends Closeable {
      * @return a MongoDatabase representing the specified database
      */
     MongoDatabase getDatabase(String databaseName, MongoDatabaseOptions options);
-
-    /**
-     * Run the given Runnable in the scope of a single connection.
-     *
-     * @param runnable what to do with the connection
-     */
-    void withConnection(Runnable runnable);
-
-    /**
-     * Run the given Callable in the scope of a single connection.
-     *
-     * @param callable what to do with the connection
-     */
-    <T> T withConnection(final Callable<T> callable) throws ExecutionException;
 
     /**
      * Close the client, releasing all resources.  Implementations of this method should be idempotent.
