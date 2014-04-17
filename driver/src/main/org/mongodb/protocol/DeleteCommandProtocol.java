@@ -50,10 +50,10 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
     }
 
     @Override
-    public BulkWriteResult execute(final Connection connection, final ServerDescription serverDescription) {
+    public BulkWriteResult execute(final Connection connection) {
         LOGGER.debug(format("Deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
                             connection.getId(), connection.getServerAddress()));
-        BulkWriteResult writeResult = super.execute(connection, serverDescription);
+        BulkWriteResult writeResult = super.execute(connection);
         LOGGER.debug("Delete completed");
         return writeResult;
     }

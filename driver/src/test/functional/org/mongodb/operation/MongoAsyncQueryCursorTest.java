@@ -117,7 +117,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                                         connection);
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                                             firstBatch, 0, 2, new DocumentCodec(),
-                                            connection, connectionProvider.getServerDescription())
+                                            connection)
         .start(new TestBlock());
 
         latch.await();
@@ -132,7 +132,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                                             firstBatch, 5, 2, new DocumentCodec(),
-                                            connection, connectionProvider.getServerDescription())
+                                            connection)
         .start(new TestBlock());
 
         latch.await();
@@ -152,7 +152,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
             new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 5, 2, new DocumentCodec(),
-                                                connection, connectionProvider.getServerDescription())
+                                                connection)
             .start(new TestBlock(1));
 
             latch.await();
@@ -184,7 +184,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                 TestBlock block = new TestBlock(1);
                 new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                                                     firstBatch, 5, 2, new DocumentCodec(),
-                                                    connection, connectionProvider.getServerDescription())
+                                                    connection)
                 .start(block);
 
                 latch.await();
@@ -215,7 +215,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
                                                final Connection connection) {
         return new QueryProtocol<Document>(collection.getNamespace(), queryFlag, 0, numberToReturn, query, null,
                                            new DocumentCodec(), new DocumentCodec())
-               .execute(connection, connectionProvider.getServerDescription());
+               .execute(connection);
     }
 
     private final class TestBlock implements AsyncBlock<Document> {

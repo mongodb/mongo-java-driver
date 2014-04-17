@@ -402,7 +402,7 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
 
             BulkWriteResult execute() {
                 if (shouldUseWriteCommands(provider)) {
-                    return getWriteCommandProtocol().execute(connection, provider.getServerDescription());
+                    return getWriteCommandProtocol().execute(connection);
                 } else {
                     BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(provider.getServerDescription().getAddress(),
                                                                                                ordered, writeConcern);
@@ -411,7 +411,7 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
                         indexMap = indexMap.add(0, i);
                         WriteProtocol writeProtocol = getWriteProtocol(i);
                         try {
-                            WriteResult writeResult = writeProtocol.execute(connection, provider.getServerDescription());
+                            WriteResult writeResult = writeProtocol.execute(connection);
                             if (writeResult.wasAcknowledged()) {
                                 bulkWriteBatchCombiner.addResult(getResult(writeResult), indexMap);
                             }

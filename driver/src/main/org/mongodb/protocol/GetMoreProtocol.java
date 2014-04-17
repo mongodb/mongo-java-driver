@@ -26,7 +26,6 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.GetMore;
@@ -55,19 +54,20 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     @Override
-    public QueryResult<T> execute(final Connection connection, final ServerDescription serverDescription) {
+    public QueryResult<T> execute(final Connection connection) {
         LOGGER.debug(format("Getting more documents from cursor with id %d on connection [%s] to server %s",
                             getMore.getServerCursor().getId(), connection.getId(), connection.getServerAddress()));
-        QueryResult<T> queryResult = receiveMessage(connection, sendMessage(connection, serverDescription));
+        QueryResult<T> queryResult = receiveMessage(connection, sendMessage(connection));
         LOGGER.debug("Get-more completed");
         return queryResult;
     }
 
-    public MongoFuture<QueryResult<T>> executeAsync(final Connection connection, final ServerDescription serverDescription) {
+    public MongoFuture<QueryResult<T>> executeAsync(final Connection connection) {
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
-        GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore, getMessageSettings(serverDescription));
+        GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore,
+                                                    getMessageSettings(connection.getServerDescription()));
         encodeMessageToBuffer(message, buffer);
         GetMoreResultCallback<T> receiveCallback = new GetMoreResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
                                                                                 resultDecoder,
@@ -82,10 +82,11 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
 
-    private GetMoreMessage sendMessage(final Connection connection, final ServerDescription serverDescription) {
+    private GetMoreMessage sendMessage(final Connection connection) {
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         try {
-            GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore, getMessageSettings(serverDescription));
+            GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore,
+                                                        getMessageSettings(connection.getServerDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return message;

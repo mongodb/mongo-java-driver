@@ -23,7 +23,6 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
@@ -45,7 +44,6 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     private final Decoder<T> decoder;
     private ServerConnectionProvider serverConnectionProvider;
     private Connection exhaustConnection;
-    private ServerDescription serverDescription;
     private long numFetchedSoFar;
     private ServerCursor cursor;
     private AsyncBlock<? super T> block;
@@ -53,18 +51,18 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     // For normal queries
     MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
                           final Decoder<T> decoder, final ServerConnectionProvider provider) {
-        this(namespace, firstBatch, limit, batchSize, decoder, provider, null, null);
+        this(namespace, firstBatch, limit, batchSize, decoder, provider, null);
     }
 
     // For exhaust queries
-    MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch,  final int limit, final int batchSize,
-                          final Decoder<T> decoder, final Connection exhaustConnection, final ServerDescription serverDescription) {
-        this(namespace, firstBatch, limit, batchSize, decoder, null, exhaustConnection, serverDescription);
+    MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
+                          final Decoder<T> decoder, final Connection exhaustConnection) {
+        this(namespace, firstBatch, limit, batchSize, decoder, null, exhaustConnection);
     }
 
     private MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
                                   final Decoder<T> decoder, final ServerConnectionProvider provider,
-                                  final Connection exhaustConnection, final ServerDescription serverDescription) {
+                                  final Connection exhaustConnection) {
         this.namespace = namespace;
         this.firstBatch = firstBatch;
         this.limit = limit;
@@ -72,7 +70,6 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
         this.decoder = decoder;
         this.serverConnectionProvider = provider;
         this.exhaustConnection = exhaustConnection;
-        this.serverDescription = serverDescription != null ? serverDescription : serverConnectionProvider.getServerDescription();
     }
 
     @Override
@@ -95,7 +92,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
 
     private void handleExhaustCleanup(final int responseTo) {
         new GetMoreDiscardProtocol(cursor != null ? cursor.getId() : 0, responseTo)
-        .executeAsync(exhaustConnection, serverDescription)
+        .executeAsync(exhaustConnection)
         .register(new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final MongoException e) {
@@ -150,7 +147,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                 // get more results
                 if (isExhaust()) {
                     new GetMoreReceiveProtocol<T>(decoder, result.getRequestId())
-                    .executeAsync(exhaustConnection, serverDescription)
+                    .executeAsync(exhaustConnection)
                     .register(this);
                 } else {
                     serverConnectionProvider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
@@ -161,7 +158,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                             } else {
                                 new GetMoreProtocol<T>(namespace, new GetMore(result.getCursor(), limit, batchSize, numFetchedSoFar),
                                                        decoder)
-                                .executeAsync(connection, serverDescription)
+                                .executeAsync(connection)
                                 .register(new QueryResultSingleResultCallback(connection));
                             }
                         }

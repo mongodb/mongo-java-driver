@@ -49,10 +49,10 @@ public class InsertCommandProtocol<T> extends WriteCommandProtocol {
     }
 
     @Override
-    public BulkWriteResult execute(final Connection connection, final ServerDescription serverDescription) {
+    public BulkWriteResult execute(final Connection connection) {
         LOGGER.debug(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insertRequests.size(),
                             getNamespace(), connection.getId(), connection.getServerAddress()));
-        BulkWriteResult writeResult = super.execute(connection, serverDescription);
+        BulkWriteResult writeResult = super.execute(connection);
         LOGGER.debug("Insert completed");
         return writeResult;
     }

@@ -57,9 +57,9 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
         return writeConcern;
     }
 
-    public BulkWriteResult execute(final Connection connection, final ServerDescription serverDescription) {
-        BaseWriteCommandMessage message = createRequestMessage(serverDescription);
-        BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(serverDescription.getAddress(), ordered, writeConcern);
+    public BulkWriteResult execute(final Connection connection) {
+        BaseWriteCommandMessage message = createRequestMessage(connection.getServerDescription());
+        BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getServerAddress(), ordered, writeConcern);
         int batchNum = 0;
         int currentRangeStartIndex = 0;
         do {
@@ -86,7 +86,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
     }
 
     @Override
-    public MongoFuture<BulkWriteResult> executeAsync(final Connection connection, final ServerDescription serverDescription) {
+    public MongoFuture<BulkWriteResult> executeAsync(final Connection connection) {
         throw new UnsupportedOperationException();  // TODO!!!!!!!!!!!!!!!!
     }
 

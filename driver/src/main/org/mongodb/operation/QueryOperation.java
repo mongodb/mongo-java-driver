@@ -65,12 +65,11 @@ public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, O
         ServerConnectionProvider connectionProvider = getConnectionProvider(find.getReadPreference(), session);
         Connection connection = connectionProvider.getConnection();
         try {
-            QueryResult<T> queryResult = asQueryProtocol(connectionProvider.getServerDescription()).execute(connection,
-                                                                                                            connectionProvider
-                                                                                                            .getServerDescription());
+            QueryResult<T> queryResult = asQueryProtocol(connectionProvider.getServerDescription()).execute(connection
+                                                                                                           );
             if (isExhaustCursor()) {
                 return new MongoQueryCursor<T>(namespace, queryResult, find.getLimit(), find.getBatchSize(),
-                                               resultDecoder, connection, connectionProvider.getServerDescription());
+                                               resultDecoder, connection);
             } else {
                 return new MongoQueryCursor<T>(namespace, queryResult, find.getLimit(), find.getBatchSize(),
                                                resultDecoder, connectionProvider);
@@ -95,7 +94,7 @@ public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, O
                         @Override
                         public void onResult(final Connection connection, final MongoException e) {
                             asQueryProtocol(connectionProvider.getServerDescription())
-                            .executeAsync(connection, connectionProvider.getServerDescription())
+                            .executeAsync(connection)
                             .register(new SingleResultCallback<QueryResult<T>>() {
                                 @Override
                                 public void onResult(final QueryResult<T> queryResult, final MongoException e) {

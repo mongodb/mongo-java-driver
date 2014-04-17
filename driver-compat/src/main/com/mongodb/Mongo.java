@@ -816,8 +816,7 @@ public class Mongo {
                 ServerConnectionProvider provider = session.createServerConnectionProvider(options);
                 Connection connection = provider.getConnection();
                 try {
-                    new KillCursorProtocol(new KillCursor(cur)
-                    ).execute(connection, provider.getServerDescription());
+                    new KillCursorProtocol(new KillCursor(cur)).execute(connection);
                 } finally {
                     connection.close();
                 }
