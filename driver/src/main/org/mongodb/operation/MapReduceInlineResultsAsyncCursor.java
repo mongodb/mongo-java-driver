@@ -79,10 +79,6 @@ class MapReduceInlineResultsAsyncCursor<T> implements MapReduceAsyncCursor<T> {
         return commandResult.getResponse().getInteger("timeMillis");
     }
 
-    public Document getResponse() {
-        return commandResult.getResponse();
-    }
-
     @Override
     public void start(final AsyncBlock<? super T> block) {
         while (hasNext()) {

@@ -93,7 +93,4 @@ class MapReduceInlineResultsCursor<T> implements MapReduceCursor<T> {
         return commandResult.getResponse().getInteger("timeMillis");
     }
 
-    public Document getResponse() {
-        return commandResult.getResponse();
-    }
 }

@@ -15,7 +15,6 @@
  */
 
 package org.mongodb.operation
-
 import org.bson.types.Code
 import org.mongodb.AsyncBlock
 import org.mongodb.Document
@@ -30,11 +29,8 @@ import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.SingleResultCallback
 import org.mongodb.test.CollectionHelper
 
-import static org.hamcrest.CoreMatchers.not
-import static org.hamcrest.Matchers.hasKey
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
-import static spock.util.matcher.HamcrestSupport.that
 
 class MapReduceWithInlineResultsOperationFunctionalSpecification extends FunctionalSpecification {
     private final documentCodec = new DocumentCodec()
@@ -52,7 +48,7 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
     }
 
 
-    def 'should return the correct results and the default command result is not verbose'() {
+    def 'should return the correct results'() {
         given:
         def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec, ReadPreference.primary())
 
@@ -61,10 +57,9 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
 
         then:
         results.iterator().toList() == expectedResults
-        that results.getResponse(), not(hasKey('timing'))
     }
 
-    def 'should return the correct results and the default command result is not verbose asynchronously'() {
+    def 'should return the correct results asynchronously'() {
         assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
 
         given:
@@ -96,57 +91,6 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
 
         then:
         result.get().iterator().toList() == expectedResults
-        that results.get().getResponse(), not(hasKey('timing'))
-    }
-
-    def 'when verbose is set the command result should contain more information'() {
-        given:
-        def mapReduceVerbose = mapReduce.verbose()
-        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduceVerbose, documentCodec, ReadPreference.primary())
-
-        when:
-        MapReduceCursor<Document> results = operation.execute(getSession())
-
-        then:
-        results.iterator().toList() == expectedResults
-        that results.getResponse(), hasKey('timing')
-    }
-
-    def 'when verbose is set the command result should contain more information asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
-        given:
-        def mapReduceVerbose = mapReduce.verbose()
-        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduceVerbose, documentCodec, ReadPreference.primary())
-
-        when:
-        MongoFuture<MapReduceAsyncCursor> results = operation.executeAsync(getSession())
-        def result = new SingleResultFuture<List<Document>>()
-        results.register(new SingleResultCallback<MapReduceAsyncCursor<Document>>() {
-            @Override
-            void onResult(final MapReduceAsyncCursor<Document> cursor, final MongoException e) {
-                cursor.start(new AsyncBlock<Document>() {
-                    List<Document> docList = []
-
-                    @Override
-                    void done() {
-                        result.init(docList, null)
-                    }
-
-                    @Override
-                    void apply(final Document value) {
-                        if (value != null) {
-                            docList += value
-                        }
-                    }
-                })
-            }
-        })
-
-
-        then:
-        result.get().iterator().toList() == expectedResults
-        that results.get().getResponse(), hasKey('timing')
     }
 
 }
