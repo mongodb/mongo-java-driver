@@ -44,11 +44,11 @@ import static org.mongodb.operation.OperationHelper.transformResult;
  */
 public class FindAndUpdateOperation<T> implements AsyncOperation<T>, Operation<T> {
     private final MongoNamespace namespace;
-    private final FindAndUpdate<T> findAndUpdate;
+    private final FindAndUpdate findAndUpdate;
     private final CommandResultWithPayloadDecoder<T> resultDecoder;
     private final DocumentCodec commandEncoder = new DocumentCodec(PrimitiveCodecs.createDefault());
 
-    public FindAndUpdateOperation(final MongoNamespace namespace, final FindAndUpdate<T> findAndUpdate, final Decoder<T> resultDecoder) {
+    public FindAndUpdateOperation(final MongoNamespace namespace, final FindAndUpdate findAndUpdate, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
         this.findAndUpdate = findAndUpdate;
         this.resultDecoder = new CommandResultWithPayloadDecoder<T>(resultDecoder, "value");

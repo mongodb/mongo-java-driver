@@ -41,7 +41,7 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
         helper.insertDocuments(pete, sam)
 
         when:
-        FindAndUpdate<Document> findAndUpdate = new FindAndUpdate<Document>()
+        def findAndUpdate = new FindAndUpdate()
                 .where(new Document('name', 'Pete'))
                 .updateWith(new Document('$inc', new Document('numberOfJobs', 1)))
 
@@ -66,7 +66,7 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
         helper.insertDocuments(pete, sam)
 
         when:
-        FindAndUpdate<Document> findAndUpdate = new FindAndUpdate<Document>()
+        FindAndUpdate findAndUpdate = new FindAndUpdate()
                 .where(new Document('name', 'Pete'))
                 .updateWith(new Document('$inc', new Document('numberOfJobs', 1)))
 

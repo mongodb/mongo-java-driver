@@ -1495,14 +1495,14 @@ public class DBCollection {
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
 
-                FindAndUpdate<DBObject> findAndUpdate = new FindAndUpdate<DBObject>()
-                                                        .where(toNullableDocument(query))
-                                                        .sortBy(toNullableDocument(sort))
-                                                        .returnNew(returnNew)
-                                                        .select(toFieldSelectorDocument(fields))
-                                                        .updateWith(toUpdateOperationsDocument(update))
-                                                        .upsert(upsert)
-                                                        .maxTime(maxTime, maxTimeUnit);
+                FindAndUpdate findAndUpdate = new FindAndUpdate()
+                                              .where(toNullableDocument(query))
+                                              .sortBy(toNullableDocument(sort))
+                                              .returnNew(returnNew)
+                                              .select(toFieldSelectorDocument(fields))
+                                              .updateWith(toUpdateOperationsDocument(update))
+                                              .upsert(upsert)
+                                              .maxTime(maxTime, maxTimeUnit);
                 operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, resultDecoder
                 );
             } else {

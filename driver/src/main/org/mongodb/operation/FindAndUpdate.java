@@ -20,13 +20,13 @@ import org.mongodb.Document;
 
 import java.util.concurrent.TimeUnit;
 
-public class FindAndUpdate<T> extends FindAndModify {
+public class FindAndUpdate extends FindAndModify {
     private Document updateOperations;
 
     public FindAndUpdate() {
     }
 
-    public FindAndUpdate<T> updateWith(final Document anUpdateOperations) {
+    public FindAndUpdate updateWith(final Document anUpdateOperations) {
         this.updateOperations = anUpdateOperations;
         return this;
     }
@@ -36,37 +36,37 @@ public class FindAndUpdate<T> extends FindAndModify {
     }
 
     @Override
-    public FindAndUpdate<T> where(final Document filter) {
+    public FindAndUpdate where(final Document filter) {
         super.where(filter);
         return this;
     }
 
     @Override
-    public FindAndUpdate<T> select(final Document selector) {
+    public FindAndUpdate select(final Document selector) {
         super.select(selector);
         return this;
     }
 
     @Override
-    public FindAndUpdate<T> sortBy(final Document sortCriteria) {
+    public FindAndUpdate sortBy(final Document sortCriteria) {
         super.sortBy(sortCriteria);
         return this;
     }
 
     @Override
-    public FindAndUpdate<T> returnNew(final boolean returnNew) {
+    public FindAndUpdate returnNew(final boolean returnNew) {
         super.returnNew(returnNew);
         return this;
     }
 
     @Override
-    public FindAndUpdate<T> upsert(final boolean upsert) {
+    public FindAndUpdate upsert(final boolean upsert) {
         super.upsert(upsert);
         return this;
     }
 
     @Override
-    public FindAndUpdate<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public FindAndUpdate maxTime(final long maxTime, final TimeUnit timeUnit) {
         super.maxTime(maxTime, timeUnit);
         return this;
     }
