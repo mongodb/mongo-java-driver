@@ -16,6 +16,8 @@
 
 package org.mongodb.operation
 
+import org.mongodb.Document
+import org.mongodb.Fixture
 import category.Async
 import org.junit.experimental.categories.Category
 import org.mongodb.FunctionalSpecification
@@ -29,8 +31,37 @@ import static org.mongodb.Fixture.disableMaxTimeFailPoint
 import static org.mongodb.Fixture.enableMaxTimeFailPoint
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.Fixture.serverVersionAtLeast
+import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
 class CountOperationSpecification extends FunctionalSpecification {
+
+    private List<InsertRequest<Document>> insertDocumentList;
+
+    def setup() {
+        insertDocumentList = [
+                new InsertRequest<Document>(new Document()),
+                new InsertRequest<Document>(new Document()),
+                new InsertRequest<Document>(new Document()),
+                new InsertRequest<Document>(new Document()),
+                new InsertRequest<Document>(new Document()),
+                new InsertRequest<Document>(new Document()),
+                new InsertRequest<Document>(new Document()),
+                new InsertRequest<Document>(new Document())
+        ]
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, insertDocumentList, new DocumentCodec()).execute(getSession())
+    }
+
+    def 'should get the count'() {
+        expect:
+        new CountOperation(getNamespace(), new Find(), new DocumentCodec()).execute(getSession()) == insertDocumentList.size()
+    }
+
+    def 'should get the count asynchronously'() {
+        expect:
+        new CountOperation(getNamespace(), new Find(), new DocumentCodec()).executeAsync(getSession()).get() == insertDocumentList.size()
+    }
+
+
     def 'should throw execution timeout exception from execute'() {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 

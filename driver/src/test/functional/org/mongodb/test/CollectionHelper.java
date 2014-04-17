@@ -65,7 +65,7 @@ public final class CollectionHelper<T> {
         return results;
     }
 
-    public Long count() {
+    public long count() {
         return new CountOperation(namespace, new Find(), new DocumentCodec()).execute(getSession());
     }
 }
