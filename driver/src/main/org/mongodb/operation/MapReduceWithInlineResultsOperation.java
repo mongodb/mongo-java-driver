@@ -20,6 +20,7 @@ import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
+import org.mongodb.Function;
 import org.mongodb.MapReduceAsyncCursor;
 import org.mongodb.MapReduceCursor;
 import org.mongodb.MongoFuture;
@@ -99,8 +100,8 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncOperation<Ma
         return transformResult(result, transformAsync());
     }
 
-    private TransformBlock<CommandResult, MapReduceCursor<T>> transform() {
-        return new TransformBlock<CommandResult, MapReduceCursor<T>>() {
+    private Function<CommandResult, MapReduceCursor<T>> transform() {
+        return new Function<CommandResult, MapReduceCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override
             public MapReduceCursor<T> apply(final CommandResult result) {
@@ -109,8 +110,8 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncOperation<Ma
         };
     }
 
-    private TransformBlock<CommandResult, MapReduceAsyncCursor<T>> transformAsync() {
-        return new TransformBlock<CommandResult, MapReduceAsyncCursor<T>>() {
+    private Function<CommandResult, MapReduceAsyncCursor<T>> transformAsync() {
+        return new Function<CommandResult, MapReduceAsyncCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override
             public MapReduceAsyncCursor<T> apply(final CommandResult result) {

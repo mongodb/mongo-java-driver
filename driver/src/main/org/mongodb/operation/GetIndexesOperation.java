@@ -21,7 +21,6 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.protocol.QueryProtocol;
-import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.Session;
 
 import java.util.EnumSet;
@@ -42,14 +41,12 @@ public class GetIndexesOperation implements AsyncOperation<List<Document>>, Oper
 
     @Override
     public List<Document> execute(final Session session) {
-        QueryResult<Document> queryResult = executeProtocol(getProtocol(), session);
-        return queryResultToList(queryResult, session, getIndexNamespace(), new DocumentCodec());
+        return queryResultToList(executeProtocol(getProtocol(), session), session, getIndexNamespace(), new DocumentCodec());
     }
 
     @Override
     public MongoFuture<List<Document>> executeAsync(final Session session) {
-        final MongoFuture<QueryResult<Document>> queryResult = executeProtocolAsync(getProtocol(), session);
-        return queryResultToListAsync(queryResult, session, getIndexNamespace(), new DocumentCodec());
+        return queryResultToListAsync(executeProtocolAsync(getProtocol(), session), session, getIndexNamespace(), new DocumentCodec());
     }
 
     private Document asQueryDocument() {

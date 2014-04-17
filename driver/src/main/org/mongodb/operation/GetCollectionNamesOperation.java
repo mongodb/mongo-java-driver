@@ -17,6 +17,7 @@
 package org.mongodb.operation;
 
 import org.mongodb.Document;
+import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
@@ -52,8 +53,8 @@ public class GetCollectionNamesOperation implements AsyncOperation<List<String>>
         return queryResultToListAsync(queryResult, session, getNamespace(), new DocumentCodec(), transformer());
     }
 
-    private TransformBlock<Document, String> transformer() {
-        return new TransformBlock<Document, String>() {
+    private Function<Document, String> transformer() {
+        return new Function<Document, String>() {
             @Override
             public String apply(final Document document) {
                 String collectionName = document.getString("name");

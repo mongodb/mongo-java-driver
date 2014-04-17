@@ -59,9 +59,9 @@ public class DropCollectionOperation implements AsyncOperation<CommandResult>, O
 
     @Override
     public MongoFuture<CommandResult> executeAsync(final Session session) {
-        MongoFuture<CommandResult> fututeDropOperation = executeWrappedCommandProtocolAsync(namespace.getDatabaseName(),
+        MongoFuture<CommandResult> futureDropOperation = executeWrappedCommandProtocolAsync(namespace.getDatabaseName(),
                 dropCollectionCommand, commandCodec, commandCodec, session);
-        return ignoreNameSpaceErrors(fututeDropOperation);
+        return ignoreNameSpaceErrors(futureDropOperation);
     }
 
 

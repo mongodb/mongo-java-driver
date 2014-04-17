@@ -19,6 +19,7 @@ package org.mongodb.operation;
 import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
+import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
@@ -60,8 +61,8 @@ public class FindAndRemoveOperation<T> implements AsyncOperation<T>, Operation<T
         return transformResult(result, transformer());
     }
 
-    private TransformBlock<CommandResult, T> transformer() {
-        return new TransformBlock<CommandResult, T>() {
+    private Function<CommandResult, T> transformer() {
+        return new Function<CommandResult, T>() {
             @SuppressWarnings("unchecked")
             @Override
             public T apply(final CommandResult result) {

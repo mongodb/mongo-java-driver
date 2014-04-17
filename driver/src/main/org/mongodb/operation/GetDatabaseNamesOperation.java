@@ -19,6 +19,7 @@ package org.mongodb.operation;
 import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
+import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.session.Session;
@@ -66,8 +67,8 @@ public class GetDatabaseNamesOperation implements AsyncOperation<List<String>>, 
         return transformResult(result, transformer());
     }
 
-    private TransformBlock<CommandResult, List<String>> transformer() {
-        return new TransformBlock<CommandResult, List<String>>() {
+    private Function<CommandResult, List<String>> transformer() {
+        return new Function<CommandResult, List<String>>() {
             @SuppressWarnings("unchecked")
             @Override
             public List<String> apply(final CommandResult result) {

@@ -21,6 +21,7 @@ import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.Function;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoException;
@@ -175,8 +176,7 @@ final class OperationHelper {
     }
 
     static <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol, final ServerConnectionProvider connectionProvider) {
-        SingleResultFuture<ServerConnectionProvider> futureProvider = new SingleResultFuture<ServerConnectionProvider>(connectionProvider);
-        return executeProtocolAsync(protocol, futureProvider);
+        return executeProtocolAsync(protocol, new SingleResultFuture<ServerConnectionProvider>(connectionProvider));
     }
 
     static <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol,
@@ -187,11 +187,11 @@ final class OperationHelper {
     }
 
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
-                                                       final Encoder<Document> commandEncoder,
-                                                       final Decoder<Document> commandResultDecoder,
-                                                       final Session session) {
+                                                                         final Encoder<Document> commandEncoder,
+                                                                         final Decoder<Document> commandResultDecoder,
+                                                                         final Session session) {
         return executeWrappedCommandProtocolAsync(namespace, command, commandEncoder, commandResultDecoder,
-                ReadPreference.primary(), session);
+                                                  ReadPreference.primary(), session);
     }
 
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
@@ -255,12 +255,8 @@ final class OperationHelper {
                                                                          final ReadPreference readPreference,
                                                                          final MongoFuture<ServerConnectionProvider> connectionProvider) {
         SingleResultFuture<CommandResult> future = new SingleResultFuture<CommandResult>();
-        connectionProvider.register(new CommandProtocolExecutingCallback(database,
-                                                                         command,
-                                                                         commandEncoder,
-                                                                         commandResultDecoder,
-                                                                         readPreference,
-                                                                         future));
+        connectionProvider.register(new CommandProtocolExecutingCallback(database, command, commandEncoder, commandResultDecoder,
+                                                                         readPreference, future));
         return future;
     }
 
@@ -313,7 +309,7 @@ final class OperationHelper {
     }
 
     static <T> MongoFuture<Void> ignoreResult(final MongoFuture<T> future) {
-        return transformResult(future, new TransformBlock<T, Void>() {
+        return transformResult(future, new Function<T, Void>() {
             @Override
             public Void apply(final T t) {
                 return null;
@@ -321,11 +317,11 @@ final class OperationHelper {
         });
     }
 
-    static <T, V> V transformResult(final T result, final TransformBlock<T, V> block) {
+    static <T, V> V transformResult(final T result, final Function<T, V> block) {
         return block.apply(result);
     }
 
-    static <T, V> MongoFuture<V> transformResult(final MongoFuture<T> future, final TransformBlock<T, V> block) {
+    static <T, V> MongoFuture<V> transformResult(final MongoFuture<T> future, final Function<T, V> block) {
         final SingleResultFuture<V> retVal = new SingleResultFuture<V>();
         future.register(new SingleResultCallback<T>() {
             @Override
@@ -342,7 +338,7 @@ final class OperationHelper {
 
     static <T> List<T> queryResultToList(final QueryResult<T> queryResult, final Session session,
                                          final MongoNamespace namespace, final Decoder<T> decoder) {
-        return queryResultToList(queryResult, session, namespace, decoder, new TransformBlock<T, T>() {
+        return queryResultToList(queryResult, session, namespace, decoder, new Function<T, T>() {
             @Override
             public T apply(final T t) {
                 return t;
@@ -352,7 +348,7 @@ final class OperationHelper {
 
     static <T, V> List<V> queryResultToList(final QueryResult<T> queryResult, final Session session,
                                             final MongoNamespace namespace, final Decoder<T> decoder,
-                                            final TransformBlock<T, V> block) {
+                                            final Function<T, V> block) {
         MongoCursor<T> cursor = new MongoQueryCursor<T>(namespace, queryResult,
                                                         0, 0, decoder, getPrimaryConnectionProvider(session));
         try {
@@ -371,7 +367,7 @@ final class OperationHelper {
 
     static <T> MongoFuture<List<T>> queryResultToListAsync(final MongoFuture<QueryResult<T>> queryResult, final Session session,
                                                            final MongoNamespace namespace, final Decoder<T> decoder) {
-        return queryResultToListAsync(queryResult, session, namespace, decoder, new TransformBlock<T, T>() {
+        return queryResultToListAsync(queryResult, session, namespace, decoder, new Function<T, T>() {
             @Override
             public T apply(final T t) {
                 return t;
@@ -381,25 +377,25 @@ final class OperationHelper {
 
     static <T, V> MongoFuture<List<V>> queryResultToListAsync(final MongoFuture<QueryResult<T>> queryResult, final Session session,
                                                               final MongoNamespace namespace, final Decoder<T> decoder,
-                                                              final TransformBlock<T, V> block) {
+                                                              final Function<T, V> block) {
         final SingleResultFuture<List<V>> retVal = new SingleResultFuture<List<V>>();
         getPrimaryConnectionProviderAsync(session)
-            .register(new SingleResultCallback<ServerConnectionProvider>() {
-                @Override
-                public void onResult(final ServerConnectionProvider connectionProvider, final MongoException e) {
-                    if (e != null) {
-                        retVal.init(null, e);
-                    } else {
-                        connectionProvider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
-                            @Override
-                            public void onResult(final Connection connection, final MongoException e) {
-                                queryResult.register(new QueryResultToListCallback<T, V>(retVal, namespace, decoder, connectionProvider,
-                                                                                         connection, block));
-                            }
-                        });
-                    }
+        .register(new SingleResultCallback<ServerConnectionProvider>() {
+            @Override
+            public void onResult(final ServerConnectionProvider connectionProvider, final MongoException e) {
+                if (e != null) {
+                    retVal.init(null, e);
+                } else {
+                    connectionProvider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
+                        @Override
+                        public void onResult(final Connection connection, final MongoException e) {
+                            queryResult.register(new QueryResultToListCallback<T, V>(retVal, namespace, decoder, connectionProvider,
+                                                                                     connection, block));
+                        }
+                    });
                 }
-            });
+            }
+        });
         return retVal;
     }
 
@@ -410,14 +406,14 @@ final class OperationHelper {
         private Decoder<T> decoder;
         private ServerConnectionProvider connectionProvider;
         private Connection connection;
-        private TransformBlock<T, V> block;
+        private Function<T, V> block;
 
         public QueryResultToListCallback(final SingleResultFuture<List<V>> retVal,
                                          final MongoNamespace namespace,
                                          final Decoder<T> decoder,
                                          final ServerConnectionProvider connectionProvider,
                                          final Connection connection,
-                                         final TransformBlock<T, V> block) {
+                                         final Function<T, V> block) {
             this.retVal = retVal;
             this.namespace = namespace;
             this.decoder = decoder;
@@ -522,21 +518,21 @@ final class OperationHelper {
                             retVal.init(null, e);
                         } else {
                             getProtocol(provider.getServerDescription())
-                                .executeAsync(connection, provider.getServerDescription())
-                                .register(new SingleResultCallback<T>() {
-                                    @Override
-                                    public void onResult(final T result, final MongoException e) {
-                                        try {
-                                            if (e != null) {
-                                                retVal.init(null, e);
-                                            } else {
-                                                retVal.init(result, null);
-                                            }
-                                        } finally {
-                                            connection.close();
+                            .executeAsync(connection, provider.getServerDescription())
+                            .register(new SingleResultCallback<T>() {
+                                @Override
+                                public void onResult(final T result, final MongoException e) {
+                                    try {
+                                        if (e != null) {
+                                            retVal.init(null, e);
+                                        } else {
+                                            retVal.init(result, null);
                                         }
+                                    } finally {
+                                        connection.close();
                                     }
-                                });
+                                }
+                            });
                         }
                     }
                 });

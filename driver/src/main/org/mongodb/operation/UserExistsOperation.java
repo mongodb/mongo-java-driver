@@ -18,6 +18,7 @@ package org.mongodb.operation;
 
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
+import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
@@ -82,8 +83,8 @@ public class UserExistsOperation implements AsyncOperation<Boolean>, Operation<B
         }
     }
 
-    private TransformBlock<CommandResult, Boolean> transformCommandResult() {
-        return new TransformBlock<CommandResult, Boolean>() {
+    private Function<CommandResult, Boolean> transformCommandResult() {
+        return new Function<CommandResult, Boolean>() {
             @Override
             public Boolean apply(final CommandResult commandResult) {
                 return !commandResult.getResponse().get("users", List.class).isEmpty();
@@ -91,8 +92,8 @@ public class UserExistsOperation implements AsyncOperation<Boolean>, Operation<B
         };
     }
 
-    private TransformBlock<QueryResult<Document>, Boolean> transformQueryResult() {
-        return new TransformBlock<QueryResult<Document>, Boolean>() {
+    private Function<QueryResult<Document>, Boolean> transformQueryResult() {
+        return new Function<QueryResult<Document>, Boolean>() {
             @Override
             public Boolean apply(final QueryResult<Document> queryResult) {
                 return !queryResult.getResults().isEmpty();

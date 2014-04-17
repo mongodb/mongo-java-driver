@@ -20,9 +20,11 @@ import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.session.Session;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.DocumentHelper.putIfNotNull;
 import static org.mongodb.operation.DocumentHelper.putIfNotZero;
@@ -62,8 +64,8 @@ public class FindAndReplaceOperation<T> implements AsyncOperation<T>, Operation<
         return transformResult(result, transformer());
     }
 
-    private TransformBlock<CommandResult, T> transformer() {
-        return new TransformBlock<CommandResult, T>() {
+    private Function<CommandResult, T> transformer() {
+        return new Function<CommandResult, T>() {
             @SuppressWarnings("unchecked")
             @Override
             public T apply(final CommandResult result) {

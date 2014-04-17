@@ -63,14 +63,14 @@ public class CreateIndexesOperation implements AsyncOperation<Void>, Operation<V
         ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
         if (connectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             try {
-                final DocumentCodec commandCodec = new DocumentCodec();
-                executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), commandCodec, commandCodec, connectionProvider);
+                executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), new DocumentCodec(), new DocumentCodec(),
+                                              connectionProvider);
             } catch (MongoCommandFailureException e) {
                 throw checkForDuplicateKeyError(e);
             }
         } else {
             for (Index index : indexes) {
-                executeProtocol(getCollectionBasedProtocol(index), connectionProvider);
+                executeProtocol(asInsertProtocol(index), connectionProvider);
             }
         }
         return null;
@@ -83,53 +83,40 @@ public class CreateIndexesOperation implements AsyncOperation<Void>, Operation<V
             @Override
             public void onResult(final ServerConnectionProvider connectionProvider, final MongoException e) {
                 if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-                    runCommand(retVal, connectionProvider, getCommand());
+                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), new DocumentCodec(), new DocumentCodec(),
+                                                       connectionProvider)
+                    .register(new SingleResultCallback<CommandResult>() {
+                        @Override
+                        public void onResult(final CommandResult result, final MongoException e1) {
+                            retVal.init(null, translateException(e1));
+                        }
+                    });
                 } else {
-                    runProtocol(retVal, connectionProvider, indexes);
+                    executeInsertProtocolAsync(retVal, connectionProvider, indexes);
                 }
             }
         });
         return retVal;
     }
 
-    private void runCommand(final SingleResultFuture<Void> retVal, final ServerConnectionProvider connectionProvider,
-                                  final Document command) {
-        final DocumentCodec commandCodec = new DocumentCodec();
-        final SingleResultFuture<CommandResult> commandResult = new SingleResultFuture<CommandResult>();
-        executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), command, commandCodec, commandCodec, connectionProvider)
-            .register(new HandleDuplicateKeySingleResultCallback<CommandResult>(commandResult));
-
-        // Discard results on the retVal future
-        commandResult.register(new SingleResultCallback<CommandResult>() {
+    private void executeInsertProtocolAsync(final SingleResultFuture<Void> retVal, final ServerConnectionProvider connectionProvider,
+                                            final List<Index> indexesRemaining) {
+        Index index = indexesRemaining.remove(0);
+        SingleResultFuture<WriteResult> indexResult = new SingleResultFuture<WriteResult>();
+        executeProtocolAsync(asInsertProtocol(index), connectionProvider)
+        .register(new SingleResultCallback<WriteResult>() {
             @Override
-            public void onResult(final CommandResult result, final MongoException e) {
-                retVal.init(null, e);
+            public void onResult(final WriteResult result, final MongoException e) {
+                MongoException translatedException = translateException(e);
+                if (translatedException != null) {
+                    retVal.init(null, translatedException);
+                } else if (indexesRemaining.isEmpty()) {
+                    retVal.init(null, null);
+                } else {
+                    executeInsertProtocolAsync(retVal, connectionProvider, indexesRemaining);
+                }
             }
         });
-    }
-
-    private void runProtocol(final SingleResultFuture<Void> retVal, final ServerConnectionProvider connectionProvider,
-                            final List<Index> indexesRemaining) {
-        if (indexesRemaining.size() > 0) {
-            final Index index = indexesRemaining.remove(0);
-            final SingleResultFuture<WriteResult> indexResult = new SingleResultFuture<WriteResult>();
-            executeProtocolAsync(getCollectionBasedProtocol(index), connectionProvider)
-                .register(new HandleDuplicateKeySingleResultCallback<WriteResult>(indexResult));
-
-            // Chain the index creation on result either throw an error or recurse
-            indexResult.register(new SingleResultCallback<WriteResult>() {
-                @Override
-                public void onResult(final WriteResult result, final MongoException e) {
-                    if (e != null) {
-                        retVal.init(null, e);
-                    } else {
-                        runProtocol(retVal, connectionProvider, indexesRemaining);
-                    }
-                }
-            });
-        } else {
-            retVal.init(null, null);
-        }
     }
 
     private Document getCommand() {
@@ -144,7 +131,7 @@ public class CreateIndexesOperation implements AsyncOperation<Void>, Operation<V
     }
 
     @SuppressWarnings("unchecked")
-    private InsertProtocol<Document> getCollectionBasedProtocol(final Index index) {
+    private InsertProtocol<Document> asInsertProtocol(final Index index) {
         return new InsertProtocol<Document>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
                                             asList(new InsertRequest<Document>(toDocument(index))),
                                             new DocumentCodec());
@@ -175,6 +162,10 @@ public class CreateIndexesOperation implements AsyncOperation<Void>, Operation<V
         return indexDetails;
     }
 
+    private MongoException translateException(final MongoException e) {
+        return (e instanceof MongoCommandFailureException) ? checkForDuplicateKeyError((MongoCommandFailureException) e) : null;
+    }
+
     private MongoServerException checkForDuplicateKeyError(final MongoCommandFailureException e) {
         if (DUPLICATE_KEY_ERROR_CODES.contains(e.getErrorCode())) {
             return new MongoDuplicateKeyException(e.getErrorCode(), e.getErrorMessage(), e.getCommandResult());
@@ -182,23 +173,4 @@ public class CreateIndexesOperation implements AsyncOperation<Void>, Operation<V
             return e;
         }
     }
-
-    private class HandleDuplicateKeySingleResultCallback<T> implements SingleResultCallback<T> {
-        private final SingleResultFuture<T> retVal;
-
-        public HandleDuplicateKeySingleResultCallback(final SingleResultFuture<T> retVal) {
-            this.retVal = retVal;
-        }
-
-        @Override
-        public void onResult(final T result, final MongoException e) {
-            MongoException checkedError = e;
-            // Check for Duplicate Key and convert error
-            if (e instanceof MongoCommandFailureException) {
-                checkedError = checkForDuplicateKeyError((MongoCommandFailureException) e);
-            }
-            retVal.init(result, checkedError);
-        }
-    }
-
 }

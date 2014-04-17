@@ -16,7 +16,6 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
@@ -30,19 +29,19 @@ import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtoco
 import static org.mongodb.operation.OperationHelper.ignoreNameSpaceErrors;
 
 public class DropIndexOperation implements AsyncOperation<CommandResult>, Operation<CommandResult> {
-    private final Codec<Document> commandCodec = new DocumentCodec();
     private final MongoNamespace namespace;
-    private final Document dropIndexesCommand;
+    private final String indexName;
 
     public DropIndexOperation(final MongoNamespace namespace, final String indexName) {
         this.namespace = namespace;
-        this.dropIndexesCommand = new Document("dropIndexes", namespace.getCollectionName()).append("index", indexName);
+        this.indexName = indexName;
     }
 
     @Override
     public CommandResult execute(final Session session) {
         try {
-            return executeWrappedCommandProtocol(namespace.getDatabaseName(), dropIndexesCommand, commandCodec, commandCodec, session);
+            return executeWrappedCommandProtocol(namespace.getDatabaseName(), asCommandDocument(),
+                                                 new DocumentCodec(), new DocumentCodec(), session);
         } catch (MongoCommandFailureException e) {
             return ignoreNameSpaceErrors(e);
         }
@@ -50,8 +49,11 @@ public class DropIndexOperation implements AsyncOperation<CommandResult>, Operat
 
     @Override
     public MongoFuture<CommandResult> executeAsync(final Session session) {
-        return ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), dropIndexesCommand,
-                                                                        commandCodec, commandCodec, session));
+        return ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), asCommandDocument(),
+                                                                        new DocumentCodec(), new DocumentCodec(), session));
     }
 
+    private Document asCommandDocument() {
+        return new Document("dropIndexes", namespace.getCollectionName()).append("index", indexName);
+    }
 }

@@ -19,6 +19,7 @@ package org.mongodb.operation;
 import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
+import org.mongodb.Function;
 import org.mongodb.MapReduceStatistics;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
@@ -86,8 +87,8 @@ public class MapReduceToCollectionOperation implements AsyncOperation<MapReduceS
         return transformResult(result, transformer());
     }
 
-    private TransformBlock<CommandResult, MapReduceStatistics> transformer() {
-        return new TransformBlock<CommandResult, MapReduceStatistics>() {
+    private Function<CommandResult, MapReduceStatistics> transformer() {
+        return new Function<CommandResult, MapReduceStatistics>() {
             @SuppressWarnings("unchecked")
             @Override
             public MapReduceStatistics apply(final CommandResult result) {

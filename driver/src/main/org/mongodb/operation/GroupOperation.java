@@ -18,6 +18,7 @@ package org.mongodb.operation;
 
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
+import org.mongodb.Function;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoFuture;
@@ -84,8 +85,8 @@ public class GroupOperation implements AsyncOperation<MongoAsyncCursor<Document>
         return transformResult(result, transformAsync());
     }
 
-    private TransformBlock<CommandResult, MongoCursor<Document>> transform() {
-        return new TransformBlock<CommandResult, MongoCursor<Document>>() {
+    private Function<CommandResult, MongoCursor<Document>> transform() {
+        return new Function<CommandResult, MongoCursor<Document>>() {
             @SuppressWarnings("unchecked")
             @Override
             public MongoCursor<Document> apply(final CommandResult result) {
@@ -94,8 +95,8 @@ public class GroupOperation implements AsyncOperation<MongoAsyncCursor<Document>
         };
     }
 
-    private TransformBlock<CommandResult, MongoAsyncCursor<Document>> transformAsync() {
-        return new TransformBlock<CommandResult, MongoAsyncCursor<Document>>() {
+    private Function<CommandResult, MongoAsyncCursor<Document>> transformAsync() {
+        return new Function<CommandResult, MongoAsyncCursor<Document>>() {
             @SuppressWarnings("unchecked")
             @Override
             public MongoAsyncCursor<Document> apply(final CommandResult result) {
