@@ -185,6 +185,12 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         }
 
         @Override
+        public ServerDescription getServerDescription() {
+            isTrue("open", !isClosed());
+            return wrapped.getServerDescription();
+        }
+
+        @Override
         public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
             isTrue("open", !isClosed());
             wrapped.sendMessage(byteBuffers, lastRequestId);

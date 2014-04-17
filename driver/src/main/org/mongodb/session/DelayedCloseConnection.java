@@ -21,6 +21,7 @@ import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
+import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 
 import java.util.List;
@@ -41,6 +42,12 @@ class DelayedCloseConnection implements Connection {
     public ByteBuf getBuffer(final int capacity) {
         isTrue("open", !isClosed());
         return wrapped.getBuffer(capacity);
+    }
+
+    @Override
+    public ServerDescription getServerDescription() {
+        isTrue("open", !isClosed());
+        return wrapped.getServerDescription();
     }
 
     @Override
