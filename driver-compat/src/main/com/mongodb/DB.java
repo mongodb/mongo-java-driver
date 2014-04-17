@@ -35,6 +35,7 @@ import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.UpdateUserOperation;
 import org.mongodb.operation.User;
 import org.mongodb.operation.UserExistsOperation;
+import org.mongodb.operation.WriteOperation;
 import org.mongodb.session.Session;
 
 import java.util.HashSet;
@@ -613,5 +614,9 @@ public class DB {
 
     private <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
         return getMongo().execute(operation, readPreference);
+    }
+
+    private <T> T execute(final WriteOperation<T> operation) {
+        return getMongo().execute(operation);
     }
 }

@@ -21,6 +21,7 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
@@ -33,7 +34,7 @@ class RemoveOperationSpecification extends FunctionalSpecification {
                                      new DocumentCodec())
 
         when:
-        op.execute(getSession())
+        op.execute(getBinding())
 
         then:
         getCollectionHelper().count() == 0
@@ -65,7 +66,7 @@ class RemoveOperationSpecification extends FunctionalSpecification {
                                      new DocumentCodec())
 
         when:
-        op.execute(getSession())
+        op.execute(getBinding())
 
         then:
         getCollectionHelper().count() == 0

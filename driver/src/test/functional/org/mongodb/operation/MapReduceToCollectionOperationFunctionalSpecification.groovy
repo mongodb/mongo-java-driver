@@ -27,6 +27,7 @@ import org.mongodb.codecs.DocumentCodec
 import org.mongodb.test.CollectionHelper
 import spock.lang.Shared
 
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 
 class MapReduceToCollectionOperationFunctionalSpecification extends FunctionalSpecification {
@@ -52,8 +53,8 @@ class MapReduceToCollectionOperationFunctionalSpecification extends FunctionalSp
     }
 
     def cleanup() {
-        new DropCollectionOperation(mapReduceInputNamespace).execute(getSession())
-        new DropCollectionOperation(mapReduceOutputNamespace).execute(getSession())
+        new DropCollectionOperation(mapReduceInputNamespace).execute(getBinding())
+        new DropCollectionOperation(mapReduceOutputNamespace).execute(getBinding())
     }
 
     def 'should return the correct statistics and save the results'() {
@@ -62,7 +63,7 @@ class MapReduceToCollectionOperationFunctionalSpecification extends FunctionalSp
         def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace, mapReduce)
 
         when:
-        MapReduceStatistics results = operation.execute(getSession())
+        MapReduceStatistics results = operation.execute(getBinding())
         def serverUsed = operation.getServerUsed()
 
         then:

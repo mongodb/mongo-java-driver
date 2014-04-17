@@ -18,6 +18,7 @@ package org.mongodb.operation;
 
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.MongoFuture;
+import org.mongodb.binding.WriteBinding;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
@@ -25,7 +26,7 @@ import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtoco
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.ignoreResult;
 
-public class CreateCollectionOperation implements AsyncOperation<Void>, Operation<Void> {
+public class CreateCollectionOperation implements AsyncOperation<Void>, WriteOperation<Void> {
     private final String databaseName;
     private final CreateCollectionOptions createCollectionOptions;
 
@@ -35,8 +36,8 @@ public class CreateCollectionOperation implements AsyncOperation<Void>, Operatio
     }
 
     @Override
-    public Void execute(final Session session) {
-        executeWrappedCommandProtocol(databaseName, createCollectionOptions.asDocument(), session);
+    public Void execute(final WriteBinding binding) {
+        executeWrappedCommandProtocol(databaseName, createCollectionOptions.asDocument(), binding);
         return null;
     }
 

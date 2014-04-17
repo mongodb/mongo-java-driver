@@ -32,7 +32,7 @@ class DropCollectionOperationSpecification extends FunctionalSpecification {
         assert collectionNameExists(getCollectionName())
 
         when:
-        new DropCollectionOperation(getNamespace()).execute(getSession())
+        new DropCollectionOperation(getNamespace()).execute(getBinding())
 
         then:
         !collectionNameExists(getCollectionName())
@@ -56,7 +56,7 @@ class DropCollectionOperationSpecification extends FunctionalSpecification {
         def namespace = new MongoNamespace(getDatabaseName(), 'nonExistingCollection')
 
         when:
-        new DropCollectionOperation(namespace).execute(getSession())
+        new DropCollectionOperation(namespace).execute(getBinding())
 
         then:
         !collectionNameExists('nonExistingCollection')

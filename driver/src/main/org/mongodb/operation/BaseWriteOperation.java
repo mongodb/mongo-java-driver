@@ -28,26 +28,27 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.MongoWriteException;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
+import org.mongodb.binding.WriteBinding;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.AcknowledgedWriteResult;
 import org.mongodb.protocol.WriteCommandProtocol;
 import org.mongodb.protocol.WriteProtocol;
-import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
-import static org.mongodb.operation.OperationHelper.executeProtocol;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
-import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
 import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
+import static org.mongodb.operation.OperationHelper.withConnection;
 import static org.mongodb.operation.WriteRequest.Type.INSERT;
 import static org.mongodb.operation.WriteRequest.Type.REMOVE;
 import static org.mongodb.operation.WriteRequest.Type.REPLACE;
 import static org.mongodb.operation.WriteRequest.Type.UPDATE;
 
-public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>, Operation<WriteResult> {
+public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>, WriteOperation<WriteResult> {
 
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
@@ -68,17 +69,21 @@ public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>,
     }
 
     @Override
-    public WriteResult execute(final Session session) {
-        ServerConnectionProvider provider = getPrimaryConnectionProvider(session);
-        try {
-            if (writeConcern.isAcknowledged() && serverSupportsWriteCommands(provider)) {
-                return translateBulkWriteResult(executeProtocol(getCommandProtocol(), provider));
-            } else {
-                return executeProtocol(getWriteProtocol(), provider);
+    public WriteResult execute(final WriteBinding binding) {
+        return withConnection(binding, new CallableWithConnection<WriteResult>() {
+            @Override
+            public WriteResult call(final Connection connection) {
+                try {
+                    if (writeConcern.isAcknowledged() && serverSupportsWriteCommands(connection)) {
+                        return translateBulkWriteResult(getCommandProtocol().execute(connection));
+                    } else {
+                        return getWriteProtocol().execute(connection);
+                    }
+                } catch (BulkWriteException e) {
+                    throw convertBulkWriteException(e);
+                }
             }
-        } catch (BulkWriteException e) {
-            throw convertBulkWriteException(e);
-        }
+        });
     }
 
     @Override
@@ -99,7 +104,7 @@ public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>,
                 }
             }
         });
-       return retVal;
+        return retVal;
     }
 
     public MongoNamespace getNamespace() {
@@ -110,8 +115,8 @@ public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>,
 
     protected abstract WriteCommandProtocol getCommandProtocol();
 
-    private boolean serverSupportsWriteCommands(final ServerConnectionProvider connectionProvider) {
-        return serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6));
+    private boolean serverSupportsWriteCommands(final Connection connection) {
+        return serverVersionIsAtLeast(connection, new ServerVersion(2, 6));
     }
 
     private MongoWriteException convertBulkWriteException(final BulkWriteException e) {
@@ -167,11 +172,12 @@ public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>,
     private WriteResult translateBulkWriteResult(final BulkWriteResult bulkWriteResult) {
         return new AcknowledgedWriteResult(getCount(bulkWriteResult), getUpdatedExisting(bulkWriteResult),
                                            bulkWriteResult.getUpserts().isEmpty()
-                                           ? null : bulkWriteResult.getUpserts().get(0).getId());
+                                           ? null : bulkWriteResult.getUpserts().get(0).getId()
+        );
     }
 
     protected abstract WriteRequest.Type getType();
-    
+
     protected abstract int getCount(final BulkWriteResult bulkWriteResult);
 
     protected boolean getUpdatedExisting(final BulkWriteResult bulkWriteResult) {

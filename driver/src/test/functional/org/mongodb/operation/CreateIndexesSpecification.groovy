@@ -35,7 +35,7 @@ class CreateIndexesSpecification extends FunctionalSpecification {
         def createIndexesOperation = new CreateIndexesOperation([index], getNamespace())
 
         when:
-        createIndexesOperation.execute(getSession())
+        createIndexesOperation.execute(getBinding())
 
         then:
         getIndexes()*.get('key') containsAll(idIndex, field1Index)
@@ -63,7 +63,7 @@ class CreateIndexesSpecification extends FunctionalSpecification {
 
 
         when:
-        createIndexesOperation.execute(getSession())
+        createIndexesOperation.execute(getBinding())
 
         then:
         getIndexes()*.get('key') containsAll(idIndex, field1Index, field2Index)
@@ -90,7 +90,7 @@ class CreateIndexesSpecification extends FunctionalSpecification {
         def createIndexesOperation = new CreateIndexesOperation([index, index], getNamespace())
 
         when:
-        createIndexesOperation.execute(getSession())
+        createIndexesOperation.execute(getBinding())
 
         then:
         getIndexes()*.get('key') containsAll(idIndex, field1Index)

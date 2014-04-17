@@ -24,6 +24,7 @@ import org.mongodb.codecs.DocumentCodec
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 
 class FindAndRemoveOperationSpecification extends FunctionalSpecification {
@@ -43,7 +44,7 @@ class FindAndRemoveOperationSpecification extends FunctionalSpecification {
 
         FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), findAndRemove,
                                                                                           documentCodec)
-        Document returnedDocument = operation.execute(getSession())
+        Document returnedDocument = operation.execute(getBinding())
 
         then:
         getCollectionHelper().find().size() == 1;
@@ -84,7 +85,7 @@ class FindAndRemoveOperationSpecification extends FunctionalSpecification {
 
         FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Worker>(getNamespace(), findAndRemove,
                                                                                       workerCodec)
-        Worker returnedDocument = operation.execute(getSession())
+        Worker returnedDocument = operation.execute(getBinding())
 
         then:
         getWorkerCollectionHelper().find().size() == 1;
@@ -104,7 +105,7 @@ class FindAndRemoveOperationSpecification extends FunctionalSpecification {
 
         FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Worker>(getNamespace(), findAndRemove,
                                                                                       workerCodec)
-        Worker returnedDocument = operation.execute(getSession())
+        Worker returnedDocument = operation.execute(getBinding())
 
         then:
         getWorkerCollectionHelper().find().size() == 1;

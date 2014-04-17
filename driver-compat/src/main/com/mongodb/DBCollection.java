@@ -67,6 +67,7 @@ import org.mongodb.operation.ReplaceOperation;
 import org.mongodb.operation.ReplaceRequest;
 import org.mongodb.operation.UpdateOperation;
 import org.mongodb.operation.UpdateRequest;
+import org.mongodb.operation.WriteOperation;
 import org.mongodb.session.Session;
 import org.mongodb.util.FieldHelpers;
 
@@ -1481,14 +1482,13 @@ public class DBCollection {
                                           ? new DBDecoderAdapter(getDBDecoderFactory().create(), this, getBufferPool())
                                           : getObjectCodec();
 
-        Operation<DBObject> operation;
+        WriteOperation<DBObject> operation;
         if (remove) {
             FindAndRemove<DBObject> findAndRemove = new FindAndRemove<DBObject>().where(toNullableDocument(query))
                                                                                  .sortBy(toNullableDocument(sort))
                                                                                  .returnNew(returnNew)
                                                                                  .maxTime(maxTime, maxTimeUnit);
-            operation = new FindAndRemoveOperation<DBObject>(getNamespace(), findAndRemove, resultDecoder
-            );
+            operation = new FindAndRemoveOperation<DBObject>(getNamespace(), findAndRemove, resultDecoder);
         } else {
             if (update == null) {
                 throw new IllegalArgumentException("Update document can't be null");
@@ -1503,8 +1503,7 @@ public class DBCollection {
                                               .updateWith(toUpdateOperationsDocument(update))
                                               .upsert(upsert)
                                               .maxTime(maxTime, maxTimeUnit);
-                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, resultDecoder
-                );
+                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, resultDecoder);
             } else {
                 FindAndReplace<DBObject> findAndReplace = new FindAndReplace<DBObject>(update)
                                                           .where(toNullableDocument(query))
@@ -1513,8 +1512,7 @@ public class DBCollection {
                                                           .returnNew(returnNew)
                                                           .upsert(upsert)
                                                           .maxTime(maxTime, maxTimeUnit);
-                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), findAndReplace, resultDecoder, objectCodec
-                );
+                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), findAndReplace, resultDecoder, objectCodec);
             }
         }
 
@@ -1845,6 +1843,10 @@ public class DBCollection {
     }
 
     <T> T execute(final Operation<T> operation) {
+        return getDB().getMongo().execute(operation);
+    }
+
+    <T> T execute(final WriteOperation<T> operation) {
         return getDB().getMongo().execute(operation);
     }
 

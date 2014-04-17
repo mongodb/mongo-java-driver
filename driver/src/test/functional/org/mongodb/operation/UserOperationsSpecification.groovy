@@ -49,7 +49,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'an added user should be found'() {
         given:
-        new CreateUserOperation(readOnlyUser).execute(getSession())
+        new CreateUserOperation(readOnlyUser).execute(getBinding())
 
         when:
         def found = new UserExistsOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
@@ -58,7 +58,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         found
 
         cleanup:
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
     }
 
     @Category(Async)
@@ -80,7 +80,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'an added user should authenticate'() {
         given:
-        new CreateUserOperation(readOnlyUser).execute(getSession())
+        new CreateUserOperation(readOnlyUser).execute(getBinding())
         def cluster = getCluster()
 
         when:
@@ -92,7 +92,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
         cleanup:
         connection?.close()
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
         cluster?.close()
     }
 
@@ -117,8 +117,8 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'a removed user should not authenticate'() {
         given:
-        new CreateUserOperation(readOnlyUser).execute(getSession())
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        new CreateUserOperation(readOnlyUser).execute(getBinding())
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
         def cluster = getCluster()
 
         when:
@@ -152,10 +152,10 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'a replaced user should authenticate with its new password'() {
         given:
-        new CreateUserOperation(readOnlyUser).execute(getSession())
+        new CreateUserOperation(readOnlyUser).execute(getBinding())
         def newUser = new User(createMongoCRCredential(readOnlyUser.credential.userName, readOnlyUser.credential.source,
                 '234'.toCharArray()), true)
-        new UpdateUserOperation(newUser).execute(getSession())
+        new UpdateUserOperation(newUser).execute(getBinding())
         def cluster = getCluster(newUser)
 
         when:
@@ -167,7 +167,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
         cleanup:
         connection?.close()
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
         cluster?.close()
     }
 
@@ -195,19 +195,19 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'a read write user should be able to write'() {
         given:
-        new CreateUserOperation(readWriteUser).execute(getSession())
+        new CreateUserOperation(readWriteUser).execute(getBinding())
         def cluster = getCluster()
 
         when:
         def result = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
                 asList(new InsertRequest<Document>(new Document())),
                 new DocumentCodec())
-                .execute(getSession())
+                .execute(getBinding())
         then:
         result.getCount() == 0
 
         cleanup:
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
         cluster?.close()
     }
 

@@ -24,6 +24,7 @@ import org.mongodb.test.CollectionHelper
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 //TODO: what about custom Date formats?
 //TODO: test null returns
@@ -46,7 +47,7 @@ class FindAndReplaceOperationSpecification extends FunctionalSpecification {
 
         FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace,
                 documentCodec, documentCodec)
-        Document returnedDocument = operation.execute(getSession())
+        Document returnedDocument = operation.execute(getBinding())
 
         then:
         returnedDocument.getString('name') == 'Pete'
@@ -91,7 +92,7 @@ class FindAndReplaceOperationSpecification extends FunctionalSpecification {
 
         FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(getNamespace(), findAndReplace,
                 workerCodec, workerCodec)
-        Worker returnedDocument = operation.execute(getSession())
+        Worker returnedDocument = operation.execute(getBinding())
 
         then:
         returnedDocument == pete

@@ -27,7 +27,9 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.MongoServerException;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
+import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.InsertProtocol;
@@ -39,20 +41,19 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
-import static org.mongodb.operation.OperationHelper.executeProtocol;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
 import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProviderAsync;
 import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
+import static org.mongodb.operation.OperationHelper.withConnection;
 
 /**
  * An operation that creates one or more indexes.
  *
  * @since 3.0
  */
-public class CreateIndexesOperation implements AsyncOperation<Void>, Operation<Void> {
+public class CreateIndexesOperation implements AsyncOperation<Void>, WriteOperation<Void> {
     private final List<Index> indexes;
     private final MongoNamespace namespace;
     private final MongoNamespace systemIndexes;
@@ -64,20 +65,24 @@ public class CreateIndexesOperation implements AsyncOperation<Void>, Operation<V
     }
 
     @Override
-    public Void execute(final Session session) {
-        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
-        if (connectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
-            try {
-                executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), connectionProvider);
-            } catch (MongoCommandFailureException e) {
-                throw checkForDuplicateKeyError(e);
+    public Void execute(final WriteBinding binding) {
+        return withConnection(binding, new OperationHelper.CallableWithConnection<Void>() {
+            @Override
+            public Void call(final Connection connection) {
+                if (connection.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
+                    try {
+                        executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), connection);
+                    } catch (MongoCommandFailureException e) {
+                        throw checkForDuplicateKeyError(e);
+                    }
+                } else {
+                    for (Index index : indexes) {
+                        asInsertProtocol(index).execute(connection);
+                    }
+                }
+                return null;
             }
-        } else {
-            for (Index index : indexes) {
-                executeProtocol(asInsertProtocol(index), connectionProvider);
-            }
-        }
-        return null;
+        });
     }
 
     @Override

@@ -49,7 +49,7 @@ class CountOperationSpecification extends FunctionalSpecification {
                 new InsertRequest<Document>(new Document()),
                 new InsertRequest<Document>(new Document())
         ]
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, insertDocumentList, new DocumentCodec()).execute(getSession())
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, insertDocumentList, new DocumentCodec()).execute(getBinding())
     }
 
     def 'should get the count'() {
