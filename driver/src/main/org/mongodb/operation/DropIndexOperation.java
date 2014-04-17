@@ -20,13 +20,16 @@ import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.session.Session;
 
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.OperationHelper.ignoreNameSpaceErrors;
 
-public class DropIndexOperation implements Operation<CommandResult> {
+public class DropIndexOperation implements AsyncOperation<CommandResult>, Operation<CommandResult> {
     private final Codec<Document> commandCodec = new DocumentCodec();
     private final MongoNamespace namespace;
     private final Document dropIndexesCommand;
@@ -41,16 +44,14 @@ public class DropIndexOperation implements Operation<CommandResult> {
         try {
             return executeWrappedCommandProtocol(namespace.getDatabaseName(), dropIndexesCommand, commandCodec, commandCodec, session);
         } catch (MongoCommandFailureException e) {
-            return ignoreNamespaceNotFoundExceptions(e);
+            return ignoreNameSpaceErrors(e);
         }
     }
 
-    //TODO: work out a way to reuse this
-    private CommandResult ignoreNamespaceNotFoundExceptions(final MongoCommandFailureException e) {
-        if (!e.getCommandResult().getErrorMessage().contains("ns not found")) {
-            throw e;
-        }
-        return e.getCommandResult();
+    @Override
+    public MongoFuture<CommandResult> executeAsync(final Session session) {
+        return ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), dropIndexesCommand,
+                                                                        commandCodec, commandCodec, session));
     }
 
 }

@@ -17,22 +17,23 @@
 package org.mongodb.operation;
 
 import org.mongodb.Document;
-import org.mongodb.MongoCursor;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 import org.mongodb.session.Session;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
-import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
+import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
+import static org.mongodb.operation.OperationHelper.queryResultToList;
+import static org.mongodb.operation.OperationHelper.queryResultToListAsync;
 
-public class GetIndexesOperation implements Operation<List<Document>> {
+public class GetIndexesOperation implements AsyncOperation<List<Document>>, Operation<List<Document>> {
     private final MongoNamespace collectionNamespace;
 
     public GetIndexesOperation(final MongoNamespace collectionNamespace) {
@@ -41,22 +42,14 @@ public class GetIndexesOperation implements Operation<List<Document>> {
 
     @Override
     public List<Document> execute(final Session session) {
-        QueryResult<Document> queryResult =
-        executeProtocol(new QueryProtocol<Document>(getIndexNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, asQueryDocument(), null,
-                                                    new DocumentCodec(), new DocumentCodec()),
-                        session);
-        MongoCursor<Document> cursor = new MongoQueryCursor<Document>(getIndexNamespace(), queryResult, 0, 0,
-                                                                      new DocumentCodec(),
-                                                                      getPrimaryConnectionProvider(session));
-        try {
-            List<Document> retVal = new ArrayList<Document>();
-            while (cursor.hasNext()) {
-                retVal.add(cursor.next());
-            }
-            return retVal;
-        } finally {
-            cursor.close();
-        }
+        QueryResult<Document> queryResult = executeProtocol(getProtocol(), session);
+        return queryResultToList(queryResult, session, getIndexNamespace(), new DocumentCodec());
+    }
+
+    @Override
+    public MongoFuture<List<Document>> executeAsync(final Session session) {
+        final MongoFuture<QueryResult<Document>> queryResult = executeProtocolAsync(getProtocol(), session);
+        return queryResultToListAsync(queryResult, session, getIndexNamespace(), new DocumentCodec());
     }
 
     private Document asQueryDocument() {
@@ -66,4 +59,10 @@ public class GetIndexesOperation implements Operation<List<Document>> {
     private MongoNamespace getIndexNamespace() {
         return new MongoNamespace(collectionNamespace.getDatabaseName(), "system.indexes");
     }
+
+    private QueryProtocol<Document> getProtocol() {
+        return new QueryProtocol<Document>(getIndexNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, asQueryDocument(),
+                null, new DocumentCodec(), new DocumentCodec());
+    }
+
 }

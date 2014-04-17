@@ -16,19 +16,24 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.AsyncBlock;
 import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.MongoCommandFailureException;
+import org.mongodb.MongoCursor;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.ServerVersion;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.Protocol;
+import org.mongodb.protocol.QueryResult;
 import org.mongodb.selector.PrimaryServerSelector;
 import org.mongodb.selector.ReadPreferenceServerSelector;
 import org.mongodb.selector.ServerSelector;
@@ -36,18 +41,29 @@ import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
 import org.mongodb.session.Session;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.List;
 
+import static java.util.Collections.unmodifiableList;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerType.SHARD_ROUTER;
 
 final class OperationHelper {
 
+    // TODO: This is duplicated in ProtocolHelper, but I don't want it to be public
+    static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
+
+    static boolean serverVersionIsAtLeast(final ServerConnectionProvider connectionProvider, final ServerVersion serverVersion) {
+        return connectionProvider.getServerDescription().getVersion().compareTo(serverVersion) >= 0;
+    }
+
     /**
      * Use this method to get a ServerConnectionProvider that doesn't rely on specified read preferences.  Used by Operations like commands
      * which always run against the primary.
      *
-     * @param session        the session
+     * @param session the session
      * @return a ServerConnectionProvider initialised with a PrimaryServerSelector
      */
     static ServerConnectionProvider getPrimaryConnectionProvider(final Session session) {
@@ -240,6 +256,36 @@ final class OperationHelper {
         return future;
     }
 
+    static CommandResult ignoreNameSpaceErrors(final MongoCommandFailureException e) {
+        String message = e.getErrorMessage();
+        if (!message.startsWith("ns not found")) {
+            throw e;
+        }
+        return e.getCommandResult();
+    }
+
+    static MongoFuture<CommandResult> ignoreNameSpaceErrors(final MongoFuture<CommandResult> future) {
+        final SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
+        future.register(new SingleResultCallback<CommandResult>() {
+
+            @Override
+            public void onResult(final CommandResult result, final MongoException e) {
+                MongoException checkedError = e;
+                CommandResult fixedResult = result;
+                // Check for a namespace error which we can safely ignore
+                if (e instanceof MongoCommandFailureException) {
+                    try {
+                        checkedError = null;
+                        fixedResult = ignoreNameSpaceErrors((MongoCommandFailureException) e);
+                    } catch (MongoCommandFailureException error) {
+                        checkedError = error;
+                    }
+                }
+                retVal.init(fixedResult, checkedError);
+            }
+        });
+        return retVal;
+    }
 
     private static Document wrapCommand(final Document command, final ReadPreference readPreference,
                                         final ServerDescription serverDescription) {
@@ -250,6 +296,44 @@ final class OperationHelper {
         }
     }
 
+    static <T> List<T> queryResultToList(final QueryResult<T> queryResult, final Session session,
+                                         final MongoNamespace namespace, final Decoder<T> decoder) {
+        MongoCursor<T> cursor = new MongoQueryCursor<T>(namespace, queryResult,
+                                                        0, 0, decoder, getPrimaryConnectionProvider(session));
+        try {
+            List<T> retVal = new ArrayList<T>();
+            while (cursor.hasNext()) {
+                retVal.add(cursor.next());
+            }
+            return unmodifiableList(retVal);
+        } finally {
+            cursor.close();
+        }
+    }
+
+    static <T> MongoFuture<List<T>> queryResultToListAsync(final MongoFuture<QueryResult<T>> queryResult, final Session session,
+                                                           final MongoNamespace namespace, final Decoder<T> decoder) {
+        final SingleResultFuture<List<T>> retVal = new SingleResultFuture<List<T>>();
+        getPrimaryConnectionProviderAsync(session)
+            .register(new SingleResultCallback<ServerConnectionProvider>() {
+                @Override
+                public void onResult(final ServerConnectionProvider connectionProvider, final MongoException e) {
+                    if (e != null) {
+                        retVal.init(null, e);
+                    } else {
+                        connectionProvider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
+                            @Override
+                            public void onResult(final Connection connection, final MongoException e) {
+                                queryResult.register(new QueryResultToListCallback<T>(retVal, namespace, decoder, connectionProvider,
+                                                                                      connection));
+                            }
+                        });
+                    }
+                }
+            });
+        return retVal;
+    }
+
     private static EnumSet<QueryFlag> getQueryFlags(final ReadPreference readPreference) {
         if (readPreference.isSlaveOk()) {
             return EnumSet.of(QueryFlag.SlaveOk);
@@ -257,6 +341,59 @@ final class OperationHelper {
             return EnumSet.noneOf(QueryFlag.class);
         }
     }
+
+    private static class QueryResultToListCallback<T> implements SingleResultCallback<QueryResult<T>> {
+
+        private SingleResultFuture<List<T>> retVal;
+        private MongoNamespace namespace;
+        private Decoder<T> decoder;
+        private ServerConnectionProvider connectionProvider;
+        private Connection connection;
+
+        public QueryResultToListCallback(final SingleResultFuture<List<T>> retVal,
+                                         final MongoNamespace namespace,
+                                         final Decoder<T> decoder,
+                                         final ServerConnectionProvider connectionProvider,
+                                         final Connection connection) {
+            this.retVal = retVal;
+            this.namespace = namespace;
+            this.decoder = decoder;
+            this.connectionProvider = connectionProvider;
+            this.connection = connection;
+        }
+
+        @Override
+        public void onResult(final QueryResult<T> result, final MongoException e) {
+            try {
+                if (e != null) {
+                    retVal.init(null, e);
+                } else {
+                    MongoAsyncQueryCursor<T> cursor = new MongoAsyncQueryCursor<T>(namespace,
+                                                                                   result,
+                                                                                   0, 0, decoder,
+                                                                                   connectionProvider.getConnection(),
+                                                                                   connectionProvider.getServerDescription());
+
+                    final List<T> results = new ArrayList<T>();
+                    cursor.start(new AsyncBlock<T>() {
+
+                        @Override
+                        public void done() {
+                            retVal.init(unmodifiableList(results), null);
+                        }
+
+                        @Override
+                        public void apply(final T v) {
+                            results.add(v);
+                        }
+                    });
+                }
+            } finally {
+                connection.close();
+            }
+        }
+    }
+
 
     private static class ProtocolExecutingCallback<T> extends AbstractProtocolExecutingCallback<T> {
         private final Protocol<T> protocol;
@@ -318,21 +455,21 @@ final class OperationHelper {
                             retVal.init(null, e);
                         } else {
                             getProtocol(provider.getServerDescription())
-                            .executeAsync(connection, provider.getServerDescription())
-                            .register(new SingleResultCallback<T>() {
-                                @Override
-                                public void onResult(final T result, final MongoException e) {
-                                    try {
-                                        if (e != null) {
-                                            retVal.init(null, e);
-                                        } else {
-                                            retVal.init(result, null);
+                                .executeAsync(connection, provider.getServerDescription())
+                                .register(new SingleResultCallback<T>() {
+                                    @Override
+                                    public void onResult(final T result, final MongoException e) {
+                                        try {
+                                            if (e != null) {
+                                                retVal.init(null, e);
+                                            } else {
+                                                retVal.init(result, null);
+                                            }
+                                        } finally {
+                                            connection.close();
                                         }
-                                    } finally {
-                                        connection.close();
                                     }
-                                }
-                            });
+                                });
                         }
                     }
                 });

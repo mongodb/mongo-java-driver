@@ -14,16 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
-
-
-
-
 package org.mongodb.operation
 
 import org.mongodb.Fixture
@@ -41,7 +31,7 @@ import static org.mongodb.Fixture.serverVersionAtLeast
 
 class CountOperationSpecification extends FunctionalSpecification {
     def 'should throw execution timeout exception from execute'() {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 
         given:
         def find = new Find().maxTime(1, SECONDS)
@@ -59,7 +49,7 @@ class CountOperationSpecification extends FunctionalSpecification {
     }
 
     def 'should throw execution timeout exception from executeAsync'() {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
         assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
 
         given:
