@@ -49,10 +49,10 @@ public class UpdateCommandProtocol extends WriteCommandProtocol {
     }
 
     @Override
-    public BulkWriteResult execute(final Connection connection, final ServerDescription serverDescription) {
+    public BulkWriteResult execute(final Connection connection) {
         LOGGER.debug(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(), connection.getId(),
                             connection.getServerAddress()));
-        BulkWriteResult writeResult = super.execute(connection, serverDescription);
+        BulkWriteResult writeResult = super.execute(connection);
         LOGGER.debug("Update completed");
         return writeResult;
     }

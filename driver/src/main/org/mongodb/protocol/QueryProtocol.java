@@ -69,19 +69,19 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     @Override
-    public QueryResult<T> execute(final Connection connection, final ServerDescription serverDescription) {
+    public QueryResult<T> execute(final Connection connection) {
         LOGGER.debug(format("Sending query to namespace %s on connection [%s] to server %s", namespace, connection.getId(),
                             connection.getServerAddress()));
-        QueryResult<T> queryResult = receiveMessage(connection, sendMessage(connection, serverDescription));
+        QueryResult<T> queryResult = receiveMessage(connection, sendMessage(connection));
         LOGGER.debug("Query completed");
         return queryResult;
     }
 
-    public MongoFuture<QueryResult<T>> executeAsync(final Connection connection, final ServerDescription serverDescription) {
+    public MongoFuture<QueryResult<T>> executeAsync(final Connection connection) {
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
-        QueryMessage message = createQueryMessage(serverDescription);
+        QueryMessage message = createQueryMessage(connection.getServerDescription());
         encodeMessageToBuffer(message, buffer);
         QueryResultCallback<T> receiveCallback = new QueryResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
                                                                             resultDecoder,
@@ -99,10 +99,10 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
                                                     getMessageSettings(serverDescription));
     }
 
-    private QueryMessage sendMessage(final Connection connection, final ServerDescription serverDescription) {
+    private QueryMessage sendMessage(final Connection connection) {
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         try {
-            QueryMessage message = createQueryMessage(serverDescription);
+            QueryMessage message = createQueryMessage(connection.getServerDescription());
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return message;

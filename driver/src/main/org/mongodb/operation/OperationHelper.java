@@ -97,7 +97,7 @@ final class OperationHelper {
     static <T> T executeProtocol(final Protocol<T> protocol, final ServerConnectionProvider provider) {
         Connection connection = provider.getConnection();
         try {
-            return protocol.execute(connection, provider.getServerDescription());
+            return protocol.execute(connection);
         } finally {
             connection.close();
         }
@@ -496,8 +496,8 @@ final class OperationHelper {
                     MongoAsyncQueryCursor<T> cursor = new MongoAsyncQueryCursor<T>(namespace,
                                                                                    result,
                                                                                    0, 0, decoder,
-                                                                                   connectionProvider.getConnection(),
-                                                                                   connectionProvider.getServerDescription());
+                                                                                   connectionProvider.getConnection()
+                    );
 
                     final List<V> results = new ArrayList<V>();
                     cursor.start(new AsyncBlock<T>() {
@@ -583,7 +583,7 @@ final class OperationHelper {
                             retVal.init(null, e);
                         } else {
                             getProtocol(provider.getServerDescription())
-                            .executeAsync(connection, provider.getServerDescription())
+                            .executeAsync(connection)
                             .register(new SingleResultCallback<T>() {
                                 @Override
                                 public void onResult(final T result, final MongoException e) {

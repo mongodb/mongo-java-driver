@@ -26,7 +26,6 @@ import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.QueryFlag;
@@ -61,20 +60,20 @@ public class CommandProtocol implements Protocol<CommandResult> {
         this.commandEncoder = commandEncoder;
     }
 
-    public CommandResult execute(final Connection connection, final ServerDescription serverDescription) {
+    public CommandResult execute(final Connection connection) {
         LOGGER.debug(format("Sending command {%s : %s} to database %s on connection [%s] to server %s",
                             command.keySet().iterator().next(), command.values().iterator().next(),
                             namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
-        CommandResult commandResult = receiveMessage(connection, sendMessage(connection, serverDescription).getId());
+        CommandResult commandResult = receiveMessage(connection, sendMessage(connection).getId());
         LOGGER.debug("Command execution complete");
         return commandResult;
     }
 
-    private CommandMessage sendMessage(final Connection connection, final ServerDescription serverDescription) {
+    private CommandMessage sendMessage(final Connection connection) {
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         try {
             CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags, commandEncoder,
-                                                        getMessageSettings(serverDescription));
+                                                        getMessageSettings(connection.getServerDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return message;
@@ -93,12 +92,12 @@ public class CommandProtocol implements Protocol<CommandResult> {
         }
     }
 
-    public MongoFuture<CommandResult> executeAsync(final Connection connection, final ServerDescription serverDescription) {
+    public MongoFuture<CommandResult> executeAsync(final Connection connection) {
         SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags, commandEncoder,
-                                                    getMessageSettings(serverDescription));
+                                                    getMessageSettings(connection.getServerDescription()));
         encodeMessageToBuffer(message, buffer);
 
         CommandResultCallback receiveCallback = new CommandResultCallback(new SingleResultFutureCallback<CommandResult>(retVal),

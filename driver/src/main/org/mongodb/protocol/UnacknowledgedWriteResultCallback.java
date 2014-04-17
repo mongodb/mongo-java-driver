@@ -22,7 +22,6 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
@@ -36,18 +35,16 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
     private final RequestMessage nextMessage;
     private final OutputBuffer writtenBuffer;
     private final boolean ordered;
-    private final ServerDescription serverDescription;
     private final Connection connection;
 
     UnacknowledgedWriteResultCallback(final SingleResultFuture<WriteResult> future,
                                       final MongoNamespace namespace, final RequestMessage nextMessage,
                                       final boolean ordered, final OutputBuffer writtenBuffer,
-                                      final Connection connection, final ServerDescription serverDescription) {
+                                      final Connection connection) {
         this.future = future;
         this.namespace = namespace;
         this.nextMessage = nextMessage;
         this.ordered = ordered;
-        this.serverDescription = serverDescription;
         this.connection = connection;
         this.writtenBuffer = writtenBuffer;
     }
@@ -59,7 +56,7 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
             future.init(null, e);
         } else if (nextMessage != null) {
             MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace, nextMessage, ordered, UNACKNOWLEDGED)
-                                                 .executeAsync(connection, serverDescription);
+                                                 .executeAsync(connection);
             newFuture.register(new SingleResultFutureCallback<WriteResult>(future));
         } else {
             future.init(null, null);

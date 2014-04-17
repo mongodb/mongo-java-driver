@@ -67,7 +67,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         firstBatch =
         new QueryProtocol<Document>(collection.getNamespace(), exhaustFlag, 0, 0, new Document(), null,
                                                     new DocumentCodec(), new DocumentCodec())
-        .execute(exhaustConnection, connectionProvider.getServerDescription());
+        .execute(exhaustConnection);
 
     }
 
@@ -77,8 +77,8 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         assumeFalse(isSharded());
 
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(), firstBatch, 0, 0,
-                                                                           new DocumentCodec(), exhaustConnection,
-                                                                           connectionProvider.getServerDescription());
+                                                                           new DocumentCodec(), exhaustConnection
+        );
 
         int count = 0;
         while (cursor.hasNext()) {
@@ -99,15 +99,15 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
             singleConnectionSession.createServerConnectionProvider(new ServerConnectionProviderOptions(true, new PrimaryServerSelector()));
             MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(), firstBatch, 0, 0,
                                                                                new DocumentCodec(),
-                                                                               singleConnectionProvider.getConnection(),
-                                                                               singleConnectionProvider.getServerDescription());
+                                                                               singleConnectionProvider.getConnection()
+            );
 
             cursor.next();
             cursor.close();
 
             new QueryProtocol<Document>(collection.getNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, new Document(), null,
                                         new DocumentCodec(), new DocumentCodec())
-            .execute(singleConnectionProvider.getConnection(), singleConnectionProvider.getServerDescription());
+            .execute(singleConnectionProvider.getConnection());
 
             singleConnectionSession.connection.close();
         } finally {

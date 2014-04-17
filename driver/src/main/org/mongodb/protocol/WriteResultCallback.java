@@ -25,7 +25,6 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.RequestMessage;
@@ -37,22 +36,20 @@ class WriteResultCallback extends CommandResultBaseCallback {
     private boolean ordered;
     private final WriteConcern writeConcern;
     private final Connection connection;
-    private final ServerDescription serverDescription;
 
     // CHECKSTYLE:OFF
     public WriteResultCallback(final SingleResultFuture<WriteResult> future, final Decoder<Document> decoder,
                                final MongoNamespace namespace, final RequestMessage nextMessage,
                                final boolean ordered, final WriteConcern writeConcern, final long requestId,
-                               final Connection connection, final ServerDescription serverDescription) {
+                               final Connection connection) {
         // CHECKSTYLE:ON
-        super(decoder, requestId, serverDescription.getAddress());
+        super(decoder, requestId, connection.getServerAddress());
         this.future = future;
         this.namespace = namespace;
         this.nextMessage = nextMessage;
         this.ordered = ordered;
         this.writeConcern = writeConcern;
         this.connection = connection;
-        this.serverDescription = serverDescription;
     }
 
     @Override
@@ -65,7 +62,7 @@ class WriteResultCallback extends CommandResultBaseCallback {
                 WriteResult writeResult = ProtocolHelper.getWriteResult(commandResult);
                 if (nextMessage != null) {
                     MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace, nextMessage, ordered, writeConcern)
-                                                         .executeAsync(connection, serverDescription);
+                                                         .executeAsync(connection);
                     newFuture.register(new SingleResultFutureCallback<WriteResult>(future));
                     done = false;
                 } else {

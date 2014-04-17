@@ -22,7 +22,6 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.RemoveRequest;
@@ -48,10 +47,10 @@ public class DeleteProtocol extends WriteProtocol {
     }
 
     @Override
-    public WriteResult execute(final Connection connection, final ServerDescription serverDescription) {
+    public WriteResult execute(final Connection connection) {
         LOGGER.debug(format("Deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
                             connection.getId(), connection.getServerAddress()));
-        WriteResult writeResult = super.execute(connection, serverDescription);
+        WriteResult writeResult = super.execute(connection);
         LOGGER.debug("Delete completed");
         return writeResult;
     }

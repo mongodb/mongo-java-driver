@@ -413,7 +413,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
                                                 connectionProvider)
 
         def connection = connectionProvider.getConnection()
-        new KillCursorProtocol(new KillCursor(cursor.getServerCursor())).execute(connection, connectionProvider.serverDescription)
+        new KillCursorProtocol(new KillCursor(cursor.getServerCursor())).execute(connection)
         connection.close()
         cursor.next()
         cursor.next()
@@ -440,7 +440,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         try {
             new QueryProtocol<Document>(collection.getNamespace(), queryFlag, 0, numberToReturn, query, null,
                                         new DocumentCodec(), new DocumentCodec())
-                    .execute(connection, connectionProvider.getServerDescription())
+                    .execute(connection)
         } finally {
             connection.close()
         }
@@ -450,7 +450,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         new GetMoreProtocol<Document>(collection.getNamespace(),
                                       new GetMore(serverCursor, 1, 1, 1),
                                       collection.getOptions().getDocumentCodec())
-                .execute(cursor.serverConnectionProvider.getConnection(), cursor.serverConnectionProvider.serverDescription)
+                .execute(cursor.serverConnectionProvider.getConnection())
     }
 
 }
