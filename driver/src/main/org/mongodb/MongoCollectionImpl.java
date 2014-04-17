@@ -18,9 +18,7 @@ package org.mongodb;
 
 import org.bson.types.Code;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.AggregateOperation;
-import org.mongodb.operation.AsyncOperation;
 import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.FindAndRemove;
@@ -40,8 +38,6 @@ import org.mongodb.operation.RemoveOperation;
 import org.mongodb.operation.RemoveRequest;
 import org.mongodb.operation.ReplaceOperation;
 import org.mongodb.operation.ReplaceRequest;
-import org.mongodb.operation.SingleResultFuture;
-import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.operation.UpdateOperation;
 import org.mongodb.operation.UpdateRequest;
 
@@ -80,16 +76,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public WriteResult insert(final List<T> documents) {
         return new MongoCollectionView().insert(documents);
-    }
-
-    @Override
-    public MongoFuture<WriteResult> asyncInsert(final T document) {
-        return new MongoCollectionView().asyncInsert(document);
-    }
-
-    @Override
-    public MongoFuture<WriteResult> asyncInsert(final List<T> documents) {
-        return new MongoCollectionView().asyncInsert(documents);
     }
 
     @Override
@@ -158,10 +144,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     <V> V execute(final Operation<V> operation) {
         return client.execute(operation);
-    }
-
-    <V> MongoFuture<V> executeAsync(final AsyncOperation<V> operation) {
-        return client.executeAsync(operation);
     }
 
     private final class MongoCollectionView implements MongoView<T> {
@@ -333,22 +315,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        @SuppressWarnings("unchecked")
-        public MongoFuture<WriteResult> asyncInsert(final T document) {
-            return asyncInsert(asList(document));
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public MongoFuture<WriteResult> asyncInsert(final List<T> documents) {
-            List<InsertRequest<T>> insertRequestList = new ArrayList<InsertRequest<T>>(documents.size());
-            for (T cur : documents) {
-                insertRequestList.add(new InsertRequest<T>(cur));
-            }
-            return executeAsync(new InsertOperation<T>(getNamespace(), true, writeConcern, insertRequestList, getCodec()));
-        }
-
-        @Override
         public WriteResult save(final T document) {
             Object id = getCodec().getId(document);
             if (id == null) {
@@ -462,55 +428,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
             return execute(new FindAndRemoveOperation<T>(getNamespace(), findAndRemove, getCodec())); }
 
-        @Override
-        @SuppressWarnings("unchecked")
-        public MongoFuture<WriteResult> asyncReplace(final T replacement) {
-            ReplaceRequest<T> replaceRequest = new ReplaceRequest<T>(findOp.getFilter(), replacement).upsert(upsert);
-            return executeAsync(new ReplaceOperation<T>(getNamespace(), true, writeConcern, asList(replaceRequest),
-                    getDocumentCodec(), getCodec()));
-        }
-
         boolean asBoolean(final Get get) {
             return get == Get.AfterChangeApplied;
-        }
-
-        @Override
-        public MongoFuture<T> asyncOne() {
-            final SingleResultFuture<T> retVal = new SingleResultFuture<T>();
-            executeAsync(new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec()))
-            .register(new
-                      SingleResultCallback<MongoAsyncCursor<T>>() {
-                          @Override
-                          public void onResult(
-                                              final
-                                              MongoAsyncCursor<T> cursor,
-                                              final
-                                              MongoException e) {
-                              if (e != null) {
-                                  retVal.init(null, e);
-                              } else {
-                                  cursor.start(new AsyncBlock<T>() {
-                                      @Override
-                                      public void done() {
-                                          if (!retVal.isDone()) {
-                                              retVal.init(null, null); // TODO: deal with errors
-                                          }
-                                      }
-
-                                      @Override
-                                      public void apply(final T t) {
-                                          retVal.init(t, null);
-                                      }
-                                  });
-                              }
-                          }
-                      });
-            return retVal;
-        }
-
-        @Override
-        public MongoFuture<Long> asyncCount() {
-            return executeAsync(new CountOperation(getNamespace(), findOp, getDocumentCodec()));
         }
 
         private boolean getMultiFromLimit() {
@@ -527,38 +446,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             }
         }
 
-        @Override
-        public void asyncForEach(final AsyncBlock<? super T> block) {
-            executeAsync(new QueryOperation<T>(getNamespace(), findOp, getDocumentCodec(), getCodec()))
-            .register(new SingleResultCallback<MongoAsyncCursor<T>>() {
-                @Override
-                public void onResult(final MongoAsyncCursor<T> cursor, final MongoException e) {
-                    cursor.start(block);  // TODO: deal with exceptions
-                }
-            });
-        }
-
-        @Override
-        public <A extends Collection<? super T>> MongoFuture<A> asyncInto(final A target) {
-            SingleResultFuture<A> future = new SingleResultFuture<A>();
-
-            asyncInto(target, new SingleResultFutureCallback<A>(future));
-            return future;
-        }
-
-        private <A extends Collection<? super T>> void asyncInto(final A target, final SingleResultCallback<A> callback) {
-            asyncForEach(new AsyncBlock<T>() {
-                @Override
-                public void done() {
-                    callback.onResult(target, null);
-                }
-
-                @Override
-                public void apply(final T t) {
-                    target.add(t);
-                }
-            });
-        }
     }
 
     private class MongoCollectionPipeline implements MongoPipeline<T> {
@@ -624,16 +511,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public <U> MongoIterable<U> map(final Function<T, U> mapper) {
             return new MappingIterable<T, U>(this, mapper);
-        }
-
-        @Override
-        public void asyncForEach(final AsyncBlock<? super T> block) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public <A extends Collection<? super T>> MongoFuture<A> asyncInto(final A target) {
-            throw new UnsupportedOperationException();
         }
 
         @Override

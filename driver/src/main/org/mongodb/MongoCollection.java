@@ -61,10 +61,6 @@ public interface MongoCollection<T> {
 
     WriteResult insert(List<T> document);
 
-    MongoFuture<WriteResult> asyncInsert(T document);
-
-    MongoFuture<WriteResult> asyncInsert(List<T> document);
-
     WriteResult save(T document);
 
     MongoPipeline<T> pipe();
