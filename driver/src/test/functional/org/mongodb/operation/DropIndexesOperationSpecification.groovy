@@ -33,7 +33,7 @@ class DropIndexesOperationSpecification extends FunctionalSpecification {
         def operation = new DropIndexOperation(getNamespace(), 'made_up_index_1')
 
         when:
-        operation.execute(getSession())
+        operation.execute(getBinding())
 
         then:
         getIndexes().size() == 0
@@ -57,7 +57,7 @@ class DropIndexesOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
 
         when:
-        operation.execute(getSession())
+        operation.execute(getBinding())
 
         then:
         thrown(MongoException)
@@ -82,7 +82,7 @@ class DropIndexesOperationSpecification extends FunctionalSpecification {
         createIndexes(Index.builder().addKey('theField', ASC).build())
 
         when:
-        operation.execute(getSession())
+        operation.execute(getBinding())
         List<Document> indexes = getIndexes()
 
         then:
@@ -112,7 +112,7 @@ class DropIndexesOperationSpecification extends FunctionalSpecification {
                 Index.builder().addKey('theOtherField', ASC).build())
 
         when:
-        operation.execute(getSession())
+        operation.execute(getBinding())
         List<Document> indexes = getIndexes()
 
         then:
@@ -138,7 +138,7 @@ class DropIndexesOperationSpecification extends FunctionalSpecification {
 
     @SuppressWarnings('FactoryMethodName')
     def createIndexes(Index[] indexes) {
-        new CreateIndexesOperation(indexes.toList(), getNamespace()).execute(getSession())
+        new CreateIndexesOperation(indexes.toList(), getNamespace()).execute(getBinding())
     }
 
     def getIndexes() {

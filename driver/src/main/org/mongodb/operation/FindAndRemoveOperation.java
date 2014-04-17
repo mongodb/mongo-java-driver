@@ -22,6 +22,7 @@ import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.session.Session;
@@ -38,7 +39,7 @@ import static org.mongodb.operation.OperationHelper.transformResult;
  *
  *  @since 3.0
  */
-public class FindAndRemoveOperation<T> implements AsyncOperation<T>, Operation<T> {
+public class FindAndRemoveOperation<T> implements AsyncOperation<T>, WriteOperation<T> {
     private final MongoNamespace namespace;
     private final FindAndRemove<T> findAndRemove;
     private final CommandResultWithPayloadDecoder<T> resultDecoder;
@@ -51,8 +52,8 @@ public class FindAndRemoveOperation<T> implements AsyncOperation<T>, Operation<T
     }
 
     @Override
-    public T execute(final Session session) {
-        CommandResult result = executeWrappedCommandProtocol(namespace, getFindAndRemoveDocument(), commandEncoder, resultDecoder, session);
+    public T execute(final WriteBinding binding) {
+        CommandResult result = executeWrappedCommandProtocol(namespace, getFindAndRemoveDocument(), commandEncoder, resultDecoder, binding);
         return transformResult(result, transformer());
     }
 

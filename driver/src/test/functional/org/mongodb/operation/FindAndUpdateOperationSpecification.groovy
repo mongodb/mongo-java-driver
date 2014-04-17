@@ -24,6 +24,7 @@ import org.mongodb.test.CollectionHelper
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 
 class FindAndUpdateOperationSpecification extends FunctionalSpecification {
@@ -46,7 +47,7 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
 
         FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), findAndUpdate,
                 documentCodec)
-        Document returnedDocument = operation.execute(getSession())
+        Document returnedDocument = operation.execute(getBinding())
 
         then:
         returnedDocument.getInteger('numberOfJobs') == 3
@@ -87,13 +88,13 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
         helper.insertDocuments(pete, sam)
 
         when:
-        FindAndUpdate<Worker> findAndUpdate = new FindAndUpdate<Worker>()
+        def findAndUpdate = new FindAndUpdate<Worker>()
                 .where(new Document('name', 'Pete'))
                 .updateWith(new Document('$inc', new Document('numberOfJobs', 1)))
 
         FindAndUpdateOperation<Worker> operation = new FindAndUpdateOperation<Worker>(getNamespace(), findAndUpdate,
                 workerCodec)
-        Worker returnedDocument = operation.execute(getSession())
+        Worker returnedDocument = operation.execute(getBinding())
 
         then:
         returnedDocument.numberOfJobs == 3

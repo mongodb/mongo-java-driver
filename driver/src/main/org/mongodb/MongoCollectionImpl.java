@@ -41,6 +41,7 @@ import org.mongodb.operation.ReplaceOperation;
 import org.mongodb.operation.ReplaceRequest;
 import org.mongodb.operation.UpdateOperation;
 import org.mongodb.operation.UpdateRequest;
+import org.mongodb.operation.WriteOperation;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -149,6 +150,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     <V> V execute(final ReadOperation<V> operation, final ReadPreference readPreference) {
         return client.execute(operation, readPreference);
+    }
+
+    <V> V execute(final WriteOperation<V> operation) {
+        return client.execute(operation);
     }
 
     private final class MongoCollectionView implements MongoView<T> {

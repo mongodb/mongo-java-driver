@@ -20,6 +20,7 @@ import org.mongodb.binding.ClusterBinding;
 import org.mongodb.connection.Cluster;
 import org.mongodb.operation.Operation;
 import org.mongodb.operation.ReadOperation;
+import org.mongodb.operation.WriteOperation;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.Session;
 
@@ -28,6 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.mongodb.ReadPreference.primary;
 
 class MongoClientImpl implements MongoClient {
 
@@ -86,6 +88,15 @@ class MongoClientImpl implements MongoClient {
         ClusterBinding binding = new ClusterBinding(cluster, readPreference, clientOptions.getMaxWaitTime(), MILLISECONDS);
         try {
             return readOperation.execute(binding);
+        } finally {
+            binding.release();
+        }
+    }
+
+    public <V> V execute(final WriteOperation<V> writeOperation) {
+        ClusterBinding binding = new ClusterBinding(cluster, primary(), clientOptions.getMaxWaitTime(), MILLISECONDS);
+        try {
+            return writeOperation.execute(binding);
         } finally {
             binding.release();
         }

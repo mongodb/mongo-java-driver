@@ -29,7 +29,7 @@ import static org.mongodb.Fixture.getSession
 class RenameCollectionOperationSpecification extends FunctionalSpecification {
 
     def cleanup() {
-        new DropCollectionOperation(new MongoNamespace(getDatabaseName(), 'newCollection')).execute(getSession())
+        new DropCollectionOperation(new MongoNamespace(getDatabaseName(), 'newCollection')).execute(getBinding())
     }
 
     def 'should return rename a collection'() {
@@ -38,7 +38,7 @@ class RenameCollectionOperationSpecification extends FunctionalSpecification {
         assert collectionNameExists(getCollectionName())
 
         when:
-        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), 'newCollection', false).execute(getSession())
+        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), 'newCollection', false).execute(getBinding())
 
         then:
         !collectionNameExists(getCollectionName())
@@ -65,7 +65,7 @@ class RenameCollectionOperationSpecification extends FunctionalSpecification {
         assert collectionNameExists(getCollectionName())
 
         when:
-        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), getCollectionName(), false).execute(getSession())
+        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), getCollectionName(), false).execute(getBinding())
 
         then:
         thrown(MongoServerException)
@@ -79,7 +79,7 @@ class RenameCollectionOperationSpecification extends FunctionalSpecification {
         assert collectionNameExists(getCollectionName())
 
         when:
-        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), getCollectionName(), false).execute(getSession())
+        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), getCollectionName(), false).execute(getBinding())
 
         then:
         thrown(MongoServerException)

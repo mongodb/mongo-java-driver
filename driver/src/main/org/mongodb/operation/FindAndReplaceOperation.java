@@ -23,6 +23,7 @@ import org.mongodb.Encoder;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.WriteBinding;
 import org.mongodb.session.Session;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -39,7 +40,7 @@ import static org.mongodb.operation.OperationHelper.transformResult;
  * @param <T> the document type
  * @since 3.0
  */
-public class FindAndReplaceOperation<T> implements AsyncOperation<T>, Operation<T> {
+public class FindAndReplaceOperation<T> implements AsyncOperation<T>, WriteOperation<T> {
     private final MongoNamespace namespace;
     private final FindAndReplace<T> findAndReplace;
     private final CommandResultWithPayloadDecoder<T> resultDecoder;
@@ -54,8 +55,8 @@ public class FindAndReplaceOperation<T> implements AsyncOperation<T>, Operation<
     }
 
     @Override
-    public T execute(final Session session) {
-        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), commandEncoder, resultDecoder, session);
+    public T execute(final WriteBinding binding) {
+        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), commandEncoder, resultDecoder, binding);
         return transformResult(result, transformer());
     }
 

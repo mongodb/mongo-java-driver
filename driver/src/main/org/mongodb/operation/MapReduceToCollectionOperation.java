@@ -22,6 +22,7 @@ import org.mongodb.Function;
 import org.mongodb.MapReduceStatistics;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.WriteBinding;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.session.Session;
 
@@ -41,7 +42,7 @@ import static org.mongodb.operation.OperationHelper.transformResult;
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0
  */
-public class MapReduceToCollectionOperation implements AsyncOperation<MapReduceStatistics>, Operation<MapReduceStatistics> {
+public class MapReduceToCollectionOperation implements AsyncOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
     private final MapReduce mapReduce;
     private final MongoNamespace namespace;
     private ServerAddress serverUsed;
@@ -64,12 +65,12 @@ public class MapReduceToCollectionOperation implements AsyncOperation<MapReduceS
     /**
      * Executing this will return a cursor with your results in.
      *
-     * @param session
+     * @param binding
      * @return a MongoCursor that can be iterated over to find all the results of the Map Reduce operation.
      */
     @Override
-    public MapReduceStatistics execute(final Session session) {
-        CommandResult result = executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), session);
+    public MapReduceStatistics execute(final WriteBinding binding) {
+        CommandResult result = executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), binding);
         return transformResult(result, transformer());
     }
 

@@ -32,7 +32,7 @@ class CreateCollectionOperationSpecification extends FunctionalSpecification {
         assert !collectionNameExists(getCollectionName())
 
         when:
-        new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName())).execute(getSession())
+        new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName())).execute(getBinding())
 
         then:
         collectionNameExists(getCollectionName())
@@ -44,7 +44,7 @@ class CreateCollectionOperationSpecification extends FunctionalSpecification {
         assert !collectionNameExists(getCollectionName())
 
         when:
-        new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName())).execute(getSession())
+        new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName())).execute(getBinding())
 
         then:
         collectionNameExists(getCollectionName())
@@ -54,10 +54,10 @@ class CreateCollectionOperationSpecification extends FunctionalSpecification {
         given:
         assert !collectionNameExists(getCollectionName())
         def operation = new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName()))
-        operation.execute(getSession())
+        operation.execute(getBinding())
 
         when:
-        operation.execute(getSession())
+        operation.execute(getBinding())
 
         then:
         thrown(MongoServerException)
@@ -69,7 +69,7 @@ class CreateCollectionOperationSpecification extends FunctionalSpecification {
         given:
         assert !collectionNameExists(getCollectionName())
         def operation = new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName()))
-        operation.execute(getSession())
+        operation.execute(getBinding())
 
         when:
         operation.executeAsync(getSession()).get()

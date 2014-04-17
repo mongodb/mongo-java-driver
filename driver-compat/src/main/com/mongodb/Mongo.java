@@ -21,7 +21,8 @@ import org.mongodb.Document;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.binding.ClusterBinding;
-import org.mongodb.binding.ReadWriteBinding;
+import org.mongodb.binding.ReadBinding;
+import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
@@ -37,6 +38,7 @@ import org.mongodb.management.JMXConnectionPoolListener;
 import org.mongodb.operation.GetDatabaseNamesOperation;
 import org.mongodb.operation.Operation;
 import org.mongodb.operation.ReadOperation;
+import org.mongodb.operation.WriteOperation;
 import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.KillCursorProtocol;
 import org.mongodb.selector.CompositeServerSelector;
@@ -801,7 +803,18 @@ public class Mongo {
     }
 
     public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-        ReadWriteBinding binding = new ClusterBinding(cluster, readPreference.toNew(), options.getMaxWaitTime(), MILLISECONDS);
+        ReadBinding binding = new ClusterBinding(cluster, readPreference.toNew(), options.getMaxWaitTime(), MILLISECONDS);
+        try {
+            return operation.execute(binding);
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        } finally {
+            binding.release();
+        }
+    }
+
+    public <T> T execute(final WriteOperation<T> operation) {
+        WriteBinding binding = new ClusterBinding(cluster, primary().toNew(), options.getMaxWaitTime(), MILLISECONDS);
         try {
             return operation.execute(binding);
         } catch (org.mongodb.MongoException e) {

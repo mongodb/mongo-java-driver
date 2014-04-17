@@ -84,7 +84,7 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
 
     @SuppressWarnings('FactoryMethodName')
     def createIndexes(Index[] indexes) {
-        new CreateIndexesOperation(indexes.toList(), getNamespace()).execute(getSession())
+        new CreateIndexesOperation(indexes.toList(), getNamespace()).execute(getBinding())
     }
 
 }

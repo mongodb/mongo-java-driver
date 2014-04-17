@@ -22,7 +22,9 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
+import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.DeleteProtocol;
 import org.mongodb.session.ServerConnectionProvider;
@@ -30,20 +32,20 @@ import org.mongodb.session.Session;
 
 import static java.util.Arrays.asList;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.operation.OperationHelper.executeProtocol;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
 import static org.mongodb.operation.OperationHelper.ignoreResult;
 import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
+import static org.mongodb.operation.OperationHelper.withConnection;
 
 /**
  * An operation to remove a user.
  *
  * @since 3.0
  */
-public class DropUserOperation implements AsyncOperation<Void>, Operation<Void>  {
+public class DropUserOperation implements AsyncOperation<Void>, WriteOperation<Void>  {
     private final String database;
     private final String userName;
 
@@ -53,14 +55,18 @@ public class DropUserOperation implements AsyncOperation<Void>, Operation<Void> 
     }
 
     @Override
-    public Void execute(final Session session) {
-        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
-        if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-            executeWrappedCommandProtocol(database, getCommand(), connectionProvider);
-        } else {
-            executeProtocol(getCollectionBasedProtocol(), connectionProvider);
-        }
-        return null;
+    public Void execute(final WriteBinding binding) {
+        return withConnection(binding, new OperationHelper.CallableWithConnection<Void>() {
+            @Override
+            public Void call(final Connection connection) {
+                if (serverVersionIsAtLeast(connection, new ServerVersion(2, 6))) {
+                    executeWrappedCommandProtocol(database, getCommand(), connection);
+                } else {
+                    getCollectionBasedProtocol().execute(connection);
+                }
+                return null;
+            }
+        });
     }
 
     @Override

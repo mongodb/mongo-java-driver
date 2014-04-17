@@ -35,7 +35,6 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.mongodb.Fixture.getBinding;
-import static org.mongodb.Fixture.getSession;
 
 public final class CollectionHelper<T> {
 
@@ -53,7 +52,7 @@ public final class CollectionHelper<T> {
     public void insertDocuments(final T... documents) {
         for (T document : documents) {
             new InsertOperation<T>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                    asList(new InsertRequest<T>(document)), codec).execute(getSession());
+                    asList(new InsertRequest<T>(document)), codec).execute(getBinding());
         }
     }
 

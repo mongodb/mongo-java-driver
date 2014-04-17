@@ -31,9 +31,9 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
+import static org.mongodb.Fixture.getBinding;
 import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.Fixture.getExecutor;
-import static org.mongodb.Fixture.getSession;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 import static org.mongodb.WriteConcern.UNACKNOWLEDGED;
 
@@ -64,7 +64,7 @@ public class AsyncInsertOperationTest extends DatabaseTestCase {
     public void testBatchInsert() throws ExecutionException, InterruptedException {
         InsertOperation<Document> op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, insertDocumentList,
                                                                      new DocumentCodec());
-        op.execute(getSession());
+        op.execute(getBinding());
         assertEquals((long) insertDocumentList.size(), getCollectionHelper().count());
     }
 
@@ -74,7 +74,7 @@ public class AsyncInsertOperationTest extends DatabaseTestCase {
         try {
             InsertOperation<Document> op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, insertDocumentList,
                                                                          new DocumentCodec());
-            op.execute(session);
+            op.execute(getBinding());
             assertEquals(insertDocumentList.size(), getCollectionHelper().count());
         } finally {
             session.close();
