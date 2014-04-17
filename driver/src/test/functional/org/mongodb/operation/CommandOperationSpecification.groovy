@@ -29,6 +29,7 @@ import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.disableMaxTimeFailPoint
 import static org.mongodb.Fixture.enableMaxTimeFailPoint
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.Fixture.isSharded
 import static org.mongodb.Fixture.serverVersionAtLeast
@@ -45,7 +46,7 @@ class CommandOperationSpecification extends FunctionalSpecification {
         enableMaxTimeFailPoint()
 
         when:
-        commandOperation.execute(getSession())
+        commandOperation.execute(getBinding())
 
         then:
         thrown(MongoExecutionTimeoutException)
