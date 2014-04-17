@@ -18,6 +18,8 @@ package org.mongodb;
 
 import org.junit.After;
 import org.junit.Before;
+import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.test.CollectionHelper;
 
 import static org.mongodb.Fixture.getDefaultDatabase;
 import static org.mongodb.Fixture.initialiseCollection;
@@ -48,5 +50,13 @@ public class DatabaseTestCase {
 
     protected String getCollectionName() {
         return collection.getName();
+    }
+
+    protected MongoNamespace getNamespace() {
+        return collection.getNamespace();
+    }
+
+    protected CollectionHelper<Document> getCollectionHelper() {
+        return new CollectionHelper<Document>(new DocumentCodec(), getNamespace());
     }
 }
