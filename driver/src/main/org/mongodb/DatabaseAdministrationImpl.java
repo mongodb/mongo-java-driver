@@ -18,6 +18,7 @@ package org.mongodb;
 
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.CreateCollectionOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.GetCollectionNamesOperation;
 import org.mongodb.operation.RenameCollectionOperation;
@@ -59,10 +60,7 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public void createCollection(final CreateCollectionOptions createCollectionOptions) {
-        CommandResult commandResult = client.execute(new CommandOperation(databaseName, createCollectionOptions.asDocument(),
-                                                                          ReadPreference.primary(), commandCodec, commandCodec
-        ));
-        ErrorHandling.handleErrors(commandResult);
+        client.execute(new CreateCollectionOperation(databaseName, createCollectionOptions));
     }
 
     @Override
