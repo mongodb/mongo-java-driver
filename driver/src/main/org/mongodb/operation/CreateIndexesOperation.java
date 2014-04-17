@@ -102,7 +102,6 @@ public class CreateIndexesOperation implements AsyncOperation<Void>, Operation<V
     private void executeInsertProtocolAsync(final SingleResultFuture<Void> retVal, final ServerConnectionProvider connectionProvider,
                                             final List<Index> indexesRemaining) {
         Index index = indexesRemaining.remove(0);
-        SingleResultFuture<WriteResult> indexResult = new SingleResultFuture<WriteResult>();
         executeProtocolAsync(asInsertProtocol(index), connectionProvider)
         .register(new SingleResultCallback<WriteResult>() {
             @Override
