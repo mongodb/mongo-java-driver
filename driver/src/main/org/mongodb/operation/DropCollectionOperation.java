@@ -16,49 +16,53 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.session.Session;
 
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.OperationHelper.ignoreNameSpaceErrors;
+import static org.mongodb.operation.OperationHelper.ignoreResult;
 
 /**
  * Operation to drop a Collection in MongoDB.  The {@code execute} method throws MongoCommandFailureException if something goes wrong, but
  * it will not throw an Exception if the collection does not exist before trying to drop it.
  */
-public class DropCollectionOperation implements Operation<CommandResult> {
+public class DropCollectionOperation implements AsyncOperation<Void>, Operation<Void> {
     private final MongoNamespace namespace;
-    private final Document dropCollectionCommand;
-    private final Codec<Document> commandCodec = new DocumentCodec();
 
     /**
      * Create the Operation to drop a Collection from MongoDB.
-     * @param namespace      the database/collection namespace for the collection to be dropped
      *
+     * @param namespace the database/collection namespace for the collection to be dropped
      */
     public DropCollectionOperation(final MongoNamespace namespace) {
         this.namespace = namespace;
-        dropCollectionCommand = new Document("drop", namespace.getCollectionName());
     }
 
     @Override
-    public CommandResult execute(final Session session) {
+    public Void execute(final Session session) {
         try {
-            return executeWrappedCommandProtocol(namespace.getDatabaseName(), dropCollectionCommand, commandCodec, commandCodec, session);
+            executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), session);
         } catch (MongoCommandFailureException e) {
-            return ignoreNamespaceNotFoundExceptionsWhenDroppingACollection(e);
+            ignoreNameSpaceErrors(e);
         }
+        return null;
     }
 
-    private CommandResult ignoreNamespaceNotFoundExceptionsWhenDroppingACollection(final MongoCommandFailureException e) {
-        if (!e.getCommandResult().getErrorMessage().equals("ns not found")) {
-            throw e;
-        }
-        return e.getCommandResult();
+    @Override
+    public MongoFuture<Void> executeAsync(final Session session) {
+        MongoFuture<CommandResult> futureDropOperation = executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
+                                                                                            session);
+        return ignoreResult(ignoreNameSpaceErrors(futureDropOperation));
+    }
+
+    private Document getCommand() {
+        return new Document("drop", namespace.getCollectionName());
     }
 
 }

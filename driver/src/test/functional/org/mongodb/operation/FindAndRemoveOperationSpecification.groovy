@@ -14,66 +14,102 @@
  * limitations under the License.
  */
 
-
-
-
-
 package org.mongodb.operation
-
 import org.mongodb.Document
+import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoCollection
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
+import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 
 class FindAndRemoveOperationSpecification extends FunctionalSpecification {
-    private final DocumentCodec documentDecoder = new DocumentCodec()
+    private final DocumentCodec documentCodec = new DocumentCodec()
+    private final WorkerCodec workerCodec = new WorkerCodec()
 
     def 'should remove single document'() {
+
         given:
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
 
-        collection.insert(pete);
-        collection.insert(sam);
+        getCollectionHelper().insertDocuments(pete, sam)
 
         when:
         FindAndRemove findAndRemove = new FindAndRemove().where(new Document('name', 'Pete'));
 
-        FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(collection.namespace, findAndRemove,
-                                                                                          documentDecoder
-        )
+        FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), findAndRemove,
+                                                                                          documentCodec)
         Document returnedDocument = operation.execute(getSession())
 
         then:
-        collection.find().count() == 1;
-        collection.find().one == sam
-        returnedDocument == pete
+        getCollectionHelper().find().size() == 1;
+        getCollectionHelper().find().first().getString('name') == 'Sam'
+        returnedDocument.getString('name') == 'Pete'
+    }
+
+    def 'should remove single document asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+
+        given:
+        Document pete = new Document('name', 'Pete').append('job', 'handyman')
+        Document sam = new Document('name', 'Sam').append('job', 'plumber')
+
+        getCollectionHelper().insertDocuments(pete, sam)
+
+        when:
+        FindAndRemove findAndRemove = new FindAndRemove().where(new Document('name', 'Pete'));
+
+        FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), findAndRemove,
+                                                                                          documentCodec)
+        Document returnedDocument = operation.executeAsync(getSession()).get()
+
+        then:
+        getCollectionHelper().find().size() == 1;
+        getCollectionHelper().find().first().getString('name') == 'Sam'
+        returnedDocument.getString('name') == 'Pete'
     }
 
     def 'should remove single document when using custom codecs'() {
         given:
-        MongoCollection<Worker> workerCollection = database.getCollection(getCollectionName(), new WorkerCodec())
         Worker pete = new Worker('Pete', 'handyman', new Date(), 3)
         Worker sam = new Worker('Sam', 'plumber', new Date(), 7)
-
-        workerCollection.insert(pete);
-        workerCollection.insert(sam);
+        getWorkerCollectionHelper().insertDocuments(pete, sam)
 
         when:
         FindAndRemove<Worker> findAndRemove = new FindAndRemove<Worker>().where(new Document('name', 'Pete'));
 
-        FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Worker>(collection.namespace, findAndRemove,
-                                                                                      new WorkerCodec()
-        )
+        FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Worker>(getNamespace(), findAndRemove,
+                                                                                      workerCodec)
         Worker returnedDocument = operation.execute(getSession())
 
         then:
-        workerCollection.find().count() == 1;
-        workerCollection.find().one == sam
+        getWorkerCollectionHelper().find().size() == 1;
+        getWorkerCollectionHelper().find().first() == sam
         returnedDocument == pete
     }
+
+    def 'should remove single document when using custom codecs asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+
+        given:
+        Worker pete = new Worker('Pete', 'handyman', new Date(), 3)
+        Worker sam = new Worker('Sam', 'plumber', new Date(), 7)
+        getWorkerCollectionHelper().insertDocuments(pete, sam)
+
+        when:
+        FindAndRemove<Worker> findAndRemove = new FindAndRemove<Worker>().where(new Document('name', 'Pete'));
+
+        FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Worker>(getNamespace(), findAndRemove,
+                                                                                      workerCodec)
+        Worker returnedDocument = operation.execute(getSession())
+
+        then:
+        getWorkerCollectionHelper().find().size() == 1;
+        getWorkerCollectionHelper().find().first() == sam
+        returnedDocument == pete
+    }
+
 }

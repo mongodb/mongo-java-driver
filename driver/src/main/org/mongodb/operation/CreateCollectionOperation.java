@@ -16,42 +16,33 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Document;
-import org.mongodb.MongoCommandFailureException;
+import org.mongodb.CreateCollectionOptions;
 import org.mongodb.MongoFuture;
-import org.mongodb.MongoNamespace;
 import org.mongodb.session.Session;
 
+import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.ignoreNameSpaceErrors;
 import static org.mongodb.operation.OperationHelper.ignoreResult;
 
-public class DropIndexOperation implements AsyncOperation<Void>, Operation<Void> {
-    private final MongoNamespace namespace;
-    private final String indexName;
+public class CreateCollectionOperation implements AsyncOperation<Void>, Operation<Void> {
+    private final String databaseName;
+    private final CreateCollectionOptions createCollectionOptions;
 
-    public DropIndexOperation(final MongoNamespace namespace, final String indexName) {
-        this.namespace = namespace;
-        this.indexName = indexName;
+    public CreateCollectionOperation(final String databaseName, final CreateCollectionOptions createCollectionOptions) {
+        this.databaseName = notNull("databaseName", databaseName);
+        this.createCollectionOptions = notNull("createCollectionOptions", createCollectionOptions);
     }
 
     @Override
     public Void execute(final Session session) {
-        try {
-            executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), session);
-        } catch (MongoCommandFailureException e) {
-            ignoreNameSpaceErrors(e);
-        }
+        executeWrappedCommandProtocol(databaseName, createCollectionOptions.asDocument(), session);
         return null;
     }
 
     @Override
     public MongoFuture<Void> executeAsync(final Session session) {
-        return ignoreResult(ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), session)));
+        return ignoreResult(executeWrappedCommandProtocolAsync(databaseName, createCollectionOptions.asDocument(), session));
     }
 
-    private Document getCommand() {
-        return new Document("dropIndexes", namespace.getCollectionName()).append("index", indexName);
-    }
 }

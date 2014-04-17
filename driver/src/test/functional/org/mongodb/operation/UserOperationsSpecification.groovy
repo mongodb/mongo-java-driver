@@ -14,21 +14,10 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
-
-
-
-
-
-
 package org.mongodb.operation
 
 import org.mongodb.Document
+import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.ClusterSettings
@@ -42,6 +31,7 @@ import org.mongodb.selector.PrimaryServerSelector
 
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
+import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
 import static org.mongodb.Fixture.getSession
@@ -59,22 +49,39 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'an added user should be found'() {
         given:
-        new CreateUserOperation(readOnlyUser).execute(session)
+        new CreateUserOperation(readOnlyUser).execute(getSession())
 
         when:
-        def found = new UserExistsOperation(databaseName, readOnlyUser.credential.userName)
-                .execute(session)
+        def found = new UserExistsOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
 
         then:
         found
 
         cleanup:
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(session)
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+    }
+
+    def 'an added user should be found asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+
+        given:
+        new CreateUserOperation(readOnlyUser).executeAsync(getSession()).get()
+
+        when:
+        def found = new UserExistsOperation(databaseName, readOnlyUser.credential.userName)
+                .executeAsync(getSession()).get()
+
+        then:
+        found
+
+        cleanup:
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName)
+                .executeAsync(getSession()).get()
     }
 
     def 'an added user should authenticate'() {
         given:
-        new CreateUserOperation(readOnlyUser).execute(session)
+        new CreateUserOperation(readOnlyUser).execute(getSession())
         def cluster = getCluster()
 
         when:
@@ -86,14 +93,53 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
         cleanup:
         connection?.close()
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(session)
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        cluster?.close()
+    }
+
+    def 'an added user should authenticate asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+
+        given:
+        new CreateUserOperation(readOnlyUser).executeAsync(getSession()).get()
+        def cluster = getCluster()
+
+        when:
+        def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
+        def connection = server.getConnection()
+
+        then:
+        connection
+
+        cleanup:
+        connection?.close()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getSession()).get()
         cluster?.close()
     }
 
     def 'a removed user should not authenticate'() {
         given:
-        new CreateUserOperation(readOnlyUser).execute(session)
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(session)
+        new CreateUserOperation(readOnlyUser).execute(getSession())
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        def cluster = getCluster()
+
+        when:
+        def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
+        server.getConnection()
+
+        then:
+        thrown(MongoSecurityException)
+
+        cleanup:
+        cluster?.close()
+    }
+
+    def 'a removed user should not authenticate asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+
+        given:
+        new CreateUserOperation(readOnlyUser).executeAsync(getSession()).get()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getSession()).get()
         def cluster = getCluster()
 
         when:
@@ -109,10 +155,10 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'a replaced user should authenticate with its new password'() {
         given:
-        new CreateUserOperation(readOnlyUser).execute(session)
+        new CreateUserOperation(readOnlyUser).execute(getSession())
         def newUser = new User(createMongoCRCredential(readOnlyUser.credential.userName, readOnlyUser.credential.source,
-                                                       '234'.toCharArray()), true)
-        new UpdateUserOperation(newUser).execute(session)
+                '234'.toCharArray()), true)
+        new UpdateUserOperation(newUser).execute(getSession())
         def cluster = getCluster(newUser)
 
         when:
@@ -124,42 +170,89 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
         cleanup:
         connection?.close()
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(session)
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        cluster?.close()
+    }
+
+    def 'a replaced user should authenticate with its new password asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+
+        given:
+        new CreateUserOperation(readOnlyUser).executeAsync(getSession()).get()
+        def newUser = new User(createMongoCRCredential(readOnlyUser.credential.userName, readOnlyUser.credential.source,
+                '234'.toCharArray()), true)
+        new UpdateUserOperation(newUser).executeAsync(getSession()).get()
+        def cluster = getCluster(newUser)
+
+        when:
+        def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
+        def connection = server.getConnection()
+
+        then:
+        connection
+
+        cleanup:
+        connection?.close()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getSession()).get()
         cluster?.close()
     }
 
     def 'a read write user should be able to write'() {
         given:
-        new CreateUserOperation(readWriteUser).execute(session)
+        new CreateUserOperation(readWriteUser).execute(getSession())
         def cluster = getCluster()
 
         when:
         def result = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
-                                                   asList(new InsertRequest<Document>(new Document())),
-                                                   new DocumentCodec())
-                .execute(session)
+                asList(new InsertRequest<Document>(new Document())),
+                new DocumentCodec())
+                .execute(getSession())
         then:
         result.getCount() == 0
 
         cleanup:
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(session)
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
         cluster?.close()
     }
 
-    // This test is in UserOperationTest because the assertion is conditional on auth being enabled, and there's no way to do that in Spock
+    def 'a read write user should be able to write asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+
+        given:
+        new CreateUserOperation(readWriteUser).executeAsync(getSession()).get()
+        def cluster = getCluster()
+
+        when:
+        def result = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
+                asList(new InsertRequest<Document>(new Document())),
+                new DocumentCodec())
+                .executeAsync(getSession()).get()
+        then:
+        result.getCount() == 0
+
+        cleanup:
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getSession()).get()
+        cluster?.close()
+    }
+
+//    // This test is in UserOperationTest because the assertion is conditional on auth being enabled, and
+//    // there's no way to do that in Spock
 //    def 'a read only user should not be able to write'() {
 //        given:
-//        new CreateUserOperation(readOnlyUser, getBufferProvider(), getSession(), true).execute()
-//        def cluster = createCluster()
+//        new CreateUserOperation(readOnlyUser).execute(getSession())
+//        def cluster = getCluster()
 //
 //        when:
-//        new InsertOperation<Document>(getNamespace(), new Insert<Document>(ACKNOWLEDGED, new Document()), new DocumentCodec(),
-//                                      getBufferProvider(), new ClusterSession(cluster, getExecutor()), true).execute()
+//        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
+//                asList(new InsertRequest<Document>(new Document())),
+//                new DocumentCodec())
+//                .execute(getSession())
+//
 //        then:
 //        thrown(MongoWriteException)
 //
 //        cleanup:
-//        new RemoveUserOperation(databaseName, readOnlyUser.credential.userName, getBufferProvider(), getSession(), true).execute()
+//        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
 //        cluster?.close()
 //    }
 
@@ -170,9 +263,8 @@ class UserOperationsSpecification extends FunctionalSpecification {
     def getCluster(User user) {
         def streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings())
         new DefaultClusterFactory().create(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
-                                           ServerSettings.builder().build(),
-                                           ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
-                                           streamFactory, streamFactory
-                                           , asList(user.credential), null, null, null)
+                ServerSettings.builder().build(),
+                ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
+                streamFactory, streamFactory, asList(user.credential), null, null, null)
     }
 }

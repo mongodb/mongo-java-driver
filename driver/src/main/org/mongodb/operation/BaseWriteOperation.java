@@ -22,26 +22,26 @@ import org.mongodb.BulkWriteResult;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoDuplicateKeyException;
+import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.MongoWriteException;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerVersion;
+import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.AcknowledgedWriteResult;
 import org.mongodb.protocol.WriteCommandProtocol;
 import org.mongodb.protocol.WriteProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
-import java.util.Arrays;
-import java.util.List;
-
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
+import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
 import static org.mongodb.operation.WriteRequest.Type.INSERT;
 import static org.mongodb.operation.WriteRequest.Type.REMOVE;
 import static org.mongodb.operation.WriteRequest.Type.REPLACE;
@@ -71,7 +71,7 @@ public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>,
     public WriteResult execute(final Session session) {
         ServerConnectionProvider provider = getPrimaryConnectionProvider(session);
         try {
-            if (writeConcern.isAcknowledged() && serverSupportsWriteCommands(provider.getServerDescription())) {
+            if (writeConcern.isAcknowledged() && serverSupportsWriteCommands(provider)) {
                 return translateBulkWriteResult(executeProtocol(getCommandProtocol(), provider));
             } else {
                 return executeProtocol(getWriteProtocol(), provider);
@@ -83,7 +83,23 @@ public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>,
 
     @Override
     public MongoFuture<WriteResult> executeAsync(final Session session) {
-        return executeProtocolAsync(getWriteProtocol(), session);
+        // Todo handle async command protocol
+        final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
+        executeProtocolAsync(getWriteProtocol(), session).register(new SingleResultCallback<WriteResult>() {
+            @Override
+            public void onResult(final WriteResult result, final MongoException e) {
+                if (e != null) {
+                    MongoException checkedError = e;
+                    if (e instanceof BulkWriteException) {
+                        checkedError = convertBulkWriteException((BulkWriteException) e);
+                    }
+                    retVal.init(null, checkedError);
+                } else {
+                    retVal.init(result, null);
+                }
+            }
+        });
+       return retVal;
     }
 
     public MongoNamespace getNamespace() {
@@ -94,12 +110,9 @@ public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>,
 
     protected abstract WriteCommandProtocol getCommandProtocol();
 
-    private boolean serverSupportsWriteCommands(final ServerDescription serverDescription) {
-        return serverDescription.getVersion().compareTo(new ServerVersion(2, 6)) >= 0;
+    private boolean serverSupportsWriteCommands(final ServerConnectionProvider connectionProvider) {
+        return serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6));
     }
-
-    // TODO: This is duplicated in ProtocolHelper, but I don't want it to be public
-    private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
 
     private MongoWriteException convertBulkWriteException(final BulkWriteException e) {
         BulkWriteError lastError = getLastError(e);

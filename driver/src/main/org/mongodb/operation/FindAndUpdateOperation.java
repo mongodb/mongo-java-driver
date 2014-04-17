@@ -16,8 +16,11 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
+import org.mongodb.Function;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
@@ -29,8 +32,10 @@ import static org.mongodb.operation.DocumentHelper.putIfNotNull;
 import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 import static org.mongodb.operation.DocumentHelper.putIfTrue;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.OperationHelper.transformResult;
 
-public class FindAndUpdateOperation<T> implements Operation<T> {
+public class FindAndUpdateOperation<T> implements AsyncOperation<T>, Operation<T> {
     private final MongoNamespace namespace;
     private final FindAndUpdate<T> findAndUpdate;
     private final CommandResultWithPayloadDecoder<T> resultDecoder;
@@ -42,13 +47,29 @@ public class FindAndUpdateOperation<T> implements Operation<T> {
         this.resultDecoder = new CommandResultWithPayloadDecoder<T>(resultDecoder, "value");
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public T execute(final Session session) {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        return (T) executeWrappedCommandProtocol(namespace.getDatabaseName(), createFindAndUpdateDocument(), commandEncoder, resultDecoder,
-                                                 session)
-                   .getResponse().get("value");
+        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), commandEncoder, resultDecoder, session);
+        return transformResult(result, transformer());
+    }
+
+    @Override
+    public MongoFuture<T> executeAsync(final Session session) {
+        validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
+        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace, getCommand(), commandEncoder, resultDecoder,
+                                                                               session);
+        return transformResult(result, transformer());
+    }
+
+    private Function<CommandResult, T> transformer() {
+        return new Function<CommandResult, T>() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public T apply(final CommandResult result) {
+                return (T) result.getResponse().get("value");
+            }
+        };
     }
 
     private void validateUpdateDocumentToEnsureItHasUpdateOperators(final Document value) {
@@ -61,7 +82,7 @@ public class FindAndUpdateOperation<T> implements Operation<T> {
                                                   + "Document: %s", value));
     }
 
-    private Document createFindAndUpdateDocument() {
+    private Document getCommand() {
         Document command = new Document("findandmodify", namespace.getCollectionName());
         putIfNotNull(command, "query", findAndUpdate.getFilter());
         putIfNotNull(command, "fields", findAndUpdate.getSelector());
@@ -73,4 +94,5 @@ public class FindAndUpdateOperation<T> implements Operation<T> {
         command.put("update", findAndUpdate.getUpdateOperations());
         return command;
     }
+
 }

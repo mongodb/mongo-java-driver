@@ -16,14 +16,20 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.Index;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoDuplicateKeyException;
+import org.mongodb.MongoException;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.MongoServerException;
 import org.mongodb.WriteConcern;
+import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ServerVersion;
+import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.InsertProtocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
@@ -32,17 +38,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.asList;
+import static org.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
+import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProviderAsync;
+import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
 
-public class CreateIndexesOperation implements Operation<Void> {
+public class CreateIndexesOperation implements AsyncOperation<Void>, Operation<Void> {
     private final List<Index> indexes;
     private final MongoNamespace namespace;
+    private final MongoNamespace systemIndexes;
 
     public CreateIndexesOperation(final List<Index> indexes, final MongoNamespace namespace) {
         this.indexes = indexes;
         this.namespace = namespace;
+        this.systemIndexes = new MongoNamespace(namespace.getDatabaseName(), "system.indexes");
     }
 
     @Override
@@ -50,34 +63,60 @@ public class CreateIndexesOperation implements Operation<Void> {
         ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
         if (connectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
             try {
-                executeCommandBasedProtocol(connectionProvider);
+                executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), connectionProvider);
             } catch (MongoCommandFailureException e) {
-                if (e.getErrorCode() == 11000) {
-                    throw new MongoDuplicateKeyException(e.getErrorCode(), e.getErrorMessage(), e.getCommandResult());
-                } else {
-                    throw e;
-                }
+                throw checkForDuplicateKeyError(e);
             }
         } else {
-            executeCollectionBasedProtocol(connectionProvider);
+            for (Index index : indexes) {
+                executeProtocol(asInsertProtocol(index), connectionProvider);
+            }
         }
         return null;
-
     }
 
-    @SuppressWarnings("unchecked")
-    private void executeCollectionBasedProtocol(final ServerConnectionProvider connectionProvider) {
-        MongoNamespace systemIndexes = new MongoNamespace(namespace.getDatabaseName(), "system.indexes");
-        for (Index index : indexes) {
-            executeProtocol(new InsertProtocol<Document>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
-                                                         asList(new InsertRequest<Document>(toDocument(index))),
-                                                         new DocumentCodec()),
-                            connectionProvider);
-        }
+    @Override
+    public MongoFuture<Void> executeAsync(final Session session) {
+        final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
+        getPrimaryConnectionProviderAsync(session).register(new SingleResultCallback<ServerConnectionProvider>() {
+            @Override
+            public void onResult(final ServerConnectionProvider connectionProvider, final MongoException e) {
+                if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
+                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), connectionProvider)
+                    .register(new SingleResultCallback<CommandResult>() {
+                        @Override
+                        public void onResult(final CommandResult result, final MongoException e1) {
+                            retVal.init(null, translateException(e1));
+                        }
+                    });
+                } else {
+                    executeInsertProtocolAsync(retVal, connectionProvider, indexes);
+                }
+            }
+        });
+        return retVal;
     }
 
+    private void executeInsertProtocolAsync(final SingleResultFuture<Void> retVal, final ServerConnectionProvider connectionProvider,
+                                            final List<Index> indexesRemaining) {
+        Index index = indexesRemaining.remove(0);
+        executeProtocolAsync(asInsertProtocol(index), connectionProvider)
+        .register(new SingleResultCallback<WriteResult>() {
+            @Override
+            public void onResult(final WriteResult result, final MongoException e) {
+                MongoException translatedException = translateException(e);
+                if (translatedException != null) {
+                    retVal.init(null, translatedException);
+                } else if (indexesRemaining.isEmpty()) {
+                    retVal.init(null, null);
+                } else {
+                    executeInsertProtocolAsync(retVal, connectionProvider, indexesRemaining);
+                }
+            }
+        });
+    }
 
-    private void executeCommandBasedProtocol(final ServerConnectionProvider connectionProvider) {
+    private Document getCommand() {
         Document command = new Document("createIndexes", namespace.getCollectionName());
         List<Document> list = new ArrayList<Document>();
         for (Index index : indexes) {
@@ -85,8 +124,14 @@ public class CreateIndexesOperation implements Operation<Void> {
         }
         command.append("indexes", list);
 
+        return command;
+    }
 
-        executeWrappedCommandProtocol(namespace.getDatabaseName(), command, new DocumentCodec(), new DocumentCodec(), connectionProvider);
+    @SuppressWarnings("unchecked")
+    private InsertProtocol<Document> asInsertProtocol(final Index index) {
+        return new InsertProtocol<Document>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
+                                            asList(new InsertRequest<Document>(toDocument(index))),
+                                            new DocumentCodec());
     }
 
     private Document toDocument(final Index index) {
@@ -114,4 +159,15 @@ public class CreateIndexesOperation implements Operation<Void> {
         return indexDetails;
     }
 
+    private MongoException translateException(final MongoException e) {
+        return (e instanceof MongoCommandFailureException) ? checkForDuplicateKeyError((MongoCommandFailureException) e) : null;
+    }
+
+    private MongoServerException checkForDuplicateKeyError(final MongoCommandFailureException e) {
+        if (DUPLICATE_KEY_ERROR_CODES.contains(e.getErrorCode())) {
+            return new MongoDuplicateKeyException(e.getErrorCode(), e.getErrorMessage(), e.getCommandResult());
+        } else {
+            return e;
+        }
+    }
 }

@@ -16,29 +16,27 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Codec;
-import org.mongodb.CommandResult;
 import org.mongodb.Document;
-import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.MongoFuture;
 import org.mongodb.session.Session;
 
 import static org.mongodb.MongoNamespace.asNamespaceString;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.OperationHelper.ignoreResult;
 
 /**
  * Executing this operation will rename the given collection to the new name.  If the new name is the same as an existing collection and
  * dropTarget is true, this existing collection will be dropped. If dropTarget is false and the newCollectionName is the same as an existing
  * collection, a MongoServerException will be thrown.
  */
-public class RenameCollectionOperation implements Operation<CommandResult> {
-    private final Codec<Document> commandCodec = new DocumentCodec();
+public class RenameCollectionOperation implements AsyncOperation<Void>, Operation<Void> {
     private final String originalCollectionName;
     private final String newCollectionName;
     private final boolean dropTarget;
     private final String databaseName;
 
     /**
-     * The constructor of this abstract class takes the fields that are required by all basic operations.
      * @param databaseName           the name of the database containing the collection to rename
      * @param originalCollectionName the name of the collection to rename
      * @param newCollectionName      the desired new name for the collection
@@ -56,18 +54,31 @@ public class RenameCollectionOperation implements Operation<CommandResult> {
     /**
      * Rename the collection with {@code oldCollectionName} in database {@code databaseName} to the {@code newCollectionName}.
      *
-     * @return a CommandResult containing the success or failure of executing the rename.
      * @throws org.mongodb.MongoServerException
      *          if you provide a newCollectionName that is the name of an existing collection and dropTarget is false,
      *          or if the oldCollectionName is the name of a collection that doesn't exist
      * @param session
      */
     @Override
-    public CommandResult execute(final Session session) {
-        return executeWrappedCommandProtocol("admin", createCommand(), commandCodec, commandCodec, session);
+    public Void execute(final Session session) {
+        executeWrappedCommandProtocol("admin", getCommand(), session);
+        return null;
     }
 
-    private Document createCommand() {
+    /**
+     * Rename the collection with {@code oldCollectionName} in database {@code databaseName} to the {@code newCollectionName}.
+     *
+     * @throws org.mongodb.MongoServerException
+     *          if you provide a newCollectionName that is the name of an existing collection and dropTarget is false,
+     *          or if the oldCollectionName is the name of a collection that doesn't exist
+     * @param session
+     */
+    @Override
+    public MongoFuture<Void> executeAsync(final Session session) {
+        return ignoreResult(executeWrappedCommandProtocolAsync("admin", getCommand(), session));
+    }
+
+    private Document getCommand() {
         return new Document("renameCollection", asNamespaceString(databaseName, originalCollectionName))
                    .append("to", asNamespaceString(databaseName, newCollectionName))
                    .append("dropTarget", dropTarget);

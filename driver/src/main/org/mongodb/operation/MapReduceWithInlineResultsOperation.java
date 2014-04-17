@@ -20,7 +20,10 @@ import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
+import org.mongodb.Function;
+import org.mongodb.MapReduceAsyncCursor;
 import org.mongodb.MapReduceCursor;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.codecs.DocumentCodec;
@@ -29,6 +32,8 @@ import org.mongodb.session.Session;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandDocuments.createMapReduce;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.OperationHelper.transformResult;
 
 /**
  * Operation that runs a Map Reduce against a MongoDB instance.  This operation only supports "inline" results, i.e. the results will be
@@ -40,8 +45,8 @@ import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtoco
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0
  */
-public class MapReduceWithInlineResultsOperation<T> implements Operation<MapReduceCursor<T>> {
-    private final Document command;
+public class MapReduceWithInlineResultsOperation<T> implements AsyncOperation<MapReduceAsyncCursor<T>>, Operation<MapReduceCursor<T>> {
+    private final MapReduce mapReduce;
     private final MongoNamespace namespace;
     private final ReadPreference readPreference;
     private final Codec<Document> commandCodec = new DocumentCodec();
@@ -64,7 +69,7 @@ public class MapReduceWithInlineResultsOperation<T> implements Operation<MapRedu
         }
         this.namespace = notNull("namespace", namespace);
         this.readPreference = readPreference;
-        this.command = createMapReduce(namespace.getCollectionName(), mapReduce);
+        this.mapReduce = mapReduce;
     }
 
     /**
@@ -76,11 +81,43 @@ public class MapReduceWithInlineResultsOperation<T> implements Operation<MapRedu
     @Override
     @SuppressWarnings("unchecked")
     public MapReduceCursor<T> execute(final Session session) {
-        CommandResult commandResult = executeWrappedCommandProtocol(namespace, command,
-                                                                    commandCodec,
-                                                                    new CommandResultWithPayloadDecoder<T>(decoder, "results"),
-                                                                    readPreference, session);
+        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), commandCodec,
+                                                             new CommandResultWithPayloadDecoder<T>(decoder, "results"),
+                                                             readPreference, session);
 
-        return new MapReduceInlineResultsCursor<T>(commandResult);
+        return transformResult(result, transform());
     }
+
+    @Override
+    public MongoFuture<MapReduceAsyncCursor<T>> executeAsync(final Session session) {
+        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace, getCommand(), commandCodec,
+                                                                               new CommandResultWithPayloadDecoder<T>(decoder, "results"),
+                                                                               readPreference, session);
+        return transformResult(result, transformAsync());
+    }
+
+    private Function<CommandResult, MapReduceCursor<T>> transform() {
+        return new Function<CommandResult, MapReduceCursor<T>>() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public MapReduceCursor<T> apply(final CommandResult result) {
+                return new MapReduceInlineResultsCursor(result);
+            }
+        };
+    }
+
+    private Function<CommandResult, MapReduceAsyncCursor<T>> transformAsync() {
+        return new Function<CommandResult, MapReduceAsyncCursor<T>>() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public MapReduceAsyncCursor<T> apply(final CommandResult result) {
+                return new MapReduceInlineResultsAsyncCursor<T>(result);
+            }
+        };
+    }
+
+    private Document getCommand() {
+        return createMapReduce(namespace.getCollectionName(), mapReduce);
+    }
+
 }

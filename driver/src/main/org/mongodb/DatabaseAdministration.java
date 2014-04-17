@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * The administrative commands that can be run against a selected database.  Application developers should not normally need to call these
@@ -35,7 +35,7 @@ public interface DatabaseAdministration {
     /**
      * @return a Set of the names of all the collections in this database
      */
-    Set<String> getCollectionNames();
+    List<String> getCollectionNames();
 
     /**
      * Create a new collection with the given name.

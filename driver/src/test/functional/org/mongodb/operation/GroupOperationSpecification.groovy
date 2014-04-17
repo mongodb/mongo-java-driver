@@ -20,57 +20,51 @@ import org.mongodb.AsyncBlock
 import org.mongodb.Document
 import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MapReduceAsyncCursor
-import org.mongodb.MapReduceCursor
+import org.mongodb.MongoAsyncCursor
 import org.mongodb.MongoException
-import org.mongodb.MongoFuture
 import org.mongodb.ReadPreference
-import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.SingleResultCallback
-import org.mongodb.test.CollectionHelper
 
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 
-class MapReduceWithInlineResultsOperationFunctionalSpecification extends FunctionalSpecification {
-    private final documentCodec = new DocumentCodec()
-    def mapReduce = new MapReduce(new Code('function(){ emit( this.name , 1 ); }'),
-                                  new Code('function(key, values){ return values.length; }'))
-    def expectedResults = [['_id': 'Pete', 'value': 2.0] as Document,
-                           ['_id': 'Sam', 'value': 1.0] as Document]
+class GroupOperationSpecification extends FunctionalSpecification {
 
-    def setup() {
-        CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
+    def 'should be able to group by name'() {
+        given:
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
-        helper.insertDocuments(pete, sam, pete2)
-    }
+        getCollectionHelper().insertDocuments(pete, sam, pete2)
 
-
-    def 'should return the correct results'() {
-        given:
-        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec, ReadPreference.primary())
+        Group group = new Group(new Document('name',  1), new Code('function ( curr, result ) {}'), new Document())
 
         when:
-        MapReduceCursor<Document> results = operation.execute(getSession())
+        GroupOperation op = new GroupOperation(getNamespace(), group, ReadPreference.primary())
+        def result = op.execute(getSession());
 
         then:
-        results.iterator().toList() == expectedResults
+        List<String> results = result.iterator()*.getString('name')
+        results.containsAll(['Pete', 'Sam'])
     }
 
-    def 'should return the correct results asynchronously'() {
+    def 'should be able to group by name asynchronously'() {
         assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
 
         given:
-        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec, ReadPreference.primary())
+        Document pete = new Document('name', 'Pete').append('job', 'handyman')
+        Document sam = new Document('name', 'Sam').append('job', 'plumber')
+        Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
+        getCollectionHelper().insertDocuments(pete, sam, pete2)
+
+        Group group = new Group(new Document('name',  1), new Code('function ( curr, result ) {}'), new Document())
 
         when:
-        MongoFuture<MapReduceAsyncCursor> results = operation.executeAsync(getSession())
+        GroupOperation op = new GroupOperation(getNamespace(), group, ReadPreference.primary())
         def result = new SingleResultFuture<List<Document>>()
-        results.register(new SingleResultCallback<MapReduceAsyncCursor<Document>>() {
+        op.executeAsync(getSession()).register(new SingleResultCallback<MongoAsyncCursor<Document>>() {
             @Override
-            void onResult(final MapReduceAsyncCursor<Document> cursor, final MongoException e) {
+            void onResult(final MongoAsyncCursor<Document> cursor, final MongoException e) {
                 cursor.start(new AsyncBlock<Document>() {
                     List<Document> docList = []
 
@@ -90,7 +84,6 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
         })
 
         then:
-        result.get().iterator().toList() == expectedResults
+        result.get().iterator()*.getString('name') containsAll(['Pete', 'Sam'])
     }
-
 }

@@ -14,27 +14,21 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
 package org.mongodb.operation
-
 import org.mongodb.Document
+import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 
-import static java.util.Arrays.asList
+import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.OrderBy.ASC
 
 class GetIndexesOperationSpecification extends FunctionalSpecification {
     def 'should return default index on Collection that exists'() {
         given:
-        def operation = new GetIndexesOperation(collection.getNamespace());
-        collection.insert(new Document('documentThat', 'forces creation of the Collection'))
+        def operation = new GetIndexesOperation(getNamespace())
+        getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
 
         when:
         List<Document> indexes = operation.execute(getSession())
@@ -44,10 +38,25 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
         indexes[0].name == '_id_'
     }
 
+    def 'should return default index on Collection that exists asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+
+        given:
+        def operation = new GetIndexesOperation(getNamespace())
+        getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
+
+        when:
+        List<Document> indexes = operation.executeAsync(getSession()).get()
+
+        then:
+        indexes.size() == 1
+        indexes[0].name == '_id_'
+    }
+
     def 'should return created indexes on Collection'() {
         given:
-        def operation = new GetIndexesOperation(collection.getNamespace());
-        collection.tools().createIndexes(asList(Index.builder().addKey('theField', ASC).build()));
+        def operation = new GetIndexesOperation(getNamespace())
+        createIndexes(Index.builder().addKey('theField', ASC).build())
 
         when:
         List<Document> indexes = operation.execute(getSession())
@@ -58,9 +67,25 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
         indexes[1].name == 'theField_1'
     }
 
-    private final class CustomIndex {
-        String indexName;
-        String indexField;
+    def 'should return created indexes on Collection asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+
+        given:
+        def operation = new GetIndexesOperation(getNamespace())
+        createIndexes(Index.builder().addKey('theField', ASC).build())
+
+        when:
+        List<Document> indexes = operation.executeAsync(getSession()).get()
+
+        then:
+        indexes.size() == 2
+        indexes[0].name == '_id_'
+        indexes[1].name == 'theField_1'
+    }
+
+    @SuppressWarnings('FactoryMethodName')
+    def createIndexes(Index[] indexes) {
+        new CreateIndexesOperation(indexes.toList(), getNamespace()).execute(getSession())
     }
 
 }

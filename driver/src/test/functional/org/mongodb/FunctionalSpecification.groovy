@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
 package org.mongodb
 
+import org.mongodb.codecs.DocumentCodec
+import org.mongodb.test.CollectionHelper
+import org.mongodb.test.Worker
+import org.mongodb.test.WorkerCodec
 import spock.lang.Specification
 
 import static org.mongodb.Fixture.getDefaultDatabase
@@ -52,5 +50,13 @@ class FunctionalSpecification extends Specification {
 
     MongoNamespace getNamespace() {
         new MongoNamespace(getDatabaseName(), getCollectionName())
+    }
+
+    CollectionHelper<Document> getCollectionHelper() {
+        new CollectionHelper<Document>(new DocumentCodec(), getNamespace())
+    }
+
+    CollectionHelper<Worker> getWorkerCollectionHelper() {
+        new CollectionHelper<Worker>(new WorkerCodec(), getNamespace())
     }
 }

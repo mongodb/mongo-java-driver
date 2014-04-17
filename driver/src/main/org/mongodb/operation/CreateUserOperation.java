@@ -16,20 +16,28 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
+import org.mongodb.WriteResult;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.InsertProtocol;
+import org.mongodb.protocol.Protocol;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.Session;
 
 import static java.util.Arrays.asList;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
+import static org.mongodb.operation.OperationHelper.ignoreResult;
+import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
 import static org.mongodb.operation.UserOperationHelper.asCollectionDocument;
 import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
 
@@ -38,7 +46,7 @@ import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
  *
  * @since 3.0
  */
-public class CreateUserOperation implements Operation<Void> {
+public class CreateUserOperation implements AsyncOperation<Void>, Operation<Void> {
     private final User user;
 
     public CreateUserOperation(final User user) {
@@ -47,26 +55,37 @@ public class CreateUserOperation implements Operation<Void> {
 
     @Override
     public Void execute(final Session session) {
-        ServerConnectionProvider serverConnectionProvider = getPrimaryConnectionProvider(session);
-        if (serverConnectionProvider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
-            executeCommandBasedProtocol(serverConnectionProvider);
+        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
+        if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
+            executeWrappedCommandProtocol(user.getCredential().getSource(), getCommand(), connectionProvider);
         } else {
-            executeCollectionBasedProtocol(serverConnectionProvider);
+            executeProtocol(getCollectionBasedProtocol(), connectionProvider);
         }
         return null;
     }
 
-    private void executeCommandBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
-        executeWrappedCommandProtocol(user.getCredential().getSource(), asCommandDocument(user, "createUser"),
-                                      new DocumentCodec(), new DocumentCodec(), serverConnectionProvider);
+    @Override
+    public MongoFuture<Void> executeAsync(final Session session) {
+        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
+        if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
+            MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(user.getCredential().getSource(), getCommand(),
+                                                                                   connectionProvider);
+            return ignoreResult(result);
+        } else {
+            MongoFuture<WriteResult> result = executeProtocolAsync(getCollectionBasedProtocol(), session);
+            return ignoreResult(result);
+        }
     }
 
     @SuppressWarnings("unchecked")
-    private void executeCollectionBasedProtocol(final ServerConnectionProvider serverConnectionProvider) {
+    private Protocol<WriteResult> getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(user.getCredential().getSource(), "system.users");
-        executeProtocol(new InsertProtocol<Document>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                                     asList(new InsertRequest<Document>(asCollectionDocument(user))),
-                                                     new DocumentCodec()),
-                        serverConnectionProvider);
+        return new InsertProtocol<Document>(namespace, true, WriteConcern.ACKNOWLEDGED,
+                asList(new InsertRequest<Document>(asCollectionDocument(user))),
+                new DocumentCodec());
+    }
+
+    private Document getCommand() {
+        return asCommandDocument(user, "createUser");
     }
 }

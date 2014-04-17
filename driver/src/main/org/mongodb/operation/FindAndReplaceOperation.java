@@ -16,9 +16,12 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.Function;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.session.Session;
 
@@ -27,8 +30,10 @@ import static org.mongodb.operation.DocumentHelper.putIfNotNull;
 import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 import static org.mongodb.operation.DocumentHelper.putIfTrue;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.OperationHelper.transformResult;
 
-public class FindAndReplaceOperation<T> implements Operation<T> {
+public class FindAndReplaceOperation<T> implements AsyncOperation<T>, Operation<T> {
     private final MongoNamespace namespace;
     private final FindAndReplace<T> findAndReplace;
     private final CommandResultWithPayloadDecoder<T> resultDecoder;
@@ -42,15 +47,30 @@ public class FindAndReplaceOperation<T> implements Operation<T> {
         commandEncoder = new CommandWithPayloadEncoder<T>("update", payloadEncoder);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public T execute(final Session session) {
-        return (T) executeWrappedCommandProtocol(namespace.getDatabaseName(), createFindAndReplaceDocument(), commandEncoder,
-                                                 resultDecoder, session)
-                   .getResponse().get("value");
+        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), commandEncoder, resultDecoder, session);
+        return transformResult(result, transformer());
     }
 
-    private Document createFindAndReplaceDocument() {
+    @Override
+    public MongoFuture<T> executeAsync(final Session session) {
+        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace, getCommand(), commandEncoder, resultDecoder,
+                                                                               session);
+        return transformResult(result, transformer());
+    }
+
+    private Function<CommandResult, T> transformer() {
+        return new Function<CommandResult, T>() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public T apply(final CommandResult result) {
+                return (T) result.getResponse().get("value");
+            }
+        };
+    }
+
+    private Document getCommand() {
         Document command = new Document("findandmodify", namespace.getCollectionName());
         putIfNotNull(command, "query", findAndReplace.getFilter());
         putIfNotNull(command, "fields", findAndReplace.getSelector());

@@ -14,50 +14,112 @@
  * limitations under the License.
  */
 
-
-
-
-
 package org.mongodb.operation
-
 import org.mongodb.Document
+import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoCollection
+import org.mongodb.codecs.DocumentCodec
+import org.mongodb.test.CollectionHelper
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
+import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 
+//TODO: what about custom Date formats?
+//TODO: test null returns
 class FindAndReplaceOperationSpecification extends FunctionalSpecification {
-    private MongoCollection<Worker> workerCollection
+    private final DocumentCodec documentCodec = new DocumentCodec()
+    private final WorkerCodec workerCodec = new WorkerCodec()
 
-    def setup() {
-        //setup with a collection designed to store Workers not Documents
-        workerCollection = database.getCollection(getCollectionName(), new WorkerCodec())
+    def 'should replace single document'() {
+
+        given:
+        CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
+        Document pete = new Document('name', 'Pete').append('job', 'handyman')
+        Document sam = new Document('name', 'Sam').append('job', 'plumber')
+        Document jordan = new Document('name', 'Jordan').append('job', 'sparky')
+
+        helper.insertDocuments(pete, sam)
+
+        when:
+        FindAndReplace<Document> findAndReplace = new FindAndReplace<Document>(jordan).where(new Document('name', 'Pete'));
+
+        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace,
+                documentCodec, documentCodec)
+        Document returnedDocument = operation.execute(getSession())
+
+        then:
+        returnedDocument.getString('name') == 'Pete'
+        helper.find().size() == 2;
+        helper.find().get(0).getString('name') == 'Jordan'
     }
 
-    def 'should be able to specify a custom encoder for the replacement object'() {
+    def 'should replace single document asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+
         given:
+        CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
+        Document pete = new Document('name', 'Pete').append('job', 'handyman')
+        Document sam = new Document('name', 'Sam').append('job', 'plumber')
+        Document jordan = new Document('name', 'Jordan').append('job', 'sparky')
+
+        helper.insertDocuments(pete, sam)
+
+        when:
+        FindAndReplace<Document> findAndReplace = new FindAndReplace<Document>(jordan).where(new Document('name', 'Pete'));
+
+        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace,
+                documentCodec, documentCodec)
+        Document returnedDocument = operation.executeAsync(getSession()).get()
+
+        then:
+        returnedDocument.getString('name') == 'Pete'
+        helper.find().size() == 2;
+        helper.find().get(0).getString('name') == 'Jordan'
+    }
+
+    def 'should replace single document when using custom codecs'() {
+        given:
+        CollectionHelper<Worker> helper = new CollectionHelper<Worker>(workerCodec, getNamespace())
         Worker pete = new Worker('Pete', 'handyman', new Date(), 3)
         Worker sam = new Worker('Sam', 'plumber', new Date(), 5)
         Worker jordan = new Worker(pete.id, 'Jordan', 'sparky', new Date(), 7)
 
-        workerCollection.insert(pete);
-        workerCollection.insert(sam);
+        helper.insertDocuments(pete, sam)
 
         when:
-        FindAndReplace findAndReplace = new FindAndReplace<Worker>(jordan).where(new Document('name', 'Pete'))
-                                                                          .returnNew(false);
+        FindAndReplace<Worker> findAndReplace = new FindAndReplace<Worker>(jordan).where(new Document('name', 'Pete'));
 
-        FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(workerCollection.namespace, findAndReplace,
-                                                                                        new WorkerCodec(), new WorkerCodec())
-        Worker returnedValue = operation.execute(getSession())
+        FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(getNamespace(), findAndReplace,
+                workerCodec, workerCodec)
+        Worker returnedDocument = operation.execute(getSession())
 
         then:
-        returnedValue == pete
+        returnedDocument == pete
+        helper.find().get(0) == jordan
     }
 
-    //TODO: what about custom Date formats?
-    //TODO: test null returns
+    def 'should replace single document when using custom codecs asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
 
+        given:
+        CollectionHelper<Worker> helper = new CollectionHelper<Worker>(workerCodec, getNamespace())
+        Worker pete = new Worker('Pete', 'handyman', new Date(), 3)
+        Worker sam = new Worker('Sam', 'plumber', new Date(), 5)
+        Worker jordan = new Worker(pete.id, 'Jordan', 'sparky', new Date(), 7)
+
+        helper.insertDocuments(pete, sam)
+
+        when:
+        FindAndReplace<Worker> findAndReplace = new FindAndReplace<Worker>(jordan).where(new Document('name', 'Pete'));
+
+        FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(getNamespace(), findAndReplace,
+                workerCodec, workerCodec)
+        Worker returnedDocument = operation.executeAsync(getSession()).get()
+
+        then:
+        returnedDocument == pete
+        helper.find().get(0) == jordan
+    }
 }

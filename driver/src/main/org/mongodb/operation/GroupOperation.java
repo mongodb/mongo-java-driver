@@ -18,15 +18,19 @@ package org.mongodb.operation;
 
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
+import org.mongodb.Function;
+import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.session.Session;
 
 import java.util.List;
 
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.OperationHelper.transformResult;
 
 /**
  * Groups documents in a collection by the specified key and performs simple aggregation functions, such as computing counts and sums. The
@@ -35,7 +39,7 @@ import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtoco
  * @mongodb.driver.manual reference/command/group Group Command
  * @since 3.0
  */
-public class GroupOperation implements Operation<MongoCursor<Document>> {
+public class GroupOperation implements AsyncOperation<MongoAsyncCursor<Document>>, Operation<MongoCursor<Document>> {
     private final MongoNamespace namespace;
     private final Group group;
     private final ReadPreference readPreference;
@@ -61,13 +65,45 @@ public class GroupOperation implements Operation<MongoCursor<Document>> {
     @Override
     @SuppressWarnings("unchecked")
     public MongoCursor<Document> execute(final Session session) {
-        CommandResult commandResult = executeWrappedCommandProtocol(namespace, asCommandDocument(), new DocumentCodec(),
-                                                                    new DocumentCodec(), readPreference, session);
-
-        return new InlineMongoCursor<Document>(commandResult.getAddress(), (List<Document>) commandResult.getResponse().get("retval"));
+        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), readPreference, session);
+        return transformResult(result, transform());
     }
 
-    private Document asCommandDocument() {
+    /**
+     * Will return a cursor of Documents containing the results of the group operation.
+     *
+     * @return a Future MongoCursor of T, the results of the group operation in a form to be iterated over
+     * @param session the session
+     */
+    @Override
+    @SuppressWarnings("unchecked")
+    public MongoFuture<MongoAsyncCursor<Document>> executeAsync(final Session session) {
+        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace, getCommand(), readPreference, session);
+        return transformResult(result, transformAsync());
+    }
+
+    private Function<CommandResult, MongoCursor<Document>> transform() {
+        return new Function<CommandResult, MongoCursor<Document>>() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public MongoCursor<Document> apply(final CommandResult result) {
+                return new InlineMongoCursor<Document>(result.getAddress(), (List<Document>) result.getResponse().get("retval"));
+            }
+        };
+    }
+
+    private Function<CommandResult, MongoAsyncCursor<Document>> transformAsync() {
+        return new Function<CommandResult, MongoAsyncCursor<Document>>() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public MongoAsyncCursor<Document> apply(final CommandResult result) {
+                return new InlineMongoAsyncCursor<Document>((List<Document>) result.getResponse().get("retval"));
+            }
+        };
+    }
+
+
+    private Document getCommand() {
 
         Document document = new Document("ns", namespace.getCollectionName());
 
