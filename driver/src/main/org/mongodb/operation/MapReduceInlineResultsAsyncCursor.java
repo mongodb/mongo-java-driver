@@ -16,10 +16,10 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.AsyncBlock;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
-import org.mongodb.MapReduceCursor;
-import org.mongodb.ServerCursor;
+import org.mongodb.MapReduceAsyncCursor;
 import org.mongodb.connection.ServerAddress;
 
 import java.util.Iterator;
@@ -32,43 +32,29 @@ import java.util.List;
  * @param <T> the type of document to return in the results.
  * @since 3.0
  */
-class MapReduceInlineResultsCursor<T> implements MapReduceCursor<T> {
+class MapReduceInlineResultsAsyncCursor<T> implements MapReduceAsyncCursor<T> {
     private final CommandResult commandResult;
     private final List<T> results;
     private final Iterator<T> iterator;
 
     @SuppressWarnings("unchecked")
-    MapReduceInlineResultsCursor(final CommandResult result) {
+    MapReduceInlineResultsAsyncCursor(final CommandResult result) {
         commandResult = result;
         this.results = (List<T>) commandResult.getResponse().get("results");
         iterator = this.results.iterator();
     }
 
-    @Override
     public void close() {
     }
 
-    @Override
-    public boolean hasNext() {
+    private boolean hasNext() {
         return iterator.hasNext();
     }
 
-    @Override
-    public T next() {
+    private T next() {
         return iterator.next();
     }
 
-    @Override
-    public ServerCursor getServerCursor() {
-        return null;
-    }
-
-    @Override
-    public void remove() {
-        throw new UnsupportedOperationException("Inline map reduce operations don't support remove operations.");
-    }
-
-    @Override
     public ServerAddress getServerAddress() {
         return commandResult.getAddress();
     }
@@ -95,5 +81,13 @@ class MapReduceInlineResultsCursor<T> implements MapReduceCursor<T> {
 
     public Document getResponse() {
         return commandResult.getResponse();
+    }
+
+    @Override
+    public void start(final AsyncBlock<? super T> block) {
+        while (hasNext()) {
+            block.apply(next());
+        }
+        block.done();
     }
 }

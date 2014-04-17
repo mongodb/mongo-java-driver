@@ -20,6 +20,7 @@ import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MapReduceStatistics;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ServerAddress;
@@ -28,6 +29,8 @@ import org.mongodb.session.Session;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandDocuments.createMapReduce;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.OperationHelper.transformResult;
 
 /**
  * Operation that runs a Map Reduce against a MongoDB instance.  This operation does not support "inline" results, i.e. the results will be
@@ -39,7 +42,7 @@ import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtoco
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0
  */
-public class MapReduceToCollectionOperation implements Operation<MapReduceStatistics> {
+public class MapReduceToCollectionOperation implements AsyncOperation<MapReduceStatistics>, Operation<MapReduceStatistics> {
     private final Document command;
     private final MongoNamespace namespace;
     private final Codec<Document> commandCodec = new DocumentCodec();
@@ -69,10 +72,29 @@ public class MapReduceToCollectionOperation implements Operation<MapReduceStatis
      */
     @Override
     public MapReduceStatistics execute(final Session session) {
-        CommandResult commandResult = executeWrappedCommandProtocol(namespace.getDatabaseName(), command, commandCodec, commandCodec,
-                                                      session);
-        serverUsed = commandResult.getAddress();
-        return new MapReduceIntoCollectionStatistics(commandResult);
+        CommandResult result = executeWrappedCommandProtocol(namespace.getDatabaseName(), command, commandCodec, commandCodec, session);
+        return transformResult(result, transformer());
+    }
+
+    @Override
+    public MongoFuture<MapReduceStatistics> executeAsync(final Session session) {
+        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace.getDatabaseName(),
+                                                                               command,
+                                                                               commandCodec,
+                                                                               commandCodec,
+                                                                               session);
+        return transformResult(result, transformer());
+    }
+
+    private TransformBlock<CommandResult, MapReduceStatistics> transformer() {
+        return new TransformBlock<CommandResult, MapReduceStatistics>() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public MapReduceStatistics apply(final CommandResult result) {
+                serverUsed = result.getAddress();
+                return new MapReduceIntoCollectionStatistics(result);
+            }
+        };
     }
 
     /**
@@ -83,4 +105,5 @@ public class MapReduceToCollectionOperation implements Operation<MapReduceStatis
     public ServerAddress getServerUsed() {
         return serverUsed;
     }
+
 }

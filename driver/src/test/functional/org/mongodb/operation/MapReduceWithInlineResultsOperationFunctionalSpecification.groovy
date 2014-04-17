@@ -14,64 +14,139 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
 package org.mongodb.operation
+
 import org.bson.types.Code
+import org.mongodb.AsyncBlock
 import org.mongodb.Document
+import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoCursor
+import org.mongodb.MapReduceAsyncCursor
+import org.mongodb.MapReduceCursor
+import org.mongodb.MongoException
+import org.mongodb.MongoFuture
+import org.mongodb.ReadPreference
 import org.mongodb.codecs.DocumentCodec
+import org.mongodb.connection.SingleResultCallback
+import org.mongodb.test.CollectionHelper
 
 import static org.hamcrest.CoreMatchers.not
 import static org.hamcrest.Matchers.hasKey
+import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
-import static org.mongodb.ReadPreference.primary
 import static spock.util.matcher.HamcrestSupport.that
 
 class MapReduceWithInlineResultsOperationFunctionalSpecification extends FunctionalSpecification {
+    private final documentCodec = new DocumentCodec()
+    def mapReduce = new MapReduce(new Code('function(){ emit( this.name , 1 ); }'),
+                                  new Code('function(key, values){ return values.length; }'))
+    def expectedResults = [['_id': 'Pete', 'value': 2.0] as Document,
+                           ['_id': 'Sam', 'value': 1.0] as Document]
 
     def setup() {
-        collection.save(['x': ['a', 'b'], 's': 1] as Document);
-        collection.save(['x': ['b', 'c'], 's': 2] as Document);
-        collection.save(['x': ['c', 'd'], 's': 3] as Document);
+        CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
+        Document pete = new Document('name', 'Pete').append('job', 'handyman')
+        Document sam = new Document('name', 'Sam').append('job', 'plumber')
+        Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
+        helper.insertDocuments(pete, sam, pete2)
     }
 
-    def 'when verbose is not set the command result should contain less information'() {
-        given:
-        MapReduce mapReduce = new MapReduce(new Code('function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }'),
-                      new Code('function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}'))
 
-        MapReduceWithInlineResultsOperation operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, new DocumentCodec(),
-                                                                                                primary())
+    def 'should return the correct results and the default command result is not verbose'() {
+        given:
+        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec, ReadPreference.primary())
 
         when:
-        MongoCursor<Document> results = operation.execute(getSession())
+        MapReduceCursor<Document> results = operation.execute(getSession())
 
         then:
-        that results.commandResult.getResponse(), not(hasKey('timing'))
+        results.iterator().toList() == expectedResults
+        that results.getResponse(), not(hasKey('timing'))
     }
 
-    def 'when verbose is set the command result should contain less information'() {
+    def 'should return the correct results and the default command result is not verbose asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+
         given:
-        MapReduce mapReduce = new MapReduce(new Code('function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }'),
-                                            new Code('function(key,values)' +
-                                                     '{ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}'))
-        mapReduce.verbose();
-
-        MapReduceWithInlineResultsOperation operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce,
-                                                                                                new DocumentCodec(), primary())
-
+        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec, ReadPreference.primary())
 
         when:
-        MongoCursor<Document> results = operation.execute(getSession())
+        MongoFuture<MapReduceAsyncCursor> results = operation.executeAsync(getSession())
+        def result = new SingleResultFuture<List<Document>>()
+        results.register(new SingleResultCallback<MapReduceAsyncCursor<Document>>() {
+            @Override
+            void onResult(final MapReduceAsyncCursor<Document> cursor, final MongoException e) {
+                cursor.start(new AsyncBlock<Document>() {
+                    List<Document> docList = []
+
+                    @Override
+                    void done() {
+                        result.init(docList, null)
+                    }
+
+                    @Override
+                    void apply(final Document value) {
+                        if (value != null) {
+                            docList += value
+                        }
+                    }
+                })
+            }
+        })
 
         then:
-        that results.commandResult.getResponse(), hasKey('timing')
+        result.get().iterator().toList() == expectedResults
+        that results.get().getResponse(), not(hasKey('timing'))
+    }
+
+    def 'when verbose is set the command result should contain more information'() {
+        given:
+        def mapReduceVerbose = mapReduce.verbose()
+        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduceVerbose, documentCodec, ReadPreference.primary())
+
+        when:
+        MapReduceCursor<Document> results = operation.execute(getSession())
+
+        then:
+        results.iterator().toList() == expectedResults
+        that results.getResponse(), hasKey('timing')
+    }
+
+    def 'when verbose is set the command result should contain more information asynchronously'() {
+        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+
+        given:
+        def mapReduceVerbose = mapReduce.verbose()
+        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduceVerbose, documentCodec, ReadPreference.primary())
+
+        when:
+        MongoFuture<MapReduceAsyncCursor> results = operation.executeAsync(getSession())
+        def result = new SingleResultFuture<List<Document>>()
+        results.register(new SingleResultCallback<MapReduceAsyncCursor<Document>>() {
+            @Override
+            void onResult(final MapReduceAsyncCursor<Document> cursor, final MongoException e) {
+                cursor.start(new AsyncBlock<Document>() {
+                    List<Document> docList = []
+
+                    @Override
+                    void done() {
+                        result.init(docList, null)
+                    }
+
+                    @Override
+                    void apply(final Document value) {
+                        if (value != null) {
+                            docList += value
+                        }
+                    }
+                })
+            }
+        })
+
+
+        then:
+        result.get().iterator().toList() == expectedResults
+        that results.get().getResponse(), hasKey('timing')
     }
 
 }
