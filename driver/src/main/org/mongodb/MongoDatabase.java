@@ -25,6 +25,8 @@ import org.mongodb.annotations.ThreadSafe;
 public interface MongoDatabase {
     String getName();
 
+    CommandResult executeCommand(Document command);
+
     CommandResult executeCommand(final Document command, final ReadPreference readPreference);
 
     MongoDatabaseOptions getOptions();

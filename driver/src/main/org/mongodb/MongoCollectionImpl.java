@@ -32,7 +32,6 @@ import org.mongodb.operation.InsertRequest;
 import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceToCollectionOperation;
 import org.mongodb.operation.MapReduceWithInlineResultsOperation;
-import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.RemoveOperation;
@@ -142,10 +141,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public MongoNamespace getNamespace() {
         return new MongoNamespace(getDatabase().getName(), getName());
-    }
-
-    <V> V execute(final Operation<V> operation) {
-        return client.execute(operation);
     }
 
     <V> V execute(final ReadOperation<V> operation, final ReadPreference readPreference) {

@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.CommandReadOperation;
 import org.mongodb.operation.GetDatabaseNamesOperation;
 
 import java.util.List;
@@ -43,9 +43,10 @@ class ClientAdministrationImpl implements ClientAdministration {
     //http://docs.mongodb.org/manual/reference/command/ping/
     @Override
     public double ping() {
-        CommandResult pingResult = client.execute(new CommandOperation(ADMIN_DATABASE, PING_COMMAND,
-                                                                       client.getOptions().getReadPreference(),
-                                                                       commandCodec, commandCodec));
+        CommandResult pingResult = client.execute(new CommandReadOperation(ADMIN_DATABASE, PING_COMMAND,
+                                                                           client.getOptions().getReadPreference(),
+                                                                           commandCodec, commandCodec),
+                                                  client.getOptions().getReadPreference());
 
         return (Double) pingResult.getResponse().get("ok");
     }
