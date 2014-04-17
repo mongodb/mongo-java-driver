@@ -19,11 +19,8 @@ package org.mongodb;
 import org.mongodb.connection.Cluster;
 import org.mongodb.operation.Operation;
 import org.mongodb.session.ClusterSession;
-import org.mongodb.session.PinnedSession;
 import org.mongodb.session.Session;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,7 +29,6 @@ class MongoClientImpl implements MongoClient {
 
     private final Cluster cluster;
     private final MongoClientOptions clientOptions;
-    private final ThreadLocal<Session> pinnedSession = new ThreadLocal<Session>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     MongoClientImpl(final MongoClientOptions clientOptions, final Cluster cluster) {
@@ -48,28 +44,6 @@ class MongoClientImpl implements MongoClient {
     @Override
     public MongoDatabase getDatabase(final String databaseName, final MongoDatabaseOptions options) {
         return new MongoDatabaseImpl(databaseName, this, options.withDefaults(clientOptions));
-    }
-
-    @Override
-    public void withConnection(final Runnable runnable) {
-        pinSession();
-        try {
-            runnable.run();
-        } finally {
-            unpinSession();
-        }
-    }
-
-    @Override
-    public <T> T withConnection(final Callable<T> callable) throws ExecutionException {
-        pinSession();
-        try {
-            return callable.call();
-        } catch (Exception e) {
-            throw new ExecutionException(e);
-        } finally {
-            unpinSession();
-        }
     }
 
     @Override
@@ -89,9 +63,6 @@ class MongoClientImpl implements MongoClient {
     }
 
     public Session getSession() {
-        if (pinnedSession.get() != null) {
-            return pinnedSession.get();
-        }
         return new ClusterSession(cluster, executorService);
     }
 
@@ -101,19 +72,6 @@ class MongoClientImpl implements MongoClient {
 
     public Executor getExecutor() {
         return executorService;
-    }
-
-    private void pinSession() {
-        if (pinnedSession.get() != null) {
-            throw new IllegalStateException();
-        }
-        pinnedSession.set(new PinnedSession(cluster, executorService));
-    }
-
-    private void unpinSession() {
-        Session sessionToUnpin = this.pinnedSession.get();
-        this.pinnedSession.remove();
-        sessionToUnpin.close();
     }
 
     <V> V execute(final Operation<V> operation) {
