@@ -15,6 +15,9 @@
  */
 
 package org.mongodb.operation
+
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoNamespace
@@ -41,6 +44,7 @@ class RenameCollectionOperationSpecification extends FunctionalSpecification {
         collectionNameExists('newCollection')
     }
 
+    @Category(Async)
     def 'should return rename a collection asynchronously'() {
         given:
         getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
@@ -67,6 +71,7 @@ class RenameCollectionOperationSpecification extends FunctionalSpecification {
         collectionNameExists(getCollectionName())
     }
 
+    @Category(Async)
     def 'should throw if not drop and collection exists asynchronously'() {
         given:
         getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))

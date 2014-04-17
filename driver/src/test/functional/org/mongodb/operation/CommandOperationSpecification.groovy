@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
-
-
 package org.mongodb.operation
-
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoExecutionTimeoutException
 import org.mongodb.ReadPreference
@@ -42,8 +34,8 @@ import static org.mongodb.Fixture.serverVersionAtLeast
 
 class CommandOperationSpecification extends FunctionalSpecification {
     def 'should throw execution timeout exception from execute'() {
-        assumeFalse(isSharded());
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeFalse(isSharded())
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 
         given:
         def commandOperation = new CommandOperation(getNamespace().databaseName,
@@ -61,10 +53,10 @@ class CommandOperationSpecification extends FunctionalSpecification {
         disableMaxTimeFailPoint()
     }
 
+    @Category(Async)
     def 'should throw execution timeout exception from executeAsync'() {
-        assumeFalse(isSharded());
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+        assumeFalse(isSharded())
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 
         given:
         def commandOperation = new CommandOperation(getNamespace().databaseName,

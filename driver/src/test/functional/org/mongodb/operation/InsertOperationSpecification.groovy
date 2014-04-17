@@ -15,16 +15,15 @@
  */
 
 package org.mongodb.operation
-
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoDuplicateKeyException
 import org.mongodb.codecs.DocumentCodec
 import spock.lang.FailsWith
 
 import static java.util.Arrays.asList
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 import static org.mongodb.WriteConcern.UNACKNOWLEDGED
@@ -45,9 +44,8 @@ class InsertOperationSpecification extends FunctionalSpecification {
         !result.isUpdateOfExisting()
     }
 
+    @Category(Async)
     def 'should return correct result asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def insert = new InsertRequest<Document>(new Document('_id', 1))
         def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec())
@@ -74,9 +72,8 @@ class InsertOperationSpecification extends FunctionalSpecification {
         asList(insert.getDocument()) == getCollectionHelper().find()
     }
 
+    @Category(Async)
     def 'should insert a single document asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def insert = new InsertRequest<Document>(new Document('_id', 1))
         def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec())
@@ -104,9 +101,8 @@ class InsertOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().count() == 1001
     }
 
+    @Category(Async)
     def 'should insert a large number of documents asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def inserts = []
         for (i in 1..1001) {
@@ -134,10 +130,9 @@ class InsertOperationSpecification extends FunctionalSpecification {
         !result.wasAcknowledged()
     }
 
+    @Category(Async)
     @FailsWith(NullPointerException)
     def 'should return null CommandResult with unacknowledged WriteConcern asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def insert = new InsertRequest<Document>(new Document('_id', 1))
         def op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, asList(insert), new DocumentCodec())
@@ -167,9 +162,8 @@ class InsertOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().count() == 2
     }
 
+    @Category(Async)
     def 'should insert a batch at The limit of the batch size asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         byte[] hugeByteArray = new byte[1024 * 1024 * 16 - 2127];
         byte[] smallerByteArray = new byte[1024 * 16 + 1980];
@@ -204,9 +198,8 @@ class InsertOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().count() == 2
     }
 
+    @Category(Async)
     def 'should continue on error when continuing on error asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def documents = [
                 new InsertRequest<Document>(new Document('_id', 1)),
@@ -240,9 +233,8 @@ class InsertOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().count() == 1
     }
 
+    @Category(Async)
     def 'should not continue on error when not continuing on error asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def documents = [
                 new InsertRequest<Document>(new Document('_id', 1)),

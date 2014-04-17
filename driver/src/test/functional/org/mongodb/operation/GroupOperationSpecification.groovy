@@ -15,17 +15,18 @@
  */
 
 package org.mongodb.operation
+
+import category.Async
 import org.bson.types.Code
+import org.junit.experimental.categories.Category
 import org.mongodb.AsyncBlock
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoAsyncCursor
 import org.mongodb.MongoException
 import org.mongodb.ReadPreference
 import org.mongodb.connection.SingleResultCallback
 
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 
 class GroupOperationSpecification extends FunctionalSpecification {
@@ -48,9 +49,8 @@ class GroupOperationSpecification extends FunctionalSpecification {
         results.containsAll(['Pete', 'Sam'])
     }
 
+    @Category(Async)
     def 'should be able to group by name asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')

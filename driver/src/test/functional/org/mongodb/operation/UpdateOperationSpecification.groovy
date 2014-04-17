@@ -15,14 +15,14 @@
  */
 
 package org.mongodb.operation
+import category.Async
 import org.bson.types.ObjectId
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 
 import static java.util.Arrays.asList
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
@@ -44,9 +44,8 @@ class UpdateOperationSpecification extends FunctionalSpecification {
         result.isUpdateOfExisting()
     }
 
+    @Category(Async)
     def 'should return correct result for update asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         getCollectionHelper().insertDocuments(new Document('_id', 1))
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
@@ -81,9 +80,8 @@ class UpdateOperationSpecification extends FunctionalSpecification {
         !result.isUpdateOfExisting()
     }
 
+    @Category(Async)
     def 'should return correct result for upsert asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def id = new ObjectId()
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,

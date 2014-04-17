@@ -15,14 +15,15 @@
  */
 
 package org.mongodb.operation
+
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 
 class FindAndRemoveOperationSpecification extends FunctionalSpecification {
@@ -50,9 +51,9 @@ class FindAndRemoveOperationSpecification extends FunctionalSpecification {
         returnedDocument.getString('name') == 'Pete'
     }
 
-    def 'should remove single document asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
 
+    @Category(Async)
+    def 'should remove single document asynchronously'() {
         given:
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
@@ -91,9 +92,8 @@ class FindAndRemoveOperationSpecification extends FunctionalSpecification {
         returnedDocument == pete
     }
 
+    @Category(Async)
     def 'should remove single document when using custom codecs asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         Worker pete = new Worker('Pete', 'handyman', new Date(), 3)
         Worker sam = new Worker('Sam', 'plumber', new Date(), 7)

@@ -30,6 +30,8 @@
 
 package org.mongodb.operation
 
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
@@ -57,7 +59,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
 
     def 'should throw execution timeout exception from execute'() {
         assumeFalse(isSharded())
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 
         given:
         def find = new Find().maxTime(1, SECONDS)
@@ -74,10 +76,10 @@ class QueryOperationSpecification extends FunctionalSpecification {
         disableMaxTimeFailPoint()
     }
 
+    @Category(Async)
     def 'should throw execution timeout exception from executeAsync'() {
         assumeFalse(isSharded())
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
+        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 
         given:
         def find = new Find().maxTime(1, SECONDS)

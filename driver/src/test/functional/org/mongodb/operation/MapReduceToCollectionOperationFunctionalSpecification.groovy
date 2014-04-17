@@ -16,9 +16,10 @@
 
 package org.mongodb.operation
 
+import category.Async
 import org.bson.types.Code
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MapReduceStatistics
 import org.mongodb.MongoNamespace
@@ -26,7 +27,6 @@ import org.mongodb.codecs.DocumentCodec
 import org.mongodb.test.CollectionHelper
 import spock.lang.Shared
 
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 
 class MapReduceToCollectionOperationFunctionalSpecification extends FunctionalSpecification {
@@ -74,9 +74,8 @@ class MapReduceToCollectionOperationFunctionalSpecification extends FunctionalSp
         serverUsed != null
     }
 
+    @Category(Async)
     def 'should return the correct statistics and save the results asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def helper = new CollectionHelper<Document>(documentCodec, mapReduceOutputNamespace)
         def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace, mapReduce)

@@ -15,11 +15,11 @@
  */
 
 package org.mongodb.operation
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 
 class GetCollectionNamesOperationSpecification extends FunctionalSpecification {
@@ -35,9 +35,8 @@ class GetCollectionNamesOperationSpecification extends FunctionalSpecification {
         names.isEmpty()
     }
 
+    @Category(Async)
     def 'should return empty set if database does not exist asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def operation = new GetCollectionNamesOperation('MadeUpDatabase')
 
@@ -60,9 +59,8 @@ class GetCollectionNamesOperationSpecification extends FunctionalSpecification {
         names.containsAll(['system.indexes', collectionName])
     }
 
+    @Category(Async)
     def 'should return default system.index and collection names if a Collection exists asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def operation = new GetCollectionNamesOperation(databaseName)
         getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))

@@ -15,12 +15,12 @@
  */
 
 package org.mongodb.operation
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.OrderBy.ASC
 
@@ -38,9 +38,8 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
         indexes[0].name == '_id_'
     }
 
+    @Category(Async)
     def 'should return default index on Collection that exists asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def operation = new GetIndexesOperation(getNamespace())
         getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
@@ -67,9 +66,8 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
         indexes[1].name == 'theField_1'
     }
 
+    @Category(Async)
     def 'should return created indexes on Collection asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def operation = new GetIndexesOperation(getNamespace())
         createIndexes(Index.builder().addKey('theField', ASC).build())

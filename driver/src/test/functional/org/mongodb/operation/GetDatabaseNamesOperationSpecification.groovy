@@ -15,11 +15,12 @@
  */
 
 package org.mongodb.operation
+
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 
 class GetDatabaseNamesOperationSpecification extends FunctionalSpecification {
@@ -36,9 +37,8 @@ class GetDatabaseNamesOperationSpecification extends FunctionalSpecification {
         names.contains(getDatabaseName())
     }
 
+    @Category(Async)
     def 'should return a list of database names asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         getCollectionHelper().insertDocuments(new Document('_id', 1))
         def operation = new GetDatabaseNamesOperation()

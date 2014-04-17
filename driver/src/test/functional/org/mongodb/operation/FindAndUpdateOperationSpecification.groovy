@@ -15,16 +15,15 @@
  */
 
 package org.mongodb.operation
-
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.test.CollectionHelper
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 
 class FindAndUpdateOperationSpecification extends FunctionalSpecification {
@@ -55,9 +54,8 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
         helper.find().get(0).getInteger('numberOfJobs') == 4
     }
 
+    @Category(Async)
     def 'should update single document asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
         Document pete = new Document('name', 'Pete').append('numberOfJobs', 3)
@@ -103,9 +101,8 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
         helper.find().get(0).numberOfJobs == 4
     }
 
+    @Category(Async)
     def 'should update single document when using custom codecs asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-        
         given:
         CollectionHelper<Worker> helper = new CollectionHelper<Worker>(workerCodec, getNamespace())
         Worker pete = new Worker('Pete', 'handyman', new Date(), 3)

@@ -15,10 +15,12 @@
  */
 
 package org.mongodb.operation
+
+import category.Async
 import org.bson.types.Code
+import org.junit.experimental.categories.Category
 import org.mongodb.AsyncBlock
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MapReduceAsyncCursor
 import org.mongodb.MapReduceCursor
@@ -29,7 +31,6 @@ import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.SingleResultCallback
 import org.mongodb.test.CollectionHelper
 
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 
 class MapReduceWithInlineResultsOperationFunctionalSpecification extends FunctionalSpecification {
@@ -59,9 +60,8 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
         results.iterator().toList() == expectedResults
     }
 
+    @Category(Async)
     def 'should return the correct results asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec, ReadPreference.primary())
 

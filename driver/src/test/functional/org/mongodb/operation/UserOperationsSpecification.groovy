@@ -15,9 +15,9 @@
  */
 
 package org.mongodb.operation
-
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.ClusterSettings
@@ -31,7 +31,6 @@ import org.mongodb.selector.PrimaryServerSelector
 
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
 import static org.mongodb.Fixture.getSession
@@ -61,9 +60,8 @@ class UserOperationsSpecification extends FunctionalSpecification {
         new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
     }
 
+    @Category(Async)
     def 'an added user should be found asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         new CreateUserOperation(readOnlyUser).executeAsync(getSession()).get()
 
@@ -97,9 +95,8 @@ class UserOperationsSpecification extends FunctionalSpecification {
         cluster?.close()
     }
 
+    @Category(Async)
     def 'an added user should authenticate asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         new CreateUserOperation(readOnlyUser).executeAsync(getSession()).get()
         def cluster = getCluster()
@@ -134,9 +131,8 @@ class UserOperationsSpecification extends FunctionalSpecification {
         cluster?.close()
     }
 
+    @Category(Async)
     def 'a removed user should not authenticate asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         new CreateUserOperation(readOnlyUser).executeAsync(getSession()).get()
         new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getSession()).get()
@@ -174,9 +170,8 @@ class UserOperationsSpecification extends FunctionalSpecification {
         cluster?.close()
     }
 
+    @Category(Async)
     def 'a replaced user should authenticate with its new password asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         new CreateUserOperation(readOnlyUser).executeAsync(getSession()).get()
         def newUser = new User(createMongoCRCredential(readOnlyUser.credential.userName, readOnlyUser.credential.source,
@@ -215,9 +210,8 @@ class UserOperationsSpecification extends FunctionalSpecification {
         cluster?.close()
     }
 
+    @Category(Async)
     def 'a read write user should be able to write asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         new CreateUserOperation(readWriteUser).executeAsync(getSession()).get()
         def cluster = getCluster()

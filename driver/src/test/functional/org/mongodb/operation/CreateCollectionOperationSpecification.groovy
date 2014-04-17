@@ -15,6 +15,9 @@
  */
 
 package org.mongodb.operation
+
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.CreateCollectionOptions
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoServerException
@@ -34,6 +37,7 @@ class CreateCollectionOperationSpecification extends FunctionalSpecification {
         collectionNameExists(getCollectionName())
     }
 
+    @Category(Async)
     def 'should create a collection asynchronously'() {
         given:
         assert !collectionNameExists(getCollectionName())
@@ -59,6 +63,7 @@ class CreateCollectionOperationSpecification extends FunctionalSpecification {
         !collectionNameExists('nonExistingCollection')
     }
 
+    @Category(Async)
     def 'should error when creating a collection that already exists asynchronously'() {
         given:
         assert !collectionNameExists(getCollectionName())

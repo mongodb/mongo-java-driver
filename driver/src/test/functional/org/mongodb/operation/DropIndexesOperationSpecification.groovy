@@ -15,13 +15,13 @@
  */
 
 package org.mongodb.operation
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 import org.mongodb.MongoException
 
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.OrderBy.ASC
 
@@ -38,9 +38,8 @@ class DropIndexesOperationSpecification extends FunctionalSpecification {
         getIndexes().size() == 0
     }
 
+    @Category(Async)
     def 'should not error when dropping non-existent index on non-existent collection asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def operation = new DropIndexOperation(getNamespace(), 'made_up_index_1')
 
@@ -63,9 +62,8 @@ class DropIndexesOperationSpecification extends FunctionalSpecification {
         thrown(MongoException)
     }
 
+    @Category(Async)
     def 'should error when dropping non-existent index  on existing collection asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def operation = new DropIndexOperation(getNamespace(), 'made_up_index_1')
         getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
@@ -91,9 +89,8 @@ class DropIndexesOperationSpecification extends FunctionalSpecification {
         indexes[0].name == '_id_'
     }
 
+    @Category(Async)
     def 'should drop existing index asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def operation = new DropIndexOperation(getNamespace(), 'theField_1');
         createIndexes(Index.builder().addKey('theField', ASC).build())
@@ -122,9 +119,8 @@ class DropIndexesOperationSpecification extends FunctionalSpecification {
         indexes[0].name == '_id_'
     }
 
+    @Category(Async)
     def 'should drop all indexes when passed * asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def operation = new DropIndexOperation(getNamespace(), '*');
         createIndexes(Index.builder().addKey('theField', ASC).build(),

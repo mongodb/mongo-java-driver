@@ -15,12 +15,12 @@
  */
 
 package org.mongodb.operation
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
@@ -39,9 +39,8 @@ class RemoveOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().count() == 0
     }
 
+    @Category(Async)
     def 'should remove a document asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         getCollectionHelper().insertDocuments(new Document('_id', 1))
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
@@ -72,9 +71,8 @@ class RemoveOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().count() == 0
     }
 
+    @Category(Async)
     def 'should split removes into batches asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         Document bigDoc = new Document('bytes', new byte[1024 * 1024 * 16 - 2127])
         Document smallerDoc = new Document('bytes', new byte[1024 * 16 + 1980])

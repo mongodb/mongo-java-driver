@@ -16,7 +16,8 @@
 
 package org.mongodb.operation
 
-import org.mongodb.Fixture
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoExecutionTimeoutException
 import org.mongodb.codecs.DocumentCodec
@@ -48,9 +49,9 @@ class CountOperationSpecification extends FunctionalSpecification {
         disableMaxTimeFailPoint()
     }
 
+    @Category(Async)
     def 'should throw execution timeout exception from executeAsync'() {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
 
         given:
         def find = new Find().maxTime(1, SECONDS)

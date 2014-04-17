@@ -15,11 +15,11 @@
  */
 
 package org.mongodb.operation
-import org.mongodb.Fixture
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.OrderBy.ASC
 
@@ -40,8 +40,8 @@ class CreateIndexesSpecification extends FunctionalSpecification {
         getIndexes()*.get('key') containsAll(idIndex, field1Index)
     }
 
+    @Category(Async)
     def 'should be able to create a single index asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
 
         given:
         def index = Index.builder().addKey('field', ASC).build()
@@ -68,8 +68,8 @@ class CreateIndexesSpecification extends FunctionalSpecification {
         getIndexes()*.get('key') containsAll(idIndex, field1Index, field2Index)
     }
 
+    @Category(Async)
     def 'should be able to create multiple indexes asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
 
         given:
         def index1 = Index.builder().addKey('field', ASC).build()
@@ -95,8 +95,8 @@ class CreateIndexesSpecification extends FunctionalSpecification {
         getIndexes()*.get('key') containsAll(idIndex, field1Index)
     }
 
+    @Category(Async)
     def 'should be able to handle duplicated indexes asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
 
         given:
         def index = Index.builder().addKey('field', ASC).build()

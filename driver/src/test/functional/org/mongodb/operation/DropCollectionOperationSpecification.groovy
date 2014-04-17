@@ -15,13 +15,12 @@
  */
 
 package org.mongodb.operation
-
+import category.Async
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoNamespace
 
-import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getSession
 
 class DropCollectionOperationSpecification extends FunctionalSpecification {
@@ -38,9 +37,8 @@ class DropCollectionOperationSpecification extends FunctionalSpecification {
         !collectionNameExists(getCollectionName())
     }
 
+    @Category(Async)
     def 'should drop a collection that exists asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         getCollectionHelper().insertDocuments(new Document('documentTo', 'createTheCollection'))
         assert collectionNameExists(getCollectionName())
@@ -63,9 +61,8 @@ class DropCollectionOperationSpecification extends FunctionalSpecification {
         !collectionNameExists('nonExistingCollection')
     }
 
+    @Category(Async)
     def 'should not error when dropping a collection that does not exist asynchronously'() {
-        assumeTrue(Fixture.mongoClientURI.options.isAsyncEnabled())
-
         given:
         def namespace = new MongoNamespace(getDatabaseName(), 'nonExistingCollection')
 
