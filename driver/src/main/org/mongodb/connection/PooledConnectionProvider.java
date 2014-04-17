@@ -18,7 +18,6 @@ package org.mongodb.connection;
 
 import org.bson.ByteBuf;
 import org.mongodb.MongoException;
-import org.mongodb.MongoInternalException;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.event.ConnectionEvent;
@@ -70,12 +69,12 @@ class PooledConnectionProvider implements ConnectionProvider {
     }
 
     @Override
-    public Connection get() {
+    public InternalConnection get() {
         return get(settings.getMaxWaitTime(MILLISECONDS), MILLISECONDS);
     }
 
     @Override
-    public Connection get(final long timeout, final TimeUnit timeUnit) {
+    public InternalConnection get(final long timeout, final TimeUnit timeUnit) {
         try {
             if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
                 throw new MongoWaitQueueFullException(format("Too many threads are already waiting for a connection. "
@@ -184,7 +183,7 @@ class PooledConnectionProvider implements ConnectionProvider {
      * @param connection the connection that generated the exception
      * @param e          the exception
      */
-    private void incrementGenerationOnSocketException(final Connection connection, final MongoException e) {
+    private void incrementGenerationOnSocketException(final InternalConnection connection, final MongoException e) {
         if (e instanceof MongoSocketException && !(e instanceof MongoSocketInterruptedReadException)) {
             LOGGER.warn(format("Got socket exception on connection [%s] to %s. All connections to %s will be closed.",
                                connection.getId(), serverAddress, serverAddress));
@@ -192,7 +191,7 @@ class PooledConnectionProvider implements ConnectionProvider {
         }
     }
 
-    private class PooledConnection implements Connection {
+    private class PooledConnection implements InternalConnection {
         private volatile UsageTrackingInternalConnection wrapped;
 
         public PooledConnection(final UsageTrackingInternalConnection wrapped) {
@@ -239,16 +238,10 @@ class PooledConnectionProvider implements ConnectionProvider {
         }
 
         @Override
-        public ResponseBuffers receiveMessage(final int responseTo) {
+        public ResponseBuffers receiveMessage() {
             isTrue("open", wrapped != null);
             try {
-                ResponseBuffers responseBuffers = wrapped.receiveMessage();
-                if (responseBuffers.getReplyHeader().getResponseTo() != responseTo) {
-                    throw new MongoInternalException(format("The responseTo (%d) in the reply message does not match the "
-                                                            + "requestId (%d) in the request message",
-                                                            responseBuffers.getReplyHeader().getResponseTo(), responseTo));
-                }
-                return responseBuffers;
+                return wrapped.receiveMessage();
             } catch (MongoException e) {
                 incrementGenerationOnSocketException(this, e);
                 throw e;
@@ -262,8 +255,7 @@ class PooledConnectionProvider implements ConnectionProvider {
         }
 
         @Override
-        public void receiveMessageAsync(final int responseTo,
-                                        final SingleResultCallback<ResponseBuffers> callback) {
+        public void receiveMessageAsync(final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", wrapped != null);
             wrapped.receiveMessageAsync(callback);                // TODO: handle async exceptions
         }

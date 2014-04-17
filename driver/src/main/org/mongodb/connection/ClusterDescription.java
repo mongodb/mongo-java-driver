@@ -44,7 +44,8 @@ public class ClusterDescription {
                               final List<ServerDescription> serverDescriptions) {
         notNull("all", serverDescriptions);
         this.connectionMode = notNull("connectionMode", connectionMode);
-        this.type = notNull("type", type);
+        this.type = notNull("type",
+                            type);
         Set<ServerDescription> serverDescriptionSet = new TreeSet<ServerDescription>(new Comparator<ServerDescription>() {
             @Override
             public int compare(final ServerDescription o1, final ServerDescription o2) {
