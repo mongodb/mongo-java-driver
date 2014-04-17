@@ -23,6 +23,7 @@ import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoNamespace
 import org.mongodb.MongoServerException
 
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 
 class RenameCollectionOperationSpecification extends FunctionalSpecification {
@@ -86,7 +87,7 @@ class RenameCollectionOperationSpecification extends FunctionalSpecification {
     }
 
     def collectionNameExists(String collectionName) {
-        new GetCollectionNamesOperation(databaseName).execute(getSession()).contains(collectionName);
+        new GetCollectionNamesOperation(databaseName).execute(getBinding()).contains(collectionName);
     }
 
 }

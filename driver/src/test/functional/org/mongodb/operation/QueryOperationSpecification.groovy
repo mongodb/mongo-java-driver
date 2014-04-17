@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.mongodb.operation
 
 import category.Async
@@ -31,6 +32,7 @@ import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.disableMaxTimeFailPoint
 import static org.mongodb.Fixture.enableMaxTimeFailPoint
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.Fixture.isSharded
 import static org.mongodb.Fixture.serverVersionAtLeast
@@ -52,7 +54,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         enableMaxTimeFailPoint()
 
         when:
-        queryOperation.execute(session)
+        queryOperation.execute(getBinding())
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -72,7 +74,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         enableMaxTimeFailPoint()
 
         when:
-        queryOperation.executeAsync(session).get();
+        queryOperation.executeAsync(getSession()).get();
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -93,7 +95,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         when:
         queryOperation.execute(session).each {
-            count++
+            count++ 
         }
 
         then:
@@ -112,8 +114,8 @@ class QueryOperationSpecification extends FunctionalSpecification {
         find.getOptions().min(new Document('count', 10))
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         when:
-        queryOperation.execute(session).each {
-            count++
+        queryOperation.execute(getBinding()).each {
+            count++ 
         }
 
         then:
@@ -130,8 +132,8 @@ class QueryOperationSpecification extends FunctionalSpecification {
         find.getOptions().maxScan(34)
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         when:
-        queryOperation.execute(session).each {
-            count++
+        queryOperation.execute(getBinding()).each {
+            count++ 
         }
 
         then:
@@ -150,7 +152,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
 
         when:
-        def cursor = queryOperation.execute(getSession())
+        def cursor = queryOperation.execute(getBinding())
 
         then:
         def foundItem = cursor.next()
@@ -168,7 +170,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         find.getOptions().showDiskLoc()
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         when:
-        queryOperation.execute(getSession()).each {
+        queryOperation.execute(getBinding()).each {
             found &= it['$diskLoc'] != null
         }
 
@@ -182,6 +184,6 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
 
         expect:
-        queryOperation.execute(getSession()) != null // if it didn't throw, the query was executed
+        queryOperation.execute(getBinding()) != null // if it didn't throw, the query was executed
     }
 }

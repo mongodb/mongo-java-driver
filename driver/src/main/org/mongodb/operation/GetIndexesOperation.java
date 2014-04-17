@@ -19,6 +19,7 @@ package org.mongodb.operation;
 import org.mongodb.Document;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.session.Session;
@@ -35,7 +36,7 @@ import static org.mongodb.operation.OperationHelper.queryResultToListAsync;
  *
  * @since 3.0
  */
-public class GetIndexesOperation implements AsyncOperation<List<Document>>, Operation<List<Document>> {
+public class GetIndexesOperation implements AsyncOperation<List<Document>>, ReadOperation<List<Document>> {
     private final MongoNamespace collectionNamespace;
 
     public GetIndexesOperation(final MongoNamespace collectionNamespace) {
@@ -43,8 +44,8 @@ public class GetIndexesOperation implements AsyncOperation<List<Document>>, Oper
     }
 
     @Override
-    public List<Document> execute(final Session session) {
-        return queryResultToList(getProtocol(), session, getIndexNamespace(), new DocumentCodec());
+    public List<Document> execute(final ReadBinding binding) {
+        return queryResultToList(getProtocol(), binding, getIndexNamespace(), new DocumentCodec());
     }
 
     @Override

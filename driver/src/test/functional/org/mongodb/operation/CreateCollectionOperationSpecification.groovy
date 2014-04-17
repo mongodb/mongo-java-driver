@@ -22,6 +22,7 @@ import org.mongodb.CreateCollectionOptions
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoServerException
 
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 
 class CreateCollectionOperationSpecification extends FunctionalSpecification {
@@ -79,7 +80,7 @@ class CreateCollectionOperationSpecification extends FunctionalSpecification {
     }
 
     def collectionNameExists(String collectionName) {
-        new GetCollectionNamesOperation(databaseName).execute(getSession()).contains(collectionName);
+        new GetCollectionNamesOperation(databaseName).execute(getBinding()).contains(collectionName);
     }
 
 }

@@ -22,6 +22,7 @@ import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 import org.mongodb.MongoException
 
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.OrderBy.ASC
 
@@ -141,7 +142,7 @@ class DropIndexesOperationSpecification extends FunctionalSpecification {
     }
 
     def getIndexes() {
-        new GetIndexesOperation(getNamespace()).execute(getSession())
+        new GetIndexesOperation(getNamespace()).execute(getBinding())
     }
 
 }

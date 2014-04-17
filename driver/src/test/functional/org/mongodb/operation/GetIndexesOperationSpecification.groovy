@@ -21,6 +21,7 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 import static org.mongodb.OrderBy.ASC
 
@@ -31,7 +32,7 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
 
         when:
-        List<Document> indexes = operation.execute(getSession())
+        List<Document> indexes = operation.execute(getBinding())
 
         then:
         indexes.size() == 1
@@ -58,7 +59,7 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
         createIndexes(Index.builder().addKey('theField', ASC).build())
 
         when:
-        List<Document> indexes = operation.execute(getSession())
+        List<Document> indexes = operation.execute(getBinding())
 
         then:
         indexes.size() == 2

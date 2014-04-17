@@ -21,6 +21,7 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoNamespace
 
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getSession
 
 class DropCollectionOperationSpecification extends FunctionalSpecification {
@@ -74,7 +75,7 @@ class DropCollectionOperationSpecification extends FunctionalSpecification {
     }
 
     def collectionNameExists(String collectionName) {
-        new GetCollectionNamesOperation(databaseName).execute(getSession()).contains(collectionName);
+        new GetCollectionNamesOperation(databaseName).execute(getBinding()).contains(collectionName);
     }
 
 }

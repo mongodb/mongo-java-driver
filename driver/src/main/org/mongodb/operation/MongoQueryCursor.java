@@ -21,6 +21,7 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.binding.ConnectionSource;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.protocol.GetMoreDiscardProtocol;
@@ -29,7 +30,6 @@ import org.mongodb.protocol.GetMoreReceiveProtocol;
 import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.KillCursorProtocol;
 import org.mongodb.protocol.QueryResult;
-import org.mongodb.session.ServerConnectionProvider;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,7 +44,7 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
     private final int limit;
     private final int batchSize;
     private final Decoder<T> decoder;
-    private final ServerConnectionProvider provider;
+    private final ConnectionSource source;
     private QueryResult<T> currentResult;
     private Iterator<T> currentIterator;
     private long nextCount;
@@ -53,8 +53,8 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
 
     // For normal queries
     MongoQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
-                     final Decoder<T> decoder, final ServerConnectionProvider provider) {
-        this(namespace, firstBatch, limit, batchSize, decoder, provider, null);
+                     final Decoder<T> decoder, final ConnectionSource source) {
+        this(namespace, firstBatch, limit, batchSize, decoder, source, null);
     }
 
     // For exhaust queries
@@ -64,13 +64,16 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
     }
 
     private MongoQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch,
-                             final int limit, final int batchSize, final Decoder<T> decoder, final ServerConnectionProvider provider,
+                             final int limit, final int batchSize, final Decoder<T> decoder, final ConnectionSource source,
                              final Connection exhaustConnection) {
         this.namespace = namespace;
         this.limit = limit;
         this.batchSize = batchSize;
         this.decoder = decoder;
-        this.provider = provider;
+        this.source = source;
+        if (this.source != null) {
+            this.source.retain();
+        }
         this.exhaustConnection = exhaustConnection;
         this.currentResult = firstBatch;
         currentIterator = currentResult.getResults().iterator();
@@ -98,6 +101,9 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
         }
         if (exhaustConnection != null) {
             exhaustConnection.close();
+        }
+        if (source != null) {
+            source.release();
         }
         currentResult = null;
         currentIterator = null;
@@ -201,10 +207,6 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
         throw new UnsupportedOperationException("MongoCursor does not support remove");
     }
 
-    ServerConnectionProvider getServerConnectionProvider() {
-        return provider;
-    }
-
     private void killCursorIfLimitReached() {
         if (limitReached()) {
             Connection connection = getConnection();
@@ -239,7 +241,7 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
         if (isExhaust()) {
             return exhaustConnection;
         } else {
-            return provider.getConnection();
+            return source.getConnection();
         }
     }
 }

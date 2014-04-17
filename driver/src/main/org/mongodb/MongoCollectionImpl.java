@@ -34,6 +34,7 @@ import org.mongodb.operation.MapReduceToCollectionOperation;
 import org.mongodb.operation.MapReduceWithInlineResultsOperation;
 import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
+import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.RemoveOperation;
 import org.mongodb.operation.RemoveRequest;
 import org.mongodb.operation.ReplaceOperation;
@@ -146,6 +147,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         return client.execute(operation);
     }
 
+    <V> V execute(final ReadOperation<V> operation, final ReadPreference readPreference) {
+        return client.execute(operation, readPreference);
+    }
+
     private final class MongoCollectionView implements MongoView<T> {
         private final Find findOp;
         private WriteConcern writeConcern;
@@ -229,14 +234,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoCursor<T> get() {
-            return execute(new QueryOperation<T>(getNamespace(), findOp, getDocumentCodec(), getCodec()
-            ));
+            return execute(new QueryOperation<T>(getNamespace(), findOp, getDocumentCodec(), getCodec()), findOp.getReadPreference());
         }
 
         @Override
         public T getOne() {
-            MongoCursor<T> cursor = execute(new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec()
-            ));
+            MongoCursor<T> cursor = execute(new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec()),
+                                            findOp.getReadPreference());
 
             return cursor.hasNext() ? cursor.next() : null;
         }
@@ -516,8 +520,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         @SuppressWarnings("unchecked")
         public MongoCursor<T> iterator() {
-            return execute(new AggregateOperation<T>(getNamespace(), pipeline, codec, AggregationOptions.builder().build(),
-                                                     options.getReadPreference()));
+            return execute(new AggregateOperation<T>(getNamespace(), pipeline, codec, AggregationOptions.builder().build()),
+                           options.getReadPreference());
         }
 
         @Override

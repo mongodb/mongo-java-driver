@@ -16,14 +16,18 @@
 
 package org.mongodb;
 
+import org.mongodb.binding.ClusterBinding;
 import org.mongodb.connection.Cluster;
 import org.mongodb.operation.Operation;
+import org.mongodb.operation.ReadOperation;
 import org.mongodb.session.ClusterSession;
 import org.mongodb.session.Session;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class MongoClientImpl implements MongoClient {
 
@@ -76,5 +80,14 @@ class MongoClientImpl implements MongoClient {
 
     <V> V execute(final Operation<V> operation) {
         return operation.execute(getSession());
+    }
+
+    public <V> V execute(final ReadOperation<V> readOperation, final ReadPreference readPreference) {
+        ClusterBinding binding = new ClusterBinding(cluster, readPreference, clientOptions.getMaxWaitTime(), MILLISECONDS);
+        try {
+            return readOperation.execute(binding);
+        } finally {
+            binding.release();
+        }
     }
 }

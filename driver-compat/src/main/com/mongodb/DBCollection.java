@@ -59,6 +59,7 @@ import org.mongodb.operation.MapReduceWithInlineResultsOperation;
 import org.mongodb.operation.MixedBulkWriteOperation;
 import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
+import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.RemoveOperation;
 import org.mongodb.operation.RemoveRequest;
 import org.mongodb.operation.RenameCollectionOperation;
@@ -85,6 +86,7 @@ import static com.mongodb.DBObjects.toFieldSelectorDocument;
 import static com.mongodb.DBObjects.toNullableDocument;
 import static com.mongodb.DBObjects.toUpdateOperationsDocument;
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.ReadPreference.primaryPreferred;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -688,7 +690,8 @@ public class DBCollection {
                               .batchSize(-1)
                               .maxTime(maxTime, maxTimeUnit);
 
-        MongoCursor<DBObject> cursor = execute(new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec));
+        MongoCursor<DBObject> cursor = execute(new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec),
+                                               readPreference);
 
         return cursor.hasNext() ? cursor.next() : null;
     }
@@ -1269,8 +1272,8 @@ public class DBCollection {
         MongoCursor<Document> cursor = execute(new AggregateOperation<Document>(getNamespace(),
                                                                                 stages,
                                                                                 getDocumentCodec(),
-                                                                                options.toNew(),
-                                                                                activeReadPreference.toNew()));
+                                                                                options.toNew()),
+                                              readPreference);
         if (outCollection != null) {
             if (returnCursorForOutCollection) {
                 return new DBCursor(database.getCollection(outCollection), new BasicDBObject(), null, primary());
@@ -1298,8 +1301,8 @@ public class DBCollection {
      * @mongodb.server.release 2.6
      */
     public CommandResult explainAggregate(final List<DBObject> pipeline, final AggregationOptions options) {
-        return new CommandResult(execute(new AggregateExplainOperation(getNamespace(), preparePipeline(pipeline), options.toNew(),
-                                                                       getReadPreference().toNew())));
+        return new CommandResult(execute(new AggregateExplainOperation(getNamespace(), preparePipeline(pipeline), options.toNew()),
+                                         primaryPreferred()));
     }
 
     private ReadPreference coerceReadPreference(final ReadPreference readPreference, final boolean dollarOutPresent) {
@@ -1684,7 +1687,7 @@ public class DBCollection {
      * @throws MongoException
      */
     public List<DBObject> getIndexInfo() {
-        List<Document> indexDocumentList = execute(new GetIndexesOperation(getNamespace()));
+        List<Document> indexDocumentList = execute(new GetIndexesOperation(getNamespace()), primary());
         List<DBObject> indexDBObjectList = new ArrayList<DBObject>(indexDocumentList.size());
         for (Document cur : indexDocumentList) {
             indexDBObjectList.add(toDBObject(cur));
@@ -1846,6 +1849,10 @@ public class DBCollection {
 
     <T> T execute(final Operation<T> operation) {
         return getDB().getMongo().execute(operation);
+    }
+
+    <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
+        return getDB().getMongo().execute(operation, readPreference);
     }
 
     private CollectibleDBObjectCodec createCollectibleDBObjectCodec() {

@@ -25,6 +25,8 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
+import org.mongodb.binding.ConnectionSource;
+import org.mongodb.binding.ReadBinding;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
@@ -36,7 +38,6 @@ import org.mongodb.session.Session;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerType.SHARD_ROUTER;
-import static org.mongodb.operation.OperationHelper.getConnectionProvider;
 import static org.mongodb.operation.OperationHelper.getConnectionProviderAsync;
 
 /**
@@ -46,7 +47,7 @@ import static org.mongodb.operation.OperationHelper.getConnectionProviderAsync;
  *
  * @since 3.0
  */
-public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, Operation<MongoCursor<T>> {
+public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, ReadOperation<MongoCursor<T>> {
     private final Find find;
     private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
@@ -61,23 +62,26 @@ public class QueryOperation<T> implements AsyncOperation<MongoAsyncCursor<T>>, O
     }
 
     @Override
-    public MongoCursor<T> execute(final Session session) {
-        ServerConnectionProvider connectionProvider = getConnectionProvider(find.getReadPreference(), session);
-        Connection connection = connectionProvider.getConnection();
+    public MongoCursor<T> execute(final ReadBinding binding) {
+        ConnectionSource source = binding.getReadConnectionSource();
         try {
-            QueryResult<T> queryResult = asQueryProtocol(connectionProvider.getServerDescription()).execute(connection
-                                                                                                           );
-            if (isExhaustCursor()) {
-                return new MongoQueryCursor<T>(namespace, queryResult, find.getLimit(), find.getBatchSize(),
-                                               resultDecoder, connection);
-            } else {
-                return new MongoQueryCursor<T>(namespace, queryResult, find.getLimit(), find.getBatchSize(),
-                                               resultDecoder, connectionProvider);
+            Connection connection = source.getConnection();
+            try {
+                QueryResult<T> queryResult = asQueryProtocol(connection.getServerDescription()).execute(connection);
+                if (isExhaustCursor()) {
+                    return new MongoQueryCursor<T>(namespace, queryResult, find.getLimit(), find.getBatchSize(),
+                                                   resultDecoder, connection);
+                } else {
+                    return new MongoQueryCursor<T>(namespace, queryResult, find.getLimit(), find.getBatchSize(),
+                                                   resultDecoder, source);
+                }
+            } finally {
+                if (!isExhaustCursor()) {
+                    connection.close();
+                }
             }
         } finally {
-            if (!isExhaustCursor()) {
-                connection.close();
-            }
+            source.release();
         }
     }
 

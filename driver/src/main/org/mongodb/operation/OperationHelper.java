@@ -28,6 +28,8 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
+import org.mongodb.binding.ConnectionSource;
+import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
@@ -60,6 +62,125 @@ final class OperationHelper {
 
     static boolean serverVersionIsAtLeast(final ServerConnectionProvider connectionProvider, final ServerVersion serverVersion) {
         return connectionProvider.getServerDescription().getVersion().compareTo(serverVersion) >= 0;
+    }
+
+
+    static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command,
+                                                       final ConnectionSource source, final ReadPreference readPreference) {
+        return executeWrappedCommandProtocol(namespace, command, new DocumentCodec(), new DocumentCodec(), source, readPreference);
+    }
+
+    static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command,
+                                                       final Decoder<Document> decoder,
+                                                       final ConnectionSource source, final ReadPreference readPreference) {
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), command, new DocumentCodec(), decoder, source, readPreference);
+    }
+
+    static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command,
+                                                       final Encoder<Document> encoder, final Decoder<Document> decoder,
+                                                       final ConnectionSource source, final ReadPreference readPreference) {
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), command, encoder, decoder, source, readPreference);
+    }
+
+
+    static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command, final ReadBinding binding) {
+        return executeWrappedCommandProtocol(namespace, command, new DocumentCodec(), new DocumentCodec(), binding);
+    }
+
+    static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command,
+                                                       final Encoder<Document> encoder, final Decoder<Document> decoder,
+                                                       final ReadBinding binding) {
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), command, encoder, decoder, binding);
+    }
+
+
+    static CommandResult executeWrappedCommandProtocol(final String database, final Document command,
+                                                       final Encoder<Document> encoder, final Decoder<Document> decoder,
+                                                       final ReadBinding binding) {
+        ConnectionSource source = binding.getReadConnectionSource();
+        try {
+            return executeWrappedCommandProtocol(database, command, encoder, decoder, source, binding.getReadPreference());
+        } finally {
+            source.release();
+        }
+    }
+
+    static CommandResult executeWrappedCommandProtocol(final String database, final Document command,
+                                                       final Encoder<Document> encoder, final Decoder<Document> decoder,
+                                                       final ConnectionSource source, final ReadPreference readPreference) {
+        Connection connection = source.getConnection();
+        try {
+            return new CommandProtocol(database, wrapCommand(command, readPreference, connection.getServerDescription()),
+                                       getQueryFlags(readPreference), encoder, decoder).execute(connection);
+        } finally {
+            connection.close();
+        }
+    }
+
+
+    static <T> List<T> queryResultToList(final QueryProtocol<T> queryProtocol, final ReadBinding binding, final MongoNamespace namespace,
+                                         final Decoder<T> decoder) {
+        return queryResultToList(queryProtocol, binding, namespace, decoder, new Function<T, T>() {
+            @Override
+            public T apply(final T t) {
+                return t;
+            }
+        });
+    }
+
+
+    static <V> List<V> queryResultToList(final QueryProtocol<Document> queryProtocol, final ReadBinding binding,
+                                         final MongoNamespace namespace,
+                                         final Function<Document, V> block) {
+         return queryResultToList(queryProtocol, binding, namespace, new DocumentCodec(), block);
+    }
+
+    static <T, V> List<V> queryResultToList(final QueryProtocol<T> queryProtocol, final ReadBinding binding,
+                                            final MongoNamespace namespace,
+                                            final Decoder<T> decoder, final Function<T, V> block) {
+        ConnectionSource source = binding.getReadConnectionSource();
+        try {
+            return queryResultToList(executeProtocol(queryProtocol, source), source, namespace, decoder, block);
+        } finally {
+            source.release();
+        }
+    }
+
+    static <T> List<T> queryResultToList(final QueryResult<T> queryResult, final ConnectionSource source,
+                                         final MongoNamespace namespace, final Decoder<T> decoder) {
+        return queryResultToList(queryResult, source, namespace, decoder, new Function<T, T>() {
+            @Override
+            public T apply(final T t) {
+                return t;
+            }
+        });
+    }
+
+    static <T, V> List<V> queryResultToList(final QueryResult<T> queryResult, final ConnectionSource source,
+                                            final MongoNamespace namespace, final Decoder<T> decoder,
+                                            final Function<T, V> block) {
+        MongoCursor<T> cursor = new MongoQueryCursor<T>(namespace, queryResult, 0, 0, decoder, source);
+        try {
+            List<V> retVal = new ArrayList<V>();
+            while (cursor.hasNext()) {
+                V value = block.apply(cursor.next());
+                if (value != null) {
+                    retVal.add(value);
+                }
+            }
+            return unmodifiableList(retVal);
+        } finally {
+            cursor.close();
+        }
+    }
+
+    static <T> T executeProtocol(final Protocol<T> protocol, final ConnectionSource source) {
+        Connection connection = source.getConnection();
+        try {
+            return protocol.execute(connection);
+        } finally {
+            connection.close();
+        }
     }
 
     /**
@@ -383,47 +504,6 @@ final class OperationHelper {
         return retVal;
     }
 
-    static <T> List<T> queryResultToList(final QueryProtocol<T> queryProtocol, final Session session, final MongoNamespace namespace,
-                                         final Decoder<T> decoder) {
-        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
-        return queryResultToList(executeProtocol(queryProtocol, connectionProvider), connectionProvider, namespace, decoder);
-    }
-
-    static <T, V> List<V> queryResultToList(final QueryProtocol<T> queryProtocol, final Session session, final MongoNamespace namespace,
-                                         final Decoder<T> decoder, final Function<T, V> block) {
-        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
-        return queryResultToList(executeProtocol(queryProtocol, connectionProvider), connectionProvider, namespace, decoder, block);
-    }
-
-    static <T> List<T> queryResultToList(final QueryResult<T> queryResult, final ServerConnectionProvider connectionProvider,
-                                         final MongoNamespace namespace, final Decoder<T> decoder) {
-        return queryResultToList(queryResult, connectionProvider, namespace, decoder, new Function<T, T>() {
-            @Override
-            public T apply(final T t) {
-                return t;
-            }
-        });
-    }
-
-    static <T, V> List<V> queryResultToList(final QueryResult<T> queryResult, final ServerConnectionProvider connectionProvider,
-                                            final MongoNamespace namespace, final Decoder<T> decoder,
-                                            final Function<T, V> block) {
-        MongoCursor<T> cursor = new MongoQueryCursor<T>(namespace, queryResult,
-                                                        0, 0, decoder, connectionProvider);
-        try {
-            List<V> retVal = new ArrayList<V>();
-            while (cursor.hasNext()) {
-                V value = block.apply(cursor.next());
-                if (value != null) {
-                    retVal.add(value);
-                }
-            }
-            return unmodifiableList(retVal);
-        } finally {
-            cursor.close();
-        }
-    }
-
     static <T> MongoFuture<List<T>> queryResultToListAsync(final QueryProtocol<T> queryProtocol, final Session session,
                                                            final MongoNamespace namespace, final Decoder<T> decoder) {
         ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
@@ -431,8 +511,8 @@ final class OperationHelper {
     }
 
     static <T, V> MongoFuture<List<V>> queryResultToListAsync(final QueryProtocol<T> queryProtocol, final Session session,
-                                                           final MongoNamespace namespace, final Decoder<T> decoder,
-                                                           final Function<T, V> block) {
+                                                              final MongoNamespace namespace, final Decoder<T> decoder,
+                                                              final Function<T, V> block) {
         ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
         return queryResultToListAsync(executeProtocolAsync(queryProtocol, connectionProvider), connectionProvider, namespace, decoder,
                                       block);
