@@ -26,7 +26,6 @@ import org.mongodb.MongoCollection;
 import org.mongodb.MongoDatabase;
 
 import java.util.List;
-import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -44,7 +43,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateCollection() {
         database.tools().createCollection(getCollectionName());
 
-        Set<String> collections = database.tools().getCollectionNames();
+        List<String> collections = database.tools().getCollectionNames();
         assertThat(collections.contains(getCollectionName()), is(true));
     }
 
@@ -52,7 +51,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateCappedCollection() {
         database.tools().createCollection(new CreateCollectionOptions(getCollectionName(), true, 40 * 1024));
 
-        Set<String> collections = database.tools().getCollectionNames();
+        List<String> collections = database.tools().getCollectionNames();
         assertThat(collections.contains(getCollectionName()), is(true));
 
         MongoCollection<Document> collection = database.getCollection(getCollectionName());
@@ -65,7 +64,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     public void shouldCreateCappedCollectionWithoutAutoIndex() {
         database.tools().createCollection(new CreateCollectionOptions(getCollectionName(), true, 40 * 1024, false));
 
-        Set<String> collections = database.tools().getCollectionNames();
+        List<String> collections = database.tools().getCollectionNames();
         assertThat(collections.contains(getCollectionName()), is(true));
 
         MongoCollection<Document> collection = database.getCollection(getCollectionName());
@@ -83,7 +82,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
                                                                       false,
                                                                       maxDocuments));
 
-        Set<String> collections = database.tools().getCollectionNames();
+        List<String> collections = database.tools().getCollectionNames();
         assertThat(collections.contains(getCollectionName()), is(true));
 
         MongoCollection<Document> collection = database.getCollection(getCollectionName());
@@ -96,7 +95,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
     public void shouldGetCollectionNamesFromDatabase() {
         database.tools().createCollection(getCollectionName());
 
-        Set<String> collections = database.tools().getCollectionNames();
+        List<String> collections = database.tools().getCollectionNames();
 
         assertThat(collections.contains("system.indexes"), is(true));
         assertThat(collections.contains(getCollectionName()), is(true));

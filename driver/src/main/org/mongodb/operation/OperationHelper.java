@@ -296,21 +296,6 @@ final class OperationHelper {
         }
     }
 
-    static <T> List<T> queryResultToList(final QueryResult<T> queryResult, final Session session,
-                                         final MongoNamespace namespace, final Decoder<T> decoder) {
-        MongoCursor<T> cursor = new MongoQueryCursor<T>(namespace, queryResult,
-                                                        0, 0, decoder, getPrimaryConnectionProvider(session));
-        try {
-            List<T> retVal = new ArrayList<T>();
-            while (cursor.hasNext()) {
-                retVal.add(cursor.next());
-            }
-            return unmodifiableList(retVal);
-        } finally {
-            cursor.close();
-        }
-    }
-
     private static EnumSet<QueryFlag> getQueryFlags(final ReadPreference readPreference) {
         if (readPreference.isSlaveOk()) {
             return EnumSet.of(QueryFlag.SlaveOk);
@@ -347,9 +332,49 @@ final class OperationHelper {
         return retVal;
     }
 
+    static <T> List<T> queryResultToList(final QueryResult<T> queryResult, final Session session,
+                                         final MongoNamespace namespace, final Decoder<T> decoder) {
+        return queryResultToList(queryResult, session, namespace, decoder, new TransformBlock<T, T>() {
+            @Override
+            public T apply(final T t) {
+                return t;
+            }
+        });
+    }
+
+    static <T, V> List<V> queryResultToList(final QueryResult<T> queryResult, final Session session,
+                                            final MongoNamespace namespace, final Decoder<T> decoder,
+                                            final TransformBlock<T, V> block) {
+        MongoCursor<T> cursor = new MongoQueryCursor<T>(namespace, queryResult,
+                                                        0, 0, decoder, getPrimaryConnectionProvider(session));
+        try {
+            List<V> retVal = new ArrayList<V>();
+            while (cursor.hasNext()) {
+                V value = block.apply(cursor.next());
+                if (value != null) {
+                    retVal.add(value);
+                }
+            }
+            return unmodifiableList(retVal);
+        } finally {
+            cursor.close();
+        }
+    }
+
     static <T> MongoFuture<List<T>> queryResultToListAsync(final MongoFuture<QueryResult<T>> queryResult, final Session session,
                                                            final MongoNamespace namespace, final Decoder<T> decoder) {
-        final SingleResultFuture<List<T>> retVal = new SingleResultFuture<List<T>>();
+        return queryResultToListAsync(queryResult, session, namespace, decoder, new TransformBlock<T, T>() {
+            @Override
+            public T apply(final T t) {
+                return t;
+            }
+        });
+    }
+
+    static <T, V> MongoFuture<List<V>> queryResultToListAsync(final MongoFuture<QueryResult<T>> queryResult, final Session session,
+                                                              final MongoNamespace namespace, final Decoder<T> decoder,
+                                                              final TransformBlock<T, V> block) {
+        final SingleResultFuture<List<V>> retVal = new SingleResultFuture<List<V>>();
         getPrimaryConnectionProviderAsync(session)
             .register(new SingleResultCallback<ServerConnectionProvider>() {
                 @Override
@@ -360,8 +385,8 @@ final class OperationHelper {
                         connectionProvider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
                             @Override
                             public void onResult(final Connection connection, final MongoException e) {
-                                queryResult.register(new QueryResultToListCallback<T>(retVal, namespace, decoder, connectionProvider,
-                                                                                      connection));
+                                queryResult.register(new QueryResultToListCallback<T, V>(retVal, namespace, decoder, connectionProvider,
+                                                                                         connection, block));
                             }
                         });
                     }
@@ -370,24 +395,27 @@ final class OperationHelper {
         return retVal;
     }
 
-    private static class QueryResultToListCallback<T> implements SingleResultCallback<QueryResult<T>> {
+    private static class QueryResultToListCallback<T, V> implements SingleResultCallback<QueryResult<T>> {
 
-        private SingleResultFuture<List<T>> retVal;
+        private SingleResultFuture<List<V>> retVal;
         private MongoNamespace namespace;
         private Decoder<T> decoder;
         private ServerConnectionProvider connectionProvider;
         private Connection connection;
+        private TransformBlock<T, V> block;
 
-        public QueryResultToListCallback(final SingleResultFuture<List<T>> retVal,
+        public QueryResultToListCallback(final SingleResultFuture<List<V>> retVal,
                                          final MongoNamespace namespace,
                                          final Decoder<T> decoder,
                                          final ServerConnectionProvider connectionProvider,
-                                         final Connection connection) {
+                                         final Connection connection,
+                                         final TransformBlock<T, V> block) {
             this.retVal = retVal;
             this.namespace = namespace;
             this.decoder = decoder;
             this.connectionProvider = connectionProvider;
             this.connection = connection;
+            this.block = block;
         }
 
         @Override
@@ -402,7 +430,7 @@ final class OperationHelper {
                                                                                    connectionProvider.getConnection(),
                                                                                    connectionProvider.getServerDescription());
 
-                    final List<T> results = new ArrayList<T>();
+                    final List<V> results = new ArrayList<V>();
                     cursor.start(new AsyncBlock<T>() {
 
                         @Override
@@ -412,7 +440,10 @@ final class OperationHelper {
 
                         @Override
                         public void apply(final T v) {
-                            results.add(v);
+                            V value = block.apply(v);
+                            if (value != null) {
+                                results.add(value);
+                            }
                         }
                     });
                 }

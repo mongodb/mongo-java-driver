@@ -19,11 +19,10 @@ package org.mongodb;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.CommandOperation;
 import org.mongodb.operation.Find;
-import org.mongodb.operation.QueryOperation;
+import org.mongodb.operation.GetCollectionNamesOperation;
 import org.mongodb.operation.RenameCollectionOperation;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 /**
  * Runs the admin commands for a selected database.  This should be accessed from MongoDatabase.  The methods here are not implemented in
@@ -49,21 +48,8 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     }
 
     @Override
-    public Set<String> getCollectionNames() {
-        MongoNamespace namespacesCollection = new MongoNamespace(databaseName, "system.namespaces");
-        MongoCursor<Document> cursor = client.execute(new QueryOperation<Document>(namespacesCollection, FIND_ALL, commandCodec,
-                                                                                   commandCodec));
-
-        HashSet<String> collections = new HashSet<String>();
-        int lengthOfDatabaseName = databaseName.length();
-        while (cursor.hasNext()) {
-            String collectionName = (String) cursor.next().get("name");
-            if (!collectionName.contains("$")) {
-                String collectionNameWithoutDatabasePrefix = collectionName.substring(lengthOfDatabaseName + 1);
-                collections.add(collectionNameWithoutDatabasePrefix);
-            }
-        }
-        return collections;
+    public List<String> getCollectionNames() {
+        return client.execute(new GetCollectionNamesOperation(databaseName));
     }
 
     @Override
