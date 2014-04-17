@@ -187,6 +187,14 @@ final class OperationHelper {
     }
 
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
+                                                       final Encoder<Document> commandEncoder,
+                                                       final Decoder<Document> commandResultDecoder,
+                                                       final Session session) {
+        return executeWrappedCommandProtocolAsync(namespace, command, commandEncoder, commandResultDecoder,
+                ReadPreference.primary(), session);
+    }
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
                                                                          final Encoder<Document> commandEncoder,
                                                                          final Decoder<Document> commandResultDecoder,
                                                                          final ReadPreference readPreference,

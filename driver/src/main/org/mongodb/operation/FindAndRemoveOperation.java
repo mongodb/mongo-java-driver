@@ -16,8 +16,10 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
@@ -27,8 +29,10 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.DocumentHelper.putIfNotNull;
 import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.OperationHelper.transformResult;
 
-public class FindAndRemoveOperation<T> implements Operation<T> {
+public class FindAndRemoveOperation<T> implements AsyncOperation<T>, Operation<T> {
     private final MongoNamespace namespace;
     private final FindAndRemove<T> findAndRemove;
     private final CommandResultWithPayloadDecoder<T> resultDecoder;
@@ -40,11 +44,30 @@ public class FindAndRemoveOperation<T> implements Operation<T> {
         this.resultDecoder = new CommandResultWithPayloadDecoder<T>(resultDecoder, "value");
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public T execute(final Session session) {
-        return (T) executeWrappedCommandProtocol(namespace, getFindAndRemoveDocument(), commandEncoder, resultDecoder, session)
-                   .getResponse().get("value");
+        CommandResult result = executeWrappedCommandProtocol(namespace, getFindAndRemoveDocument(), commandEncoder, resultDecoder, session);
+        return transformResult(result, transformer());
+    }
+
+    @Override
+    public MongoFuture<T> executeAsync(final Session session) {
+        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace,
+                                                                               getFindAndRemoveDocument(),
+                                                                               commandEncoder,
+                                                                               resultDecoder,
+                                                                               session);
+        return transformResult(result, transformer());
+    }
+
+    private TransformBlock<CommandResult, T> transformer() {
+        return new TransformBlock<CommandResult, T>() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public T apply(final CommandResult result) {
+                return (T) result.getResponse().get("value");
+            }
+        };
     }
 
     private Document getFindAndRemoveDocument() {
