@@ -24,7 +24,7 @@ import org.mongodb.binding.ReadBinding;
 
 import java.util.List;
 
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 
 /**
  * An operation that executes an explain on an aggregation pipeline.

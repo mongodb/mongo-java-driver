@@ -22,8 +22,8 @@ import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
 
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.ignoreResult;
 
 public class CreateCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {

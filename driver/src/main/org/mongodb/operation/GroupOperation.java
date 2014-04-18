@@ -28,8 +28,8 @@ import org.mongodb.binding.ReadBinding;
 
 import java.util.List;
 
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
 /**
  * Groups documents in a collection by the specified key and performs simple aggregation functions, such as computing counts and sums. The

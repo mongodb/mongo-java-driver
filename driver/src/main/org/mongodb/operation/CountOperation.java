@@ -27,8 +27,8 @@ import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
 /**
  * An operation that executes a count.

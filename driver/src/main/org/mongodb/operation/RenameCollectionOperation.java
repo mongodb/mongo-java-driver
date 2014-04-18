@@ -23,9 +23,9 @@ import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
 
 import static org.mongodb.MongoNamespace.asNamespaceString;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.VoidTransformer;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 
 /**
  * An operation that renames the given collection to the new name.  If the new name is the same as an existing collection and
@@ -61,7 +61,7 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
      * @throws org.mongodb.MongoServerException
      *          if you provide a newCollectionName that is the name of an existing collection and dropTarget is false,
      *          or if the oldCollectionName is the name of a collection that doesn't exist
-     * @param binding
+     * @param binding the binding
      */
     @Override
     public Void execute(final WriteBinding binding) {

@@ -27,11 +27,11 @@ import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.DocumentHelper.putIfNotNull;
 import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 import static org.mongodb.operation.DocumentHelper.putIfTrue;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 
 /**
  * An operation that atomically finds and removes a single document.

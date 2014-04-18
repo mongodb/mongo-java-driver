@@ -23,9 +23,9 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
 
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.ignoreNameSpaceErrors;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.CommandOperationHelper.ignoreNameSpaceErrors;
 import static org.mongodb.operation.OperationHelper.ignoreResult;
 
 /**

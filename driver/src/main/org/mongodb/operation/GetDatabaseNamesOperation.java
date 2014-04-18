@@ -27,8 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Collections.unmodifiableList;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
 /**
  * Execute this operation to return a List of Strings of the names of all the databases for the current MongoDB instance.
@@ -39,7 +39,7 @@ public class GetDatabaseNamesOperation implements AsyncReadOperation<List<String
      * Executing this will return a list of all the databases names in the MongoDB instance.
      *
      * @return a List of Strings of the names of all the databases in the MongoDB instance
-     * @param binding
+     * @param binding the binding
      */
     @Override
     public List<String> execute(final ReadBinding binding) {

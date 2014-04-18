@@ -28,8 +28,8 @@ import java.util.EnumSet;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.operation.OperationHelper.queryResultToList;
-import static org.mongodb.operation.OperationHelper.queryResultToListAsync;
+import static org.mongodb.operation.QueryOperationHelper.queryResultToList;
+import static org.mongodb.operation.QueryOperationHelper.queryResultToListAsync;
 
 /**
  * An operation that gets the indexes that have been created on a collection.
