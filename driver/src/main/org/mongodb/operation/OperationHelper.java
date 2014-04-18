@@ -28,6 +28,8 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
+import org.mongodb.binding.AsyncConnectionSource;
+import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.ConnectionSource;
 import org.mongodb.binding.ReadBinding;
 import org.mongodb.binding.WriteBinding;
@@ -67,9 +69,12 @@ final class OperationHelper {
     }
 
 
-
     interface CallableWithConnection<T> {
         T call(Connection connection);
+    }
+
+    interface AsyncCallableWithConnection<T> {
+        MongoFuture<T> call(Connection connection);
     }
 
     static <T> T withConnection(final ReadBinding binding, final CallableWithConnection<T> callable) {
@@ -90,6 +95,21 @@ final class OperationHelper {
         }
     }
 
+    static <T> MongoFuture<T> withConnection(final AsyncWriteBinding binding, final AsyncCallableWithConnection<T> callable) {
+        final SingleResultFuture<T> future = new SingleResultFuture<T>();
+        binding.getWriteConnectionSource().register(new SingleResultCallback<AsyncConnectionSource>() {
+            @Override
+            public void onResult(final AsyncConnectionSource source, final MongoException e) {
+                if (e != null) {
+                    future.init(null, e);
+                } else {
+                    withConnectionSource(source, callable, future);
+                }
+            }
+        });
+        return future;
+    }
+
     static <T> T withConnectionSource(final ConnectionSource source, final CallableWithConnection<T> callable) {
         Connection connection = source.getConnection();
         try {
@@ -97,6 +117,34 @@ final class OperationHelper {
         } finally {
             connection.close();
         }
+    }
+
+    static <T> void withConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnection<T> callable,
+                                         final SingleResultFuture<T> future) {
+        source.getConnection().register(new SingleResultCallback<Connection>() {
+            @Override
+            public void onResult(final Connection connection, final MongoException e) {
+                if (e != null) {
+                    future.init(null, e);
+                } else {
+                    callable.call(connection).register(new SingleResultCallback<T>() {
+                        @Override
+                        public void onResult(final T result, final MongoException e) {
+                            try {
+                                if (e != null) {
+                                    future.init(null, e);
+                                } else {
+                                    future.init(result, null);
+                                }
+                            } finally {
+                                connection.close();
+                                source.release();
+                            }
+                        }
+                    });
+                }
+            }
+        });
     }
 
     static boolean serverVersionIsAtLeast(final Connection connection, final ServerVersion serverVersion) {
@@ -209,7 +257,7 @@ final class OperationHelper {
     static <V> List<V> queryResultToList(final QueryProtocol<Document> queryProtocol, final ReadBinding binding,
                                          final MongoNamespace namespace,
                                          final Function<Document, V> block) {
-         return queryResultToList(queryProtocol, binding, namespace, new DocumentCodec(), block);
+        return queryResultToList(queryProtocol, binding, namespace, new DocumentCodec(), block);
     }
 
     static <T, V> List<V> queryResultToList(final QueryProtocol<T> queryProtocol, final ReadBinding binding,
@@ -260,6 +308,77 @@ final class OperationHelper {
         }
     }
 
+
+    static <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol, final AsyncWriteBinding binding) {
+        SingleResultFuture<T> retVal = new SingleResultFuture<T>();
+        binding.getWriteConnectionSource().register(new ProtocolExecutingCallback2<T>(protocol, retVal));
+        return retVal;
+    }
+
+    static <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol, final Connection connection) {
+        return protocol.executeAsync(connection);
+    }
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
+                                                                         final AsyncWriteBinding binding) {
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), command, binding);
+    }
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
+                                                                         final AsyncWriteBinding binding) {
+        return executeWrappedCommandProtocolAsync(database, command, new DocumentCodec(), new DocumentCodec(),
+                                                  binding);
+    }
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
+                                                                         final Encoder<Document> commandEncoder,
+                                                                         final Decoder<Document> commandResultDecoder,
+                                                                         final AsyncWriteBinding binding) {
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), command, commandEncoder, commandResultDecoder,
+                                                  binding);
+    }
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
+                                                                         final Encoder<Document> commandEncoder,
+                                                                         final Decoder<Document> commandResultDecoder,
+                                                                         final AsyncWriteBinding binding) {
+        SingleResultFuture<CommandResult> future = new SingleResultFuture<CommandResult>();
+        binding.getWriteConnectionSource().register(new CommandProtocolExecutingCallback2(database, command, commandEncoder,
+                                                                                          commandResultDecoder, primary(), future));
+
+        return future;
+    }
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
+                                                                         final Connection connection) {
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), command, connection);
+    }
+
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
+                                                                         final Connection connection) {
+        return executeWrappedCommandProtocolAsync(database, command, new DocumentCodec(), new DocumentCodec(), connection);
+    }
+
+    private static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
+                                                                                 final Encoder<Document> encoder,
+                                                                                 final Decoder<Document> decoder,
+                                                                                 final Connection connection) {
+        return executeWrappedCommandProtocolAsync(database, command, encoder, decoder, primary(), connection);
+
+    }
+
+    private static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final Document command,
+                                                                                 final Encoder<Document> encoder,
+                                                                                 final Decoder<Document> decoder,
+                                                                                 final ReadPreference readPreference,
+                                                                                 final Connection connection) {
+        return new CommandProtocol(database, wrapCommand(command, readPreference, connection.getServerDescription()),
+                                   getQueryFlags(readPreference), encoder, decoder)
+               .executeAsync(connection);
+    }
+
+
     /**
      * Use this method to get a ServerConnectionProvider that doesn't rely on specified read preferences.  Used by Operations like commands
      * which always run against the primary.
@@ -299,14 +418,6 @@ final class OperationHelper {
         } finally {
             connection.close();
         }
-    }
-
-    static <T> T executeProtocol(final Protocol<T> protocol, final Session session) {
-        return executeProtocol(protocol, getPrimaryConnectionProvider(session));
-    }
-
-    static <T> T executeProtocol(final Protocol<T> protocol, final ReadPreference readPreference, final Session session) {
-        return executeProtocol(protocol, getConnectionProvider(readPreference, session));
     }
 
     static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command, final Session session) {
@@ -752,6 +863,93 @@ final class OperationHelper {
                                         }
                                     } finally {
                                         connection.close();
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
+
+        protected abstract Protocol<T> getProtocol(final ServerDescription serverDescription);
+    }
+
+
+    private static class ProtocolExecutingCallback2<T> extends AbstractProtocolExecutingCallback2<T> {
+        private final Protocol<T> protocol;
+
+        public ProtocolExecutingCallback2(final Protocol<T> protocol, final SingleResultFuture<T> retVal) {
+            super(retVal);
+            this.protocol = protocol;
+        }
+
+        @Override
+        protected Protocol<T> getProtocol(final ServerDescription serverDescription) {
+            return protocol;
+        }
+    }
+
+    private static class CommandProtocolExecutingCallback2 extends AbstractProtocolExecutingCallback2<CommandResult> {
+        private final String database;
+        private final Document command;
+        private final Encoder<Document> commandEncoder;
+        private final Decoder<Document> commandResultDecoder;
+        private final ReadPreference readPreference;
+
+        public CommandProtocolExecutingCallback2(final String database, final Document command,
+                                                 final Encoder<Document> commandEncoder,
+                                                 final Decoder<Document> commandResultDecoder,
+                                                 final ReadPreference readPreference,
+                                                 final SingleResultFuture<CommandResult> retVal) {
+            super(retVal);
+            this.database = database;
+            this.command = command;
+            this.commandEncoder = commandEncoder;
+            this.commandResultDecoder = commandResultDecoder;
+            this.readPreference = readPreference;
+        }
+
+        @Override
+        protected Protocol<CommandResult> getProtocol(final ServerDescription serverDescription) {
+            return new CommandProtocol(database, wrapCommand(command, readPreference, serverDescription),
+                                       getQueryFlags(readPreference), commandEncoder, commandResultDecoder);
+        }
+    }
+
+
+    private abstract static class AbstractProtocolExecutingCallback2<T> implements SingleResultCallback<AsyncConnectionSource> {
+        private final SingleResultFuture<T> retVal;
+
+        public AbstractProtocolExecutingCallback2(final SingleResultFuture<T> retVal) {
+            this.retVal = retVal;
+        }
+
+        @Override
+        public void onResult(final AsyncConnectionSource source, final MongoException e) {
+            if (e != null) {
+                retVal.init(null, e);
+            } else {
+                source.getConnection().register(new SingleResultCallback<Connection>() {
+                    @Override
+                    public void onResult(final Connection connection, final MongoException e) {
+                        if (e != null) {
+                            retVal.init(null, e);
+                        } else {
+                            getProtocol(connection.getServerDescription())
+                            .executeAsync(connection)
+                            .register(new SingleResultCallback<T>() {
+                                @Override
+                                public void onResult(final T result, final MongoException e) {
+                                    try {
+                                        if (e != null) {
+                                            retVal.init(null, e);
+                                        } else {
+                                            retVal.init(result, null);
+                                        }
+                                    } finally {
+                                        connection.close();
+                                        source.release();
                                     }
                                 }
                             });

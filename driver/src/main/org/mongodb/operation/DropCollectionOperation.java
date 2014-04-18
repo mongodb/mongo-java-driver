@@ -21,8 +21,8 @@ import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
-import org.mongodb.session.Session;
 
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
@@ -35,7 +35,7 @@ import static org.mongodb.operation.OperationHelper.ignoreResult;
  *
  * @since 3.0
  */
-public class DropCollectionOperation implements AsyncOperation<Void>, WriteOperation<Void> {
+public class DropCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
 
     /**
@@ -58,9 +58,9 @@ public class DropCollectionOperation implements AsyncOperation<Void>, WriteOpera
     }
 
     @Override
-    public MongoFuture<Void> executeAsync(final Session session) {
+    public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
         MongoFuture<CommandResult> futureDropOperation = executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
-                                                                                            session);
+                                                                                            binding);
         return ignoreResult(ignoreNameSpaceErrors(futureDropOperation));
     }
 

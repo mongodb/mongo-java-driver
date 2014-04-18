@@ -20,8 +20,8 @@ import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
-import org.mongodb.session.Session;
 
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
@@ -33,7 +33,7 @@ import static org.mongodb.operation.OperationHelper.ignoreResult;
  *
  * @since 3.0
  */
-public class DropIndexOperation implements AsyncOperation<Void>, WriteOperation<Void> {
+public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
     private final String indexName;
 
@@ -53,8 +53,8 @@ public class DropIndexOperation implements AsyncOperation<Void>, WriteOperation<
     }
 
     @Override
-    public MongoFuture<Void> executeAsync(final Session session) {
-        return ignoreResult(ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), session)));
+    public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
+        return ignoreResult(ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding)));
     }
 
     private Document getCommand() {

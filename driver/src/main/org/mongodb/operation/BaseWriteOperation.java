@@ -28,6 +28,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.MongoWriteException;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
+import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerVersion;
@@ -35,7 +36,6 @@ import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.AcknowledgedWriteResult;
 import org.mongodb.protocol.WriteCommandProtocol;
 import org.mongodb.protocol.WriteProtocol;
-import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.CallableWithConnection;
@@ -48,7 +48,7 @@ import static org.mongodb.operation.WriteRequest.Type.REMOVE;
 import static org.mongodb.operation.WriteRequest.Type.REPLACE;
 import static org.mongodb.operation.WriteRequest.Type.UPDATE;
 
-public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>, WriteOperation<WriteResult> {
+public abstract class BaseWriteOperation implements WriteOperation<WriteResult>, AsyncWriteOperation<WriteResult> {
 
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
@@ -87,10 +87,10 @@ public abstract class BaseWriteOperation implements AsyncOperation<WriteResult>,
     }
 
     @Override
-    public MongoFuture<WriteResult> executeAsync(final Session session) {
+    public MongoFuture<WriteResult> executeAsync(final AsyncWriteBinding binding) {
         // Todo handle async command protocol
         final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
-        executeProtocolAsync(getWriteProtocol(), session).register(new SingleResultCallback<WriteResult>() {
+        executeProtocolAsync(getWriteProtocol(), binding).register(new SingleResultCallback<WriteResult>() {
             @Override
             public void onResult(final WriteResult result, final MongoException e) {
                 if (e != null) {
