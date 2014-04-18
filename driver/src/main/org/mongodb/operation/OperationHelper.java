@@ -89,6 +89,11 @@ final class OperationHelper {
         }
     }
 
+    static boolean serverIsAtLeastVersionTwoDotSix(final Connection connection) {
+        return connection.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0;
+    }
+
+
     static <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol, final AsyncWriteBinding binding) {
         return withConnection(binding, new AsyncCallableWithConnection<T>() {
             @Override
@@ -237,10 +242,6 @@ final class OperationHelper {
                 }
             }
         });
-    }
-
-    static boolean serverVersionIsAtLeast(final Connection connection, final ServerVersion serverVersion) {
-        return connection.getServerDescription().getVersion().compareTo(serverVersion) >= 0;
     }
 
     static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command,

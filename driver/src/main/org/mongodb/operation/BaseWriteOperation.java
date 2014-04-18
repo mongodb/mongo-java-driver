@@ -31,7 +31,6 @@ import org.mongodb.WriteResult;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerVersion;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.AcknowledgedWriteResult;
 import org.mongodb.protocol.WriteCommandProtocol;
@@ -41,7 +40,7 @@ import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
-import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
+import static org.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static org.mongodb.operation.OperationHelper.withConnection;
 import static org.mongodb.operation.WriteRequest.Type.INSERT;
 import static org.mongodb.operation.WriteRequest.Type.REMOVE;
@@ -74,7 +73,7 @@ public abstract class BaseWriteOperation implements WriteOperation<WriteResult>,
             @Override
             public WriteResult call(final Connection connection) {
                 try {
-                    if (writeConcern.isAcknowledged() && serverSupportsWriteCommands(connection)) {
+                    if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection)) {
                         return translateBulkWriteResult(getCommandProtocol().execute(connection));
                     } else {
                         return getWriteProtocol().execute(connection);
@@ -114,10 +113,6 @@ public abstract class BaseWriteOperation implements WriteOperation<WriteResult>,
     protected abstract WriteProtocol getWriteProtocol();
 
     protected abstract WriteCommandProtocol getCommandProtocol();
-
-    private boolean serverSupportsWriteCommands(final Connection connection) {
-        return serverVersionIsAtLeast(connection, new ServerVersion(2, 6));
-    }
 
     private MongoWriteException convertBulkWriteException(final BulkWriteException e) {
         BulkWriteError lastError = getLastError(e);

@@ -31,7 +31,6 @@ import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerVersion;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.InsertProtocol;
 
@@ -44,7 +43,7 @@ import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
+import static org.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static org.mongodb.operation.OperationHelper.withConnection;
 
 /**
@@ -68,7 +67,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
-                if (connection.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
+                if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     try {
                         executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), connection);
                     } catch (MongoCommandFailureException e) {
@@ -90,7 +89,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             @Override
             public MongoFuture<Void> call(final Connection connection) {
                 final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
-                if (serverVersionIsAtLeast(connection, new ServerVersion(2, 6))) {
+                if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     executeWrappedCommandProtocolAsync(namespace, getCommand(), connection)
                     .register(new SingleResultCallback<CommandResult>() {
                         @Override
@@ -107,7 +106,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     }
 
     private void executeInsertProtocolAsync(final List<Index> indexesRemaining, final Connection connection,
-                                            final SingleResultFuture<Void> retVal) {
+                                            final SingleResultFuture<Void> future) {
         Index index = indexesRemaining.remove(0);
         asInsertProtocol(index).executeAsync(connection)
         .register(new SingleResultCallback<WriteResult>() {
@@ -115,11 +114,11 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             public void onResult(final WriteResult result, final MongoException e) {
                 MongoException translatedException = translateException(e);
                 if (translatedException != null) {
-                    retVal.init(null, translatedException);
+                    future.init(null, translatedException);
                 } else if (indexesRemaining.isEmpty()) {
-                    retVal.init(null, null);
+                    future.init(null, null);
                 } else {
-                    executeInsertProtocolAsync(indexesRemaining, connection, retVal);
+                    executeInsertProtocolAsync(indexesRemaining, connection, future);
                 }
             }
         });
