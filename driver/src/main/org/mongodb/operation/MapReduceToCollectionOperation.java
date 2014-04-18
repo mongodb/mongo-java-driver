@@ -22,15 +22,14 @@ import org.mongodb.Function;
 import org.mongodb.MapReduceStatistics;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
 import org.mongodb.connection.ServerAddress;
-import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandDocuments.createMapReduce;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.transformResult;
 
 /**
  * Operation that runs a Map Reduce against a MongoDB instance.  This operation does not support "inline" results, i.e. the results will be
@@ -42,7 +41,7 @@ import static org.mongodb.operation.OperationHelper.transformResult;
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0
  */
-public class MapReduceToCollectionOperation implements AsyncOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
+public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
     private final MapReduce mapReduce;
     private final MongoNamespace namespace;
     private ServerAddress serverUsed;
@@ -65,19 +64,17 @@ public class MapReduceToCollectionOperation implements AsyncOperation<MapReduceS
     /**
      * Executing this will return a cursor with your results in.
      *
-     * @param binding
+     * @param binding the binding
      * @return a MongoCursor that can be iterated over to find all the results of the Map Reduce operation.
      */
     @Override
     public MapReduceStatistics execute(final WriteBinding binding) {
-        CommandResult result = executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), binding);
-        return transformResult(result, transformer());
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), binding, transformer());
     }
 
     @Override
-    public MongoFuture<MapReduceStatistics> executeAsync(final Session session) {
-        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), session);
-        return transformResult(result, transformer());
+    public MongoFuture<MapReduceStatistics> executeAsync(final AsyncWriteBinding binding) {
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding, transformer());
     }
 
     /**

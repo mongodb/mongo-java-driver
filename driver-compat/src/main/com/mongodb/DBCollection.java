@@ -1021,8 +1021,7 @@ public class DBCollection {
      */
     public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
         //TODO: test read preference
-        MongoCursor<Document> cursor = execute(new GroupOperation(getNamespace(), cmd.toNew(), readPreference.toNew()),
-                                               readPreference);
+        MongoCursor<Document> cursor = execute(new GroupOperation(getNamespace(), cmd.toNew()), readPreference);
         return toDBList(cursor);
     }
 
@@ -1150,8 +1149,8 @@ public class DBCollection {
         if (mapReduce.isInline()) {
             MapReduceCursor<DBObject> executionResult = execute(new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(),
                                                                                                                   mapReduce,
-                                                                                                                  objectCodec,
-                                                                                                                  readPreference.toNew()),
+                                                                                                                  objectCodec
+                                                                ),
                                                                 readPreference);
             return new MapReduceOutput(command.toDBObject(), executionResult, executionResult.getServerAddress());
         } else {

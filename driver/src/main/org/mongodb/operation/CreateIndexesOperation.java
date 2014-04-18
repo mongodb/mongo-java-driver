@@ -42,7 +42,6 @@ import static java.util.Arrays.asList;
 import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
-import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
@@ -110,7 +109,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     private void executeInsertProtocolAsync(final List<Index> indexesRemaining, final Connection connection,
                                             final SingleResultFuture<Void> retVal) {
         Index index = indexesRemaining.remove(0);
-        executeProtocolAsync(asInsertProtocol(index), connection)
+        asInsertProtocol(index).executeAsync(connection)
         .register(new SingleResultCallback<WriteResult>() {
             @Override
             public void onResult(final WriteResult result, final MongoException e) {

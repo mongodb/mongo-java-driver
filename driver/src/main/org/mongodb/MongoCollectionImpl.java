@@ -258,8 +258,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
             if (mapReduce.isInline()) {
                 MapReduceWithInlineResultsOperation<Document> operation =
-                new MapReduceWithInlineResultsOperation<Document>(getNamespace(), mapReduce, new DocumentCodec(),
-                                                                  options.getReadPreference());
+                new MapReduceWithInlineResultsOperation<Document>(getNamespace(), mapReduce, new DocumentCodec());
                 return new MapReduceResultsIterable<T, Document>(operation, MongoCollectionImpl.this);
             } else {
                 execute(new MapReduceToCollectionOperation(getNamespace(), mapReduce));

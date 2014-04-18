@@ -16,15 +16,16 @@
 
 package org.mongodb.operation;
 
+import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoFuture;
+import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
-import org.mongodb.session.Session;
 
 import static org.mongodb.MongoNamespace.asNamespaceString;
+import static org.mongodb.operation.OperationHelper.VoidTransformer;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.ignoreResult;
 
 /**
  * An operation that renames the given collection to the new name.  If the new name is the same as an existing collection and
@@ -33,7 +34,7 @@ import static org.mongodb.operation.OperationHelper.ignoreResult;
  *
  * @3.0
  */
-public class RenameCollectionOperation implements AsyncOperation<Void>, WriteOperation<Void> {
+public class RenameCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final String originalCollectionName;
     private final String newCollectionName;
     private final boolean dropTarget;
@@ -64,8 +65,7 @@ public class RenameCollectionOperation implements AsyncOperation<Void>, WriteOpe
      */
     @Override
     public Void execute(final WriteBinding binding) {
-        executeWrappedCommandProtocol("admin", getCommand(), binding);
-        return null;
+        return executeWrappedCommandProtocol("admin", getCommand(), binding, new VoidTransformer<CommandResult>());
     }
 
     /**
@@ -74,11 +74,11 @@ public class RenameCollectionOperation implements AsyncOperation<Void>, WriteOpe
      * @throws org.mongodb.MongoServerException
      *          if you provide a newCollectionName that is the name of an existing collection and dropTarget is false,
      *          or if the oldCollectionName is the name of a collection that doesn't exist
-     * @param session
+     * @param binding the binding
      */
     @Override
-    public MongoFuture<Void> executeAsync(final Session session) {
-        return ignoreResult(executeWrappedCommandProtocolAsync("admin", getCommand(), session));
+    public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
+        return executeWrappedCommandProtocolAsync("admin", getCommand(), binding, new VoidTransformer<CommandResult>());
     }
 
     private Document getCommand() {

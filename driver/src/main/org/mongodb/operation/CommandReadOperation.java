@@ -5,9 +5,8 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoFuture;
-import org.mongodb.ReadPreference;
+import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
-import org.mongodb.session.Session;
 
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
@@ -17,20 +16,18 @@ import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtoco
  *
  * @since 3.0
  */
-public class CommandReadOperation implements AsyncOperation<CommandResult>, ReadOperation<CommandResult> {
+public class CommandReadOperation implements AsyncReadOperation<CommandResult>, ReadOperation<CommandResult> {
     private final Encoder<Document> commandEncoder;
     private final Decoder<Document> commandDecoder;
     private final String database;
     private final Document commandDocument;
-    private final ReadPreference readPreference;
 
-    public CommandReadOperation(final String database, final Document command, final ReadPreference readPreference,
+    public CommandReadOperation(final String database, final Document command,
                                 final Decoder<Document> commandDecoder, final Encoder<Document> commandEncoder) {
         this.database = database;
         this.commandEncoder = commandEncoder;
         this.commandDecoder = commandDecoder;
         this.commandDocument = command;
-        this.readPreference = readPreference;
     }
 
     @Override
@@ -39,7 +36,7 @@ public class CommandReadOperation implements AsyncOperation<CommandResult>, Read
     }
 
     @Override
-    public MongoFuture<CommandResult> executeAsync(final Session session) {
-        return executeWrappedCommandProtocolAsync(database, commandDocument, commandEncoder, commandDecoder, readPreference, session);
+    public MongoFuture<CommandResult> executeAsync(final AsyncReadBinding binding) {
+        return executeWrappedCommandProtocolAsync(database, commandDocument, commandEncoder, commandDecoder, binding);
     }
 }

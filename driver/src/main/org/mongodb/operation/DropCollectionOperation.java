@@ -16,7 +16,6 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoFuture;
@@ -59,9 +58,8 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
 
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        MongoFuture<CommandResult> futureDropOperation = executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
-                                                                                            binding);
-        return ignoreResult(ignoreNameSpaceErrors(futureDropOperation));
+        return ignoreResult(ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
+                                                                                            binding)));
     }
 
     private Document getCommand() {

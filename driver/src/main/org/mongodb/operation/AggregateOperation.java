@@ -24,12 +24,16 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.ConnectionSource;
 import org.mongodb.binding.ReadBinding;
+import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.connection.Connection;
 import org.mongodb.protocol.QueryResult;
 
 import java.util.List;
 
 import static org.mongodb.operation.AggregateHelper.asCommandDocument;
+import static org.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.withConnection;
 
 /**
  * An operation that executes an aggregation query
@@ -54,20 +58,21 @@ public class AggregateOperation<T> implements ReadOperation<MongoCursor<T>> {
     @SuppressWarnings("unchecked")
     @Override
     public MongoCursor<T> execute(final ReadBinding binding) {
-        ConnectionSource source = binding.getReadConnectionSource();
-        try {
-            CommandResult result = executeWrappedCommandProtocol(namespace, asCommandDocument(namespace, pipeline, options),
-                                                                 new CommandResultWithPayloadDecoder<T>(decoder, "result"),
-                                                                 source, binding.getReadPreference());
-            if (options.getOutputMode() == AggregationOptions.OutputMode.INLINE) {
-                return new InlineMongoCursor<T>(result.getAddress(), (List<T>) result.getResponse().get("result"));
-            } else {
-                int batchSize = options.getBatchSize() == null ? 0 : options.getBatchSize();
-                return new MongoQueryCursor<T>(namespace, createQueryResult(result), 0, batchSize, decoder, source);
+        return withConnection(binding, new CallableWithConnectionAndSource<MongoCursor<T>>() {
+            @Override
+            public MongoCursor<T> call(final ConnectionSource source, final Connection connection) {
+                CommandResult result = executeWrappedCommandProtocol(namespace, asCommandDocument(namespace, pipeline, options),
+                                                                     new DocumentCodec(),
+                                                                     new CommandResultWithPayloadDecoder<T>(decoder, "result"),
+                                                                     connection, binding.getReadPreference());
+                if (options.getOutputMode() == AggregationOptions.OutputMode.INLINE) {
+                    return new InlineMongoCursor<T>(result.getAddress(), (List<T>) result.getResponse().get("result"));
+                } else {
+                    int batchSize = options.getBatchSize() == null ? 0 : options.getBatchSize();
+                    return new MongoQueryCursor<T>(namespace, createQueryResult(result), 0, batchSize, decoder, source);
+                }
             }
-        } finally {
-            source.release();
-        }
+        });
     }
 
     @SuppressWarnings("unchecked")

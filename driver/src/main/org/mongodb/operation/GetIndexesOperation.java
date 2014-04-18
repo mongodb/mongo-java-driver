@@ -19,10 +19,10 @@ package org.mongodb.operation;
 import org.mongodb.Document;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.protocol.QueryProtocol;
-import org.mongodb.session.Session;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -36,7 +36,7 @@ import static org.mongodb.operation.OperationHelper.queryResultToListAsync;
  *
  * @since 3.0
  */
-public class GetIndexesOperation implements AsyncOperation<List<Document>>, ReadOperation<List<Document>> {
+public class GetIndexesOperation implements AsyncReadOperation<List<Document>>, ReadOperation<List<Document>> {
     private final MongoNamespace collectionNamespace;
 
     public GetIndexesOperation(final MongoNamespace collectionNamespace) {
@@ -45,12 +45,12 @@ public class GetIndexesOperation implements AsyncOperation<List<Document>>, Read
 
     @Override
     public List<Document> execute(final ReadBinding binding) {
-        return queryResultToList(getProtocol(), binding, getIndexNamespace(), new DocumentCodec());
+        return queryResultToList(getIndexNamespace(), getProtocol(), new DocumentCodec(), binding);
     }
 
     @Override
-    public MongoFuture<List<Document>> executeAsync(final Session session) {
-        return queryResultToListAsync(getProtocol(), session, getIndexNamespace(), new DocumentCodec());
+    public MongoFuture<List<Document>> executeAsync(final AsyncReadBinding binding) {
+        return queryResultToListAsync(getIndexNamespace(), getProtocol(), binding);
     }
 
     private Document asQueryDocument() {

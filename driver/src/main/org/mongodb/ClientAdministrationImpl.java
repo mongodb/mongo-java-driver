@@ -44,7 +44,6 @@ class ClientAdministrationImpl implements ClientAdministration {
     @Override
     public double ping() {
         CommandResult pingResult = client.execute(new CommandReadOperation(ADMIN_DATABASE, PING_COMMAND,
-                                                                           client.getOptions().getReadPreference(),
                                                                            commandCodec, commandCodec),
                                                   client.getOptions().getReadPreference());
 

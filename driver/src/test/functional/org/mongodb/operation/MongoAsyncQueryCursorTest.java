@@ -24,12 +24,14 @@ import org.junit.experimental.categories.Category;
 import org.mongodb.AsyncBlock;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
+import org.mongodb.binding.AsyncClusterBinding;
+import org.mongodb.binding.AsyncConnectionSource;
+import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 import org.mongodb.selector.PrimaryServerSelector;
-import org.mongodb.session.ClusterSession;
 import org.mongodb.session.PinnedSession;
 import org.mongodb.session.ServerConnectionProvider;
 import org.mongodb.session.ServerConnectionProviderOptions;
@@ -42,16 +44,15 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeFalse;
 import static org.mongodb.Fixture.getCluster;
 import static org.mongodb.Fixture.getExecutor;
-import static org.mongodb.Fixture.getSession;
 import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.ReadPreference.primary;
-import static org.mongodb.operation.OperationHelper.getConnectionProvider;
 import static org.mongodb.operation.QueryFlag.Exhaust;
 
 @Category(Async.class)
@@ -60,8 +61,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     private CountDownLatch latch;
     private List<Document> documentList;
     private List<Document> documentResultList;
-    private Session session;
-    private ServerConnectionProvider connectionProvider;
+    private AsyncReadBinding binding;
+    private AsyncConnectionSource source;
 
     @Before
     public void setUp() {
@@ -75,14 +76,14 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         }
 
         collection.insert(documentList);
-        session = new ClusterSession(getCluster(), getExecutor());
-        connectionProvider = getConnectionProvider(primary(), getSession());
+        binding = new AsyncClusterBinding(getCluster(), primary(), 1, SECONDS);
+        source = binding.getReadConnectionSource().get();
     }
 
     @After
     public void tearDown() {
         super.tearDown();
-        session.close();
+        binding.release();
     }
 
     @Test
@@ -90,7 +91,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         QueryResult<Document> firstBatch = executeQuery();
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                                             firstBatch, 0, 2, new DocumentCodec(),
-                                            connectionProvider)
+                                            source)
         .start(new TestBlock());
         latch.await();
         assertEquals(documentList, documentResultList);
@@ -101,7 +102,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         QueryResult<Document> firstBatch = executeQuery();
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                                             firstBatch, 100, 0, new DocumentCodec(),
-                                            connectionProvider)
+                                            source)
         .start(new TestBlock());
 
         latch.await();
@@ -111,7 +112,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testExhaust() throws InterruptedException {
         assumeFalse(isSharded());
-        Connection connection = connectionProvider.getConnection();
+        Connection connection = source.getConnection().get();
         QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(),
                                                         2, EnumSet.of(Exhaust),
                                                         connection);
@@ -127,7 +128,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testExhaustWithLimit() throws InterruptedException {
         assumeFalse(isSharded());
-        Connection connection = connectionProvider.getConnection();
+        Connection connection = source.getConnection().get();
         QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection);
 
         new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
@@ -203,7 +204,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     }
 
     private QueryResult<Document> executeQuery(final Document query, final int numberToReturn, final EnumSet<QueryFlag> queryFlag) {
-        Connection connection = connectionProvider.getConnection();
+        Connection connection = source.getConnection().get();
         try {
             return executeQuery(query, numberToReturn, queryFlag, connection);
         } finally {

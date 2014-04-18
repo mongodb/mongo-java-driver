@@ -22,6 +22,7 @@ import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
+import org.mongodb.binding.AsyncConnectionSource;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;
@@ -30,7 +31,6 @@ import org.mongodb.protocol.GetMoreDiscardProtocol;
 import org.mongodb.protocol.GetMoreProtocol;
 import org.mongodb.protocol.GetMoreReceiveProtocol;
 import org.mongodb.protocol.QueryResult;
-import org.mongodb.session.ServerConnectionProvider;
 
 // TODO: kill cursor on early breakout
 // TODO: Report errors in callback
@@ -42,7 +42,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     private final int limit;
     private final int batchSize;
     private final Decoder<T> decoder;
-    private ServerConnectionProvider serverConnectionProvider;
+    private AsyncConnectionSource connectionSource;
     private Connection exhaustConnection;
     private long numFetchedSoFar;
     private ServerCursor cursor;
@@ -50,8 +50,8 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
 
     // For normal queries
     MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
-                          final Decoder<T> decoder, final ServerConnectionProvider provider) {
-        this(namespace, firstBatch, limit, batchSize, decoder, provider, null);
+                          final Decoder<T> decoder, final AsyncConnectionSource connectionSource) {
+        this(namespace, firstBatch, limit, batchSize, decoder, connectionSource, null);
     }
 
     // For exhaust queries
@@ -61,14 +61,17 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     }
 
     private MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
-                                  final Decoder<T> decoder, final ServerConnectionProvider provider,
+                                  final Decoder<T> decoder, final AsyncConnectionSource connectionSource,
                                   final Connection exhaustConnection) {
         this.namespace = namespace;
         this.firstBatch = firstBatch;
         this.limit = limit;
         this.batchSize = batchSize;
         this.decoder = decoder;
-        this.serverConnectionProvider = provider;
+        this.connectionSource = connectionSource;
+        if (this.connectionSource != null) {
+            this.connectionSource.retain();
+        }
         this.exhaustConnection = exhaustConnection;
     }
 
@@ -82,7 +85,11 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
         if (isExhaust()) {
             handleExhaustCleanup(responseTo);
         } else {
-            block.done();
+            try {
+                block.done();
+            } finally {
+                releaseConnectionSource();
+            }
         }
     }
 
@@ -100,9 +107,16 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                     block.done();
                 } finally {
                     exhaustConnection.close();
+                    releaseConnectionSource();
                 }
             }
         });
+    }
+
+    private void releaseConnectionSource() {
+        if (connectionSource != null) {
+            connectionSource.release();
+        }
     }
 
     private class QueryResultSingleResultCallback implements SingleResultCallback<QueryResult<T>> {
@@ -150,7 +164,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                     .executeAsync(exhaustConnection)
                     .register(this);
                 } else {
-                    serverConnectionProvider.getConnectionAsync().register(new SingleResultCallback<Connection>() {
+                    connectionSource.getConnection().register(new SingleResultCallback<Connection>() {
                         @Override
                         public void onResult(final Connection connection, final MongoException e) {
                             if (e != null) {
