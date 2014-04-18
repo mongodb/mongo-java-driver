@@ -25,7 +25,7 @@ import org.mongodb.binding.ReadBinding;
 
 import java.util.List;
 
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 
 /**
  * Finds the distinct values for a specified field across a single collection. This returns an array of the distinct values.

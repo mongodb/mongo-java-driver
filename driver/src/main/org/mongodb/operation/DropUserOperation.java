@@ -30,11 +30,12 @@ import org.mongodb.protocol.DeleteProtocol;
 
 import static java.util.Arrays.asList;
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
+import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.VoidTransformer;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static org.mongodb.operation.OperationHelper.withConnection;
 
@@ -54,7 +55,7 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new OperationHelper.CallableWithConnection<Void>() {
+        return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {

@@ -31,8 +31,8 @@ import org.mongodb.protocol.QueryResult;
 import java.util.List;
 
 import static org.mongodb.operation.AggregateHelper.asCommandDocument;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.withConnection;
 
 /**
