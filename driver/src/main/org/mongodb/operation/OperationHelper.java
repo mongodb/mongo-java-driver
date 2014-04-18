@@ -83,6 +83,10 @@ final class OperationHelper {
         }
     }
 
+    static <T, R> R executeProtocol(final Protocol<T> protocol, final Connection connection, final Function<T, R> transformer) {
+        return transformer.apply(protocol.execute(connection));
+    }
+
     static <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol, final AsyncWriteBinding binding) {
         return withConnection(binding, new AsyncCallableWithConnection<T>() {
             @Override
@@ -235,10 +239,6 @@ final class OperationHelper {
 
     static <T> MongoFuture<Void> ignoreResult(final MongoFuture<T> future) {
         return transformResult(future, new VoidTransformer<T>());
-    }
-
-    static <T, V> V transformResult(final T result, final Function<T, V> block) {
-        return block.apply(result);
     }
 
     static <T, V> MongoFuture<V> transformResult(final MongoFuture<T> future, final Function<T, V> block) {
