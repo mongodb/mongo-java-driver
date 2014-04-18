@@ -36,9 +36,9 @@ import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static org.mongodb.operation.OperationHelper.CallableWithConnection;
+import static org.mongodb.operation.OperationHelper.executeProtocol;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
-import static org.mongodb.operation.OperationHelper.transformResult;
 import static org.mongodb.operation.OperationHelper.withConnection;
 
 /**
@@ -55,17 +55,17 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
         this.database = notNull("source", source);
         this.userName = notNull("userName", userName);
     }
+
     @Override
     public Boolean execute(final ReadBinding binding) {
         return withConnection(binding, new CallableWithConnection<Boolean>() {
             @Override
             public Boolean call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    CommandResult result = executeWrappedCommandProtocol(database, getCommand(), connection, binding.getReadPreference());
-                    return transformResult(result, transformCommandResult());
+                    return executeWrappedCommandProtocol(database, getCommand(), connection, binding.getReadPreference(),
+                                                         transformCommandResult());
                 } else {
-                    QueryResult<Document> result = getCollectionBasedProtocol().execute(connection);
-                    return transformResult(result, transformQueryResult());
+                    return executeProtocol(getCollectionBasedProtocol(), connection, transformQueryResult());
                 }
             }
         });
@@ -107,7 +107,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
         return new QueryProtocol<Document>(namespace, EnumSet.noneOf(QueryFlag.class), 0, 1,
-                new Document("user", userName), null, codec, codec);
+                                           new Document("user", userName), null, codec, codec);
     }
 
     private Document getCommand() {

@@ -148,22 +148,19 @@ final class CommandOperationHelper {
 
     static CommandResult executeWrappedCommandProtocol(final String database, final Document command,
                                                        final Connection connection) {
-        return executeWrappedCommandProtocol(database,
-                                             command,
-                                             new DocumentCodec(),
-                                             new DocumentCodec(),
-                                             connection,
-                                             primary());
+        return executeWrappedCommandProtocol(database, command, new DocumentCodec(), new DocumentCodec(), connection, primary());
+    }
+
+    static <T> T executeWrappedCommandProtocol(final String database, final Document command,
+                                               final Connection connection, final ReadPreference readPreference,
+                                               final Function<CommandResult, T> transformer) {
+        return executeWrappedCommandProtocol(database, command, new DocumentCodec(), new DocumentCodec(), connection, readPreference,
+                                             transformer);
     }
 
     static CommandResult executeWrappedCommandProtocol(final String database, final Document command,
                                                        final Connection connection, final ReadPreference readPreference) {
-        return executeWrappedCommandProtocol(database,
-                                             command,
-                                             new DocumentCodec(),
-                                             new DocumentCodec(),
-                                             connection,
-                                             readPreference);
+        return executeWrappedCommandProtocol(database, command, new DocumentCodec(), new DocumentCodec(), connection, readPreference);
     }
 
     static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command,
@@ -171,6 +168,21 @@ final class CommandOperationHelper {
                                                        final Connection connection, final ReadPreference readPreference) {
         return new CommandProtocol(namespace.getDatabaseName(), wrapCommand(command, readPreference, connection.getServerDescription()),
                                    getQueryFlags(readPreference), encoder, decoder).execute(connection);
+    }
+
+    static CommandResult executeWrappedCommandProtocol(final String database, final Document command,
+                                                       final Encoder<Document> encoder, final Decoder<Document> decoder,
+                                                       final Connection connection, final ReadPreference readPreference) {
+        return executeWrappedCommandProtocol(database, command, encoder, decoder, connection, readPreference,
+                                             new IdentityTransformer<CommandResult>());
+    }
+
+    static <T> T executeWrappedCommandProtocol(final String database, final Document command,
+                                               final Encoder<Document> encoder, final Decoder<Document> decoder,
+                                               final Connection connection, final ReadPreference readPreference,
+                                               final Function<CommandResult, T> transformer) {
+        return transformer.apply(new CommandProtocol(database, wrapCommand(command, readPreference, connection.getServerDescription()),
+                                                     getQueryFlags(readPreference), encoder, decoder).execute(connection));
     }
 
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
@@ -374,13 +386,6 @@ final class CommandOperationHelper {
         } else {
             return EnumSet.noneOf(QueryFlag.class);
         }
-    }
-
-    static CommandResult executeWrappedCommandProtocol(final String database, final Document command,
-                                                       final Encoder<Document> encoder, final Decoder<Document> decoder,
-                                                       final Connection connection, final ReadPreference readPreference) {
-        return new CommandProtocol(database, wrapCommand(command, readPreference, connection.getServerDescription()),
-                                   getQueryFlags(readPreference), encoder, decoder).execute(connection);
     }
 
     private static class CommandProtocolExecutingCallback<R> implements SingleResultCallback<AsyncConnectionSource> {
