@@ -18,6 +18,7 @@ package org.mongodb.operation;
 
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
+import org.mongodb.Function;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.ReadBinding;
@@ -54,12 +55,21 @@ public class DistinctOperation implements ReadOperation<MongoCursor<String>> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public MongoCursor<String> execute(final ReadBinding binding) {
-        CommandResult commandResult = executeWrappedCommandProtocol(namespace, asCommandDocument(), binding);
+        return executeWrappedCommandProtocol(namespace, asCommandDocument(), binding, transformer());
 
-        return new InlineMongoCursor<String>(commandResult.getAddress(), (List<String>) commandResult.getResponse().get("values"));
     }
+
+    @SuppressWarnings("unchecked")
+    private Function<CommandResult, MongoCursor<String>> transformer() {
+        return new Function<CommandResult, MongoCursor<String>>() {
+            @Override
+            public MongoCursor<String> apply(final CommandResult commandResult) {
+                return new InlineMongoCursor<String>(commandResult.getAddress(), (List<String>) commandResult.getResponse().get("values"));
+            }
+        };
+    }
+
 
     private Document asCommandDocument() {
         Document cmd = new Document("distinct", namespace.getCollectionName());

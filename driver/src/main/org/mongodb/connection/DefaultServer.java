@@ -199,6 +199,7 @@ class DefaultServer implements ClusterableServer {
 
         @Override
         public String getId() {
+            isTrue("open", !isClosed());
             return wrapped.getId();
         }
 

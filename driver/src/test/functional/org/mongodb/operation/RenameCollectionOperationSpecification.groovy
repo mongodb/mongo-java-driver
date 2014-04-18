@@ -23,8 +23,8 @@ import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoNamespace
 import org.mongodb.MongoServerException
 
+import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
-import static org.mongodb.Fixture.getSession
 
 class RenameCollectionOperationSpecification extends FunctionalSpecification {
 
@@ -52,7 +52,7 @@ class RenameCollectionOperationSpecification extends FunctionalSpecification {
         assert collectionNameExists(getCollectionName())
 
         when:
-        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), 'newCollection', false).executeAsync(getSession()).get()
+        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), 'newCollection', false).executeAsync(getAsyncBinding()).get()
 
         then:
         !collectionNameExists(getCollectionName())

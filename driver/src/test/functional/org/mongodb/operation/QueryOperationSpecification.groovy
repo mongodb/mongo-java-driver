@@ -16,8 +16,8 @@
 
 package org.mongodb.operation
 
+import org.junit.experimental.categories.Category;
 import category.Async
-import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
@@ -32,8 +32,8 @@ import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.disableMaxTimeFailPoint
 import static org.mongodb.Fixture.enableMaxTimeFailPoint
+import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
-import static org.mongodb.Fixture.getSession
 import static org.mongodb.Fixture.isSharded
 import static org.mongodb.Fixture.serverVersionAtLeast
 
@@ -74,7 +74,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         enableMaxTimeFailPoint()
 
         when:
-        queryOperation.executeAsync(getSession()).get();
+        queryOperation.executeAsync(getAsyncBinding()).get();
 
         then:
         thrown(MongoExecutionTimeoutException)

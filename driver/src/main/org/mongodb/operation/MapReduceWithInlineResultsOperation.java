@@ -16,7 +16,6 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
@@ -25,16 +24,14 @@ import org.mongodb.MapReduceAsyncCursor;
 import org.mongodb.MapReduceCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ReadPreference;
+import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.session.Session;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandDocuments.createMapReduce;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.transformResult;
 
 /**
  * Operation that runs a Map Reduce against a MongoDB instance.  This operation only supports "inline" results, i.e. the results will be
@@ -46,30 +43,27 @@ import static org.mongodb.operation.OperationHelper.transformResult;
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0
  */
-public class MapReduceWithInlineResultsOperation<T> implements AsyncOperation<MapReduceAsyncCursor<T>>, ReadOperation<MapReduceCursor<T>> {
+public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperation<MapReduceAsyncCursor<T>>,
+                                                               ReadOperation<MapReduceCursor<T>> {
     private final MapReduce mapReduce;
     private final MongoNamespace namespace;
-    private final ReadPreference readPreference;
-    private final Codec<Document> commandCodec = new DocumentCodec();
     private final Decoder<T> decoder;
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute
      *
-     * @param namespace      the database and collection to perform the map reduce on
-     * @param mapReduce      the bean containing all the details of the Map Reduce operation to perform
-     * @param decoder        the decoder to use for decoding the documents in the results of the map-reduce operation
-     * @param readPreference the read preference suggesting which server to run the command on
+     * @param namespace the database and collection to perform the map reduce on
+     * @param mapReduce the bean containing all the details of the Map Reduce operation to perform
+     * @param decoder   the decoder to use for decoding the documents in the results of the map-reduce operation
      */
     public MapReduceWithInlineResultsOperation(final MongoNamespace namespace, final MapReduce mapReduce,
-                                               final Decoder<T> decoder, final ReadPreference readPreference) {
+                                               final Decoder<T> decoder) {
         this.decoder = decoder;
         if (!mapReduce.isInline()) {
             throw new IllegalArgumentException("This operation can only be used with inline map reduce operations.  Invalid MapReduce: "
                                                + mapReduce);
         }
         this.namespace = notNull("namespace", namespace);
-        this.readPreference = readPreference;
         this.mapReduce = mapReduce;
     }
 
@@ -82,22 +76,19 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncOperation<Ma
     @Override
     @SuppressWarnings("unchecked")
     public MapReduceCursor<T> execute(final ReadBinding binding) {
-        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), commandCodec,
-                                                             new CommandResultWithPayloadDecoder<T>(decoder, "results"),
-                                                             binding);
-
-        return transformResult(result, transform());
+        return executeWrappedCommandProtocol(namespace, getCommand(), new DocumentCodec(),
+                                             new CommandResultWithPayloadDecoder<T>(decoder, "results"),
+                                             binding, transformer());
     }
 
     @Override
-    public MongoFuture<MapReduceAsyncCursor<T>> executeAsync(final Session session) {
-        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace, getCommand(), commandCodec,
-                                                                               new CommandResultWithPayloadDecoder<T>(decoder, "results"),
-                                                                               readPreference, session);
-        return transformResult(result, transformAsync());
+    public MongoFuture<MapReduceAsyncCursor<T>> executeAsync(final AsyncReadBinding binding) {
+        return executeWrappedCommandProtocolAsync(namespace, getCommand(), new DocumentCodec(),
+                                                  new CommandResultWithPayloadDecoder<T>(decoder, "results"),
+                                                  binding, asyncTransformer());
     }
 
-    private Function<CommandResult, MapReduceCursor<T>> transform() {
+    private Function<CommandResult, MapReduceCursor<T>> transformer() {
         return new Function<CommandResult, MapReduceCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override
@@ -107,7 +98,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncOperation<Ma
         };
     }
 
-    private Function<CommandResult, MapReduceAsyncCursor<T>> transformAsync() {
+    private Function<CommandResult, MapReduceAsyncCursor<T>> asyncTransformer() {
         return new Function<CommandResult, MapReduceAsyncCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override

@@ -27,8 +27,8 @@ import org.mongodb.codecs.DocumentCodec
 import org.mongodb.test.CollectionHelper
 import spock.lang.Shared
 
+import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
-import static org.mongodb.Fixture.getSession
 
 class MapReduceToCollectionOperationFunctionalSpecification extends FunctionalSpecification {
     private final documentCodec = new DocumentCodec()
@@ -82,7 +82,7 @@ class MapReduceToCollectionOperationFunctionalSpecification extends FunctionalSp
         def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace, mapReduce)
 
         when:
-        MapReduceStatistics results = operation.executeAsync(getSession()).get()
+        MapReduceStatistics results = operation.executeAsync(getAsyncBinding()).get()
         def serverUsed = operation.getServerUsed()
 
         then:

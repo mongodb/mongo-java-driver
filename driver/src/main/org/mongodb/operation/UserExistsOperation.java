@@ -21,24 +21,23 @@ import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
-import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.Session;
 
 import java.util.EnumSet;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
 import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
 import static org.mongodb.operation.OperationHelper.transformResult;
 import static org.mongodb.operation.OperationHelper.withConnection;
@@ -48,7 +47,7 @@ import static org.mongodb.operation.OperationHelper.withConnection;
  *
  * @since 3.0
  */
-public class UserExistsOperation implements AsyncOperation<Boolean>, ReadOperation<Boolean> {
+public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOperation<Boolean> {
 
     private final String database;
     private final String userName;
@@ -74,15 +73,17 @@ public class UserExistsOperation implements AsyncOperation<Boolean>, ReadOperati
     }
 
     @Override
-    public MongoFuture<Boolean> executeAsync(final Session session) {
-        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
-        if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-            MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(database, getCommand(), connectionProvider);
-            return transformResult(result, transformCommandResult());
-        } else {
-            MongoFuture<QueryResult<Document>> result = executeProtocolAsync(getCollectionBasedProtocol(), session);
-            return transformResult(result, transformQueryResult());
-        }
+    public MongoFuture<Boolean> executeAsync(final AsyncReadBinding binding) {
+        return withConnection(binding, new AsyncCallableWithConnection<Boolean>() {
+            @Override
+            public MongoFuture<Boolean> call(final Connection connection) {
+                if (serverVersionIsAtLeast(connection, new ServerVersion(2, 6))) {
+                    return executeWrappedCommandProtocolAsync(database, getCommand(), connection, transformCommandResult());
+                } else {
+                    return executeProtocolAsync(getCollectionBasedProtocol(), connection, transformQueryResult());
+                }
+            }
+        });
     }
 
     private Function<CommandResult, Boolean> transformCommandResult() {

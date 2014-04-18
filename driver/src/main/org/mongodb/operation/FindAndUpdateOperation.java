@@ -22,10 +22,10 @@ import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.session.Session;
 
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -34,7 +34,6 @@ import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 import static org.mongodb.operation.DocumentHelper.putIfTrue;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.transformResult;
 
 /**
  * An operation that atomically finds and updates a single document.
@@ -43,7 +42,7 @@ import static org.mongodb.operation.OperationHelper.transformResult;
  *
  *  @since 3.0
  */
-public class FindAndUpdateOperation<T> implements AsyncOperation<T>, WriteOperation<T> {
+public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
     private final MongoNamespace namespace;
     private final FindAndUpdate findAndUpdate;
     private final CommandResultWithPayloadDecoder<T> resultDecoder;
@@ -58,16 +57,13 @@ public class FindAndUpdateOperation<T> implements AsyncOperation<T>, WriteOperat
     @Override
     public T execute(final WriteBinding binding) {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), commandEncoder, resultDecoder, binding);
-        return transformResult(result, transformer());
+        return executeWrappedCommandProtocol(namespace, getCommand(), commandEncoder, resultDecoder, binding, transformer());
     }
 
     @Override
-    public MongoFuture<T> executeAsync(final Session session) {
+    public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace, getCommand(), commandEncoder, resultDecoder,
-                                                                               session);
-        return transformResult(result, transformer());
+        return executeWrappedCommandProtocolAsync(namespace, getCommand(), commandEncoder, resultDecoder, binding, transformer());
     }
 
     private Function<CommandResult, T> transformer() {

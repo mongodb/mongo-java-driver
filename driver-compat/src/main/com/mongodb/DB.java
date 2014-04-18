@@ -597,8 +597,7 @@ public class DB {
     }
 
     CommandResult executeCommand(final Document commandDocument, final ReadPreference readPreference) {
-        return new CommandResult(getMongo().execute(new CommandReadOperation(getName(), commandDocument, readPreference.toNew(),
-                                                                             commandCodec, commandCodec),
+        return new CommandResult(getMongo().execute(new CommandReadOperation(getName(), commandDocument, commandCodec, commandCodec),
                                                     readPreference));
     }
 

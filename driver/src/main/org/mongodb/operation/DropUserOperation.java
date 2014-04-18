@@ -22,21 +22,20 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
+import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.DeleteProtocol;
-import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.Session;
 
 import static java.util.Arrays.asList;
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
+import static org.mongodb.operation.OperationHelper.VoidTransformer;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
-import static org.mongodb.operation.OperationHelper.ignoreResult;
 import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
 import static org.mongodb.operation.OperationHelper.withConnection;
 
@@ -45,7 +44,7 @@ import static org.mongodb.operation.OperationHelper.withConnection;
  *
  * @since 3.0
  */
-public class DropUserOperation implements AsyncOperation<Void>, WriteOperation<Void>  {
+public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperation<Void>  {
     private final String database;
     private final String userName;
 
@@ -70,15 +69,17 @@ public class DropUserOperation implements AsyncOperation<Void>, WriteOperation<V
     }
 
     @Override
-    public MongoFuture<Void> executeAsync(final Session session) {
-        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
-        if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-            MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(database, getCommand(), connectionProvider);
-            return ignoreResult(result);
-        } else {
-            MongoFuture<WriteResult> result = executeProtocolAsync(getCollectionBasedProtocol(), session);
-            return ignoreResult(result);
-        }
+    public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
+        return withConnection(binding, new AsyncCallableWithConnection<Void>() {
+            @Override
+            public MongoFuture<Void> call(final Connection connection) {
+                if (serverVersionIsAtLeast(connection, new ServerVersion(2, 6))) {
+                    return executeWrappedCommandProtocolAsync(database, getCommand(), connection, new VoidTransformer<CommandResult>());
+                } else {
+                    return executeProtocolAsync(getCollectionBasedProtocol(), connection, new VoidTransformer<WriteResult>());
+                }
+            }
+        });
     }
 
     private DeleteProtocol getCollectionBasedProtocol() {
