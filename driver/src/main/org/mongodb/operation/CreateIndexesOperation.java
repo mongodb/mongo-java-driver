@@ -27,24 +27,24 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.MongoServerException;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
+import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.InsertProtocol;
-import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.Session;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.asList;
+import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
+import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProviderAsync;
 import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
 import static org.mongodb.operation.OperationHelper.withConnection;
 
@@ -53,7 +53,7 @@ import static org.mongodb.operation.OperationHelper.withConnection;
  *
  * @since 3.0
  */
-public class CreateIndexesOperation implements AsyncOperation<Void>, WriteOperation<Void> {
+public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final List<Index> indexes;
     private final MongoNamespace namespace;
     private final MongoNamespace systemIndexes;
@@ -66,7 +66,7 @@ public class CreateIndexesOperation implements AsyncOperation<Void>, WriteOperat
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new OperationHelper.CallableWithConnection<Void>() {
+        return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
                 if (connection.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
@@ -86,31 +86,31 @@ public class CreateIndexesOperation implements AsyncOperation<Void>, WriteOperat
     }
 
     @Override
-    public MongoFuture<Void> executeAsync(final Session session) {
-        final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
-        getPrimaryConnectionProviderAsync(session).register(new SingleResultCallback<ServerConnectionProvider>() {
+    public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
+        return withConnection(binding, new AsyncCallableWithConnection<Void>() {
             @Override
-            public void onResult(final ServerConnectionProvider connectionProvider, final MongoException e) {
-                if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), connectionProvider)
+            public MongoFuture<Void> call(final Connection connection) {
+                final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
+                if (serverVersionIsAtLeast(connection, new ServerVersion(2, 6))) {
+                    executeWrappedCommandProtocolAsync(namespace, getCommand(), connection)
                     .register(new SingleResultCallback<CommandResult>() {
                         @Override
-                        public void onResult(final CommandResult result, final MongoException e1) {
-                            retVal.init(null, translateException(e1));
+                        public void onResult(final CommandResult result, final MongoException e) {
+                            future.init(null, translateException(e));
                         }
                     });
                 } else {
-                    executeInsertProtocolAsync(retVal, connectionProvider, indexes);
+                    executeInsertProtocolAsync(indexes, connection, future);
                 }
+                return future;
             }
         });
-        return retVal;
     }
 
-    private void executeInsertProtocolAsync(final SingleResultFuture<Void> retVal, final ServerConnectionProvider connectionProvider,
-                                            final List<Index> indexesRemaining) {
+    private void executeInsertProtocolAsync(final List<Index> indexesRemaining, final Connection connection,
+                                            final SingleResultFuture<Void> retVal) {
         Index index = indexesRemaining.remove(0);
-        executeProtocolAsync(asInsertProtocol(index), connectionProvider)
+        executeProtocolAsync(asInsertProtocol(index), connection)
         .register(new SingleResultCallback<WriteResult>() {
             @Override
             public void onResult(final WriteResult result, final MongoException e) {
@@ -120,7 +120,7 @@ public class CreateIndexesOperation implements AsyncOperation<Void>, WriteOperat
                 } else if (indexesRemaining.isEmpty()) {
                     retVal.init(null, null);
                 } else {
-                    executeInsertProtocolAsync(retVal, connectionProvider, indexesRemaining);
+                    executeInsertProtocolAsync(indexesRemaining, connection, retVal);
                 }
             }
         });

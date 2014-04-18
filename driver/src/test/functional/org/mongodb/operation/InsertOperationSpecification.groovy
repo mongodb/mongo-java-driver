@@ -24,8 +24,8 @@ import org.mongodb.codecs.DocumentCodec
 import spock.lang.FailsWith
 
 import static java.util.Arrays.asList
+import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
-import static org.mongodb.Fixture.getSession
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 import static org.mongodb.WriteConcern.UNACKNOWLEDGED
 
@@ -52,7 +52,7 @@ class InsertOperationSpecification extends FunctionalSpecification {
         def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec())
 
         when:
-        def result = op.executeAsync(getSession()).get()
+        def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
         result.wasAcknowledged()
@@ -80,7 +80,7 @@ class InsertOperationSpecification extends FunctionalSpecification {
         def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec())
 
         when:
-        op.executeAsync(getSession()).get()
+        op.executeAsync(getAsyncBinding()).get()
 
         then:
         asList(insert.getDocument()) == getCollectionHelper().find()
@@ -113,7 +113,7 @@ class InsertOperationSpecification extends FunctionalSpecification {
 
 
         when:
-        op.executeAsync(getSession()).get()
+        op.executeAsync(getAsyncBinding()).get()
 
         then:
         getCollectionHelper().count() == 1001
@@ -139,7 +139,7 @@ class InsertOperationSpecification extends FunctionalSpecification {
         def op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, asList(insert), new DocumentCodec())
 
         when:
-        def result = op.executeAsync(getSession()).get()
+        def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
         !result.wasAcknowledged()
@@ -175,7 +175,7 @@ class InsertOperationSpecification extends FunctionalSpecification {
 
         when:
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents.toList(), new DocumentCodec())
-                .executeAsync(getSession()).get()
+                .executeAsync(getAsyncBinding()).get()
 
         then:
         getCollectionHelper().count() == 2
@@ -209,7 +209,7 @@ class InsertOperationSpecification extends FunctionalSpecification {
 
         when:
         new InsertOperation<Document>(getNamespace(), false, ACKNOWLEDGED, documents, new DocumentCodec())
-                .executeAsync(getSession()).get()
+                .executeAsync(getAsyncBinding()).get()
 
         then:
         thrown(MongoDuplicateKeyException)
@@ -244,7 +244,7 @@ class InsertOperationSpecification extends FunctionalSpecification {
 
         when:
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents, new DocumentCodec())
-                .executeAsync(getSession()).get()
+                .executeAsync(getAsyncBinding()).get()
 
         then:
         thrown(MongoDuplicateKeyException)

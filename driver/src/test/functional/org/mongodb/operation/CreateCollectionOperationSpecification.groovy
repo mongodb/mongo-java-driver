@@ -22,8 +22,8 @@ import org.mongodb.CreateCollectionOptions
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoServerException
 
+import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
-import static org.mongodb.Fixture.getSession
 
 class CreateCollectionOperationSpecification extends FunctionalSpecification {
 
@@ -72,7 +72,7 @@ class CreateCollectionOperationSpecification extends FunctionalSpecification {
         operation.execute(getBinding())
 
         when:
-        operation.executeAsync(getSession()).get()
+        operation.executeAsync(getAsyncBinding()).get()
 
         then:
         thrown(MongoServerException)

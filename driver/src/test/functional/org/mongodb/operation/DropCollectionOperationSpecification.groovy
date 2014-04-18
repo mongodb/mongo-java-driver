@@ -21,8 +21,8 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoNamespace
 
+import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
-import static org.mongodb.Fixture.getSession
 
 class DropCollectionOperationSpecification extends FunctionalSpecification {
 
@@ -45,7 +45,7 @@ class DropCollectionOperationSpecification extends FunctionalSpecification {
         assert collectionNameExists(getCollectionName())
 
         when:
-        new DropCollectionOperation(getNamespace()).executeAsync(getSession()).get()
+        new DropCollectionOperation(getNamespace()).executeAsync(getAsyncBinding()).get()
 
         then:
         !collectionNameExists(getCollectionName())
@@ -68,7 +68,7 @@ class DropCollectionOperationSpecification extends FunctionalSpecification {
         def namespace = new MongoNamespace(getDatabaseName(), 'nonExistingCollection')
 
         when:
-        new DropCollectionOperation(namespace).executeAsync(getSession()).get()
+        new DropCollectionOperation(namespace).executeAsync(getAsyncBinding()).get()
 
         then:
         !collectionNameExists('nonExistingCollection')

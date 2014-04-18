@@ -31,6 +31,7 @@ import org.mongodb.selector.PrimaryServerSelector
 
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
+import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
@@ -221,7 +222,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         def result = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
                 asList(new InsertRequest<Document>(new Document())),
                 new DocumentCodec())
-                .executeAsync(getSession()).get()
+                .executeAsync(getAsyncBinding()).get()
         then:
         result.getCount() == 0
 

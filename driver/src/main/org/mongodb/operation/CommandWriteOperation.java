@@ -5,8 +5,8 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
 import org.mongodb.MongoFuture;
+import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
-import org.mongodb.session.Session;
 
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
@@ -16,7 +16,7 @@ import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtoco
  *
  * @since 3.0
  */
-public class CommandWriteOperation implements AsyncOperation<CommandResult>, WriteOperation<CommandResult> {
+public class CommandWriteOperation implements AsyncWriteOperation<CommandResult>, WriteOperation<CommandResult> {
     private final Encoder<Document> commandEncoder;
     private final Decoder<Document> commandDecoder;
     private final String database;
@@ -36,7 +36,7 @@ public class CommandWriteOperation implements AsyncOperation<CommandResult>, Wri
     }
 
     @Override
-    public MongoFuture<CommandResult> executeAsync(final Session session) {
-        return executeWrappedCommandProtocolAsync(database, commandDocument, commandEncoder, commandDecoder, session);
+    public MongoFuture<CommandResult> executeAsync(final AsyncWriteBinding binding) {
+        return executeWrappedCommandProtocolAsync(database, commandDocument, commandEncoder, commandDecoder, binding);
     }
 }
