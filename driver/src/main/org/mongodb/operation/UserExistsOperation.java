@@ -25,7 +25,6 @@ import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 
@@ -38,7 +37,7 @@ import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
+import static org.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static org.mongodb.operation.OperationHelper.transformResult;
 import static org.mongodb.operation.OperationHelper.withConnection;
 
@@ -61,7 +60,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
         return withConnection(binding, new CallableWithConnection<Boolean>() {
             @Override
             public Boolean call(final Connection connection) {
-                if (serverVersionIsAtLeast(connection, new ServerVersion(2, 6))) {
+                if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     CommandResult result = executeWrappedCommandProtocol(database, getCommand(), connection, binding.getReadPreference());
                     return transformResult(result, transformCommandResult());
                 } else {
@@ -77,7 +76,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
         return withConnection(binding, new AsyncCallableWithConnection<Boolean>() {
             @Override
             public MongoFuture<Boolean> call(final Connection connection) {
-                if (serverVersionIsAtLeast(connection, new ServerVersion(2, 6))) {
+                if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     return executeWrappedCommandProtocolAsync(database, getCommand(), connection, transformCommandResult());
                 } else {
                     return executeProtocolAsync(getCollectionBasedProtocol(), connection, transformQueryResult());

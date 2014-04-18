@@ -44,7 +44,7 @@ import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
+import static org.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static org.mongodb.operation.OperationHelper.withConnection;
 
 /**
@@ -90,7 +90,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             @Override
             public MongoFuture<Void> call(final Connection connection) {
                 final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
-                if (serverVersionIsAtLeast(connection, new ServerVersion(2, 6))) {
+                if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     executeWrappedCommandProtocolAsync(namespace, getCommand(), connection)
                     .register(new SingleResultCallback<CommandResult>() {
                         @Override

@@ -26,7 +26,6 @@ import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerVersion;
 import org.mongodb.protocol.InsertProtocol;
 import org.mongodb.protocol.Protocol;
 
@@ -37,7 +36,7 @@ import static org.mongodb.operation.OperationHelper.VoidTransformer;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
+import static org.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static org.mongodb.operation.OperationHelper.withConnection;
 import static org.mongodb.operation.UserOperationHelper.asCollectionDocument;
 import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
@@ -59,7 +58,7 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
         return withConnection(binding, new OperationHelper.CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
-                if (serverVersionIsAtLeast(connection, new ServerVersion(2, 6))) {
+                if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     executeWrappedCommandProtocol(user.getCredential().getSource(), getCommand(), connection);
                 } else {
                     getCollectionBasedProtocol().execute(connection);
@@ -74,7 +73,7 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
         return withConnection(binding, new AsyncCallableWithConnection<Void>() {
             @Override
             public MongoFuture<Void> call(final Connection connection) {
-                if (serverVersionIsAtLeast(connection, new ServerVersion(2, 6))) {
+                if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     return executeWrappedCommandProtocolAsync(user.getCredential().getSource(), getCommand(), connection,
                                                               new VoidTransformer<CommandResult>());
                 } else {
