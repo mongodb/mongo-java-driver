@@ -1,7 +1,6 @@
 package org.mongodb.binding;
 
 import org.mongodb.MongoFuture;
-import org.mongodb.binding.ReferenceCounted;
 import org.mongodb.connection.Connection;
 
 /**
