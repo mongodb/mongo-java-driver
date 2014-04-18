@@ -21,5 +21,5 @@ public interface ReadBinding extends ReferenceCounted {
     ConnectionSource getReadConnectionSource();
 
     @Override
-    WriteBinding retain();
+    ReadBinding retain();
 }
