@@ -20,8 +20,6 @@ import org.mongodb.binding.ClusterBinding;
 import org.mongodb.connection.Cluster;
 import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.WriteOperation;
-import org.mongodb.session.ClusterSession;
-import org.mongodb.session.Session;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -65,10 +63,6 @@ class MongoClientImpl implements MongoClient {
     @Override
     public ClientAdministration tools() {
         return new ClientAdministrationImpl(this);
-    }
-
-    public Session getSession() {
-        return new ClusterSession(cluster, executorService);
     }
 
     public Cluster getCluster() {
