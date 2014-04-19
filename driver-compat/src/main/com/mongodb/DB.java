@@ -36,7 +36,6 @@ import org.mongodb.operation.UpdateUserOperation;
 import org.mongodb.operation.User;
 import org.mongodb.operation.UserExistsOperation;
 import org.mongodb.operation.WriteOperation;
-import org.mongodb.session.Session;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -145,14 +144,14 @@ public class DB {
      * underlying connection. This is useful to ensure that operations happen in a certain order with predictable results.
      */
     public void requestStart() {
-        getMongo().pinSession();
+        getMongo().pinBinding();
     }
 
     /**
      * Ends the current "consistent request"
      */
     public void requestDone() {
-        getMongo().unpinSession();
+        getMongo().unpinBinding();
     }
 
     /**
@@ -586,10 +585,6 @@ public class DB {
 
     Cluster getCluster() {
         return getMongo().getCluster();
-    }
-
-    Session getSession() {
-        return getMongo().getSession();
     }
 
     CommandResult executeCommand(final Document commandDocument) {

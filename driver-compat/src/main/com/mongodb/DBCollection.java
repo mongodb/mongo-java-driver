@@ -67,7 +67,6 @@ import org.mongodb.operation.ReplaceRequest;
 import org.mongodb.operation.UpdateOperation;
 import org.mongodb.operation.UpdateRequest;
 import org.mongodb.operation.WriteOperation;
-import org.mongodb.session.Session;
 import org.mongodb.util.FieldHelpers;
 
 import java.util.ArrayList;
@@ -1907,10 +1906,6 @@ public class DBCollection {
             }
         }
         return keys;
-    }
-
-    public Session getSession() {
-        return getDB().getSession();
     }
 
     CollectibleCodec<DBObject> getObjectCodec() {

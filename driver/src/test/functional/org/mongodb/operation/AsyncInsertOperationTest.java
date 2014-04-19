@@ -23,17 +23,17 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
+import org.mongodb.binding.PinnedBinding;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.session.PinnedSession;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getBinding;
 import static org.mongodb.Fixture.getCluster;
-import static org.mongodb.Fixture.getExecutor;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 import static org.mongodb.WriteConcern.UNACKNOWLEDGED;
 
@@ -70,14 +70,14 @@ public class AsyncInsertOperationTest extends DatabaseTestCase {
 
     @Test
     public void testUnacknowledgedBatchInsert() throws ExecutionException, InterruptedException {
-        PinnedSession session = new PinnedSession(getCluster(), getExecutor());
+        PinnedBinding binding = new PinnedBinding(getCluster(), 1, SECONDS);
         try {
             InsertOperation<Document> op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, insertDocumentList,
                                                                          new DocumentCodec());
             op.execute(getBinding());
             assertEquals(insertDocumentList.size(), getCollectionHelper().count());
         } finally {
-            session.close();
+            binding.release();
         }
     }
 }
