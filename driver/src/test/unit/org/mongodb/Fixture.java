@@ -27,7 +27,6 @@ import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerVersion;
-import org.mongodb.session.Session;
 
 import java.net.UnknownHostException;
 import java.util.List;
@@ -123,11 +122,6 @@ public final class Fixture {
         MongoCollection<Document> collection = database.getCollection(collectionName);
         collection.tools().drop();
         return collection;
-    }
-
-    public static Session getSession() {
-        getMongoClient();
-        return mongoClient.getSession();
     }
 
     public static ReadWriteBinding getBinding() {
