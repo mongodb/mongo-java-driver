@@ -25,7 +25,6 @@ import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
-import org.mongodb.session.Session;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -684,10 +683,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
 
         return currentObject;
-    }
-
-    public Session getSession() {
-        return getCollection().getSession();
     }
 
     private static DBObject lookupSuitableHints(final DBObject query, final List<DBObject> hints) {

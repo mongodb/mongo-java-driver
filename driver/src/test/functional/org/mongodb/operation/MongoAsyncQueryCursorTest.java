@@ -31,11 +31,6 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
-import org.mongodb.selector.PrimaryServerSelector;
-import org.mongodb.session.PinnedSession;
-import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.ServerConnectionProviderOptions;
-import org.mongodb.session.Session;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,8 +44,9 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeFalse;
+import static org.mongodb.Fixture.getAsyncBinding;
+import static org.mongodb.Fixture.getBinding;
 import static org.mongodb.Fixture.getCluster;
-import static org.mongodb.Fixture.getExecutor;
 import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.ReadPreference.primary;
 import static org.mongodb.operation.QueryFlag.Exhaust;
@@ -143,57 +139,46 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     @Test
     public void testExhaustWithDiscard() throws InterruptedException, ExecutionException {
         assumeFalse(isSharded());
-        PinnedSession pinnedSession = new PinnedSession(getCluster(), getExecutor());
+
+        DelayedCloseConnection connection = new DelayedCloseConnection(getBinding().getReadConnectionSource().getConnection());
 
         try {
-            ServerConnectionProvider pinnedServerConnectionProvider =
-            pinnedSession.createServerConnectionProvider(new ServerConnectionProviderOptions(true, new PrimaryServerSelector()));
-            Connection connection = pinnedServerConnectionProvider.getConnection();
             QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection);
 
-            new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                                                firstBatch, 5, 2, new DocumentCodec(),
-                                                connection)
+            new MongoAsyncQueryCursor<Document>(collection.getNamespace(), firstBatch, 5, 2, new DocumentCodec(), connection)
             .start(new TestBlock(1));
 
             latch.await();
             assertThat(documentResultList, is(documentList.subList(0, 1)));
 
-            connection = pinnedServerConnectionProvider.getConnection();
-            try {
-                firstBatch = executeQuery(getOrderedByIdQuery(), 1, EnumSet.of(Exhaust), connection);
-                assertEquals(Arrays.asList(new Document("_id", 0)), firstBatch.getResults());
-            } finally {
-                connection.close();
-            }
+            firstBatch = executeQuery(getOrderedByIdQuery(), 1, EnumSet.of(Exhaust), connection.getWrapped());
+            assertEquals(Arrays.asList(new Document("_id", 0)), firstBatch.getResults());
         } finally {
-            pinnedSession.close();
+            connection.getWrapped().close();
         }
     }
 
-        @Test
-        public void testEarlyTermination() throws InterruptedException, ExecutionException {
-            assumeFalse(isSharded());
-            Session pinnedSession = new PinnedSession(getCluster(), getExecutor());
+    @Test
+    public void testEarlyTermination() throws InterruptedException, ExecutionException {
+        assumeFalse(isSharded());
+        AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get();
 
-            try {
-                ServerConnectionProvider pinnedServerConnectionProvider =
-                pinnedSession.createServerConnectionProvider(new ServerConnectionProviderOptions(true, new PrimaryServerSelector()));
-                Connection connection = pinnedServerConnectionProvider.getConnection();
-                QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection);
+        try {
+            Connection connection = source.getConnection().get();
+            QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection);
 
-                TestBlock block = new TestBlock(1);
-                new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                                                    firstBatch, 5, 2, new DocumentCodec(),
-                                                    connection)
-                .start(block);
+            TestBlock block = new TestBlock(1);
+            new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, 5, 2, new DocumentCodec(),
+                                                connection)
+            .start(block);
 
-                latch.await();
-                assertEquals(1, block.getIterations());
-            } finally {
-                pinnedSession.close();
-            }
+            latch.await();
+            assertEquals(1, block.getIterations());
+        } finally {
+            source.release();
         }
+    }
 
     private Document getOrderedByIdQuery() {
         return new Document("$query", new Document()).append("$orderby", new Document("_id", 1));
