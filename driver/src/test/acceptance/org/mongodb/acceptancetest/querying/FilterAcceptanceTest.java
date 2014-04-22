@@ -42,8 +42,7 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldSortDescending() {
-        int numberOfDocuments = 10;
-        initialiseCollectionWithDocuments(numberOfDocuments);
+        initialiseCollectionWithDocuments(10);
 
         //TODO: I think we can make this prettier
         MongoCursor<Document> filteredAndSortedCollection = collection.find().sort(new Document("_id", -1)).get();
@@ -58,6 +57,38 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
         assertThat((Integer) filteredAndSortedCollection.next().get("_id"), is(2));
         assertThat((Integer) filteredAndSortedCollection.next().get("_id"), is(1));
         assertThat((Integer) filteredAndSortedCollection.next().get("_id"), is(0));
+    }
+
+    @Test
+    public void shouldReturnResultsInTheOrderTheyAreOnDiskWhenNaturalSortApplied() {
+        // Given
+        collection.insert(new Document("name", "Chris"));
+        collection.insert(new Document("name", "Adam"));
+        collection.insert(new Document("name", "Bob"));
+
+        // When
+        MongoCursor<Document> sortedCollection = collection.find().sort(new Document("$natural", 1)).get();
+
+        // Then
+        assertThat(sortedCollection.next().get("name").toString(), is("Chris"));
+        assertThat(sortedCollection.next().get("name").toString(), is("Adam"));
+        assertThat(sortedCollection.next().get("name").toString(), is("Bob"));
+    }
+
+    @Test
+    public void shouldReturnResultsInTheReverseOrderTheyAreOnDiskWhenNaturalSortOfMinusOneApplied() {
+        // Given
+        collection.insert(new Document("name", "Chris"));
+        collection.insert(new Document("name", "Adam"));
+        collection.insert(new Document("name", "Bob"));
+
+        // When
+        MongoCursor<Document> sortedCollection = collection.find().sort(new Document("$natural", -1)).get();
+
+        // Then
+        assertThat(sortedCollection.next().get("name").toString(), is("Bob"));
+        assertThat(sortedCollection.next().get("name").toString(), is("Adam"));
+        assertThat(sortedCollection.next().get("name").toString(), is("Chris"));
     }
 
     @Test
