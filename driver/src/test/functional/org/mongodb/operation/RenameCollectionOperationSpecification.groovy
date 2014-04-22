@@ -23,12 +23,13 @@ import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoNamespace
 import org.mongodb.MongoServerException
 
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.getAsyncBinding
+import static org.mongodb.Fixture.getBinding
 
 class RenameCollectionOperationSpecification extends FunctionalSpecification {
 
     def cleanup() {
-        new DropCollectionOperation(new MongoNamespace(getDatabaseName(), 'newCollection')).execute(getSession())
+        new DropCollectionOperation(new MongoNamespace(getDatabaseName(), 'newCollection')).execute(getBinding())
     }
 
     def 'should return rename a collection'() {
@@ -37,7 +38,7 @@ class RenameCollectionOperationSpecification extends FunctionalSpecification {
         assert collectionNameExists(getCollectionName())
 
         when:
-        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), 'newCollection', false).execute(getSession())
+        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), 'newCollection', false).execute(getBinding())
 
         then:
         !collectionNameExists(getCollectionName())
@@ -51,7 +52,7 @@ class RenameCollectionOperationSpecification extends FunctionalSpecification {
         assert collectionNameExists(getCollectionName())
 
         when:
-        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), 'newCollection', false).executeAsync(getSession()).get()
+        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), 'newCollection', false).executeAsync(getAsyncBinding()).get()
 
         then:
         !collectionNameExists(getCollectionName())
@@ -64,7 +65,7 @@ class RenameCollectionOperationSpecification extends FunctionalSpecification {
         assert collectionNameExists(getCollectionName())
 
         when:
-        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), getCollectionName(), false).execute(getSession())
+        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), getCollectionName(), false).execute(getBinding())
 
         then:
         thrown(MongoServerException)
@@ -78,7 +79,7 @@ class RenameCollectionOperationSpecification extends FunctionalSpecification {
         assert collectionNameExists(getCollectionName())
 
         when:
-        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), getCollectionName(), false).execute(getSession())
+        new RenameCollectionOperation(getDatabaseName(), getCollectionName(), getCollectionName(), false).execute(getBinding())
 
         then:
         thrown(MongoServerException)
@@ -86,7 +87,7 @@ class RenameCollectionOperationSpecification extends FunctionalSpecification {
     }
 
     def collectionNameExists(String collectionName) {
-        new GetCollectionNamesOperation(databaseName).execute(getSession()).contains(collectionName);
+        new GetCollectionNamesOperation(databaseName).execute(getBinding()).contains(collectionName);
     }
 
 }

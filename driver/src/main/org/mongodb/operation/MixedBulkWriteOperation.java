@@ -27,6 +27,7 @@ import org.mongodb.MongoWriteException;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteConcernError;
 import org.mongodb.WriteResult;
+import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
@@ -44,8 +45,6 @@ import org.mongodb.protocol.UpdateCommandProtocol;
 import org.mongodb.protocol.UpdateProtocol;
 import org.mongodb.protocol.WriteCommandProtocol;
 import org.mongodb.protocol.WriteProtocol;
-import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.Session;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,7 +56,8 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static org.mongodb.assertions.Assertions.isTrueArgument;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
+import static org.mongodb.operation.OperationHelper.CallableWithConnection;
+import static org.mongodb.operation.OperationHelper.withConnection;
 import static org.mongodb.operation.WriteRequest.Type.INSERT;
 import static org.mongodb.operation.WriteRequest.Type.REMOVE;
 import static org.mongodb.operation.WriteRequest.Type.REPLACE;
@@ -69,7 +69,7 @@ import static org.mongodb.operation.WriteRequest.Type.UPDATE;
  * @param <T> The type of document stored in the given namespace
  * @since 3.0
  */
-public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
+public class MixedBulkWriteOperation<T> implements WriteOperation<BulkWriteResult> {
     private final MongoNamespace namespace;
     private final List<WriteRequest> writeRequests;
     private final WriteConcern writeConcern;
@@ -99,40 +99,39 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
      * @return the bulk write result.
      * @throws org.mongodb.BulkWriteException if a failure to complete the bulk write is detected based on the response from the server
      * @throws org.mongodb.MongoException     for general failures
-     * @param session
+     * @param binding
      */
     @Override
-    public BulkWriteResult execute(final Session session) {
-        ServerConnectionProvider provider = getPrimaryConnectionProvider(session);
-        Connection connection = provider.getConnection();
-        try {
-            BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(provider.getServerDescription().getAddress(),
-                                                                                       ordered, writeConcern);
-            for (Run run : getRunGenerator(provider.getServerDescription())) {
-                try {
-                    BulkWriteResult result = run.execute(provider, connection);
-                    if (result.isAcknowledged()) {
-                        bulkWriteBatchCombiner.addResult(result, run.indexMap);
-                    }
-                } catch (BulkWriteException e) {
-                    bulkWriteBatchCombiner.addErrorResult(e, run.indexMap);
-                    if (bulkWriteBatchCombiner.shouldStopSendingMoreBatches()) {
-                        break;
+    public BulkWriteResult execute(final WriteBinding binding) {
+        return withConnection(binding, new CallableWithConnection<BulkWriteResult>() {
+            @Override
+            public BulkWriteResult call(final Connection connection) {
+                BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getServerDescription().getAddress(),
+                                                                                           ordered, writeConcern);
+                for (Run run : getRunGenerator(connection.getServerDescription())) {
+                    try {
+                        BulkWriteResult result = run.execute(connection);
+                        if (result.isAcknowledged()) {
+                            bulkWriteBatchCombiner.addResult(result, run.indexMap);
+                        }
+                    } catch (BulkWriteException e) {
+                        bulkWriteBatchCombiner.addErrorResult(e, run.indexMap);
+                        if (bulkWriteBatchCombiner.shouldStopSendingMoreBatches()) {
+                            break;
+                        }
                     }
                 }
+                return bulkWriteBatchCombiner.getResult();
             }
-            return bulkWriteBatchCombiner.getResult();
-        } finally {
-            connection.close();
-        }
+        });
     }
 
-    private boolean shouldUseWriteCommands(final ServerConnectionProvider provider) {
-        return writeConcern.isAcknowledged() && serverSupportsWriteCommands(provider);
+    private boolean shouldUseWriteCommands(final Connection connection) {
+        return writeConcern.isAcknowledged() && serverSupportsWriteCommands(connection.getServerDescription());
     }
 
-    private boolean serverSupportsWriteCommands(final ServerConnectionProvider provider) {
-        return provider.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0;
+    private boolean serverSupportsWriteCommands(final ServerDescription serverDescription) {
+        return serverDescription.getVersion().compareTo(new ServerVersion(2, 6)) >= 0;
     }
 
     private Iterable<Run> getRunGenerator(final ServerDescription serverDescription) {
@@ -269,17 +268,17 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
         }
 
         @SuppressWarnings("unchecked")
-        BulkWriteResult execute(final ServerConnectionProvider provider, final Connection connection) {
+        BulkWriteResult execute(final Connection connection) {
             final BulkWriteResult nextWriteResult;
 
             if (type == UPDATE) {
-                nextWriteResult = executeUpdates((List<UpdateRequest>) runWrites, provider, connection);
+                nextWriteResult = executeUpdates((List<UpdateRequest>) runWrites, connection);
             } else if (type == REPLACE) {
-                nextWriteResult = executeReplaces((List<ReplaceRequest<T>>) runWrites, provider, connection);
+                nextWriteResult = executeReplaces((List<ReplaceRequest<T>>) runWrites, connection);
             } else if (type == INSERT) {
-                nextWriteResult = executeInserts((List<InsertRequest<T>>) runWrites, provider, connection);
+                nextWriteResult = executeInserts((List<InsertRequest<T>>) runWrites, connection);
             } else if (type == REMOVE) {
-                nextWriteResult = executeRemoves((List<RemoveRequest>) runWrites, provider, connection);
+                nextWriteResult = executeRemoves((List<RemoveRequest>) runWrites, connection);
             } else {
                 throw new UnsupportedOperationException(format("Unsupported write of type %s", type));
             }
@@ -287,9 +286,8 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
         }
 
         @SuppressWarnings("unchecked")
-        BulkWriteResult executeReplaces(final List<ReplaceRequest<T>> replaceRequests, final ServerConnectionProvider provider,
-                                        final Connection connection) {
-            return new RunExecutor(provider, connection) {
+        BulkWriteResult executeReplaces(final List<ReplaceRequest<T>> replaceRequests, final Connection connection) {
+            return new RunExecutor(connection) {
                 WriteProtocol getWriteProtocol(final int index) {
                     return new ReplaceProtocol<T>(namespace,
                                                   ordered, writeConcern,
@@ -300,8 +298,7 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new ReplaceCommandProtocol<T>(namespace, ordered, writeConcern, replaceRequests, new DocumentCodec(), encoder
-                    );
+                    return new ReplaceCommandProtocol<T>(namespace, ordered, writeConcern, replaceRequests, new DocumentCodec(), encoder);
                 }
 
                 @Override
@@ -312,9 +309,8 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
             }.execute();
         }
 
-        BulkWriteResult executeRemoves(final List<RemoveRequest> removeRequests, final ServerConnectionProvider provider,
-                                       final Connection connection) {
-            return new RunExecutor(provider, connection) {
+        BulkWriteResult executeRemoves(final List<RemoveRequest> removeRequests, final Connection connection) {
+            return new RunExecutor(connection) {
                 WriteProtocol getWriteProtocol(final int index) {
                     return new DeleteProtocol(namespace, ordered, writeConcern, asList(removeRequests.get(index)), new DocumentCodec()
                     );
@@ -334,9 +330,8 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
         }
 
         @SuppressWarnings("unchecked")
-        BulkWriteResult executeInserts(final List<InsertRequest<T>> insertRequests, final ServerConnectionProvider provider,
-                                       final Connection connection) {
-            return new RunExecutor(provider, connection) {
+        BulkWriteResult executeInserts(final List<InsertRequest<T>> insertRequests, final Connection connection) {
+            return new RunExecutor(connection) {
                 WriteProtocol getWriteProtocol(final int index) {
                     return new InsertProtocol<T>(namespace, ordered, writeConcern, asList(insertRequests.get(index)), encoder
                     );
@@ -360,9 +355,8 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
         }
 
 
-        BulkWriteResult executeUpdates(final List<UpdateRequest> updates, final ServerConnectionProvider provider,
-                                       final Connection connection) {
-            return new RunExecutor(provider, connection) {
+        BulkWriteResult executeUpdates(final List<UpdateRequest> updates, final Connection connection) {
+            return new RunExecutor(connection) {
                 WriteProtocol getWriteProtocol(final int index) {
                     return new UpdateProtocol(namespace, ordered, writeConcern, asList(updates.get(index)), new DocumentCodec()
                     );
@@ -382,11 +376,9 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
         }
 
         private abstract class RunExecutor {
-            private final ServerConnectionProvider provider;
             private final Connection connection;
 
-            RunExecutor(final ServerConnectionProvider provider, final Connection connection) {
-                this.provider = provider;
+            RunExecutor(final Connection connection) {
                 this.connection = connection;
             }
 
@@ -401,17 +393,17 @@ public class MixedBulkWriteOperation<T> implements Operation<BulkWriteResult> {
             }
 
             BulkWriteResult execute() {
-                if (shouldUseWriteCommands(provider)) {
-                    return getWriteCommandProtocol().execute(connection, provider.getServerDescription());
+                if (shouldUseWriteCommands(connection)) {
+                    return getWriteCommandProtocol().execute(connection);
                 } else {
-                    BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(provider.getServerDescription().getAddress(),
+                    BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getServerAddress(),
                                                                                                ordered, writeConcern);
                     for (int i = 0; i < runWrites.size(); i++) {
                         IndexMap indexMap = IndexMap.create(i, 1);
                         indexMap = indexMap.add(0, i);
                         WriteProtocol writeProtocol = getWriteProtocol(i);
                         try {
-                            WriteResult writeResult = writeProtocol.execute(connection, provider.getServerDescription());
+                            WriteResult writeResult = writeProtocol.execute(connection);
                             if (writeResult.wasAcknowledged()) {
                                 bulkWriteBatchCombiner.addResult(getResult(writeResult), indexMap);
                             }

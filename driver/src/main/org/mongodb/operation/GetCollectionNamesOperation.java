@@ -20,23 +20,24 @@ import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.AsyncReadBinding;
+import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.protocol.QueryProtocol;
-import org.mongodb.session.Session;
 
 import java.util.EnumSet;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.operation.OperationHelper.queryResultToList;
-import static org.mongodb.operation.OperationHelper.queryResultToListAsync;
+import static org.mongodb.operation.QueryOperationHelper.queryResultToList;
+import static org.mongodb.operation.QueryOperationHelper.queryResultToListAsync;
 
 /**
  * An operation that gets the names of all the collections in a database.
  *
  * @since 3.0
  */
-public class GetCollectionNamesOperation implements AsyncOperation<List<String>>, Operation<List<String>> {
+public class GetCollectionNamesOperation implements AsyncReadOperation<List<String>>, ReadOperation<List<String>> {
     private final String databaseName;
 
     public GetCollectionNamesOperation(final String databaseName) {
@@ -44,13 +45,13 @@ public class GetCollectionNamesOperation implements AsyncOperation<List<String>>
     }
 
     @Override
-    public List<String> execute(final Session session) {
-        return queryResultToList(getProtocol(), session, getNamespace(), new DocumentCodec(), transformer());
+    public List<String> execute(final ReadBinding binding) {
+        return queryResultToList(getNamespace(), getProtocol(), binding, transformer());
     }
 
     @Override
-    public MongoFuture<List<String>> executeAsync(final Session session) {
-        return queryResultToListAsync(getProtocol(), session, getNamespace(), new DocumentCodec(), transformer());
+    public MongoFuture<List<String>> executeAsync(final AsyncReadBinding binding) {
+        return queryResultToListAsync(getNamespace(), getProtocol(), binding, transformer());
     }
 
     private Function<Document, String> transformer() {

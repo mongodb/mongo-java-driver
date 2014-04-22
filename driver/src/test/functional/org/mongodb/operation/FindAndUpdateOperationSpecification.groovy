@@ -24,7 +24,8 @@ import org.mongodb.test.CollectionHelper
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.getAsyncBinding
+import static org.mongodb.Fixture.getBinding
 
 class FindAndUpdateOperationSpecification extends FunctionalSpecification {
     private final DocumentCodec documentCodec = new DocumentCodec()
@@ -46,7 +47,7 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
 
         FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), findAndUpdate,
                 documentCodec)
-        Document returnedDocument = operation.execute(getSession())
+        Document returnedDocument = operation.execute(getBinding())
 
         then:
         returnedDocument.getInteger('numberOfJobs') == 3
@@ -70,7 +71,7 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
 
         FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), findAndUpdate,
                 documentCodec)
-        Document returnedDocument = operation.executeAsync(getSession()).get()
+        Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:
         returnedDocument.getInteger('numberOfJobs') == 3
@@ -87,13 +88,13 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
         helper.insertDocuments(pete, sam)
 
         when:
-        FindAndUpdate<Worker> findAndUpdate = new FindAndUpdate<Worker>()
+        def findAndUpdate = new FindAndUpdate<Worker>()
                 .where(new Document('name', 'Pete'))
                 .updateWith(new Document('$inc', new Document('numberOfJobs', 1)))
 
         FindAndUpdateOperation<Worker> operation = new FindAndUpdateOperation<Worker>(getNamespace(), findAndUpdate,
                 workerCodec)
-        Worker returnedDocument = operation.execute(getSession())
+        Worker returnedDocument = operation.execute(getBinding())
 
         then:
         returnedDocument.numberOfJobs == 3
@@ -117,7 +118,7 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
 
         FindAndUpdateOperation<Worker> operation = new FindAndUpdateOperation<Worker>(getNamespace(), findAndUpdate,
                 workerCodec)
-        Worker returnedDocument = operation.executeAsync(getSession()).get()
+        Worker returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:
         returnedDocument.numberOfJobs == 3

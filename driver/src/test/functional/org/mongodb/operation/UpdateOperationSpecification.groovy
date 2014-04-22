@@ -23,7 +23,8 @@ import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 
 import static java.util.Arrays.asList
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.getAsyncBinding
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
 class UpdateOperationSpecification extends FunctionalSpecification {
@@ -35,7 +36,7 @@ class UpdateOperationSpecification extends FunctionalSpecification {
                                      new DocumentCodec())
 
         when:
-        def result = op.execute(getSession())
+        def result = op.execute(getBinding())
 
         then:
         result.wasAcknowledged()
@@ -53,7 +54,7 @@ class UpdateOperationSpecification extends FunctionalSpecification {
                                      new DocumentCodec())
 
         when:
-        def result = op.executeAsync(getSession()).get()
+        def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
         result.wasAcknowledged()
@@ -71,7 +72,7 @@ class UpdateOperationSpecification extends FunctionalSpecification {
                                      new DocumentCodec())
 
         when:
-        def result = op.execute(getSession())
+        def result = op.execute(getBinding())
 
         then:
         result.wasAcknowledged()
@@ -90,7 +91,7 @@ class UpdateOperationSpecification extends FunctionalSpecification {
                                      new DocumentCodec())
 
         when:
-        def result = op.executeAsync(getSession()).get()
+        def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
         result.wasAcknowledged()

@@ -22,13 +22,18 @@ import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ReadPreference;
+import org.mongodb.binding.ConnectionSource;
+import org.mongodb.binding.ReadBinding;
+import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.connection.Connection;
 import org.mongodb.protocol.QueryResult;
-import org.mongodb.session.Session;
 
 import java.util.List;
 
-import static org.mongodb.operation.OperationHelper.getConnectionProvider;
+import static org.mongodb.operation.AggregateHelper.asCommandDocument;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
+import static org.mongodb.operation.OperationHelper.withConnection;
 
 /**
  * An operation that executes an aggregation query
@@ -36,24 +41,38 @@ import static org.mongodb.operation.OperationHelper.getConnectionProvider;
  * @param <T> the type to deserialize the results to
  * @since 3.0
  */
-public class AggregateOperation<T> extends AggregateBaseOperation<T> implements Operation<MongoCursor<T>> {
+public class AggregateOperation<T> implements ReadOperation<MongoCursor<T>> {
+    private final MongoNamespace namespace;
+    private final List<Document> pipeline;
+    private final Decoder<T> decoder;
+    private final AggregationOptions options;
+
     public AggregateOperation(final MongoNamespace namespace, final List<Document> pipeline, final Decoder<T> decoder,
-                              final AggregationOptions options, final ReadPreference readPreference) {
-        super(namespace, pipeline, decoder, options, readPreference);
+                              final AggregationOptions options) {
+        this.namespace = namespace;
+        this.pipeline = pipeline;
+        this.decoder = decoder;
+        this.options = options;
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public MongoCursor<T> execute(final Session session) {
-        CommandResult result = sendAndReceiveMessage(session);
-        if (getOptions().getOutputMode() == AggregationOptions.OutputMode.INLINE) {
-            return new InlineMongoCursor<T>(result.getAddress(), (List<T>) result.getResponse().get("result"));
-        } else {
-            int batchSize = getOptions().getBatchSize() == null ? 0 : getOptions().getBatchSize();
-            return new MongoQueryCursor<T>(getNamespace(), createQueryResult(result), 0,
-                                           batchSize, getDecoder(),
-                                           getConnectionProvider(getReadPreference(), session));
-        }
+    public MongoCursor<T> execute(final ReadBinding binding) {
+        return withConnection(binding, new CallableWithConnectionAndSource<MongoCursor<T>>() {
+            @Override
+            public MongoCursor<T> call(final ConnectionSource source, final Connection connection) {
+                CommandResult result = executeWrappedCommandProtocol(namespace, asCommandDocument(namespace, pipeline, options),
+                                                                     new DocumentCodec(),
+                                                                     new CommandResultWithPayloadDecoder<T>(decoder, "result"),
+                                                                     connection, binding.getReadPreference());
+                if (options.getOutputMode() == AggregationOptions.OutputMode.INLINE) {
+                    return new InlineMongoCursor<T>(result.getAddress(), (List<T>) result.getResponse().get("result"));
+                } else {
+                    int batchSize = options.getBatchSize() == null ? 0 : options.getBatchSize();
+                    return new MongoQueryCursor<T>(namespace, createQueryResult(result), 0, batchSize, decoder, source);
+                }
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")

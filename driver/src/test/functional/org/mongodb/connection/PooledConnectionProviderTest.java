@@ -130,7 +130,7 @@ public class PooledConnectionProviderTest {
                                                 new NoOpConnectionPoolListener());
 
         // when
-        Connection connection = provider.get();
+        InternalConnection connection = provider.get();
         Thread.sleep(50);
         connection.close();
 
@@ -198,7 +198,7 @@ public class PooledConnectionProviderTest {
         provider.get().close();
         Thread.sleep(50);
         provider.doMaintenance();
-        Connection secondConnection = provider.get();
+        InternalConnection secondConnection = provider.get();
 
         // then
         assertNotNull(secondConnection);

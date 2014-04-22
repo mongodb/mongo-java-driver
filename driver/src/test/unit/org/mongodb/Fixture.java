@@ -16,6 +16,10 @@
 
 package org.mongodb;
 
+import org.mongodb.binding.AsyncClusterBinding;
+import org.mongodb.binding.AsyncReadWriteBinding;
+import org.mongodb.binding.ClusterBinding;
+import org.mongodb.binding.ReadWriteBinding;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ClusterType;
@@ -23,7 +27,6 @@ import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerVersion;
-import org.mongodb.session.Session;
 
 import java.net.UnknownHostException;
 import java.util.List;
@@ -121,9 +124,14 @@ public final class Fixture {
         return collection;
     }
 
-    public static Session getSession() {
+    public static ReadWriteBinding getBinding() {
         getMongoClient();
-        return mongoClient.getSession();
+        return new ClusterBinding(getCluster(), ReadPreference.primary(), 1, SECONDS);
+    }
+
+    public static AsyncReadWriteBinding getAsyncBinding() {
+        getMongoClient();
+        return new AsyncClusterBinding(getCluster(), ReadPreference.primary(), 1, SECONDS);
     }
 
     public static Cluster getCluster() {

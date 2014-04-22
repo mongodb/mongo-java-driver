@@ -24,8 +24,8 @@ import java.util.concurrent.TimeUnit;
 public class TestConnectionProvider implements ConnectionProvider {
 
     @Override
-    public Connection get() {
-        return new Connection() {
+    public InternalConnection get() {
+        return new InternalConnection() {
             @Override
             public ByteBuf getBuffer(final int capacity) {
                 throw new UnsupportedOperationException("Not implemented yet!");
@@ -37,7 +37,7 @@ public class TestConnectionProvider implements ConnectionProvider {
             }
 
             @Override
-            public ResponseBuffers receiveMessage(final int responseTo) {
+            public ResponseBuffers receiveMessage() {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
@@ -48,7 +48,7 @@ public class TestConnectionProvider implements ConnectionProvider {
             }
 
             @Override
-            public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
+            public void receiveMessageAsync(final SingleResultCallback<ResponseBuffers> callback) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
@@ -75,7 +75,7 @@ public class TestConnectionProvider implements ConnectionProvider {
     }
 
     @Override
-    public Connection get(final long timeout, final TimeUnit timeUnit) {
+    public InternalConnection get(final long timeout, final TimeUnit timeUnit) {
         return get();
     }
 

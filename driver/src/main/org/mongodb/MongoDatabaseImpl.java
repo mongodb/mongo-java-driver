@@ -19,7 +19,10 @@ package org.mongodb;
 import org.mongodb.codecs.CollectibleDocumentCodec;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.ObjectIdGenerator;
-import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.CommandReadOperation;
+import org.mongodb.operation.CommandWriteOperation;
+
+import static org.mongodb.assertions.Assertions.notNull;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoDatabaseOptions options;
@@ -73,9 +76,15 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public CommandResult executeCommand(final Document command, final ReadPreference requestedReadPreference) {
-        ReadPreference readPreference = requestedReadPreference == null ? options.getReadPreference() : requestedReadPreference;
-        return client.execute(new CommandOperation(getName(), command, readPreference, commandCodec, commandCodec));
+    public CommandResult executeCommand(final Document command) {
+        return client.execute(new CommandWriteOperation(getName(), command, commandCodec, commandCodec));
+    }
+
+    @Override
+    public CommandResult executeCommand(final Document command, final ReadPreference readPreference) {
+        notNull("readPreference", readPreference);
+        return client.execute(new CommandReadOperation(getName(), command, commandCodec, commandCodec),
+                              readPreference);
     }
 
     @Override

@@ -20,11 +20,12 @@ import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.session.Session;
+import org.mongodb.binding.AsyncWriteBinding;
+import org.mongodb.binding.WriteBinding;
 
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.ignoreNameSpaceErrors;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.CommandOperationHelper.ignoreNameSpaceErrors;
 import static org.mongodb.operation.OperationHelper.ignoreResult;
 
 /**
@@ -32,7 +33,7 @@ import static org.mongodb.operation.OperationHelper.ignoreResult;
  *
  * @since 3.0
  */
-public class DropIndexOperation implements AsyncOperation<Void>, Operation<Void> {
+public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
     private final String indexName;
 
@@ -42,9 +43,9 @@ public class DropIndexOperation implements AsyncOperation<Void>, Operation<Void>
     }
 
     @Override
-    public Void execute(final Session session) {
+    public Void execute(final WriteBinding binding) {
         try {
-            executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), session);
+            executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), binding);
         } catch (MongoCommandFailureException e) {
             ignoreNameSpaceErrors(e);
         }
@@ -52,8 +53,8 @@ public class DropIndexOperation implements AsyncOperation<Void>, Operation<Void>
     }
 
     @Override
-    public MongoFuture<Void> executeAsync(final Session session) {
-        return ignoreResult(ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), session)));
+    public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
+        return ignoreResult(ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding)));
     }
 
     private Document getCommand() {

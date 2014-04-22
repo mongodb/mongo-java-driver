@@ -20,6 +20,13 @@ import org.mongodb.Codec;
 import org.mongodb.Document;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.binding.ClusterBinding;
+import org.mongodb.binding.ConnectionSource;
+import org.mongodb.binding.PinnedBinding;
+import org.mongodb.binding.ReadBinding;
+import org.mongodb.binding.ReadWriteBinding;
+import org.mongodb.binding.SingleServerBinding;
+import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
@@ -33,19 +40,14 @@ import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.management.JMXConnectionPoolListener;
 import org.mongodb.operation.GetDatabaseNamesOperation;
-import org.mongodb.operation.Operation;
+import org.mongodb.operation.ReadOperation;
+import org.mongodb.operation.WriteOperation;
 import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.KillCursorProtocol;
 import org.mongodb.selector.CompositeServerSelector;
 import org.mongodb.selector.LatencyMinimizingServerSelector;
 import org.mongodb.selector.MongosHAServerSelector;
-import org.mongodb.selector.ServerAddressSelector;
 import org.mongodb.selector.ServerSelector;
-import org.mongodb.session.ClusterSession;
-import org.mongodb.session.PinnedSession;
-import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.ServerConnectionProviderOptions;
-import org.mongodb.session.Session;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -63,6 +65,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.MongoExceptions.mapException;
+import static com.mongodb.ReadPreference.primary;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -131,7 +134,7 @@ public class Mongo {
     private final Cluster cluster;
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
-    private final ThreadLocal<SessionHolder> pinnedSession = new ThreadLocal<SessionHolder>();
+    private final ThreadLocal<BindingHolder> pinnedBinding = new ThreadLocal<BindingHolder>();
     private final ConcurrentLinkedQueue<ServerCursor> orphanedCursors = new ConcurrentLinkedQueue<ServerCursor>();
     private final ExecutorService cursorCleaningService;
 
@@ -337,7 +340,7 @@ public class Mongo {
         this.cluster = cluster;
         this.documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
         this.options = options;
-        this.readPreference = options.getReadPreference() != null ? options.getReadPreference() : ReadPreference.primary();
+        this.readPreference = options.getReadPreference() != null ? options.getReadPreference() : primary();
         this.writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : WriteConcern.UNACKNOWLEDGED;
         this.optionHolder = new Bytes.OptionHolder(null);
         this.credentialsList = unmodifiableList(credentialsList);
@@ -470,7 +473,7 @@ public class Mongo {
      * @throws MongoException
      */
     public List<String> getDatabaseNames() {
-        return execute(new GetDatabaseNamesOperation());
+        return execute(new GetDatabaseNamesOperation(), primary());
     }
 
     /**
@@ -696,7 +699,8 @@ public class Mongo {
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                             .serverSelector(createServerSelector())
                                             .build(),
-                             credentialsList, options);
+                             credentialsList, options
+                            );
     }
 
     private static Cluster createCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialsList,
@@ -707,7 +711,8 @@ public class Mongo {
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                             .serverSelector(createServerSelector())
                                             .build(),
-                             credentialsList, options);
+                             credentialsList, options
+                            );
     }
 
     private static Cluster createCluster(final ClusterSettings settings, final List<MongoCredential> credentialsList,
@@ -747,13 +752,6 @@ public class Mongo {
         return bufferProvider;
     }
 
-    Session getSession() {
-        if (pinnedSession.get() != null) {
-            return pinnedSession.get().session;
-        }
-        return new ClusterSession(getCluster());
-    }
-
     MongoClientOptions getMongoClientOptions() {
         return options;
     }
@@ -762,23 +760,41 @@ public class Mongo {
         return credentialsList;
     }
 
-    void pinSession() {
-        SessionHolder currentlyBound = pinnedSession.get();
+    WriteBinding getWriteBinding() {
+        return getReadWriteBinding(primary());
+    }
+
+    ReadBinding getReadBinding(final ReadPreference readPreference) {
+        return getReadWriteBinding(readPreference);
+    }
+
+    private ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference) {
+        if (pinnedBinding.get() != null) {
+            PinnedBinding binding = pinnedBinding.get().binding;
+            binding.setReadPreference(readPreference.toNew());
+            return binding.retain(); // retain since caller will release
+        } else {
+            return new ClusterBinding(getCluster(), readPreference.toNew(), options.getMaxWaitTime(), MILLISECONDS);
+        }
+    }
+
+    void pinBinding() {
+        BindingHolder currentlyBound = pinnedBinding.get();
         if (currentlyBound == null) {
-            pinnedSession.set(new SessionHolder(new PinnedSession(cluster)));
+            pinnedBinding.set(new BindingHolder(new PinnedBinding(cluster, options.getMaxWaitTime(), MILLISECONDS)));
         } else {
             currentlyBound.nestedBindings++;
         }
     }
 
-    void unpinSession() {
-        SessionHolder currentlyBound = pinnedSession.get();
+    void unpinBinding() {
+        BindingHolder currentlyBound = pinnedBinding.get();
         if (currentlyBound != null) {
             if (currentlyBound.nestedBindings > 0) {
                 currentlyBound.nestedBindings--;
             } else {
-                pinnedSession.remove();
-                currentlyBound.session.close();
+                pinnedBinding.remove();
+                currentlyBound.binding.release();
             }
         }
     }
@@ -787,11 +803,25 @@ public class Mongo {
         orphanedCursors.add(serverCursor);
     }
 
-    <V> V execute(final Operation<V> operation) {
+    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
+        ReadBinding binding = getReadBinding(readPreference);
         try {
-            return operation.execute(getSession());
+            return operation.execute(binding);
         } catch (org.mongodb.MongoException e) {
             throw mapException(e);
+        } finally {
+            binding.release();
+        }
+    }
+
+    public <T> T execute(final WriteOperation<T> operation) {
+        WriteBinding binding = getWriteBinding();
+        try {
+            return operation.execute(binding);
+        } catch (org.mongodb.MongoException e) {
+            throw mapException(e);
+        } finally {
+            binding.release();
         }
     }
 
@@ -807,23 +837,24 @@ public class Mongo {
     }
 
     private void cleanCursors() {
-        Session session = new ClusterSession(cluster);
         ServerCursor cur;
-        try {
-            while ((cur = orphanedCursors.poll()) != null) {
-                ServerConnectionProviderOptions options = new ServerConnectionProviderOptions(false,
-                                                                                              new ServerAddressSelector(cur.getAddress()));
-                ServerConnectionProvider provider = session.createServerConnectionProvider(options);
-                Connection connection = provider.getConnection();
+        while ((cur = orphanedCursors.poll()) != null) {
+            ReadWriteBinding binding = new SingleServerBinding(cluster, cur.getAddress(), options.getMaxWaitTime(), MILLISECONDS);
+            try {
+                ConnectionSource source = binding.getReadConnectionSource();
                 try {
-                    new KillCursorProtocol(new KillCursor(cur)
-                    ).execute(connection, provider.getServerDescription());
+                    Connection connection = source.getConnection();
+                    try {
+                        new KillCursorProtocol(new KillCursor(cur)).execute(connection);
+                    } finally {
+                        connection.close();
+                    }
                 } finally {
-                    connection.close();
+                    source.release();
                 }
+            } finally {
+                binding.release();
             }
-        } finally {
-            session.close();
         }
     }
 
@@ -896,12 +927,12 @@ public class Mongo {
         }
     }
 
-    private static final class SessionHolder {
-        private final Session session;
+    private static final class BindingHolder {
+        private final PinnedBinding binding;
         private int nestedBindings;
 
-        private SessionHolder(final Session session) {
-            this.session = session;
+        private BindingHolder(final PinnedBinding binding) {
+            this.binding = binding;
         }
     }
 

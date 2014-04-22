@@ -21,31 +21,32 @@ import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.AsyncReadBinding;
+import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.ServerVersion;
+import org.mongodb.connection.Connection;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
-import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.Session;
 
 import java.util.EnumSet;
 import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
+import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.getPrimaryConnectionProvider;
-import static org.mongodb.operation.OperationHelper.serverVersionIsAtLeast;
-import static org.mongodb.operation.OperationHelper.transformResult;
+import static org.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
+import static org.mongodb.operation.OperationHelper.withConnection;
 
 /**
  * An operation that determines if a user exists.
  *
  * @since 3.0
  */
-public class UserExistsOperation implements AsyncOperation<Boolean>, Operation<Boolean> {
+public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOperation<Boolean> {
 
     private final String database;
     private final String userName;
@@ -54,28 +55,34 @@ public class UserExistsOperation implements AsyncOperation<Boolean>, Operation<B
         this.database = notNull("source", source);
         this.userName = notNull("userName", userName);
     }
+
     @Override
-    public Boolean execute(final Session session) {
-        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
-        if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-            CommandResult result = executeWrappedCommandProtocol(database, getCommand(), connectionProvider);
-            return transformResult(result, transformCommandResult());
-        } else {
-            QueryResult<Document> result = executeProtocol(getCollectionBasedProtocol(), connectionProvider);
-            return transformResult(result, transformQueryResult());
-        }
+    public Boolean execute(final ReadBinding binding) {
+        return withConnection(binding, new CallableWithConnection<Boolean>() {
+            @Override
+            public Boolean call(final Connection connection) {
+                if (serverIsAtLeastVersionTwoDotSix(connection)) {
+                    return executeWrappedCommandProtocol(database, getCommand(), connection, binding.getReadPreference(),
+                                                         transformCommandResult());
+                } else {
+                    return executeProtocol(getCollectionBasedProtocol(), connection, transformQueryResult());
+                }
+            }
+        });
     }
 
     @Override
-    public MongoFuture<Boolean> executeAsync(final Session session) {
-        ServerConnectionProvider connectionProvider = getPrimaryConnectionProvider(session);
-        if (serverVersionIsAtLeast(connectionProvider, new ServerVersion(2, 6))) {
-            MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(database, getCommand(), connectionProvider);
-            return transformResult(result, transformCommandResult());
-        } else {
-            MongoFuture<QueryResult<Document>> result = executeProtocolAsync(getCollectionBasedProtocol(), session);
-            return transformResult(result, transformQueryResult());
-        }
+    public MongoFuture<Boolean> executeAsync(final AsyncReadBinding binding) {
+        return withConnection(binding, new AsyncCallableWithConnection<Boolean>() {
+            @Override
+            public MongoFuture<Boolean> call(final Connection connection) {
+                if (serverIsAtLeastVersionTwoDotSix(connection)) {
+                    return executeWrappedCommandProtocolAsync(database, getCommand(), connection, transformCommandResult());
+                } else {
+                    return executeProtocolAsync(getCollectionBasedProtocol(), connection, transformQueryResult());
+                }
+            }
+        });
     }
 
     private Function<CommandResult, Boolean> transformCommandResult() {
@@ -100,7 +107,7 @@ public class UserExistsOperation implements AsyncOperation<Boolean>, Operation<B
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         DocumentCodec codec = new DocumentCodec();
         return new QueryProtocol<Document>(namespace, EnumSet.noneOf(QueryFlag.class), 0, 1,
-                new Document("user", userName), null, codec, codec);
+                                           new Document("user", userName), null, codec, codec);
     }
 
     private Document getCommand() {

@@ -21,9 +21,9 @@ import java.util.concurrent.TimeUnit;
 
 interface ConnectionProvider extends Closeable {
 
-    Connection get();
+    InternalConnection get();
 
-    Connection get(final long timeout, final TimeUnit timeUnit);
+    InternalConnection get(final long timeout, final TimeUnit timeUnit);
 
     void close();
 }

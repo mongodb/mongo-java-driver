@@ -16,42 +16,31 @@
 
 package org.mongodb.operation;
 
-import org.bson.ByteBuf;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoFuture;
+import org.mongodb.ReadPreference;
+import org.mongodb.binding.ConnectionSource;
+import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ServerAddress;
-import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
-import org.mongodb.selector.PrimaryServerSelector;
-import org.mongodb.session.ServerConnectionProvider;
-import org.mongodb.session.ServerConnectionProviderOptions;
-import org.mongodb.session.Session;
 
 import java.util.EnumSet;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
-import static org.mongodb.Fixture.getSession;
+import static org.mongodb.Fixture.getBinding;
 import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.ReadPreference.primary;
-import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.assertions.Assertions.notNull;
 
 public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
     private final byte[] bytes = new byte[10000];
     private EnumSet<QueryFlag> exhaustFlag = EnumSet.of(QueryFlag.Exhaust);
     private QueryResult<Document> firstBatch;
-    private ServerConnectionProvider connectionProvider;
     private Connection exhaustConnection;
 
     @Before
@@ -62,12 +51,10 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
             collection.insert(new Document("_id", i).append("bytes", bytes));
         }
 
-        connectionProvider = OperationHelper.getConnectionProvider(primary(), getSession());
-        exhaustConnection = connectionProvider.getConnection();
-        firstBatch =
-        new QueryProtocol<Document>(collection.getNamespace(), exhaustFlag, 0, 0, new Document(), null,
-                                                    new DocumentCodec(), new DocumentCodec())
-        .execute(exhaustConnection, connectionProvider.getServerDescription());
+        exhaustConnection = getBinding().getReadConnectionSource().getConnection();
+        firstBatch = new QueryProtocol<Document>(collection.getNamespace(), exhaustFlag, 0, 0, new Document(), null,
+                                                 new DocumentCodec(), new DocumentCodec())
+                     .execute(exhaustConnection);
 
     }
 
@@ -77,8 +64,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         assumeFalse(isSharded());
 
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(), firstBatch, 0, 0,
-                                                                           new DocumentCodec(), exhaustConnection,
-                                                                           connectionProvider.getServerDescription());
+                                                                           new DocumentCodec(), exhaustConnection);
 
         int count = 0;
         while (cursor.hasNext()) {
@@ -93,135 +79,74 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     public void testExhaustCloseBeforeReadingAllDocuments() {
         assumeFalse(isSharded());
         try {
-            SingleConnectionSession singleConnectionSession = new SingleConnectionSession(connectionProvider.getServerDescription(),
-                                                                                          exhaustConnection);
-            ServerConnectionProvider singleConnectionProvider =
-            singleConnectionSession.createServerConnectionProvider(new ServerConnectionProviderOptions(true, new PrimaryServerSelector()));
+            SingleConnectionBinding singleConnectionBinding = new SingleConnectionBinding(exhaustConnection);
+            ConnectionSource source = singleConnectionBinding.getReadConnectionSource();
             MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(), firstBatch, 0, 0,
                                                                                new DocumentCodec(),
-                                                                               singleConnectionProvider.getConnection(),
-                                                                               singleConnectionProvider.getServerDescription());
+                                                                               source.getConnection());
 
             cursor.next();
             cursor.close();
 
             new QueryProtocol<Document>(collection.getNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, new Document(), null,
                                         new DocumentCodec(), new DocumentCodec())
-            .execute(singleConnectionProvider.getConnection(), singleConnectionProvider.getServerDescription());
+            .execute(source.getConnection());
 
-            singleConnectionSession.connection.close();
+            singleConnectionBinding.connection.close();
         } finally {
             exhaustConnection.close();
         }
     }
 
-    private static class SingleConnectionSession implements Session {
-        private final ServerDescription description;
+    private static class SingleConnectionBinding implements ReadBinding {
         private final Connection connection;
-        private boolean isClosed;
 
-        public SingleConnectionSession(final ServerDescription description, final Connection connection) {
-            this.description = description;
+        public SingleConnectionBinding(final Connection connection) {
             this.connection = connection;
         }
 
         @Override
-        public void close() {
-            isClosed = true;
+        public int getCount() {
+            return 1;
         }
 
         @Override
-        public boolean isClosed() {
-            return isClosed;
+        public ReadPreference getReadPreference() {
+            return primary();
         }
 
         @Override
-        public ServerConnectionProvider createServerConnectionProvider(final ServerConnectionProviderOptions options) {
-            return new DelayedCloseServerConnectionProvider();
+        public ConnectionSource getReadConnectionSource() {
+            return new ConnectionSource() {
+                @Override
+                public Connection getConnection() {
+                    return new DelayedCloseConnection(connection);
+                }
+
+                @Override
+                public ConnectionSource retain() {
+                    return this;
+                }
+
+                @Override
+                public int getCount() {
+                    return 1;
+                }
+
+                @Override
+                public void release() {
+                }
+            };
         }
 
         @Override
-        public MongoFuture<ServerConnectionProvider> createServerConnectionProviderAsync(final ServerConnectionProviderOptions options) {
-            return new SingleResultFuture<ServerConnectionProvider>(new DelayedCloseServerConnectionProvider(), null);
+        public ReadBinding retain() {
+            return this;
         }
 
-        private class DelayedCloseServerConnectionProvider implements ServerConnectionProvider {
-            @Override
-            public ServerDescription getServerDescription() {
-                return description;
-            }
-
-            @Override
-            public Connection getConnection() {
-                return new DelayedCloseConnection(connection);
-            }
-
-            @Override
-            public MongoFuture<Connection> getConnectionAsync() {
-                return new SingleResultFuture<Connection>(connection, null);
-            }
+        @Override
+        public void release() {
         }
     }
 
-    private static class DelayedCloseConnection implements Connection {
-        private final Connection wrapped;
-        private boolean isClosed;
-
-
-        public DelayedCloseConnection(final Connection wrapped) {
-            this.wrapped = notNull("wrapped", wrapped);
-        }
-
-        @Override
-        public ServerAddress getServerAddress() {
-            isTrue("open", !isClosed());
-            return wrapped.getServerAddress();
-        }
-
-        @Override
-        public ByteBuf getBuffer(final int capacity) {
-            isTrue("open", !isClosed());
-            return wrapped.getBuffer(capacity);
-        }
-
-        @Override
-        public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
-            isTrue("open", !isClosed());
-            wrapped.sendMessage(byteBuffers, lastRequestId);
-        }
-
-        @Override
-        public ResponseBuffers receiveMessage(final int responseTo) {
-            isTrue("open", !isClosed());
-            return wrapped.receiveMessage(responseTo);
-        }
-
-        @Override
-        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-            isTrue("open", !isClosed());
-            wrapped.sendMessageAsync(byteBuffers, lastRequestId, callback);
-        }
-
-        @Override
-        public void receiveMessageAsync(final int responseTo,
-                                        final SingleResultCallback<ResponseBuffers> callback) {
-            isTrue("open", !isClosed());
-            wrapped.receiveMessageAsync(responseTo, callback);
-        }
-
-        @Override
-        public String getId() {
-            return wrapped.getId();
-        }
-
-        @Override
-        public void close() {
-            isClosed = true;
-        }
-
-        @Override
-        public boolean isClosed() {
-            return isClosed;
-        }
-    }
 }

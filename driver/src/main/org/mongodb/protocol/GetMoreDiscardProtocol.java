@@ -20,7 +20,6 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
 
@@ -33,7 +32,7 @@ public class GetMoreDiscardProtocol implements Protocol<Void> {
         this.responseTo = responseTo;
     }
 
-    public Void execute(final Connection connection, final ServerDescription serverDescription) {
+    public Void execute(final Connection connection) {
         long curCursorId = cursorId;
         int curResponseTo = responseTo;
         while (curCursorId != 0) {
@@ -48,7 +47,7 @@ public class GetMoreDiscardProtocol implements Protocol<Void> {
         return null;
     }
 
-    public MongoFuture<Void> executeAsync(final Connection connection, final ServerDescription serverDescription) {
+    public MongoFuture<Void> executeAsync(final Connection connection) {
         SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
 
         if (cursorId == 0) {

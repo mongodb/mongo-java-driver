@@ -21,7 +21,8 @@ import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.getAsyncBinding
+import static org.mongodb.Fixture.getBinding
 
 class GetDatabaseNamesOperationSpecification extends FunctionalSpecification {
 
@@ -31,7 +32,7 @@ class GetDatabaseNamesOperationSpecification extends FunctionalSpecification {
         def operation = new GetDatabaseNamesOperation()
 
         when:
-        List<String> names = operation.execute(getSession())
+        List<String> names = operation.execute(getBinding())
 
         then:
         names.contains(getDatabaseName())
@@ -44,7 +45,7 @@ class GetDatabaseNamesOperationSpecification extends FunctionalSpecification {
         def operation = new GetDatabaseNamesOperation()
 
         when:
-        List<String> names = operation.executeAsync(getSession()).get()
+        List<String> names = operation.executeAsync(getAsyncBinding()).get()
 
         then:
         names.contains(getDatabaseName())

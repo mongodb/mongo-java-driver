@@ -37,7 +37,7 @@ class MapReduceResultsIterable<T, V> implements MongoIterable<V> {
 
     @Override
     public MongoCursor<V> iterator() {
-        return collection.execute(operation);
+        return collection.execute(operation, collection.getOptions().getReadPreference());
     }
 
     @Override
@@ -64,13 +64,4 @@ class MapReduceResultsIterable<T, V> implements MongoIterable<V> {
         return new MappingIterable<V, U>(this, mapper);
     }
 
-    @Override
-    public void asyncForEach(final AsyncBlock<? super V> block) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <A extends Collection<? super V>> MongoFuture<A> asyncInto(final A target) {
-        throw new UnsupportedOperationException();
-    }
 }

@@ -24,10 +24,10 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoAsyncCursor
 import org.mongodb.MongoException
-import org.mongodb.ReadPreference
 import org.mongodb.connection.SingleResultCallback
 
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.getAsyncBinding
+import static org.mongodb.Fixture.getBinding
 
 class GroupOperationSpecification extends FunctionalSpecification {
 
@@ -41,8 +41,8 @@ class GroupOperationSpecification extends FunctionalSpecification {
         Group group = new Group(new Document('name',  1), new Code('function ( curr, result ) {}'), new Document())
 
         when:
-        GroupOperation op = new GroupOperation(getNamespace(), group, ReadPreference.primary())
-        def result = op.execute(getSession());
+        GroupOperation op = new GroupOperation(getNamespace(), group)
+        def result = op.execute(getBinding());
 
         then:
         List<String> results = result.iterator()*.getString('name')
@@ -60,9 +60,9 @@ class GroupOperationSpecification extends FunctionalSpecification {
         Group group = new Group(new Document('name',  1), new Code('function ( curr, result ) {}'), new Document())
 
         when:
-        GroupOperation op = new GroupOperation(getNamespace(), group, ReadPreference.primary())
+        GroupOperation op = new GroupOperation(getNamespace(), group)
         def result = new SingleResultFuture<List<Document>>()
-        op.executeAsync(getSession()).register(new SingleResultCallback<MongoAsyncCursor<Document>>() {
+        op.executeAsync(getAsyncBinding()).register(new SingleResultCallback<MongoAsyncCursor<Document>>() {
             @Override
             void onResult(final MongoAsyncCursor<Document> cursor, final MongoException e) {
                 cursor.start(new AsyncBlock<Document>() {

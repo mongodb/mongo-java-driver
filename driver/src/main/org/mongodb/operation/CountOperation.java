@@ -16,60 +16,56 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
-import org.mongodb.MongoException;
+import org.mongodb.Encoder;
+import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.AsyncReadBinding;
+import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.session.Session;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
 /**
  * An operation that executes a count.
  *
  * @since 3.0
  */
-public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
-    private final DocumentCodec commandEncoder = new DocumentCodec();
-    private final Codec<Document> codec;
+public class CountOperation implements ReadOperation<Long>, AsyncReadOperation<Long> {
+    private final Encoder<Document> encoder;
     private final MongoNamespace namespace;
     private final Find find;
 
-    public CountOperation(final MongoNamespace namespace, final Find find, final Codec<Document> codec) {
+    public CountOperation(final MongoNamespace namespace, final Find find, final Encoder<Document> encoder) {
         this.namespace = namespace;
         this.find = find;
-        this.codec = codec;
+        this.encoder = encoder;
     }
 
 
-    public Long execute(final Session session) {
-        return getCount(executeWrappedCommandProtocol(namespace, asDocument(), commandEncoder, codec, find.getReadPreference(), session));
+    public Long execute(final ReadBinding binding) {
+        return executeWrappedCommandProtocol(namespace, asCommandDocument(), encoder, new DocumentCodec(), binding, transformer());
     }
 
     @Override
-    public MongoFuture<Long> executeAsync(final Session session) {
-        final SingleResultFuture<Long> retVal = new SingleResultFuture<Long>();
-        executeWrappedCommandProtocolAsync(namespace, asDocument(), commandEncoder, codec, find.getReadPreference(), session)
-        .register(new SingleResultCallback<CommandResult>() {
-            @Override
-            public void onResult(final CommandResult result, final MongoException e) {
-                if (e != null) {
-                    retVal.init(null, e);
-                } else {
-                    retVal.init(getCount(result), null);
-                }
-            }
-        });
-        return retVal;
+    public MongoFuture<Long> executeAsync(final AsyncReadBinding binding) {
+        return executeWrappedCommandProtocolAsync(namespace, asCommandDocument(), encoder, new DocumentCodec(), binding, transformer());
     }
 
-    private Document asDocument() {
+    private Function<CommandResult, Long> transformer() {
+        return new Function<CommandResult, Long>() {
+            @Override
+            public Long apply(final CommandResult commandResult) {
+                return ((Number) commandResult.getResponse().get("n")).longValue();
+            }
+        };
+    }
+
+    private Document asCommandDocument() {
         Document document = new Document("count", namespace.getCollectionName());
 
         if (find.getFilter() != null) {
@@ -85,9 +81,5 @@ public class CountOperation implements Operation<Long>, AsyncOperation<Long> {
             document.put("maxTimeMS", find.getOptions().getMaxTime(MILLISECONDS));
         }
         return document;
-    }
-
-    private long getCount(final CommandResult commandResult) {
-        return ((Number) commandResult.getResponse().get("n")).longValue();
     }
 }

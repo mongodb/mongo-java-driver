@@ -26,30 +26,29 @@ import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoCursorNotFoundException
 import org.mongodb.QueryOptions
 import org.mongodb.ServerCursor
+import org.mongodb.binding.ConnectionSource
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.protocol.GetMoreProtocol
 import org.mongodb.protocol.KillCursor
 import org.mongodb.protocol.KillCursorProtocol
 import org.mongodb.protocol.QueryProtocol
 import org.mongodb.protocol.QueryResult
-import org.mongodb.session.ServerConnectionProvider
 
 import java.util.concurrent.CountDownLatch
 
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
-import static org.mongodb.Fixture.getSession
-import static org.mongodb.ReadPreference.primary
+import static org.mongodb.Fixture.getBinding
 
 class MongoQueryCursorSpecification extends FunctionalSpecification {
-    private ServerConnectionProvider connectionProvider
+    private ConnectionSource connectionSource
     private MongoQueryCursor<Document> cursor
 
     def setup() {
         for (int i = 0; i < 10; i++) {
             collection.insert(new Document('_id', i))
         }
-        connectionProvider = OperationHelper.getConnectionProvider(primary(), getSession())
+        connectionSource = getBinding().getReadConnectionSource()
     }
 
     def cleanup() {
@@ -65,7 +64,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 0, 0, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
 
         then:
         cursor.getServerCursor() != null
@@ -78,7 +77,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 0, 0, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
         then:
         cursor.getServerAddress() != null
     }
@@ -89,7 +88,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 0, 0, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
 
         when:
         cursor.close()
@@ -120,7 +119,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 2, 0, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
         when:
         cursor.next()
         cursor.next()
@@ -136,7 +135,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 0, 0, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
 
         when:
         int i = 0
@@ -155,7 +154,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 5, 0, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
 
         when:
         int i = 0
@@ -174,7 +173,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 0, 0, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
 
         when:
         cursor.remove()
@@ -190,7 +189,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 0, 2, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
 
         then:
         cursor.getNumGetMores() == 0
@@ -229,7 +228,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 0, 2, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
 
         then:
         cursor.hasNext()
@@ -268,7 +267,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 0, 2, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
 
         CountDownLatch latch = new CountDownLatch(1)
         //TODO: there might be a more Groovy-y way to do this, may be no need to hack into an array?
@@ -301,7 +300,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 5, 0, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
 
         ServerCursor serverCursor = cursor.getServerCursor()
         Thread.sleep(1000) //Note: waiting for some time for killCursor operation to be performed on a server.
@@ -319,7 +318,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 5, 3, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
         ServerCursor serverCursor = cursor.getServerCursor()
 
         cursor.next()
@@ -367,7 +366,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 0, 2, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
 
         then:
         int i = 0
@@ -387,7 +386,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 0, 2, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
 
         then:
         for (int i = 0; i < 10; i++) {
@@ -410,10 +409,10 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         when:
         cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
                                                 firstBatch, 0, 2, new DocumentCodec(),
-                                                connectionProvider)
+                                                connectionSource)
 
-        def connection = connectionProvider.getConnection()
-        new KillCursorProtocol(new KillCursor(cursor.getServerCursor())).execute(connection, connectionProvider.serverDescription)
+        def connection = connectionSource.getConnection()
+        new KillCursorProtocol(new KillCursor(cursor.getServerCursor())).execute(connection)
         connection.close()
         cursor.next()
         cursor.next()
@@ -436,21 +435,19 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
     }
 
     private QueryResult<Document> executeQuery(Document query, int numberToReturn, EnumSet<QueryFlag> queryFlag) {
-        def connection = connectionProvider.getConnection()
+        def connection = connectionSource.getConnection()
         try {
             new QueryProtocol<Document>(collection.getNamespace(), queryFlag, 0, numberToReturn, query, null,
                                         new DocumentCodec(), new DocumentCodec())
-                    .execute(connection, connectionProvider.getServerDescription())
+                    .execute(connection)
         } finally {
             connection.close()
         }
     }
 
     private void makeAdditionalGetMoreCall(ServerCursor serverCursor) {
-        new GetMoreProtocol<Document>(collection.getNamespace(),
-                                      new GetMore(serverCursor, 1, 1, 1),
+        new GetMoreProtocol<Document>(collection.getNamespace(), new GetMore(serverCursor, 1, 1, 1),
                                       collection.getOptions().getDocumentCodec())
-                .execute(cursor.serverConnectionProvider.getConnection(), cursor.serverConnectionProvider.serverDescription)
+                .execute(connectionSource.getConnection())
     }
-
 }

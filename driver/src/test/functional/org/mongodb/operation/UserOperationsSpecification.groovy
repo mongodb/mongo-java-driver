@@ -15,8 +15,9 @@
  */
 
 package org.mongodb.operation
-import category.Async
+
 import org.junit.experimental.categories.Category
+import category.Async
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
@@ -31,9 +32,10 @@ import org.mongodb.selector.PrimaryServerSelector
 
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
+import static org.mongodb.Fixture.getAsyncBinding
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
-import static org.mongodb.Fixture.getSession
 import static org.mongodb.MongoCredential.createMongoCRCredential
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
@@ -48,38 +50,38 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'an added user should be found'() {
         given:
-        new CreateUserOperation(readOnlyUser).execute(getSession())
+        new CreateUserOperation(readOnlyUser).execute(getBinding())
 
         when:
-        def found = new UserExistsOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        def found = new UserExistsOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
 
         then:
         found
 
         cleanup:
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
     }
 
     @Category(Async)
     def 'an added user should be found asynchronously'() {
         given:
-        new CreateUserOperation(readOnlyUser).executeAsync(getSession()).get()
+        new CreateUserOperation(readOnlyUser).executeAsync(getAsyncBinding()).get()
 
         when:
         def found = new UserExistsOperation(databaseName, readOnlyUser.credential.userName)
-                .executeAsync(getSession()).get()
+                .executeAsync(getAsyncBinding()).get()
 
         then:
         found
 
         cleanup:
         new DropUserOperation(databaseName, readOnlyUser.credential.userName)
-                .executeAsync(getSession()).get()
+                .executeAsync(getAsyncBinding()).get()
     }
 
     def 'an added user should authenticate'() {
         given:
-        new CreateUserOperation(readOnlyUser).execute(getSession())
+        new CreateUserOperation(readOnlyUser).execute(getBinding())
         def cluster = getCluster()
 
         when:
@@ -91,14 +93,14 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
         cleanup:
         connection?.close()
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
         cluster?.close()
     }
 
     @Category(Async)
     def 'an added user should authenticate asynchronously'() {
         given:
-        new CreateUserOperation(readOnlyUser).executeAsync(getSession()).get()
+        new CreateUserOperation(readOnlyUser).executeAsync(getAsyncBinding()).get()
         def cluster = getCluster()
 
         when:
@@ -110,14 +112,14 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
         cleanup:
         connection?.close()
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getSession()).get()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getAsyncBinding()).get()
         cluster?.close()
     }
 
     def 'a removed user should not authenticate'() {
         given:
-        new CreateUserOperation(readOnlyUser).execute(getSession())
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        new CreateUserOperation(readOnlyUser).execute(getBinding())
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
         def cluster = getCluster()
 
         when:
@@ -134,8 +136,8 @@ class UserOperationsSpecification extends FunctionalSpecification {
     @Category(Async)
     def 'a removed user should not authenticate asynchronously'() {
         given:
-        new CreateUserOperation(readOnlyUser).executeAsync(getSession()).get()
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getSession()).get()
+        new CreateUserOperation(readOnlyUser).executeAsync(getAsyncBinding()).get()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getAsyncBinding()).get()
         def cluster = getCluster()
 
         when:
@@ -151,10 +153,10 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
     def 'a replaced user should authenticate with its new password'() {
         given:
-        new CreateUserOperation(readOnlyUser).execute(getSession())
+        new CreateUserOperation(readOnlyUser).execute(getBinding())
         def newUser = new User(createMongoCRCredential(readOnlyUser.credential.userName, readOnlyUser.credential.source,
                 '234'.toCharArray()), true)
-        new UpdateUserOperation(newUser).execute(getSession())
+        new UpdateUserOperation(newUser).execute(getBinding())
         def cluster = getCluster(newUser)
 
         when:
@@ -166,17 +168,17 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
         cleanup:
         connection?.close()
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
         cluster?.close()
     }
 
     @Category(Async)
     def 'a replaced user should authenticate with its new password asynchronously'() {
         given:
-        new CreateUserOperation(readOnlyUser).executeAsync(getSession()).get()
+        new CreateUserOperation(readOnlyUser).executeAsync(getAsyncBinding()).get()
         def newUser = new User(createMongoCRCredential(readOnlyUser.credential.userName, readOnlyUser.credential.source,
                 '234'.toCharArray()), true)
-        new UpdateUserOperation(newUser).executeAsync(getSession()).get()
+        new UpdateUserOperation(newUser).executeAsync(getAsyncBinding()).get()
         def cluster = getCluster(newUser)
 
         when:
@@ -188,44 +190,44 @@ class UserOperationsSpecification extends FunctionalSpecification {
 
         cleanup:
         connection?.close()
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getSession()).get()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getAsyncBinding()).get()
         cluster?.close()
     }
 
     def 'a read write user should be able to write'() {
         given:
-        new CreateUserOperation(readWriteUser).execute(getSession())
+        new CreateUserOperation(readWriteUser).execute(getBinding())
         def cluster = getCluster()
 
         when:
         def result = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
                 asList(new InsertRequest<Document>(new Document())),
                 new DocumentCodec())
-                .execute(getSession())
+                .execute(getBinding())
         then:
         result.getCount() == 0
 
         cleanup:
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
         cluster?.close()
     }
 
     @Category(Async)
     def 'a read write user should be able to write asynchronously'() {
         given:
-        new CreateUserOperation(readWriteUser).executeAsync(getSession()).get()
+        new CreateUserOperation(readWriteUser).executeAsync(getAsyncBinding()).get()
         def cluster = getCluster()
 
         when:
         def result = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
                 asList(new InsertRequest<Document>(new Document())),
                 new DocumentCodec())
-                .executeAsync(getSession()).get()
+                .executeAsync(getAsyncBinding()).get()
         then:
         result.getCount() == 0
 
         cleanup:
-        new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getSession()).get()
+        new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getAsyncBinding()).get()
         cluster?.close()
     }
 
@@ -240,13 +242,13 @@ class UserOperationsSpecification extends FunctionalSpecification {
 //        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
 //                asList(new InsertRequest<Document>(new Document())),
 //                new DocumentCodec())
-//                .execute(getSession())
+//                .execute(getBinding())
 //
 //        then:
 //        thrown(MongoWriteException)
 //
 //        cleanup:
-//        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getSession())
+//        new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
 //        cluster?.close()
 //    }
 

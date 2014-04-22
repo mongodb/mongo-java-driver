@@ -20,43 +20,41 @@ import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
-import org.mongodb.session.Session;
+import org.mongodb.binding.AsyncReadBinding;
+import org.mongodb.binding.ReadBinding;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Collections.unmodifiableList;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.transformResult;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
 /**
  * Execute this operation to return a List of Strings of the names of all the databases for the current MongoDB instance.
  */
-public class GetDatabaseNamesOperation implements AsyncOperation<List<String>>, Operation<List<String>> {
+public class GetDatabaseNamesOperation implements AsyncReadOperation<List<String>>, ReadOperation<List<String>> {
 
     /**
      * Executing this will return a list of all the databases names in the MongoDB instance.
      *
      * @return a List of Strings of the names of all the databases in the MongoDB instance
-     * @param session
+     * @param binding the binding
      */
     @Override
-    public List<String> execute(final Session session) {
-        CommandResult result = executeWrappedCommandProtocol("admin", getCommand(), session);
-        return transformResult(result, transformer());
+    public List<String> execute(final ReadBinding binding) {
+        return executeWrappedCommandProtocol("admin", getCommand(), binding, transformer());
     }
 
     /**
      * Executing this will return a Future list of all the databases names in the MongoDB instance.
      *
      * @return a Future List of Strings of the names of all the databases in the MongoDB instance
-     * @param session
+     * @param binding the binding
      */
     @Override
-    public MongoFuture<List<String>> executeAsync(final Session session) {
-        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync("admin", getCommand(), session);
-        return transformResult(result, transformer());
+    public MongoFuture<List<String>> executeAsync(final AsyncReadBinding binding) {
+        return executeWrappedCommandProtocolAsync("admin", getCommand(), binding, transformer());
     }
 
     private Function<CommandResult, List<String>> transformer() {

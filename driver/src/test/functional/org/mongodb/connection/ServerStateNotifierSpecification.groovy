@@ -58,7 +58,7 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
 
     def 'should return server version'() {
         given:
-        CommandResult commandResult = database.executeCommand(new Document('buildinfo', 1), null)
+        CommandResult commandResult = database.executeCommand(new Document('buildinfo', 1), ReadPreference.primary())
         def expectedVersion = new ServerVersion((commandResult.getResponse().get('versionArray') as List<Integer>).subList(0, 3))
 
         when:

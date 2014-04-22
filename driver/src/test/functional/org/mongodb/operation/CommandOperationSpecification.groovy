@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
+
 package org.mongodb.operation
 import category.Async
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoExecutionTimeoutException
-import org.mongodb.ReadPreference
 import org.mongodb.codecs.DocumentCodec
 
 import static java.util.Arrays.asList
@@ -28,7 +28,8 @@ import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.disableMaxTimeFailPoint
 import static org.mongodb.Fixture.enableMaxTimeFailPoint
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.getAsyncBinding
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.isSharded
 import static org.mongodb.Fixture.serverVersionAtLeast
 
@@ -38,13 +39,13 @@ class CommandOperationSpecification extends FunctionalSpecification {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 
         given:
-        def commandOperation = new CommandOperation(getNamespace().databaseName,
-                                                    new Document('count', getCollectionName()).append('maxTimeMS', 1),
-                                                    ReadPreference.primary(), new DocumentCodec(), new DocumentCodec())
+        def commandOperation = new CommandReadOperation(getNamespace().databaseName,
+                                                        new Document('count', getCollectionName()).append('maxTimeMS', 1)
+                                                        , new DocumentCodec(), new DocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
-        commandOperation.execute(getSession())
+        commandOperation.execute(getBinding())
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -59,13 +60,13 @@ class CommandOperationSpecification extends FunctionalSpecification {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 
         given:
-        def commandOperation = new CommandOperation(getNamespace().databaseName,
-                                                    new Document('count', getCollectionName()).append('maxTimeMS', 1),
-                                                    ReadPreference.primary(), new DocumentCodec(), new DocumentCodec())
+        def commandOperation = new CommandReadOperation(getNamespace().databaseName,
+                                                        new Document('count', getCollectionName()).append('maxTimeMS', 1)
+                                                        , new DocumentCodec(), new DocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
-        commandOperation.executeAsync(getSession()).get()
+        commandOperation.executeAsync(getAsyncBinding()).get()
 
         then:
         thrown(MongoExecutionTimeoutException)

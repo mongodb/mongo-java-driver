@@ -20,7 +20,8 @@ import org.junit.experimental.categories.Category
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.getAsyncBinding
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.OrderBy.ASC
 
 class CreateIndexesSpecification extends FunctionalSpecification {
@@ -34,7 +35,7 @@ class CreateIndexesSpecification extends FunctionalSpecification {
         def createIndexesOperation = new CreateIndexesOperation([index], getNamespace())
 
         when:
-        createIndexesOperation.execute(getSession())
+        createIndexesOperation.execute(getBinding())
 
         then:
         getIndexes()*.get('key') containsAll(idIndex, field1Index)
@@ -48,7 +49,7 @@ class CreateIndexesSpecification extends FunctionalSpecification {
         def createIndexesOperation = new CreateIndexesOperation([index], getNamespace())
 
         when:
-        createIndexesOperation.executeAsync(getSession()).get()
+        createIndexesOperation.executeAsync(getAsyncBinding()).get()
 
         then:
         getIndexes()*.get('key') containsAll(idIndex, field1Index)
@@ -62,7 +63,7 @@ class CreateIndexesSpecification extends FunctionalSpecification {
 
 
         when:
-        createIndexesOperation.execute(getSession())
+        createIndexesOperation.execute(getBinding())
 
         then:
         getIndexes()*.get('key') containsAll(idIndex, field1Index, field2Index)
@@ -77,7 +78,7 @@ class CreateIndexesSpecification extends FunctionalSpecification {
         def createIndexesOperation = new CreateIndexesOperation([index1, index2], getNamespace())
 
         when:
-        createIndexesOperation.executeAsync(getSession()).get()
+        createIndexesOperation.executeAsync(getAsyncBinding()).get()
 
         then:
         getIndexes()*.get('key') containsAll(idIndex, field1Index, field2Index)
@@ -89,7 +90,7 @@ class CreateIndexesSpecification extends FunctionalSpecification {
         def createIndexesOperation = new CreateIndexesOperation([index, index], getNamespace())
 
         when:
-        createIndexesOperation.execute(getSession())
+        createIndexesOperation.execute(getBinding())
 
         then:
         getIndexes()*.get('key') containsAll(idIndex, field1Index)
@@ -103,14 +104,14 @@ class CreateIndexesSpecification extends FunctionalSpecification {
         def createIndexesOperation = new CreateIndexesOperation([index, index], getNamespace())
 
         when:
-        createIndexesOperation.executeAsync(getSession()).get()
+        createIndexesOperation.executeAsync(getAsyncBinding()).get()
 
         then:
         getIndexes()*.get('key') containsAll(idIndex, field1Index)
     }
 
     def getIndexes() {
-        new GetIndexesOperation(getNamespace()).execute(getSession())
+        new GetIndexesOperation(getNamespace()).execute(getBinding())
     }
 
 }

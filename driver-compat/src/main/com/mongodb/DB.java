@@ -25,16 +25,17 @@ import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
-import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.CommandReadOperation;
+import org.mongodb.operation.CommandWriteOperation;
 import org.mongodb.operation.CreateUserOperation;
 import org.mongodb.operation.DropUserOperation;
 import org.mongodb.operation.Find;
-import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
+import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.UpdateUserOperation;
 import org.mongodb.operation.User;
 import org.mongodb.operation.UserExistsOperation;
-import org.mongodb.session.Session;
+import org.mongodb.operation.WriteOperation;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -42,6 +43,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.MongoExceptions.mapException;
+import static com.mongodb.ReadPreference.primary;
 import static org.mongodb.MongoCredential.createMongoCRCredential;
 
 /**
@@ -142,14 +144,14 @@ public class DB {
      * underlying connection. This is useful to ensure that operations happen in a certain order with predictable results.
      */
     public void requestStart() {
-        getMongo().pinSession();
+        getMongo().pinBinding();
     }
 
     /**
      * Ends the current "consistent request"
      */
     public void requestDone() {
-        getMongo().unpinSession();
+        getMongo().unpinBinding();
     }
 
     /**
@@ -202,7 +204,7 @@ public class DB {
      * @throws MongoException
      */
     public void dropDatabase() {
-        executeCommand(new Document("dropDatabase", 1), org.mongodb.ReadPreference.primary());
+        executeCommand(new Document("dropDatabase", 1));
     }
 
     /**
@@ -234,7 +236,8 @@ public class DB {
         MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
         Find findAll = new Find().readPreference(org.mongodb.ReadPreference.primary());
         // TODO: Should use an operation
-        MongoCursor<Document> cursor = execute(new QueryOperation<Document>(namespacesCollection, findAll, commandCodec, commandCodec));
+        MongoCursor<Document> cursor = execute(new QueryOperation<Document>(namespacesCollection, findAll, commandCodec, commandCodec),
+                                               primary());
 
         try {
             HashSet<String> collections = new HashSet<String>();
@@ -283,7 +286,7 @@ public class DB {
      */
     public DBCollection createCollection(final String collectionName, final DBObject options) {
         CreateCollectionOptions createCollectionOptions = toCreateCollectionOptions(collectionName, options);
-        executeCommand(createCollectionOptions.asDocument(), getReadPreference().toNew());
+        executeCommand(createCollectionOptions.asDocument());
         return getCollection(collectionName);
     }
 
@@ -373,7 +376,7 @@ public class DB {
     public CommandResult command(final DBObject cmd, final ReadPreference readPreference, final DBEncoder encoder) {
         try {
             Document document = encoder != null ? toDocument(cmd, encoder, commandCodec) : toDocument(cmd);
-            return new CommandResult(executeCommand(document, readPreference.toNew()));
+            return executeCommand(document, readPreference);
         } catch (CommandFailureException ex) {
             return ex.getCommandResult();
         }
@@ -445,7 +448,7 @@ public class DB {
      */
     public CommandResult doEval(final String code, final Object... args) {
         Document commandDocument = new Document("$eval", code).append("args", args);
-        return new CommandResult(executeCommand(commandDocument, getReadPreference().toNew()));
+        return executeCommand(commandDocument);
     }
 
     /**
@@ -473,7 +476,7 @@ public class DB {
      */
     public CommandResult getStats() {
         Document commandDocument = new Document("dbStats", 1).append("scale", 1);
-        return new CommandResult(executeCommand(commandDocument, getReadPreference().toNew()));
+        return executeCommand(commandDocument);
     }
 
     /**
@@ -505,7 +508,7 @@ public class DB {
     @Deprecated
     public WriteResult addUser(final String userName, final char[] password, final boolean readOnly) {
         User user = new User(createMongoCRCredential(userName, getName(), password), readOnly);
-        if (execute(new UserExistsOperation(getName(), userName))) {
+        if (execute(new UserExistsOperation(getName(), userName), primary())) {
             execute(new UpdateUserOperation(user));
             return new WriteResult(1, false, null, getWriteConcern());
 
@@ -584,12 +587,13 @@ public class DB {
         return getMongo().getCluster();
     }
 
-    Session getSession() {
-        return getMongo().getSession();
+    CommandResult executeCommand(final Document commandDocument) {
+        return new CommandResult(getMongo().execute(new CommandWriteOperation(getName(), commandDocument, commandCodec, commandCodec)));
     }
 
-    org.mongodb.CommandResult executeCommand(final Document commandDocument, final org.mongodb.ReadPreference requestedReadPreference) {
-        return getMongo().execute(new CommandOperation(getName(), commandDocument, requestedReadPreference, commandCodec, commandCodec));
+    CommandResult executeCommand(final Document commandDocument, final ReadPreference readPreference) {
+        return new CommandResult(getMongo().execute(new CommandReadOperation(getName(), commandDocument, commandCodec, commandCodec),
+                                                    readPreference));
     }
 
     Bytes.OptionHolder getOptionHolder() {
@@ -604,7 +608,11 @@ public class DB {
         return databaseName.length() != 0 && !databaseName.contains(" ");
     }
 
-    private <T> T execute(final Operation<T> operation) {
+    private <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
+        return getMongo().execute(operation, readPreference);
+    }
+
+    private <T> T execute(final WriteOperation<T> operation) {
         return getMongo().execute(operation);
     }
 }

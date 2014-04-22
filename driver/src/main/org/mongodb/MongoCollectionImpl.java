@@ -18,9 +18,7 @@ package org.mongodb;
 
 import org.bson.types.Code;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.AggregateOperation;
-import org.mongodb.operation.AsyncOperation;
 import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.FindAndRemove;
@@ -34,16 +32,15 @@ import org.mongodb.operation.InsertRequest;
 import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceToCollectionOperation;
 import org.mongodb.operation.MapReduceWithInlineResultsOperation;
-import org.mongodb.operation.Operation;
 import org.mongodb.operation.QueryOperation;
+import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.RemoveOperation;
 import org.mongodb.operation.RemoveRequest;
 import org.mongodb.operation.ReplaceOperation;
 import org.mongodb.operation.ReplaceRequest;
-import org.mongodb.operation.SingleResultFuture;
-import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.operation.UpdateOperation;
 import org.mongodb.operation.UpdateRequest;
+import org.mongodb.operation.WriteOperation;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -80,16 +77,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public WriteResult insert(final List<T> documents) {
         return new MongoCollectionView().insert(documents);
-    }
-
-    @Override
-    public MongoFuture<WriteResult> asyncInsert(final T document) {
-        return new MongoCollectionView().asyncInsert(document);
-    }
-
-    @Override
-    public MongoFuture<WriteResult> asyncInsert(final List<T> documents) {
-        return new MongoCollectionView().asyncInsert(documents);
     }
 
     @Override
@@ -156,12 +143,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         return new MongoNamespace(getDatabase().getName(), getName());
     }
 
-    <V> V execute(final Operation<V> operation) {
-        return client.execute(operation);
+    <V> V execute(final ReadOperation<V> operation, final ReadPreference readPreference) {
+        return client.execute(operation, readPreference);
     }
 
-    <V> MongoFuture<V> executeAsync(final AsyncOperation<V> operation) {
-        return client.executeAsync(operation);
+    <V> V execute(final WriteOperation<V> operation) {
+        return client.execute(operation);
     }
 
     private final class MongoCollectionView implements MongoView<T> {
@@ -247,21 +234,20 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoCursor<T> get() {
-            return execute(new QueryOperation<T>(getNamespace(), findOp, getDocumentCodec(), getCodec()
-            ));
+            return execute(new QueryOperation<T>(getNamespace(), findOp, getDocumentCodec(), getCodec()), findOp.getReadPreference());
         }
 
         @Override
         public T getOne() {
-            MongoCursor<T> cursor = execute(new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec()
-            ));
+            MongoCursor<T> cursor = execute(new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec()),
+                                            findOp.getReadPreference());
 
             return cursor.hasNext() ? cursor.next() : null;
         }
 
         @Override
         public long count() {
-            return execute(new CountOperation(getNamespace(), findOp, getDocumentCodec()));
+            return execute(new CountOperation(getNamespace(), findOp, getDocumentCodec()), findOp.getReadPreference());
         }
 
         @Override
@@ -272,8 +258,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
             if (mapReduce.isInline()) {
                 MapReduceWithInlineResultsOperation<Document> operation =
-                new MapReduceWithInlineResultsOperation<Document>(getNamespace(), mapReduce, new DocumentCodec(),
-                                                                  options.getReadPreference());
+                new MapReduceWithInlineResultsOperation<Document>(getNamespace(), mapReduce, new DocumentCodec());
                 return new MapReduceResultsIterable<T, Document>(operation, MongoCollectionImpl.this);
             } else {
                 execute(new MapReduceToCollectionOperation(getNamespace(), mapReduce));
@@ -330,22 +315,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 insertRequestList.add(new InsertRequest<T>(cur));
             }
             return execute(new InsertOperation<T>(getNamespace(), true, writeConcern, insertRequestList, getCodec()));
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public MongoFuture<WriteResult> asyncInsert(final T document) {
-            return asyncInsert(asList(document));
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public MongoFuture<WriteResult> asyncInsert(final List<T> documents) {
-            List<InsertRequest<T>> insertRequestList = new ArrayList<InsertRequest<T>>(documents.size());
-            for (T cur : documents) {
-                insertRequestList.add(new InsertRequest<T>(cur));
-            }
-            return executeAsync(new InsertOperation<T>(getNamespace(), true, writeConcern, insertRequestList, getCodec()));
         }
 
         @Override
@@ -462,55 +431,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
             return execute(new FindAndRemoveOperation<T>(getNamespace(), findAndRemove, getCodec())); }
 
-        @Override
-        @SuppressWarnings("unchecked")
-        public MongoFuture<WriteResult> asyncReplace(final T replacement) {
-            ReplaceRequest<T> replaceRequest = new ReplaceRequest<T>(findOp.getFilter(), replacement).upsert(upsert);
-            return executeAsync(new ReplaceOperation<T>(getNamespace(), true, writeConcern, asList(replaceRequest),
-                    getDocumentCodec(), getCodec()));
-        }
-
         boolean asBoolean(final Get get) {
             return get == Get.AfterChangeApplied;
-        }
-
-        @Override
-        public MongoFuture<T> asyncOne() {
-            final SingleResultFuture<T> retVal = new SingleResultFuture<T>();
-            executeAsync(new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec()))
-            .register(new
-                      SingleResultCallback<MongoAsyncCursor<T>>() {
-                          @Override
-                          public void onResult(
-                                              final
-                                              MongoAsyncCursor<T> cursor,
-                                              final
-                                              MongoException e) {
-                              if (e != null) {
-                                  retVal.init(null, e);
-                              } else {
-                                  cursor.start(new AsyncBlock<T>() {
-                                      @Override
-                                      public void done() {
-                                          if (!retVal.isDone()) {
-                                              retVal.init(null, null); // TODO: deal with errors
-                                          }
-                                      }
-
-                                      @Override
-                                      public void apply(final T t) {
-                                          retVal.init(t, null);
-                                      }
-                                  });
-                              }
-                          }
-                      });
-            return retVal;
-        }
-
-        @Override
-        public MongoFuture<Long> asyncCount() {
-            return executeAsync(new CountOperation(getNamespace(), findOp, getDocumentCodec()));
         }
 
         private boolean getMultiFromLimit() {
@@ -527,38 +449,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             }
         }
 
-        @Override
-        public void asyncForEach(final AsyncBlock<? super T> block) {
-            executeAsync(new QueryOperation<T>(getNamespace(), findOp, getDocumentCodec(), getCodec()))
-            .register(new SingleResultCallback<MongoAsyncCursor<T>>() {
-                @Override
-                public void onResult(final MongoAsyncCursor<T> cursor, final MongoException e) {
-                    cursor.start(block);  // TODO: deal with exceptions
-                }
-            });
-        }
-
-        @Override
-        public <A extends Collection<? super T>> MongoFuture<A> asyncInto(final A target) {
-            SingleResultFuture<A> future = new SingleResultFuture<A>();
-
-            asyncInto(target, new SingleResultFutureCallback<A>(future));
-            return future;
-        }
-
-        private <A extends Collection<? super T>> void asyncInto(final A target, final SingleResultCallback<A> callback) {
-            asyncForEach(new AsyncBlock<T>() {
-                @Override
-                public void done() {
-                    callback.onResult(target, null);
-                }
-
-                @Override
-                public void apply(final T t) {
-                    target.add(t);
-                }
-            });
-        }
     }
 
     private class MongoCollectionPipeline implements MongoPipeline<T> {
@@ -627,20 +517,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public void asyncForEach(final AsyncBlock<? super T> block) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public <A extends Collection<? super T>> MongoFuture<A> asyncInto(final A target) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         @SuppressWarnings("unchecked")
         public MongoCursor<T> iterator() {
-            return execute(new AggregateOperation<T>(getNamespace(), pipeline, codec, AggregationOptions.builder().build(),
-                                                     options.getReadPreference()));
+            return execute(new AggregateOperation<T>(getNamespace(), pipeline, codec, AggregationOptions.builder().build()),
+                           options.getReadPreference());
         }
 
         @Override

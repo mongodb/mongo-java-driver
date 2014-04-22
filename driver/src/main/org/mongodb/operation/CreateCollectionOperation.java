@@ -18,14 +18,15 @@ package org.mongodb.operation;
 
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.MongoFuture;
-import org.mongodb.session.Session;
+import org.mongodb.binding.AsyncWriteBinding;
+import org.mongodb.binding.WriteBinding;
 
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.ignoreResult;
 
-public class CreateCollectionOperation implements AsyncOperation<Void>, Operation<Void> {
+public class CreateCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final String databaseName;
     private final CreateCollectionOptions createCollectionOptions;
 
@@ -35,14 +36,14 @@ public class CreateCollectionOperation implements AsyncOperation<Void>, Operatio
     }
 
     @Override
-    public Void execute(final Session session) {
-        executeWrappedCommandProtocol(databaseName, createCollectionOptions.asDocument(), session);
+    public Void execute(final WriteBinding binding) {
+        executeWrappedCommandProtocol(databaseName, createCollectionOptions.asDocument(), binding);
         return null;
     }
 
     @Override
-    public MongoFuture<Void> executeAsync(final Session session) {
-        return ignoreResult(executeWrappedCommandProtocolAsync(databaseName, createCollectionOptions.asDocument(), session));
+    public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
+        return ignoreResult(executeWrappedCommandProtocolAsync(databaseName, createCollectionOptions.asDocument(), binding));
     }
 
 }

@@ -17,10 +17,12 @@
 package org.mongodb;
 
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.operation.CommandOperation;
+import org.mongodb.operation.CommandReadOperation;
 import org.mongodb.operation.GetDatabaseNamesOperation;
 
 import java.util.List;
+
+import static org.mongodb.ReadPreference.primary;
 
 /**
  * Contains the commands that can be run on MongoDB that do not require a database to be selected first.  These commands can be accessed via
@@ -41,15 +43,15 @@ class ClientAdministrationImpl implements ClientAdministration {
     //http://docs.mongodb.org/manual/reference/command/ping/
     @Override
     public double ping() {
-        CommandResult pingResult = client.execute(new CommandOperation(ADMIN_DATABASE, PING_COMMAND,
-                                                                       client.getOptions().getReadPreference(),
-                                                                       commandCodec, commandCodec));
+        CommandResult pingResult = client.execute(new CommandReadOperation(ADMIN_DATABASE, PING_COMMAND,
+                                                                           commandCodec, commandCodec),
+                                                  client.getOptions().getReadPreference());
 
         return (Double) pingResult.getResponse().get("ok");
     }
 
     @Override
     public List<String> getDatabaseNames() {
-        return client.execute(new GetDatabaseNamesOperation());
+        return client.execute(new GetDatabaseNamesOperation(), primary());
     }
 }

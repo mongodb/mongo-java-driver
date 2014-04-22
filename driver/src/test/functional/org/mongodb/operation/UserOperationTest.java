@@ -23,6 +23,9 @@ import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.ClusterBinding;
+import org.mongodb.binding.ReadWriteBinding;
+import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterSettings;
@@ -31,19 +34,18 @@ import org.mongodb.connection.DefaultClusterFactory;
 import org.mongodb.connection.ServerSettings;
 import org.mongodb.connection.SocketSettings;
 import org.mongodb.connection.SocketStreamFactory;
-import org.mongodb.session.ClusterSession;
-import org.mongodb.session.Session;
 
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
+import static org.mongodb.Fixture.getBinding;
 import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.getSSLSettings;
-import static org.mongodb.Fixture.getSession;
 import static org.mongodb.Fixture.isAuthenticated;
-import static org.mongodb.Fixture.getExecutor;
 import static org.mongodb.MongoCredential.createMongoCRCredential;
+import static org.mongodb.ReadPreference.primary;
 import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
 // This test is here because the assertion is conditional on auth being enabled, and there"s no way to do that in Spock
@@ -67,23 +69,22 @@ public class UserOperationTest extends DatabaseTestCase {
         assumeTrue(isAuthenticated());
 
         // given:
-        new CreateUserOperation(readOnlyUser).execute(getSession());
+        new CreateUserOperation(readOnlyUser).execute(getBinding());
         Cluster cluster = createCluster(readOnlyUser);
-        Session session = new ClusterSession(cluster, getExecutor());
+        ReadWriteBinding binding = new ClusterBinding(cluster, primary(), 1, SECONDS);
 
         // when:
         try {
             new InsertOperation<Document>(collection.getNamespace(), true, ACKNOWLEDGED,
                                           asList(new InsertRequest<Document>(new Document())),
-                                          new DocumentCodec()
-            ).execute(session);
+                                          new DocumentCodec())
+            .execute(binding);
             fail("should have thrown");
         } catch (MongoException e) {
             // all good
         } finally {
             // cleanup:
-            new DropUserOperation(getDatabaseName(), readOnlyUser.getCredential().getUserName()
-            ).execute(getSession());
+            new DropUserOperation(getDatabaseName(), readOnlyUser.getCredential().getUserName()).execute(getBinding());
             cluster.close();
         }
     }
@@ -94,26 +95,24 @@ public class UserOperationTest extends DatabaseTestCase {
 
         // given
         User adminUser = new User(createMongoCRCredential("jeff-rw-admin", "admin", "123".toCharArray()), false);
-        new CreateUserOperation(adminUser).execute(getSession());
+        new CreateUserOperation(adminUser).execute(getBinding());
 
         Cluster cluster = createCluster(adminUser);
-        Session session = new ClusterSession(cluster, getExecutor());
+        WriteBinding binding = new ClusterBinding(cluster, primary(), 1, SECONDS);
 
         try {
             // when
             new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()),
                                           true, ACKNOWLEDGED,
                                           asList(new InsertRequest<Document>(new Document())),
-                                          new DocumentCodec()
-            ).execute(session);
+                                          new DocumentCodec()).execute(binding);
             // then
             assertEquals(1L, (long) new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()), new Find(),
-                                                       new DocumentCodec()
-            )
-                                    .execute(session));
+                                                       new DocumentCodec())
+                                    .execute(getBinding()));
         } finally {
             // cleanup
-            new DropUserOperation("admin", adminUser.getCredential().getUserName()).execute(getSession());
+            new DropUserOperation("admin", adminUser.getCredential().getUserName()).execute(getBinding());
             cluster.close();
         }
     }
@@ -123,23 +122,23 @@ public class UserOperationTest extends DatabaseTestCase {
         assumeTrue(isAuthenticated());
         // given
         User adminUser = new User(createMongoCRCredential("jeff-ro-admin", "admin", "123".toCharArray()), true);
-        new CreateUserOperation(adminUser).execute(getSession());
+        new CreateUserOperation(adminUser).execute(getBinding());
 
         Cluster cluster = createCluster(adminUser);
-        Session session = new ClusterSession(cluster, getExecutor());
+        WriteBinding binding = new ClusterBinding(cluster, primary(), 1, SECONDS);
 
         try {
             // when
             new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()), true, ACKNOWLEDGED,
                                           asList(new InsertRequest<Document>(new Document())),
-                                          new DocumentCodec()).execute(session);
+                                          new DocumentCodec()).execute(binding);
             fail("Should have thrown");
         } catch (MongoException e) {
             // all good
         }
         finally {
             // cleanup
-            new DropUserOperation("admin", adminUser.getCredential().getUserName()).execute(getSession());
+            new DropUserOperation("admin", adminUser.getCredential().getUserName()).execute(getBinding());
             cluster.close();
         }
     }
@@ -150,22 +149,21 @@ public class UserOperationTest extends DatabaseTestCase {
 
         // given
         User adminUser = new User(createMongoCRCredential("jeff-ro-admin", "admin", "123".toCharArray()), true);
-        new CreateUserOperation(adminUser).execute(getSession());
+        new CreateUserOperation(adminUser).execute(getBinding());
 
         Cluster cluster = createCluster(adminUser);
-        Session session = new ClusterSession(cluster, getExecutor());
-
+        ReadWriteBinding binding = new ClusterBinding(cluster, primary(), 1, SECONDS);
         try {
             // when
             long result = new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()),
                                              new Find(),
-                                             new DocumentCodec()
-            ).execute(session);
+                                             new DocumentCodec())
+                          .execute(binding);
             // then
             assertEquals(0, result);
         } finally {
             // cleanup
-            new DropUserOperation("admin", adminUser.getCredential().getUserName()).execute(getSession());
+            new DropUserOperation("admin", adminUser.getCredential().getUserName()).execute(getBinding());
             cluster.close();
         }
     }

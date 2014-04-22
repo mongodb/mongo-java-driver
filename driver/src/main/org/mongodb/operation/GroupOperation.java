@@ -23,14 +23,13 @@ import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ReadPreference;
-import org.mongodb.session.Session;
+import org.mongodb.binding.AsyncReadBinding;
+import org.mongodb.binding.ReadBinding;
 
 import java.util.List;
 
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocol;
-import static org.mongodb.operation.OperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.OperationHelper.transformResult;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
 /**
  * Groups documents in a collection by the specified key and performs simple aggregation functions, such as computing counts and sums. The
@@ -39,50 +38,45 @@ import static org.mongodb.operation.OperationHelper.transformResult;
  * @mongodb.driver.manual reference/command/group Group Command
  * @since 3.0
  */
-public class GroupOperation implements AsyncOperation<MongoAsyncCursor<Document>>, Operation<MongoCursor<Document>> {
+public class GroupOperation implements AsyncReadOperation<MongoAsyncCursor<Document>>, ReadOperation<MongoCursor<Document>> {
     private final MongoNamespace namespace;
     private final Group group;
-    private final ReadPreference readPreference;
 
     /**
      * Create an operation that will perform a Group on a given collection.
      * @param namespace      the database and collection to run the operation against
      * @param group          contains all the arguments for this group command
-     * @param readPreference the ReadPreference for the group command. If null, primary will be used.
      */
-    public GroupOperation(final MongoNamespace namespace, final Group group, final ReadPreference readPreference) {
+    public GroupOperation(final MongoNamespace namespace, final Group group) {
         this.namespace = namespace;
         this.group = group;
-        this.readPreference = readPreference;
     }
 
     /**
      * Will return a cursor of Documents containing the results of the group operation.
      *
      * @return a MongoCursor of T, the results of the group operation in a form to be iterated over
-     * @param session the session
+     * @param binding the binding
      */
     @Override
     @SuppressWarnings("unchecked")
-    public MongoCursor<Document> execute(final Session session) {
-        CommandResult result = executeWrappedCommandProtocol(namespace, getCommand(), readPreference, session);
-        return transformResult(result, transform());
+    public MongoCursor<Document> execute(final ReadBinding binding) {
+        return executeWrappedCommandProtocol(namespace, getCommand(), binding, transformer());
     }
 
     /**
      * Will return a cursor of Documents containing the results of the group operation.
      *
      * @return a Future MongoCursor of T, the results of the group operation in a form to be iterated over
-     * @param session the session
+     * @param binding the binding
      */
     @Override
     @SuppressWarnings("unchecked")
-    public MongoFuture<MongoAsyncCursor<Document>> executeAsync(final Session session) {
-        MongoFuture<CommandResult> result = executeWrappedCommandProtocolAsync(namespace, getCommand(), readPreference, session);
-        return transformResult(result, transformAsync());
+    public MongoFuture<MongoAsyncCursor<Document>> executeAsync(final AsyncReadBinding binding) {
+        return executeWrappedCommandProtocolAsync(namespace, getCommand(), binding, asyncTransformer());
     }
 
-    private Function<CommandResult, MongoCursor<Document>> transform() {
+    private Function<CommandResult, MongoCursor<Document>> transformer() {
         return new Function<CommandResult, MongoCursor<Document>>() {
             @SuppressWarnings("unchecked")
             @Override
@@ -92,7 +86,7 @@ public class GroupOperation implements AsyncOperation<MongoAsyncCursor<Document>
         };
     }
 
-    private Function<CommandResult, MongoAsyncCursor<Document>> transformAsync() {
+    private Function<CommandResult, MongoAsyncCursor<Document>> asyncTransformer() {
         return new Function<CommandResult, MongoAsyncCursor<Document>>() {
             @SuppressWarnings("unchecked")
             @Override

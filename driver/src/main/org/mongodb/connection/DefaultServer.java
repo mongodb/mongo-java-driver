@@ -18,6 +18,7 @@ package org.mongodb.connection;
 
 import org.bson.ByteBuf;
 import org.mongodb.MongoException;
+import org.mongodb.MongoInternalException;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 
+import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
@@ -131,9 +133,9 @@ class DefaultServer implements ClusterableServer {
     }
 
     private class DefaultServerConnection implements Connection {
-        private Connection wrapped;
+        private InternalConnection wrapped;
 
-        public DefaultServerConnection(final Connection wrapped) {
+        public DefaultServerConnection(final InternalConnection wrapped) {
             this.wrapped = wrapped;
         }
 
@@ -147,6 +149,12 @@ class DefaultServer implements ClusterableServer {
         public ByteBuf getBuffer(final int capacity) {
             isTrue("open", !isClosed());
             return wrapped.getBuffer(capacity);
+        }
+
+        @Override
+        public ServerDescription getServerDescription() {
+            isTrue("open", !isClosed());
+            return getDescription();  // TODO: get a new one for each connection, so that it's immutable
         }
 
         @Override
@@ -164,7 +172,13 @@ class DefaultServer implements ClusterableServer {
         public ResponseBuffers receiveMessage(final int responseTo) {
             isTrue("open", !isClosed());
             try {
-                return wrapped.receiveMessage(responseTo);
+                ResponseBuffers responseBuffers = wrapped.receiveMessage();
+                if (responseBuffers.getReplyHeader().getResponseTo() != responseTo) {
+                    throw new MongoInternalException(format("The responseTo (%d) in the reply message does not match the "
+                                                            + "requestId (%d) in the request message",
+                                                            responseBuffers.getReplyHeader().getResponseTo(), responseTo));
+                }
+                return responseBuffers;
             } catch (MongoException e) {
                 handleException();
                 throw e;
@@ -180,11 +194,12 @@ class DefaultServer implements ClusterableServer {
         @Override
         public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", !isClosed());
-            wrapped.receiveMessageAsync(responseTo, callback);  // TODO: handle asynchronous exceptions
+            wrapped.receiveMessageAsync(callback);  // TODO: handle asynchronous exceptions and incorrect responseTo
         }
 
         @Override
         public String getId() {
+            isTrue("open", !isClosed());
             return wrapped.getId();
         }
 

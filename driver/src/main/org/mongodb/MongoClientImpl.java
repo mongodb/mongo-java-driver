@@ -16,24 +16,22 @@
 
 package org.mongodb;
 
+import org.mongodb.binding.ClusterBinding;
 import org.mongodb.connection.Cluster;
-import org.mongodb.operation.AsyncOperation;
-import org.mongodb.operation.Operation;
-import org.mongodb.session.ClusterSession;
-import org.mongodb.session.PinnedSession;
-import org.mongodb.session.Session;
+import org.mongodb.operation.ReadOperation;
+import org.mongodb.operation.WriteOperation;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.mongodb.ReadPreference.primary;
 
 class MongoClientImpl implements MongoClient {
 
     private final Cluster cluster;
     private final MongoClientOptions clientOptions;
-    private final ThreadLocal<Session> pinnedSession = new ThreadLocal<Session>();
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     MongoClientImpl(final MongoClientOptions clientOptions, final Cluster cluster) {
@@ -52,28 +50,6 @@ class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public void withConnection(final Runnable runnable) {
-        pinSession();
-        try {
-            runnable.run();
-        } finally {
-            unpinSession();
-        }
-    }
-
-    @Override
-    public <T> T withConnection(final Callable<T> callable) throws ExecutionException {
-        pinSession();
-        try {
-            return callable.call();
-        } catch (Exception e) {
-            throw new ExecutionException(e);
-        } finally {
-            unpinSession();
-        }
-    }
-
-    @Override
     public void close() {
         cluster.close();
         executorService.shutdownNow();
@@ -89,13 +65,6 @@ class MongoClientImpl implements MongoClient {
         return new ClientAdministrationImpl(this);
     }
 
-    public Session getSession() {
-        if (pinnedSession.get() != null) {
-            return pinnedSession.get();
-        }
-        return new ClusterSession(cluster, executorService);
-    }
-
     public Cluster getCluster() {
         return cluster;
     }
@@ -104,24 +73,21 @@ class MongoClientImpl implements MongoClient {
         return executorService;
     }
 
-    private void pinSession() {
-        if (pinnedSession.get() != null) {
-            throw new IllegalStateException();
+    public <V> V execute(final ReadOperation<V> readOperation, final ReadPreference readPreference) {
+        ClusterBinding binding = new ClusterBinding(cluster, readPreference, clientOptions.getMaxWaitTime(), MILLISECONDS);
+        try {
+            return readOperation.execute(binding);
+        } finally {
+            binding.release();
         }
-        pinnedSession.set(new PinnedSession(cluster, executorService));
     }
 
-    private void unpinSession() {
-        Session sessionToUnpin = this.pinnedSession.get();
-        this.pinnedSession.remove();
-        sessionToUnpin.close();
-    }
-
-    <V> V execute(final Operation<V> operation) {
-        return operation.execute(getSession());
-    }
-
-    <V> MongoFuture<V> executeAsync(final AsyncOperation<V> operation) {
-        return operation.executeAsync(getSession());
+    public <V> V execute(final WriteOperation<V> writeOperation) {
+        ClusterBinding binding = new ClusterBinding(cluster, primary(), clientOptions.getMaxWaitTime(), MILLISECONDS);
+        try {
+            return writeOperation.execute(binding);
+        } finally {
+            binding.release();
+        }
     }
 }

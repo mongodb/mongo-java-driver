@@ -25,7 +25,6 @@ import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
-import org.mongodb.session.Session;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -118,7 +117,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
         if (cursor == null) {
             cursor = collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(),
-                                                                     resultDecoder));
+                                                                     resultDecoder), getReadPreference());
         }
 
         return cursor.hasNext();
@@ -362,7 +361,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             copy.limit(0);
         }
         return collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(),
-                                                               new DBObjectCodec())).next();
+                                                               new DBObjectCodec()), getReadPreference())
+                         .next();
     }
 
     /**
@@ -683,10 +683,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
 
         return currentObject;
-    }
-
-    public Session getSession() {
-        return getCollection().getSession();
     }
 
     private static DBObject lookupSuitableHints(final DBObject query, final List<DBObject> hints) {

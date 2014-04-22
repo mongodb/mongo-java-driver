@@ -1,0 +1,135 @@
+/*
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.mongodb.binding;
+
+import org.mongodb.ReadPreference;
+import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.connection.Cluster;
+import org.mongodb.connection.Connection;
+import org.mongodb.connection.Server;
+import org.mongodb.selector.PrimaryServerSelector;
+import org.mongodb.selector.ReadPreferenceServerSelector;
+
+import java.util.concurrent.TimeUnit;
+
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.mongodb.assertions.Assertions.notNull;
+
+/**
+ * A binding that ensures that reads to the primary use the same connection as writes, while reads to any other server go to the same
+ * server so long as the read preference has not been changed.
+ *
+ * @since 3.0
+ */
+@NotThreadSafe
+public class PinnedBinding extends AbstractReferenceCounted implements ReadWriteBinding {
+    private ReadPreference readPreference = ReadPreference.primary();
+    private ReadPreference lastRequestedReadPreference;
+    private Server serverForReads;
+    private Server serverForWrites;
+    private Connection connectionForReads;
+    private Connection connectionForWrites;
+    private final Cluster cluster;
+    private long maxWaitTimeMS;
+
+    /**
+     * Create a new session with the given cluster.
+     *
+     * @param cluster the cluster, which may not be null
+     */
+    public PinnedBinding(final Cluster cluster, final long maxWaitTime, final TimeUnit timeUnit) {
+        this.cluster = notNull("cluster", cluster);
+        maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
+    }
+
+    public void setReadPreference(final ReadPreference readPreference) {
+        this.readPreference = readPreference;
+    }
+
+    @Override
+    public PinnedBinding retain() {
+        super.retain();
+        return this;
+    }
+
+    public void release() {
+        super.release();
+        if (getCount() == 0) {
+            if (connectionForReads != null) {
+                connectionForReads.close();
+                connectionForReads = null;
+            }
+            if (connectionForWrites != null) {
+                connectionForWrites.close();
+                connectionForWrites = null;
+            }
+        }
+    }
+
+    @Override
+    public ReadPreference getReadPreference() {
+        return readPreference;
+    }
+
+    @Override
+    public ConnectionSource getReadConnectionSource() {
+        if (connectionForReads == null || !readPreference.equals(lastRequestedReadPreference)) {
+            lastRequestedReadPreference = readPreference;
+            if (connectionForReads != null) {
+                connectionForReads.close();
+            }
+            serverForReads = cluster.selectServer(new ReadPreferenceServerSelector(readPreference), maxWaitTimeMS, MILLISECONDS);
+            connectionForReads = serverForReads.getConnection();
+        }
+        Connection connectionToUse;
+        if (serverForWrites != null && serverForReads.getDescription().getAddress().equals(serverForWrites.getDescription().getAddress())) {
+            connectionToUse = connectionForWrites;
+        } else {
+            connectionToUse = connectionForReads;
+        }
+        return new MyConnectionSource(connectionToUse);
+    }
+
+    @Override
+    public ConnectionSource getWriteConnectionSource() {
+        if (connectionForWrites == null) {
+            serverForWrites = cluster.selectServer(new PrimaryServerSelector(), maxWaitTimeMS, MILLISECONDS);
+            connectionForWrites = serverForWrites.getConnection();
+        }
+        Connection connectionToUse = connectionForWrites;
+        return new MyConnectionSource(connectionToUse);
+    }
+
+    private static final class MyConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
+        private final Connection connection;
+
+        public MyConnectionSource(final Connection connection) {
+            this.connection = connection;
+        }
+
+        @Override
+        public Connection getConnection() {
+            return new DelayedCloseConnection(connection);
+        }
+
+        @Override
+        public MyConnectionSource retain() {
+            super.retain();
+            return this;
+        }
+    }
+}

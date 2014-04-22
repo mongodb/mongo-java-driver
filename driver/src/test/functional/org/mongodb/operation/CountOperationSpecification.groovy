@@ -18,6 +18,7 @@ package org.mongodb.operation
 
 import category.Async
 import org.junit.experimental.categories.Category
+import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoExecutionTimeoutException
 import org.mongodb.codecs.DocumentCodec
@@ -27,10 +28,41 @@ import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.disableMaxTimeFailPoint
 import static org.mongodb.Fixture.enableMaxTimeFailPoint
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.getAsyncBinding
+import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.serverVersionAtLeast
+import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
 class CountOperationSpecification extends FunctionalSpecification {
+
+    private List<InsertRequest<Document>> insertDocumentList;
+
+    def setup() {
+        insertDocumentList = [
+                new InsertRequest<Document>(new Document()),
+                new InsertRequest<Document>(new Document()),
+                new InsertRequest<Document>(new Document()),
+                new InsertRequest<Document>(new Document()),
+                new InsertRequest<Document>(new Document()),
+                new InsertRequest<Document>(new Document()),
+                new InsertRequest<Document>(new Document()),
+                new InsertRequest<Document>(new Document())
+        ]
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, insertDocumentList, new DocumentCodec()).execute(getBinding())
+    }
+
+    def 'should get the count'() {
+        expect:
+        new CountOperation(getNamespace(), new Find(), new DocumentCodec()).execute(getBinding()) == insertDocumentList.size()
+    }
+
+    def 'should get the count asynchronously'() {
+        expect:
+        new CountOperation(getNamespace(), new Find(), new DocumentCodec()).executeAsync(getAsyncBinding()).get() ==
+        insertDocumentList.size()
+    }
+
+
     def 'should throw execution timeout exception from execute'() {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 
@@ -40,7 +72,7 @@ class CountOperationSpecification extends FunctionalSpecification {
         enableMaxTimeFailPoint()
 
         when:
-        countOperation.execute(getSession())
+        countOperation.execute(getBinding())
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -59,7 +91,7 @@ class CountOperationSpecification extends FunctionalSpecification {
         enableMaxTimeFailPoint()
 
         when:
-        countOperation.executeAsync(getSession()).get()
+        countOperation.executeAsync(getAsyncBinding()).get()
 
         then:
         thrown(MongoExecutionTimeoutException)

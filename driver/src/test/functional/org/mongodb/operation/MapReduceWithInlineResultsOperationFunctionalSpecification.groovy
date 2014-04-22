@@ -26,12 +26,12 @@ import org.mongodb.MapReduceAsyncCursor
 import org.mongodb.MapReduceCursor
 import org.mongodb.MongoException
 import org.mongodb.MongoFuture
-import org.mongodb.ReadPreference
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.SingleResultCallback
 import org.mongodb.test.CollectionHelper
 
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.getAsyncBinding
+import static org.mongodb.Fixture.getBinding
 
 class MapReduceWithInlineResultsOperationFunctionalSpecification extends FunctionalSpecification {
     private final documentCodec = new DocumentCodec()
@@ -51,10 +51,10 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
 
     def 'should return the correct results'() {
         given:
-        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec, ReadPreference.primary())
+        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec)
 
         when:
-        MapReduceCursor<Document> results = operation.execute(getSession())
+        MapReduceCursor<Document> results = operation.execute(getBinding())
 
         then:
         results.iterator().toList() == expectedResults
@@ -63,10 +63,10 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
     @Category(Async)
     def 'should return the correct results asynchronously'() {
         given:
-        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec, ReadPreference.primary())
+        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec)
 
         when:
-        MongoFuture<MapReduceAsyncCursor> results = operation.executeAsync(getSession())
+        MongoFuture<MapReduceAsyncCursor> results = operation.executeAsync(getAsyncBinding())
         def result = new SingleResultFuture<List<Document>>()
         results.register(new SingleResultCallback<MapReduceAsyncCursor<Document>>() {
             @Override

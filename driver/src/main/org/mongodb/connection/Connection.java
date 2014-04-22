@@ -32,6 +32,13 @@ import java.util.List;
 public interface Connection extends BufferProvider {
 
     /**
+     * Gets the description of the server that it's connected to.
+     *
+     * @return the server description
+     */
+    ServerDescription getServerDescription();
+
+    /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message. <p> This method
      * blocks until all bytes have been written.  This method is not thread safe: only one thread at a time can have an active call to this
      * method. </p>

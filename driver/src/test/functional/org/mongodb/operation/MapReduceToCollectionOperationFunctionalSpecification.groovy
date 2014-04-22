@@ -27,7 +27,8 @@ import org.mongodb.codecs.DocumentCodec
 import org.mongodb.test.CollectionHelper
 import spock.lang.Shared
 
-import static org.mongodb.Fixture.getSession
+import static org.mongodb.Fixture.getAsyncBinding
+import static org.mongodb.Fixture.getBinding
 
 class MapReduceToCollectionOperationFunctionalSpecification extends FunctionalSpecification {
     private final documentCodec = new DocumentCodec()
@@ -52,8 +53,8 @@ class MapReduceToCollectionOperationFunctionalSpecification extends FunctionalSp
     }
 
     def cleanup() {
-        new DropCollectionOperation(mapReduceInputNamespace).execute(getSession())
-        new DropCollectionOperation(mapReduceOutputNamespace).execute(getSession())
+        new DropCollectionOperation(mapReduceInputNamespace).execute(getBinding())
+        new DropCollectionOperation(mapReduceOutputNamespace).execute(getBinding())
     }
 
     def 'should return the correct statistics and save the results'() {
@@ -62,7 +63,7 @@ class MapReduceToCollectionOperationFunctionalSpecification extends FunctionalSp
         def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace, mapReduce)
 
         when:
-        MapReduceStatistics results = operation.execute(getSession())
+        MapReduceStatistics results = operation.execute(getBinding())
         def serverUsed = operation.getServerUsed()
 
         then:
@@ -81,7 +82,7 @@ class MapReduceToCollectionOperationFunctionalSpecification extends FunctionalSp
         def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace, mapReduce)
 
         when:
-        MapReduceStatistics results = operation.executeAsync(getSession()).get()
+        MapReduceStatistics results = operation.executeAsync(getAsyncBinding()).get()
         def serverUsed = operation.getServerUsed()
 
         then:

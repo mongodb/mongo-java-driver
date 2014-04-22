@@ -24,6 +24,8 @@ import org.mongodb.util.FieldHelpers;
 
 import java.util.List;
 
+import static org.mongodb.ReadPreference.primary;
+
 /**
  * Encapsulates functionality that is not part of the day-to-day use of a Collection.  For example, via this admin class you can create
  * indexes and drop the collection.
@@ -52,12 +54,12 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public List<Document> getIndexes() {
-        return client.execute(new GetIndexesOperation(collectionNamespace));
+        return client.execute(new GetIndexesOperation(collectionNamespace), primary());
     }
 
     @Override
     public boolean isCapped() {
-        CommandResult commandResult = database.executeCommand(collStatsCommand, null);
+        CommandResult commandResult = database.executeCommand(collStatsCommand, primary());
         ErrorHandling.handleErrors(commandResult);
 
         return FieldHelpers.asBoolean(commandResult.getResponse().get("capped"));
@@ -65,7 +67,7 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public Document getStatistics() {
-        CommandResult commandResult = database.executeCommand(collStatsCommand, null);
+        CommandResult commandResult = database.executeCommand(collStatsCommand, primary());
         ErrorHandling.handleErrors(commandResult);
 
         return commandResult.getResponse();
