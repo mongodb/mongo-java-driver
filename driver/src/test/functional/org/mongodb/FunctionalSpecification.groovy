@@ -17,12 +17,14 @@
 package org.mongodb
 
 import org.mongodb.codecs.DocumentCodec
+import org.mongodb.connection.ServerHelper
 import org.mongodb.test.CollectionHelper
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 import spock.lang.Specification
 
 import static org.mongodb.Fixture.getDefaultDatabase
+import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.initialiseCollection
 
 class FunctionalSpecification extends Specification {
@@ -38,6 +40,7 @@ class FunctionalSpecification extends Specification {
         if (collection != null) {
             collection.tools().drop();
         }
+        ServerHelper.checkPool(getPrimary())
     }
 
     String getDatabaseName() {
