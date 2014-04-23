@@ -83,7 +83,7 @@ public abstract class BaseCluster implements Cluster {
                 if (!serverDescriptions.isEmpty()) {
                     ClusterableServer server = getRandomServer(new ArrayList<ServerDescription>(serverDescriptions));
                     if (server != null) {
-                        return new WrappedServer(server);
+                        return server;
                     }
                 }
 
@@ -220,24 +220,5 @@ public abstract class BaseCluster implements Cluster {
                                                               + "the servers to which it is connected: %s", curDescription),
                                                        curDescription);
         }
-    }
-
-    private static final class WrappedServer implements Server {
-        private final ClusterableServer wrapped;
-
-        public WrappedServer(final ClusterableServer server) {
-            wrapped = server;
-        }
-
-        @Override
-        public ServerDescription getDescription() {
-            return wrapped.getDescription();
-        }
-
-        @Override
-        public Connection getConnection() {
-            return wrapped.getConnection();
-        }
-
     }
 }

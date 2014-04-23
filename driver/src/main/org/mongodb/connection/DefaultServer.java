@@ -114,6 +114,10 @@ class DefaultServer implements ClusterableServer {
         return isClosed;
     }
 
+    ConnectionProvider getConnectionProvider() {
+        return connectionProvider;
+    }
+
     private void handleException() {
         invalidate();  // TODO: handle different exceptions sub-classes differently
     }
