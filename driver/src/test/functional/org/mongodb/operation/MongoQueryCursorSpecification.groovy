@@ -446,8 +446,13 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
     }
 
     private void makeAdditionalGetMoreCall(ServerCursor serverCursor) {
-        new GetMoreProtocol<Document>(collection.getNamespace(), new GetMore(serverCursor, 1, 1, 1),
-                                      collection.getOptions().getDocumentCodec())
-                .execute(connectionSource.getConnection())
+        def connection = connectionSource.getConnection()
+        try {
+            new GetMoreProtocol<Document>(collection.getNamespace(), new GetMore(serverCursor, 1, 1, 1),
+                                          collection.getOptions().getDocumentCodec())
+                    .execute(connection)
+        } finally {
+            connection.release()
+        }
     }
 }

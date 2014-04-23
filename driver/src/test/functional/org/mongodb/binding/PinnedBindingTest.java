@@ -57,9 +57,12 @@ public class PinnedBindingTest extends DatabaseTestCase {
             readConnectionSource = binding.getReadConnectionSource();
             connection = readConnectionSource.getConnection();
             assertEquals(serverAddress, connection.getServerAddress());
+            connection.release();
+            readConnectionSource.release();
         }
 
-        binding.getWriteConnectionSource();
+        ConnectionSource writeConnectionSource = binding.getWriteConnectionSource();
+        writeConnectionSource.release();
 
         readConnectionSource = binding.getReadConnectionSource();
         connection = readConnectionSource.getConnection();

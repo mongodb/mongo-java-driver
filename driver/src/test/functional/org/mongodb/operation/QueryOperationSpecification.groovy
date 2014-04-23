@@ -204,9 +204,13 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def count = 0;
 
         def cursor = queryOperation.execute(getBinding())
-        while (cursor.hasNext()) {
-            cursor.next();
-            count++;
+        try {
+            while (cursor.hasNext()) {
+                cursor.next();
+                count++;
+            }
+        } finally {
+            cursor.close()
         }
 
         then:
