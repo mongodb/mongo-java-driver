@@ -92,7 +92,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         connection
 
         cleanup:
-        connection?.close()
+        connection?.release()
         new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
         cluster?.close()
     }
@@ -111,7 +111,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         connection
 
         cleanup:
-        connection?.close()
+        connection?.release()
         new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getAsyncBinding()).get()
         cluster?.close()
     }
@@ -167,7 +167,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         connection
 
         cleanup:
-        connection?.close()
+        connection?.release()
         new DropUserOperation(databaseName, readOnlyUser.credential.userName).execute(getBinding())
         cluster?.close()
     }
@@ -189,7 +189,7 @@ class UserOperationsSpecification extends FunctionalSpecification {
         connection
 
         cleanup:
-        connection?.close()
+        connection?.release()
         new DropUserOperation(databaseName, readOnlyUser.credential.userName).executeAsync(getAsyncBinding()).get()
         cluster?.close()
     }

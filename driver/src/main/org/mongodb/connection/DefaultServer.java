@@ -132,7 +132,7 @@ class DefaultServer implements ClusterableServer {
 
     }
 
-    private class DefaultServerConnection implements Connection {
+    private class DefaultServerConnection extends AbstractReferenceCounted implements Connection {
         private InternalConnection wrapped;
 
         public DefaultServerConnection(final InternalConnection wrapped) {
@@ -140,26 +140,40 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
+        public DefaultServerConnection retain() {
+            super.retain();
+            return this;
+        }
+
+        @Override
+        public void release() {
+            super.release();
+            if (getCount() == 0) {
+                wrapped.close();
+            }
+        }
+
+        @Override
         public ServerAddress getServerAddress() {
-            isTrue("open", !isClosed());
+            isTrue("open", getCount() > 0);
             return wrapped.getServerAddress();
         }
 
         @Override
         public ByteBuf getBuffer(final int capacity) {
-            isTrue("open", !isClosed());
+            isTrue("open", getCount() > 0);
             return wrapped.getBuffer(capacity);
         }
 
         @Override
         public ServerDescription getServerDescription() {
-            isTrue("open", !isClosed());
+            isTrue("open", getCount() > 0);
             return getDescription();  // TODO: get a new one for each connection, so that it's immutable
         }
 
         @Override
         public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
-            isTrue("open", !isClosed());
+            isTrue("open", getCount() > 0);
             try {
                 wrapped.sendMessage(byteBuffers, lastRequestId);
             } catch (MongoException e) {
@@ -170,7 +184,7 @@ class DefaultServer implements ClusterableServer {
 
         @Override
         public ResponseBuffers receiveMessage(final int responseTo) {
-            isTrue("open", !isClosed());
+            isTrue("open", getCount() > 0);
             try {
                 ResponseBuffers responseBuffers = wrapped.receiveMessage();
                 if (responseBuffers.getReplyHeader().getResponseTo() != responseTo) {
@@ -187,33 +201,20 @@ class DefaultServer implements ClusterableServer {
 
         @Override
         public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-            isTrue("open", !isClosed());
+            isTrue("open", getCount() > 0);
             wrapped.sendMessageAsync(byteBuffers, lastRequestId, callback);            // TODO: handle asynchronous exceptions
         }
 
         @Override
         public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-            isTrue("open", !isClosed());
+            isTrue("open", getCount() > 0);
             wrapped.receiveMessageAsync(callback);  // TODO: handle asynchronous exceptions and incorrect responseTo
         }
 
         @Override
         public String getId() {
-            isTrue("open", !isClosed());
+            isTrue("open", getCount() > 0);
             return wrapped.getId();
         }
-
-        @Override
-        public void close() {
-            if (wrapped != null) {
-                wrapped.close();
-                wrapped = null;
-            }
-        }
-
-        @Override
-        public boolean isClosed() {
-            return wrapped == null;
-        }
-    }
+   }
 }
