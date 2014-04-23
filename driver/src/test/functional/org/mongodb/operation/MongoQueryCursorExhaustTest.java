@@ -92,17 +92,19 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
                                         new DocumentCodec(), new DocumentCodec())
             .execute(source.getConnection());
 
-            singleConnectionBinding.connection.close();
+            singleConnectionBinding.connection.release();
         } finally {
-            exhaustConnection.close();
+            exhaustConnection.release();
         }
     }
 
     private static class SingleConnectionBinding implements ReadBinding {
         private final Connection connection;
+        private int referenceCount = 1;
 
         public SingleConnectionBinding(final Connection connection) {
             this.connection = connection;
+            this.connection.retain();
         }
 
         @Override
@@ -120,21 +122,26 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
             return new ConnectionSource() {
                 @Override
                 public Connection getConnection() {
-                    return new DelayedCloseConnection(connection);
+                    return connection;
                 }
 
                 @Override
                 public ConnectionSource retain() {
+                    referenceCount++;
                     return this;
                 }
 
                 @Override
                 public int getCount() {
-                    return 1;
+                    return referenceCount;
                 }
 
                 @Override
                 public void release() {
+                    referenceCount--;
+                    if (referenceCount == 0) {
+                        connection.release();
+                    }
                 }
             };
         }

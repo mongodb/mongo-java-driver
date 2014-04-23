@@ -142,7 +142,7 @@ final class CommandOperationHelper {
         try {
             return executeWrappedCommandProtocol(database, command, encoder, decoder, connection, readPreference);
         } finally {
-            connection.close();
+            connection.release();
         }
     }
 
@@ -440,7 +440,7 @@ final class CommandOperationHelper {
                                             future.init(transformer.apply(result), null);
                                         }
                                     } finally {
-                                        connection.close();
+                                        connection.release();
                                         source.release();
                                     }
                                 }
