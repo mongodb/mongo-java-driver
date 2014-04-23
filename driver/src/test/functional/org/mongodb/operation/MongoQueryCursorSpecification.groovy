@@ -413,7 +413,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         def connection = connectionSource.getConnection()
         new KillCursorProtocol(new KillCursor(cursor.getServerCursor())).execute(connection)
-        connection.close()
+        connection.release()
         cursor.next()
         cursor.next()
         then:
@@ -441,7 +441,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
                                         new DocumentCodec(), new DocumentCodec())
                     .execute(connection)
         } finally {
-            connection.close()
+            connection.release();
         }
     }
 

@@ -99,7 +99,7 @@ final class QueryOperationHelper {
             public MongoFuture<List<V>> call(final AsyncConnectionSource source, final Connection connection) {
                 final SingleResultFuture<List<V>> future = new SingleResultFuture<List<V>>();
                 queryProtocol.executeAsync(connection)
-                             .register(new QueryResultToListCallback<T, V>(future, namespace, decoder, source, connection, transformer));
+                             .register(new QueryResultToListCallback<T, V>(future, namespace, decoder, source, transformer));
                 return future;
             }
         });
@@ -111,53 +111,46 @@ final class QueryOperationHelper {
         private MongoNamespace namespace;
         private Decoder<T> decoder;
         private AsyncConnectionSource connectionSource;
-        private Connection connection;
         private Function<T, V> block;
 
         public QueryResultToListCallback(final SingleResultFuture<List<V>> future,
                                          final MongoNamespace namespace,
                                          final Decoder<T> decoder,
                                          final AsyncConnectionSource connectionSource,
-                                         final Connection connection,
                                          final Function<T, V> block) {
             this.future = future;
             this.namespace = namespace;
             this.decoder = decoder;
             this.connectionSource = connectionSource;
-            this.connection = connection;
             this.block = block;
         }
 
         @Override
         public void onResult(final QueryResult<T> result, final MongoException e) {
-            try {
-                if (e != null) {
-                    future.init(null, e);
-                } else {
-                    MongoAsyncQueryCursor<T> cursor = new MongoAsyncQueryCursor<T>(namespace,
-                                                                                   result,
-                                                                                   0, 0, decoder,
-                                                                                   connectionSource);
+            if (e != null) {
+                future.init(null, e);
+            } else {
+                MongoAsyncQueryCursor<T> cursor = new MongoAsyncQueryCursor<T>(namespace,
+                                                                               result,
+                                                                               0, 0, decoder,
+                                                                               connectionSource);
 
-                    final List<V> results = new ArrayList<V>();
-                    cursor.start(new AsyncBlock<T>() {
+                final List<V> results = new ArrayList<V>();
+                cursor.start(new AsyncBlock<T>() {
 
-                        @Override
-                        public void done() {
-                            future.init(unmodifiableList(results), null);
+                    @Override
+                    public void done() {
+                        future.init(unmodifiableList(results), null);
+                    }
+
+                    @Override
+                    public void apply(final T v) {
+                        V value = block.apply(v);
+                        if (value != null) {
+                            results.add(value);
                         }
-
-                        @Override
-                        public void apply(final T v) {
-                            V value = block.apply(v);
-                            if (value != null) {
-                                results.add(value);
-                            }
-                        }
-                    });
-                }
-            } finally {
-                connection.close();
+                    }
+                });
             }
         }
     }

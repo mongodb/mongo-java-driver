@@ -139,8 +139,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testExhaustWithDiscard() throws InterruptedException, ExecutionException {
         assumeFalse(isSharded());
 
-        DelayedCloseConnection connection = new DelayedCloseConnection(getAsyncBinding().getReadConnectionSource().get()
-                                                                                        .getConnection().get());
+        Connection connection = getAsyncBinding().getReadConnectionSource().get().getConnection().get().retain();
 
         try {
             QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection);
@@ -151,10 +150,10 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
             latch.await();
             assertThat(documentResultList, is(documentList.subList(0, 1)));
 
-            firstBatch = executeQuery(getOrderedByIdQuery(), 1, EnumSet.of(Exhaust), connection.getWrapped());
+            firstBatch = executeQuery(getOrderedByIdQuery(), 1, EnumSet.of(Exhaust), connection);
             assertEquals(Arrays.asList(new Document("_id", 0)), firstBatch.getResults());
         } finally {
-            connection.getWrapped().close();
+            connection.release();
         }
     }
 
@@ -193,7 +192,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         try {
             return executeQuery(query, numberToReturn, queryFlag, connection);
         } finally {
-            connection.close();
+            connection.release();
         }
     }
 
