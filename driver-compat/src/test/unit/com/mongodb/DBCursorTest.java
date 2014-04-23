@@ -42,12 +42,13 @@ import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.Fixture.serverVersionAtLeast;
 
 public class DBCursorTest extends DatabaseTestCase {
+    private static final int NUMBER_OF_DOCUMENTS = 10;
     private DBCursor cursor;
 
     @Before
     public void setUp() {
         super.setUp();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < NUMBER_OF_DOCUMENTS; i++) {
             collection.insert(new BasicDBObject("_id", i).append("x", i));
         }
         collection.createIndex(new BasicDBObject("x", 1));
@@ -218,29 +219,29 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testLength() {
-        assertEquals(10, cursor.length());
+        assertEquals(NUMBER_OF_DOCUMENTS, cursor.length());
     }
 
     @Test
     public void testToArray() {
-        assertEquals(10, cursor.toArray().size());
-        assertEquals(10, cursor.toArray().size());
+        assertEquals(NUMBER_OF_DOCUMENTS, cursor.toArray().size());
+        assertEquals(NUMBER_OF_DOCUMENTS, cursor.toArray().size());
     }
 
     @Test
     public void testToArrayWithMax() {
         assertEquals(9, cursor.toArray(9).size());
-        assertEquals(10, cursor.toArray().size());
+        assertEquals(NUMBER_OF_DOCUMENTS, cursor.toArray().size());
     }
 
     @Test
     public void testIterationCount() {
-        assertEquals(10, cursor.itcount());
+        assertEquals(NUMBER_OF_DOCUMENTS, cursor.itcount());
     }
 
     @Test
     public void testCount() {
-        assertEquals(10, cursor.count());
+        assertEquals(NUMBER_OF_DOCUMENTS, cursor.count());
         assertEquals(1, collection.find(new BasicDBObject("_id", 1)).count());
     }
 
@@ -388,6 +389,27 @@ public class DBCursorTest extends DatabaseTestCase {
         DBCollection profileCollection = database.getCollection("system.profile");
         assertEquals(1, profileCollection.count());
         assertEquals(expectedComment, ((DBObject) profileCollection.findOne().get("query")).get("$comment"));
+    }
+
+    @Test
+    public void testShouldReturnOnlyTheFieldThatWasInTheIndexUsedForTheFindWhenReturnKeyIsUsed() {
+        // Given
+        // put some documents into the collection
+        for (int i = 0; i < NUMBER_OF_DOCUMENTS; i++) {
+            collection.insert(new BasicDBObject("y", i).append("someOtherKey", "someOtherValue"));
+        }
+        //set an index on the field "y"
+        collection.createIndex(new BasicDBObject("y", 1));
+
+        // When
+        // find a document by using a search on the field in the index
+        DBCursor cursor = collection.find(new BasicDBObject("y", 7))
+                                    .returnKey();
+
+        // Then
+        DBObject foundItem = cursor.next();
+        assertThat("There should only be one field in the resulting document", foundItem.keySet().size(), is(1));
+        assertThat("This should be the 'y' field with its value", (Integer) foundItem.get("y"), is(7));
     }
 
     @Test

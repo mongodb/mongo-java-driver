@@ -13,21 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 package org.mongodb.operation
 
 import category.Async
@@ -95,8 +80,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         cleanup:
         disableMaxTimeFailPoint()
     }
-    
-    
+
     def '$max should limit items returned'() {
         given:
         for (i in 1..100) {
@@ -109,13 +93,13 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         when:
         queryOperation.execute(session).each {
-            count++ 
+            count++
         }
-        
+
         then:
         count == 10
     }
-    
+
     def '$min should limit items returned'() {
         given:
         collection.find().remove();
@@ -129,13 +113,13 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         when:
         queryOperation.execute(session).each {
-            count++ 
+            count++
         }
-        
+
         then:
         count == 91
     }
-    
+
     def '$maxScan should limit items returned'() {
         given:
         for (i in 1..100) {
@@ -147,31 +131,34 @@ class QueryOperationSpecification extends FunctionalSpecification {
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         when:
         queryOperation.execute(session).each {
-            count++ 
+            count++
         }
-        
+
         then:
         count == 34
     }
 
-    def '$returnKey should limit properties returned'() {
+    def '$returnKey should only return the field that was in an index used to perform the find'() {
         given:
-        for (i in 1..100) {
-            collection.insert(new Document('x', 'y'))
+        for (i in 1..13) {
+            collection.insert(new Document('x', i))
         }
-        def idFound = false;
-        def find = new Find()
+        collection.tools().createIndexes([Index.builder().addKey('x').build()])
+
+        def find = new Find(new Document('x', 7))
         find.getOptions().returnKey()
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
+
         when:
-        queryOperation.execute(getSession()).each {
-            idFound |= it['_id'] != null
-        }
-        
+        def cursor = queryOperation.execute(getSession())
+
         then:
-        !idFound
+        def foundItem = cursor.next()
+        foundItem.keySet().size() == 1
+        foundItem['x'] == 7
     }
-     def '$showDiskLoc should return disk locations'() {
+    
+    def '$showDiskLoc should return disk locations'() {
         given:
         for (i in 1..100) {
             collection.insert(new Document('x', 'y'))
@@ -184,7 +171,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         queryOperation.execute(getSession()).each {
             found &= it['$diskLoc'] != null
         }
-        
+
         then:
         found
     }
