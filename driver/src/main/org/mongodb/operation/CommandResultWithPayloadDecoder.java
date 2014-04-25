@@ -19,17 +19,16 @@ package org.mongodb.operation;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.mongodb.Decoder;
-import org.mongodb.Document;
 import org.mongodb.codecs.Codecs;
+import org.mongodb.codecs.DocumentCodec;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
 import static org.bson.BSONType.ARRAY;
 import static org.bson.BSONType.DOCUMENT;
-import static org.bson.BSONType.END_OF_DOCUMENT;
 
-class CommandResultWithPayloadDecoder<T> implements Decoder<Document> {
+class CommandResultWithPayloadDecoder<T> extends DocumentCodec {
     private final Decoder<T> payloadDecoder;
     private final Codecs codecs;
     private final String fieldContainingPayload;
@@ -41,33 +40,25 @@ class CommandResultWithPayloadDecoder<T> implements Decoder<Document> {
     }
 
     @Override
-    public Document decode(final BSONReader reader) {
-        Document document = new Document();
-
-        reader.readStartDocument();
-        while (reader.readBSONType() != END_OF_DOCUMENT) {
-            String fieldName = reader.readName();
-            BSONType bsonType = reader.getCurrentBSONType();
-            if (fieldName.equals(fieldContainingPayload)) {
-                if (bsonType.equals(DOCUMENT)) {
-                    document.put(fieldName, payloadDecoder.decode(reader));
-                } else if (bsonType.equals(ARRAY)) {
-                    reader.readStartArray();
-                    Collection<T> collection = new ArrayList<T>();
-                    while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-                        collection.add(payloadDecoder.decode(reader));
-                    }
-                    reader.readEndArray();
-                    document.put(fieldName, collection);
-                } else {
-                    document.put(fieldName, codecs.decode(reader));
+    protected Object readValue(final BSONReader reader, final String fieldName) {
+        BSONType bsonType = reader.getCurrentBSONType();
+        if (fieldName.equals(fieldContainingPayload)) {
+            if (bsonType.equals(DOCUMENT)) {
+                return payloadDecoder.decode(reader);
+            } else if (bsonType.equals(ARRAY)) {
+                reader.readStartArray();
+                Collection<T> collection = new ArrayList<T>();
+                while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+                    collection.add(payloadDecoder.decode(reader));
                 }
+                reader.readEndArray();
+                return collection;
             } else {
-                document.put(fieldName, codecs.decode(reader));
+                return codecs.decode(reader);
             }
+        } else {
+            return super.readValue(reader, fieldName);
         }
-        reader.readEndDocument();
-        return document;
     }
 }
 

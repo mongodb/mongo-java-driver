@@ -520,7 +520,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         @SuppressWarnings("unchecked")
         public MongoCursor<T> iterator() {
-            return execute(new AggregateOperation<T>(getNamespace(), pipeline, codec, AggregationOptions.builder().build()),
+            return execute(new AggregateOperation<T>(getNamespace(), pipeline, getDocumentCodec(), getCodec(),
+                                                     AggregationOptions.builder().build()),
                            options.getReadPreference());
         }
 

@@ -22,12 +22,10 @@ import org.mongodb.CollectibleCodec;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.Function;
 import org.mongodb.Index;
 import org.mongodb.MapReduceCursor;
 import org.mongodb.MapReduceStatistics;
 import org.mongodb.MongoCursor;
-import org.mongodb.MongoMappingCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
@@ -36,6 +34,7 @@ import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.AggregateExplainOperation;
 import org.mongodb.operation.AggregateOperation;
+import org.mongodb.operation.AggregateToCollectionOperation;
 import org.mongodb.operation.BaseWriteOperation;
 import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.CreateIndexesOperation;
@@ -1145,13 +1144,11 @@ public class DBCollection {
         if (mapReduce.isInline()) {
             MapReduceCursor<DBObject> executionResult = execute(new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(),
                                                                                                                   mapReduce,
-                                                                                                                  objectCodec
-                                                                ),
+                                                                                                                  objectCodec),
                                                                 readPreference);
             return new MapReduceOutput(command.toDBObject(), executionResult, executionResult.getServerAddress());
         } else {
-            MapReduceToCollectionOperation mapReduceOperation = new MapReduceToCollectionOperation(getNamespace(), mapReduce
-            );
+            MapReduceToCollectionOperation mapReduceOperation = new MapReduceToCollectionOperation(getNamespace(), mapReduce);
             MapReduceStatistics mapReduceStatistics = execute(mapReduceOperation);
             DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command.getMapReduce());
             DBCursor executionResult = mapReduceOutputCollection.find();
@@ -1259,26 +1256,19 @@ public class DBCollection {
         List<Document> stages = preparePipeline(pipeline);
 
         String outCollection = stages.get(stages.size() - 1).getString("$out");
-        ReadPreference activeReadPreference = coerceReadPreference(readPreference, outCollection != null);
 
-        MongoCursor<Document> cursor = execute(new AggregateOperation<Document>(getNamespace(),
-                                                                                stages,
-                                                                                getDocumentCodec(),
-                                                                                options.toNew()),
-                                              readPreference);
         if (outCollection != null) {
+            execute(new AggregateToCollectionOperation(getNamespace(), stages, getDocumentCodec(), options.toNew()));
             if (returnCursorForOutCollection) {
                 return new DBCursor(database.getCollection(outCollection), new BasicDBObject(), null, primary());
             } else {
                 return null;
             }
         } else {
-            return new MongoCursorAdapter(new MongoMappingCursor<Document, DBObject>(cursor, new Function<Document, DBObject>() {
-                @Override
-                public DBObject apply(final Document document) {
-                    return toDBObject(document);
-                }
-            }));
+            MongoCursor<DBObject> cursor = execute(new AggregateOperation<DBObject>(getNamespace(), stages, documentCodec, objectCodec,
+                                                                                    options.toNew()),
+                                                    readPreference);
+            return new MongoCursorAdapter(cursor);
         }
     }
 
@@ -1295,10 +1285,6 @@ public class DBCollection {
     public CommandResult explainAggregate(final List<DBObject> pipeline, final AggregationOptions options) {
         return new CommandResult(execute(new AggregateExplainOperation(getNamespace(), preparePipeline(pipeline), options.toNew()),
                                          primaryPreferred()));
-    }
-
-    private ReadPreference coerceReadPreference(final ReadPreference readPreference, final boolean dollarOutPresent) {
-        return dollarOutPresent ? primary() : readPreference;
     }
 
     @SuppressWarnings("unchecked")

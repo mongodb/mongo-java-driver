@@ -20,16 +20,17 @@ import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
+import org.mongodb.Encoder;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.ConnectionSource;
 import org.mongodb.binding.ReadBinding;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.protocol.QueryResult;
 
 import java.util.List;
 
+import static org.mongodb.AggregationOptions.OutputMode.INLINE;
 import static org.mongodb.operation.AggregateHelper.asCommandDocument;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
@@ -42,15 +43,20 @@ import static org.mongodb.operation.OperationHelper.withConnection;
  * @since 3.0
  */
 public class AggregateOperation<T> implements ReadOperation<MongoCursor<T>> {
+    private static final String RESULT = "result";
+    private static final String FIRST_BATCH = "firstBatch";
+
     private final MongoNamespace namespace;
     private final List<Document> pipeline;
+    private final Encoder<Document> encoder;
     private final Decoder<T> decoder;
     private final AggregationOptions options;
 
-    public AggregateOperation(final MongoNamespace namespace, final List<Document> pipeline, final Decoder<T> decoder,
-                              final AggregationOptions options) {
+    public AggregateOperation(final MongoNamespace namespace, final List<Document> pipeline, final Encoder<Document> encoder,
+                              final Decoder<T> decoder, final AggregationOptions options) {
         this.namespace = namespace;
         this.pipeline = pipeline;
+        this.encoder = encoder;
         this.decoder = decoder;
         this.options = options;
     }
@@ -61,12 +67,12 @@ public class AggregateOperation<T> implements ReadOperation<MongoCursor<T>> {
         return withConnection(binding, new CallableWithConnectionAndSource<MongoCursor<T>>() {
             @Override
             public MongoCursor<T> call(final ConnectionSource source, final Connection connection) {
-                CommandResult result = executeWrappedCommandProtocol(namespace, asCommandDocument(namespace, pipeline, options),
-                                                                     new DocumentCodec(),
-                                                                     new CommandResultWithPayloadDecoder<T>(decoder, "result"),
+                CommandResult result = executeWrappedCommandProtocol(namespace, asCommandDocument(namespace, pipeline, options), encoder,
+                                                                     new CommandResultWithPayloadDecoder<T>(decoder,
+                                                                                                            getFieldNameWithResults()),
                                                                      connection, binding.getReadPreference());
-                if (options.getOutputMode() == AggregationOptions.OutputMode.INLINE) {
-                    return new InlineMongoCursor<T>(result.getAddress(), (List<T>) result.getResponse().get("result"));
+                if (isInline()) {
+                    return new InlineMongoCursor<T>(result.getAddress(), (List<T>) result.getResponse().get(RESULT));
                 } else {
                     int batchSize = options.getBatchSize() == null ? 0 : options.getBatchSize();
                     return new MongoQueryCursor<T>(namespace, createQueryResult(result), 0, batchSize, decoder, source);
@@ -75,17 +81,25 @@ public class AggregateOperation<T> implements ReadOperation<MongoCursor<T>> {
         });
     }
 
+    private boolean isInline() {
+        return options.getOutputMode() == INLINE;
+    }
+
+    private String getFieldNameWithResults() {
+        return options.getOutputMode() == INLINE ? RESULT : FIRST_BATCH;
+    }
+
     @SuppressWarnings("unchecked")
     private QueryResult<T> createQueryResult(final CommandResult result) {
-        Document cursor = (Document) result.getResponse().get("cursor");
         long cursorId;
         List<T> results;
-        if (cursor != null) {
-            cursorId = cursor.getLong("id");
-            results = (List<T>) cursor.get("firstBatch");
-        } else {
+        if (isInline()) {
             cursorId = 0;
-            results = (List<T>) result.getResponse().get("result");
+            results = (List<T>) result.getResponse().get(RESULT);
+        } else {
+            Document cursor = (Document) result.getResponse().get("cursor");
+            cursorId = cursor.getLong("id");
+            results = (List<T>) cursor.get(FIRST_BATCH);
         }
         return new QueryResult<T>(results, cursorId, result.getAddress(), 0);
     }
