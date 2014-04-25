@@ -16,11 +16,9 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
-import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncWriteBinding;
@@ -55,22 +53,14 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getCommand(), commandEncoder, resultDecoder, binding, transformer());
+        return executeWrappedCommandProtocol(namespace, getCommand(), commandEncoder, resultDecoder, binding,
+                                             FindAndModifyHelper.<T>transformer());
     }
 
     @Override
     public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), commandEncoder, resultDecoder, binding, transformer());
-    }
-
-    private Function<CommandResult, T> transformer() {
-        return new Function<CommandResult, T>() {
-            @SuppressWarnings("unchecked")
-            @Override
-            public T apply(final CommandResult result) {
-                return (T) result.getResponse().get("value");
-            }
-        };
+        return executeWrappedCommandProtocolAsync(namespace, getCommand(), commandEncoder, resultDecoder, binding,
+                                                  FindAndModifyHelper.<T>transformer());
     }
 
     private Document getCommand() {
