@@ -96,7 +96,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         find.getOptions().max(new Document('count', 10))
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         when:
-        queryOperation.execute(session).each {
+        queryOperation.execute(getBinding()).each {
             count++ 
         }
 
