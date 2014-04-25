@@ -32,6 +32,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.Executor;
 
+import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
@@ -80,11 +81,20 @@ public final class Fixture {
 
     public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
         ClusterDescription clusterDescription = getCluster().getDescription(10, SECONDS);
-        List<ServerDescription> serverDescriptions = clusterDescription.getAny();
-        if (serverDescriptions.isEmpty()) {
+        int retries = 0;
+        while (clusterDescription.getAny().isEmpty() && retries <= 3) {
+            try {
+                Thread.sleep(1000);
+                retries++;
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Interrupted", e);
+            }
+            clusterDescription = getCluster().getDescription(10, SECONDS);
+        }
+        if (clusterDescription.getAny().isEmpty()) {
             throw new RuntimeException("There are no servers available in " + clusterDescription);
         }
-        return serverDescriptions.get(0).getVersion().compareTo(new ServerVersion(versionArray)) >= 0;
+        return clusterDescription.getAny().get(0).getVersion().compareTo(new ServerVersion(versionArray)) >= 0;
     }
 
     static class ShutdownHook extends Thread {
@@ -156,7 +166,7 @@ public final class Fixture {
         getMongoClient();
         List<ServerDescription> serverDescriptions = mongoClient.getCluster().getDescription(10, SECONDS).getPrimaries();
         while (serverDescriptions.isEmpty()) {
-            Thread.sleep(100);
+            sleep(100);
             serverDescriptions = mongoClient.getCluster().getDescription(10, SECONDS).getPrimaries();
         }
         return serverDescriptions.get(0).getAddress();
