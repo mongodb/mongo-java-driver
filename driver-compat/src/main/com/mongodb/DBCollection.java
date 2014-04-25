@@ -685,7 +685,6 @@ public class DBCollection {
         Find find = new Find().select(toFieldSelectorDocument(projection))
                               .where(toDocument(query))
                               .order(toDocument(sort))
-                              .readPreference(readPreference.toNew())
                               .batchSize(-1)
                               .maxTime(maxTime, maxTimeUnit);
 
@@ -917,7 +916,6 @@ public class DBCollection {
         // TODO: investigate case of int to long for skip
         Find find = new Find(toDocument(query)).limit((int) limit)
                                                .skip((int) skip)
-                                               .readPreference(readPreference.toNew())
                                                .maxTime(maxTime, maxTimeUnit);
 
         return execute(new CountOperation(getNamespace(), find, getDocumentCodec()), readPreference);
@@ -1069,8 +1067,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/distinct Distinct Command
      */
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
-        Find find = new Find().filter(toDocument(query))
-                              .readPreference(readPreference.toNew());
+        Find find = new Find().filter(toDocument(query));
         MongoCursor<String> result = execute(new DistinctOperation(getNamespace(), fieldName, find), readPreference);
 
         List<String> results = new ArrayList<String>();

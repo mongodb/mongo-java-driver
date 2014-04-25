@@ -36,6 +36,7 @@ import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.mongodb.ReadPreference.primary;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerType.SHARD_ROUTER;
 
@@ -65,7 +66,8 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
         try {
             Connection connection = source.getConnection();
             try {
-                QueryResult<T> queryResult = asQueryProtocol(connection.getServerDescription()).execute(connection);
+                QueryResult<T> queryResult = asQueryProtocol(connection.getServerDescription(), binding.getReadPreference())
+                                             .execute(connection);
                 if (isExhaustCursor()) {
                     return new MongoQueryCursor<T>(namespace, queryResult, find.getLimit(), find.getBatchSize(),
                                                    resultDecoder, connection);
@@ -98,7 +100,7 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
                                    if (e != null) {
                                        future.init(null, e);
                                    } else {
-                                       asQueryProtocol(connection.getServerDescription())
+                                       asQueryProtocol(connection.getServerDescription(), binding.getReadPreference())
                                        .executeAsync(connection)
                                        .register(new SingleResultCallback<QueryResult<T>>() {
                                            @Override
@@ -129,13 +131,13 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
         return future;
     }
 
-    private QueryProtocol<T> asQueryProtocol(final ServerDescription serverDescription) {
-        return new QueryProtocol<T>(namespace, find.getFlags(), find.getSkip(),
-                                    find.getNumberToReturn(), asDocument(serverDescription),
+    private QueryProtocol<T> asQueryProtocol(final ServerDescription serverDescription, final ReadPreference readPreference) {
+        return new QueryProtocol<T>(namespace, find.getFlags(readPreference), find.getSkip(),
+                                    find.getNumberToReturn(), asDocument(serverDescription, readPreference),
                                     find.getFields(), queryEncoder, resultDecoder);
     }
 
-    private Document asDocument(final ServerDescription serverDescription) {
+    private Document asDocument(final ServerDescription serverDescription, final ReadPreference readPreference) {
         Document document = new Document();
         document.put("$query", find.getFilter());
         if (find.getOrder() != null && !find.getOrder().isEmpty()) {
@@ -147,9 +149,8 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
         if (find.isExplain()) {
             document.put("$explain", true);
         }
-        if (serverDescription.getType() == SHARD_ROUTER
-            && find.getReadPreference() != null && !find.getReadPreference().equals(ReadPreference.primary())) {
-            document.put("$readPreference", find.getReadPreference().toDocument());
+        if (serverDescription.getType() == SHARD_ROUTER && !readPreference.equals(primary())) {
+            document.put("$readPreference", readPreference.toDocument());
         }
 
         if (find.getHint() != null) {
@@ -195,6 +196,6 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     }
 
     private boolean isExhaustCursor() {
-        return find.getFlags().contains(QueryFlag.Exhaust);
+        return find.getFlags(primary()).contains(QueryFlag.Exhaust);
     }
 }

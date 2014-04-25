@@ -57,6 +57,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class DBCursor implements Cursor, Iterable<DBObject> {
     private final DBCollection collection;
     private final Find find;
+    private ReadPreference readPreference;
     private Decoder<DBObject> resultDecoder;
     private DBDecoderFactory decoderFactory;
     private CursorType cursorType;
@@ -82,18 +83,18 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
              new Find()
              .where(toDocument(query))
              .select(DBObjects.toFieldSelectorDocument(fields))
-             .readPreference(readPreference.toNew())
              .hintIndex(toNullableDocument(lookupSuitableHints(query, collection.getHintFields())))
-             .addFlags(QueryFlag.toSet(collection.getOptions()))
-            );
+             .addFlags(QueryFlag.toSet(collection.getOptions())),
+             readPreference);
     }
 
-    private DBCursor(final DBCollection collection, final Find find) {
+    private DBCursor(final DBCollection collection, final Find find, final ReadPreference readPreference) {
         if (collection == null) {
             throw new IllegalArgumentException("Collection can't be null");
         }
         this.collection = collection;
         this.find = new Find(find);
+        this.readPreference = readPreference;
         this.resultDecoder = collection.getObjectCodec();
         this.decoderFactory = collection.getDBDecoderFactory();
         optionalFinalizer = collection.getDB().getMongo().getMongoClientOptions().isCursorFinalizerEnabled()
@@ -106,7 +107,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the new cursor
      */
     public DBCursor copy() {
-        return new DBCursor(collection, find);
+        return new DBCursor(collection, find, readPreference);
     }
 
     public boolean hasNext() {
@@ -184,7 +185,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the bitmask of options
      */
     public int getOptions() {
-        return QueryFlag.fromSet(find.getFlags());
+        return QueryFlag.fromSet(find.getFlags(readPreference.toNew()));
     }
 
     /**
@@ -616,7 +617,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @param readPreference read preference to use
      */
     public DBCursor setReadPreference(final ReadPreference readPreference) {
-        find.readPreference(readPreference.toNew());
+        this.readPreference = readPreference;
         return this;
     }
 
@@ -626,7 +627,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the readPreference used by this cursor
      */
     public ReadPreference getReadPreference() {
-        return ReadPreference.fromNew(find.getReadPreference());
+        return readPreference;
     }
 
     public DBCursor setDecoderFactory(final DBDecoderFactory factory) {

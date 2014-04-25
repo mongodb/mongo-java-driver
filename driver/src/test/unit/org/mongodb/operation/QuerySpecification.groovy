@@ -15,11 +15,11 @@
  */
 
 package org.mongodb.operation
-
 import org.mongodb.Document
-import org.mongodb.ReadPreference
 import spock.lang.Specification
 
+import static org.mongodb.ReadPreference.primary
+import static org.mongodb.ReadPreference.secondary
 import static org.mongodb.operation.QueryFlag.AwaitData
 import static org.mongodb.operation.QueryFlag.Exhaust
 import static org.mongodb.operation.QueryFlag.SlaveOk
@@ -42,9 +42,9 @@ class QuerySpecification extends Specification {
         new Find().limit(10).batchSize(-7)  | -7
     }
 
-    def 'testFlags'() {
+    def 'test flags with primary'() {
         expect:
-        query.getFlags() == flags
+        query.getFlags(primary()) == flags
 
         where:
         query                                                                             | flags
@@ -54,9 +54,17 @@ class QuerySpecification extends Specification {
         new Find().addFlags(EnumSet.of(Tailable, SlaveOk))                                | EnumSet.of(Tailable, AwaitData, SlaveOk)
         new Find().flags(EnumSet.of(Exhaust))                                             | EnumSet.of(Exhaust)
         new Find().addFlags(EnumSet.of(Tailable, SlaveOk)).flags(EnumSet.of(Exhaust))     | EnumSet.of(Exhaust)
-        new Find().readPreference(ReadPreference.secondary())                             | EnumSet.of(SlaveOk)
-        new Find().readPreference(ReadPreference.primary())                               | EnumSet.noneOf(QueryFlag)
-        new Find().flags(EnumSet.of(Tailable)).readPreference(ReadPreference.secondary()) | EnumSet.of(SlaveOk, Tailable)
+    }
+
+    def 'test flags with secondary'() {
+        expect:
+        query.getFlags(secondary()) == flags
+
+        where:
+        query                                                                             | flags
+        new Find()                                                                        | EnumSet.of(SlaveOk)
+        new Find().addFlags(EnumSet.of(SlaveOk))                                          | EnumSet.of(SlaveOk)
+        new Find().flags(EnumSet.of(Exhaust))                                             | EnumSet.of(Exhaust, SlaveOk)
     }
 
     def 'should throw an exception if options given are null'() {
@@ -74,7 +82,6 @@ class QuerySpecification extends Specification {
     def 'testCopyConstructor'() {
         given:
         EnumSet<QueryFlag> flags = EnumSet.allOf(QueryFlag)
-        ReadPreference readPreference = ReadPreference.primary()
         Document hint = new Document('a', 1)
         int batchSize = 2
         int limit = 5
@@ -83,7 +90,6 @@ class QuerySpecification extends Specification {
         originalQuery
                 .addFlags(flags)
                 .hintIndex(hint)
-                .readPreference(readPreference)
                 .batchSize(batchSize)
                 .limit(limit)
                 .skip(skip);
@@ -92,8 +98,7 @@ class QuerySpecification extends Specification {
         Query copy = new Find(originalQuery);
 
         then:
-        copy.getFlags() == flags
-        copy.getReadPreference() == readPreference
+        copy.getFlags(primary()) == flags
         copy.getBatchSize() == batchSize
         copy.getLimit() == limit
         copy.getSkip() == skip

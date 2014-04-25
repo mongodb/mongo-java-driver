@@ -19,7 +19,6 @@ package org.mongodb;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.CommandWriteOperation;
 import org.mongodb.operation.CreateCollectionOperation;
-import org.mongodb.operation.Find;
 import org.mongodb.operation.GetCollectionNamesOperation;
 import org.mongodb.operation.RenameCollectionOperation;
 
@@ -33,7 +32,6 @@ import static org.mongodb.ReadPreference.primary;
  */
 class DatabaseAdministrationImpl implements DatabaseAdministration {
     private static final Document DROP_DATABASE = new Document("dropDatabase", 1);
-    private static final Find FIND_ALL = new Find().readPreference(primary());
 
     private final String databaseName;
     private final Codec<Document> commandCodec = new DocumentCodec();

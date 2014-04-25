@@ -233,10 +233,8 @@ public class DB {
      * @throws MongoException
      */
     public Set<String> getCollectionNames() {
-        MongoNamespace namespacesCollection = new MongoNamespace(name, "system.namespaces");
-        Find findAll = new Find().readPreference(org.mongodb.ReadPreference.primary());
-        // TODO: Should use an operation
-        MongoCursor<Document> cursor = execute(new QueryOperation<Document>(namespacesCollection, findAll, commandCodec, commandCodec),
+        MongoCursor<Document> cursor = execute(new QueryOperation<Document>(new MongoNamespace(name, "system.namespaces"), new Find(),
+                                                                            commandCodec, commandCodec),
                                                primary());
 
         try {

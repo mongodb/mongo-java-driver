@@ -24,10 +24,7 @@ import org.mongodb.ReadPreference;
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
-import static org.mongodb.assertions.Assertions.notNull;
-
 public abstract class Query {
-    private ReadPreference readPreference;
     private int skip;
     private int limit;
     private QueryOptions options = new QueryOptions();
@@ -37,17 +34,10 @@ public abstract class Query {
     }
 
     public Query(final Query from) {
-        readPreference = from.readPreference;
         skip = from.skip;
         limit = from.limit;
         options = new QueryOptions(from.options);
         flags = EnumSet.copyOf(from.flags);
-    }
-
-    //CHECKSTYLE:OFF
-    public Query readPreference(final ReadPreference readPreference) {
-        this.readPreference = notNull("readPreference", readPreference);
-        return this;
     }
 
     public Query skip(final int skip) {
@@ -100,7 +90,7 @@ public abstract class Query {
     //CHECKSTYLE:ON
 
 
-    public EnumSet<QueryFlag> getFlags() {
+    public EnumSet<QueryFlag> getFlags(final ReadPreference readPreference) {
         if (readPreference.isSlaveOk()) {
             EnumSet<QueryFlag> retVal = EnumSet.copyOf(flags);
             retVal.add(QueryFlag.SlaveOk);
@@ -108,10 +98,6 @@ public abstract class Query {
         } else {
             return flags;
         }
-    }
-
-    public ReadPreference getReadPreference() {
-        return readPreference;
     }
 
     public int getBatchSize() {
@@ -163,11 +149,11 @@ public abstract class Query {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof Query)) {
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
 
-        final Query query = (Query) o;
+        Query query = (Query) o;
 
         if (limit != query.limit) {
             return false;
@@ -175,10 +161,10 @@ public abstract class Query {
         if (skip != query.skip) {
             return false;
         }
-        if (options != null ? !options.equals(query.options) : query.options != null) {
+        if (!flags.equals(query.flags)) {
             return false;
         }
-        if (readPreference != null ? !readPreference.equals(query.readPreference) : query.readPreference != null) {
+        if (!options.equals(query.options)) {
             return false;
         }
 
@@ -187,10 +173,10 @@ public abstract class Query {
 
     @Override
     public int hashCode() {
-        int result = readPreference != null ? readPreference.hashCode() : 0;
-        result = 31 * result + skip;
+        int result = skip;
         result = 31 * result + limit;
-        result = 31 * result + (options != null ? options.hashCode() : 0);
+        result = 31 * result + options.hashCode();
+        result = 31 * result + flags.hashCode();
         return result;
     }
 }

@@ -24,6 +24,7 @@ import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 import org.mongodb.MongoExecutionTimeoutException
 import org.mongodb.ReadPreference
+import org.mongodb.binding.ClusterBinding
 import org.mongodb.codecs.DocumentCodec
 
 import static java.util.Arrays.asList
@@ -34,6 +35,7 @@ import static org.mongodb.Fixture.disableMaxTimeFailPoint
 import static org.mongodb.Fixture.enableMaxTimeFailPoint
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
+import static org.mongodb.Fixture.getCluster
 import static org.mongodb.Fixture.isSharded
 import static org.mongodb.Fixture.serverVersionAtLeast
 
@@ -180,10 +182,12 @@ class QueryOperationSpecification extends FunctionalSpecification {
 
     def 'should read from a secondary'() {
         assumeTrue(Fixture.isDiscoverableReplicaSet())
-        def find = new Find().readPreference(ReadPreference.secondary())
+        collection.insert(new Document())
+        def find = new Find()
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
+        def binding = new ClusterBinding(getCluster(), ReadPreference.secondary(), 1, SECONDS)
 
         expect:
-        queryOperation.execute(getBinding()) != null // if it didn't throw, the query was executed
+        queryOperation.execute(binding) != null // if it didn't throw, the query was executed
     }
 }

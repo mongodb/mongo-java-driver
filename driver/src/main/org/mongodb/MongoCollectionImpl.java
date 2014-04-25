@@ -153,14 +153,15 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     private final class MongoCollectionView implements MongoView<T> {
         private final Find findOp;
+        private ReadPreference readPreference;
         private WriteConcern writeConcern;
         private boolean limitSet;
         private boolean upsert;
 
         private MongoCollectionView() {
             findOp = new Find();
-            findOp.readPreference(getOptions().getReadPreference());
             writeConcern = getOptions().getWriteConcern();
+            readPreference = getOptions().getReadPreference();
         }
 
         @Override
@@ -228,26 +229,26 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoView<T> withReadPreference(final ReadPreference readPreference) {
-            findOp.readPreference(readPreference);
+            this.readPreference = readPreference;
             return this;
         }
 
         @Override
         public MongoCursor<T> get() {
-            return execute(new QueryOperation<T>(getNamespace(), findOp, getDocumentCodec(), getCodec()), findOp.getReadPreference());
+            return execute(new QueryOperation<T>(getNamespace(), findOp, getDocumentCodec(), getCodec()), readPreference);
         }
 
         @Override
         public T getOne() {
             MongoCursor<T> cursor = execute(new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec()),
-                                            findOp.getReadPreference());
+                                            readPreference);
 
             return cursor.hasNext() ? cursor.next() : null;
         }
 
         @Override
         public long count() {
-            return execute(new CountOperation(getNamespace(), findOp, getDocumentCodec()), findOp.getReadPreference());
+            return execute(new CountOperation(getNamespace(), findOp, getDocumentCodec()), readPreference);
         }
 
         @Override

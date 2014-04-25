@@ -17,7 +17,6 @@
 package org.mongodb.operation;
 
 import org.mongodb.Document;
-import org.mongodb.ReadPreference;
 
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
@@ -36,7 +35,6 @@ public class Find extends Query {
 
     public Find(final Document filter) {
         this.filter = filter;
-        readPreference(ReadPreference.primary());
     }
 
     public Find(final Find from) {
@@ -129,11 +127,6 @@ public class Find extends Query {
 
     public Document getFields() {
         return fields;
-    }
-
-    public Find readPreference(final ReadPreference readPreference) {
-        super.readPreference(readPreference);
-        return this;
     }
 
     @Override
