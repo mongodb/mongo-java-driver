@@ -56,6 +56,7 @@ class CountOperationSpecification extends FunctionalSpecification {
         new CountOperation(getNamespace(), new Find(), new DocumentCodec()).execute(getBinding()) == insertDocumentList.size()
     }
 
+    @Category(Async)
     def 'should get the count asynchronously'() {
         expect:
         new CountOperation(getNamespace(), new Find(), new DocumentCodec()).executeAsync(getAsyncBinding()).get() ==
