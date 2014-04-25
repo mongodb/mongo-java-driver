@@ -4,7 +4,7 @@ import org.mongodb.MongoFuture;
 import org.mongodb.ReadPreference;
 
 /**
- * A factory of connection sources to servers that can be read from and that satisfy the specified read preference.
+ * An asynchronous factory of connection sources to servers that can be read from and that satisfy the specified read preference.
  *
  * @since 3.0
  */

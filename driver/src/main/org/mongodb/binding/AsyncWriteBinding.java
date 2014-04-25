@@ -3,7 +3,7 @@ package org.mongodb.binding;
 import org.mongodb.MongoFuture;
 
 /**
- * A factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
+ * An asynchronous factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
  *
  * @since 3.0
  */
