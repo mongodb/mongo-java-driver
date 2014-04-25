@@ -892,7 +892,7 @@ class DBCollectionImpl extends DBCollection {
 
             // Accommodating GLE representation of write concern errors
             private boolean isWriteConcernError(final CommandResult commandResult) {
-                return commandResult.get("wtimeout") != null || commandResult.get("wnote") != null || commandResult.get("jnote") != null;
+                return commandResult.get("wtimeout") != null;
             }
 
             private WriteConcernError getWriteConcernError(final CommandResult commandResult) {
@@ -900,16 +900,8 @@ class DBCollectionImpl extends DBCollection {
                                              getErrorResponseDetails(commandResult));
             }
 
-            // GLE uses jnote and wnote as alternative ways or reporting write concern errors
             private String getWriteConcernErrorMessage(final CommandResult commandResult) {
-                String errorMessage = commandResult.getString("jnote");
-                if (errorMessage == null) {
-                    errorMessage = commandResult.getString("wnote");
-                }
-                if (errorMessage == null) {
-                    errorMessage = commandResult.getString("err");
-                }
-                return errorMessage;
+                return commandResult.getString("err");
             }
 
             private DBObject getErrorResponseDetails(final DBObject response) {
