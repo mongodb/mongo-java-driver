@@ -334,7 +334,7 @@ class DBCollectionImpl extends DBCollection {
 
     public void createIndex(final DBObject keys, final DBObject options, DBEncoder encoder) {
         DBTCPConnector connector = db.getConnector();
-        DBPort port = db.getConnector().getPrimaryPort();
+        final DBPort port = db.getConnector().getPrimaryPort();
 
         try {
             DBObject index = defaultOptions(keys);
@@ -342,13 +342,18 @@ class DBCollectionImpl extends DBCollection {
             index.put("key", keys);
 
             if (connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(2, 6)) >= 0) {
-                BasicDBObject createIndexes = new BasicDBObject("createIndexes", getName());
+                final BasicDBObject createIndexes = new BasicDBObject("createIndexes", getName());
 
                 BasicDBList list = new BasicDBList();
                 list.add(index);
                 createIndexes.put("indexes", list);
 
-                CommandResult commandResult = port.runCommand(db, createIndexes);
+                CommandResult commandResult = connector.doOperation(db, port, new DBPort.Operation<CommandResult>() {
+                    @Override
+                    public CommandResult execute() throws IOException {
+                       return port.runCommand(db, createIndexes);
+                    }
+                });
                 try {
                     commandResult.throwOnError();
                 } catch (CommandFailureException e) {
@@ -362,8 +367,6 @@ class DBCollectionImpl extends DBCollection {
                 db.doGetCollection("system.indexes").insertWithWriteProtocol(asList(index), WriteConcern.SAFE,
                                                                              DefaultDBEncoder.FACTORY.create(), port, false);
             }
-        } catch (IOException e) {
-            throw new MongoException.Network("Operation on server " + port.getAddress() + " failed", e);
         } finally {
             connector.releasePort(port);
         }
