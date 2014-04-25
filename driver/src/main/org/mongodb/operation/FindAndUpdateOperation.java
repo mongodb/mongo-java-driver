@@ -16,10 +16,8 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.CommandResult;
 import org.mongodb.Decoder;
 import org.mongodb.Document;
-import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncWriteBinding;
@@ -57,23 +55,15 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
     @Override
     public T execute(final WriteBinding binding) {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        return executeWrappedCommandProtocol(namespace, getCommand(), commandEncoder, resultDecoder, binding, transformer());
+        return executeWrappedCommandProtocol(namespace, getCommand(), commandEncoder, resultDecoder, binding,
+                                             FindAndModifyHelper.<T>transformer());
     }
 
     @Override
     public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), commandEncoder, resultDecoder, binding, transformer());
-    }
-
-    private Function<CommandResult, T> transformer() {
-        return new Function<CommandResult, T>() {
-            @SuppressWarnings("unchecked")
-            @Override
-            public T apply(final CommandResult result) {
-                return (T) result.getResponse().get("value");
-            }
-        };
+        return executeWrappedCommandProtocolAsync(namespace, getCommand(), commandEncoder, resultDecoder, binding,
+                                                  FindAndModifyHelper.<T>transformer());
     }
 
     private void validateUpdateDocumentToEnsureItHasUpdateOperators(final Document value) {
