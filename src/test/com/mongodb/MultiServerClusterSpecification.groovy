@@ -120,7 +120,21 @@ class MultiServerClusterSpecification extends Specification {
                 CLUSTER_LISTENER)
 
         when:
-        sendNotification(secondServer, ReplicaSetOther, [], null)  // null replica set name
+        sendNotification(secondServer, ReplicaSetOther, [])
+
+        then:
+        getClusterDescription(cluster).type == ReplicaSet
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer)
+    }
+
+    def 'should ignore a host without a replica set name when type is replica set'() {
+        given:
+        def cluster = new MultiServerCluster(
+                CLUSTER_ID, ClusterSettings.builder().requiredClusterType(ReplicaSet).hosts([firstServer, secondServer]).build(), factory,
+                CLUSTER_LISTENER)
+
+        when:
+        sendNotification(secondServer, ReplicaSetOther, [firstServer, secondServer], null)  // null replica set name
 
         then:
         getClusterDescription(cluster).type == ReplicaSet
@@ -322,7 +336,7 @@ class MultiServerClusterSpecification extends Specification {
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts) {
-        sendNotification(serverAddress, serverType, hosts, null)
+        sendNotification(serverAddress, serverType, hosts, 'test')
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, String setName, int setVersion) {

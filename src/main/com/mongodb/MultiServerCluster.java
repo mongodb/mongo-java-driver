@@ -152,7 +152,7 @@ final class MultiServerCluster extends BaseCluster {
             return;
         }
 
-        if (newDescription.getHosts().isEmpty()) {
+        if (newDescription.getHosts().isEmpty() || newDescription.getSetName() == null) {
             LOGGER.info(format("Server %s does not appear to be a member of an initiated replica set.", newDescription.getAddress()));
             return;
         }
@@ -161,7 +161,7 @@ final class MultiServerCluster extends BaseCluster {
             replicaSetName = newDescription.getSetName();
         }
 
-        if (replicaSetName != null && !replicaSetName.equals(newDescription.getSetName())) {
+        if (!replicaSetName.equals(newDescription.getSetName())) {
             LOGGER.severe(format("Expecting replica set member from set '%s', but found one from set '%s'.  "
                                  + "Removing %s from client view of cluster.",
                                  replicaSetName, newDescription.getSetName(), newDescription.getAddress()));
