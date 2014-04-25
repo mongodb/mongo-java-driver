@@ -46,6 +46,11 @@ import static org.bson.util.Assertions.isTrue;
 
 @SuppressWarnings("deprecation")
 class DBCollectionImpl extends DBCollection {
+
+    // Add an extra 16K to the maximum allowed size of a query document, so that, for example,
+    // a 16M document can be upserted via findAndModify
+    private static final int QUERY_DOCUMENT_HEADROOM = 16 * 1024;
+
     private final DBApiLayer db;
     private final String namespace;
 
@@ -73,7 +78,8 @@ class DBCollectionImpl extends DBCollection {
             trace("find: " + namespace + " " + JSON.serialize(ref));
         }
 
-        OutMessage query = OutMessage.query(this, options, numToSkip, chooseBatchSize(batchSize, limit, 0), ref, fields, readPref, encoder);
+        OutMessage query = OutMessage.query(this, options, numToSkip, chooseBatchSize(batchSize, limit, 0), ref, fields, readPref,
+                                            encoder, db.getMongo().getMaxBsonObjectSize() + QUERY_DOCUMENT_HEADROOM);
 
         Response res = db.getConnector().call(_db, this, query, null, 2, readPref, decoder);
 

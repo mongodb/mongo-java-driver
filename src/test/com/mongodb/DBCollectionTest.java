@@ -507,6 +507,15 @@ public class DBCollectionTest extends TestCase {
     }
 
     @Test
+    public void testFindAndReplaceA16MDocument() {
+        BasicDBObject documentWithJustId = new BasicDBObject("_id", 42);
+        DBObject foundDocument = collection.findAndModify(documentWithJustId, new BasicDBObject("_id", 1), null, false,
+                                                          new BasicDBObject("_id", 42).append("b", new byte[16 * 1024 * 1024 - 30]), true,
+                                                          true);
+        assertEquals(documentWithJustId, foundDocument);
+    }
+
+    @Test
     public void testWriteConcernExceptionOnInsert() throws UnknownHostException {
         assumeTrue(isReplicaSet(getMongoClient()));
         MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
