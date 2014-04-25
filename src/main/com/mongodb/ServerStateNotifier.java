@@ -75,7 +75,10 @@ class ServerStateNotifier implements Runnable {
                 // down
                 count = 0;
                 elapsedNanosSum = 0;
-                connection.close(); // generating a warning in IDEA about possible NPE, but I don't think it can happen
+                if (connection != null) {
+                    connection.close();
+                    connection = null;
+                }
                 connection = new DBPort(serverAddress, null, getOptions(), 0);
                 try {
                     serverDescription = lookupServerDescription();
