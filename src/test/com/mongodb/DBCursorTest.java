@@ -674,20 +674,6 @@ public class DBCursorTest extends TestCase {
         }
     }
 
-    @Test
-    public void testToArrayCursorClosed() {
-        final DBCollection c = collection;
-
-        // Insert some data.
-        for (int i = 0; i < 4; i++) {
-            c.insert(new BasicDBObject("one", "two"));
-        }
-
-        final DBCursor cursor = c.find().batchSize(3); // ensure under normal conditions the cursor would remain
-        cursor.toArray(3);
-        assertEquals(0L, cursor.getCursorId());
-    }
-
     @Test(expected = MongoException.class)
     public void testSnapshotWithHint() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
