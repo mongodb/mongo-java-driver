@@ -59,8 +59,8 @@ public class CountOperation implements ReadOperation<Long>, AsyncReadOperation<L
     private Function<CommandResult, Long> transformer() {
         return new Function<CommandResult, Long>() {
             @Override
-            public Long apply(final CommandResult commandResult) {
-                return ((Number) commandResult.getResponse().get("n")).longValue();
+            public Long apply(final CommandResult result) {
+                return ((Number) result.getResponse().get("n")).longValue();
             }
         };
     }

@@ -88,8 +88,8 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
     private Function<CommandResult, Boolean> transformCommandResult() {
         return new Function<CommandResult, Boolean>() {
             @Override
-            public Boolean apply(final CommandResult commandResult) {
-                return !commandResult.getResponse().get("users", List.class).isEmpty();
+            public Boolean apply(final CommandResult result) {
+                return !result.getResponse().get("users", List.class).isEmpty();
             }
         };
     }
