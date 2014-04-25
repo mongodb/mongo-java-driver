@@ -17,13 +17,17 @@
 package org.mongodb.protocol;
 
 import org.mongodb.Encoder;
+import org.mongodb.MongoException;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.connection.Connection;
+import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.InsertRequest;
+import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.protocol.message.InsertMessage;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.RequestMessage;
@@ -53,6 +57,23 @@ public class InsertProtocol<T> extends WriteProtocol {
         WriteResult writeResult = super.execute(connection);
         LOGGER.debug("Insert completed");
         return writeResult;
+    }
+
+    @Override
+    public MongoFuture<WriteResult> executeAsync(final Connection connection) {
+        LOGGER.debug(format("Asynchronously inserting %d documents into namespace %s on connection [%s] to server %s",
+                            insertRequestList.size(), getNamespace(), connection.getId(), connection.getServerAddress()));
+        final SingleResultFuture<WriteResult> future = new SingleResultFuture<WriteResult>();
+        super.executeAsync(connection).register(new SingleResultCallback<WriteResult>() {
+            @Override
+            public void onResult(final WriteResult result, final MongoException e) {
+                if (e != null) {
+                    LOGGER.debug("Asynchronous insert completed");
+                }
+                future.init(result, e);
+            }
+        });
+        return future;
     }
 
     protected RequestMessage createRequestMessage(final MessageSettings settings) {

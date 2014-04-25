@@ -18,13 +18,17 @@ package org.mongodb.protocol;
 
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.MongoException;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.connection.Connection;
+import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.ReplaceRequest;
+import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.ReplaceMessage;
 import org.mongodb.protocol.message.RequestMessage;
@@ -55,6 +59,23 @@ public class ReplaceProtocol<T> extends WriteProtocol {
         WriteResult writeResult = super.execute(connection);
         LOGGER.debug("Replace completed");
         return writeResult;
+    }
+
+    @Override
+    public MongoFuture<WriteResult> executeAsync(final Connection connection) {
+        LOGGER.debug(format("Asynchronously replacing documents in namespace %s on connection [%s] to server %s", getNamespace(),
+                            connection.getId(), connection.getServerAddress()));
+        final SingleResultFuture<WriteResult> future = new SingleResultFuture<WriteResult>();
+        super.executeAsync(connection).register(new SingleResultCallback<WriteResult>() {
+            @Override
+            public void onResult(final WriteResult result, final MongoException e) {
+                if (e != null) {
+                    LOGGER.debug("Asynchronous replace completed");
+                }
+                future.init(result, e);
+            }
+        });
+        return future;
     }
 
     @Override
