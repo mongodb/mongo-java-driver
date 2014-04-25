@@ -19,13 +19,17 @@ package org.mongodb.operation;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.Function;
+import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
 
 import java.util.List;
 
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
 /**
  * Finds the distinct values for a specified field across a single collection. This returns an array of the distinct values.
@@ -36,7 +40,7 @@ import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  * @mongodb.driver.manual reference/command/distinct Distinct Command
  * @since 3.0
  */
-public class DistinctOperation implements ReadOperation<MongoCursor<String>> {
+public class DistinctOperation implements AsyncReadOperation<MongoAsyncCursor<String>>, ReadOperation<MongoCursor<String>> {
     private final MongoNamespace namespace;
     private final String fieldName;
     private final Find find;
@@ -56,22 +60,36 @@ public class DistinctOperation implements ReadOperation<MongoCursor<String>> {
 
     @Override
     public MongoCursor<String> execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, asCommandDocument(), binding, transformer());
+        return executeWrappedCommandProtocol(namespace, getCommand(), binding, transformer());
 
+    }
+
+    @Override
+    public MongoFuture<MongoAsyncCursor<String>> executeAsync(final AsyncReadBinding binding) {
+        return executeWrappedCommandProtocolAsync(namespace, getCommand(), binding, asyncTransformer());
     }
 
     @SuppressWarnings("unchecked")
     private Function<CommandResult, MongoCursor<String>> transformer() {
         return new Function<CommandResult, MongoCursor<String>>() {
             @Override
-            public MongoCursor<String> apply(final CommandResult commandResult) {
-                return new InlineMongoCursor<String>(commandResult.getAddress(), (List<String>) commandResult.getResponse().get("values"));
+            public MongoCursor<String> apply(final CommandResult result) {
+                return new InlineMongoCursor<String>(result.getAddress(), (List<String>) result.getResponse().get("values"));
             }
         };
     }
 
+    private Function<CommandResult, MongoAsyncCursor<String>> asyncTransformer() {
+        return new Function<CommandResult, MongoAsyncCursor<String>>() {
+            @SuppressWarnings("unchecked")
+            @Override
+            public MongoAsyncCursor<String> apply(final CommandResult result) {
+                return new InlineMongoAsyncCursor<String>((List<String>) result.getResponse().get("values"));
+            }
+        };
+    }
 
-    private Document asCommandDocument() {
+    private Document getCommand() {
         Document cmd = new Document("distinct", namespace.getCollectionName());
         cmd.put("key", fieldName);
         if (find.getFilter() != null) {
