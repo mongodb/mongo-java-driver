@@ -19,26 +19,29 @@ package org.mongodb.operation;
 import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
 
 import java.util.List;
 
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
 /**
  * An operation that executes an explain on an aggregation pipeline.
  *
  * @since 3.0
  */
-public class AggregateExplainOperation implements ReadOperation<CommandResult> {
+public class AggregateExplainOperation implements AsyncReadOperation<CommandResult>, ReadOperation<CommandResult> {
     private final MongoNamespace namespace;
     private final List<Document> pipeline;
     private final AggregationOptions options;
 
     /**
      * Constructs a new instance.
-     *  @param namespace the namespace
+     * @param namespace the namespace
      * @param pipeline the aggregation pipeline
      * @param options the aggregation options
      */
@@ -50,12 +53,18 @@ public class AggregateExplainOperation implements ReadOperation<CommandResult> {
 
     @Override
     public CommandResult execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, asCommandDocument(), binding);
+        return executeWrappedCommandProtocol(namespace, getCommand(), binding);
     }
 
-    private Document asCommandDocument() {
+    @Override
+    public MongoFuture<CommandResult> executeAsync(final AsyncReadBinding binding) {
+        return executeWrappedCommandProtocolAsync(namespace, getCommand(), binding);
+    }
+
+    private Document getCommand() {
         Document command = AggregateHelper.asCommandDocument(namespace, pipeline, options);
         command.put("explain", true);
         return command;
     }
+
 }

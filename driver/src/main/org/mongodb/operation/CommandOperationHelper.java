@@ -177,6 +177,14 @@ final class CommandOperationHelper {
                                              new IdentityTransformer<CommandResult>());
     }
 
+    static <T> T executeWrappedCommandProtocol(final MongoNamespace namespace, final Document command,
+                                               final Encoder<Document> encoder, final Decoder<Document> decoder,
+                                               final Connection connection, final ReadPreference readPreference,
+                                               final Function<CommandResult, T> transformer) {
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), command, encoder, decoder, connection, readPreference,
+                                             transformer);
+    }
+
     static <T> T executeWrappedCommandProtocol(final String database, final Document command,
                                                final Encoder<Document> encoder, final Decoder<Document> decoder,
                                                final Connection connection, final ReadPreference readPreference,
@@ -201,6 +209,11 @@ final class CommandOperationHelper {
                                                                  final Function<CommandResult, T> transformer) {
         return executeWrappedCommandProtocolAsync(database, command, new DocumentCodec(), new DocumentCodec(),
                                                   binding, transformer);
+    }
+
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
+                                                                         final AsyncReadBinding binding) {
+        return executeWrappedCommandProtocolAsync(namespace, command, binding, new IdentityTransformer<CommandResult>());
     }
 
     static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final Document command,
