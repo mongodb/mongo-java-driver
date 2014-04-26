@@ -20,10 +20,10 @@ import category.ReplicaSet;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mongodb.Document;
 import org.mongodb.operation.UserExistsOperation;
 
 import java.net.UnknownHostException;
-import java.util.Arrays;
 
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
@@ -286,19 +286,12 @@ public class DBTest extends DatabaseTestCase {
     @Test
     @Category(ReplicaSet.class)
     public void shouldNotThrowAnErrorWhenEnsureConnectionCalledAfterRequestStart() throws UnknownHostException {
-
-        Mongo m = new MongoClient(Arrays.asList(new ServerAddress("localhost")));
-
+        database.requestStart();
         try {
-            DB db = m.getDB("com_mongodb_unittest_DBTest");
-            db.requestStart();
-            try {
-                db.requestEnsureConnection();
-            } finally {
-                db.requestDone();
-            }
+            database.requestEnsureConnection();
+            database.executeCommand(new Document("ping", 1));
         } finally {
-            m.close();
+            database.requestDone();
         }
     }
 
