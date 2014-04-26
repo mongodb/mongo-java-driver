@@ -28,8 +28,6 @@ import java.util.Arrays;
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static com.mongodb.Fixture.getMongoClient;
-import static com.mongodb.Fixture.getOptions;
-import static com.mongodb.Fixture.getPrimary;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.secondary;
 import static java.util.Arrays.asList;
@@ -109,7 +107,7 @@ public class DBTest extends DatabaseTestCase {
     public void shouldCreateCappedCollection() {
         collection.drop();
         database.createCollection(collectionName, new BasicDBObject("capped", true)
-                                                      .append("size", 242880));
+                                                  .append("size", 242880));
         assertTrue(database.getCollection(collectionName).isCapped());
     }
 
@@ -117,8 +115,8 @@ public class DBTest extends DatabaseTestCase {
     public void shouldCreateCappedCollectionWithMaxNumberOfDocuments() {
         collection.drop();
         DBCollection cappedCollectionWithMax = database.createCollection(collectionName, new BasicDBObject("capped", true)
-                                                                                             .append("size", 242880)
-                                                                                             .append("max", 10));
+                                                                                         .append("size", 242880)
+                                                                                         .append("max", 10));
 
         assertThat(cappedCollectionWithMax.getStats(), hasSubdocument(new BasicDBObject("capped", true).append("max", 10)));
 
@@ -166,10 +164,10 @@ public class DBTest extends DatabaseTestCase {
                       + "}";
         database.doEval(code, "eliot", 5);
         assertEquals(database.getCollection("myCollection").findOne(), new BasicDBObject("_id", 1.0)
-                                                                           .append("avg", 5.0)
-                                                                           .append("num", 1.0)
-                                                                           .append("name", "eliot")
-                                                                           .append("total", 5.0));
+                                                                       .append("avg", 5.0)
+                                                                       .append("num", 1.0)
+                                                                       .append("name", "eliot")
+                                                                       .append("total", 5.0));
     }
 
     @Test(expected = MongoException.class)
@@ -265,32 +263,18 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldReleaseConnectionOnLastCallToRequestEndWhenRequestStartCallsAreNested()
-        throws UnknownHostException, InterruptedException {
-        Mongo m = new MongoClient(getPrimary(),
-                                  MongoClientOptions.builder()
-                                                    .connectionsPerHost(1)
-                                                    .maxWaitTime(10)
-                                                    .socketFactory(getOptions().getSocketFactory())
-                                                    .build()
-        );
-        DB db = m.getDB("com_mongodb_unittest_DBTest");
-
+    public void shouldReleaseConnectionOnLastCallToRequestEndWhenRequestStartCallsAreNested() {
+        database.requestStart();
         try {
-            db.requestStart();
+            database.command(new BasicDBObject("ping", 1));
+            database.requestStart();
             try {
-                db.command(new BasicDBObject("ping", 1));
-                db.requestStart();
-                try {
-                    db.command(new BasicDBObject("ping", 1));
-                } finally {
-                    db.requestDone();
-                }
+                database.command(new BasicDBObject("ping", 1));
             } finally {
-                db.requestDone();
+                database.requestDone();
             }
         } finally {
-            m.close();
+            database.requestDone();
         }
     }
 
