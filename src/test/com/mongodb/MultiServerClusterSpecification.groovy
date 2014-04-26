@@ -125,6 +125,7 @@ class MultiServerClusterSpecification extends Specification {
         then:
         getClusterDescription(cluster).type == ReplicaSet
         getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer)
+        getClusterDescription(cluster).getByServerAddress(secondServer).getType() == ReplicaSetOther
     }
 
     def 'should ignore a host without a replica set name when type is replica set'() {
@@ -139,6 +140,7 @@ class MultiServerClusterSpecification extends Specification {
         then:
         getClusterDescription(cluster).type == ReplicaSet
         getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer)
+        getClusterDescription(cluster).getByServerAddress(secondServer).getType() == ReplicaSetOther
     }
 
     def 'should remove a server of the wrong type when type is sharded'() {
