@@ -13,6 +13,7 @@ import org.mongodb.selector.ServerSelector;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.mongodb.assertions.Assertions.notNull;
 
 /**
  * A simple ReadWriteBinding implementation that supplies write connection sources bound to a possibly different primary each time and a
@@ -27,8 +28,8 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
 
     public AsyncClusterBinding(final Cluster cluster, final ReadPreference readPreference,
                                final long maxWaitTime, final TimeUnit timeUnit) {
-        this.cluster = cluster;
-        this.readPreference = readPreference;
+        this.cluster = notNull("cluster", cluster);
+        this.readPreference = notNull("readPreference", readPreference);
         this.maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
     }
 
