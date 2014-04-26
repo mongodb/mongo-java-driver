@@ -45,8 +45,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assume.assumeFalse;
 import static org.mongodb.Fixture.getAsyncBinding;
-import static org.mongodb.Fixture.getBinding;
-import static org.mongodb.Fixture.getCluster;
+import static org.mongodb.Fixture.getAsyncCluster;
 import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.ReadPreference.primary;
 import static org.mongodb.operation.QueryFlag.Exhaust;
@@ -72,7 +71,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         }
 
         collection.insert(documentList);
-        binding = new AsyncClusterBinding(getCluster(), primary(), 1, SECONDS);
+        binding = new AsyncClusterBinding(getAsyncCluster(), primary(), 1, SECONDS);
         source = binding.getReadConnectionSource().get();
     }
 
@@ -140,7 +139,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testExhaustWithDiscard() throws InterruptedException, ExecutionException {
         assumeFalse(isSharded());
 
-        DelayedCloseConnection connection = new DelayedCloseConnection(getBinding().getReadConnectionSource().getConnection());
+        DelayedCloseConnection connection = new DelayedCloseConnection(getAsyncBinding().getReadConnectionSource().get()
+                                                                                        .getConnection().get());
 
         try {
             QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection);

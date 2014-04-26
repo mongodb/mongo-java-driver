@@ -20,21 +20,33 @@ import org.mongodb.binding.AsyncClusterBinding;
 import org.mongodb.binding.AsyncReadWriteBinding;
 import org.mongodb.binding.ClusterBinding;
 import org.mongodb.binding.ReadWriteBinding;
+import org.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import org.mongodb.connection.Cluster;
+import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterDescription;
+import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ClusterType;
+import org.mongodb.connection.DefaultClusterFactory;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerVersion;
+import org.mongodb.connection.SocketStreamFactory;
+import org.mongodb.connection.StreamFactory;
+import org.mongodb.connection.netty.NettyStreamFactory;
+import org.mongodb.management.JMXConnectionPoolListener;
 
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executor;
 
 import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.mongodb.AsyncDetector.StreamType.NETTY;
+import static org.mongodb.AsyncDetector.StreamType.NIO2;
+import static org.mongodb.AsyncDetector.getAsyncStreamType;
 import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
 import static org.mongodb.connection.ClusterType.SHARDED;
@@ -50,6 +62,7 @@ public final class Fixture {
     private static MongoClientURI mongoClientURI;
     private static MongoClientImpl mongoClient;
     private static MongoDatabase defaultDatabase;
+    private static Cluster asyncCluster;
 
     private Fixture() {
     }
@@ -141,7 +154,7 @@ public final class Fixture {
 
     public static AsyncReadWriteBinding getAsyncBinding() {
         getMongoClient();
-        return new AsyncClusterBinding(getCluster(), ReadPreference.primary(), 1, SECONDS);
+        return new AsyncClusterBinding(getAsyncCluster(), ReadPreference.primary(), 1, SECONDS);
     }
 
     public static Cluster getCluster() {
@@ -149,9 +162,61 @@ public final class Fixture {
         return mongoClient.getCluster();
     }
 
-    public static Executor getExecutor() {
-        getMongoClient();
-        return mongoClient.getExecutor();
+    public static Cluster getAsyncCluster() {
+        if (asyncCluster == null) {
+            try {
+                asyncCluster = createCluster(getMongoClientURI());
+            } catch (UnknownHostException e) {
+                throw new IllegalArgumentException("Invalid Mongo URI: " + getMongoClientURI().getURI(), e);
+            }
+        }
+        return asyncCluster;
+    }
+
+    public static Cluster createCluster(final MongoClientURI mongoURI) throws UnknownHostException {
+        if (mongoURI.getHosts().size() == 1) {
+            return createCluster(ClusterSettings.builder()
+                                                .mode(ClusterConnectionMode.SINGLE)
+                                                .hosts(Arrays.asList(new ServerAddress(mongoURI.getHosts()
+                                                                                               .get(0))))
+                                                .requiredReplicaSetName(mongoURI.getOptions().getRequiredReplicaSetName())
+                                                .build(),
+                                 mongoURI.getCredentialList(), mongoURI.getOptions(), getStreamFactory(mongoURI.getOptions())
+                                );
+        } else {
+            List<ServerAddress> seedList = new ArrayList<ServerAddress>();
+            for (final String cur : mongoURI.getHosts()) {
+                seedList.add(new ServerAddress(cur));
+            }
+            return createCluster(ClusterSettings.builder()
+                                                .hosts(seedList)
+                                                .requiredReplicaSetName(mongoURI.getOptions().getRequiredReplicaSetName())
+                                                .build(),
+                                 mongoURI.getCredentialList(), mongoURI.getOptions(), getStreamFactory(mongoURI.getOptions()));
+        }
+    }
+
+    private static Cluster createCluster(final ClusterSettings clusterSettings, final List<MongoCredential> credentialList,
+                                         final MongoClientOptions options, final StreamFactory streamFactory) {
+        StreamFactory heartbeatStreamFactory = getHeartbeatStreamFactory(options);
+        return new DefaultClusterFactory().create(clusterSettings, options.getServerSettings(),
+                                                  options.getConnectionPoolSettings(), streamFactory,
+                                                  heartbeatStreamFactory,
+                                                  credentialList, null, new JMXConnectionPoolListener(), null);
+    }
+
+    private static StreamFactory getHeartbeatStreamFactory(final MongoClientOptions options) {
+        return new SocketStreamFactory(options.getHeartbeatSocketSettings(), options.getSslSettings());
+    }
+
+    private static StreamFactory getStreamFactory(final MongoClientOptions options) {
+        if (getAsyncStreamType() == NETTY | options.getSslSettings().isEnabled()) {
+            return new NettyStreamFactory(options.getSocketSettings(), options.getSslSettings());
+        } else if (getAsyncStreamType() == NIO2) {
+            return new AsynchronousSocketChannelStreamFactory(options.getSocketSettings(), options.getSslSettings());
+        } else {
+            throw new IllegalArgumentException("Unsupported stream type " + getAsyncStreamType());
+        }
     }
 
     public static SSLSettings getSSLSettings() {
@@ -195,7 +260,8 @@ public final class Fixture {
         org.junit.Assume.assumeFalse(isSharded());
         getMongoClient().getDatabase("admin").executeCommand(new Document("configureFailPoint", "maxTimeAlwaysTimeOut")
                                                              .append("mode", "alwaysOn"),
-                                                             ReadPreference.primary());
+                                                             ReadPreference.primary()
+                                                            );
     }
 
     public static void disableMaxTimeFailPoint() {
@@ -203,7 +269,8 @@ public final class Fixture {
         if (serverVersionAtLeast(asList(2, 5, 3)) && !isSharded()) {
             getMongoClient().getDatabase("admin").executeCommand(new Document("configureFailPoint", "maxTimeAlwaysTimeOut")
                                                                  .append("mode", "off"),
-                                                                 ReadPreference.primary());
+                                                                 ReadPreference.primary()
+                                                                );
         }
     }
 }
