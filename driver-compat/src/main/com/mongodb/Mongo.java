@@ -847,7 +847,7 @@ public class Mongo {
                     try {
                         new KillCursorProtocol(new KillCursor(cur)).execute(connection);
                     } finally {
-                        connection.close();
+                        connection.release();
                     }
                 } finally {
                     source.release();

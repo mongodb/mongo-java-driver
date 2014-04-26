@@ -27,6 +27,7 @@ import org.mongodb.selector.ReadPreferenceServerSelector;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -70,27 +71,28 @@ public class PinnedBinding extends AbstractReferenceCounted implements ReadWrite
         super.release();
         if (getCount() == 0) {
             if (connectionForReads != null) {
-                connectionForReads.close();
-                connectionForReads = null;
+                connectionForReads.release();
             }
             if (connectionForWrites != null) {
-                connectionForWrites.close();
-                connectionForWrites = null;
+                connectionForWrites.release();
             }
         }
     }
 
     @Override
     public ReadPreference getReadPreference() {
+        isTrue("open", getCount() > 0);
         return readPreference;
     }
 
     @Override
     public ConnectionSource getReadConnectionSource() {
+        isTrue("open", getCount() > 0);
         if (connectionForReads == null || !readPreference.equals(lastRequestedReadPreference)) {
             lastRequestedReadPreference = readPreference;
             if (connectionForReads != null) {
-                connectionForReads.close();
+                connectionForReads.release();
+                connectionForReads = null;
             }
             serverForReads = cluster.selectServer(new ReadPreferenceServerSelector(readPreference), maxWaitTimeMS, MILLISECONDS);
             connectionForReads = serverForReads.getConnection();
@@ -106,30 +108,39 @@ public class PinnedBinding extends AbstractReferenceCounted implements ReadWrite
 
     @Override
     public ConnectionSource getWriteConnectionSource() {
+        isTrue("open", getCount() > 0);
         if (connectionForWrites == null) {
             serverForWrites = cluster.selectServer(new PrimaryServerSelector(), maxWaitTimeMS, MILLISECONDS);
             connectionForWrites = serverForWrites.getConnection();
         }
-        Connection connectionToUse = connectionForWrites;
-        return new MyConnectionSource(connectionToUse);
+        return new MyConnectionSource(connectionForWrites);
     }
 
     private static final class MyConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
         private final Connection connection;
 
         public MyConnectionSource(final Connection connection) {
-            this.connection = connection;
+            this.connection = connection.retain();
         }
 
         @Override
         public Connection getConnection() {
-            return new DelayedCloseConnection(connection);
+            isTrue("open", getCount() > 0);
+            return connection.retain();
         }
 
         @Override
         public MyConnectionSource retain() {
             super.retain();
             return this;
+        }
+
+        @Override
+        public void release() {
+            super.release();
+            if (getCount() == 0) {
+                connection.release();
+            }
         }
     }
 }

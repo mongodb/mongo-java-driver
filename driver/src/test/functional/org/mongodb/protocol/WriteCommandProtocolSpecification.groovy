@@ -51,7 +51,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
     }
 
     def cleanup() {
-        connection?.close()
+        connection?.release()
     }
 
     def 'should insert a document'() {

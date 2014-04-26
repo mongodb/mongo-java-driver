@@ -117,6 +117,10 @@ class PooledConnectionProvider implements ConnectionProvider {
         }
     }
 
+    ConcurrentPool<UsageTrackingInternalConnection> getPool() {
+        return pool;
+    }
+
     private Runnable createMaintenanceTask() {
         Runnable newMaintenanceTask = null;
         if (shouldPrune() || shouldEnsureMinSize()) {

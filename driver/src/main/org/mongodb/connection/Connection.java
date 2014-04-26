@@ -18,6 +18,7 @@ package org.mongodb.connection;
 
 import org.bson.ByteBuf;
 import org.mongodb.annotations.ThreadSafe;
+import org.mongodb.binding.ReferenceCounted;
 
 import java.util.List;
 
@@ -29,7 +30,10 @@ import java.util.List;
  * @since 3.0
  */
 @ThreadSafe
-public interface Connection extends BufferProvider {
+public interface Connection extends BufferProvider, ReferenceCounted {
+
+    @Override
+    Connection retain();
 
     /**
      * Gets the description of the server that it's connected to.
@@ -85,16 +89,4 @@ public interface Connection extends BufferProvider {
      * @return the id
      */
     String getId();
-
-    /**
-     * Closes the connection.
-     */
-    void close();
-
-    /**
-     * Returns the closed state of the connection
-     *
-     * @return true if connection is closed
-     */
-    boolean isClosed();
 }

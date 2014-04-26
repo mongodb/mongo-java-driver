@@ -39,6 +39,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.ReadPreference.primary;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerType.SHARD_ROUTER;
+import static org.mongodb.operation.OperationHelper.withConnection;
 
 /**
  * An operation that queries a collection using the provided criteria.
@@ -62,10 +63,9 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
 
     @Override
     public MongoCursor<T> execute(final ReadBinding binding) {
-        ConnectionSource source = binding.getReadConnectionSource();
-        try {
-            Connection connection = source.getConnection();
-            try {
+        return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<MongoCursor<T>>() {
+            @Override
+            public MongoCursor<T> call(final ConnectionSource source, final Connection connection) {
                 QueryResult<T> queryResult = asQueryProtocol(connection.getServerDescription(), binding.getReadPreference())
                                              .execute(connection);
                 if (isExhaustCursor()) {
@@ -75,60 +75,37 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
                     return new MongoQueryCursor<T>(namespace, queryResult, find.getLimit(), find.getBatchSize(),
                                                    resultDecoder, source);
                 }
-            } finally {
-                if (!isExhaustCursor()) {
-                    connection.close();
-                }
             }
-        } finally {
-            source.release();
-        }
+        });
     }
 
     public MongoFuture<MongoAsyncCursor<T>> executeAsync(final AsyncReadBinding binding) {
-        final SingleResultFuture<MongoAsyncCursor<T>> future = new SingleResultFuture<MongoAsyncCursor<T>>();
-        binding.getReadConnectionSource()
-               .register(new SingleResultCallback<AsyncConnectionSource>() {
-                   @Override
-                   public void onResult(final AsyncConnectionSource source, final MongoException e) {
-                       if (e != null) {
-                           future.init(null, e);
-                       } else {
-                           source.getConnection().register(new SingleResultCallback<Connection>() {
-                               @Override
-                               public void onResult(final Connection connection, final MongoException e) {
-                                   if (e != null) {
-                                       future.init(null, e);
-                                   } else {
-                                       asQueryProtocol(connection.getServerDescription(), binding.getReadPreference())
-                                       .executeAsync(connection)
-                                       .register(new SingleResultCallback<QueryResult<T>>() {
-                                           @Override
-                                           public void onResult(final QueryResult<T> queryResult, final MongoException e) {
-                                               try {
-                                                   if (e != null) {
-                                                       future.init(null, e);
-                                                   } else {
-                                                       MongoAsyncQueryCursor<T> cursor = new MongoAsyncQueryCursor<T>(namespace,
-                                                                                                                      queryResult,
-                                                                                                                      find.getLimit(),
-                                                                                                                      find.getBatchSize(),
-                                                                                                                      resultDecoder,
-                                                                                                                      source);
-                                                       future.init(cursor, null);
-                                                   }
-                                               } finally {
-                                                   connection.close();
-                                               }
-                                           }
-                                       });
-                                   }
-                               }
-                           });
-                       }
-                   }
-               });
-        return future;
+        return withConnection(binding, new OperationHelper.AsyncCallableWithConnectionAndSource<MongoAsyncCursor<T>>() {
+            @Override
+            public MongoFuture<MongoAsyncCursor<T>> call(final AsyncConnectionSource source, final Connection connection) {
+                final SingleResultFuture<MongoAsyncCursor<T>> future = new SingleResultFuture<MongoAsyncCursor<T>>();
+                asQueryProtocol(connection.getServerDescription(), binding.getReadPreference())
+                .executeAsync(connection)
+                .register(new SingleResultCallback<QueryResult<T>>() {
+                              @Override
+                              public void onResult(final QueryResult<T> queryResult, final MongoException e) {
+                                  if (e != null) {
+                                      future.init(null, e);
+                                  } else {
+                                      if (isExhaustCursor()) {
+                                          future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, find.getLimit(),
+                                                                                   find.getBatchSize(), resultDecoder, connection), null);
+                                      } else {
+                                          future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, find.getLimit(),
+                                                                                   find.getBatchSize(), resultDecoder, source), null);
+                                      }
+                                  }
+                              }
+                          }
+                         );
+                return future;
+            }
+        });
     }
 
     private QueryProtocol<T> asQueryProtocol(final ServerDescription serverDescription, final ReadPreference readPreference) {
