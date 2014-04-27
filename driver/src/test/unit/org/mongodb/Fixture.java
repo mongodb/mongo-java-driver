@@ -44,9 +44,6 @@ import java.util.List;
 import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.mongodb.AsyncDetector.StreamType.NETTY;
-import static org.mongodb.AsyncDetector.StreamType.NIO2;
-import static org.mongodb.AsyncDetector.getAsyncStreamType;
 import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
 import static org.mongodb.connection.ClusterType.SHARDED;
@@ -210,12 +207,14 @@ public final class Fixture {
     }
 
     private static StreamFactory getStreamFactory(final MongoClientOptions options) {
-        if (getAsyncStreamType() == NETTY | options.getSslSettings().isEnabled()) {
+        String streamType = System.getProperty("org.mongodb.async.type", "nio2");
+
+        if (streamType.equals("netty") || options.getSslSettings().isEnabled()) {
             return new NettyStreamFactory(options.getSocketSettings(), options.getSslSettings());
-        } else if (getAsyncStreamType() == NIO2) {
+        } else if (streamType.equals("nio2")) {
             return new AsynchronousSocketChannelStreamFactory(options.getSocketSettings(), options.getSslSettings());
         } else {
-            throw new IllegalArgumentException("Unsupported stream type " + getAsyncStreamType());
+            throw new IllegalArgumentException("Unsupported stream type " + streamType);
         }
     }
 

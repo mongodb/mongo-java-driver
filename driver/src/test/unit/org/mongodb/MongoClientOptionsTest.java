@@ -41,7 +41,6 @@ public class MongoClientOptionsTest {
         assertEquals(5, options.getThreadsAllowedToBlockForConnectionMultiplier());
         assertFalse(options.isSocketKeepAlive());
         assertFalse(options.isSSLEnabled());
-        assertEquals(AsyncDetector.isAsyncEnabled(), options.isAsyncEnabled());
         assertEquals(5000, options.getHeartbeatFrequency());
         assertEquals(10, options.getHeartbeatConnectRetryFrequency());
         assertEquals(20000, options.getHeartbeatConnectTimeout());
@@ -137,19 +136,6 @@ public class MongoClientOptionsTest {
     }
 
     @Test
-    public void testAsyncEnabledIllegalArguments() {
-        if (!AsyncDetector.isAsyncEnabled()) {
-            try {
-                MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
-                builder.asyncEnabled(true);
-                fail();
-            } catch (IllegalArgumentException e) { // NOPMD
-                // all good
-            }
-        }
-    }
-
-    @Test
     public void testBuilderBuild() {
         MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
         builder.description("test");
@@ -164,7 +150,6 @@ public class MongoClientOptionsTest {
         builder.threadsAllowedToBlockForConnectionMultiplier(1);
         builder.socketKeepAlive(true);
         builder.SSLEnabled(true);
-        builder.asyncEnabled(false);
         builder.heartbeatFrequency(5);
         builder.heartbeatConnectRetryFrequency(10);
         builder.heartbeatConnectTimeout(15);
@@ -189,7 +174,6 @@ public class MongoClientOptionsTest {
         assertEquals(1, options.getThreadsAllowedToBlockForConnectionMultiplier());
         assertEquals(true, options.isSocketKeepAlive());
         assertTrue(options.isSSLEnabled());
-        assertFalse(options.isAsyncEnabled());
         assertSame(primitiveCodecs, options.getPrimitiveCodecs());
         assertEquals(5, options.getHeartbeatFrequency());
         assertEquals(10, options.getHeartbeatConnectRetryFrequency());
