@@ -67,6 +67,39 @@ import static org.mongodb.Fixture.serverVersionAtLeast;
 public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
+    public void shouldCreateIdOnInsertIfThereIsNone() {
+        BasicDBObject document = new BasicDBObject();
+        collection.insert(document);
+        assertEquals(ObjectId.class, document.get("_id").getClass());
+        assertEquals(document, collection.findOne());
+    }
+
+    @Test
+    public void shouldCreateIdOnInsertIfTheValueIsNull() {
+        BasicDBObject document = new BasicDBObject("_id", null);
+        collection.insert(document);
+        assertEquals(ObjectId.class, document.get("_id").getClass());
+        assertEquals(document, collection.findOne());
+    }
+
+    @Test
+    public void saveShouldInsertADocumentWithNullId() {
+        BasicDBObject document = new BasicDBObject("_id", null);
+        collection.save(document);
+        assertEquals(ObjectId.class, document.get("_id").getClass());
+        assertEquals(document, collection.findOne());
+    }
+
+    @Test
+    public void saveShouldInsertADocumentWithNewObjectId() {
+        ObjectId newObjectId = new ObjectId();
+        BasicDBObject document = new BasicDBObject("_id", newObjectId);
+        collection.save(document);
+        assertEquals(newObjectId, document.get("_id"));
+        assertEquals(document, collection.findOne());
+    }
+
+    @Test
     public void testDefaultSettings() {
         assertNull(collection.getDBDecoderFactory());
         assertNull(collection.getDBEncoderFactory());
