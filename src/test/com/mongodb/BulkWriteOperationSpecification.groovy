@@ -642,7 +642,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         operation.insert(new BasicDBObject('_id', 1))
 
         when:
-        operation.execute(new WriteConcern(2, 1))
+        operation.execute(new WriteConcern(5, 1))
 
         then:
         thrown(BulkWriteException)
