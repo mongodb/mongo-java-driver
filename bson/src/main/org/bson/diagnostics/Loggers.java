@@ -43,7 +43,7 @@ public final class Loggers {
         if (suffix.startsWith(".") || suffix.endsWith(".")) {
             throw new IllegalArgumentException("The suffix can not start or end with a '.'");
         }
-        return Logger.getLogger(PREFIX + ":" + suffix);
+        return Logger.getLogger(PREFIX + "." + suffix);
     }
 
     private Loggers() {
