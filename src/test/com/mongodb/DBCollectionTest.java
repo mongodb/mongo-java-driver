@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
@@ -43,24 +42,32 @@ public class DBCollectionTest extends TestCase {
     public void shouldCreateIdOnInsertIfThereIsNone() {
         BasicDBObject document = new BasicDBObject();
         collection.insert(document);
+        assertEquals(ObjectId.class, document.get("_id").getClass());
         assertEquals(document, collection.findOne());
     }
 
     @Test
-    public void shouldPreserveNullIdOnInsert() {
+    public void shouldCreateIdOnInsertIfTheValueIsNull() {
         BasicDBObject document = new BasicDBObject("_id", null);
         collection.insert(document);
-        assertNull(document.get("_id"));
+        assertEquals(ObjectId.class, document.get("_id").getClass());
         assertEquals(document, collection.findOne());
     }
 
     @Test
-    public void saveShouldUpdateAnExistingDocumentWithNullId() {
+    public void saveShouldInsertADocumentWithNullId() {
         BasicDBObject document = new BasicDBObject("_id", null);
-        collection.insert(document);
-        document.put("x", 1);
         collection.save(document);
-        assertNull(document.get("_id"));
+        assertEquals(ObjectId.class, document.get("_id").getClass());
+        assertEquals(document, collection.findOne());
+    }
+
+    @Test
+    public void saveShouldInsertADocumentWithNewObjectId() {
+        ObjectId newObjectId = new ObjectId();
+        BasicDBObject document = new BasicDBObject("_id", newObjectId);
+        collection.save(document);
+        assertEquals(newObjectId, document.get("_id"));
         assertEquals(document, collection.findOne());
     }
 
