@@ -217,6 +217,9 @@ public class DBTCPConnector implements DBConnector {
             port.checkAuth( db.getMongo() );
             return operation.execute();
         }
+        catch ( MongoException re ){
+            throw re;
+        }
         catch ( IOException ioe ){
             _myPort.error(port, ioe);
             throw new MongoException.Network("Operation on server " + port.getAddress() + " failed" , ioe );
