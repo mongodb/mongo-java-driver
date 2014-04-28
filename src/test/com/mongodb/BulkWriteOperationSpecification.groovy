@@ -634,6 +634,23 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         ordered << [true, false]
     }
 
+    def 'when a replication timeout occurs, an exception is thrown'() {
+        assumeTrue(isReplicaSet())
+
+        given:
+        def operation = collection.initializeUnorderedBulkOperation()
+        operation.insert(new BasicDBObject('_id', 1))
+
+        when:
+        operation.execute(new WriteConcern(2, 1))
+
+        then:
+        thrown(BulkWriteException)
+
+        where:
+        ordered << [true, false]
+    }
+
     def 'when j write concern is used on a server without journaling or write commands, BulkWriteException is thrown'() {
         assumeTrue(!isSharded() && isServerStartedWithJournalingDisabled() && !serverIsAtLeastVersion(2.6))
 

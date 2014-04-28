@@ -860,10 +860,6 @@ class DBCollectionImpl extends DBCollection {
                         WriteResult writeResult = executeWriteProtocol(i);
                         if (writeConcern.callGetLastError()) {
                             bulkWriteBatchCombiner.addResult(getResult(writeResult), indexMap);
-                            // When a journaled write is requested but journaling is disabled, it's not thrown as an exception.
-                            if (isWriteConcernError(writeResult.getLastError()))  {
-                                bulkWriteBatchCombiner.addWriteConcernErrorResult(getWriteConcernError(writeResult.getLastError()));
-                            }
                         }
                     } catch (WriteConcernException writeException) {
                         if (isWriteConcernError(writeException.getCommandResult()))  {
