@@ -412,9 +412,7 @@ public class MixedBulkWriteOperation<T> implements WriteOperation<BulkWriteResul
                                 bulkWriteBatchCombiner.addResult(getResult(writeResult), indexMap);
                             }
                         } catch (MongoWriteException writeException) {
-                            if (writeException.getCommandResult().getResponse().get("wtimeout") != null
-                                || writeException.getCommandResult().getResponse().get("wnote") != null
-                                || writeException.getCommandResult().getResponse().get("jnote") != null)  {
+                            if (writeException.getCommandResult().getResponse().get("wtimeout") != null)  {
                                 bulkWriteBatchCombiner.addWriteConcernErrorResult(getWriteConcernError(writeException));
                             } else {
                                 bulkWriteBatchCombiner.addWriteErrorResult(getBulkWriteError(writeException), indexMap);
