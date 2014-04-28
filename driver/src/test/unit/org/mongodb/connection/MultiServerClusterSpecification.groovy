@@ -27,6 +27,7 @@ import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static org.mongodb.connection.ClusterType.REPLICA_SET
 import static org.mongodb.connection.ClusterType.SHARDED
 import static org.mongodb.connection.ServerConnectionState.CONNECTING
+import static org.mongodb.connection.ServerType.REPLICA_SET_OTHER
 import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
 import static org.mongodb.connection.ServerType.REPLICA_SET_SECONDARY
 import static org.mongodb.connection.ServerType.SHARD_ROUTER
@@ -107,6 +108,36 @@ class MultiServerClusterSpecification extends Specification {
         then:
         cluster.getDescription(1, SECONDS).type == REPLICA_SET
         cluster.getDescription(1, SECONDS).all == factory.getDescriptions(firstServer)
+    }
+
+    def 'should ignore an empty list of hosts when type is replica set'() {
+        given:
+        def cluster = new MultiServerCluster(
+                CLUSTER_ID, ClusterSettings.builder().requiredClusterType(REPLICA_SET).hosts([firstServer, secondServer]).build(), factory,
+                CLUSTER_LISTENER)
+
+        when:
+        factory.sendNotification(secondServer, REPLICA_SET_OTHER, [])
+
+        then:
+        cluster.getDescription(1, SECONDS).type == REPLICA_SET
+        cluster.getDescription(1, SECONDS).all == factory.getDescriptions(firstServer, secondServer)
+        cluster.getDescription(1, SECONDS).getByServerAddress(secondServer).getType() == REPLICA_SET_OTHER
+    }
+
+    def 'should ignore a host without a replica set name when type is replica set'() {
+        given:
+        def cluster = new MultiServerCluster(
+                CLUSTER_ID, ClusterSettings.builder().requiredClusterType(REPLICA_SET).hosts([firstServer, secondServer]).build(), factory,
+                CLUSTER_LISTENER)
+
+        when:
+        factory.sendNotification(secondServer, REPLICA_SET_OTHER, [firstServer, secondServer], null)  // null replica set name
+
+        then:
+        cluster.getDescription(1, SECONDS).type == REPLICA_SET
+        cluster.getDescription(1, SECONDS).all == factory.getDescriptions(firstServer, secondServer)
+        cluster.getDescription(1, SECONDS).getByServerAddress(secondServer).getType() == REPLICA_SET_OTHER
     }
 
     def 'should remove a server of the wrong type when type is sharded'() {

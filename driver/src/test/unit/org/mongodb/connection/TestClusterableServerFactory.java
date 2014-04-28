@@ -43,7 +43,7 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts) {
-        sendNotification(serverAddress, serverType, hosts, null);
+        sendNotification(serverAddress, serverType, hosts, "test");
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
