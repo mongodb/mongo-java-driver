@@ -54,6 +54,7 @@ import java.util.Map;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.isTrueArgument;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.CallableWithConnection;
@@ -75,6 +76,7 @@ public class MixedBulkWriteOperation<T> implements WriteOperation<BulkWriteResul
     private final WriteConcern writeConcern;
     private final Encoder<T> encoder;
     private final boolean ordered;
+    private boolean closed;
 
     /**
      * Construct a new instance.
@@ -103,6 +105,9 @@ public class MixedBulkWriteOperation<T> implements WriteOperation<BulkWriteResul
      */
     @Override
     public BulkWriteResult execute(final WriteBinding binding) {
+        isTrue("already executed", !closed);
+
+        closed = true;
         return withConnection(binding, new CallableWithConnection<BulkWriteResult>() {
             @Override
             public BulkWriteResult call(final Connection connection) {
@@ -358,13 +363,12 @@ public class MixedBulkWriteOperation<T> implements WriteOperation<BulkWriteResul
         BulkWriteResult executeUpdates(final List<UpdateRequest> updates, final Connection connection) {
             return new RunExecutor(connection) {
                 WriteProtocol getWriteProtocol(final int index) {
-                    return new UpdateProtocol(namespace, ordered, writeConcern, asList(updates.get(index)), new DocumentCodec()
-                    );
+
+                    return new UpdateProtocol(namespace, ordered, writeConcern, asList(updates.get(index)), new DocumentCodec());
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new UpdateCommandProtocol(namespace, ordered, writeConcern, updates, new DocumentCodec()
-                    );
+                    return new UpdateCommandProtocol(namespace, ordered, writeConcern, updates, new DocumentCodec());
                 }
 
                 @Override
