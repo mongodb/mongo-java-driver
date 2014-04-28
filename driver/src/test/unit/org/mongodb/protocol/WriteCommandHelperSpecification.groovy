@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 package org.mongodb.protocol
 
 import org.mongodb.BulkWriteError
@@ -29,6 +27,8 @@ import spock.lang.Specification
 
 import static org.mongodb.operation.WriteRequest.Type.INSERT
 import static org.mongodb.operation.WriteRequest.Type.UPDATE
+import static org.mongodb.operation.WriteRequest.Type.REMOVE
+import static org.mongodb.operation.WriteRequest.Type.REPLACE
 import static org.mongodb.protocol.WriteCommandResultHelper.getBulkWriteException
 import static org.mongodb.protocol.WriteCommandResultHelper.getBulkWriteResult
 import static org.mongodb.protocol.WriteCommandResultHelper.hasError
@@ -48,6 +48,27 @@ class WriteCommandHelperSpecification extends Specification {
                                                             .append('upserted', [new Document('index', 0).append('_id', 'id1'),
                                                                                  new Document('index', 2).append('_id', 'id2')])))
                 .getUpserts()
+    }
+
+
+    def 'should not have modified count for update with no nModified field in the result'() {
+        expect:
+        !getBulkWriteResult(UPDATE, getCommandResult(new Document('n', 1))).isModifiedCountAvailable()
+    }
+
+    def 'should not have modified count for replace with no nModified field in the result'() {
+        expect:
+        !getBulkWriteResult(REPLACE, getCommandResult(new Document('n', 1))).isModifiedCountAvailable()
+    }
+
+    def 'should have modified count of 0 for insert with no nModified field in the result'() {
+        expect:
+        0 == getBulkWriteResult(INSERT, getCommandResult(new Document('n', 1))).getModifiedCount()
+    }
+
+    def 'should have modified count of 0 for remove with no nModified field in the result'() {
+        expect:
+        0 == getBulkWriteResult(REMOVE, getCommandResult(new Document('n', 1))).getModifiedCount()
     }
 
     def 'should not have error if writeErrors is empty and writeConcernError is missing'() {

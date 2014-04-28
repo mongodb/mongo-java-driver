@@ -51,6 +51,11 @@ public class UnacknowledgedBulkWriteResult extends BulkWriteResult {
     }
 
     @Override
+    public boolean isModifiedCountAvailable() {
+        throw getUnacknowledgedWriteException();
+    }
+
+    @Override
     public int getModifiedCount() {
         throw getUnacknowledgedWriteException();
     }
@@ -83,7 +88,6 @@ public class UnacknowledgedBulkWriteResult extends BulkWriteResult {
 
     @Override
     public String toString() {
-        return "UnacknowledgedBulkWriteResult{"
-               + '}';
+        return "UnacknowledgedBulkWriteResult{}";
     }
 }

@@ -25,11 +25,11 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
     private int insertedCount;
     private int updatedCount;
     private int removedCount;
-    private int modifiedCount;
+    private Integer modifiedCount;
     private final List<BulkWriteUpsert> upserts;
 
     AcknowledgedBulkWriteResult(final int insertedCount, final int updatedCount, final int removedCount,
-                                final int modifiedCount, final List<BulkWriteUpsert> upserts) {
+                                final Integer modifiedCount, final List<BulkWriteUpsert> upserts) {
         this.insertedCount = insertedCount;
         this.updatedCount = updatedCount;
         this.removedCount = removedCount;
@@ -58,7 +58,17 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
     }
 
     @Override
+    public boolean isModifiedCountAvailable() {
+        return modifiedCount != null;
+    }
+
+    @Override
     public int getModifiedCount() {
+        if (modifiedCount == null) {
+            throw new UnsupportedOperationException("The modifiedCount is not available because at least one of the servers that was "
+                                                    + "updated was not able to provide this information (the server is must be at least "
+                                                    + "version 2.6");
+        }
         return modifiedCount;
     }
 

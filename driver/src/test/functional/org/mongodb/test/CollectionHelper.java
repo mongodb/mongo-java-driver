@@ -65,7 +65,7 @@ public final class CollectionHelper<T> {
         return results;
     }
 
-    public List<T> find(Document filter) {
+    public List<T> find(final Document filter) {
         MongoCursor<T> cursor = new QueryOperation<T>(namespace, new Find(filter), queryEncoder, codec).execute(getBinding());
         List<T> results = new ArrayList<T>();
         while (cursor.hasNext()) {
@@ -78,7 +78,7 @@ public final class CollectionHelper<T> {
         return new CountOperation(namespace, new Find(), new DocumentCodec()).execute(getBinding());
     }
 
-    public long count(Document filter) {
+    public long count(final Document filter) {
         return new CountOperation(namespace, new Find(filter), new DocumentCodec()).execute(getBinding());
     }
 }

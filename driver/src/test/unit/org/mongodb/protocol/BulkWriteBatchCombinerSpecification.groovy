@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 package org.mongodb.protocol
 
 import org.mongodb.BulkWriteError
@@ -54,6 +52,18 @@ class BulkWriteBatchCombinerSpecification extends Specification {
 
         then:
         result == new AcknowledgedBulkWriteResult(INSERT, 1, 0, [])
+    }
+
+    def 'should handle null modifiedCount'() {
+        def combiner = new BulkWriteBatchCombiner(new ServerAddress(), true, ACKNOWLEDGED)
+        combiner.addResult(new AcknowledgedBulkWriteResult(UPDATE, 1, null, []), new IndexMap.RangeBased().add(0, 0))
+        combiner.addResult(new AcknowledgedBulkWriteResult(INSERT, 1, 0, []), new IndexMap.RangeBased().add(0, 0))
+
+        when:
+        def result = combiner.getResult()
+
+        then:
+        result == new AcknowledgedBulkWriteResult(1, 1, 0, null, [])
     }
 
     def 'should sort upserts'() {

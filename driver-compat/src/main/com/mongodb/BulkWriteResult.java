@@ -66,17 +66,35 @@ public abstract class BulkWriteResult {
     public abstract int getRemovedCount();
 
     /**
+     * Returns true if the server was able to provide a count of modified documents.  If this method returns false (which can happen if
+     * the server is not at least version 2.6) then the {@code getModifiedCount} method will throw {@code UnsupportedOperationException}.
+     *
+     * @return true if modifiedCount is available
+     *
+     * @throws UnacknowledgedWriteException if the write was unacknowledged.
+     * @see WriteConcern#UNACKNOWLEDGED
+     * @see #getModifiedCount()
+     */
+    public abstract boolean isModifiedCountAvailable();
+
+    /**
      * Returns the number of documents modified by the write operation.  This only applies to updates or replacements,
      * and will only count documents that were actually changed; for example, if you set the value of some field ,
      * and the field already has that value, that will not count as a modification.
      *
+     *  <p>
+     *     If the server is not able to provide a count of modified documents (which can happen if the server is not at least version
+     *     2.6), then this method will throw an {@code UnsupportedOperationException}
+     * </p>
+     *
      * @return the number of documents modified by the write operation
      *
      * @throws UnacknowledgedWriteException if the write was unacknowledged.
+     * @throws java.lang.UnsupportedOperationException if no modified count is available
      * @see WriteConcern#UNACKNOWLEDGED
+     * @see #isModifiedCountAvailable()
      */
     public abstract int getModifiedCount();
-
 
     /**
      * Gets an unmodifiable list of upserted items, or the empty list if there were none.

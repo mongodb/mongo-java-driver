@@ -432,7 +432,7 @@ public class MixedBulkWriteOperation<T> implements WriteOperation<BulkWriteResul
             BulkWriteResult getResult(final WriteResult writeResult) {
                 int count = getCount(writeResult);
                 List<BulkWriteUpsert> upsertedItems = getUpsertedItems(writeResult);
-                int modifiedCount = (getType() == UPDATE || getType() == REPLACE) ? count - upsertedItems.size() : 0;
+                Integer modifiedCount = (getType() == UPDATE || getType() == REPLACE) ? null : 0;
                 return new AcknowledgedBulkWriteResult(getType(), count - upsertedItems.size(), modifiedCount, upsertedItems);
             }
 
