@@ -91,6 +91,7 @@ public class MongoClientOptions {
         serverSettings = ServerSettings.builder()
                                        .heartbeatFrequency(proxied.getHeartbeatFrequency(), MILLISECONDS)
                                        .heartbeatConnectRetryFrequency(proxied.getHeartbeatConnectRetryFrequency(), MILLISECONDS)
+                                       .heartbeatThreadCount(proxied.getHeartbeatThreadCount())
                                        .build();
     }
 
@@ -265,6 +266,20 @@ public class MongoClientOptions {
      */
     public int getHeartbeatSocketTimeout() {
         return proxied.getHeartbeatSocketTimeout();
+    }
+
+    /**
+     * Gets the heartbeat thread count.  This is the number of threads that will be used to monitor the MongoDB servers that the
+     * MongoClient is connected to.
+     *
+     * <p>
+     * The default value is the number of servers in the seed list.
+     * </p>
+     * @return the heartbeat thread count
+     * @since 2.12.0
+     */
+    public int getHeartbeatThreadCount() {
+        return proxied.getHeartbeatThreadCount();
     }
 
     /**
@@ -750,6 +765,20 @@ public class MongoClientOptions {
          */
         public Builder heartbeatSocketTimeout(final int socketTimeout) {
             proxied.heartbeatSocketTimeout(socketTimeout);
+            return this;
+        }
+
+        /**
+         * Sets the heartbeat thread count.
+         *
+         * @param heartbeatThreadCount the heartbeat thread count
+         * @return {@code this}
+         * @throws IllegalArgumentException if heartbeatThreadCount < 1
+         * @see MongoClientOptions#getHeartbeatThreadCount()
+         * @since 2.12.0
+         */
+        public Builder heartbeatThreadCount(final int heartbeatThreadCount) {
+            proxied.heartbeatThreadCount(heartbeatThreadCount);
             return this;
         }
 
