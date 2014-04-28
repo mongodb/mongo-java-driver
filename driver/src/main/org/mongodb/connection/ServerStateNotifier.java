@@ -83,22 +83,15 @@ class ServerStateNotifier implements Runnable {
                 internalConnection = internalConnectionFactory.create(serverAddress);
             }
             try {
-                LOGGER.debug(format("Checking status of %s", serverAddress));
-                CommandResult isMasterResult = executeCommand("admin", new Document("ismaster", 1), new DocumentCodec(),
-                                                              internalConnection);
-                count++;
-                elapsedNanosSum += isMasterResult.getElapsedNanoseconds();
-
-                CommandResult buildInfoResult = executeCommand("admin", new Document("buildinfo", 1), new DocumentCodec(),
-                                                               internalConnection);
-                serverDescription = createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
+                serverDescription = lookupServerDescription();
             } catch (MongoSocketException e) {
-                if (!isClosed) {
-                    internalConnection.close();
-                    internalConnection = null;
-                    count = 0;
-                    elapsedNanosSum = 0;
-                    throw e;
+                reset();
+                internalConnection = internalConnectionFactory.create(serverAddress);
+                try {
+                    serverDescription = lookupServerDescription();
+                } catch (MongoSocketException e1) {
+                    reset();
+                    throw e1;
                 }
             }
         } catch (Throwable t) {
@@ -112,8 +105,7 @@ class ServerStateNotifier implements Runnable {
                 // so this will not spam the logs too hard.
                 if (!currentServerDescription.equals(serverDescription)) {
                     if (throwable != null) {
-                        LOGGER.info(format("Exception in monitor thread while connecting to server %s", serverAddress),
-                                   throwable);
+                        LOGGER.info(format("Exception in monitor thread while connecting to server %s", serverAddress), throwable);
                     } else {
                         LOGGER.info(format("Monitor thread successfully connected to server with description %s", serverDescription));
                     }
@@ -123,6 +115,27 @@ class ServerStateNotifier implements Runnable {
                 LOGGER.warn("Exception in monitor thread during notification of server description state change", t);
             }
         }
+    }
+
+    private void reset() {
+        count = 0;
+        elapsedNanosSum = 0;
+        if (internalConnection != null) {
+            internalConnection.close();
+            internalConnection = null;
+        }
+    }
+
+    private ServerDescription lookupServerDescription() {
+        LOGGER.debug(format("Checking status of %s", serverAddress));
+        CommandResult isMasterResult = executeCommand("admin", new Document("ismaster", 1), new DocumentCodec(),
+                                                      internalConnection);
+        count++;
+        elapsedNanosSum += isMasterResult.getElapsedNanoseconds();
+
+        CommandResult buildInfoResult = executeCommand("admin", new Document("buildinfo", 1), new DocumentCodec(),
+                                                       internalConnection);
+        return createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
     }
 
     public void close() {
