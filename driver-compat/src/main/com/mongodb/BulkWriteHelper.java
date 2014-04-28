@@ -22,11 +22,14 @@ import java.util.List;
 final class BulkWriteHelper {
 
     static BulkWriteResult translateBulkWriteResult(final org.mongodb.BulkWriteResult bulkWriteResult) {
-        return bulkWriteResult.isAcknowledged()
-               ? new AcknowledgedBulkWriteResult(bulkWriteResult.getInsertedCount(), bulkWriteResult.getUpdatedCount(),
-                                                 bulkWriteResult.getRemovedCount(), bulkWriteResult.getModifiedCount(),
-                                                 translateBulkWriteUpserts(bulkWriteResult.getUpserts()))
-               : new UnacknowledgedBulkWriteResult();
+        if (bulkWriteResult.isAcknowledged()) {
+            Integer modifiedCount = (bulkWriteResult.isModifiedCountAvailable()) ? bulkWriteResult.getModifiedCount() : null;
+            return new AcknowledgedBulkWriteResult(bulkWriteResult.getInsertedCount(), bulkWriteResult.getUpdatedCount(),
+                                                   bulkWriteResult.getRemovedCount(), modifiedCount,
+                                                   translateBulkWriteUpserts(bulkWriteResult.getUpserts()));
+        } else {
+            return new UnacknowledgedBulkWriteResult();
+        }
     }
 
     static List<BulkWriteUpsert> translateBulkWriteUpserts(final List<org.mongodb.BulkWriteUpsert> upserts) {
