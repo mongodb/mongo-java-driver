@@ -23,6 +23,10 @@ import org.mongodb.event.ConnectionPoolListener;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.util.concurrent.Executors.newScheduledThreadPool;
 
 class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final String clusterId;
@@ -36,8 +40,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                            final ConnectionPoolSettings connectionPoolSettings,
                                            final StreamFactory streamFactory,
                                            final StreamFactory heartbeatStreamFactory,
-                                           final ScheduledExecutorService scheduledExecutorService,
-                                           final List<MongoCredential> credentialList,
+                                           final int seedListSize, final List<MongoCredential> credentialList,
                                            final ConnectionListener connectionListener,
                                            final ConnectionPoolListener connectionPoolListener) {
         this.clusterId = clusterId;
@@ -50,7 +53,9 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                                                              connectionListener,
                                                                              connectionPoolListener);
         this.heartbeatStreamFactory = heartbeatStreamFactory;
-        this.scheduledExecutorService = scheduledExecutorService;
+        this.scheduledExecutorService = newScheduledThreadPool(settings.getHeartbeatThreadCount() == 0
+                                                               ? seedListSize : settings.getHeartbeatThreadCount(),
+                                                               new DaemonThreadFactory(clusterId));
     }
 
     @Override
@@ -64,5 +69,23 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
     @Override
     public void close() {
         scheduledExecutorService.shutdownNow();
+    }
+
+
+    // Custom thread factory for scheduled executor service that creates daemon threads.  Otherwise,
+    // applications that neglect to close the Cluster will not exit.
+    static class DaemonThreadFactory implements ThreadFactory {
+        private final AtomicInteger threadNumber = new AtomicInteger(1);
+        private final String clusterId;
+
+        DaemonThreadFactory(final String clusterId) {
+            this.clusterId = clusterId;
+        }
+
+        public Thread newThread(final Runnable runnable) {
+            Thread t = new Thread(runnable, "cluster-" + clusterId + "-thread-" + threadNumber.getAndIncrement());
+            t.setDaemon(true);
+            return t;
+        }
     }
 }

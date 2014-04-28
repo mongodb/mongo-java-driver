@@ -19,6 +19,7 @@ package org.mongodb;
 import org.junit.Test;
 import org.mongodb.codecs.PrimitiveCodecs;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -45,6 +46,7 @@ public class MongoClientOptionsTest {
         assertEquals(10, options.getHeartbeatConnectRetryFrequency());
         assertEquals(20000, options.getHeartbeatConnectTimeout());
         assertEquals(20000, options.getHeartbeatSocketTimeout());
+        assertEquals(0, options.getHeartbeatThreadCount());
         assertNull(options.getRequiredReplicaSetName());
     }
 
@@ -160,6 +162,7 @@ public class MongoClientOptionsTest {
         builder.heartbeatConnectRetryFrequency(10);
         builder.heartbeatConnectTimeout(15);
         builder.heartbeatSocketTimeout(20);
+        builder.heartbeatThreadCount(4);
         builder.requiredReplicaSetName("test");
         PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
         builder.primitiveCodecs(primitiveCodecs);
@@ -184,6 +187,11 @@ public class MongoClientOptionsTest {
         assertEquals(10, options.getHeartbeatConnectRetryFrequency());
         assertEquals(15, options.getHeartbeatConnectTimeout());
         assertEquals(20, options.getHeartbeatSocketTimeout());
+        assertEquals(4, options.getHeartbeatThreadCount());
         assertEquals("test", options.getRequiredReplicaSetName());
+
+        assertEquals(5, options.getServerSettings().getHeartbeatFrequency(MILLISECONDS));
+        assertEquals(10, options.getServerSettings().getHeartbeatConnectRetryFrequency(MILLISECONDS));
+        assertEquals(4, options.getServerSettings().getHeartbeatThreadCount());
     }
 }

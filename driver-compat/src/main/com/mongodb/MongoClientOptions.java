@@ -90,7 +90,7 @@ public class MongoClientOptions {
                                                 .build();
         serverSettings = ServerSettings.builder()
                                        .heartbeatFrequency(proxied.getHeartbeatFrequency(), MILLISECONDS)
-                                       .connectRetryFrequency(proxied.getHeartbeatConnectRetryFrequency(), MILLISECONDS)
+                                       .heartbeatConnectRetryFrequency(proxied.getHeartbeatConnectRetryFrequency(), MILLISECONDS)
                                        .build();
     }
 
@@ -485,7 +485,7 @@ public class MongoClientOptions {
          *
          * @param connectionsPerHost maximum number of connections
          * @return {@code this}
-         * @throws IllegalArgumentException if {@code connnectionsPerHost < 1}
+         * @throws IllegalArgumentException if {@code connectionsPerHost < 1}
          * @see MongoClientOptions#getConnectionsPerHost()
          */
         public Builder connectionsPerHost(final int connectionsPerHost) {

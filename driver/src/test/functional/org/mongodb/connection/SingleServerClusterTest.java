@@ -23,7 +23,6 @@ import org.mongodb.selector.ServerSelector;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertNotNull;
@@ -49,8 +48,7 @@ public class SingleServerClusterTest {
                                                                               ConnectionPoolSettings.builder().maxSize(1).build(),
                                                                               streamFactory,
                                                                               streamFactory,
-                                                                              Executors.newScheduledThreadPool(1),
-                                                                              getCredentialList(),
+                                                                              1, getCredentialList(),
                                                                               new NoOpConnectionListener(),
                                                                               new NoOpConnectionPoolListener()),
                                           new NoOpClusterListener());

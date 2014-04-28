@@ -22,9 +22,6 @@ import org.mongodb.event.ConnectionListener;
 import org.mongodb.event.ConnectionPoolListener;
 
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -47,14 +44,12 @@ public final class DefaultClusterFactory implements ClusterFactory {
                           final ClusterListener clusterListener, final ConnectionPoolListener connectionPoolListener,
                           final ConnectionListener connectionListener) {
         String clusterId = Integer.toString(NEXT_CLUSTER_ID.getAndIncrement());
-        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(settings.getHosts().size(),
-                                                                                             new DaemonThreadFactory(clusterId));
         ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId,
                                                                                      serverSettings,
                                                                                      connectionPoolSettings,
                                                                                      streamFactory,
                                                                                      heartbeatStreamFactory,
-                                                                                     scheduledExecutorService,
+                                                                                     settings.getHosts().size(),
                                                                                      credentialList,
                                                                                      connectionListener != null ? connectionListener
                                                                                                              : new NoOpConnectionListener(),
@@ -73,21 +68,4 @@ public final class DefaultClusterFactory implements ClusterFactory {
         }
     }
     // CHECKSTYLE:ON
-
-    // Custom thread factory for scheduled executor service that creates daemon threads.  Otherwise,
-    // applications that neglect to close the Cluster will not exit.
-    static class DaemonThreadFactory implements ThreadFactory {
-        private final AtomicInteger threadNumber = new AtomicInteger(1);
-        private final String clusterId;
-
-        DaemonThreadFactory(final String clusterId) {
-            this.clusterId = clusterId;
-        }
-
-        public Thread newThread(final Runnable runnable) {
-            Thread t = new Thread(runnable, "cluster-" + clusterId + "-thread-" + threadNumber.getAndIncrement());
-            t.setDaemon(true);
-            return t;
-        }
-    }
 }

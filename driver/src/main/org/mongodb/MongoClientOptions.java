@@ -59,6 +59,8 @@ public final class MongoClientOptions {
     private final int heartbeatConnectRetryFrequency;
     private final int heartbeatConnectTimeout;
     private final int heartbeatSocketTimeout;
+    private final int heartbeatThreadCount;
+
     private final String requiredReplicaSetName;
     private final SocketSettings socketSettings;
     private final SocketSettings heartbeatSocketSettings;
@@ -104,6 +106,7 @@ public final class MongoClientOptions {
         private int heartbeatConnectRetryFrequency = 10;
         private int heartbeatConnectTimeout = 20000;
         private int heartbeatSocketTimeout = 20000;
+        private int heartbeatThreadCount;
 
         private String requiredReplicaSetName;
 
@@ -154,8 +157,7 @@ public final class MongoClientOptions {
         /**
          * Sets the multiplier for number of threads allowed to block waiting for a connection.
          *
-         * @param aThreadsAllowedToBlockForConnectionMultiplier
-         *         the multiplier
+         * @param aThreadsAllowedToBlockForConnectionMultiplier the multiplier
          * @return {@code this}
          * @throws IllegalArgumentException if {@code aThreadsAllowedToBlockForConnectionMultiplier < 1}
          * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
@@ -406,6 +408,23 @@ public final class MongoClientOptions {
         }
 
         /**
+         * Sets the heartbeat thread count.
+         *
+         * @param heartbeatThreadCount the heartbeat thread count
+         * @return {@code this}
+         * @throws IllegalArgumentException if heartbeatThreadCount < 1
+         * @see MongoClientOptions#getHeartbeatThreadCount()
+         * @since 2.12.0
+         */
+        public Builder heartbeatThreadCount(final int heartbeatThreadCount) {
+            if (heartbeatThreadCount < 1) {
+                throw new IllegalArgumentException("heartbeatThreadCount must be greater than 0");
+            }
+            this.heartbeatThreadCount = heartbeatThreadCount;
+            return this;
+        }
+
+        /**
          * Sets the required replica set name for the cluster.
          *
          * @param aRequiredReplicaSetName the required replica set name for the replica set.
@@ -639,6 +658,19 @@ public final class MongoClientOptions {
     }
 
     /**
+     * Gets the heartbeat thread count.  This is the number of threads that will be used to monitor the MongoDB servers that the MongoClient
+     * is connected to.
+     * <p/>
+     * <p> The default value is the number of servers in the seed list. </p>
+     *
+     * @return the heartbeat thread count
+     * @since 2.12.0
+     */
+    public int getHeartbeatThreadCount() {
+        return heartbeatThreadCount;
+    }
+
+    /**
      * Gets the connection-specific settings wrapped in a settings object.   This settings object uses the values for connectTimeout,
      * socketTimeout and socketKeepAlive.
      *
@@ -694,13 +726,10 @@ public final class MongoClientOptions {
     }
 
     /**
-     * Gets the required replica set name.  With this option set, the MongoClient instance will
-     * <p> 1. Connect in replica set mode, and discover all members of the set based on the given servers
-     * </p>
-     * <p> 2. Make sure that the set name reported by all members matches the required set name.
-     * </p>
-     * <p> 3. Refuse to service any requests if any member of the seed list is not part of a replica set with the required name.
-     * </p>
+     * Gets the required replica set name.  With this option set, the MongoClient instance will <p> 1. Connect in replica set mode, and
+     * discover all members of the set based on the given servers </p> <p> 2. Make sure that the set name reported by all members matches
+     * the required set name. </p> <p> 3. Refuse to service any requests if any member of the seed list is not part of a replica set with
+     * the required name. </p>
      *
      * @return the required replica set name
      */
@@ -731,6 +760,7 @@ public final class MongoClientOptions {
                + ", heartbeatConnectRetryFrequency=" + heartbeatConnectRetryFrequency
                + ", heartbeatConnectTimeout=" + heartbeatConnectTimeout
                + ", heartbeatSocketTimeout=" + heartbeatSocketTimeout
+               + ", heartbeatThreadCount=" + heartbeatThreadCount
                + ", requiredReplicaSetName=" + requiredReplicaSetName
                + '}';
     }
@@ -756,6 +786,7 @@ public final class MongoClientOptions {
         heartbeatConnectRetryFrequency = builder.heartbeatConnectRetryFrequency;
         heartbeatConnectTimeout = builder.heartbeatConnectTimeout;
         heartbeatSocketTimeout = builder.heartbeatSocketTimeout;
+        heartbeatThreadCount = builder.heartbeatThreadCount;
         requiredReplicaSetName = builder.requiredReplicaSetName;
 
         socketSettings = SocketSettings.builder()
@@ -782,7 +813,8 @@ public final class MongoClientOptions {
 
         serverSettings = ServerSettings.builder()
                                        .heartbeatFrequency(heartbeatFrequency, MILLISECONDS)
-                                       .connectRetryFrequency(heartbeatConnectRetryFrequency, MILLISECONDS)
+                                       .heartbeatConnectRetryFrequency(heartbeatConnectRetryFrequency, MILLISECONDS)
+                                       .heartbeatThreadCount(heartbeatThreadCount)
                                        .build();
         sslSettings = SSLSettings.builder().enabled(SSLEnabled).build();
 
