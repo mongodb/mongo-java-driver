@@ -28,6 +28,7 @@ import org.mongodb.connection.SingleResultCallback
 
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
+import static org.mongodb.Fixture.serverVersionAtLeast
 
 class AggregateOperationSpecification extends FunctionalSpecification {
 
@@ -49,9 +50,7 @@ class AggregateOperationSpecification extends FunctionalSpecification {
         results.containsAll(['Pete', 'Sam'])
 
         where:
-        aggregateOptions << [
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build(),
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.CURSOR).build()]
+        aggregateOptions << generateOptions()
     }
 
     @Category(Async)
@@ -93,9 +92,7 @@ class AggregateOperationSpecification extends FunctionalSpecification {
         results.containsAll(['Pete', 'Sam'])
 
         where:
-        aggregateOptions << [
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build(),
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.CURSOR).build()]
+        aggregateOptions << generateOptions()
     }
 
     def 'should be able to aggregate with pipeline'() {
@@ -116,9 +113,7 @@ class AggregateOperationSpecification extends FunctionalSpecification {
         results == ['Sam']
 
         where:
-        aggregateOptions << [
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build(),
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.CURSOR).build()]
+        aggregateOptions << generateOptions()
     }
 
     @Category(Async)
@@ -160,8 +155,14 @@ class AggregateOperationSpecification extends FunctionalSpecification {
         results == ['Sam']
 
         where:
-        aggregateOptions << [
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build(),
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.CURSOR).build()]
+        aggregateOptions << generateOptions()
+    }
+
+    private static List<AggregationOptions> generateOptions() {
+        def options = [AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build()]
+        if ((serverVersionAtLeast([2, 6, 0]))) {
+            options += AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.CURSOR).build()
+        }
+        options
     }
 }

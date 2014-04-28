@@ -117,16 +117,16 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
         return new QueryResult<T>(results, cursorId, result.getAddress(), 0);
     }
 
-    @SuppressWarnings("unchecked")
     private Function<CommandResult, MongoCursor<T>> transformer(final ConnectionSource source) {
         return new Function<CommandResult, MongoCursor<T>>() {
             @Override
             public MongoCursor<T> apply(final CommandResult result) {
+                QueryResult<T> queryResult = createQueryResult(result);
                 if (isInline()) {
-                    return new InlineMongoCursor<T>(result.getAddress(), (List<T>) result.getResponse().get(RESULT));
+                    return new InlineMongoCursor<T>(result.getAddress(), queryResult.getResults());
                 } else {
                     int batchSize = options.getBatchSize() == null ? 0 : options.getBatchSize();
-                    return new MongoQueryCursor<T>(namespace, createQueryResult(result), 0, batchSize, decoder, source);
+                    return new MongoQueryCursor<T>(namespace, queryResult, 0, batchSize, decoder, source);
                 }
             }
         };
@@ -134,14 +134,15 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
 
     private Function<CommandResult, MongoAsyncCursor<T>> asyncTransformer(final AsyncConnectionSource source) {
         return new Function<CommandResult, MongoAsyncCursor<T>>() {
-            @SuppressWarnings("unchecked")
+
             @Override
             public MongoAsyncCursor<T> apply(final CommandResult result) {
+                QueryResult<T> queryResult = createQueryResult(result);
                 if (isInline()) {
-                    return new InlineMongoAsyncCursor<T>((List<T>) result.getResponse().get(RESULT));
+                    return new InlineMongoAsyncCursor<T>(queryResult.getResults());
                 } else {
                     int batchSize = options.getBatchSize() == null ? 0 : options.getBatchSize();
-                    return new MongoAsyncQueryCursor<T>(namespace, createQueryResult(result), 0, batchSize, decoder, source);
+                    return new MongoAsyncQueryCursor<T>(namespace, queryResult, 0, batchSize, decoder, source);
                 }
             }
         };
