@@ -184,11 +184,11 @@ public abstract class TaggableReadPreference extends ReadPreference {
         public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
 
             if (getTagsList().isEmpty()) {
-                return clusterDescription.getAny();
+                return clusterDescription.getAnyPrimaryOrSecondary();
             }
 
             for (final Tags tags : getTagsList()) {
-                List<ServerDescription> servers = clusterDescription.getAny(tags);
+                List<ServerDescription> servers = clusterDescription.getAnyPrimaryOrSecondary(tags);
                 if (!servers.isEmpty()) {
                     return servers;
                 }

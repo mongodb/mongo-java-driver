@@ -15,12 +15,13 @@
  */
 
 package com.mongodb
-
 import org.mongodb.connection.Cluster
 import org.mongodb.connection.ClusterDescription
 import org.mongodb.connection.ServerDescription
 import spock.lang.Specification
 import spock.lang.Subject
+
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class ReplicaSetStatusSpecification extends Specification {
     private final ClusterDescription clusterDescription = Mock();
@@ -30,7 +31,7 @@ class ReplicaSetStatusSpecification extends Specification {
     private final ReplicaSetStatus replicaSetStatus = new ReplicaSetStatus(cluster);
 
     def setup() {
-        cluster.getDescription(10, java.util.concurrent.TimeUnit.SECONDS) >> clusterDescription;
+        cluster.getDescription(10, SECONDS) >> clusterDescription;
     }
 
     def 'should return replica set name'() {
@@ -39,7 +40,7 @@ class ReplicaSetStatusSpecification extends Specification {
         ServerDescription serverDescription = Mock();
 
         serverDescription.getSetName() >> setName;
-        clusterDescription.getAny() >> [serverDescription]
+        clusterDescription.getAnyPrimaryOrSecondary() >> [serverDescription]
 
         expect:
         replicaSetStatus.getName() == setName;
@@ -47,7 +48,7 @@ class ReplicaSetStatusSpecification extends Specification {
 
     def 'should return null if no servers'() {
         given:
-        clusterDescription.getAny() >> []
+        clusterDescription.getAnyPrimaryOrSecondary() >> []
 
         expect:
         replicaSetStatus.getName() == null;

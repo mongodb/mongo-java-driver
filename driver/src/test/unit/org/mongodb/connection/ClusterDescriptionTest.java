@@ -16,12 +16,15 @@
 
 package org.mongodb.connection;
 
+import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -33,9 +36,49 @@ import static org.mongodb.connection.ClusterType.UNKNOWN;
 import static org.mongodb.connection.ServerConnectionState.CONNECTED;
 import static org.mongodb.connection.ServerConnectionState.CONNECTING;
 import static org.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
+import static org.mongodb.connection.ServerDescription.builder;
+import static org.mongodb.connection.ServerType.REPLICA_SET_OTHER;
 import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
+import static org.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
 
 public class ClusterDescriptionTest {
+
+    private ServerDescription primary, secondary, otherSecondary, uninitiatedMember, notOkMember;
+    private ClusterDescription cluster;
+
+    @Before
+    public void setUp() throws IOException {
+        Tags tags1 = new Tags("foo", "1").append("bar", "2").append("baz", "1");
+        Tags tags2 = new Tags("foo", "1").append("bar", "2").append("baz", "2");
+        Tags tags3 = new Tags("foo", "1").append("bar", "3").append("baz", "3");
+
+        primary = builder()
+                  .state(CONNECTED).address(new ServerAddress("localhost", 27017)).ok(true)
+                  .type(REPLICA_SET_PRIMARY).tags(tags1)
+                  .build();
+
+        secondary = builder()
+                    .state(CONNECTED).address(new ServerAddress("localhost", 27018)).ok(true)
+                    .type(REPLICA_SET_SECONDARY).tags(tags2)
+                    .build();
+
+        otherSecondary = builder()
+                         .state(CONNECTED).address(new ServerAddress("localhost", 27019)).ok(true)
+                         .type(REPLICA_SET_SECONDARY).tags(tags3)
+                         .build();
+        uninitiatedMember = builder()
+                            .state(CONNECTED).address(new ServerAddress("localhost", 27020)).ok(true)
+                            .type(REPLICA_SET_OTHER)
+                            .build();
+
+        notOkMember = builder().state(CONNECTED).address(new ServerAddress("localhost", 27021)).ok(false)
+                               .build();
+
+        List<ServerDescription> nodeList = asList(primary, secondary, otherSecondary, uninitiatedMember, notOkMember);
+
+        cluster = new ClusterDescription(MULTIPLE, REPLICA_SET, nodeList);
+    }
+
     @Test
     public void testMode() {
         ClusterDescription description = new ClusterDescription(MULTIPLE, UNKNOWN, Collections.<ServerDescription>emptyList());
@@ -43,44 +86,59 @@ public class ClusterDescriptionTest {
     }
 
     @Test
-    public void testEmptySet() {
+    public void testAll() {
         ClusterDescription description = new ClusterDescription(MULTIPLE, UNKNOWN, Collections.<ServerDescription>emptyList());
         assertTrue(description.getAll().isEmpty());
+        assertEquals(new HashSet<ServerDescription>(asList(primary, secondary, otherSecondary, uninitiatedMember, notOkMember)),
+                     cluster.getAll());
     }
 
     @Test
-    public void testIsConnecting() throws UnknownHostException {
-        ClusterDescription description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(ServerDescription.builder()
-                                                                                                               .state(CONNECTING)
-                                                                                                               .address(new ServerAddress())
-                                                                                                               .type(REPLICA_SET_PRIMARY)
-                                                                                                               .build()));
+    public void testAny() throws UnknownHostException {
+        assertEquals(asList(primary, secondary, otherSecondary, uninitiatedMember), cluster.getAny());
+    }
+
+    @Test
+    public void testPrimaryOrSecondary() throws UnknownHostException {
+        assertEquals(asList(primary, secondary, otherSecondary), cluster.getAnyPrimaryOrSecondary());
+        assertEquals(asList(primary, secondary), cluster.getAnyPrimaryOrSecondary(new Tags("foo", "1").append("bar", "2")));
+    }
+
+    @Test
+    public void testIsCONNECTING() throws UnknownHostException {
+        ClusterDescription description =
+        new ClusterDescription(MULTIPLE, REPLICA_SET, asList(builder()
+                                                            .state(CONNECTING)
+                                                            .address(new ServerAddress())
+                                                            .type(REPLICA_SET_PRIMARY)
+                                                            .build()));
         assertTrue(description.isConnecting());
 
-        description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(ServerDescription.builder()
-                                                                                            .state(CONNECTED)
-                                                                                            .address(new ServerAddress())
-                                                                                            .type(REPLICA_SET_PRIMARY)
-                                                                                            .build()));
+        description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(
+                                                                         builder()
+                                                                         .state(CONNECTED)
+                                                                         .address(new ServerAddress())
+                                                                         .type(REPLICA_SET_PRIMARY)
+                                                                         .build()));
         assertFalse(description.isConnecting());
     }
 
     @Test
-    public void testSortingOfAll() {
-        ClusterDescription description = new ClusterDescription(MULTIPLE,
-                                                                UNKNOWN,
-                                                                asList(ServerDescription.builder()
-                                                                                        .state(CONNECTING)
-                                                                                        .address(new ServerAddress("loc:27019"))
-                                                                                        .build(),
-                                                                       ServerDescription.builder()
-                                                                                        .state(CONNECTING)
-                                                                                        .address(new ServerAddress("loc:27018"))
-                                                                                        .build(),
-                                                                       ServerDescription.builder()
-                                                                                        .state(CONNECTING)
-                                                                                        .address(new ServerAddress("loc:27017"))
-                                                                                        .build())
+    public void testSortingOfAll() throws UnknownHostException {
+        ClusterDescription description =
+        new ClusterDescription(MULTIPLE, UNKNOWN, asList(
+                                                        builder()
+                                                        .state(CONNECTING)
+                                                        .address(new ServerAddress("loc:27019"))
+                                                        .build(),
+                                                        builder()
+                                                        .state(CONNECTING)
+                                                        .address(new ServerAddress("loc:27018"))
+                                                        .build(),
+                                                        builder()
+                                                        .state(CONNECTING)
+                                                        .address(new ServerAddress("loc:27017"))
+                                                        .build())
         );
         Iterator<ServerDescription> iter = description.getAll().iterator();
         assertEquals(new ServerAddress("loc:27017"), iter.next().getAddress());
@@ -91,22 +149,22 @@ public class ClusterDescriptionTest {
     @Test
     public void clusterDescriptionWithAnIncompatibleServerShouldBeIncompatible() throws UnknownHostException {
         ClusterDescription description =
-        new ClusterDescription(MULTIPLE, UNKNOWN, Arrays.asList(
-                                                               ServerDescription.builder()
-                                                                                .state(CONNECTING)
-                                                                                .address(new ServerAddress("loc:27019"))
-                                                                                .build(),
-                                                               ServerDescription.builder()
-                                                                                .state(CONNECTED)
-                                                                                .ok(true)
-                                                                                .address(new ServerAddress("loc:27018"))
-                                                                                .minWireVersion(MAX_DRIVER_WIRE_VERSION + 1)
-                                                                                .maxWireVersion(MAX_DRIVER_WIRE_VERSION + 1)
-                                                                                .build(),
-                                                               ServerDescription.builder()
-                                                                                .state(CONNECTING)
-                                                                                .address(new ServerAddress("loc:27017"))
-                                                                                .build())
+        new ClusterDescription(MULTIPLE, UNKNOWN, asList(
+                                                        builder()
+                                                        .state(CONNECTING)
+                                                        .address(new ServerAddress("loc:27019"))
+                                                        .build(),
+                                                        builder()
+                                                        .state(CONNECTED)
+                                                        .ok(true)
+                                                        .address(new ServerAddress("loc:27018"))
+                                                        .minWireVersion(MAX_DRIVER_WIRE_VERSION + 1)
+                                                        .maxWireVersion(MAX_DRIVER_WIRE_VERSION + 1)
+                                                        .build(),
+                                                        builder()
+                                                        .state(CONNECTING)
+                                                        .address(new ServerAddress("loc:27017"))
+                                                        .build())
         );
         assertFalse(description.isCompatibleWithDriver());
     }
@@ -114,54 +172,54 @@ public class ClusterDescriptionTest {
     @Test
     public void clusterDescriptionWithCompatibleServerShouldBeCompatible() throws UnknownHostException {
         ClusterDescription description =
-        new ClusterDescription(MULTIPLE, UNKNOWN, Arrays.asList(
-                                                               ServerDescription.builder()
-                                                                                .state(CONNECTING)
-                                                                                .address(new ServerAddress("loc:27019"))
-                                                                                .build(),
-                                                               ServerDescription.builder()
-                                                                                .state(CONNECTING)
-                                                                                .address(new ServerAddress("loc:27018"))
-                                                                                .build(),
-                                                               ServerDescription.builder()
-                                                                                .state(CONNECTING)
-                                                                                .address(new ServerAddress("loc:27017"))
-                                                                                .build())
+        new ClusterDescription(MULTIPLE, UNKNOWN, asList(
+                                                        builder()
+                                                        .state(CONNECTING)
+                                                        .address(new ServerAddress("loc:27019"))
+                                                        .build(),
+                                                        builder()
+                                                        .state(CONNECTING)
+                                                        .address(new ServerAddress("loc:27018"))
+                                                        .build(),
+                                                        builder()
+                                                        .state(CONNECTING)
+                                                        .address(new ServerAddress("loc:27017"))
+                                                        .build())
         );
         assertTrue(description.isCompatibleWithDriver());
     }
 
     @Test
-    public void testObjectOverrides() {
-        ClusterDescription description = new ClusterDescription(MULTIPLE,
-                                                                UNKNOWN,
-                                                                asList(ServerDescription.builder()
-                                                                                        .state(CONNECTING)
-                                                                                        .address(new ServerAddress("loc:27019"))
-                                                                                        .build(),
-                                                                       ServerDescription.builder()
-                                                                                        .state(CONNECTING)
-                                                                                        .address(new ServerAddress("loc:27018"))
-                                                                                        .build(),
-                                                                       ServerDescription.builder()
-                                                                                        .state(CONNECTING)
-                                                                                        .address(new ServerAddress("loc:27017"))
-                                                                                        .build())
+    public void testObjectOverrides() throws UnknownHostException {
+        ClusterDescription description =
+        new ClusterDescription(MULTIPLE, UNKNOWN, asList(
+                                                        builder()
+                                                        .state(CONNECTING)
+                                                        .address(new ServerAddress("loc:27019"))
+                                                        .build(),
+                                                        builder()
+                                                        .state(CONNECTING)
+                                                        .address(new ServerAddress("loc:27018"))
+                                                        .build(),
+                                                        builder()
+                                                        .state(CONNECTING)
+                                                        .address(new ServerAddress("loc:27017"))
+                                                        .build())
         );
-        ClusterDescription descriptionTwo = new ClusterDescription(MULTIPLE,
-                                                                   UNKNOWN,
-                                                                   asList(ServerDescription.builder()
-                                                                                           .state(CONNECTING)
-                                                                                           .address(new ServerAddress("loc:27019"))
-                                                                                           .build(),
-                                                                          ServerDescription.builder()
-                                                                                           .state(CONNECTING)
-                                                                                           .address(new ServerAddress("loc:27018"))
-                                                                                           .build(),
-                                                                          ServerDescription.builder()
-                                                                                           .state(CONNECTING)
-                                                                                           .address(new ServerAddress("loc:27017"))
-                                                                                           .build())
+        ClusterDescription descriptionTwo =
+        new ClusterDescription(MULTIPLE, UNKNOWN, asList(
+                                                        builder()
+                                                        .state(CONNECTING)
+                                                        .address(new ServerAddress("loc:27019"))
+                                                        .build(),
+                                                        builder()
+                                                        .state(CONNECTING)
+                                                        .address(new ServerAddress("loc:27018"))
+                                                        .build(),
+                                                        builder()
+                                                        .state(CONNECTING)
+                                                        .address(new ServerAddress("loc:27017"))
+                                                        .build())
         );
         assertEquals(description, descriptionTwo);
         assertEquals(description.hashCode(), descriptionTwo.hashCode());
