@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
@@ -42,6 +43,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     private EnumSet<QueryFlag> exhaustFlag = EnumSet.of(QueryFlag.Exhaust);
     private QueryResult<Document> firstBatch;
     private Connection exhaustConnection;
+    private ConnectionSource readConnectionSource;
 
     @Before
     public void setUp() {
@@ -51,14 +53,20 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
             collection.insert(new Document("_id", i).append("bytes", bytes));
         }
 
-        exhaustConnection = getBinding().getReadConnectionSource().getConnection();
+        readConnectionSource = getBinding().getReadConnectionSource();
+        exhaustConnection = readConnectionSource.getConnection();
         firstBatch = new QueryProtocol<Document>(collection.getNamespace(), exhaustFlag, 0, 0, new Document(), null,
                                                  new DocumentCodec(), new DocumentCodec())
                      .execute(exhaustConnection);
 
     }
 
-
+    @After
+    public void tearDown() {
+        exhaustConnection.release();
+        readConnectionSource.release();
+        super.tearDown();
+    }
     @Test
     public void testExhaustReadAllDocuments() {
         assumeFalse(isSharded());
@@ -78,31 +86,34 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     @Test
     public void testExhaustCloseBeforeReadingAllDocuments() {
         assumeFalse(isSharded());
+        SingleConnectionBinding singleConnectionBinding = new SingleConnectionBinding(exhaustConnection);
+        ConnectionSource source = singleConnectionBinding.getReadConnectionSource();
+        Connection connection = source.getConnection();
         try {
-            SingleConnectionBinding singleConnectionBinding = new SingleConnectionBinding(exhaustConnection);
-            ConnectionSource source = singleConnectionBinding.getReadConnectionSource();
             MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(), firstBatch, 0, 0,
                                                                                new DocumentCodec(),
-                                                                               source.getConnection());
+                                                                               connection);
 
             cursor.next();
             cursor.close();
 
             new QueryProtocol<Document>(collection.getNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, new Document(), null,
                                         new DocumentCodec(), new DocumentCodec())
-            .execute(source.getConnection());
+            .execute(connection);
 
-            singleConnectionBinding.connection.close();
         } finally {
-            exhaustConnection.close();
+            connection.release();
+            source.release();
+            singleConnectionBinding.release();
         }
     }
 
     private static class SingleConnectionBinding implements ReadBinding {
         private final Connection connection;
+        private int referenceCount = 1;
 
         public SingleConnectionBinding(final Connection connection) {
-            this.connection = connection;
+            this.connection = connection.retain();
         }
 
         @Override
@@ -120,21 +131,26 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
             return new ConnectionSource() {
                 @Override
                 public Connection getConnection() {
-                    return new DelayedCloseConnection(connection);
+                    return connection.retain();
                 }
 
                 @Override
                 public ConnectionSource retain() {
+                    referenceCount++;
                     return this;
                 }
 
                 @Override
                 public int getCount() {
-                    return 1;
+                    return referenceCount;
                 }
 
                 @Override
                 public void release() {
+                    referenceCount--;
+                    if (referenceCount == 0) {
+                        connection.release();
+                    }
                 }
             };
         }

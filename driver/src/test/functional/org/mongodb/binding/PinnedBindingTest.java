@@ -49,7 +49,7 @@ public class PinnedBindingTest extends DatabaseTestCase {
         ConnectionSource readConnectionSource = binding.getReadConnectionSource();
         Connection connection = readConnectionSource.getConnection();
         ServerAddress serverAddress = connection.getServerAddress();
-        connection.close();
+        connection.release();
         readConnectionSource.release();
 
         // there is randomization in the selection, so have to try a bunch of times.
@@ -57,14 +57,17 @@ public class PinnedBindingTest extends DatabaseTestCase {
             readConnectionSource = binding.getReadConnectionSource();
             connection = readConnectionSource.getConnection();
             assertEquals(serverAddress, connection.getServerAddress());
+            connection.release();
+            readConnectionSource.release();
         }
 
-        binding.getWriteConnectionSource();
+        ConnectionSource writeConnectionSource = binding.getWriteConnectionSource();
+        writeConnectionSource.release();
 
         readConnectionSource = binding.getReadConnectionSource();
         connection = readConnectionSource.getConnection();
         assertEquals(serverAddress, connection.getServerAddress());
-        connection.close();
+        connection.release();
         readConnectionSource.release();
     }
     @Test
@@ -76,9 +79,28 @@ public class PinnedBindingTest extends DatabaseTestCase {
         Connection readConnection = readSource.getConnection();
         assertEquals(writeConnection.getId(), readConnection.getId());
 
-        writeConnection.close();
-        readConnection.close();
+        writeConnection.release();
+        readConnection.release();
         writeSource.release();
         readSource.release();
+    }
+
+    @Test
+    public void shouldNotDevourAllConnections() {
+        for (int i = 0; i < 250; i++) {
+            PinnedBinding binding = new PinnedBinding(getCluster(), 1, SECONDS);
+            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource());
+            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource());
+            getAndReleaseConnectionSourceAndConnection(binding.getWriteConnectionSource());
+            getAndReleaseConnectionSourceAndConnection(binding.getWriteConnectionSource());
+            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource());
+            getAndReleaseConnectionSourceAndConnection(binding.getReadConnectionSource());
+            binding.release();
+        }
+    }
+
+    private void getAndReleaseConnectionSourceAndConnection(final ConnectionSource connectionSource) {
+        connectionSource.getConnection().release();
+        connectionSource.release();
     }
 }

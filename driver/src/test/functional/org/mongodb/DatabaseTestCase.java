@@ -19,9 +19,11 @@ package org.mongodb;
 import org.junit.After;
 import org.junit.Before;
 import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.connection.ServerHelper;
 import org.mongodb.test.CollectionHelper;
 
 import static org.mongodb.Fixture.getDefaultDatabase;
+import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.initialiseCollection;
 
 public class DatabaseTestCase {
@@ -41,6 +43,11 @@ public class DatabaseTestCase {
     public void tearDown() {
         if (collection != null) {
             collection.tools().drop();
+        }
+        try {
+            ServerHelper.checkPool(getPrimary());
+        } catch (InterruptedException e) {
+            // ignore
         }
     }
 

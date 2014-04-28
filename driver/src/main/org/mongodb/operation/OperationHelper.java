@@ -79,7 +79,7 @@ final class OperationHelper {
         try {
             return protocol.execute(connection);
         } finally {
-            connection.close();
+            connection.release();
         }
     }
 
@@ -168,7 +168,7 @@ final class OperationHelper {
         try {
             return callable.call(connection);
         } finally {
-            connection.close();
+            connection.release();
         }
     }
 
@@ -177,7 +177,7 @@ final class OperationHelper {
         try {
             return callable.call(source, connection);
         } finally {
-            connection.close();
+            connection.release();
         }
     }
 
@@ -199,7 +199,7 @@ final class OperationHelper {
                                     future.init(result, null);
                                 }
                             } finally {
-                                connection.close();
+                                connection.release();
                                 source.release();
                             }
                         }
@@ -227,7 +227,7 @@ final class OperationHelper {
                                     future.init(result, null);
                                 }
                             } finally {
-                                connection.close();
+                                connection.release();
                                 source.release();
                             }
                         }

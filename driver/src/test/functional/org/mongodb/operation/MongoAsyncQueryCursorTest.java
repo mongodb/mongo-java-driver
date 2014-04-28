@@ -108,39 +108,47 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testExhaust() throws InterruptedException {
         assumeFalse(isSharded());
         Connection connection = source.getConnection().get();
-        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(),
-                                                        2, EnumSet.of(Exhaust),
-                                                        connection);
-        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                                            firstBatch, 0, 2, new DocumentCodec(),
-                                            connection)
-        .start(new TestBlock());
+        try {
+            QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(),
+                                                            2, EnumSet.of(Exhaust),
+                                                            connection);
+            new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, 0, 2, new DocumentCodec(),
+                                                connection)
+            .start(new TestBlock());
 
-        latch.await();
-        assertThat(documentResultList, is(documentList));
+            latch.await();
+            assertThat(documentResultList, is(documentList));
+        } finally {
+            connection.release();
+        }
     }
 
     @Test
     public void testExhaustWithLimit() throws InterruptedException {
         assumeFalse(isSharded());
         Connection connection = source.getConnection().get();
-        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection);
+        try {
+            QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection);
 
-        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
-                                            firstBatch, 5, 2, new DocumentCodec(),
-                                            connection)
-        .start(new TestBlock());
+            new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+                                                firstBatch, 5, 2, new DocumentCodec(),
+                                                connection)
+            .start(new TestBlock());
 
-        latch.await();
-        assertThat(documentResultList, is(documentList.subList(0, 5)));
+            latch.await();
+            assertThat(documentResultList, is(documentList.subList(0, 5)));
+        } finally {
+            connection.release();
+        }
     }
 
     @Test
     public void testExhaustWithDiscard() throws InterruptedException, ExecutionException {
         assumeFalse(isSharded());
 
-        DelayedCloseConnection connection = new DelayedCloseConnection(getAsyncBinding().getReadConnectionSource().get()
-                                                                                        .getConnection().get());
+        AsyncConnectionSource readConnectionSource = getAsyncBinding().getReadConnectionSource().get();
+        Connection connection = readConnectionSource.getConnection().get();
 
         try {
             QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection);
@@ -151,10 +159,11 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
             latch.await();
             assertThat(documentResultList, is(documentList.subList(0, 1)));
 
-            firstBatch = executeQuery(getOrderedByIdQuery(), 1, EnumSet.of(Exhaust), connection.getWrapped());
+            firstBatch = executeQuery(getOrderedByIdQuery(), 1, EnumSet.of(Exhaust), connection);
             assertEquals(Arrays.asList(new Document("_id", 0)), firstBatch.getResults());
         } finally {
-            connection.getWrapped().close();
+            connection.release();
+            readConnectionSource.release();
         }
     }
 
@@ -162,9 +171,9 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
     public void testEarlyTermination() throws InterruptedException, ExecutionException {
         assumeFalse(isSharded());
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get();
+        Connection connection = source.getConnection().get();
 
         try {
-            Connection connection = source.getConnection().get();
             QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection);
 
             TestBlock block = new TestBlock(1);
@@ -176,6 +185,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
             latch.await();
             assertEquals(1, block.getIterations());
         } finally {
+            connection.release();
             source.release();
         }
     }
@@ -193,7 +203,7 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
         try {
             return executeQuery(query, numberToReturn, queryFlag, connection);
         } finally {
-            connection.close();
+            connection.release();
         }
     }
 

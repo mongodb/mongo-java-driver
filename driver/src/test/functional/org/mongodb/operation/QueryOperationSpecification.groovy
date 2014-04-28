@@ -18,6 +18,7 @@ package org.mongodb.operation
 
 import org.junit.experimental.categories.Category;
 import category.Async
+import org.mongodb.AsyncBlock
 import org.mongodb.Document
 import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
@@ -26,6 +27,8 @@ import org.mongodb.MongoExecutionTimeoutException
 import org.mongodb.ReadPreference
 import org.mongodb.binding.ClusterBinding
 import org.mongodb.codecs.DocumentCodec
+
+import java.util.concurrent.CountDownLatch
 
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -38,19 +41,16 @@ import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getCluster
 import static org.mongodb.Fixture.isSharded
 import static org.mongodb.Fixture.serverVersionAtLeast
+import static org.mongodb.operation.QueryFlag.Exhaust
 
 class QueryOperationSpecification extends FunctionalSpecification {
-
-    @Override
-    def setup() {
-        collection.insert(new Document())
-    }
 
     def 'should throw execution timeout exception from execute'() {
         assumeFalse(isSharded())
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 
         given:
+        collection.insert(new Document())
         def find = new Find().maxTime(1, SECONDS)
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         enableMaxTimeFailPoint()
@@ -71,6 +71,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 
         given:
+        collection.insert(new Document())
         def find = new Find().maxTime(1, SECONDS)
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         enableMaxTimeFailPoint()
@@ -93,7 +94,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         collection.tools().createIndexes(asList(Index.builder().addKey('count').build()))
         def count = 0;
         def find = new Find()
-        find.getOptions().max(new Document('count', 10))
+        find.getOptions().max(new Document('count', 11))
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
         when:
         queryOperation.execute(getBinding()).each {
@@ -106,7 +107,6 @@ class QueryOperationSpecification extends FunctionalSpecification {
 
     def '$min should limit items returned'() {
         given:
-        collection.find().remove();
         for (i in 1..100) {
             collection.insert(new Document('x', 'y').append('count', i))
         }
@@ -190,4 +190,92 @@ class QueryOperationSpecification extends FunctionalSpecification {
         expect:
         queryOperation.execute(binding) != null // if it didn't throw, the query was executed
     }
+
+    def 'should exhaust'() {
+        assumeFalse(isSharded())
+
+        for (i in 1..500) {
+            collection.insert(new Document('_id', i))
+        }
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find().addFlags(EnumSet.of(Exhaust)), new DocumentCodec(),
+                                                          new DocumentCodec())
+
+        when:
+        def count = 0;
+
+        def cursor = queryOperation.execute(getBinding())
+        try {
+            while (cursor.hasNext()) {
+                cursor.next();
+                count++;
+            }
+        } finally {
+            cursor.close()
+        }
+
+        then:
+        count == 500
+    }
+
+    def 'should iterate asynchronously'() {
+        assumeFalse(isSharded())
+
+        for (i in 1..500) {
+            collection.insert(new Document('_id', i))
+        }
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find(), new DocumentCodec(), new DocumentCodec())
+
+        when:
+        def latch = new CountDownLatch(1)
+        def count = 0;
+
+        def cursor = queryOperation.executeAsync(getAsyncBinding())
+        cursor.get().start(new AsyncBlock<Document>() {
+            @Override
+            void done() {
+                latch.countDown()
+            }
+
+            @Override
+            void apply(final Document document) {
+                count++;
+            }
+        })
+        latch.await(5, SECONDS)
+
+        then:
+        count == 500
+    }
+
+    def 'should exhaust asynchronously'() {
+        assumeFalse(isSharded())
+
+        for (i in 1..500) {
+            collection.insert(new Document('_id', i))
+        }
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find().addFlags(EnumSet.of(Exhaust)), new DocumentCodec(),
+                                                          new DocumentCodec())
+
+        when:
+        def latch = new CountDownLatch(1)
+        def count = 0;
+
+        def cursor = queryOperation.executeAsync(getAsyncBinding())
+        cursor.get().start(new AsyncBlock<Document>() {
+            @Override
+            void done() {
+                latch.countDown()
+            }
+
+            @Override
+            void apply(final Document document) {
+                count++;
+            }
+        })
+        latch.await(5, SECONDS)
+
+        then:
+        count == 500
+    }
+
 }

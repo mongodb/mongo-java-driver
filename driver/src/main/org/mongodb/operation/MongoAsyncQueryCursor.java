@@ -73,6 +73,9 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             this.connectionSource.retain();
         }
         this.exhaustConnection = exhaustConnection;
+        if (this.exhaustConnection != null) {
+            this.exhaustConnection.retain();
+        }
     }
 
     @Override
@@ -106,7 +109,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                 try {
                     block.done();
                 } finally {
-                    exhaustConnection.close();
+                    exhaustConnection.release();
                     releaseConnectionSource();
                 }
             }
@@ -129,7 +132,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
         @Override
         public void onResult(final QueryResult<T> result, final MongoException e) {
             if (!isExhaust() & connection != null) {
-                connection.close();
+                connection.release();
             }
             if (e != null) {
                 close(0);
