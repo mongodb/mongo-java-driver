@@ -21,12 +21,17 @@ import org.mongodb.AggregationOptions
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 
+import static java.util.Arrays.asList
+import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
+import static org.mongodb.Fixture.serverVersionAtLeast
 
 class AggregateExplainOperationSpecification extends FunctionalSpecification {
 
     def 'should be able to explain an empty pipeline'() {
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
+
         given:
         AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [], aggregateOptions)
 
@@ -44,6 +49,8 @@ class AggregateExplainOperationSpecification extends FunctionalSpecification {
 
     @Category(Async)
     def 'should be able to explain an empty pipeline asynchronously'() {
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
+
         given:
         AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [], aggregateOptions)
 
@@ -60,6 +67,8 @@ class AggregateExplainOperationSpecification extends FunctionalSpecification {
     }
 
     def 'should be able to explain a pipeline'() {
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
+
         given:
         def match = new Document('job', 'plumber')
         AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(),
@@ -73,7 +82,7 @@ class AggregateExplainOperationSpecification extends FunctionalSpecification {
         result.getResponse().containsKey('stages')
         Document stage = (Document) result.getResponse().get('stages').first()
         stage.'$cursor'.'query' == match
-        
+
         where:
         aggregateOptions << [
                 AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build(),
@@ -82,6 +91,8 @@ class AggregateExplainOperationSpecification extends FunctionalSpecification {
 
     @Category(Async)
     def 'should be able to explain a pipeline asynchronously'() {
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
+
         given:
         def match = new Document('job', 'plumber')
         AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(),
