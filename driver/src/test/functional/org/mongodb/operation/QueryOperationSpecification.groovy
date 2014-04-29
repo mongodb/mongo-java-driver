@@ -214,6 +214,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         count == 500
     }
 
+    @Category(Async)
     def 'should iterate asynchronously'() {
         assumeFalse(isSharded())
 
@@ -237,6 +238,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         count == 500
     }
 
+    @Category(Async)
     def 'should exhaust asynchronously'() {
         assumeFalse(isSharded())
 
