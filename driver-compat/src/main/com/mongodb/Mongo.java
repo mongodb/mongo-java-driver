@@ -697,10 +697,9 @@ public class Mongo {
                                          final List<MongoCredential> credentialsList, final MongoClientOptions options) {
         return createCluster(ClusterSettings.builder().hosts(createNewSeedList(seedList))
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                                            .serverSelector(createServerSelector())
+                                            .serverSelector(createServerSelector(options))
                                             .build(),
-                             credentialsList, options
-                            );
+                             credentialsList, options);
     }
 
     private static Cluster createCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialsList,
@@ -709,10 +708,9 @@ public class Mongo {
                                             .mode(getSingleServerClusterMode(options.toNew()))
                                             .hosts(asList(serverAddress.toNew()))
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                                            .serverSelector(createServerSelector())
+                                            .serverSelector(createServerSelector(options))
                                             .build(),
-                             credentialsList, options
-                            );
+                             credentialsList, options);
     }
 
     private static Cluster createCluster(final ClusterSettings settings, final List<MongoCredential> credentialsList,
@@ -724,8 +722,7 @@ public class Mongo {
                                                   new SocketStreamFactory(options.getHeartbeatSocketSettings(),
                                                                           options.getSocketFactory()),
                                                   createNewCredentialList(credentialsList),
-                                                  null, new JMXConnectionPoolListener(), null
-                                                 );
+                                                  null, new JMXConnectionPoolListener(), null);
     }
 
     private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
@@ -736,8 +733,10 @@ public class Mongo {
         return retVal;
     }
 
-    private static ServerSelector createServerSelector() {
-        return new CompositeServerSelector(asList(new MongosHAServerSelector(), new LatencyMinimizingServerSelector(15, MILLISECONDS)));
+    private static ServerSelector createServerSelector(final MongoClientOptions options) {
+        return new CompositeServerSelector(asList(new MongosHAServerSelector(),
+                                                  new LatencyMinimizingServerSelector(options.getAcceptableLatencyDifference(),
+                                                                                      MILLISECONDS)));
     }
 
     Cluster getCluster() {

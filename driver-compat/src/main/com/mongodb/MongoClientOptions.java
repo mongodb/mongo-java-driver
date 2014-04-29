@@ -283,6 +283,28 @@ public class MongoClientOptions {
     }
 
     /**
+     * Gets the acceptable latency difference.  When choosing among multiple MongoDB servers to send a request,
+     * the MongoClient will only send that request to a server whose ping time is less than or equal to the server with the fastest ping
+     * time plus the acceptable latency difference.
+     * <p>
+     * For example, let's say that the client is choosing a server to send a query when
+     * the read preference is {@code ReadPreference.secondary()}, and that there are three secondaries, server1, server2, and server3,
+     * whose ping times are 10, 15, and 16 milliseconds, respectively.  With an acceptable latency difference of 5 milliseconds,
+     * the client will send the query to either server1 or server2 (randomly selecting between the two).
+     * </p>
+     * <p>
+     * The default value is 15 milliseconds.
+     * </p>
+     *
+
+     * @return the acceptable latency difference, in milliseconds
+     * @since 2.12.0
+     */
+    public int getAcceptableLatencyDifference() {
+        return proxied.getAcceptableLatencyDifference();
+    }
+
+    /**
      * Gets the required replica set name.  With this option set, the MongoClient instance will <p/> <p> 1. Connect in replica set mode, and
      * discover all members of the set based on the given servers </p> <p> 2. Make sure that the set name reported by all members matches
      * the required set name. </p> <p> 3. Refuse to service any requests if any member of the seed list is not part of a replica set with
@@ -467,6 +489,7 @@ public class MongoClientOptions {
             proxied.heartbeatConnectRetryFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10")));
             proxied.heartbeatConnectTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000")));
             proxied.heartbeatSocketTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")));
+            proxied.acceptableLatencyDifference(Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15")));
         }
 
         /**
@@ -779,6 +802,20 @@ public class MongoClientOptions {
          */
         public Builder heartbeatThreadCount(final int heartbeatThreadCount) {
             proxied.heartbeatThreadCount(heartbeatThreadCount);
+            return this;
+        }
+
+        /**
+         * Sets the acceptable latency difference.
+         *
+         * @param acceptableLatencyDifference the acceptable latency difference, in milliseconds
+         * @return {@code this}
+         * @throws IllegalArgumentException if acceptableLatencyDifference < 0
+         * @see com.mongodb.MongoClientOptions#getAcceptableLatencyDifference()
+         * @since 2.12.0
+         */
+        public Builder acceptableLatencyDifference(final int acceptableLatencyDifference) {
+            proxied.acceptableLatencyDifference(acceptableLatencyDifference);
             return this;
         }
 

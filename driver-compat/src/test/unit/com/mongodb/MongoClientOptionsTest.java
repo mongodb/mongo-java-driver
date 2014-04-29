@@ -44,6 +44,7 @@ public class MongoClientOptionsTest {
         assertEquals(DefaultDBDecoder.FACTORY, options.getDbDecoderFactory());
         assertEquals(DefaultDBEncoder.FACTORY, options.getDbEncoderFactory());
         assertEquals(0, options.getHeartbeatThreadCount());
+        assertEquals(15, options.getAcceptableLatencyDifference());
     }
 
     @Test
@@ -124,6 +125,7 @@ public class MongoClientOptionsTest {
         builder.heartbeatConnectTimeout(15);
         builder.heartbeatSocketTimeout(20);
         builder.heartbeatThreadCount(4);
+        builder.acceptableLatencyDifference(25);
         builder.requiredReplicaSetName("test");
 
         DBEncoderFactory encoderFactory = new MyDBEncoderFactory();
@@ -150,6 +152,7 @@ public class MongoClientOptionsTest {
         assertEquals(15, options.getHeartbeatConnectTimeout());
         assertEquals(20, options.getHeartbeatSocketTimeout());
         assertEquals(4, options.getHeartbeatThreadCount());
+        assertEquals(25, options.getAcceptableLatencyDifference());
         assertEquals("test", options.getRequiredReplicaSetName());
 
         assertEquals(5, options.getServerSettings().getHeartbeatFrequency(MILLISECONDS));
