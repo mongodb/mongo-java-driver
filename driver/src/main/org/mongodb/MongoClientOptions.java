@@ -60,6 +60,7 @@ public final class MongoClientOptions {
     private final int heartbeatConnectTimeout;
     private final int heartbeatSocketTimeout;
     private final int heartbeatThreadCount;
+    private final int acceptableLatencyDifference;
 
     private final String requiredReplicaSetName;
     private final SocketSettings socketSettings;
@@ -107,6 +108,7 @@ public final class MongoClientOptions {
         private int heartbeatConnectTimeout = 20000;
         private int heartbeatSocketTimeout = 20000;
         private int heartbeatThreadCount;
+        private int acceptableLatencyDifference = 15;
 
         private String requiredReplicaSetName;
 
@@ -423,6 +425,23 @@ public final class MongoClientOptions {
             this.heartbeatThreadCount = heartbeatThreadCount;
             return this;
         }
+        /**
+         * Sets the acceptable latency difference.
+         *
+         * @param acceptableLatencyDifference the acceptable latency different, in milliseconds
+         * @return {@code this}
+         * @throws IllegalArgumentException if acceptableLatencyDifference < 0
+         * @see MongoClientOptions#getAcceptableLatencyDifference()
+         */
+        public Builder acceptableLatencyDifference(final int acceptableLatencyDifference) {
+            if (acceptableLatencyDifference < 0) {
+                throw new IllegalArgumentException("acceptableLatencyDifference must be greater than or equal to 0");
+            }
+            this.acceptableLatencyDifference = acceptableLatencyDifference;
+            return this;
+        }
+
+
 
         /**
          * Sets the required replica set name for the cluster.
@@ -664,10 +683,30 @@ public final class MongoClientOptions {
      * <p> The default value is the number of servers in the seed list. </p>
      *
      * @return the heartbeat thread count
-     * @since 2.12.0
      */
     public int getHeartbeatThreadCount() {
         return heartbeatThreadCount;
+    }
+
+    /**
+     * Gets the acceptable latency difference.  When choosing among multiple MongoDB servers to send a request,
+     * the MongoClient will only send that request to a server whose ping time is less than or equal to the server with the fastest ping
+     * time plus the acceptable latency difference.
+     * <p>
+     * For example, let's say that the client is choosing a server to send a query when
+     * the read preference is {@code ReadPreference.secondary()}, and that there are three secondaries, server1, server2, and server3,
+     * whose ping times are 10, 15, and 16 milliseconds, respectively.  With an acceptable latency difference of 5 milliseconds,
+     * the client will send the query to either server1 or server2 (randomly selecting between the two).
+     * </p>
+     * <p>
+     * The default value is 15 milliseconds.
+     * </p>
+     *
+
+     * @return the acceptable latency difference, in milliseconds
+     */
+    public int getAcceptableLatencyDifference() {
+        return acceptableLatencyDifference;
     }
 
     /**
@@ -761,6 +800,7 @@ public final class MongoClientOptions {
                + ", heartbeatConnectTimeout=" + heartbeatConnectTimeout
                + ", heartbeatSocketTimeout=" + heartbeatSocketTimeout
                + ", heartbeatThreadCount=" + heartbeatThreadCount
+               + ", acceptableLatencyDifference=" + acceptableLatencyDifference
                + ", requiredReplicaSetName=" + requiredReplicaSetName
                + '}';
     }
@@ -787,6 +827,7 @@ public final class MongoClientOptions {
         heartbeatConnectTimeout = builder.heartbeatConnectTimeout;
         heartbeatSocketTimeout = builder.heartbeatSocketTimeout;
         heartbeatThreadCount = builder.heartbeatThreadCount;
+        acceptableLatencyDifference = builder.acceptableLatencyDifference;
         requiredReplicaSetName = builder.requiredReplicaSetName;
 
         socketSettings = SocketSettings.builder()

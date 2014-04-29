@@ -25,12 +25,18 @@ import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.connection.StreamFactory;
 import org.mongodb.management.JMXConnectionPoolListener;
+import org.mongodb.selector.CompositeServerSelector;
+import org.mongodb.selector.LatencyMinimizingServerSelector;
+import org.mongodb.selector.MongosHAServerSelector;
+import org.mongodb.selector.ServerSelector;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @ThreadSafe
 public final class MongoClients {
@@ -50,11 +56,11 @@ public final class MongoClients {
                                      final MongoClientOptions options) {
         return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
                                                                          .mode(ClusterConnectionMode.SINGLE)
-                                                                         .hosts(Arrays.asList(serverAddress))
+                                                                         .hosts(asList(serverAddress))
+                                                                         .serverSelector(createServerSelector(options))
                                                                          .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                                                          .build(),
-                                                          credentialList, options, getStreamFactory(options)
-                                                         ));
+                                                          credentialList, options, getStreamFactory(options)));
     }
 
     public static MongoClient create(final List<ServerAddress> seedList) {
@@ -65,9 +71,9 @@ public final class MongoClients {
         return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
                                                                          .hosts(seedList)
                                                                          .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                                                         .serverSelector(createServerSelector(options))
                                                                          .build(),
-                                                          Collections.<MongoCredential>emptyList(), options, getStreamFactory(options)
-                                                         ));
+                                                          Collections.<MongoCredential>emptyList(), options, getStreamFactory(options)));
     }
 
     public static MongoClient create(final MongoClientURI mongoURI) throws UnknownHostException {
@@ -78,12 +84,11 @@ public final class MongoClients {
         if (mongoURI.getHosts().size() == 1) {
             return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
                                                                              .mode(ClusterConnectionMode.SINGLE)
-                                                                             .hosts(Arrays.asList(new ServerAddress(mongoURI.getHosts()
-                                                                                                                            .get(0))))
+                                                                             .hosts(asList(new ServerAddress(mongoURI.getHosts().get(0))))
                                                                              .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                                                             .serverSelector(createServerSelector(options))
                                                                              .build(),
-                                                              mongoURI.getCredentialList(), options, getStreamFactory(options)
-                                                             ));
+                                                              mongoURI.getCredentialList(), options, getStreamFactory(options)));
         } else {
             List<ServerAddress> seedList = new ArrayList<ServerAddress>();
             for (final String cur : mongoURI.getHosts()) {
@@ -92,13 +97,10 @@ public final class MongoClients {
             return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
                                                                              .hosts(seedList)
                                                                              .requiredReplicaSetName(options.getRequiredReplicaSetName())
+                                                                             .serverSelector(createServerSelector(options))
                                                                              .build(),
-                                                              mongoURI.getCredentialList(), options, getStreamFactory(options)
-                                                             ));
+                                                              mongoURI.getCredentialList(), options, getStreamFactory(options)));
         }
-    }
-
-    private MongoClients() {
     }
 
     private static Cluster createCluster(final ClusterSettings clusterSettings, final List<MongoCredential> credentialList,
@@ -116,5 +118,14 @@ public final class MongoClients {
 
     private static StreamFactory getStreamFactory(final MongoClientOptions options) {
         return new SocketStreamFactory(options.getSocketSettings(), options.getSslSettings());
+    }
+
+    private static ServerSelector createServerSelector(final MongoClientOptions options) {
+        return new CompositeServerSelector(asList(new MongosHAServerSelector(),
+                                                  new LatencyMinimizingServerSelector(options.getAcceptableLatencyDifference(),
+                                                                                      MILLISECONDS)));
+    }
+
+    private MongoClients() {
     }
 }

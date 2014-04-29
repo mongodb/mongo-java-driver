@@ -47,6 +47,7 @@ public class MongoClientOptionsTest {
         assertEquals(20000, options.getHeartbeatConnectTimeout());
         assertEquals(20000, options.getHeartbeatSocketTimeout());
         assertEquals(0, options.getHeartbeatThreadCount());
+        assertEquals(15, options.getAcceptableLatencyDifference());
         assertNull(options.getRequiredReplicaSetName());
     }
 
@@ -129,6 +130,12 @@ public class MongoClientOptionsTest {
         builder.heartbeatSocketTimeout(-1);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testAcceptableLatencyDifferenceIllegalArguments() {
+        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+        builder.acceptableLatencyDifference(-1);
+    }
+
     @Test
     public void testAsyncEnabledIllegalArguments() {
         if (!AsyncDetector.isAsyncEnabled()) {
@@ -164,6 +171,7 @@ public class MongoClientOptionsTest {
         builder.heartbeatSocketTimeout(20);
         builder.heartbeatThreadCount(4);
         builder.requiredReplicaSetName("test");
+        builder.acceptableLatencyDifference(25);
         PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
         builder.primitiveCodecs(primitiveCodecs);
 
@@ -188,6 +196,7 @@ public class MongoClientOptionsTest {
         assertEquals(15, options.getHeartbeatConnectTimeout());
         assertEquals(20, options.getHeartbeatSocketTimeout());
         assertEquals(4, options.getHeartbeatThreadCount());
+        assertEquals(25, options.getAcceptableLatencyDifference());
         assertEquals("test", options.getRequiredReplicaSetName());
 
         assertEquals(5, options.getServerSettings().getHeartbeatFrequency(MILLISECONDS));
