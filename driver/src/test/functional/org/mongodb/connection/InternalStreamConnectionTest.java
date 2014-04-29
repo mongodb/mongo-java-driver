@@ -45,15 +45,14 @@ import java.util.concurrent.CountDownLatch;
 
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.Fixture.getPrimary;
-import static org.mongodb.Fixture.getSSLSettings;
+import static org.mongodb.Fixture.getAsyncStreamFactory;
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 
 // This is a Java test so that we can use categories.
 @Category(Async.class)
 public class InternalStreamConnectionTest {
     private static final String CLUSTER_ID = "1";
-    private AsynchronousSocketChannelStreamFactory factory = new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(),
-                                                                                                        getSSLSettings());
+    private StreamFactory factory = getAsyncStreamFactory();
     private Stream stream;
 
     @Before
@@ -121,19 +120,15 @@ public class InternalStreamConnectionTest {
     }
 
     private static final class TestConnectionListener implements ConnectionListener {
-        private int connectionOpenedCount;
-        private int connectionClosedCount;
         private int messagesSentCount;
         private int messageReceivedCount;
 
         @Override
         public void connectionOpened(final ConnectionEvent event) {
-            connectionOpenedCount++;
         }
 
         @Override
         public void connectionClosed(final ConnectionEvent event) {
-            connectionClosedCount++;
         }
 
         @Override
@@ -147,18 +142,8 @@ public class InternalStreamConnectionTest {
         }
 
         public void reset() {
-            connectionOpenedCount = 0;
-            connectionClosedCount = 0;
             messagesSentCount = 0;
             messageReceivedCount = 0;
-        }
-
-        public int connectionOpenedCount() {
-            return connectionOpenedCount;
-        }
-
-        public int connectionClosedCount() {
-            return connectionClosedCount;
         }
 
         public int messagesSentCount() {

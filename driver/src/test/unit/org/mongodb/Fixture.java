@@ -159,6 +159,10 @@ public final class Fixture {
         return mongoClient.getCluster();
     }
 
+    public static StreamFactory getAsyncStreamFactory() {
+        return getAsyncStreamFactory(getMongoClientURI().getOptions());
+    }
+
     public static Cluster getAsyncCluster() {
         if (asyncCluster == null) {
             try {
@@ -178,7 +182,7 @@ public final class Fixture {
                                                                                                .get(0))))
                                                 .requiredReplicaSetName(mongoURI.getOptions().getRequiredReplicaSetName())
                                                 .build(),
-                                 mongoURI.getCredentialList(), mongoURI.getOptions(), getStreamFactory(mongoURI.getOptions())
+                                 mongoURI.getCredentialList(), mongoURI.getOptions(), getAsyncStreamFactory(mongoURI.getOptions())
                                 );
         } else {
             List<ServerAddress> seedList = new ArrayList<ServerAddress>();
@@ -189,7 +193,7 @@ public final class Fixture {
                                                 .hosts(seedList)
                                                 .requiredReplicaSetName(mongoURI.getOptions().getRequiredReplicaSetName())
                                                 .build(),
-                                 mongoURI.getCredentialList(), mongoURI.getOptions(), getStreamFactory(mongoURI.getOptions()));
+                                 mongoURI.getCredentialList(), mongoURI.getOptions(), getAsyncStreamFactory(mongoURI.getOptions()));
         }
     }
 
@@ -206,7 +210,7 @@ public final class Fixture {
         return new SocketStreamFactory(options.getHeartbeatSocketSettings(), options.getSslSettings());
     }
 
-    private static StreamFactory getStreamFactory(final MongoClientOptions options) {
+    private static StreamFactory getAsyncStreamFactory(final MongoClientOptions options) {
         String streamType = System.getProperty("org.mongodb.async.type", "nio2");
 
         if (streamType.equals("netty") || options.getSslSettings().isEnabled()) {
