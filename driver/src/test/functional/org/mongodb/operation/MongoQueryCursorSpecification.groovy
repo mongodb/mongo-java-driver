@@ -235,6 +235,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         cursor.next().get('_id') == 1
 
         when:
+        def latch = new CountDownLatch(1)
         new Thread(new Runnable() {
             @Override
             void run() {
@@ -244,6 +245,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
                 } catch (ignored) {
                     // all good
                 }
+                latch.countDown()
             }
         }).start()
 
@@ -252,6 +254,9 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         then:
         cursor.hasNext()
         cursor.next().get('_id') == 2
+
+        cleanup:
+        latch.await()
     }
 
     @Category(Slow)
