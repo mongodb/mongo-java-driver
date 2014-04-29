@@ -51,6 +51,7 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         options.cursorFinalizerEnabled = true;
         options.socketFactory = SSLSocketFactory.getDefault();
         options.alwaysUseMBeans = true;
+        options.requiredReplicaSetName = "set1";
 
         MongoOptions copy = options.copy();
         assertEquals(options.connectionsPerHost, copy.connectionsPerHost);
@@ -70,6 +71,7 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         assertEquals(options.readPreference, copy.readPreference);
         assertEquals(options.alwaysUseMBeans, copy.alwaysUseMBeans);
         assertEquals(options.socketFactory, copy.socketFactory);
+        assertEquals(options.requiredReplicaSetName, copy.requiredReplicaSetName);
     }
 
     @Test
@@ -96,6 +98,7 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         options.setSocketFactory(SSLSocketFactory.getDefault());
         options.setAlwaysUseMBeans(true);
         options.setCursorFinalizerEnabled(false);
+        options.requiredReplicaSetName = "set1";
 
         assertEquals(options.getConnectionsPerHost(), 100);
         assertEquals(options.getThreadsAllowedToBlockForConnectionMultiplier(), 101);
@@ -115,6 +118,7 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         assertEquals(options.isAlwaysUseMBeans(), true);
         assertEquals(options.getSocketFactory(), options.socketFactory);
         assertEquals(options.isCursorFinalizerEnabled(), false);
+        assertEquals(options.getRequiredReplicaSetName(), "set1");
     }
 
     @Test

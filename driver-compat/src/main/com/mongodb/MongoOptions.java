@@ -153,6 +153,9 @@ public class MongoOptions {
      */
     public boolean alwaysUseMBeans;
 
+    String requiredReplicaSetName;
+
+
     @Deprecated
     public MongoOptions() {
         reset();
@@ -173,6 +176,7 @@ public class MongoOptions {
         description = options.getDescription();
         writeConcern = options.getWriteConcern();
         alwaysUseMBeans = options.isAlwaysUseMBeans();
+        requiredReplicaSetName = options.getRequiredReplicaSetName();
    }
 
     public void reset() {
@@ -195,6 +199,7 @@ public class MongoOptions {
         description = null;
         cursorFinalizerEnabled = true;
         alwaysUseMBeans = false;
+        requiredReplicaSetName = null;
     }
 
     public MongoOptions copy() {
@@ -218,6 +223,7 @@ public class MongoOptions {
         m.description = description;
         m.cursorFinalizerEnabled = cursorFinalizerEnabled;
         m.alwaysUseMBeans = alwaysUseMBeans;
+        m.requiredReplicaSetName = requiredReplicaSetName;
         return m;
     }
 
@@ -520,6 +526,17 @@ public class MongoOptions {
         this.alwaysUseMBeans = alwaysUseMBeans;
     }
 
+    /**
+     * Gets the required replica set name that this client should be connecting to.
+     *
+     * @return the required replica set name, or null if none is required
+     * @since 2.12
+     */
+    public String getRequiredReplicaSetName() {
+        return requiredReplicaSetName;
+    }
+
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -588,7 +605,10 @@ public class MongoOptions {
         if (writeConcern != null ? !writeConcern.equals(options.writeConcern) : options.writeConcern != null) {
             return false;
         }
-
+        if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(options.requiredReplicaSetName)
+                                           : options.requiredReplicaSetName != null) {
+            return false;
+        }
         return true;
     }
 
@@ -613,6 +633,7 @@ public class MongoOptions {
         result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
         result = 31 * result + (writeConcern != null ? writeConcern.hashCode() : 0);
         result = 31 * result + (alwaysUseMBeans ? 1 : 0);
+        result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
         return result;
     }
 
@@ -638,6 +659,7 @@ public class MongoOptions {
                + ", cursorFinalizerEnabled=" + cursorFinalizerEnabled
                + ", writeConcern=" + writeConcern
                + ", alwaysUseMBeans=" + alwaysUseMBeans
+               + ", requiredReplicaSetName=" + requiredReplicaSetName
                + '}';
     }
 }
