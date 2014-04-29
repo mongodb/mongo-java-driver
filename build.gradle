@@ -127,10 +127,6 @@ configure(subprojects.findAll { it.name != 'util' }) {
         }
 
         useJUnit {
-            if (!JavaVersion.current().isJava7Compatible() || project.buildingWith('ssl.enabled') ||
-                System.getProperty('org.mongodb.disableAsync', 'false')) {
-                excludeCategories 'category.Async'
-            }
             if (!project.buildingWith('rs.enabled')) {
                 excludeCategories 'category.ReplicaSet'
             }
