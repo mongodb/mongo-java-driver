@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-public enum Get {
+enum Get {
     BeforeChangeApplied,
     AfterChangeApplied
 }
