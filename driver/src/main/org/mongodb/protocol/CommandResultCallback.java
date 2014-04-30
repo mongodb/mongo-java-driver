@@ -22,8 +22,12 @@ import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 
 class CommandResultCallback extends CommandResultBaseCallback {
+    public static final Logger LOGGER = Loggers.getLogger("protocol.command");
+
     private final SingleResultCallback<CommandResult> callback;
 
     public CommandResultCallback(final SingleResultCallback<CommandResult> callback, final Decoder<Document> decoder,
@@ -36,10 +40,13 @@ class CommandResultCallback extends CommandResultBaseCallback {
     protected boolean callCallback(final CommandResult commandResult, final MongoException e) {
         if (e != null) {
             callback.onResult(null, e);
-        } else if (!commandResult.isOk()) {
-            callback.onResult(null, ProtocolHelper.getCommandFailureException(commandResult));
         } else {
-            callback.onResult(commandResult, null);
+            LOGGER.debug("Command execution completed with status " + commandResult.isOk());
+            if (!commandResult.isOk()) {
+                callback.onResult(null, ProtocolHelper.getCommandFailureException(commandResult));
+            } else {
+                callback.onResult(commandResult, null);
+            }
         }
         return true;
     }

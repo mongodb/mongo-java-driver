@@ -65,7 +65,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
                             command.keySet().iterator().next(), command.values().iterator().next(),
                             namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
         CommandResult commandResult = receiveMessage(connection, sendMessage(connection).getId());
-        LOGGER.debug("Command execution complete");
+        LOGGER.debug("Command execution completed with status " + commandResult.isOk());
         return commandResult;
     }
 
@@ -93,6 +93,9 @@ public class CommandProtocol implements Protocol<CommandResult> {
     }
 
     public MongoFuture<CommandResult> executeAsync(final Connection connection) {
+        LOGGER.debug(format("Asynchronously sending command {%s : %s} to database %s on connection [%s] to server %s",
+                            command.keySet().iterator().next(), command.values().iterator().next(),
+                            namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
         SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
