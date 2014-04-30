@@ -55,16 +55,16 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
 
     @Override
     public QueryResult<T> execute(final Connection connection) {
-        LOGGER.debug(format("Getting more documents from cursor with id %d on connection [%s] to server %s",
-                            getMore.getServerCursor().getId(), connection.getId(), connection.getServerAddress()));
+        LOGGER.debug(format("Getting more documents from namespace %s with cursor %d on connection [%s] to server %s",
+                            namespace, getMore.getServerCursor().getId(), connection.getId(), connection.getServerAddress()));
         QueryResult<T> queryResult = receiveMessage(connection, sendMessage(connection));
         LOGGER.debug("Get-more completed");
         return queryResult;
     }
 
     public MongoFuture<QueryResult<T>> executeAsync(final Connection connection) {
-        LOGGER.debug(format("Asynchronously getting more documents from cursor with id %d on connection [%s] to server %s",
-                            getMore.getServerCursor().getId(), connection.getId(), connection.getServerAddress()));
+        LOGGER.debug(format("Asynchronously getting more documents from namespace %s with cursor %d on connection [%s] to server %s",
+                            namespace, getMore.getServerCursor().getId(), connection.getId(), connection.getServerAddress()));
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
