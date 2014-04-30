@@ -19,6 +19,7 @@ package org.mongodb.async;
 import org.mongodb.Document;
 import org.mongodb.MongoClientURI;
 import org.mongodb.MongoCommandFailureException;
+import org.mongodb.MongoNamespace;
 
 import java.net.UnknownHostException;
 
@@ -66,15 +67,27 @@ public final class Fixture {
         return defaultDatabase;
     }
 
-    public static MongoCollection<Document> initializeCollection(final MongoDatabase database, final String collectionName) {
+    public static MongoCollection<Document> initializeCollection(final MongoNamespace namespace) {
+        MongoDatabase database = getMongoClient().getDatabase(namespace.getDatabaseName());
         try {
-            database.executeCommand(new Document("drop", collectionName)).get();
+            database.executeCommand(new Document("drop", namespace.getCollectionName())).get();
         } catch (MongoCommandFailureException e) {
             if (!e.getErrorMessage().startsWith("ns not found")) {
                 throw e;
             }
         }
-        return database.getCollection(collectionName);
+        return database.getCollection(namespace.getCollectionName());
+    }
+
+    public static void dropCollection(final MongoNamespace namespace) {
+        try {
+            getMongoClient().getDatabase(namespace.getDatabaseName())
+                            .executeCommand(new Document("drop", namespace.getCollectionName())).get();
+        } catch (MongoCommandFailureException e) {
+            if (!e.getErrorMessage().startsWith("ns not found")) {
+                throw e;
+            }
+        }
     }
 
     static class ShutdownHook extends Thread {
