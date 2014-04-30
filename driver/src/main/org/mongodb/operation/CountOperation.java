@@ -35,7 +35,7 @@ import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  *
  * @since 3.0
  */
-public class CountOperation implements ReadOperation<Long>, AsyncReadOperation<Long> {
+public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private final Encoder<Document> encoder;
     private final MongoNamespace namespace;
     private final Find find;

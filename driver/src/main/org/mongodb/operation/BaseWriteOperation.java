@@ -37,9 +37,9 @@ import org.mongodb.protocol.WriteCommandProtocol;
 import org.mongodb.protocol.WriteProtocol;
 
 import static org.mongodb.assertions.Assertions.notNull;
+import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
-import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static org.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static org.mongodb.operation.OperationHelper.withConnection;
 import static org.mongodb.operation.WriteRequest.Type.INSERT;
@@ -47,7 +47,8 @@ import static org.mongodb.operation.WriteRequest.Type.REMOVE;
 import static org.mongodb.operation.WriteRequest.Type.REPLACE;
 import static org.mongodb.operation.WriteRequest.Type.UPDATE;
 
-public abstract class BaseWriteOperation implements WriteOperation<WriteResult>, AsyncWriteOperation<WriteResult> {
+
+public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteResult>, WriteOperation<WriteResult> {
 
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
@@ -87,23 +88,38 @@ public abstract class BaseWriteOperation implements WriteOperation<WriteResult>,
 
     @Override
     public MongoFuture<WriteResult> executeAsync(final AsyncWriteBinding binding) {
-        // Todo handle async command protocol
-        final SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
-        executeProtocolAsync(getWriteProtocol(), binding).register(new SingleResultCallback<WriteResult>() {
+        return withConnection(binding, new AsyncCallableWithConnection<WriteResult>() {
+
             @Override
-            public void onResult(final WriteResult result, final MongoException e) {
-                if (e != null) {
-                    MongoException checkedError = e;
-                    if (e instanceof BulkWriteException) {
-                        checkedError = convertBulkWriteException((BulkWriteException) e);
-                    }
-                    retVal.init(null, checkedError);
+            public MongoFuture<WriteResult> call(final Connection connection) {
+                final SingleResultFuture<WriteResult> future = new SingleResultFuture<WriteResult>();
+                if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection)) {
+                    getCommandProtocol().executeAsync(connection)
+                        .register(new SingleResultCallback<BulkWriteResult>() {
+                            @Override
+                            public void onResult(final BulkWriteResult result, final MongoException e) {
+                                if (e != null) {
+                                    future.init(null, translateException(e));
+                                } else {
+                                    future.init(translateBulkWriteResult(result), null);
+                                }
+                            }
+                        });
                 } else {
-                    retVal.init(result, null);
+                   getWriteProtocol().executeAsync(connection).register(new SingleResultCallback<WriteResult>() {
+                       @Override
+                       public void onResult(final WriteResult result, final MongoException e) {
+                           if (e != null) {
+                               future.init(null, translateException(e));
+                           } else {
+                               future.init(result, null);
+                           }
+                       }
+                   });
                 }
+                return future;
             }
         });
-        return retVal;
     }
 
     public MongoNamespace getNamespace() {
@@ -113,6 +129,14 @@ public abstract class BaseWriteOperation implements WriteOperation<WriteResult>,
     protected abstract WriteProtocol getWriteProtocol();
 
     protected abstract WriteCommandProtocol getCommandProtocol();
+
+    private MongoException translateException(final MongoException e) {
+        MongoException checkedError = e;
+        if (e instanceof BulkWriteException) {
+            checkedError = convertBulkWriteException((BulkWriteException) e);
+        }
+        return checkedError;
+    }
 
     private MongoWriteException convertBulkWriteException(final BulkWriteException e) {
         BulkWriteError lastError = getLastError(e);

@@ -19,13 +19,17 @@ package org.mongodb.protocol;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
 import org.mongodb.Encoder;
+import org.mongodb.MongoException;
+import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
+import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.RemoveRequest;
+import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.WriteRequest;
 import org.mongodb.protocol.message.DeleteCommandMessage;
 
@@ -56,6 +60,23 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
         BulkWriteResult writeResult = super.execute(connection);
         LOGGER.debug("Delete completed");
         return writeResult;
+    }
+
+    @Override
+    public MongoFuture<BulkWriteResult> executeAsync(final Connection connection) {
+        LOGGER.debug(format("Asynchronously deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
+                            connection.getId(), connection.getServerAddress()));
+        final SingleResultFuture<BulkWriteResult> future = new SingleResultFuture<BulkWriteResult>();
+        super.executeAsync(connection).register(new SingleResultCallback<BulkWriteResult>() {
+            @Override
+            public void onResult(final BulkWriteResult result, final MongoException e) {
+                if (e != null) {
+                    LOGGER.debug("Asynchronous delete completed");
+                }
+                future.init(result, e);
+            }
+        });
+        return future;
     }
 
     @Override
