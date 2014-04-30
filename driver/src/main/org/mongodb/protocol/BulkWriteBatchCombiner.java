@@ -131,12 +131,21 @@ public class BulkWriteBatchCombiner {
         return ordered && hasWriteErrors();
     }
 
+    public boolean hasErrors() {
+        return hasWriteErrors() || hasWriteConcernErrors();
+    }
+
+    public BulkWriteException getError() {
+        return hasErrors() ? new BulkWriteException(createResult(),
+                                                   new ArrayList<BulkWriteError>(writeErrors),
+                                                   writeConcernErrors.isEmpty() ? null
+                                                                                : writeConcernErrors.get(writeConcernErrors.size() - 1),
+                                                   serverAddress) : null;
+    }
+
     private void throwOnError() {
-        if (!writeErrors.isEmpty() || !writeConcernErrors.isEmpty()) {
-            throw new BulkWriteException(createResult(),
-                                         new ArrayList<BulkWriteError>(writeErrors),
-                                         writeConcernErrors.isEmpty() ? null : writeConcernErrors.get(writeConcernErrors.size() - 1),
-                                         serverAddress);
+        if (hasErrors()) {
+            throw getError();
         }
     }
 
@@ -149,5 +158,9 @@ public class BulkWriteBatchCombiner {
 
     private boolean hasWriteErrors() {
         return !writeErrors.isEmpty();
+    }
+
+    private boolean hasWriteConcernErrors() {
+        return !writeConcernErrors.isEmpty();
     }
 }

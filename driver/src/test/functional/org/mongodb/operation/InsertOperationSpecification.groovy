@@ -21,7 +21,6 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoDuplicateKeyException
 import org.mongodb.codecs.DocumentCodec
-import spock.lang.FailsWith
 
 import static java.util.Arrays.asList
 import static org.mongodb.Fixture.getAsyncBinding
@@ -132,7 +131,6 @@ class InsertOperationSpecification extends FunctionalSpecification {
     }
 
     @Category(Async)
-    @FailsWith(NullPointerException)
     def 'should return null CommandResult with unacknowledged WriteConcern asynchronously'() {
         given:
         def insert = new InsertRequest<Document>(new Document('_id', 1))
