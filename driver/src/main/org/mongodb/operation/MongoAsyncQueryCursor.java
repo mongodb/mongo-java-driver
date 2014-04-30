@@ -91,7 +91,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             handleExhaustCleanup(responseTo, future, e);
         } else {
             releaseConnectionSource();
-            LOGGER.debug("Initializing forEach future " + (e == null ? "" : " with exception " + e));
+            LOGGER.trace("Initializing forEach future " + (e == null ? "" : " with exception " + e));
             future.init(null, e);
         }
     }
@@ -156,12 +156,12 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                         breakEarly = true;
                         break;
                     }
-                    LOGGER.debug("Applying block to " + cur);
+                    LOGGER.trace("Applying block to " + cur);
                     block.apply(cur);
 
                 }
             } catch (Throwable e1) {
-                LOGGER.debug("Applied block threw exception: " + e1);
+                LOGGER.trace("Applied block threw exception: " + e1);
                 breakEarly = true;
                 exceptionFromApply = new MongoInternalException("Exception thrown by client while iterating over cursor", e1);
             }
