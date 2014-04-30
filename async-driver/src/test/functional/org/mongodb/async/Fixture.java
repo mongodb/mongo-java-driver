@@ -2,6 +2,7 @@ package org.mongodb.async;
 
 import org.mongodb.Document;
 import org.mongodb.MongoClientURI;
+import org.mongodb.MongoCommandFailureException;
 
 import java.net.UnknownHostException;
 
@@ -50,7 +51,13 @@ public final class Fixture {
     }
 
     public static MongoCollection<Document> initializeCollection(final MongoDatabase database, final String collectionName) {
-        database.executeCommand(new Document("drop", collectionName));
+        try {
+            database.executeCommand(new Document("drop", collectionName)).get();
+        } catch (MongoCommandFailureException e) {
+            if (!e.getErrorMessage().startsWith("ns not found")) {
+                throw e;
+            }
+        }
         return database.getCollection(collectionName);
     }
 
@@ -59,7 +66,11 @@ public final class Fixture {
         public void run() {
             if (mongoClient != null) {
                 if (defaultDatabase != null) {
-                    defaultDatabase.executeCommand(new Document("dropDatabase", defaultDatabase.getName()));
+                    try {
+                        defaultDatabase.executeCommand(new Document("dropDatabase", defaultDatabase.getName())).get();
+                    } catch (MongoCommandFailureException e) {
+                        // ignore
+                    }
                 }
                 mongoClient.close();
                 mongoClient = null;
