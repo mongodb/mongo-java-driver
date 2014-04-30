@@ -27,6 +27,8 @@ import org.mongodb.ServerCursor;
 import org.mongodb.binding.AsyncConnectionSource;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.protocol.GetMoreDiscardProtocol;
 import org.mongodb.protocol.GetMoreProtocol;
 import org.mongodb.protocol.GetMoreReceiveProtocol;
@@ -35,13 +37,15 @@ import org.mongodb.protocol.QueryResult;
 // TODO: kill cursor on early breakout
 class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
 
+    private static final Logger LOGGER = Loggers.getLogger("operation.query.cursor");
+
     private final MongoNamespace namespace;
     private final QueryResult<T> firstBatch;
     private final int limit;
     private final int batchSize;
     private final Decoder<T> decoder;
-    private AsyncConnectionSource connectionSource;
-    private Connection exhaustConnection;
+    private final AsyncConnectionSource connectionSource;
+    private final Connection exhaustConnection;
     private long numFetchedSoFar;
     private ServerCursor cursor;
 
@@ -87,6 +91,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             handleExhaustCleanup(responseTo, future, e);
         } else {
             releaseConnectionSource();
+            LOGGER.debug("Initializing forEach future " + (e == null ? "" : " with exception " + e));
             future.init(null, e);
         }
     }
@@ -151,10 +156,12 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                         breakEarly = true;
                         break;
                     }
+                    LOGGER.debug("Applying block to " + cur);
                     block.apply(cur);
 
                 }
             } catch (Throwable e1) {
+                LOGGER.debug("Applied block threw exception: " + e1);
                 breakEarly = true;
                 exceptionFromApply = new MongoInternalException("Exception thrown by client while iterating over cursor", e1);
             }

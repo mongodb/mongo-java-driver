@@ -63,6 +63,8 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     public MongoFuture<QueryResult<T>> executeAsync(final Connection connection) {
+        LOGGER.debug(format("Asynchronously getting more documents from cursor with id %d on connection [%s] to server %s",
+                            getMore.getServerCursor().getId(), connection.getId(), connection.getServerAddress()));
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);

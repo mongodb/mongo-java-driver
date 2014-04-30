@@ -24,9 +24,12 @@ import org.mongodb.ServerCursor;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.protocol.message.ReplyMessage;
 
 class GetMoreResultCallback<T> extends ResponseCallback {
+    public static final Logger LOGGER = Loggers.getLogger("protocol.getmore");
     private final SingleResultCallback<QueryResult<T>> callback;
     private final Decoder<T> decoder;
     private final long cursorId;
@@ -50,6 +53,7 @@ class GetMoreResultCallback<T> extends ResponseCallback {
                 throw new MongoCursorNotFoundException(new ServerCursor(cursorId, getServerAddress()));
             } else {
                 result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()), getServerAddress());
+                LOGGER.debug("GetMore results received " + result.getResults().size() + " documents with cursor " + result.getCursor());
             }
         } catch (MongoException me) {
             exceptionResult = me;

@@ -24,11 +24,15 @@ import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.protocol.message.ReplyMessage;
 
 import static org.mongodb.protocol.ProtocolHelper.getQueryFailureException;
 
 class QueryResultCallback<T> extends ResponseCallback {
+    public static final Logger LOGGER = Loggers.getLogger("protocol.query");
+
     private final SingleResultCallback<QueryResult<T>> callback;
     private final Decoder<T> decoder;
 
@@ -52,6 +56,7 @@ class QueryResultCallback<T> extends ResponseCallback {
                 throw getQueryFailureException(getServerAddress(), errorDocument);
             } else {
                 result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()), getServerAddress());
+                LOGGER.debug("Query results received " + result.getResults().size() + " documents with cursor " + result.getCursor());
             }
         } catch (MongoException me) {
             exceptionResult = me;
