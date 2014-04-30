@@ -59,7 +59,7 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
                                                  .executeAsync(connection);
             newFuture.register(new SingleResultFutureCallback<WriteResult>(future));
         } else {
-            future.init(null, null);
+            future.init(new UnacknowledgedWriteResult(), null);
         }
     }
 }
