@@ -23,7 +23,7 @@ class FunctionalSpecification extends Specification {
             try {
                 database.executeCommand(new Document('drop', collection.getName())).get()
             } catch (MongoCommandFailureException e) {
-                if (!e.getErrorMessage().startsWith("ns not found")) {
+                if (!e.getErrorMessage().startsWith('ns not found')) {
                     throw e;
                 }
             }
