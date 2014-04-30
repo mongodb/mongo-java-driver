@@ -1,6 +1,7 @@
 package org.mongodb.async
 
 import org.mongodb.Document
+import org.mongodb.MongoCommandFailureException
 import org.mongodb.MongoNamespace
 import spock.lang.Specification
 
@@ -19,7 +20,14 @@ class FunctionalSpecification extends Specification {
 
     def cleanup() {
         if (collection != null) {
-            database.executeCommand(new Document('drop', collection.getName()))
+            try {
+                database.executeCommand(new Document('drop', collection.getName())).get()
+            } catch (MongoCommandFailureException e) {
+                if (!e.getErrorMessage().startsWith("ns not found")) {
+                    throw e;
+                }
+            }
+
         }
     }
 
