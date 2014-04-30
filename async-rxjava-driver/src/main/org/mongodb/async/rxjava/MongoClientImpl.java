@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+ * Copyright (c) 2008-2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,4 +14,23 @@
  * limitations under the License.
  */
 
-include 'util','bson', 'driver', 'async-driver', 'driver-compat', 'async-rxjava-driver'
+package org.mongodb.async.rxjava;
+
+class MongoClientImpl implements MongoClient {
+
+    private final org.mongodb.async.MongoClient wrapped;
+
+    public MongoClientImpl(final org.mongodb.async.MongoClient wrapped) {
+        this.wrapped = wrapped;
+    }
+
+    @Override
+    public MongoDatabase getDatabase(final String name) {
+        return new MongoDatabaseImpl(wrapped.getDatabase(name));
+    }
+
+    @Override
+    public void close() {
+        wrapped.close();
+    }
+}
