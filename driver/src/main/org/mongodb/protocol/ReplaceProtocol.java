@@ -69,7 +69,7 @@ public class ReplaceProtocol<T> extends WriteProtocol {
         super.executeAsync(connection).register(new SingleResultCallback<WriteResult>() {
             @Override
             public void onResult(final WriteResult result, final MongoException e) {
-                if (e != null) {
+                if (e == null) {
                     LOGGER.debug("Asynchronous replace completed");
                 }
                 future.init(result, e);

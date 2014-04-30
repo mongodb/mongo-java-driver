@@ -67,7 +67,7 @@ public class InsertProtocol<T> extends WriteProtocol {
         super.executeAsync(connection).register(new SingleResultCallback<WriteResult>() {
             @Override
             public void onResult(final WriteResult result, final MongoException e) {
-                if (e != null) {
+                if (e == null) {
                     LOGGER.debug("Asynchronous insert completed");
                 }
                 future.init(result, e);
