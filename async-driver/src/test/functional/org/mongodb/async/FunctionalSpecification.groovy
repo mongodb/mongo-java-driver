@@ -15,15 +15,13 @@
  */
 
 package org.mongodb.async
-
 import org.mongodb.Document
-import org.mongodb.MongoCommandFailureException
 import org.mongodb.MongoNamespace
 import spock.lang.Specification
 
+import static org.mongodb.async.Fixture.dropCollection
 import static org.mongodb.async.Fixture.getDefaultDatabase
 import static org.mongodb.async.Fixture.initializeCollection
-
 
 class FunctionalSpecification extends Specification {
     protected MongoDatabase database;
@@ -31,19 +29,12 @@ class FunctionalSpecification extends Specification {
 
     def setup() {
         database = getDefaultDatabase()
-        collection = initializeCollection(database, getClass().getName())
+        collection = initializeCollection(new MongoNamespace(database.getName(), getClass().getName()))
     }
 
     def cleanup() {
         if (collection != null) {
-            try {
-                database.executeCommand(new Document('drop', collection.getName())).get()
-            } catch (MongoCommandFailureException e) {
-                if (!e.getErrorMessage().startsWith('ns not found')) {
-                    throw e;
-                }
-            }
-
+            dropCollection(collection.getNamespace())
         }
     }
 
