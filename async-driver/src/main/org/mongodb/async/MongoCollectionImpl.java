@@ -108,7 +108,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public MongoFuture<WriteResult> save(final T document) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+        if (codec.getId(document) == null) {
+            return insert(document);
+        } else {
+            return find(new Document("_id", codec.getId(document))).upsert().replace(document);
+        }
     }
 
     <V> MongoFuture<V> execute(final AsyncWriteOperation<V> writeOperation) {
@@ -122,6 +126,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     private class MongoCollectionView implements MongoView<T> {
         private final Find find = new Find();
         private final ReadPreference readPreference = options.getReadPreference();
+        private boolean upsert;
 
         @Override
         public MongoFuture<T> one() {
@@ -204,6 +209,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
+        public MongoView<T> upsert() {
+            upsert = true;
+            return this;
+        }
+
+        @Override
         public MongoFuture<Void> forEach(final Block<? super T> block) {
             final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
             execute(new QueryOperation<T>(getNamespace(), find, new DocumentCodec(), getCodec()), readPreference)
@@ -266,7 +277,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> replace(final T replacement) {
             notNull("replacement", replacement);
             return execute(new ReplaceOperation<T>(getNamespace(), true, options.getWriteConcern(),
-                                                   asList(new ReplaceRequest<T>(find.getFilter(), replacement)),
+                                                   asList(new ReplaceRequest<T>(find.getFilter(), replacement).upsert(upsert)),
                                                    new DocumentCodec(), getCodec()));
         }
     }
