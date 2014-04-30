@@ -139,6 +139,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                       public void apply(final T t) {
                                           retVal.init(t, null);
                                       }
+                                  }).register(new SingleResultCallback<Void>() {
+                                      @Override
+                                      public void onResult(final Void result, final MongoException e) {
+                                          if (!retVal.isDone()) {
+                                              retVal.init(null, e);
+                                          }
+                                      }
                                   });
                               }
                           }

@@ -13,6 +13,17 @@ class ViewSpecification extends FunctionalSpecification {
         collection.insert(sortedDocuments).get()
     }
 
+    def 'one should return null if there are no matching documents'() {
+        expect:
+        collection.find(new Document('_id', 101)).one().get() == null
+    }
+
+    def 'one should return a document if there are a matching one'() {
+        def document = collection.find(new Document('_id', 1)).sort(new Document('_id', 1)).one().get()
+        expect:
+        document == sortedDocuments[0]
+    }
+
     def 'should sort documents'() {
         expect:
         collection.find(new Document()).sort(new Document('_id', 1)).into([]).get() == sortedDocuments
