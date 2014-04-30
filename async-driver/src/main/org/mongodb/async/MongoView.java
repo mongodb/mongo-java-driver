@@ -100,4 +100,12 @@ public interface MongoView<T> extends MongoWritableView<T>, MongoReadableView<T>
      * @return this
      */
     MongoView<T> fields(ConvertibleToDocument selector);
+
+    /**
+     * Specifies that update operations executed on this view will result in inserts if no document with the _id of the document exists
+     * in the collection.
+     *
+     * @return this
+     */
+    MongoView<T> upsert();
 }
