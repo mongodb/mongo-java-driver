@@ -22,6 +22,9 @@ import org.bson.types.ObjectId;
 import org.junit.Test;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -141,6 +144,21 @@ public class BasicDBObjectTest {
 
         assertEquality(new BasicDBObject("a", new BasicDBObject("y", 2).append("x", 1)),
                        new BasicDBObject("a", new BasicDBObject("x", 1).append("y", 2)));
+
+        assertEquality(new BasicDBObject("a", asList(new BasicDBObject("y", 2).append("x", 1))),
+                       new BasicDBObject("a", asList(new BasicDBObject("x", 1).append("y", 2))));
+
+        assertEquality(new BasicDBObject("a", new BasicDBList().put(1, new BasicDBObject("y", 2).append("x", 1))),
+                       new BasicDBObject("a", new BasicDBList().put(1, new BasicDBObject("x", 1).append("y", 2))));
+
+        Map<String, Object> first = new HashMap<String, Object>();
+        first.put("1", new BasicDBObject("y", 2).append("x", 1));
+        first.put("2", new BasicDBObject("a", 2).append("b", 1));
+        Map<String, Object> second = new TreeMap<String, Object>();
+        second.put("2", new BasicDBObject("b", 1).append("a", 2));
+        second.put("1", new BasicDBObject("x", 1).append("y", 2));
+
+        assertEquality(new BasicDBObject("a", first), new BasicDBObject("a", second));
     }
 
     void assertEquality(final BasicBSONObject x, final BasicBSONObject y) {
