@@ -103,42 +103,39 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
 
         if (message != null && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches()) {
 
-            ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
-            try {
-                final BaseWriteCommandMessage nextMessage = message.encode(buffer);
-                final int itemCount = nextMessage != null ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
-                final IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
-                final int nextBatchNum = batchNum + 1;
-                final int nextRangeStartIndex = currentRangeStartIndex + itemCount;
+            final ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
+            final BaseWriteCommandMessage nextMessage = message.encode(buffer);
+            final int itemCount = nextMessage != null ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
+            final IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
+            final int nextBatchNum = batchNum + 1;
+            final int nextRangeStartIndex = currentRangeStartIndex + itemCount;
 
-                if (nextBatchNum > 1) {
-                    getLogger().debug(format("Asynchronously sending batch %d", batchNum));
-                }
-
-                sendMessageAsync(connection, message.getId(), buffer).register(new SingleResultCallback<CommandResult>() {
-                    @Override
-                    public void onResult(final CommandResult result, final MongoException e) {
-                        if (e != null) {
-                            future.init(null, e);
-                        } else {
-
-                            if (nextBatchNum > 1) {
-                                getLogger().debug(format("Asynchronously received response for batch %d", batchNum));
-                            }
-
-                            if (hasError(result)) {
-                                bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), result), indexMap);
-                            } else {
-                                bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), result), indexMap);
-                            }
-
-                            executeBatchesAsync(connection, nextMessage, bulkWriteBatchCombiner, nextBatchNum, nextRangeStartIndex, future);
-                        }
-                    }
-                });
-            } finally {
-                buffer.close();
+            if (nextBatchNum > 1) {
+                getLogger().debug(format("Asynchronously sending batch %d", batchNum));
             }
+
+            sendMessageAsync(connection, message.getId(), buffer).register(new SingleResultCallback<CommandResult>() {
+                @Override
+                public void onResult(final CommandResult result, final MongoException e) {
+                    buffer.close();
+                    if (e != null) {
+                        future.init(null, e);
+                    } else {
+
+                        if (nextBatchNum > 1) {
+                            getLogger().debug(format("Asynchronously received response for batch %d", batchNum));
+                        }
+
+                        if (hasError(result)) {
+                            bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), result), indexMap);
+                        } else {
+                            bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), result), indexMap);
+                        }
+
+                        executeBatchesAsync(connection, nextMessage, bulkWriteBatchCombiner, nextBatchNum, nextRangeStartIndex, future);
+                    }
+                }
+            });
         } else {
             if (bulkWriteBatchCombiner.hasErrors()) {
                 future.init(null, bulkWriteBatchCombiner.getError());
