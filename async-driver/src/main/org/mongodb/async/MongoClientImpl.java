@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
-public class MongoClientImpl implements MongoClient {
+class MongoClientImpl implements MongoClient {
     private final Cluster cluster;
     private final MongoClientOptions options;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
@@ -107,9 +107,5 @@ public class MongoClientImpl implements MongoClient {
     private AsyncReadWriteBinding getReadWriteBinding(final ReadPreference readPreference) {
         notNull("readPreference", readPreference);
         return new AsyncClusterBinding(cluster, readPreference, options.getMaxWaitTime(), TimeUnit.MILLISECONDS);
-    }
-
-    Cluster getCluster() {
-        return cluster;
     }
 }
