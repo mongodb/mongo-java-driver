@@ -23,15 +23,15 @@ import static org.mongodb.assertions.Assertions.notNull;
 
 class AcknowledgedBulkWriteResult extends BulkWriteResult {
     private int insertedCount;
-    private int updatedCount;
+    private int matchedCount;
     private int removedCount;
     private Integer modifiedCount;
     private final List<BulkWriteUpsert> upserts;
 
-    AcknowledgedBulkWriteResult(final int insertedCount, final int updatedCount, final int removedCount,
+    AcknowledgedBulkWriteResult(final int insertedCount, final int matchedCount, final int removedCount,
                                 final Integer modifiedCount, final List<BulkWriteUpsert> upserts) {
         this.insertedCount = insertedCount;
-        this.updatedCount = updatedCount;
+        this.matchedCount = matchedCount;
         this.removedCount = removedCount;
         this.modifiedCount = modifiedCount;
         this.upserts = Collections.unmodifiableList(notNull("upserts", upserts));
@@ -48,8 +48,8 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
     }
 
     @Override
-    public int getUpdatedCount() {
-        return updatedCount;
+    public int getMatchedCount() {
+        return matchedCount;
     }
 
     @Override
@@ -97,7 +97,7 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
         if (removedCount != that.removedCount) {
             return false;
         }
-        if (updatedCount != that.updatedCount) {
+        if (matchedCount != that.matchedCount) {
             return false;
         }
         if (!upserts.equals(that.upserts)) {
@@ -111,7 +111,7 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
     public int hashCode() {
         int result = upserts.hashCode();
         result = 31 * result + insertedCount;
-        result = 31 * result + updatedCount;
+        result = 31 * result + matchedCount;
         result = 31 * result + removedCount;
         result = 31 * result + modifiedCount;
         return result;
@@ -121,7 +121,7 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
     public String toString() {
         return "AcknowledgedBulkWriteResult{"
                + "insertedCount=" + insertedCount
-               + ", updatedCount=" + updatedCount
+               + ", matchedCount=" + matchedCount
                + ", removedCount=" + removedCount
                + ", modifiedCount=" + modifiedCount
                + ", upserts=" + upserts

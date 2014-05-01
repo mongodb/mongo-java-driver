@@ -24,7 +24,7 @@ final class BulkWriteHelper {
     static BulkWriteResult translateBulkWriteResult(final org.mongodb.BulkWriteResult bulkWriteResult) {
         if (bulkWriteResult.isAcknowledged()) {
             Integer modifiedCount = (bulkWriteResult.isModifiedCountAvailable()) ? bulkWriteResult.getModifiedCount() : null;
-            return new AcknowledgedBulkWriteResult(bulkWriteResult.getInsertedCount(), bulkWriteResult.getUpdatedCount(),
+            return new AcknowledgedBulkWriteResult(bulkWriteResult.getInsertedCount(), bulkWriteResult.getMatchedCount(),
                                                    bulkWriteResult.getRemovedCount(), modifiedCount,
                                                    translateBulkWriteUpserts(bulkWriteResult.getUpserts()));
         } else {

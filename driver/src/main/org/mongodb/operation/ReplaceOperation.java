@@ -67,11 +67,11 @@ public class ReplaceOperation<T> extends BaseWriteOperation {
 
     @Override
     protected int getCount(final BulkWriteResult bulkWriteResult) {
-        return bulkWriteResult.getUpdatedCount() + bulkWriteResult.getUpserts().size();
+        return bulkWriteResult.getMatchedCount() + bulkWriteResult.getUpserts().size();
     }
 
     @Override
     protected boolean getUpdatedExisting(final BulkWriteResult bulkWriteResult) {
-        return bulkWriteResult.getUpdatedCount() > 0 && bulkWriteResult.getUpserts().isEmpty();
+        return bulkWriteResult.getMatchedCount() > 0 && bulkWriteResult.getUpserts().isEmpty();
     }
 }
