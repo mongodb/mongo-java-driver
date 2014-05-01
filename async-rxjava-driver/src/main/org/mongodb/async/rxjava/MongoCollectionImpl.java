@@ -210,5 +210,25 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 }
             }));
         }
+
+        @Override
+        public Observable<WriteResult> update(final Document updateOperations) {
+            return Observable.create(new OnSubscribeAdapter<WriteResult>(new FutureFunction<WriteResult>() {
+                @Override
+                public MongoFuture<WriteResult> apply() {
+                    return wrappedView.update(updateOperations);
+                }
+            }));
+        }
+
+        @Override
+        public Observable<WriteResult> updateOne(final Document updateOperations) {
+            return Observable.create(new OnSubscribeAdapter<WriteResult>(new FutureFunction<WriteResult>() {
+                @Override
+                public MongoFuture<WriteResult> apply() {
+                    return wrappedView.updateOne(updateOperations);
+                }
+            }));
+        }
     }
 }

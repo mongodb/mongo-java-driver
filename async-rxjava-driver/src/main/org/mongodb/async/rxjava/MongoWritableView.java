@@ -16,6 +16,7 @@
 
 package org.mongodb.async.rxjava;
 
+import org.mongodb.Document;
 import org.mongodb.WriteResult;
 import rx.Observable;
 
@@ -28,11 +29,31 @@ import rx.Observable;
 public interface MongoWritableView<T> {
 
     /**
-     * Replace a document in the underlying collection with the given document, using the filter criteria of the view.
+     * With the given document, replace a single document in the underlying collection matching the filter criteria in the view.
      *
      * @param replacement the replacement document
      * @return an Observable representing the completion of the replace. It will report exactly one event when the command completes
      * successfully.
      */
     Observable<WriteResult> replace(T replacement);
+
+
+    /**
+     * With the given update operations, update all documents in the underlying collection matching the filter criteria in the view.
+     *
+     * @param updateOperations the update operations to apply to each document
+     * @return an Observable representing the completion of the update. It will report exactly one event when the command completes
+     * successfully.
+     */
+    Observable<WriteResult> update(Document updateOperations);
+
+    /**
+     /**
+     * With the given update operations, update a single document in the underlying collection matching the filter criteria in the view.
+     *
+     * @param updateOperations the update operations to apply to each document
+     * @return an Observable representing the completion of the update. It will report exactly one event when the command completes
+     * successfully.
+     */
+    Observable<WriteResult> updateOne(Document updateOperations);
 }
