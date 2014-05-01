@@ -24,7 +24,9 @@ import org.mongodb.codecs.DocumentCodec
 
 import static java.util.Arrays.asList
 import static org.mongodb.Fixture.getAsyncBinding
+import static org.mongodb.Fixture.getAsyncSingleConnectionBinding
 import static org.mongodb.Fixture.getBinding
+import static org.mongodb.Fixture.getPinnedBinding
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 import static org.mongodb.WriteConcern.UNACKNOWLEDGED
 
@@ -118,29 +120,39 @@ class InsertOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().count() == 1001
     }
 
-    def 'should return null CommandResult with unacknowledged WriteConcern'() {
+    def 'should return UnacknowledgedWriteResult when using an unacknowledged WriteConcern'() {
         given:
         def insert = new InsertRequest<Document>(new Document('_id', 1))
         def op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, asList(insert), new DocumentCodec())
 
         when:
-        def result = op.execute(getBinding())
+        def binding = getPinnedBinding()
+        def result = op.execute(binding)
+        new InsertOperation<Document>(namespace, true, ACKNOWLEDGED, [new InsertRequest<Document>(new Document('_id', 2))],
+                                      new DocumentCodec()).execute(binding);
 
         then:
         !result.wasAcknowledged()
+
+        cleanup:
+        acknowledgeWrite(binding)
     }
 
     @Category(Async)
-    def 'should return null CommandResult with unacknowledged WriteConcern asynchronously'() {
+    def 'should return UnacknowledgedWriteResult when using an unacknowledged WriteConcern asynchronously'() {
         given:
         def insert = new InsertRequest<Document>(new Document('_id', 1))
         def op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, asList(insert), new DocumentCodec())
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def binding = getAsyncSingleConnectionBinding()
+        def result = op.executeAsync(binding).get()
 
         then:
         !result.wasAcknowledged()
+
+        cleanup:
+        acknowledgeWrite(binding)
     }
 
     def 'should insert a batch at The limit of the batch size'() {
