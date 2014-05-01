@@ -34,6 +34,7 @@ import org.mongodb.protocol.AcknowledgedBulkWriteResult
 
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getAsyncBinding
+import static org.mongodb.Fixture.getAsyncSingleConnectionBinding
 import static org.mongodb.Fixture.serverVersionAtLeast
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 import static org.mongodb.WriteConcern.UNACKNOWLEDGED
@@ -378,10 +379,12 @@ class BulkWriteOperationAsyncSpecification extends FunctionalSpecification {
                                              UNACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def binding = getAsyncSingleConnectionBinding()
+        def result = op.executeAsync(binding).get()
 
         then:
         !result.acknowledged
+        acknowledgeWrite(binding)
         getCollectionHelper().find(new Document('_id', 1)).first() == new Document('_id', 1).append('x', 2)
         getCollectionHelper().find(new Document('_id', 2)).first() == new Document('_id', 2).append('x', 3)
         getCollectionHelper().find(new Document('_id', 3)).isEmpty()
