@@ -23,10 +23,13 @@ import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 import spock.lang.Shared
 
+import static java.util.Arrays.asList
+import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getDefaultDatabase
 import static org.mongodb.Fixture.initialiseCollection
+import static org.mongodb.Fixture.serverVersionAtLeast
 
 class AggregateToCollectionOperationSpecification extends FunctionalSpecification {
 
@@ -60,6 +63,8 @@ class AggregateToCollectionOperationSpecification extends FunctionalSpecificatio
     }
 
     def 'should be able to output to a collection'() {
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
+
         when:
         AggregateToCollectionOperation op = new AggregateToCollectionOperation(getNamespace(),
                                                                                [new Document('$out', outCollection.name)],
@@ -72,6 +77,8 @@ class AggregateToCollectionOperationSpecification extends FunctionalSpecificatio
 
     @Category(Async)
     def 'should be able to output to a collection asynchronously'() {
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
+
         when:
         AggregateToCollectionOperation op = new AggregateToCollectionOperation(getNamespace(),
                                                                                [new Document('$out', outCollection.name)],
@@ -83,6 +90,8 @@ class AggregateToCollectionOperationSpecification extends FunctionalSpecificatio
     }
 
     def 'should be able to match then output to a collection'() {
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
+
         when:
         AggregateToCollectionOperation op = new AggregateToCollectionOperation(getNamespace(),
                                                                                [new Document('$match', new Document('job', 'plumber')),
@@ -96,6 +105,8 @@ class AggregateToCollectionOperationSpecification extends FunctionalSpecificatio
 
     @Category(Async)
     def 'should be able to match then output to a collection asynchronously'() {
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
+
         when:
         AggregateToCollectionOperation op = new AggregateToCollectionOperation(getNamespace(),
                                                                                [new Document('$match', new Document('job', 'plumber')),
