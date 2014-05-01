@@ -23,7 +23,7 @@ import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoFuture;
 import rx.Observable;
 
-public class MongoDatabaseImpl implements MongoDatabase {
+class MongoDatabaseImpl implements MongoDatabase {
     private final org.mongodb.async.MongoDatabase wrapped;
 
     public MongoDatabaseImpl(final org.mongodb.async.MongoDatabase wrapped) {
