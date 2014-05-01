@@ -178,7 +178,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
         } else if (getType() == REMOVE) {
             response.put("n", bulkWriteResult.getRemovedCount());
         } else if (getType() == UPDATE || getType() == REPLACE) {
-            response.put("n", bulkWriteResult.getUpdatedCount() + bulkWriteResult.getUpserts().size());
+            response.put("n", bulkWriteResult.getMatchedCount() + bulkWriteResult.getUpserts().size());
             if (bulkWriteResult.getUpserts().isEmpty()) {
                 response.put("updatedExisting", true);
             } else {

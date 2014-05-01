@@ -41,7 +41,7 @@ public class UnacknowledgedBulkWriteResult extends BulkWriteResult {
     }
 
     @Override
-    public int getUpdatedCount() {
+    public int getMatchedCount() {
         throw getUnacknowledgedWriteException();
     }
 

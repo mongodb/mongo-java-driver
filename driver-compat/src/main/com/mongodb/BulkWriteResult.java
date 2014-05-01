@@ -44,16 +44,16 @@ public abstract class BulkWriteResult {
     public abstract int getInsertedCount();
 
     /**
-     * Returns the number of documents updated by the write operation.  This will include documents that matched the query but where the
-     * modification didn't result in any actual change to the document; for example, if you set the value of some field ,
-     * and the field already has that value, that will still count as an update.
+     * Returns the number of documents matched by updates or replacements in the write operation.  This will include documents that
+     * matched the query but where the modification didn't result in any actual change to the document; for example,
+     * if you set the value of some field, and the field already has that value, that will still count as an update.
      *
-     * @return the number of documents updated by the write operation
+     * @return the number of documents matched by updates in the write operation
      *
      * @throws UnacknowledgedWriteException if the write was unacknowledged.
      * @see WriteConcern#UNACKNOWLEDGED
      */
-    public abstract int getUpdatedCount();
+    public abstract int getMatchedCount();
 
     /**
      * Returns the number of documents removed by the write operation.
