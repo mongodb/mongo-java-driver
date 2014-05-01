@@ -16,7 +16,6 @@
 
 
 package org.mongodb.operation
-
 import category.Slow
 import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
@@ -34,6 +33,7 @@ import org.mongodb.protocol.AcknowledgedBulkWriteResult
 
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getBinding
+import static org.mongodb.Fixture.getPinnedBinding
 import static org.mongodb.Fixture.serverVersionAtLeast
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 import static org.mongodb.WriteConcern.UNACKNOWLEDGED
@@ -376,10 +376,14 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
                                              UNACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.execute(getBinding())
+        def binding = getPinnedBinding()
+        def result = op.execute(binding)
+            new InsertOperation<Document>(namespace, true, ACKNOWLEDGED, [new InsertRequest<Document>(new Document('_id', 9))],
+                                          new DocumentCodec()).execute(binding);
 
         then:
         !result.acknowledged
+        acknowledgeWrite(binding)
         getCollectionHelper().find(new Document('_id', 1)).first() == new Document('_id', 1).append('x', 2)
         getCollectionHelper().find(new Document('_id', 2)).first() == new Document('_id', 2).append('x', 3)
         getCollectionHelper().find(new Document('_id', 3)).isEmpty()

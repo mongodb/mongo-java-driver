@@ -16,8 +16,12 @@
 
 package org.mongodb
 
+import org.mongodb.binding.AsyncSingleConnectionBinding
+import org.mongodb.binding.PinnedBinding
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.ServerHelper
+import org.mongodb.operation.InsertOperation
+import org.mongodb.operation.InsertRequest
 import org.mongodb.test.CollectionHelper
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
@@ -26,6 +30,7 @@ import spock.lang.Specification
 import static org.mongodb.Fixture.getDefaultDatabase
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.initialiseCollection
+import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
 class FunctionalSpecification extends Specification {
     protected MongoDatabase database;
@@ -53,6 +58,19 @@ class FunctionalSpecification extends Specification {
 
     MongoNamespace getNamespace() {
         new MongoNamespace(getDatabaseName(), getCollectionName())
+    }
+
+
+    void acknowledgeWrite(PinnedBinding binding) {
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
+                                      [new InsertRequest<Document>(new Document())], new DocumentCodec()).execute(binding);
+        binding.release();
+    }
+
+    void acknowledgeWrite(AsyncSingleConnectionBinding binding) {
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
+                                      [new InsertRequest<Document>(new Document())], new DocumentCodec()).executeAsync(binding).get();
+        binding.release();
     }
 
     CollectionHelper<Document> getCollectionHelper() {
