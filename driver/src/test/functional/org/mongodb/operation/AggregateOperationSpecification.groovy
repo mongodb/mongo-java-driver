@@ -29,13 +29,14 @@ import static org.mongodb.Fixture.serverVersionAtLeast
 
 class AggregateOperationSpecification extends FunctionalSpecification {
 
-    def 'should be able to aggregate'() {
-        given:
+    def setup() {
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
         getCollectionHelper().insertDocuments(pete, sam, pete2)
+    }
 
+    def 'should be able to aggregate'() {
         when:
         AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec(), new DocumentCodec(),
                                                                  aggregateOptions)
@@ -52,12 +53,6 @@ class AggregateOperationSpecification extends FunctionalSpecification {
 
     @Category(Async)
     def 'should be able to aggregate asynchronously'() {
-        given:
-        Document pete = new Document('name', 'Pete').append('job', 'handyman')
-        Document sam = new Document('name', 'Sam').append('job', 'plumber')
-        Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
-
         when:
         AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec(), new DocumentCodec(),
                                                                  aggregateOptions)
@@ -82,12 +77,6 @@ class AggregateOperationSpecification extends FunctionalSpecification {
     }
 
     def 'should be able to aggregate with pipeline'() {
-        given:
-        Document pete = new Document('name', 'Pete').append('job', 'handyman')
-        Document sam = new Document('name', 'Sam').append('job', 'plumber')
-        Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
-
         when:
         AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [new Document('$match', new Document('job', 'plumber'))],
                                                                  new DocumentCodec(), new DocumentCodec(), aggregateOptions)
@@ -104,12 +93,6 @@ class AggregateOperationSpecification extends FunctionalSpecification {
 
     @Category(Async)
     def 'should be able to aggregate with pipeline asynchronously'() {
-        given:
-        Document pete = new Document('name', 'Pete').append('job', 'handyman')
-        Document sam = new Document('name', 'Sam').append('job', 'plumber')
-        Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
-
         when:
         AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [new Document('$match', new Document('job', 'plumber'))],
                                                                  new DocumentCodec(), new DocumentCodec(), aggregateOptions)
