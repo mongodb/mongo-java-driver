@@ -56,7 +56,11 @@ class FunctionalSpecification extends Specification {
     }
 
     CollectionHelper<Document> getCollectionHelper() {
-        new CollectionHelper<Document>(new DocumentCodec(), getNamespace())
+        getCollectionHelper(getNamespace())
+    }
+
+    CollectionHelper<Document> getCollectionHelper(MongoNamespace namespace) {
+        new CollectionHelper<Document>(new DocumentCodec(), namespace)
     }
 
     CollectionHelper<Worker> getWorkerCollectionHelper() {
