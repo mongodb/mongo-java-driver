@@ -117,8 +117,6 @@ final class MultiServerCluster extends BaseCluster {
                 return;
             }
 
-            serverTuple.description = newDescription;
-
             if (event.getNewValue().isOk()) {
                 if (clusterType == Unknown) {
                     clusterType = newDescription.getClusterType();
@@ -139,6 +137,8 @@ final class MultiServerCluster extends BaseCluster {
                         break;
                 }
             }
+
+            serverTuple.description = newDescription;
             updateDescription();
         }
         fireChangeEvent();
@@ -178,8 +178,16 @@ final class MultiServerCluster extends BaseCluster {
         }
 
         if (newDescription.isPrimary()) {
+            if (isNotAlreadyPrimary(newDescription.getAddress())) {
+                LOGGER.info(format("Discovered replica set primary %s", newDescription.getAddress()));
+            }
             invalidateOldPrimaries(newDescription.getAddress());
         }
+    }
+
+    private boolean isNotAlreadyPrimary(final ServerAddress address) {
+        ServerTuple serverTuple = addressToServerTupleMap.get(address);
+        return serverTuple == null || !serverTuple.description.isPrimary();
     }
 
     private void handleShardRouterChanged(final ServerDescription newDescription) {
@@ -213,7 +221,6 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     private void invalidateOldPrimaries(final ServerAddress newPrimary) {
-        LOGGER.info(format("Replica set primary has changed to %s", newPrimary));
         for (ServerTuple serverTuple : addressToServerTupleMap.values()) {
             if (!serverTuple.description.getAddress().equals(newPrimary) && serverTuple.description.isPrimary()) {
                 LOGGER.info(format("Rediscovering type of existing primary %s", serverTuple.description.getAddress()));
