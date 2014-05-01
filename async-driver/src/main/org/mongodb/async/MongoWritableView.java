@@ -16,6 +16,7 @@
 
 package org.mongodb.async;
 
+import org.mongodb.Document;
 import org.mongodb.MongoFuture;
 import org.mongodb.WriteResult;
 
@@ -28,10 +29,27 @@ import org.mongodb.WriteResult;
 public interface MongoWritableView<T> {
 
     /**
-     * Replace a document in the underlying collection with the given document, using the filter criteria of the view.
+     * With the given document, replace a single document in the underlying collection matching the filter criteria in the view.
      *
      * @param replacement the replacement document
      * @return the result of the replacement
      */
     MongoFuture<WriteResult> replace(T replacement);
+
+    /**
+     * With the given update operations, update all documents in the underlying collection matching the filter criteria in the view.
+     *
+     * @param updateOperations the update operations to apply to each document
+     * @return the result of the update
+     */
+    MongoFuture<WriteResult> update(Document updateOperations);
+
+    /**
+     /**
+     * With the given update operations, update a single document in the underlying collection matching the filter criteria in the view.
+     *
+     * @param updateOperations the update operations to apply to each document
+     * @return the result of the update
+     */
+    MongoFuture<WriteResult> updateOne(Document updateOperations);
 }
