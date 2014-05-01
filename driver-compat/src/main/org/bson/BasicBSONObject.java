@@ -20,9 +20,11 @@ import com.mongodb.util.JSONSerializers;
 import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -361,12 +363,12 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
             return false;
         }
 
-        return Arrays.equals(canonicalize(this).encode(), canonicalize(other).encode());
+        return Arrays.equals(canonicalizeBSONObject(this).encode(), canonicalizeBSONObject(other).encode());
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(canonicalize(this).encode());
+        return Arrays.hashCode(canonicalizeBSONObject(this).encode());
     }
 
     private byte[] encode() {
@@ -374,15 +376,43 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
     }
 
     // create a copy of "from", but with keys ordered alphabetically
-    private static BasicBSONObject canonicalize(final BSONObject from) {
+    @SuppressWarnings("unchecked")
+    private static Object canonicalize(final Object from) {
+        if (from instanceof BSONObject && !(from instanceof BasicBSONList)) {
+            return canonicalizeBSONObject((BSONObject) from);
+        } else if (from instanceof List) {
+            return canonicalizeList((List<Object>) from);
+        } else if (from instanceof Map) {
+            return canonicalizeMap((Map<String, Object>) from);
+        } else {
+            return from;
+        }
+    }
+
+    private static Map<String, Object> canonicalizeMap(final Map<String, Object> from) {
+        Map<String, Object> canonicalized = new LinkedHashMap<String, Object>(from.size());
+        TreeSet<String> keysInOrder = new TreeSet<String>(from.keySet());
+        for (String key : keysInOrder) {
+            Object val = from.get(key);
+            canonicalized.put(key, canonicalize(val));
+        }
+        return canonicalized;
+    }
+
+    private static BasicBSONObject canonicalizeBSONObject(final BSONObject from) {
         BasicBSONObject canonicalized = new BasicBSONObject();
         TreeSet<String> keysInOrder = new TreeSet<String>(from.keySet());
         for (String key : keysInOrder) {
             Object val = from.get(key);
-            if (val instanceof BSONObject && !(val instanceof BasicBSONList)) {
-                val = canonicalize((BSONObject) val);
-            }
-            canonicalized.put(key, val);
+            canonicalized.put(key, canonicalize(val));
+        }
+        return canonicalized;
+    }
+
+    private static List canonicalizeList(final List<Object> list) {
+        List<Object> canonicalized = new ArrayList<Object>(list.size());
+        for (Object cur : list) {
+            canonicalized.add(canonicalize(cur));
         }
         return canonicalized;
     }
