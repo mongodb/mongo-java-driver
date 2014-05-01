@@ -37,7 +37,7 @@ public final class MongoClients {
      */
     public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options)
     throws UnknownHostException {
-        return new org.mongodb.async.rxjava.MongoClientImpl(org.mongodb.async.MongoClients.create(mongoURI, options));
+        return new MongoClientImpl(org.mongodb.async.MongoClients.create(mongoURI, options));
     }
 
     private MongoClients() {
