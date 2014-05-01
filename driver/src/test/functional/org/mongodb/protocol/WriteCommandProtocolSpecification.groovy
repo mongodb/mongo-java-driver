@@ -217,7 +217,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         def result = protocol.execute(connection);
 
         then:
-        result.updatedCount == 0;
+        result.matchedCount == 0;
         result.upserts == [new BulkWriteUpsert(0, 1), new BulkWriteUpsert(1, 2)]
     }
 }
