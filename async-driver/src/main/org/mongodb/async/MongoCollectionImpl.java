@@ -40,6 +40,8 @@ import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.ReplaceOperation;
 import org.mongodb.operation.ReplaceRequest;
 import org.mongodb.operation.SingleResultFuture;
+import org.mongodb.operation.UpdateOperation;
+import org.mongodb.operation.UpdateRequest;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -279,6 +281,22 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return execute(new ReplaceOperation<T>(getNamespace(), true, options.getWriteConcern(),
                                                    asList(new ReplaceRequest<T>(find.getFilter(), replacement).upsert(upsert)),
                                                    new DocumentCodec(), getCodec()));
+        }
+
+        @Override
+        public MongoFuture<WriteResult> update(final Document updateOperations) {
+            notNull("updateOperations", updateOperations);
+            return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
+                                               asList(new UpdateRequest(find.getFilter(), updateOperations).upsert(upsert).multi(true)),
+                                               new DocumentCodec()));
+        }
+
+        @Override
+        public MongoFuture<WriteResult> updateOne(final Document updateOperations) {
+            notNull("updateOperations", updateOperations);
+            return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
+                                               asList(new UpdateRequest(find.getFilter(), updateOperations).upsert(upsert).multi(false)),
+                                               new DocumentCodec()));
         }
     }
 }
