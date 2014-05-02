@@ -16,6 +16,8 @@
 
 package org.mongodb.assertions;
 
+import org.mongodb.Document;
+
 /**
  * Design by contract assertions.
  */
@@ -36,6 +38,14 @@ public final class Assertions {
     public static void isTrueArgument(final String name, final boolean check) {
         if (!check) {
             throw new IllegalArgumentException("state should be: " + name);
+        }
+    }
+
+    public static void isValidUpdateOperation(final String name, final Document updateOperations) {
+        for (String key : updateOperations.keySet()) {
+            if (!key.startsWith("$")) {
+                throw new IllegalArgumentException("Update document invalid" + name + " keys must start with $" + key);
+            }
         }
     }
 

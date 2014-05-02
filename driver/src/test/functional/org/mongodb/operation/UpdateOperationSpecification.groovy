@@ -100,4 +100,18 @@ class UpdateOperationSpecification extends FunctionalSpecification {
         !result.isUpdateOfExisting()
     }
 
+    def 'when an update request document contains a non $-prefixed key, update should throw IllegalArgumentException'() {
+        when:
+        new UpdateOperation(getNamespace(), ordered, ACKNOWLEDGED,
+                                    [new UpdateRequest(new Document(),
+                                                       new Document('$set', new Document('x', 2)).append('y', 2))],
+                                    new DocumentCodec())
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        ordered << [true, false]
+    }
+
 }
