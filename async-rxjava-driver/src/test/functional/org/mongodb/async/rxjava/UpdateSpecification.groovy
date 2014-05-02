@@ -33,7 +33,7 @@ class UpdateSpecification extends FunctionalSpecification {
 
          then:
          getAsList(collection.find(new Document('x', true)).sort(new Document('_id', 1)).forEach()) ==
-         documents.each { it.append('y', false)}
+         documents.each { it.append('y', false) }
      }
 
     def 'update with upsert should insert a single document if there are no matching documents'() {

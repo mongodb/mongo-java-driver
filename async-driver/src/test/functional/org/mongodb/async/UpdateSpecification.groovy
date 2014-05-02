@@ -29,8 +29,8 @@ class UpdateSpecification extends FunctionalSpecification {
          collection.find(new Document('x', true)).update(new Document('$set', new Document('y', false))).get()
 
          then:
-         collection.find(new Document('x', true)).sort(new Document('_id', 1)).into(new ArrayList()).get() ==
-         documents.each { it.append('y', false)}
+         collection.find(new Document('x', true)).sort(new Document('_id', 1)).into([]).get() ==
+         documents.each { it.append('y', false) }
      }
 
     def 'update with upsert should insert a single document if there are no matching documents'() {
@@ -38,7 +38,7 @@ class UpdateSpecification extends FunctionalSpecification {
         WriteResult result = collection.find(new Document('x', true)).upsert().update(new Document('$set', new Document('y', false))).get()
 
         then:
-        collection.find(new Document()).into(new ArrayList()).get() ==
+        collection.find(new Document()).into([]).get() ==
         [new Document('_id', result.upsertedId).append('x', true).append('y', false)]
     }
 
@@ -51,7 +51,7 @@ class UpdateSpecification extends FunctionalSpecification {
         collection.find(new Document('x', true)).updateOne(new Document('$set', new Document('y', false))).get()
 
         then:
-        collection.find(new Document('y', false)).into(new ArrayList<Document>()).get() == [document.append('y', false)]
+        collection.find(new Document('y', false)).into([]).get() == [document.append('y', false)]
     }
 
     def 'updateOne should update one of many matching documents'() {
@@ -74,7 +74,7 @@ class UpdateSpecification extends FunctionalSpecification {
         def result = collection.find(new Document('x', true)).upsert().updateOne(new Document('$set', new Document('y', false))).get()
 
         then:
-        collection.find(new Document('y', false)).into(new ArrayList<Document>()).get() ==
+        collection.find(new Document('y', false)).into([]).get() ==
         [document.append('_id', result.getUpsertedId()).append('y', false)]
     }
 }
