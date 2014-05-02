@@ -250,6 +250,46 @@ public class GridFSTest extends DatabaseTestCase {
         }
     }
 
+    @Test
+    public void testRemove() throws Exception {
+        int target = GridFS.DEFAULT_CHUNKSIZE * 3;
+        StringBuilder buf = new StringBuilder(target);
+        while (buf.length() < target) {
+            buf.append("asdasdkjasldkjasldjlasjdlajsdljasldjlasjdlkasjdlaskjdlaskjdlsakjdlaskjdasldjsad");
+        }
+        String s = buf.toString();
+
+        int nbFiles = 100;
+        for (int idx = 0; idx < nbFiles; ++idx) {
+            GridFSInputFile in = gridFS.createFile(s.getBytes(defaultCharset()));
+            in.save();
+        }
+        gridFS.remove(new BasicDBObject());
+        int[] end = getCurrentCollectionCounts();
+        assertEquals(0, end[0]);
+        assertEquals(0, end[1]);
+    }
+
+    @Test
+    public void testBulkRemove() throws Exception {
+        int target = GridFS.DEFAULT_CHUNKSIZE * 3;
+        StringBuilder buf = new StringBuilder(target);
+        while (buf.length() < target) {
+            buf.append("asdasdkjasldkjasldjlasjdlajsdljasldjlasjdlkasjdlaskjdlaskjdlsakjdlaskjdasldjsad");
+        }
+        String s = buf.toString();
+
+        int nbFiles = 100;
+        for (int idx = 0; idx < nbFiles; ++idx) {
+            GridFSInputFile in = gridFS.createFile(s.getBytes(defaultCharset()));
+            in.save();
+        }
+        gridFS.remove(new BasicDBObject(), false);
+        int[] end = getCurrentCollectionCounts();
+        assertEquals(0, end[0]);
+        assertEquals(0, end[1]);
+    }
+
     void testInOut(final String s) throws Exception {
 
         int[] start = getCurrentCollectionCounts();

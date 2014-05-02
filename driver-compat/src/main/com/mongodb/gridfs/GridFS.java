@@ -303,14 +303,42 @@ public class GridFS {
      * @throws com.mongodb.MongoException
      */
     public void remove(final DBObject query) {
+        remove(query, true);
+    }
+
+    /**
+     * Removes all files matching the given query.
+     *
+     * @param query      filter to apply
+     * @param fileByFile if true : for each file remove the file and it's chunks
+     *                   if false select all files remove them all, then remove all chunks
+     * @throws com.mongodb.MongoException
+     */
+    public void remove(final DBObject query, final boolean fileByFile) {
         if (query == null) {
             throw new IllegalArgumentException("query can not be null");
         }
 
-        for (final GridFSDBFile f : find(query)) {
-            f.remove();
+        if (fileByFile) {
+            // remove file and it's chunks one by one (legacy way to remove in gridfs)
+            for (final GridFSDBFile f : find(query)) {
+                f.remove();
+            }
+        } else {
+            // can't remove chunks without files_id thus retrieve them all
+            List<ObjectId> filesIds = new ArrayList<ObjectId>();
+            for (GridFSDBFile f : find(query)) {
+                filesIds.add((ObjectId) f.getId());
+            }
+            // remove all matched files from bucket
+            getFilesCollection().remove(query);
+            // then remove all corresponding chunks in a row
+            getChunksCollection().remove(new BasicDBObject("files_id", new BasicDBObject("$in", filesIds)));
+
         }
     }
+
+
 
     /**
      * Creates a file entry. After calling this method, you have to call {@link com.mongodb.gridfs.GridFSInputFile#save()}.
