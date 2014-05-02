@@ -16,9 +16,9 @@
 
 
 package org.mongodb.operation
-
 import category.Async
 import org.bson.codecs.BsonDocumentCodec
+import org.bson.types.Binary
 import org.bson.types.BsonDocument
 import org.bson.types.BsonInt32
 import org.bson.types.BsonString
@@ -37,6 +37,47 @@ import static org.mongodb.Fixture.isSharded
 import static org.mongodb.Fixture.serverVersionAtLeast
 
 class CommandOperationSpecification extends FunctionalSpecification {
+
+    def 'should execute command'() {
+        given:
+        def commandOperation = new CommandReadOperation(getNamespace().databaseName,
+                                                        new BsonDocument('count', new BsonString(getCollectionName())),
+                                                        new BsonDocumentCodec())
+        when:
+        def result = commandOperation.execute(getBinding())
+
+        then:
+        result.response.getNumber('n').intValue() == 0
+    }
+
+    def 'should execute command larger than 16MB'() {
+        when:
+        def result = new CommandReadOperation(getNamespace().databaseName,
+                                              new BsonDocument('findAndModify', new BsonString(collection.getNamespace().fullName))
+                                                      .append('query', new BsonDocument('_id', new BsonInt32(42)))
+                                                      .append('update',
+                                                              new BsonDocument('_id', new BsonInt32(42))
+                                                                      .append('b', new Binary(new byte[16 * 1024 * 1024 - 30]))),
+                                              new BsonDocumentCodec())
+                .execute(getBinding())
+
+        then:
+        result.response.containsKey('value')
+    }
+
+    def 'should execute command asynchronously'() {
+        given:
+        def commandOperation = new CommandReadOperation(getNamespace().databaseName,
+                                                        new BsonDocument('count', new BsonString(getCollectionName())),
+                                                        new BsonDocumentCodec())
+        when:
+        def result = commandOperation.executeAsync(getAsyncBinding()).get()
+
+        then:
+        result.response.getNumber('n').intValue() == 0
+
+    }
+
     def 'should throw execution timeout exception from execute'() {
         assumeFalse(isSharded())
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))

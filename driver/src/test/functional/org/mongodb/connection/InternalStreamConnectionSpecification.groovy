@@ -70,7 +70,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def listener = Mock(ConnectionListener)
         def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], listener)
         def buffer = new ByteBufferOutputBuffer(connection);
-        def message = new KillCursorsMessage(new KillCursor(new ServerCursor(1, getPrimary())), MessageSettings.builder().build());
+        def message = new KillCursorsMessage(new KillCursor(new ServerCursor(1, getPrimary())));
         message.encode(buffer);
 
         when:

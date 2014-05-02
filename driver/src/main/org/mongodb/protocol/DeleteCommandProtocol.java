@@ -22,7 +22,6 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
@@ -30,12 +29,12 @@ import org.mongodb.operation.RemoveRequest;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.WriteRequest;
 import org.mongodb.protocol.message.DeleteCommandMessage;
+import org.mongodb.protocol.message.MessageSettings;
 
 import java.util.List;
 
 import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
 
 public class DeleteCommandProtocol extends WriteCommandProtocol {
 
@@ -81,9 +80,8 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
     }
 
     @Override
-    protected DeleteCommandMessage createRequestMessage(final ServerDescription serverDescription) {
-        return new DeleteCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), removeRequests,
-                                        getMessageSettings(serverDescription));
+    protected DeleteCommandMessage createRequestMessage(final MessageSettings messageSettings) {
+        return new DeleteCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), removeRequests, messageSettings);
     }
 
     @Override

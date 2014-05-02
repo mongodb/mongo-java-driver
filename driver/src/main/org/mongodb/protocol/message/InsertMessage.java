@@ -46,7 +46,7 @@ public class InsertMessage<T> extends RequestMessage {
         for (int i = 0; i < insertRequestList.size(); i++) {
             T document = insertRequestList.get(i).getDocument();
             int pos = buffer.getPosition();
-            addDocument(document, encoder, buffer, createValidator());
+            addCollectibleDocument(document, encoder, buffer, createValidator());
             if (buffer.getPosition() - messageStartPosition > getSettings().getMaxMessageSize()) {
                 buffer.truncateToPosition(pos);
                 return new InsertMessage<T>(getCollectionName(), ordered, writeConcern,

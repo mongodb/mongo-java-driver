@@ -28,7 +28,6 @@ import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.protocol.message.KillCursorsMessage;
 
 import static java.lang.String.format;
-import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
 
 public class KillCursorProtocol implements Protocol<Void> {
     public static final Logger LOGGER = Loggers.getLogger("protocol.killcursor");
@@ -45,7 +44,7 @@ public class KillCursorProtocol implements Protocol<Void> {
                             connection.getServerAddress()));
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         try {
-            KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(connection.getServerDescription()));
+            KillCursorsMessage message = new KillCursorsMessage(killCursor);
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return null;
@@ -61,7 +60,7 @@ public class KillCursorProtocol implements Protocol<Void> {
                             connection.getServerAddress()));
         final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
         final ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
-        KillCursorsMessage message = new KillCursorsMessage(killCursor, getMessageSettings(connection.getServerDescription()));
+        KillCursorsMessage message = new KillCursorsMessage(killCursor);
         message.encode(buffer);
         connection.sendMessageAsync(buffer.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
             @Override

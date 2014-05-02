@@ -27,17 +27,18 @@ import org.mongodb.WriteConcern;
 import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.operation.WriteRequest;
 import org.mongodb.protocol.message.BaseWriteCommandMessage;
+import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.ReplyMessage;
 import org.mongodb.protocol.message.RequestMessage;
 
 import static java.lang.String.format;
 import static org.mongodb.protocol.ProtocolHelper.getCommandFailureException;
+import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
 import static org.mongodb.protocol.WriteCommandResultHelper.getBulkWriteException;
 import static org.mongodb.protocol.WriteCommandResultHelper.getBulkWriteResult;
 import static org.mongodb.protocol.WriteCommandResultHelper.hasError;
@@ -58,7 +59,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
     }
 
     public BulkWriteResult execute(final Connection connection) {
-        BaseWriteCommandMessage message = createRequestMessage(connection.getServerDescription());
+        BaseWriteCommandMessage message = createRequestMessage(getMessageSettings(connection.getServerDescription()));
         BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getServerAddress(), ordered, writeConcern);
         int batchNum = 0;
         int currentRangeStartIndex = 0;
@@ -88,7 +89,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
     @Override
     public MongoFuture<BulkWriteResult> executeAsync(final Connection connection) {
         SingleResultFuture<BulkWriteResult> future = new SingleResultFuture<BulkWriteResult>();
-        executeBatchesAsync(connection, createRequestMessage(connection.getServerDescription()),
+        executeBatchesAsync(connection, createRequestMessage(getMessageSettings(connection.getServerDescription())),
                             new BulkWriteBatchCombiner(connection.getServerAddress(), ordered, writeConcern), 0, 0, future);
         return future;
     }
@@ -143,7 +144,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
 
     protected abstract WriteRequest.Type getType();
 
-    protected abstract BaseWriteCommandMessage createRequestMessage(final ServerDescription serverDescription);
+    protected abstract BaseWriteCommandMessage createRequestMessage(final MessageSettings messageSettings);
 
     private BaseWriteCommandMessage sendMessage(final Connection connection, final BaseWriteCommandMessage message, final int batchNum) {
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);

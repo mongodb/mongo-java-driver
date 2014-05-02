@@ -23,8 +23,8 @@ import org.mongodb.protocol.KillCursor;
 public class KillCursorsMessage extends RequestMessage {
     private final KillCursor killCursor;
 
-    public KillCursorsMessage(final KillCursor killCursor, final MessageSettings settings) {
-        super(OpCode.OP_KILL_CURSORS, settings);
+    public KillCursorsMessage(final KillCursor killCursor) {
+        super(OpCode.OP_KILL_CURSORS, MessageSettings.builder().build());
         this.killCursor = killCursor;
     }
 

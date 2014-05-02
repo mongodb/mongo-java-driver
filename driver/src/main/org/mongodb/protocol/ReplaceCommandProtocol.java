@@ -23,20 +23,19 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.ReplaceRequest;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.WriteRequest;
+import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.ReplaceCommandMessage;
 
 import java.util.List;
 
 import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
 
 public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
 
@@ -84,9 +83,8 @@ public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
     }
 
     @Override
-    protected ReplaceCommandMessage<T> createRequestMessage(final ServerDescription serverDescription) {
-        return new ReplaceCommandMessage<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, encoder,
-                                            getMessageSettings(serverDescription));
+    protected ReplaceCommandMessage<T> createRequestMessage(final MessageSettings messageSettings) {
+        return new ReplaceCommandMessage<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, encoder, messageSettings);
     }
 
     @Override

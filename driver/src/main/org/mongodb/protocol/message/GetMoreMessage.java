@@ -22,8 +22,8 @@ import org.mongodb.operation.GetMore;
 public class GetMoreMessage extends RequestMessage {
     private final GetMore getMore;
 
-    public GetMoreMessage(final String collectionName, final GetMore getMore, final MessageSettings settings) {
-        super(collectionName, OpCode.OP_GETMORE, settings);
+    public GetMoreMessage(final String collectionName, final GetMore getMore) {
+        super(collectionName, OpCode.OP_GETMORE, MessageSettings.builder().build());
         this.getMore = getMore;
     }
 

@@ -16,12 +16,12 @@
 
 package org.mongodb.protocol;
 
+import org.bson.BsonSerializationException;
 import org.bson.types.Binary;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.MongoInvalidDocumentException;
 import org.mongodb.SimpleBufferProvider;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ByteBufferOutputBuffer;
@@ -50,7 +50,7 @@ public class MaxDocumentSizeTest {
         buffer.close();
     }
 
-    @Test(expected = MongoInvalidDocumentException.class)
+    @Test(expected = BsonSerializationException.class)
     public void testMaxDocumentSize() {
         message.encode(buffer);
     }

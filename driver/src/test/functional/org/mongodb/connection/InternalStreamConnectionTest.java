@@ -72,8 +72,7 @@ public class InternalStreamConnectionTest {
         InternalStreamConnection connection = new InternalStreamConnection(CLUSTER_ID, stream, Collections.<MongoCredential>emptyList(),
                                                                            listener);
         OutputBuffer buffer = new ByteBufferOutputBuffer(connection);
-        RequestMessage message = new KillCursorsMessage(new KillCursor(new ServerCursor(1, getPrimary())),
-                                                        MessageSettings.builder().build());
+        RequestMessage message = new KillCursorsMessage(new KillCursor(new ServerCursor(1, getPrimary())));
         message.encode(buffer);
 
         // when

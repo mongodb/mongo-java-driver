@@ -16,6 +16,7 @@
 
 package org.mongodb.operation
 import category.Async
+import org.bson.BsonSerializationException
 import org.bson.types.Binary
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
@@ -260,5 +261,31 @@ class InsertOperationSpecification extends FunctionalSpecification {
         then:
         thrown(MongoDuplicateKeyException)
         getCollectionHelper().count() == 1
+    }
+
+    def 'should throw exception if document is too large'() {
+        given:
+        byte[] hugeByteArray = new byte[1024 * 1024 * 16];
+        def documents = [new InsertRequest<Document>(new Document('_id', 1).append('b', new Binary(hugeByteArray)))]
+
+        when:
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents, new DocumentCodec())
+                .execute(getBinding())
+
+        then:
+        thrown(BsonSerializationException)
+    }
+
+    def 'should throw exception if document is too large asynchronously'() {
+        given:
+        byte[] hugeByteArray = new byte[1024 * 1024 * 16];
+        def documents = [new InsertRequest<Document>(new Document('_id', 1).append('b', new Binary(hugeByteArray)))]
+
+        when:
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents, new DocumentCodec())
+                .executeAsync(getAsyncBinding()).get()
+
+        then:
+        thrown(BsonSerializationException)
     }
 }

@@ -44,7 +44,6 @@ final class ProtocolHelper {
     private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
     private static final List<Integer> EXECUTION_TIMEOUT_ERROR_CODES = Arrays.asList(50);
 
-
     static WriteResult getWriteResult(final CommandResult commandResult) {
         if (!commandResult.isOk()) {
             throw new MongoCommandFailureException(commandResult);

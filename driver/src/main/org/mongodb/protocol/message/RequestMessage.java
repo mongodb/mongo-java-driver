@@ -17,11 +17,12 @@
 package org.mongodb.protocol.message;
 
 import org.bson.BsonBinaryWriter;
+import org.bson.BsonBinaryWriterSettings;
+import org.bson.BsonWriterSettings;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Encoder;
 import org.bson.io.OutputBuffer;
-import org.mongodb.MongoInvalidDocumentException;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -32,6 +33,10 @@ public abstract class RequestMessage {
 
     // TODO: is rollover a problem
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
+
+    // Allow an extra 16K to the maximum allowed size of a query or command document, so that, for example,
+    // a 16M document can be upserted via findAndModify
+    private static final int QUERY_DOCUMENT_HEADROOM = 16 * 1024;
 
     private final String collectionName;
     private final MessageSettings settings;
@@ -88,16 +93,20 @@ public abstract class RequestMessage {
     protected abstract RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition);
 
     protected <T> void addDocument(final T obj, final Encoder<T> encoder, final OutputBuffer buffer, final FieldNameValidator validator) {
-        BsonBinaryWriter writer = new BsonBinaryWriter(buffer, validator);
+        addDocument(obj, encoder, buffer, validator, settings.getMaxDocumentSize() + QUERY_DOCUMENT_HEADROOM);
+    }
+
+    protected <T> void addCollectibleDocument(final T obj, final Encoder<T> encoder, final OutputBuffer buffer,
+                                              final FieldNameValidator validator) {
+        addDocument(obj, encoder, buffer, validator, settings.getMaxDocumentSize());
+    }
+
+    private <T> void addDocument(final T obj, final Encoder<T> encoder, final OutputBuffer buffer, final FieldNameValidator validator,
+                                   final int maxDocumentSize) {
+        BsonBinaryWriter writer = new BsonBinaryWriter(new BsonWriterSettings(),
+                                                       new BsonBinaryWriterSettings(maxDocumentSize), buffer, validator);
         try {
-            int startPosition = buffer.getPosition();
             encoder.encode(writer, obj);
-            int documentSize = buffer.getPosition() - startPosition;
-            if (documentSize > getSettings().getMaxDocumentSize()) {
-                buffer.truncateToPosition(startPosition);
-                throw new MongoInvalidDocumentException(String.format("Document size of %d exceeds maximum of %d", documentSize,
-                                                                      getSettings().getMaxDocumentSize()));
-            }
         } finally {
             writer.close();
         }

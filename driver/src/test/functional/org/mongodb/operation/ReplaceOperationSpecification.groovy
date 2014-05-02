@@ -1,0 +1,147 @@
+/*
+ * Copyright (c) 2008-2014 MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.mongodb.operation
+import category.Async
+import org.bson.BsonSerializationException
+import org.bson.types.Binary
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
+import org.mongodb.Document
+import org.mongodb.FunctionalSpecification
+import org.mongodb.codecs.DocumentCodec
+
+import static java.util.Arrays.asList
+import static org.mongodb.Fixture.getAsyncBinding
+import static org.mongodb.Fixture.getBinding
+import static org.mongodb.WriteConcern.ACKNOWLEDGED
+
+class ReplaceOperationSpecification extends FunctionalSpecification {
+    def 'should return correct result'() {
+        given:
+        def replacement = new ReplaceRequest<Document>(new BsonDocument(), new Document('_id', 1))
+        def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
+
+        when:
+        def result = op.execute(getBinding())
+
+        then:
+        result.wasAcknowledged()
+        result.count == 0
+        result.upsertedId == null
+        !result.isUpdateOfExisting()
+    }
+
+    @org.junit.experimental.categories.Category(Async)
+    def 'should return correct result asynchronously'() {
+        given:
+        def replacement = new ReplaceRequest<Document>(new BsonDocument(), new Document('_id', 1))
+        def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
+
+        when:
+        def result = op.executeAsync(getAsyncBinding()).get()
+
+        then:
+        result.wasAcknowledged()
+        result.count == 0
+        result.upsertedId == null
+        !result.isUpdateOfExisting()
+    }
+
+    def 'should replace a single document'() {
+        given:
+        def insert = new InsertRequest<Document>(new Document('_id', 1))
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec()).execute(getBinding())
+
+        def replacement = new ReplaceRequest<Document>(new BsonDocument('_id', new BsonInt32(1)), new Document('_id', 1).append('x', 1))
+        def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        asList(replacement.getReplacement()) == getCollectionHelper().find()
+    }
+
+    @org.junit.experimental.categories.Category(Async)
+    def 'should replace a single document asynchronously'() {
+        given:
+        def insert = new InsertRequest<Document>(new Document('_id', 1))
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec()).execute(getBinding())
+
+        def replacement = new ReplaceRequest<Document>(new BsonDocument('_id', new BsonInt32(1)), new Document('_id', 1).append('x', 1))
+        def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
+
+
+        when:
+        op.executeAsync(getAsyncBinding()).get()
+
+        then:
+        asList(replacement.getReplacement()) == getCollectionHelper().find()
+    }
+
+    def 'should upsert a single document'() {
+        given:
+        def replacement = new ReplaceRequest<Document>(new BsonDocument('_id', new BsonInt32(1)), new Document('_id', 1).append('x', 1))
+                .upsert(true)
+        def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        asList(replacement.getReplacement()) == getCollectionHelper().find()
+    }
+
+    def 'should upsert a single document asynchronously'() {
+        given:
+        def replacement = new ReplaceRequest<Document>(new BsonDocument('_id', new BsonInt32(1)), new Document('_id', 1).append('x', 1))
+                .upsert(true)
+        def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
+
+        when:
+        op.executeAsync(getAsyncBinding()).get()
+
+        then:
+        asList(replacement.getReplacement()) == getCollectionHelper().find()
+    }
+
+    def 'should throw exception if document is too large'() {
+        given:
+        byte[] hugeByteArray = new byte[1024 * 1024 * 16];
+        def replacements = [new ReplaceRequest<Document>(new BsonDocument(), new Document('_id', 1).append('b', new Binary(hugeByteArray)))]
+
+        when:
+        new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, replacements, new DocumentCodec())
+                .execute(getBinding())
+
+        then:
+        thrown(BsonSerializationException)
+    }
+
+    def 'should throw exception if document is too large asynchronously'() {
+        given:
+        byte[] hugeByteArray = new byte[1024 * 1024 * 16];
+        def replacements = [new ReplaceRequest<Document>(new BsonDocument(), new Document('_id', 1).append('b', new Binary(hugeByteArray)))]
+
+        when:
+        new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, replacements, new DocumentCodec())
+                .executeAsync(getAsyncBinding()).get()
+
+        then:
+        thrown(BsonSerializationException)
+    }
+}

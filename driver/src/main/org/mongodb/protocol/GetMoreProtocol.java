@@ -36,7 +36,6 @@ import org.mongodb.protocol.message.ReplyMessage;
 
 import static java.lang.String.format;
 import static org.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
-import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
 import static org.mongodb.protocol.ProtocolHelper.getQueryFailureException;
 
 public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
@@ -68,8 +67,7 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
-        GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore,
-                                                    getMessageSettings(connection.getServerDescription()));
+        GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore);
         encodeMessageToBuffer(message, buffer);
         GetMoreResultCallback<T> receiveCallback = new GetMoreResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
                                                                                 resultDecoder,
@@ -87,8 +85,7 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     private GetMoreMessage sendMessage(final Connection connection) {
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         try {
-            GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore,
-                                                        getMessageSettings(connection.getServerDescription()));
+            GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore);
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers(), message.getId());
             return message;

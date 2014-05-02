@@ -24,19 +24,18 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.UpdateRequest;
 import org.mongodb.operation.WriteRequest;
+import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.UpdateCommandMessage;
 
 import java.util.List;
 
 import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
 
 public class UpdateCommandProtocol extends WriteCommandProtocol {
 
@@ -83,9 +82,8 @@ public class UpdateCommandProtocol extends WriteCommandProtocol {
     }
 
     @Override
-    protected UpdateCommandMessage createRequestMessage(final ServerDescription serverDescription) {
-        return new UpdateCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), updates,
-                                        getMessageSettings(serverDescription));
+    protected UpdateCommandMessage createRequestMessage(final MessageSettings messageSettings) {
+        return new UpdateCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), updates, messageSettings);
     }
 
     @Override

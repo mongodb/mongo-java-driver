@@ -23,7 +23,6 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
@@ -31,11 +30,11 @@ import org.mongodb.operation.InsertRequest;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.WriteRequest;
 import org.mongodb.protocol.message.InsertCommandMessage;
+import org.mongodb.protocol.message.MessageSettings;
 
 import java.util.List;
 
 import static java.lang.String.format;
-import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
 
 public class InsertCommandProtocol<T> extends WriteCommandProtocol {
 
@@ -83,9 +82,8 @@ public class InsertCommandProtocol<T> extends WriteCommandProtocol {
     }
 
     @Override
-    protected InsertCommandMessage<T> createRequestMessage(final ServerDescription serverDescription) {
-        return new InsertCommandMessage<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequests,
-                                           encoder, getMessageSettings(serverDescription));
+    protected InsertCommandMessage<T> createRequestMessage(final MessageSettings messageSettings) {
+        return new InsertCommandMessage<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequests, encoder, messageSettings);
     }
 
     @Override
