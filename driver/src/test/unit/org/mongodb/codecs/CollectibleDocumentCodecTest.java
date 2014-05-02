@@ -48,7 +48,6 @@ public class CollectibleDocumentCodecTest {
         });
         outputBuffer = new BasicOutputBuffer();
         writer = new BSONBinaryWriter(new BSONWriterSettings(10), new BSONBinaryWriterSettings(100), outputBuffer, true);
-        writer.writeStartDocument();
     }
 
     @After
@@ -77,6 +76,7 @@ public class CollectibleDocumentCodecTest {
     @Test
     public void testBeforeFieldsWithGeneratedId() {
         Document document = new Document();
+        writer.writeStartDocument();
         codec.beforeFields(writer, document);
         assertEquals(1, document.get("_id"));
         assertEquals(13, outputBuffer.size());    // TODO: Not such an accurate test
@@ -85,8 +85,28 @@ public class CollectibleDocumentCodecTest {
     @Test
     public void testBeforeFieldsWithExistingId() {
         Document document = new Document("_id", "Hi mom");
+        writer.writeStartDocument();
         codec.beforeFields(writer, document);
         assertEquals("Hi mom", document.get("_id"));
         assertEquals(20, outputBuffer.size());    // TODO: Not such an accurate test
     }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testThrowsIfDollarInKey() {
+        Document document = new Document("$1", 1);
+        codec.encode(writer, document);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testThrowsIfDotInKey() {
+        Document document = new Document("a.b", 1);
+        codec.encode(writer, document);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testThrowsIfKeyIsNull() {
+        Document document = new Document(null, 1);
+        codec.encode(writer, document);
+    }
+
 }
