@@ -27,6 +27,7 @@ public class UpdateRequest extends BaseUpdateRequest {
     public UpdateRequest(final Document filter, final Document updateOperations) {
         super(filter);
         this.updateOperations = notNull("updateOperations", updateOperations);
+        isValidUpdateOperation("updateOperations", updateOperations);
     }
 
     public Document getUpdateOperations() {
@@ -53,6 +54,16 @@ public class UpdateRequest extends BaseUpdateRequest {
     @Override
     public Type getType() {
         return Type.UPDATE;
+    }
+
+    private void isValidUpdateOperation(final String name, final Document updateOperations) {
+        if (updateOperations.keySet().iterator().next().startsWith("$")) {
+            for (String key : updateOperations.keySet()) {
+                if (!key.startsWith("$")) {
+                    throw new IllegalArgumentException("Update document invalid" + name + " keys must start with $" + key);
+                }
+            }
+        }
     }
 }
 
