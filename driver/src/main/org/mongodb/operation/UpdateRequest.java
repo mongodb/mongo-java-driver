@@ -18,6 +18,7 @@ package org.mongodb.operation;
 
 import org.mongodb.Document;
 
+import static org.mongodb.assertions.Assertions.isValidUpdateOperation;
 import static org.mongodb.assertions.Assertions.notNull;
 
 public class UpdateRequest extends BaseUpdateRequest {
