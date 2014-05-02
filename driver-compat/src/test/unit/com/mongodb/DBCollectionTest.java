@@ -439,6 +439,14 @@ public class DBCollectionTest extends DatabaseTestCase {
         collection.insert(obj);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testDotKeysMapInArrayFail() {
+        final Map<String, Object> map = new HashMap<String, Object>(1);
+        map.put("foo.bar",2);
+        DBObject obj = new BasicDBObject("x", 1).append("y", 2).append("array", new Object[]{map});
+        collection.insert(obj);
+    }
+
     @Test
     public void testPathToClassMapDecoding() {
         collection.setObjectClass(TopLevelDBObject.class);
