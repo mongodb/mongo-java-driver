@@ -138,7 +138,6 @@ abstract class BaseCluster implements Cluster {
     public void close() {
         if (!isClosed()) {
             isClosed = true;
-            serverFactory.close();
             phase.get().countDown();
             clusterListener.clusterClosed(new ClusterEvent(clusterId));
         }

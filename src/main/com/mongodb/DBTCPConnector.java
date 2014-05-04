@@ -21,9 +21,6 @@ import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.ClusterConnectionMode.Multiple;
@@ -47,7 +44,6 @@ public class DBTCPConnector implements DBConnector {
 
     private final Mongo _mongo;
 
-    private ScheduledExecutorService scheduledExecutorService;
     private Cluster cluster;
 
     private final MyPort _myPort = new MyPort();
@@ -73,10 +69,6 @@ public class DBTCPConnector implements DBConnector {
         MongoOptions options = _mongo.getMongoOptions();
 
         String clusterId = Integer.toString(NEXT_CLUSTER_ID.getAndIncrement());
-        scheduledExecutorService = Executors.newScheduledThreadPool(options.heartbeatThreadCount > 0 ?
-                                                                    options.heartbeatThreadCount :
-                                                                    _mongo.getAuthority().getServerAddresses().size(),
-                                                                    new DefaultThreadFactory(clusterId));
         cluster =
         Clusters.create(clusterId,
                         ClusterSettings.builder()
@@ -94,7 +86,7 @@ public class DBTCPConnector implements DBConnector {
                                                                              .socketFactory(_mongo.getMongoOptions().getSocketFactory())
                                                                              .build())
                                       .build(),
-                        scheduledExecutorService, null, _mongo);
+                        null, _mongo);
     }
 
     /**
@@ -603,10 +595,6 @@ public class DBTCPConnector implements DBConnector {
             cluster.close();
             cluster = null;
         }
-        if (scheduledExecutorService != null) {
-            scheduledExecutorService.shutdownNow();
-            scheduledExecutorService = null;
-        }
     }
 
     /**
@@ -664,22 +652,5 @@ public class DBTCPConnector implements DBConnector {
 
     private Server getServer(final ServerSelector serverSelector) {
         return cluster.getServer(serverSelector, getClusterWaitTimeMS(), MILLISECONDS);
-    }
-
-    // Custom thread factory for scheduled executor service that creates daemon threads.  Otherwise,
-    // applications that neglect to close the MongoClient will not exit.
-    static class DefaultThreadFactory implements ThreadFactory {
-        private final AtomicInteger threadNumber = new AtomicInteger(1);
-        private final String clusterId;
-
-        DefaultThreadFactory(final String clusterId) {
-            this.clusterId = clusterId;
-        }
-
-        public Thread newThread(Runnable runnable) {
-            Thread t = new Thread(runnable, "cluster-" + clusterId + "-thread-" + threadNumber.getAndIncrement());
-            t.setDaemon(true);
-            return t;
-        }
     }
 }

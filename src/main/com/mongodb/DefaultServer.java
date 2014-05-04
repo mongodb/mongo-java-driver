@@ -18,8 +18,10 @@ package com.mongodb;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ServerConnectionState.Connecting;
@@ -29,10 +31,30 @@ import static org.bson.util.Assertions.isTrue;
 import static org.bson.util.Assertions.notNull;
 
 class DefaultServer implements ClusterableServer {
+
+    private final String clusterId;
+
+    private enum HeartbeatFrequency {
+        NORMAL {
+            @Override
+            long getFrequencyMS(final ServerSettings settings) {
+                return settings.getHeartbeatFrequency(MILLISECONDS);
+            }
+        },
+
+        RETRY {
+            @Override
+            long getFrequencyMS(final ServerSettings settings) {
+                return settings.getHeartbeatConnectRetryFrequency(MILLISECONDS);
+            }
+        };
+
+        abstract long getFrequencyMS(final ServerSettings settings);
+    }
+
     private final ScheduledExecutorService scheduledExecutorService;
     private final ServerAddress serverAddress;
     private final ServerStateNotifier stateNotifier;
-    private final ScheduledFuture<?> scheduledFuture;
     private final PooledConnectionProvider connectionProvider;
     private final Map<ChangeListener<ServerDescription>, Boolean> changeListeners =
     new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>();
@@ -41,22 +63,22 @@ class DefaultServer implements ClusterableServer {
     private volatile ServerDescription description;
     private volatile boolean isClosed;
 
+    private ScheduledFuture<?> scheduledFuture;
+    private HeartbeatFrequency currentFrequency;
+
     public DefaultServer(final ServerAddress serverAddress,
                          final ServerSettings settings,
-                         final PooledConnectionProvider connectionProvider,
-                         final ScheduledExecutorService scheduledExecutorService,
-                         Mongo mongo) {
+                         final String clusterId, final PooledConnectionProvider connectionProvider,
+                         final Mongo mongo) {
+        this.clusterId = notNull("clusterId", clusterId);
         this.settings = notNull("settings", settings);
-
-        this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
         serverStateListener = new DefaultServerStateListener();
         this.stateNotifier = new ServerStateNotifier(serverAddress, serverStateListener,
                                                      settings.getHeartbeatSocketSettings(), mongo);
-        this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, 0,
-                                                                            settings.getHeartbeatFrequency(MILLISECONDS),
-                                                                            MILLISECONDS);
+        this.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new DefaultThreadFactory());
+        setHeartbeat(0, HeartbeatFrequency.NORMAL);
         this.connectionProvider = connectionProvider;
     }
 
@@ -87,7 +109,7 @@ class DefaultServer implements ClusterableServer {
         serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(description, ServerDescription.builder()
                                                                                                           .state(Connecting)
                                                                                                           .address(serverAddress).build()));
-        scheduledExecutorService.submit(stateNotifier);
+        setHeartbeat(0, HeartbeatFrequency.RETRY);
         connectionProvider.invalidate();
     }
 
@@ -95,6 +117,7 @@ class DefaultServer implements ClusterableServer {
     public void close() {
         if (!isClosed()) {
             scheduledFuture.cancel(true);
+            scheduledExecutorService.shutdownNow();
             stateNotifier.close();
             connectionProvider.close();
             isClosed = true;
@@ -106,6 +129,36 @@ class DefaultServer implements ClusterableServer {
         return isClosed;
     }
 
+    private void setHeartbeat(final ChangeEvent<ServerDescription> event) {
+        HeartbeatFrequency heartbeatFrequency = event.getNewValue().getState() == Unconnected
+                                                ? HeartbeatFrequency.RETRY
+                                                : HeartbeatFrequency.NORMAL;
+        long initialDelay = heartbeatFrequency.getFrequencyMS(settings);
+        setHeartbeat(initialDelay, heartbeatFrequency);
+    }
+
+    private synchronized void setHeartbeat(final long initialDelay, final HeartbeatFrequency newFrequency) {
+        if (currentFrequency != newFrequency) {
+            currentFrequency = newFrequency;
+            if (scheduledFuture != null) {
+                scheduledFuture.cancel(false);
+            }
+            scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, initialDelay,
+                                                                           newFrequency.getFrequencyMS(settings),
+                                                                           MILLISECONDS);
+        }
+    }
+
+    // Custom thread factory for scheduled executor service that creates daemon threads.  Otherwise,
+    // applications that neglect to close the MongoClient will not exit.
+    class DefaultThreadFactory implements ThreadFactory {
+        public Thread newThread(final Runnable runnable) {
+            Thread t = new Thread(runnable, "cluster-" + clusterId + "-" + serverAddress);
+            t.setDaemon(true);
+            return t;
+        }
+    }
+
     private final class DefaultServerStateListener implements ChangeListener<ServerDescription> {
         @Override
         public void stateChanged(final ChangeEvent<ServerDescription> event) {
@@ -113,11 +166,7 @@ class DefaultServer implements ClusterableServer {
             for (ChangeListener<ServerDescription> listener : changeListeners.keySet()) {
                 listener.stateChanged(event);
             }
-            if (event.getNewValue().getState() == Unconnected) {
-                scheduledExecutorService.schedule(stateNotifier, settings.getHeartbeatConnectRetryFrequency(MILLISECONDS),
-                                                  MILLISECONDS);
-            }
+            setHeartbeat(event);
         }
-
     }
 }

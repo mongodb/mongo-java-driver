@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import java.util.concurrent.ScheduledExecutorService;
-
 /**
  * A factory for cluster implementations.
  *
@@ -27,11 +25,8 @@ final class Clusters {
     }
 
     public static Cluster create(final String clusterId, final ClusterSettings settings, final ServerSettings serverSettings,
-                                 final ScheduledExecutorService scheduledExecutorService,
-                                 final ClusterListener clusterListener,
-                                 final Mongo mongo) {
-        ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId, serverSettings, scheduledExecutorService,
-                                                                                     mongo);
+                                 final ClusterListener clusterListener, final Mongo mongo) {
+        ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId, serverSettings, mongo);
 
         if (settings.getMode() == ClusterConnectionMode.Single) {
             return new SingleServerCluster(clusterId, settings, serverFactory,

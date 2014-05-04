@@ -16,22 +16,16 @@
 
 package com.mongodb;
 
-import java.util.concurrent.ScheduledExecutorService;
-
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final String clusterId;
     private ServerSettings settings;
-    private final ScheduledExecutorService scheduledExecutorService;
     private final Mongo mongo;
 
-    public DefaultClusterableServerFactory(final String clusterId, final ServerSettings settings,
-                                           final ScheduledExecutorService scheduledExecutorService,
-                                           final Mongo mongo) {
+    public DefaultClusterableServerFactory(final String clusterId, final ServerSettings settings, final Mongo mongo) {
         this.clusterId = clusterId;
         this.settings = settings;
-        this.scheduledExecutorService = scheduledExecutorService;
         this.mongo = mongo;
     }
 
@@ -47,14 +41,9 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                               .maxWaitQueueSize(options.getConnectionsPerHost() * options.getThreadsAllowedToBlockForConnectionMultiplier())
                               .maxWaitTime(options.getMaxWaitTime(), MILLISECONDS)
                               .build();
-        return new DefaultServer(serverAddress, settings,
+        return new DefaultServer(serverAddress, settings, clusterId,
                                  new PooledConnectionProvider(clusterId, serverAddress, new DBPortFactory(options), connectionPoolSettings,
                                                               new JMXConnectionPoolListener(mongo.getMongoOptions().getDescription())),
-                                 scheduledExecutorService, mongo);
-    }
-
-    @Override
-    public void close() {
-        scheduledExecutorService.shutdownNow();
+                                 mongo);
     }
 }
