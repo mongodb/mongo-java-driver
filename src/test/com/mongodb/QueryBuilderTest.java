@@ -18,17 +18,17 @@
 package com.mongodb;
 
 import com.mongodb.QueryBuilder.QueryBuilderException;
+import com.mongodb.geojson.*;
 import com.mongodb.util.TestCase;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Pattern;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * Test for various methods of <code/>QueryBuilder</code>
@@ -353,6 +353,316 @@ public class QueryBuilderTest extends TestCase {
     }
 
     @Test
+    public void nearWithGeoJsonTest() {
+        if (!serverIsAtLeastVersion(2.5)) {
+            return;
+        }
+
+        String key = "loc";
+        DBCollection collection = _testDB.getCollection("geoSpatialTest2");
+        BasicDBObject geoSpatialIndex = new BasicDBObject();
+        geoSpatialIndex.put(key, "2dsphere");
+        collection.ensureIndex(geoSpatialIndex);
+        DBObject expected = null;
+
+        Point point = new Point(50,30);
+        saveTestDocument(collection, key, point.get());
+
+        Point pointToSearch = new Point(45,45);
+
+        DBObject queryTrue = QueryBuilder.start(key).near(pointToSearch).get();
+
+        expected = BasicDBObjectBuilder.start()
+                .push(key)
+                .push("$near")
+                .push("$geometry")
+                .add("type", "Point")
+                .add("coordinates", new Double[]{ 45.0, 45.0 } )
+                .get();
+
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+
+        pointToSearch = new Point(50.001,30.001);
+
+        queryTrue = QueryBuilder.start(key).near(pointToSearch, 1000).get();
+
+        expected = BasicDBObjectBuilder.start()
+                .push(key)
+                .push("$near")
+                .add("$geometry",
+                        BasicDBObjectBuilder.start()
+                                .add("type", "Point")
+                                .add("coordinates", new Double[]{ 50.001, 30.001 } )
+                                .get() )
+                .add("$maxDistance", 1000.0)
+                .get();
+
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+
+
+        pointToSearch = new Point(45,45);
+
+        queryTrue = QueryBuilder.start(key).nearSphere(pointToSearch).get();
+
+        expected = BasicDBObjectBuilder.start()
+                .push(key)
+                .push("$nearSphere")
+                .push("$geometry")
+                .add("type", "Point")
+                .add("coordinates", new Double[]{ 45.0, 45.0 } )
+                .get();
+
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+
+
+        pointToSearch = new Point(50.001,30.001);
+
+
+        queryTrue = QueryBuilder.start(key).nearSphere(pointToSearch, 1000).get();
+        expected = BasicDBObjectBuilder.start()
+                .push(key)
+                .push("$nearSphere")
+                .add("$geometry",
+                        BasicDBObjectBuilder.start()
+                                .add("type", "Point")
+                                .add("coordinates", new Double[]{ 50.001, 30.001 } )
+                                .get() )
+                .add("$maxDistance", 1000.0)
+                .get();
+
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+
+    }
+
+
+    @Test
+    public void withinTest() {
+        if (!serverIsAtLeastVersion(2.5)) {
+            return;
+        }
+
+
+        String key = "loc";
+        DBCollection collection = _testDB.getCollection("geoSpatialTest2");
+        BasicDBObject geoSpatialIndex = new BasicDBObject();
+        geoSpatialIndex.put(key, "2dsphere");
+        collection.ensureIndex(geoSpatialIndex);
+
+        Point point = new Point(1.4393, 43.6288);
+        saveTestDocument(collection, key, point.get());
+
+        DBObject expected = null;
+
+        Coordinates point1 = new Coordinates( 1.4392181, 43.6288169 );
+        Coordinates point2 = new Coordinates( 1.4404412, 43.6273491 );
+        Coordinates point3 = new Coordinates( 1.4371582, 43.631892 );
+
+        Polygon polygon = new Polygon( point1, point2, point3 , point1);
+
+        DBObject queryTrue = QueryBuilder.start(key).within(polygon).get();
+
+        expected = BasicDBObjectBuilder.start()
+                .push(key)
+                .push("$geoWithin")
+                .push("$geometry")
+                .add("type", "Polygon")
+                .add("coordinates", new Double[][][] { {
+                        {1.4392181, 43.6288169} ,
+                        {1.4404412, 43.6273491} ,
+                        {1.4371582, 43.631892} ,
+                        {1.4392181, 43.6288169}
+                }
+                } )
+                .get();
+
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+
+    }
+
+
+    @Test
+    public void intersectsTest() {
+
+        if (!serverIsAtLeastVersion(2.5)) {
+            return;
+        }
+
+
+        String key = "loc";
+        DBCollection collection = _testDB.getCollection("geoSpatialTest2");
+        BasicDBObject geoSpatialIndex = new BasicDBObject();
+        geoSpatialIndex.put(key, "2dsphere");
+        collection.ensureIndex(geoSpatialIndex);
+
+        DBObject expected = null;
+
+        Point point = new Point(1.4392181, 43.6288169);
+        DBObject queryTrue = QueryBuilder.start(key).intersects(point).get();
+
+        DBObject docToSave = BasicDBObjectBuilder.start()
+                .add("type", "Point")
+                .add("coordinates", point.getCoordinates())
+                .get();
+
+        expected = BasicDBObjectBuilder.start()
+                .push(key)
+                .push("$geoIntersects")
+                .push("$geometry")
+                .add("type", "Point")
+                .add("coordinates", new Double[]{ 1.4392181, 43.6288169 } )
+                .get();
+
+
+        saveTestDocument(collection, key, docToSave);
+
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+
+
+
+
+        Double[][][] coordinates =  {
+            {
+                {1.419497, 43.651485},
+                {1.4360423, 43.6211749},
+                {1.4434237, 43.6381507},
+                {1.419497, 43.651485}
+            }
+        };
+        docToSave = BasicDBObjectBuilder.start()
+                                .add("type", "Polygon")
+                                .add("coordinates", coordinates)
+                                .get();
+
+
+        saveTestDocument(collection, key, docToSave);
+
+
+
+        expected = BasicDBObjectBuilder.start()
+                .push(key)
+                .push("$geoIntersects")
+                .push("$geometry")
+                .add("type", "Polygon")
+                .add("coordinates", new Double[][][] { {
+                        {1.4392181, 43.6288169} ,
+                        {1.4404412, 43.6273491} ,
+                        {1.4371582, 43.631892} ,
+                        {1.4392181, 43.6288169}
+                }
+                } )
+                .get();
+
+
+        Coordinates point1 = new Coordinates( 1.4392181, 43.6288169 );
+        Coordinates point2 = new Coordinates( 1.4404412, 43.6273491 );
+        Coordinates point3 = new Coordinates( 1.4371582, 43.631892 );
+
+        List<Coordinates> exteriorRing = new ArrayList<Coordinates>();
+        exteriorRing.add( point1 );
+        exteriorRing.add( point2 );
+        exteriorRing.add( point3 );
+        exteriorRing.add( point1 );
+
+        Polygon polygon = new Polygon( exteriorRing );
+
+
+        queryTrue = QueryBuilder.start(key).intersects(polygon).get();
+
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+
+        // Test intersects with LineString
+        LineString lineString = new LineString();
+        lineString.addPoint( new Point(1.419497, 43.651485)  );
+        lineString.addPoint( new Point(1.4360423, 43.6211749)  );
+
+        expected = BasicDBObjectBuilder.start()
+                .push(key)
+                .push("$geoIntersects")
+                .push("$geometry")
+                .add("type", "LineString")
+                .add("coordinates", new Double[][] {
+                        {1.419497, 43.651485} ,
+                        {1.4360423, 43.6211749}
+                } )
+                .get();
+
+
+        queryTrue = QueryBuilder.start(key).intersects(lineString).get();
+
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+
+
+
+        // MultiPoint Test
+        MultiPoint multiPoint = new MultiPoint();
+        multiPoint.addPoint( new Point(1.419497, 43.651485)  );
+        multiPoint.addPoint( new Point(1.4360423, 43.6211749)  );
+        multiPoint.addPoint( new Point(1.4371582, 43.631892)  );
+
+        expected = BasicDBObjectBuilder.start()
+                .push(key)
+                .push("$geoIntersects")
+                .push("$geometry")
+                .add("type", "MultiPoint")
+                .add("coordinates", new Double[][] {
+                        {1.419497, 43.651485} ,
+                        {1.4360423, 43.6211749},
+                        {1.4371582, 43.631892}
+                } )
+                .get();
+
+        queryTrue = QueryBuilder.start(key).intersects(multiPoint).get();
+
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+
+
+        // MultiLineString Test
+        LineString lineStringOne = new LineString();
+        lineStringOne.addPoint( new Point(1.419497, 43.651485)  );
+        lineStringOne.addPoint( new Point(1.4360423, 43.6211749)  );
+
+        LineString lineStringTwo = new LineString();
+        lineStringTwo.addPoint( new Point(1.429497, 43.671485)  );
+        lineStringTwo.addPoint( new Point(1.4460423, 43.6811749)  );
+
+        MultiLineString multiLineString = new MultiLineString();
+        multiLineString.addLineString(lineStringOne);
+        multiLineString.addLineString(lineStringTwo);
+
+
+        // TODO : check if this is a supported query
+        expected = BasicDBObjectBuilder.start()
+                .push(key)
+                .push("$geoIntersects")
+                .push("$geometry")
+                .add("type", "MultiLineString")
+                .add("coordinates", new Double[][][] {
+                        { {1.419497, 43.651485 } , { 1.4360423, 43.6211749 } },
+                        { {1.429497, 43.671485 } , { 1.4460423, 43.6811749 } }
+                } )
+                .get();
+
+        queryTrue = QueryBuilder.start(key).intersects(multiLineString).get();
+
+        assertEquals(expected, queryTrue);
+        assertTrue(testQuery(collection, queryTrue));
+
+
+
+    }
+
+
+
+    @Test
     public void textTest() {
         if (!serverIsAtLeastVersion(2.5)) {
              return;
@@ -423,7 +733,7 @@ public class QueryBuilderTest extends TestCase {
 
     @Test
     public void testOr() {
-        DBCollection c = _testDB.getCollection( "or1" );
+        DBCollection c = _testDB.getCollection("or1");
         c.drop();
         c.insert( new BasicDBObject( "a" , 1 ) );
         c.insert( new BasicDBObject( "b" , 1 ) );
