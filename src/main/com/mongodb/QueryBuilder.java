@@ -22,6 +22,9 @@
 
 package com.mongodb;
 
+import com.mongodb.geojson.GeoJsonObject;
+import com.mongodb.geojson.Point;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -251,6 +254,17 @@ public class QueryBuilder {
     }
 
     /**
+     * Equivalent of the $near operand with GeoJSON support
+     * @param point GeoJSON Point
+     * @return
+     */
+    public QueryBuilder near( Point point  ){
+        addOperand( QueryOperators.NEAR,
+                    new BasicDBObject( QueryOperators.GEOMETRY , point.get()) );
+        return this;
+    }
+
+    /**
      * Equivalent of the $near operand
      * @param x x coordinate
      * @param y y coordinate
@@ -265,6 +279,21 @@ public class QueryBuilder {
 
         return this;
     }
+
+    /**
+     * Equivalent of the $near operand with GeoJSON support
+     * @param point GeoJSON Point
+     * @param maxDistance max distance in meters
+     * @return
+     */
+    public QueryBuilder near( Point point, double maxDistance  ){
+        addOperand( QueryOperators.NEAR,
+                    BasicDBObjectBuilder.start()
+                            .add(QueryOperators.GEOMETRY , point.get())
+                            .add(QueryOperators.MAX_DISTANCE ,
+                                    maxDistance).get());
+        return this;
+    }
     
     /**
      * Equivalent of the $nearSphere operand
@@ -277,7 +306,20 @@ public class QueryBuilder {
                     Arrays.asList(longitude, latitude));
         return this;
     }
-    
+
+
+    /**
+     * Equivalent of the $nearSphere operand
+     * @param point GeoJSON Point
+     * @return
+     */
+    public QueryBuilder nearSphere( Point point ){
+        addOperand( QueryOperators.NEAR_SPHERE,
+                new BasicDBObject( QueryOperators.GEOMETRY , point.get()) );
+        return this;
+    }
+
+
     /**
      * Equivalent of the $nearSphere operand
      * @param longitude coordinate in decimal degrees 
@@ -292,6 +334,43 @@ public class QueryBuilder {
                     maxDistance );
         return this;
     }
+    /**
+     * Equivalent of the $nearSphere operand
+     * @param point GeoJSON Point
+     * @param maxDistance max distance in meters
+     * @return
+     */
+    public QueryBuilder nearSphere( Point point , double maxDistance ){
+        addOperand( QueryOperators.NEAR_SPHERE,
+                BasicDBObjectBuilder.start()
+                        .add(QueryOperators.GEOMETRY , point.get())
+                        .add(QueryOperators.MAX_DISTANCE ,
+                                maxDistance).get());
+        return this;
+    }
+
+
+    /**
+     * Equivalent of the geoIntersects operand
+     * @param geoJsonObject a complete geometry
+     * @return
+     */
+    public QueryBuilder within(GeoJsonObject geoJsonObject ) {
+        addOperand(QueryOperators.GEO_WITHIN,   new BasicDBObject( QueryOperators.GEOMETRY , geoJsonObject.get() )  );
+        return this;
+    }
+
+    /**
+     * Equivalent of the geoIntersects operand
+     * @param geoJsonObject a complete geometry
+     * @return
+     */
+    public QueryBuilder intersects(GeoJsonObject geoJsonObject ) {
+        addOperand(QueryOperators.GEO_INTERSECTS,   new BasicDBObject( QueryOperators.GEOMETRY , geoJsonObject.get() )  );
+        return this;
+    }
+
+
 
     /**
      * Equivalent of the $centerSphere operand
@@ -306,6 +385,7 @@ public class QueryBuilder {
                 new BasicDBObject(QueryOperators.CENTER_SPHERE, new Object[]{ new Double[]{longitude , latitude} , maxDistance } ) );
         return this;
     }
+
 
     /**
      * Equivalent to a $within operand, based on a bounding box using represented by two corners
