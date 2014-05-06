@@ -44,8 +44,7 @@ class ServerStateNotifier implements Runnable {
     private long elapsedNanosSum;
     private volatile ServerDescription serverDescription;
     private volatile boolean isClosed;
-    private DBPort connection;
-    private volatile boolean isRunning;
+    private volatile DBPort connection;
 
     ServerStateNotifier(final ServerAddress serverAddress, final ChangeListener<ServerDescription> serverStateListener,
                         final SocketSettings socketSettings, final Mongo mongo) {
@@ -63,64 +62,53 @@ class ServerStateNotifier implements Runnable {
             return;
         }
 
-        synchronized (this) {
-            if (isRunning) {
-                return;
-            }
-            isRunning = true;
-        }
-
+        final ServerDescription currentServerDescription = serverDescription;
+        Throwable throwable = null;
         try {
-            final ServerDescription currentServerDescription = serverDescription;
-            Throwable throwable = null;
+            if (connection == null) {
+                connection = new DBPort(serverAddress, null, getOptions(), 0);
+            }
             try {
-                if (connection == null) {
-                    connection = new DBPort(serverAddress, null, getOptions(), 0);
+                serverDescription = lookupServerDescription();
+            } catch (IOException e) {
+                // in case the connection has been reset since the last run, do one retry immediately before reporting that the server is
+                // down
+                count = 0;
+                elapsedNanosSum = 0;
+                if (connection != null) {
+                    connection.close();
+                    connection = null;
                 }
+                connection = new DBPort(serverAddress, null, getOptions(), 0);
                 try {
                     serverDescription = lookupServerDescription();
-                } catch (IOException e) {
-                    // in case the connection has been reset since the last run, do one retry immediately before reporting that the server is
-                    // down
-                    count = 0;
-                    elapsedNanosSum = 0;
-                    if (connection != null) {
-                        connection.close();
-                        connection = null;
-                    }
-                    connection = new DBPort(serverAddress, null, getOptions(), 0);
-                    try {
-                        serverDescription = lookupServerDescription();
-                    } catch (IOException e1) {
-                        connection.close();
-                        connection = null;
-                        throw e1;
-                    }
+                } catch (IOException e1) {
+                    connection.close();
+                    connection = null;
+                    throw e1;
                 }
-            } catch (Throwable t) {
-                throwable = t;
-                serverDescription = getUnconnectedServerDescription();
             }
+        } catch (Throwable t) {
+            throwable = t;
+            serverDescription = getUnconnectedServerDescription();
+        }
 
-            if (!isClosed) {
-                try {
-                    // Note that the ServerDescription.equals method does not include the average ping time as part of the comparison,
-                    // so this will not spam the logs too hard.
-                    if (!currentServerDescription.equals(serverDescription)) {
-                        if (throwable != null) {
-                            LOGGER.log(Level.INFO, format("Exception in monitor thread while connecting to server %s", serverAddress),
-                                       throwable);
-                        } else {
-                            LOGGER.info(format("Monitor thread successfully connected to server with description %s", serverDescription));
-                        }
+        if (!isClosed) {
+            try {
+                // Note that the ServerDescription.equals method does not include the average ping time as part of the comparison,
+                // so this will not spam the logs too hard.
+                if (!currentServerDescription.equals(serverDescription)) {
+                    if (throwable != null) {
+                        LOGGER.log(Level.INFO, format("Exception in monitor thread while connecting to server %s", serverAddress),
+                                   throwable);
+                    } else {
+                        LOGGER.info(format("Monitor thread successfully connected to server with description %s", serverDescription));
                     }
-                    serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
-                } catch (Throwable t) {
-                    LOGGER.log(Level.WARNING, "Exception in monitor thread during notification of server description state change", t);
                 }
+                serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
+            } catch (Throwable t) {
+                LOGGER.log(Level.WARNING, "Exception in monitor thread during notification of server description state change", t);
             }
-        } finally {
-            isRunning = false;
         }
     }
 

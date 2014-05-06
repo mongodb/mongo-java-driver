@@ -32,8 +32,6 @@ import static org.bson.util.Assertions.notNull;
 
 class DefaultServer implements ClusterableServer {
 
-    private final String clusterId;
-
     private enum HeartbeatFrequency {
         NORMAL {
             @Override
@@ -52,6 +50,7 @@ class DefaultServer implements ClusterableServer {
         abstract long getFrequencyMS(final ServerSettings settings);
     }
 
+    private final String clusterId;
     private final ScheduledExecutorService scheduledExecutorService;
     private final ServerAddress serverAddress;
     private final ServerStateNotifier stateNotifier;
