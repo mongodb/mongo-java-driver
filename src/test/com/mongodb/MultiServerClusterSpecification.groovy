@@ -23,7 +23,7 @@ import static com.mongodb.ClusterType.ReplicaSet
 import static com.mongodb.ClusterType.Sharded
 import static com.mongodb.ServerConnectionState.Connected
 import static com.mongodb.ServerConnectionState.Connecting
-import static com.mongodb.ServerType.ReplicaSetOther
+import static com.mongodb.ServerType.ReplicaSetGhost
 import static com.mongodb.ServerType.ReplicaSetPrimary
 import static com.mongodb.ServerType.ReplicaSetSecondary
 import static com.mongodb.ServerType.ShardRouter
@@ -50,7 +50,6 @@ class MultiServerClusterSpecification extends Specification {
 
         then:
         getClusterDescription(cluster).with {
-            isConnecting()
             type == ReplicaSet
             connectionMode == Multiple
         }
@@ -69,19 +68,43 @@ class MultiServerClusterSpecification extends Specification {
         thrown(IllegalStateException)
     }
 
-    def 'should discover all servers in the cluster'() {
+    def 'should discover all hosts in the cluster when notified by the primary'() {
         given:
         def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(Multiple).hosts([firstServer]).build(), factory,
                                              CLUSTER_LISTENER)
 
         when:
-        sendNotification(firstServer, ReplicaSetPrimary)
+        sendNotification(firstServer, ReplicaSetPrimary, [firstServer, secondServer, thirdServer])
 
         then:
         getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer, thirdServer)
     }
 
-    def 'should remove a server when it no longer appears in hosts'() {
+    def 'should discover all hosts in the cluster when notified by a secondary and there is no primary'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(Multiple).hosts([firstServer]).build(), factory,
+                                             CLUSTER_LISTENER)
+
+        when:
+        sendNotification(firstServer, ReplicaSetSecondary, [firstServer, secondServer, thirdServer])
+
+        then:
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer, thirdServer)
+    }
+
+    def 'should discover all passives in the cluster'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(Multiple).hosts([firstServer]).build(), factory,
+                                             CLUSTER_LISTENER)
+
+        when:
+        sendNotification(firstServer, ReplicaSetPrimary, [firstServer], [secondServer, thirdServer])
+
+        then:
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer, thirdServer)
+    }
+
+    def 'should remove a server when it no longer appears in hosts reported by the primary'() {
         given:
         def cluster = new MultiServerCluster(CLUSTER_ID,
                                              ClusterSettings.builder().hosts([firstServer, secondServer, thirdServer]).build(), factory,
@@ -120,12 +143,12 @@ class MultiServerClusterSpecification extends Specification {
                 CLUSTER_LISTENER)
 
         when:
-        sendNotification(secondServer, ReplicaSetOther, [])
+        sendNotification(secondServer, ReplicaSetGhost, [])
 
         then:
         getClusterDescription(cluster).type == ReplicaSet
         getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer)
-        getClusterDescription(cluster).getByServerAddress(secondServer).getType() == ReplicaSetOther
+        getClusterDescription(cluster).getByServerAddress(secondServer).getType() == ReplicaSetGhost
     }
 
     def 'should ignore a host without a replica set name when type is replica set'() {
@@ -135,12 +158,12 @@ class MultiServerClusterSpecification extends Specification {
                 CLUSTER_LISTENER)
 
         when:
-        sendNotification(secondServer, ReplicaSetOther, [firstServer, secondServer], null)  // null replica set name
+        sendNotification(secondServer, ReplicaSetGhost, [firstServer, secondServer], null)  // null replica set name
 
         then:
         getClusterDescription(cluster).type == ReplicaSet
         getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer)
-        getClusterDescription(cluster).getByServerAddress(secondServer).getType() == ReplicaSetOther
+        getClusterDescription(cluster).getByServerAddress(secondServer).getType() == ReplicaSetGhost
     }
 
     def 'should remove a server of the wrong type when type is sharded'() {
@@ -276,18 +299,52 @@ class MultiServerClusterSpecification extends Specification {
         getClusterDescription(cluster).all == getServerDescriptions(firstServer, thirdServer)
     }
 
-    def 'should ignore replica set member lists from a server that has an older replica set version'() {
+    def 'should add servers from a secondary host list when there is no primary'() {
         given:
         def cluster = new MultiServerCluster(CLUSTER_ID,
                                              ClusterSettings.builder().hosts([firstServer, secondServer, thirdServer]).build(), factory,
                                              CLUSTER_LISTENER)
-        sendNotification(firstServer, ReplicaSetPrimary, [firstServer, secondServer, thirdServer], 'test', 2)
+        sendNotification(firstServer, ReplicaSetSecondary, [firstServer, secondServer])
 
         when:
-        sendNotification(secondServer, ReplicaSetSecondary, [firstServer, secondServer], 'test', 1)
+        sendNotification(secondServer, ReplicaSetSecondary, [secondServer, thirdServer])
 
         then:
         getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer, thirdServer)
+    }
+
+    def 'should add and removes servers from a primary host list when there is a primary'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID,
+                                             ClusterSettings.builder().hosts([firstServer, secondServer, thirdServer]).build(), factory,
+                                             CLUSTER_LISTENER)
+        sendNotification(firstServer, ReplicaSetPrimary, [firstServer, secondServer])
+
+        when:
+        sendNotification(firstServer, ReplicaSetPrimary, [firstServer, thirdServer])
+
+        then:
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, thirdServer)
+
+        when:
+        sendNotification(thirdServer, ReplicaSetPrimary, [secondServer, thirdServer])
+
+        then:
+        getClusterDescription(cluster).all == getServerDescriptions(secondServer, thirdServer)
+    }
+
+    def 'should ignore a secondary host list when there is a primary'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID,
+                                             ClusterSettings.builder().hosts([firstServer, secondServer, thirdServer]).build(), factory,
+                                             CLUSTER_LISTENER)
+        sendNotification(firstServer, ReplicaSetPrimary, [firstServer, secondServer])
+
+        when:
+        sendNotification(secondServer, ReplicaSetSecondary, [secondServer, thirdServer])
+
+        then:
+        getClusterDescription(cluster).all == getServerDescriptions(firstServer, secondServer)
     }
 
     def 'should ignore a notification from a server that is not ok'() {
@@ -341,16 +398,21 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(serverAddress, serverType, hosts, 'test')
     }
 
-    def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, String setName, int setVersion) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, true, setName, setVersion).build())
+    def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, List<ServerAddress> passives) {
+        sendNotification(serverAddress, serverType, hosts, passives, 'test')
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, String setName) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, true, setName, null).build())
+        sendNotification(serverAddress, serverType, hosts, [], setName)
+    }
+
+    def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, List<ServerAddress> passives,
+                         String setName) {
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, passives, true, setName).build())
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, boolean ok) {
-        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, ok, null, null).build())
+        factory.getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, [], ok, null).build())
     }
 
     def getClusterDescription(MultiServerCluster cluster) {
@@ -365,15 +427,15 @@ class MultiServerClusterSpecification extends Specification {
         servers.collect { factory.getServer(it).description } as Set
     }
 
-    def getBuilder(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, boolean ok, String setName,
-                   Integer setVersion) {
+    def getBuilder(ServerAddress serverAddress, ServerType serverType, List<ServerAddress> hosts, List<ServerAddress> passives, boolean ok,
+                   String setName) {
         ServerDescription.builder()
                          .address(serverAddress)
                          .type(serverType)
                          .ok(ok)
                          .state(Connected)
                          .hosts(hosts*.toString() as Set)
+                         .passives(passives*.toString() as Set)
                          .setName(setName)
-                         .setVersion(setVersion)
     }
 }

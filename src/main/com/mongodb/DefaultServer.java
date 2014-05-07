@@ -25,7 +25,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ServerConnectionState.Connecting;
-import static com.mongodb.ServerConnectionState.Unconnected;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.util.Assertions.isTrue;
 import static org.bson.util.Assertions.notNull;
@@ -129,7 +128,7 @@ class DefaultServer implements ClusterableServer {
     }
 
     private void setHeartbeat(final ChangeEvent<ServerDescription> event) {
-        HeartbeatFrequency heartbeatFrequency = event.getNewValue().getState() == Unconnected
+        HeartbeatFrequency heartbeatFrequency = event.getNewValue().getState() == Connecting
                                                 ? HeartbeatFrequency.RETRY
                                                 : HeartbeatFrequency.NORMAL;
         long initialDelay = heartbeatFrequency.getFrequencyMS(settings);

@@ -90,7 +90,7 @@ class ServerStateNotifier implements Runnable {
             }
         } catch (Throwable t) {
             throwable = t;
-            serverDescription = getUnconnectedServerDescription();
+            serverDescription = getConnectingServerDescription();
         }
 
         if (!isClosed) {
@@ -191,7 +191,11 @@ class ServerStateNotifier implements Runnable {
                 return ServerType.ReplicaSetArbiter;
             }
 
-            return ServerType.ReplicaSetOther;
+            if (isMasterResult.containsKey("setName") && isMasterResult.containsField("hosts")) {
+                return ServerType.ReplicaSetOther;
+            }
+
+            return ServerType.ReplicaSetGhost;
         }
 
         if (isMasterResult.containsKey("msg") && isMasterResult.get("msg").equals("isdbgrid")) {
@@ -218,9 +222,5 @@ class ServerStateNotifier implements Runnable {
 
     private ServerDescription getConnectingServerDescription() {
         return ServerDescription.builder().type(ServerType.Unknown).state(ServerConnectionState.Connecting).address(serverAddress).build();
-    }
-
-    private ServerDescription getUnconnectedServerDescription() {
-        return ServerDescription.builder().type(ServerType.Unknown).state(ServerConnectionState.Unconnected).address(serverAddress).build();
     }
 }

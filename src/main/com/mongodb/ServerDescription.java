@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ServerConnectionState.Connected;
 import static com.mongodb.ServerType.ReplicaSetArbiter;
+import static com.mongodb.ServerType.ReplicaSetGhost;
 import static com.mongodb.ServerType.ReplicaSetOther;
 import static com.mongodb.ServerType.ReplicaSetPrimary;
 import static com.mongodb.ServerType.ReplicaSetSecondary;
@@ -67,7 +68,6 @@ class ServerDescription {
     private final boolean ok;
     private final ServerConnectionState state;
     private final ServerVersion version;
-    private final Integer setVersion;
 
     private final int minWireVersion;
     private final int maxWireVersion;
@@ -84,7 +84,6 @@ class ServerDescription {
         private int maxWriteBatchSize = DEFAULT_MAX_WRITE_BATCH_SIZE;
         private Tags tags = Tags.freeze(new Tags());
         private String setName;
-        private Integer setVersion;
         private long averageLatency;
         private boolean ok;
         private ServerConnectionState state;
@@ -150,11 +149,6 @@ class ServerDescription {
 
         public Builder setName(final String setName) {
             this.setName = setName;
-            return this;
-        }
-
-        public Builder setVersion(final Integer setVersion) {
-            this.setVersion = setVersion;
             return this;
         }
 
@@ -241,7 +235,8 @@ class ServerDescription {
     }
 
     public boolean isReplicaSetMember() {
-        return (type == ReplicaSetPrimary || type == ReplicaSetSecondary || type == ReplicaSetArbiter || type == ReplicaSetOther);
+        return (type == ReplicaSetPrimary || type == ReplicaSetSecondary || type == ReplicaSetArbiter || type == ReplicaSetOther
+                || type == ReplicaSetGhost);
     }
 
     public boolean isShardRouter() {
@@ -350,10 +345,6 @@ class ServerDescription {
         return version;
     }
 
-    public Integer getSetVersion() {
-        return setVersion;
-    }
-
     public long getAverageLatencyNanos() {
         return averageLatencyNanos;
     }
@@ -405,9 +396,6 @@ class ServerDescription {
         if (setName != null ? !setName.equals(that.setName) : that.setName != null) {
             return false;
         }
-        if (setVersion != null ? !setVersion.equals(that.setVersion) : that.setVersion != null) {
-            return false;
-        }
         if (state != that.state) {
             return false;
         }
@@ -444,7 +432,6 @@ class ServerDescription {
         result = 31 * result + maxWriteBatchSize;
         result = 31 * result + tags.hashCode();
         result = 31 * result + (setName != null ? setName.hashCode() : 0);
-        result = 31 * result + (setVersion != null ? setVersion.hashCode() : 0);
         result = 31 * result + (ok ? 1 : 0);
         result = 31 * result + state.hashCode();
         result = 31 * result + version.hashCode();
@@ -467,7 +454,6 @@ class ServerDescription {
                + ", maxWriteBatchSize=" + maxWriteBatchSize
                + ", tags=" + tags
                + ", setName='" + setName + '\''
-               + ", setVersion='" + setVersion + '\''
                + ", averageLatencyNanos=" + averageLatencyNanos
                + ", ok=" + ok
                + ", state=" + state
@@ -505,7 +491,6 @@ class ServerDescription {
         maxWriteBatchSize = builder.maxWriteBatchSize;
         tags = builder.tags;
         setName = builder.setName;
-        setVersion = builder.setVersion;
         averageLatencyNanos = builder.averageLatency;
         ok = builder.ok;
         minWireVersion = builder.minWireVersion;

@@ -44,7 +44,7 @@ public class TestServer implements ClusterableServer {
     }
 
     public void invalidate() {
-        description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
+        sendNotification(ServerDescription.builder().state(Connecting).address(serverAddress).build());
     }
 
     public void close() {
