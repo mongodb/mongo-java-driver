@@ -155,11 +155,11 @@ class DBCollectionImpl extends DBCollection {
         }
     }
 
-    public WriteResult insert(List<DBObject> list, WriteConcern concern, DBEncoder encoder ){
+    public WriteResult insert(List<? extends DBObject> list, WriteConcern concern, DBEncoder encoder ){
         return insert(list, true, concern, encoder);
     }
 
-    protected WriteResult insert(List<DBObject> list, boolean shouldApply , WriteConcern concern, DBEncoder encoder ){
+    protected WriteResult insert(List<? extends DBObject> list, boolean shouldApply , WriteConcern concern, DBEncoder encoder ){
         if (concern == null) {
             throw new IllegalArgumentException("Write concern can not be null");
         }
@@ -363,7 +363,7 @@ class DBCollectionImpl extends DBCollection {
         }
     }
 
-    private BulkWriteResult insertWithCommandProtocol(final List<DBObject> list, final WriteConcern writeConcern,
+    private BulkWriteResult insertWithCommandProtocol(final List<? extends DBObject> list, final WriteConcern writeConcern,
                                                       final DBEncoder encoder,
                                                       final DBPort port, final boolean shouldApply) {
         if ( shouldApply ){
@@ -376,7 +376,7 @@ class DBCollectionImpl extends DBCollection {
         return writeWithCommandProtocol(port, INSERT, message, writeConcern);
     }
 
-    private void applyRulesForInsert(final List<DBObject> list) {
+    private void applyRulesForInsert(final List<? extends DBObject> list) {
         for (DBObject o : list) {
             _checkObject(o, false, false);
             apply(o);
@@ -491,7 +491,7 @@ class DBCollectionImpl extends DBCollection {
     }
 
 
-    private WriteResult insertWithWriteProtocol(final List<DBObject> list, final WriteConcern concern, final DBEncoder encoder,
+    private WriteResult insertWithWriteProtocol(final List<? extends DBObject> list, final WriteConcern concern, final DBEncoder encoder,
                                                 final DBPort port, final boolean shouldApply) {
         if ( shouldApply ){
             applyRulesForInsert(list);
