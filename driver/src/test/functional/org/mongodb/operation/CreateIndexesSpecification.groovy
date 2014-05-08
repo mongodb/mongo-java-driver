@@ -19,6 +19,7 @@ import category.Async
 import org.junit.experimental.categories.Category
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
+import org.mongodb.MongoCommandFailureException
 
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
@@ -108,6 +109,31 @@ class CreateIndexesSpecification extends FunctionalSpecification {
 
         then:
         getIndexes()*.get('key') containsAll(idIndex, field1Index)
+    }
+
+    def 'should throw when trying to build an invalid index'() {
+        given:
+        def index = Index.builder().build()
+        def createIndexesOperation = new CreateIndexesOperation([index], getNamespace())
+
+        when:
+        createIndexesOperation.execute(getBinding())
+
+        then:
+        thrown(MongoCommandFailureException)
+    }
+
+    @Category(Async)
+    def 'should throw when trying to build an invalid index asynchronously'() {
+        given:
+        def index = Index.builder().build()
+        def createIndexesOperation = new CreateIndexesOperation([index], getNamespace())
+
+        when:
+        createIndexesOperation.execute(getBinding())
+
+        then:
+        thrown(MongoCommandFailureException)
     }
 
     def getIndexes() {

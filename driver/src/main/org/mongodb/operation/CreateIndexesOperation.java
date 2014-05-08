@@ -168,7 +168,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     }
 
     private MongoException translateException(final MongoException e) {
-        return (e instanceof MongoCommandFailureException) ? checkForDuplicateKeyError((MongoCommandFailureException) e) : null;
+        return (e instanceof MongoCommandFailureException) ? checkForDuplicateKeyError((MongoCommandFailureException) e) : e;
     }
 
     private MongoServerException checkForDuplicateKeyError(final MongoCommandFailureException e) {
