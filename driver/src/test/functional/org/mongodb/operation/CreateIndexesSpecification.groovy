@@ -19,7 +19,7 @@ import category.Async
 import org.junit.experimental.categories.Category
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
-import org.mongodb.MongoCommandFailureException
+import org.mongodb.MongoServerException
 
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
@@ -120,7 +120,7 @@ class CreateIndexesSpecification extends FunctionalSpecification {
         createIndexesOperation.execute(getBinding())
 
         then:
-        thrown(MongoCommandFailureException)
+        thrown(MongoServerException)
     }
 
     @Category(Async)
@@ -133,7 +133,7 @@ class CreateIndexesSpecification extends FunctionalSpecification {
         createIndexesOperation.execute(getBinding())
 
         then:
-        thrown(MongoCommandFailureException)
+        thrown(MongoServerException)
     }
 
     def getIndexes() {
