@@ -32,7 +32,7 @@ import static org.mongodb.operation.OperationHelper.VoidTransformer;
  * dropTarget is true, this existing collection will be dropped. If dropTarget is false and the newCollectionName is the same as an existing
  * collection, a MongoServerException will be thrown.
  *
- * @3.0
+ * @since 3.0
  */
 public class RenameCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final String originalCollectionName;

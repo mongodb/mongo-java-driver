@@ -75,7 +75,7 @@ public class ServerAddress {
 
     /**
      * Creates a ServerAddress with default port
-     * @param addr host address
+     * @param inetAddress host address
      */
     public ServerAddress(final InetAddress inetAddress) {
         this(inetAddress.getHostName(), defaultPort());
@@ -83,7 +83,7 @@ public class ServerAddress {
 
     /**
      * Creates a ServerAddress
-     * @param addr host address
+     * @param inetAddress host address
      * @param port mongod port
      */
     public ServerAddress(final InetAddress inetAddress, final int port) {
@@ -92,7 +92,7 @@ public class ServerAddress {
 
     /**
      * Creates a ServerAddress
-     * @param addr inet socket address containing hostname and port
+     * @param inetSocketAddress inet socket address containing hostname and port
      */
     public ServerAddress(final InetSocketAddress inetSocketAddress) {
         this(inetSocketAddress.getAddress(), inetSocketAddress.getPort());
