@@ -172,6 +172,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
         options.tagletPath project(':util').sourceSets.main.output.classesDir
         options.taglets 'ManualTaglet'
         options.taglets 'ServerReleaseTaglet'
+        options.encoding = "UTF-8"
     }
 
 }
