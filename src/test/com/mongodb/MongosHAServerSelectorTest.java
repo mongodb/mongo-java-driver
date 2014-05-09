@@ -48,7 +48,7 @@ public class MongosHAServerSelectorTest {
                                                    .state(Connected)
                                                    .address(new ServerAddress())
                                                    .ok(true)
-                                                   .averagePingTime(10, MILLISECONDS)
+                                                   .averageLatency(10, MILLISECONDS)
                                                    .type(ServerType.ShardRouter)
                                                    .build();
 
@@ -63,7 +63,7 @@ public class MongosHAServerSelectorTest {
                                   .state(Connected)
                                   .address(new ServerAddress("localhost:27018"))
                                   .ok(true)
-                                  .averagePingTime(8, MILLISECONDS)
+                                  .averageLatency(8, MILLISECONDS)
                                   .type(ServerType.ShardRouter)
                                   .build();
     }

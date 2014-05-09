@@ -34,7 +34,7 @@ class LatencyMinimizingServerSelector implements ServerSelector {
 
     @Override
     public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
-        return getServersWithAcceptableLatencyDifference(clusterDescription.getAll(), getBestPingTimeNanos(clusterDescription.getAll()));
+        return getServersWithAcceptableLatencyDifference(clusterDescription.getAll(), getBestLatencyNanos(clusterDescription.getAll()));
     }
 
     @Override
@@ -44,14 +44,14 @@ class LatencyMinimizingServerSelector implements ServerSelector {
                + '}';
     }
 
-    private long getBestPingTimeNanos(final Set<ServerDescription> members) {
+    private long getBestLatencyNanos(final Set<ServerDescription> members) {
         long bestPingTime = Long.MAX_VALUE;
         for (final ServerDescription cur : members) {
             if (!cur.isOk()) {
                 continue;
             }
-            if (cur.getAveragePingTimeNanos() < bestPingTime) {
-                bestPingTime = cur.getAveragePingTimeNanos();
+            if (cur.getAverageLatencyNanos() < bestPingTime) {
+                bestPingTime = cur.getAverageLatencyNanos();
             }
         }
         return bestPingTime;
@@ -64,7 +64,7 @@ class LatencyMinimizingServerSelector implements ServerSelector {
             if (!cur.isOk()) {
                 continue;
             }
-            if (cur.getAveragePingTimeNanos() - acceptableLatencyDifferenceNanos <= bestPingTime) {
+            if (cur.getAverageLatencyNanos() - acceptableLatencyDifferenceNanos <= bestPingTime) {
                 goodSecondaries.add(cur);
             }
         }

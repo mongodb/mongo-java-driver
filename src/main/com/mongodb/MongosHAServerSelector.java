@@ -43,7 +43,7 @@ class MongosHAServerSelector implements ServerSelector {
                 }
                 ServerDescription fastestServer = null;
                 for (ServerDescription cur : clusterDescription.getAny()) {
-                    if (fastestServer == null || cur.getAveragePingTimeNanos() < fastestServer.getAveragePingTimeNanos()) {
+                    if (fastestServer == null || cur.getAverageLatencyNanos() < fastestServer.getAverageLatencyNanos()) {
                         fastestServer = cur;
                     }
                 }

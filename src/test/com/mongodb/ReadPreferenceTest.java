@@ -54,28 +54,28 @@ public class ReadPreferenceTest {
         final long unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1;
 
         primary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27017))
-                                   .averagePingTime(acceptablePingTime * 1000000L, NANOSECONDS)
+                                   .averageLatency(acceptablePingTime * 1000000L, NANOSECONDS)
                                    .ok(true)
                                    .type(ServerType.ReplicaSetPrimary)
                                    .tags(tags1)
                                    .maxDocumentSize(FOUR_MEG).build();
 
         secondary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27018))
-                                     .averagePingTime(bestPingTime * 1000000L, NANOSECONDS)
+                                     .averageLatency(bestPingTime * 1000000L, NANOSECONDS)
                                      .ok(true)
                                      .type(ServerType.ReplicaSetSecondary)
                                      .tags(tags2)
                                      .maxDocumentSize(FOUR_MEG).build();
 
         otherSecondary = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27019))
-                                          .averagePingTime(unacceptablePingTime * 1000000L, NANOSECONDS)
+                                          .averageLatency(unacceptablePingTime * 1000000L, NANOSECONDS)
                                           .ok(true)
                                           .type(ServerType.ReplicaSetSecondary)
                                           .tags(tags3)
                                           .maxDocumentSize(FOUR_MEG)
                                           .build();
         ServerDescription uninitiatedMember = ServerDescription.builder().state(Connected).address(new ServerAddress(HOST, 27020))
-                                                               .averagePingTime(unacceptablePingTime * 1000000L, NANOSECONDS)
+                                                               .averageLatency(unacceptablePingTime * 1000000L, NANOSECONDS)
                                                                .ok(true)
                                                                .type(ServerType.ReplicaSetOther)
                                                                .maxDocumentSize(FOUR_MEG)

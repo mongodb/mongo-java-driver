@@ -95,7 +95,7 @@ class ServerStateNotifier implements Runnable {
 
         if (!isClosed) {
             try {
-                // Note that the ServerDescription.equals method does not include the average ping time as part of the comparison,
+                // Note that the ServerDescription.equals method does not include the average latency as part of the comparison,
                 // so this will not spam the logs too hard.
                 if (!currentServerDescription.equals(serverDescription)) {
                     if (throwable != null) {
@@ -141,7 +141,7 @@ class ServerStateNotifier implements Runnable {
 
     @SuppressWarnings("unchecked")
     private ServerDescription createDescription(final CommandResult commandResult, final CommandResult buildInfoResult,
-                                                final long averagePingTimeNanos) {
+                                                final long averageLatencyNanos) {
         return ServerDescription.builder()
                                 .state(ServerConnectionState.Connected)
                                 .version(getVersion(buildInfoResult))
@@ -160,7 +160,7 @@ class ServerStateNotifier implements Runnable {
                                 .setVersion((Integer) commandResult.get("setVersion"))
                                 .minWireVersion(commandResult.getInt("minWireVersion", ServerDescription.getDefaultMinWireVersion()))
                                 .maxWireVersion(commandResult.getInt("maxWireVersion", ServerDescription.getDefaultMaxWireVersion()))
-                                .averagePingTime(averagePingTimeNanos, TimeUnit.NANOSECONDS)
+                                .averageLatency(averageLatencyNanos, TimeUnit.NANOSECONDS)
                                 .ok(commandResult.ok()).build();
     }
 

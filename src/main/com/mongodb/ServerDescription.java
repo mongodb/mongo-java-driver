@@ -18,6 +18,7 @@ package com.mongodb;
 
 import org.bson.util.annotations.Immutable;
 
+import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -32,8 +33,6 @@ import static com.mongodb.ServerType.ReplicaSetSecondary;
 import static com.mongodb.ServerType.ShardRouter;
 import static com.mongodb.ServerType.StandAlone;
 import static com.mongodb.ServerType.Unknown;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.bson.util.Assertions.notNull;
 
 
@@ -64,7 +63,7 @@ class ServerDescription {
     private final int maxMessageSize;
     private final Tags tags;
     private final String setName;
-    private final long averagePingTimeNanos;
+    private final long averageLatencyNanos;
     private final boolean ok;
     private final ServerConnectionState state;
     private final ServerVersion version;
@@ -86,7 +85,7 @@ class ServerDescription {
         private Tags tags = Tags.freeze(new Tags());
         private String setName;
         private Integer setVersion;
-        private long averagePingTimeNanos;
+        private long averageLatency;
         private boolean ok;
         private ServerConnectionState state;
         private ServerVersion version = new ServerVersion();
@@ -144,8 +143,8 @@ class ServerDescription {
             return this;
         }
 
-        public Builder averagePingTime(final long averagePingTime, final TimeUnit timeUnit) {
-            this.averagePingTimeNanos = timeUnit.toNanos(averagePingTime);
+        public Builder averageLatency(final long averageLatency, final TimeUnit timeUnit) {
+            this.averageLatency = timeUnit.toNanos(averageLatency);
             return this;
         }
 
@@ -355,8 +354,8 @@ class ServerDescription {
         return setVersion;
     }
 
-    public long getAveragePingTimeNanos() {
-        return averagePingTimeNanos;
+    public long getAverageLatencyNanos() {
+        return averageLatencyNanos;
     }
 
     /**
@@ -469,7 +468,7 @@ class ServerDescription {
                + ", tags=" + tags
                + ", setName='" + setName + '\''
                + ", setVersion='" + setVersion + '\''
-               + ", averagePingTimeNanos=" + averagePingTimeNanos
+               + ", averageLatencyNanos=" + averageLatencyNanos
                + ", ok=" + ok
                + ", state=" + state
                + ", version=" + version
@@ -483,9 +482,13 @@ class ServerDescription {
                + "address=" + address
                + ", type=" + type
                + (tags.isEmpty() ? "" : tags)
-               + (state == Connected ? (", averagePingTime=" + NANOSECONDS.convert(averagePingTimeNanos, MILLISECONDS) + " ms") : "")
+               + (state == Connected ? (", averageLatency=" + getAverageLatencyFormattedInMilliseconds() + " ms") : "")
                + ", state=" + state
                + '}';
+    }
+
+    private String getAverageLatencyFormattedInMilliseconds() {
+        return new DecimalFormat("#0.0").format(averageLatencyNanos / 1000.0 / 1000.0);
     }
 
     ServerDescription(final Builder builder) {
@@ -503,7 +506,7 @@ class ServerDescription {
         tags = builder.tags;
         setName = builder.setName;
         setVersion = builder.setVersion;
-        averagePingTimeNanos = builder.averagePingTimeNanos;
+        averageLatencyNanos = builder.averageLatency;
         ok = builder.ok;
         minWireVersion = builder.minWireVersion;
         maxWireVersion = builder.maxWireVersion;
