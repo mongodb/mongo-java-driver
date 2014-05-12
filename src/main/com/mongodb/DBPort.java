@@ -308,12 +308,6 @@ public class DBPort implements Connection {
         return "{DBPort  " + host() + "}";
     }
     
-    @Override
-    protected void finalize() throws Throwable{
-        super.finalize();
-        close();
-    }
-
     ActiveState getActiveState() {
         isTrue("open", !closed);
         return _activeState;
