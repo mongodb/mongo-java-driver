@@ -112,8 +112,7 @@ import static org.mongodb.AuthenticationMechanism.PLAIN;
  * </ul>
  * <p>Read preference configuration:</p>
  * <ul>
- * <li>{@code slaveOk=true|false}: Whether a driver connected to a replica set will send reads to slaves/secondaries.</li>
- * <li>{@code readPreference=enum}: The read preference for this connection.  If set, it overrides any slaveOk value.
+ * <li>{@code readPreference=enum}: The read preference for this connection.
  * <ul>
  * <li>Enumerated values:
  * <ul>
@@ -288,7 +287,6 @@ public class MongoClientURI {
         GENERAL_OPTIONS_KEYS.add("ssl");
         GENERAL_OPTIONS_KEYS.add("replicaset");
 
-        READ_PREFERENCE_KEYS.add("slaveok");
         READ_PREFERENCE_KEYS.add("readpreference");
         READ_PREFERENCE_KEYS.add("readpreferencetags");
 
@@ -388,7 +386,6 @@ public class MongoClientURI {
     }
 
     private ReadPreference createReadPreference(final Map<String, List<String>> optionsMap) {
-        Boolean slaveOk = null;
         String readPreferenceType = null;
         List<Tags> tagsList = new ArrayList<Tags>();
 
@@ -398,9 +395,7 @@ public class MongoClientURI {
                 continue;
             }
 
-            if (key.equals("slaveok")) {
-                slaveOk = parseBoolean(value);
-            } else if (key.equals("readpreference")) {
+            if (key.equals("readpreference")) {
                 readPreferenceType = value;
             } else if (key.equals("readpreferencetags")) {
                 for (final String cur : optionsMap.get(key)) {
@@ -409,7 +404,7 @@ public class MongoClientURI {
                 }
             }
         }
-        return buildReadPreference(readPreferenceType, tagsList, slaveOk);
+        return buildReadPreference(readPreferenceType, tagsList);
     }
 
     private MongoCredential createCredentials(final Map<String, List<String>> optionsMap, final String userName,
@@ -484,11 +479,9 @@ public class MongoClientURI {
     }
 
     private ReadPreference buildReadPreference(final String readPreferenceType,
-                                               final List<Tags> tagsList, final Boolean slaveOk) {
+                                               final List<Tags> tagsList) {
         if (readPreferenceType != null) {
             return ReadPreference.valueOf(readPreferenceType, tagsList);
-        } else if (slaveOk != null && slaveOk.equals(Boolean.TRUE)) {
-            return ReadPreference.secondaryPreferred();
         }
         return null;
     }

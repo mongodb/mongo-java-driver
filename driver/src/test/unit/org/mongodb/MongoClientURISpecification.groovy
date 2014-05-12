@@ -106,7 +106,7 @@ class MongoClientURISpecification extends Specification {
         options.getMaxConnectionLifeTime() == 300
         options.getSocketTimeout() == 5500;
         options.getWriteConcern() == new WriteConcern(1, 2500, true);
-        options.getReadPreference() == ReadPreference.secondaryPreferred();
+        options.getReadPreference() == ReadPreference.primary() ;
         options.getRequiredReplicaSetName() == 'test'
 
         where:
@@ -114,16 +114,16 @@ class MongoClientURISpecification extends Specification {
                 [new MongoClientURI('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=5&waitQueueTimeoutMS=150&'
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
                                             + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
-                                            + 'slaveOk=true&safe=false&w=1&wtimeout=2500&fsync=true').getOptions(),
+                                            + 'safe=false&w=1&wtimeout=2500&fsync=true').getOptions(),
                  new MongoClientURI('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200;maxLifeTimeMS=300;replicaSet=test;'
                                             + 'connectTimeoutMS=2500;socketTimeoutMS=5500;'
-                                            + 'slaveOk=true;safe=false;w=1;wtimeout=2500;fsync=true').getOptions(),
+                                            + 'safe=false;w=1;wtimeout=2500;fsync=true').getOptions(),
                  new MongoClientURI('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10&waitQueueMultiple=5;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test;'
                                             + 'connectTimeoutMS=2500;'
                                             + 'socketTimeoutMS=5500&'
-                                            + 'slaveOk=true;safe=false&w=1;wtimeout=2500;fsync=true').getOptions()]
+                                            + 'safe=false&w=1;wtimeout=2500;fsync=true').getOptions()]
         //for documentation, i.e. the Unroll description for each type
         type << ['amp', 'semi', 'mixed']
     }
