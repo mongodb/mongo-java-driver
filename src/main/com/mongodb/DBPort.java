@@ -85,9 +85,9 @@ public class DBPort implements Connection {
         this.generation = generation;
 
         _logger = Logger.getLogger( _rootLogger.getName() + "." + addr.toString() );
-        _decoder = _options.dbDecoderFactory.create();
         try {
             ensureOpen();
+            _decoder = _options.dbDecoderFactory.create();
             openedAt = System.currentTimeMillis();
             lastUsedAt = openedAt;
         } catch (IOException e) {
