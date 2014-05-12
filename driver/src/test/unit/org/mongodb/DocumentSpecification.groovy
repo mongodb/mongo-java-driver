@@ -21,6 +21,7 @@ package org.mongodb
 import org.bson.types.ObjectId
 import org.mongodb.json.JSONMode
 import org.mongodb.json.JSONParseException
+import org.mongodb.test.Worker
 import spock.lang.Specification
 
 import java.util.regex.Pattern
@@ -86,6 +87,68 @@ class DocumentSpecification extends Specification {
     def 'should produce nice JSON when calling toString'() {
         expect:
         new Document('int', 1).append('string', 'abc').toString() == '{ "int" : 1, "string" : "abc" }';
+    }
+
+    def 'should be copyable'() {
+        given:
+        Date date = new Date();
+        ObjectId objectId = new ObjectId();
+        Document doc = new Document()
+                .append('int', 1).append('long', 2L).append('double', 3.0 as double).append('string', 'hi').append('boolean', true)
+                .append('objectId', objectId).append('date', date).append('list', Arrays.asList(1, 2, 3, 4));
+
+        when:
+        Document clone = new Document(doc)
+
+        then:
+        doc == clone
+    }
+
+    def 'should provide deep copies'() {
+        given:
+        Date date = new Date();
+        ObjectId objectId = new ObjectId();
+        Document subDoc = ['a': 1, 'b': '2', 'c': [1, 2, 3, 4]] as Document
+        Document doc = ['objectId': objectId, 'date': date, 'list': [1, 2, 3, 4], 'subDoc': subDoc] as Document
+        Document clone = new Document(doc)
+
+        when:
+        clone.put('objectId', new ObjectId())
+        clone.put('date', new Date())
+
+        List<Integer> list = (List<Integer>) clone.get('list')
+        list.set(0, 2)
+        list.set(1, 3)
+        list.set(2, 4)
+        list.set(3, 5)
+
+        Document subDocCopy = (Document) clone.get('subDoc')
+        subDocCopy.put('a', 2)
+        subDocCopy.put('b', '3')
+        subDocCopy.put('c', [2, 3, 4, 5])
+
+        then:
+        doc.getObjectId('objectId') == objectId
+        doc.getDate('date') == date
+        doc.get('list') == [1, 2, 3, 4]
+        doc.get('subDoc') == subDoc
+
+        clone.getObjectId('objectId') != objectId
+        clone.getDate('date') != date
+        clone.get('list') == [2, 3, 4, 5]
+        clone.get('subDoc') == ['a': 2, 'b': '3', 'c': [2, 3, 4, 5]] as Document
+    }
+
+    def 'should throw a ClassCastException for invalid type'() {
+        given:
+        Worker pete = new Worker('Pete', 'handyman', new Date(), 3)
+        Document doc = ['worker': pete] as Document
+
+        when:
+        new Document(doc)
+
+        then:
+        thrown(ClassCastException)
     }
 
 }

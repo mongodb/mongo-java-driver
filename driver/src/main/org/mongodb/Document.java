@@ -74,6 +74,16 @@ public class Document implements Map<String, Object>, Serializable {
         documentAsMap = new LinkedHashMap<String, Object>(map);
     }
 
+    /**
+     * Creates a Document instance initialized with a copy of the given Document
+     *
+     * @param from initial document
+     */
+    public Document(final Document from) {
+        DocumentCodec documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
+        documentAsMap = new BSONDocumentBuffer(from, documentCodec).decode(documentCodec).documentAsMap;
+    }
+
 
     /**
      * Converts a string in JSON format to a {@code Document}
