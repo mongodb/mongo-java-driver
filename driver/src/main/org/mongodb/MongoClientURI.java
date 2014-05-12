@@ -524,9 +524,8 @@ public class MongoClientURI {
 
     boolean parseBoolean(final String input) {
         String trimmedInput = input.trim();
-        return trimmedInput != null && trimmedInput.length() > 0 && (trimmedInput.equals("1")
-                                                                     || trimmedInput.toLowerCase().equals("true")
-                                                                     || trimmedInput.toLowerCase().equals("yes"));
+        return trimmedInput.length() > 0
+               && (trimmedInput.equals("1") || trimmedInput.toLowerCase().equals("true") || trimmedInput.toLowerCase().equals("yes"));
     }
 
     // ---------------------------------
