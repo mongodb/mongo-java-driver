@@ -424,7 +424,7 @@ public class DBPort implements Connection {
         ActiveState(final OutMessage outMessage) {
             namespace = outMessage.getNamespace();
             opCode = outMessage.getOpCode();
-            query = outMessage.getQuery() != null ? outMessage.getQuery().toString() : null;
+            query = outMessage.getQuery();
             numDocuments = outMessage.getNumDocuments();
             this.startTime = System.nanoTime();
             this.threadName = Thread.currentThread().getName();
@@ -438,7 +438,7 @@ public class DBPort implements Connection {
             return opCode;
         }
 
-        String getQuery() {
+        DBObject getQuery() {
             return query;
         }
 
@@ -456,7 +456,7 @@ public class DBPort implements Connection {
 
         private final String namespace;
         private final OutMessage.OpCode opCode;
-        private final String query;
+        private final DBObject query;
         private int numDocuments;
         private final long startTime;
         private final String threadName;

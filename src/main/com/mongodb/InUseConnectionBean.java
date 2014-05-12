@@ -41,7 +41,7 @@ public class InUseConnectionBean {
             durationMS = TimeUnit.NANOSECONDS.toMillis(currentNanoTime - activeState.getStartTime());
             namespace = activeState.getNamespace();
             opCode = activeState.getOpCode();
-            query = activeState.getQuery();
+            query = activeState.getQuery().toString();
             threadName = activeState.getThreadName();
             numDocuments = activeState.getNumDocuments();
         }
