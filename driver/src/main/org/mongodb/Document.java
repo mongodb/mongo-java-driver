@@ -74,6 +74,16 @@ public class Document implements Map<String, Object>, Serializable {
         documentAsMap = new LinkedHashMap<String, Object>(map);
     }
 
+    /**
+     * Creates a Document instance initialized with a copy of the given Document
+     *
+     * @param from initial document
+     */
+    public Document(final Document from) {
+        DocumentCodec documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
+        documentAsMap = new BSONDocumentBuffer(from, documentCodec).decode(documentCodec).documentAsMap;
+    }
+
 
     /**
      * Converts a string in JSON format to a {@code Document}
@@ -111,18 +121,6 @@ public class Document implements Map<String, Object>, Serializable {
     public Document append(final String key, final Object value) {
         documentAsMap.put(key, value);
         return this;
-    }
-
-    /**
-     * Clones the document
-     *
-     * Will fail if the Document contains any non-standard types.
-     *
-     * @return document a deeply cloned document
-     */
-    public Document copy() {
-        DocumentCodec documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
-        return new BSONDocumentBuffer(this, documentCodec).decode(documentCodec);
     }
 
     /**

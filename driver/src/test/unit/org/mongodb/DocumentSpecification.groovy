@@ -98,7 +98,7 @@ class DocumentSpecification extends Specification {
                 .append('objectId', objectId).append('date', date).append('list', Arrays.asList(1, 2, 3, 4));
 
         when:
-        Document clone = doc.copy()
+        Document clone = new Document(doc)
 
         then:
         doc == clone
@@ -110,7 +110,7 @@ class DocumentSpecification extends Specification {
         ObjectId objectId = new ObjectId();
         Document subDoc = ['a': 1, 'b': '2', 'c': [1, 2, 3, 4]] as Document
         Document doc = ['objectId': objectId, 'date': date, 'list': [1, 2, 3, 4], 'subDoc': subDoc] as Document
-        Document clone = doc.copy()
+        Document clone = new Document(doc)
 
         when:
         clone.put('objectId', new ObjectId())
@@ -139,16 +139,16 @@ class DocumentSpecification extends Specification {
         clone.get('subDoc') == ['a': 2, 'b': '3', 'c': [2, 3, 4, 5]] as Document
     }
 
-    def 'should throw a CloneNotSupportedException for invalid type'() {
+    def 'should throw a ClassCastException for invalid type'() {
         given:
         Worker pete = new Worker('Pete', 'handyman', new Date(), 3)
         Document doc = ['worker': pete] as Document
 
         when:
-        doc.clone()
+        new Document(doc)
 
         then:
-        thrown(CloneNotSupportedException)
+        thrown(ClassCastException)
     }
 
 }
