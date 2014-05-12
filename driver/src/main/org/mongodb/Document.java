@@ -42,7 +42,7 @@ import java.util.Set;
  * @mongodb.driver.manual core/document document
  * @since 3.0.0
  */
-public class Document implements Map<String, Object>, Serializable, Cloneable {
+public class Document implements Map<String, Object>, Serializable {
     private static final long serialVersionUID = 6297731997167536582L;
 
     private final LinkedHashMap<String, Object> documentAsMap;
@@ -119,16 +119,10 @@ public class Document implements Map<String, Object>, Serializable, Cloneable {
      * Will fail if the Document contains any non-standard types.
      *
      * @return document a deeply cloned document
-     * @throws CloneNotSupportedException
      */
-    public Document clone() throws CloneNotSupportedException {
-        try {
-            Document clone = (Document) super.clone();
-            DocumentCodec documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
-            return new BSONDocumentBuffer(clone, documentCodec).decode(documentCodec);
-        } catch (ClassCastException e){
-            throw new CloneNotSupportedException("Document contains invalid data type and can't be cloned");
-        }
+    public Document copy() {
+        DocumentCodec documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
+        return new BSONDocumentBuffer(this, documentCodec).decode(documentCodec);
     }
 
     /**
