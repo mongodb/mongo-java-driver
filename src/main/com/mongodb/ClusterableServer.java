@@ -47,5 +47,10 @@ interface ClusterableServer extends Server {
      * * @return whether the server is closed
      */
     boolean isClosed();
+
+    /**
+     * Attempt to connect to the server.
+     */
+    void connect();
 }
 

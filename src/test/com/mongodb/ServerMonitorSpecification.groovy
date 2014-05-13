@@ -1,23 +1,29 @@
 package com.mongodb
 
+import java.util.concurrent.CountDownLatch
+
 import static com.mongodb.Fixture.getMongoClient
 import static com.mongodb.Fixture.serverIsAtLeastVersion
 import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
 
-class ServerStateNotifierSpecification extends FunctionalSpecification {
+class ServerMonitorSpecification extends FunctionalSpecification {
     ServerDescription newDescription
-    ServerStateNotifier serverStateNotifier
+    ServerMonitor serverStateNotifier
+    CountDownLatch latch = new CountDownLatch(1)
 
     def setup() {
-        serverStateNotifier = new ServerStateNotifier(new ServerAddress(),
-                                                      new ChangeListener<ServerDescription>() {
-                                                          @Override
-                                                          void stateChanged(final ChangeEvent<ServerDescription> event) {
-                                                              newDescription = event.newValue
-                                                          }
-                                                      },
-                                                      SocketSettings.builder().build(), getMongoClient())
+        serverStateNotifier = new ServerMonitor(new ServerAddress(),
+                                                new ChangeListener<ServerDescription>() {
+                                                    @Override
+                                                    void stateChanged(final ChangeEvent<ServerDescription> event) {
+                                                        newDescription = event.newValue
+                                                        latch.countDown()
+                                                    }
+                                                },
+                                                SocketSettings.builder().build(), ServerSettings.builder().build(),
+                                                'cluster-1', getMongoClient())
+        serverStateNotifier.start()
     }
 
     def cleanup() {
@@ -30,7 +36,7 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
         def expectedVersion = new ServerVersion((commandResult.get('versionArray') as List<Integer>).subList(0, 3))
 
         when:
-        serverStateNotifier.run()
+        latch.await()
 
         then:
         newDescription.version == expectedVersion
@@ -44,7 +50,7 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
         def expected = commandResult.get('maxWriteBatchSize')
 
         when:
-        serverStateNotifier.run()
+        latch.await()
 
         then:
         newDescription.maxWriteBatchSize == expected
@@ -54,7 +60,7 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
         assumeFalse(serverIsAtLeastVersion(2.5))
 
         when:
-        serverStateNotifier.run()
+        latch.await()
 
         then:
         newDescription.maxWriteBatchSize == ServerDescription.getDefaultMaxWriteBatchSize()

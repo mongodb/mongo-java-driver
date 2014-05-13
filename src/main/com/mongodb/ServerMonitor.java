@@ -24,100 +24,160 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 @ThreadSafe
 @SuppressWarnings("deprecation")
-class ServerStateNotifier implements Runnable {
+class ServerMonitor {
 
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
     private ServerAddress serverAddress;
     private final ChangeListener<ServerDescription> serverStateListener;
     private final SocketSettings socketSettings;
+    private final ServerSettings settings;
     private final Mongo mongo;
     private int count;
     private long elapsedNanosSum;
     private volatile ServerDescription serverDescription;
     private volatile boolean isClosed;
     private volatile DBPort connection;
+    private final Thread monitorThread;
+    private final Lock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
 
-    ServerStateNotifier(final ServerAddress serverAddress, final ChangeListener<ServerDescription> serverStateListener,
-                        final SocketSettings socketSettings, final Mongo mongo) {
+
+    ServerMonitor(final ServerAddress serverAddress, final ChangeListener<ServerDescription> serverStateListener,
+                  final SocketSettings socketSettings, final ServerSettings settings, final String clusterId, Mongo mongo) {
         this.serverAddress = serverAddress;
         this.serverStateListener = serverStateListener;
         this.socketSettings = socketSettings;
+        this.settings = settings;
         this.mongo = mongo;
         serverDescription = getConnectingServerDescription();
+        monitorThread = new Thread(new ServerMonitorRunnable(), "cluster-" + clusterId + "-" + serverAddress);
+        monitorThread.setDaemon(true);
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public void run() {
-        if (isClosed) {
-            return;
-        }
+    void start() {
+        monitorThread.start();
+    }
 
-        final ServerDescription currentServerDescription = serverDescription;
-        Throwable throwable = null;
-        try {
-            if (connection == null) {
-                connection = new DBPort(serverAddress, null, getOptions(), 0);
-            }
+    class ServerMonitorRunnable implements Runnable {
+        @Override
+        @SuppressWarnings("unchecked")
+        public void run() {
             try {
-                serverDescription = lookupServerDescription();
-            } catch (IOException e) {
-                // in case the connection has been reset since the last run, do one retry immediately before reporting that the server is
-                // down
-                count = 0;
-                elapsedNanosSum = 0;
+                while (!isClosed) {
+                    ServerDescription currentServerDescription = serverDescription;
+                    Throwable throwable = null;
+                    try {
+                        if (connection == null) {
+                            connection = new DBPort(serverAddress, null, getOptions(), 0);
+                        }
+                        try {
+                            serverDescription = lookupServerDescription();
+                        } catch (IOException e) {
+                            // in case the connection has been reset since the last run, do one retry immediately before reporting that the
+                            // server is down
+                            count = 0;
+                            elapsedNanosSum = 0;
+                            if (connection != null) {
+                                connection.close();
+                                connection = null;
+                            }
+                            connection = new DBPort(serverAddress, null, getOptions(), 0);
+                            try {
+                                serverDescription = lookupServerDescription();
+                            } catch (IOException e1) {
+                                connection.close();
+                                connection = null;
+                                throw e1;
+                            }
+                        }
+                    } catch (Throwable t) {
+                        throwable = t;
+                        serverDescription = getConnectingServerDescription();
+                    }
+
+                    if (!isClosed) {
+                        try {
+                            logStateChange(currentServerDescription, throwable);
+                            serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription,
+                                                                                                serverDescription));
+                        } catch (Throwable t) {
+                            LOGGER.log(Level.WARNING, "Exception in monitor thread during notification of server state change", t);
+                        }
+                    }
+                    waitForNext();
+                }
+            } finally {
                 if (connection != null) {
                     connection.close();
-                    connection = null;
-                }
-                connection = new DBPort(serverAddress, null, getOptions(), 0);
-                try {
-                    serverDescription = lookupServerDescription();
-                } catch (IOException e1) {
-                    connection.close();
-                    connection = null;
-                    throw e1;
                 }
             }
-        } catch (Throwable t) {
-            throwable = t;
-            serverDescription = getConnectingServerDescription();
         }
 
-        if (!isClosed) {
+        private void logStateChange(final ServerDescription currentServerDescription, final Throwable throwable) {
+            // Note that the ServerDescription.equals method does not include the average ping time as part of the comparison,
+            // so this will not spam the logs too hard.
+            if (!currentServerDescription.equals(serverDescription)) {
+                if (throwable != null) {
+                    LOGGER.log(Level.INFO, format("Exception in monitor thread while connecting to server %s", serverAddress), throwable);
+                } else {
+                    LOGGER.info(format("Monitor thread successfully connected to server with description %s", serverDescription));
+                }
+            }
+        }
+
+        private void waitForNext() {
             try {
-                // Note that the ServerDescription.equals method does not include the average latency as part of the comparison,
-                // so this will not spam the logs too hard.
-                if (!currentServerDescription.equals(serverDescription)) {
-                    if (throwable != null) {
-                        LOGGER.log(Level.INFO, format("Exception in monitor thread while connecting to server %s", serverAddress),
-                                   throwable);
-                    } else {
-                        LOGGER.info(format("Monitor thread successfully connected to server with description %s", serverDescription));
+                long timeRemaining = waitForSignalOrTimeout();
+                if (timeRemaining > 0) {
+                    long timeWaiting = settings.getHeartbeatFrequency(NANOSECONDS) - timeRemaining;
+                    long minimumNanosToWait = settings.getHeartbeatConnectRetryFrequency(NANOSECONDS);
+                    if (timeWaiting < minimumNanosToWait) {
+                        long millisToSleep = MILLISECONDS.convert(minimumNanosToWait - timeWaiting, NANOSECONDS);
+                        if (millisToSleep > 0) {
+                            Thread.sleep(millisToSleep);
+                        }
                     }
                 }
-                serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
-            } catch (Throwable t) {
-                LOGGER.log(Level.WARNING, "Exception in monitor thread during notification of server description state change", t);
+            } catch (InterruptedException e) {
+                // fall through
             }
+        }
+
+        private long waitForSignalOrTimeout() throws InterruptedException {
+            lock.lock();
+            try {
+                return condition.awaitNanos(settings.getHeartbeatFrequency(NANOSECONDS));
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
+
+    public void connect() {
+        lock.lock();
+        try {
+            condition.signal();
+        } finally {
+            lock.unlock();
         }
     }
 
     public void close() {
         isClosed = true;
-        if (connection != null) {
-            connection.close();
-            connection = null;
-        }
+        monitorThread.interrupt();
     }
 
     private MongoOptions getOptions() {
@@ -157,7 +217,6 @@ class ServerStateNotifier implements Runnable {
                                                                         ServerDescription.getDefaultMaxWriteBatchSize()))
                                 .tags(getTagsFromDocument((DBObject) commandResult.get("tags")))
                                 .setName(commandResult.getString("setName"))
-                                .setVersion((Integer) commandResult.get("setVersion"))
                                 .minWireVersion(commandResult.getInt("minWireVersion", ServerDescription.getDefaultMinWireVersion()))
                                 .maxWireVersion(commandResult.getInt("maxWireVersion", ServerDescription.getDefaultMaxWireVersion()))
                                 .averageLatency(averageLatencyNanos, TimeUnit.NANOSECONDS)

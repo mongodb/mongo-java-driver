@@ -105,25 +105,6 @@ public class ClusterDescriptionTest {
     }
 
     @Test
-    public void testIsConnecting() throws UnknownHostException {
-        ClusterDescription description =
-        new ClusterDescription(Multiple, ReplicaSet, asList(builder()
-                                                            .state(Connecting)
-                                                            .address(new ServerAddress())
-                                                            .type(ReplicaSetPrimary)
-                                                            .build()));
-        assertTrue(description.isConnecting());
-
-        description = new ClusterDescription(Multiple, ReplicaSet, asList(
-                                                                         builder()
-                                                                         .state(Connected)
-                                                                         .address(new ServerAddress())
-                                                                         .type(ReplicaSetPrimary)
-                                                                         .build()));
-        assertFalse(description.isConnecting());
-    }
-
-    @Test
     public void testSortingOfAll() throws UnknownHostException {
         ClusterDescription description =
         new ClusterDescription(Multiple, Unknown, asList(

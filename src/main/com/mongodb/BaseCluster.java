@@ -76,14 +76,12 @@ abstract class BaseCluster implements Cluster {
                     }
                 }
 
-                if (!curDescription.isConnecting()) {
-                    throw new MongoServerSelectionException(format("Unable to connect to any server that matches %s", serverSelector));
-                }
-
                 final long timeout = endTime - System.nanoTime();
 
                 LOGGER.info(format("No server chosen by %s from cluster description %s. Waiting for %d ms before timing out",
                                    serverSelector, curDescription, MILLISECONDS.convert(timeout, NANOSECONDS)));
+
+                connect();
 
                 if (!currentPhase.await(timeout, NANOSECONDS)) {
                     throw new MongoTimeoutException(format("Timed out while waiting for a server that matches %s after %d ms",
@@ -107,11 +105,6 @@ abstract class BaseCluster implements Cluster {
             ClusterDescription curDescription = description;
             final long endTime = System.nanoTime() + NANOSECONDS.convert(maxWaitTime, timeUnit);
             while (curDescription.getType() == ClusterType.Unknown) {
-
-                if (!curDescription.isConnecting()) {
-                    throw new MongoServerSelectionException(format("Unable to connect to any servers"));
-                }
-
                 final long timeout = endTime - System.nanoTime();
 
                 LOGGER.info(format("Cluster description not yet available. Waiting for %d ms before timing out",
@@ -155,6 +148,11 @@ abstract class BaseCluster implements Cluster {
      * @return the server, or null if the cluster no longer contains a server at this address.
      */
     protected abstract ClusterableServer getServer(final ServerAddress serverAddress);
+
+    /**
+     * Try to connect to all servers
+     */
+    protected abstract void connect();
 
     protected synchronized void updateDescription(final ClusterDescription newDescription) {
         LOGGER.fine(format("Updating cluster description to  %s", newDescription.getShortDescription()));

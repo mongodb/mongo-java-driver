@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
-import static com.mongodb.ServerConnectionState.Connecting;
 import static java.lang.String.format;
 import static org.bson.util.Assertions.notNull;
 
@@ -73,20 +72,6 @@ class ClusterDescription {
 
     public ClusterType getType() {
         return type;
-    }
-
-    /**
-     * Returns true if the application has been unsuccessful in its last attempt to connect to any of the servers in the cluster.
-     *
-     * @return true if connecting, false otherwise
-     */
-    public boolean isConnecting() {
-        for (final ServerDescription cur : all) {
-            if (cur.getState() == Connecting) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**

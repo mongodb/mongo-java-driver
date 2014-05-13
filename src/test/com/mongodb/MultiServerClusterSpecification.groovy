@@ -390,6 +390,18 @@ class MultiServerClusterSpecification extends Specification {
         1 * clusterListener.clusterDescriptionChanged(_)
     }
 
+    def 'should connect to all servers'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(), factory,
+                                             CLUSTER_LISTENER)
+
+        when:
+        cluster.connect()
+
+        then:
+        [firstServer, secondServer].collect { factory.getServer(it).connectCount  }  == [1, 1]
+    }
+
     def sendNotification(ServerAddress serverAddress, ServerType serverType) {
         sendNotification(serverAddress, serverType, [firstServer, secondServer, thirdServer])
     }

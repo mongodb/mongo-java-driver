@@ -18,65 +18,32 @@ package com.mongodb;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ServerConnectionState.Connecting;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.util.Assertions.isTrue;
 import static org.bson.util.Assertions.notNull;
 
 class DefaultServer implements ClusterableServer {
-
-    private enum HeartbeatFrequency {
-        NORMAL {
-            @Override
-            long getFrequencyMS(final ServerSettings settings) {
-                return settings.getHeartbeatFrequency(MILLISECONDS);
-            }
-        },
-
-        RETRY {
-            @Override
-            long getFrequencyMS(final ServerSettings settings) {
-                return settings.getHeartbeatConnectRetryFrequency(MILLISECONDS);
-            }
-        };
-
-        abstract long getFrequencyMS(final ServerSettings settings);
-    }
-
-    private final String clusterId;
-    private final ScheduledExecutorService scheduledExecutorService;
     private final ServerAddress serverAddress;
-    private final ServerStateNotifier stateNotifier;
+    private final ServerMonitor serverMonitor;
     private final PooledConnectionProvider connectionProvider;
     private final Map<ChangeListener<ServerDescription>, Boolean> changeListeners =
     new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>();
-    private final ServerSettings settings;
     private final ChangeListener<ServerDescription> serverStateListener;
     private volatile ServerDescription description;
     private volatile boolean isClosed;
-
-    private ScheduledFuture<?> scheduledFuture;
-    private HeartbeatFrequency currentFrequency;
 
     public DefaultServer(final ServerAddress serverAddress,
                          final ServerSettings settings,
                          final String clusterId, final PooledConnectionProvider connectionProvider,
                          final Mongo mongo) {
-        this.clusterId = notNull("clusterId", clusterId);
-        this.settings = notNull("settings", settings);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
         serverStateListener = new DefaultServerStateListener();
-        this.stateNotifier = new ServerStateNotifier(serverAddress, serverStateListener,
-                                                     settings.getHeartbeatSocketSettings(), mongo);
-        this.scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new DefaultThreadFactory());
-        setHeartbeat(0, HeartbeatFrequency.NORMAL);
+        this.serverMonitor = new ServerMonitor(serverAddress, serverStateListener,
+                                               settings.getHeartbeatSocketSettings(), settings, clusterId, mongo);
+        this.serverMonitor.start();
         this.connectionProvider = connectionProvider;
     }
 
@@ -107,16 +74,13 @@ class DefaultServer implements ClusterableServer {
         serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(description, ServerDescription.builder()
                                                                                                           .state(Connecting)
                                                                                                           .address(serverAddress).build()));
-        setHeartbeat(0, HeartbeatFrequency.RETRY);
         connectionProvider.invalidate();
     }
 
     @Override
     public void close() {
         if (!isClosed()) {
-            scheduledFuture.cancel(true);
-            scheduledExecutorService.shutdownNow();
-            stateNotifier.close();
+            serverMonitor.close();
             connectionProvider.close();
             isClosed = true;
         }
@@ -127,34 +91,9 @@ class DefaultServer implements ClusterableServer {
         return isClosed;
     }
 
-    private void setHeartbeat(final ChangeEvent<ServerDescription> event) {
-        HeartbeatFrequency heartbeatFrequency = event.getNewValue().getState() == Connecting
-                                                ? HeartbeatFrequency.RETRY
-                                                : HeartbeatFrequency.NORMAL;
-        long initialDelay = heartbeatFrequency.getFrequencyMS(settings);
-        setHeartbeat(initialDelay, heartbeatFrequency);
-    }
-
-    private synchronized void setHeartbeat(final long initialDelay, final HeartbeatFrequency newFrequency) {
-        if (currentFrequency != newFrequency) {
-            currentFrequency = newFrequency;
-            if (scheduledFuture != null) {
-                scheduledFuture.cancel(false);
-            }
-            scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier, initialDelay,
-                                                                           newFrequency.getFrequencyMS(settings),
-                                                                           MILLISECONDS);
-        }
-    }
-
-    // Custom thread factory for scheduled executor service that creates daemon threads.  Otherwise,
-    // applications that neglect to close the MongoClient will not exit.
-    class DefaultThreadFactory implements ThreadFactory {
-        public Thread newThread(final Runnable runnable) {
-            Thread t = new Thread(runnable, "cluster-" + clusterId + "-" + serverAddress);
-            t.setDaemon(true);
-            return t;
-        }
+    @Override
+    public void connect() {
+        serverMonitor.connect();
     }
 
     private final class DefaultServerStateListener implements ChangeListener<ServerDescription> {
@@ -164,7 +103,6 @@ class DefaultServer implements ClusterableServer {
             for (ChangeListener<ServerDescription> listener : changeListeners.keySet()) {
                 listener.stateChanged(event);
             }
-            setHeartbeat(event);
         }
     }
 }

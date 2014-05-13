@@ -157,6 +157,22 @@ class SingleServerClusterSpecification extends Specification {
         thrown(MongoIncompatibleDriverException)
     }
 
+    def 'should connect to server'() {
+        given:
+        def cluster = new SingleServerCluster(CLUSTER_ID,
+                                              ClusterSettings.builder()
+                                                             .mode(Single)
+                                                             .hosts([firstServer]).build(),
+                                              factory, CLUSTER_LISTENER)
+
+        when:
+        cluster.connect()
+
+        then:
+        factory.getServer(firstServer).connectCount == 1
+    }
+
+
     def sendNotification(ServerAddress serverAddress, ServerType serverType) {
         sendNotification(serverAddress, serverType, null)
     }

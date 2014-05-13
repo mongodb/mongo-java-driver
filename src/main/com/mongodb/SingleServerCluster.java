@@ -65,6 +65,11 @@ final class SingleServerCluster extends BaseCluster {
         }
     }
 
+    @Override
+    protected void connect() {
+        server.connect();
+    }
+
     private void publishDescription(final ServerDescription serverDescription) {
         ClusterType clusterType = getSettings().getRequiredClusterType();
         if (clusterType == ClusterType.Unknown && serverDescription != null) {
