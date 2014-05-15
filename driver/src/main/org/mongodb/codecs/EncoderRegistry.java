@@ -18,7 +18,7 @@ package org.mongodb.codecs;
 
 import org.bson.types.CodeWithScope;
 import org.mongodb.DBRef;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
 
 import java.util.HashMap;

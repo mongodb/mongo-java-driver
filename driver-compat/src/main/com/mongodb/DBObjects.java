@@ -22,7 +22,7 @@ import org.bson.BSONReader;
 import org.bson.ByteBufNIO;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
-import org.mongodb.Decoder;
+import org.bson.codecs.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoException;

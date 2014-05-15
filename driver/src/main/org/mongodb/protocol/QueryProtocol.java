@@ -16,9 +16,9 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.Decoder;
+import org.bson.codecs.Decoder;
 import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;

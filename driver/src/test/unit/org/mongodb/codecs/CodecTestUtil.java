@@ -21,7 +21,7 @@ import org.bson.BSONBinaryWriter;
 import org.bson.ByteBufNIO;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 import org.mongodb.Document;
 
 import java.nio.ByteBuffer;

@@ -18,7 +18,7 @@ package com.mongodb;
 
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONReader;
-import org.mongodb.Decoder;
+import org.bson.codecs.Decoder;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ByteBufferOutputBuffer;
 

@@ -18,7 +18,7 @@ package org.mongodb.protocol.message;
 
 import org.bson.BSONBinaryWriter;
 import org.bson.io.OutputBuffer;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.MongoInvalidDocumentException;
 
 import java.util.concurrent.atomic.AtomicInteger;

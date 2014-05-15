@@ -18,7 +18,7 @@ package org.mongodb.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONType;
-import org.mongodb.Decoder;
+import org.bson.codecs.Decoder;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;

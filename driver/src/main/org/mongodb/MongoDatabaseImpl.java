@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import org.bson.codecs.Codec;
 import org.mongodb.codecs.CollectibleDocumentCodec;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.ObjectIdGenerator;

@@ -18,7 +18,7 @@ package org.mongodb.codecs
 
 import org.bson.BSONReader
 import org.bson.BSONWriter
-import org.mongodb.Decoder
+import org.bson.codecs.Decoder
 import org.mongodb.Document
 import spock.lang.Specification
 import spock.lang.Subject

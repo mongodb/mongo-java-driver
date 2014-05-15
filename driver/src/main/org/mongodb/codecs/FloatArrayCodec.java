@@ -17,7 +17,7 @@
 package org.mongodb.codecs;
 
 import org.bson.BSONWriter;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 
 public class FloatArrayCodec implements Encoder<float[]> {
     private final FloatCodec floatCodec;

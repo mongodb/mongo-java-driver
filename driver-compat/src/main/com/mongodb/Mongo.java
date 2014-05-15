@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 import org.mongodb.Document;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.ThreadSafe;

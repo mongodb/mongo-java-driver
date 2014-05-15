@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.bson.codecs;
 
-import org.bson.BSONReader;
+import org.bson.BSONWriter;
 
-public interface Decoder<T> {
-    //how do we feel about passing an object into this, representing the object to decode into?
-    <E> T decode(BSONReader reader);
+public interface Encoder<T> {
+    void encode(BSONWriter bsonWriter, T value);
+
+    // necessary because Java doesn't reify generics
+    Class<T> getEncoderClass();
 }

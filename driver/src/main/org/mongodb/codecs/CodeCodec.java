@@ -19,7 +19,7 @@ package org.mongodb.codecs;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.Code;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 
 public class CodeCodec implements Codec<Code> {
 

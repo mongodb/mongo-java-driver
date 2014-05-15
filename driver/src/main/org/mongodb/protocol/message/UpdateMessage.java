@@ -18,7 +18,7 @@ package org.mongodb.protocol.message;
 
 import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.operation.BaseUpdateRequest;
 import org.mongodb.operation.UpdateRequest;
 

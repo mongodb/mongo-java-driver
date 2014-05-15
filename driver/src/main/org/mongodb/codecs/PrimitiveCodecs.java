@@ -19,9 +19,9 @@ package org.mongodb.codecs;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
-import org.mongodb.Codec;
-import org.mongodb.Decoder;
-import org.mongodb.Encoder;
+import org.bson.codecs.Codec;
+import org.bson.codecs.Decoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.MongoException;
 
 import java.util.EnumMap;

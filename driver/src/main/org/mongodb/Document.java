@@ -18,6 +18,7 @@ package org.mongodb;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
+import org.bson.codecs.Codec;
 import org.bson.types.ObjectId;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.PrimitiveCodecs;

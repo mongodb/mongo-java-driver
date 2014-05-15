@@ -19,7 +19,7 @@ package com.mongodb;
 import org.bson.BSONObject;
 import org.bson.BSONWriter;
 import org.bson.types.CodeWScope;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.codecs.Codecs;
 
 class CodeWScopeCodec implements Encoder<CodeWScope> {
