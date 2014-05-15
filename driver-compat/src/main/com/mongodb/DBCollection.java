@@ -16,12 +16,12 @@
 
 package com.mongodb;
 
-import org.bson.types.ObjectId;
 import org.bson.codecs.Codec;
-import org.mongodb.CollectibleCodec;
 import org.bson.codecs.Decoder;
-import org.mongodb.Document;
 import org.bson.codecs.Encoder;
+import org.bson.types.ObjectId;
+import org.mongodb.CollectibleCodec;
+import org.mongodb.Document;
 import org.mongodb.Index;
 import org.mongodb.MapReduceCursor;
 import org.mongodb.MapReduceStatistics;
@@ -30,7 +30,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
-import org.mongodb.codecs.PrimitiveCodecs;
+import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.AggregateExplainOperation;
 import org.mongodb.operation.AggregateOperation;
@@ -161,7 +161,7 @@ public class DBCollection {
      * @param name     the name of the collection
      */
     protected DBCollection(final DB database, final String name) {
-        this(name, database, new DocumentCodec(PrimitiveCodecs.createDefault()));
+        this(name, database, new org.mongodb.codecs.DocumentCodec(new QueryFieldNameValidator()));
     }
 
     /**
@@ -1856,13 +1856,9 @@ public class DBCollection {
 
     private CollectibleDBObjectCodec createCollectibleDBObjectCodec() {
         return new CollectibleDBObjectCodec(getDB(),
-                                            getPrimitiveCodecs(),
                                             new ObjectIdGenerator(),
-                                            getObjectFactory());
-    }
-
-    private PrimitiveCodecs getPrimitiveCodecs() {
-        return PrimitiveCodecs.createDefault();
+                                            getObjectFactory(), getDB().getMongo().getCodecRegistry(),
+                                            PrimitiveCodecSource.getDefaultBsonTypeClassMap());
     }
 
     private Index toIndex(final DBObject keys, final DBObject options) {

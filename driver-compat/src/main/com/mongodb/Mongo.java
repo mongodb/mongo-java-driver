@@ -17,6 +17,9 @@
 package com.mongodb;
 
 import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.CodecSource;
+import org.bson.codecs.configuration.RootCodecRegistry;
 import org.mongodb.Document;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.ThreadSafe;
@@ -27,7 +30,7 @@ import org.mongodb.binding.ReadBinding;
 import org.mongodb.binding.ReadWriteBinding;
 import org.mongodb.binding.SingleServerBinding;
 import org.mongodb.binding.WriteBinding;
-import org.mongodb.codecs.PrimitiveCodecs;
+import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterConnectionMode;
@@ -51,6 +54,7 @@ import org.mongodb.selector.ServerSelector;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -137,6 +141,8 @@ public class Mongo {
     private final ThreadLocal<BindingHolder> pinnedBinding = new ThreadLocal<BindingHolder>();
     private final ConcurrentLinkedQueue<ServerCursor> orphanedCursors = new ConcurrentLinkedQueue<ServerCursor>();
     private final ExecutorService cursorCleaningService;
+
+    private final CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.<CodecSource>asList(new PrimitiveCodecSource()));
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
@@ -338,7 +344,7 @@ public class Mongo {
 
     Mongo(final Cluster cluster, final MongoClientOptions options, final List<MongoCredential> credentialsList) {
         this.cluster = cluster;
-        this.documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
+        this.documentCodec = new org.mongodb.codecs.DocumentCodec(new QueryFieldNameValidator());
         this.options = options;
         this.readPreference = options.getReadPreference() != null ? options.getReadPreference() : primary();
         this.writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : WriteConcern.UNACKNOWLEDGED;
@@ -822,6 +828,10 @@ public class Mongo {
         } finally {
             binding.release();
         }
+    }
+
+    CodecRegistry getCodecRegistry() {
+        return codecRegistry;
     }
 
     private ExecutorService createCursorCleaningService() {

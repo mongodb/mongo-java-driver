@@ -144,7 +144,7 @@ public class DBObjectsTest {
     }
 
     @Test
-    public void shouldConvertCompatDBRefsIntoNewDBRefs() {
+    public void shouldConvertCompatDBRefsIntoDocument() {
         // Given
         BasicDBObject dbObject = new BasicDBObject();
         String keyName = "link";
@@ -153,46 +153,12 @@ public class DBObjectsTest {
         dbObject.put(keyName, new DBRef(null, namespace, id));
 
         // When
-        Document actualDocument = DBObjects.toDocument(dbObject);
+        Document document = DBObjects.toDocument(dbObject);
 
         // Then
-        assertTrue("This should be an instance of the new DBRef", actualDocument.get(keyName) instanceof org.mongodb.DBRef);
-        assertThat(((org.mongodb.DBRef) actualDocument.get(keyName)).getRef(), is(namespace));
-        assertThat(((org.mongodb.DBRef) actualDocument.get(keyName)).getId().toString(), is(id));
-    }
-
-    @Test
-    public void shouldConvertCompatDBRefsIntoNewDBRefsEvenWhenNestedInsideAMap() {
-        // Given
-        BasicDBObject dbObject = new BasicDBObject();
-        HashMap<String, DBRef> map = new HashMap<String, DBRef>();
-        String keyName = "link";
-        map.put(keyName, new DBRef(null, "db.coll", "the value"));
-        dbObject.put("map", map);
-
-        // When
-        Document actualDocument = DBObjects.toDocument(dbObject);
-
-        // Then
-        assertTrue("This should be an instance of the new DBRef", ((Map) actualDocument.get("map")).get(keyName)
-                                                                  instanceof org.mongodb.DBRef);
-    }
-
-    @Test
-    public void shouldConvertCompatDBRefsIntoNewDBRefsEvenWhenNestedInsideAList() {
-        // Given
-        BasicDBObject dbObject = new BasicDBObject();
-        List<DBRef> list = new ArrayList<DBRef>();
-        list.add(new DBRef(null, "db.coll", "the value"));
-        dbObject.put("list", list);
-
-        // When
-        Document actualDocument = DBObjects.toDocument(dbObject);
-
-        // Then
-        Object convertedObject = ((List) actualDocument.get("list")).get(0);
-        assertTrue("This should be an instance of the new DBRef: " + convertedObject.getClass(),
-                   convertedObject instanceof org.mongodb.DBRef);
+        assertTrue("This should be an instance of Document", document.get(keyName) instanceof Document);
+        assertThat(((Document) document.get(keyName)).getString("$ref"), is(namespace));
+        assertThat(((Document) document.get(keyName)).getString("$id"), is(id));
     }
 
     @Test

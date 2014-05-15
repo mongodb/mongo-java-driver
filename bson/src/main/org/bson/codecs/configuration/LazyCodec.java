@@ -14,27 +14,42 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.bson.codecs.configuration;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.codecs.Codec;
 
-import static java.lang.String.format;
+class LazyCodec<T> implements Codec<T> {
+    private final CodecRegistry registry;
+    private final Class<T> clazz;
+    private volatile Codec<T> wrapped;
 
-public class NoCodec implements Codec<Object> {
-    @Override
-    public Object decode(final BSONReader reader) {
-        throw new DecodingException("NoOpCodec used to decode an Object.  This should not be registered for decoding.");
+    public LazyCodec(final CodecRegistry registry, final Class<T> clazz) {
+        this.registry = registry;
+        this.clazz = clazz;
     }
 
     @Override
-    public void encode(final BSONWriter writer, final Object value) {
-        throw new EncodingException(format("Could not find an encoder for object '%s' of class '%s'.", value, value.getClass()));
+    public void encode(final BSONWriter writer, final T value) {
+        getWrapped().encode(writer, value);
     }
 
     @Override
-    public Class<Object> getEncoderClass() {
-        return Object.class;
+    public Class<T> getEncoderClass() {
+        return clazz;
+    }
+
+    @Override
+    public T decode(final BSONReader reader) {
+        return getWrapped().decode(reader);
+    }
+
+    private Codec<T> getWrapped() {
+        if (wrapped == null) {
+            wrapped = registry.get(clazz);
+        }
+
+        return wrapped;
     }
 }

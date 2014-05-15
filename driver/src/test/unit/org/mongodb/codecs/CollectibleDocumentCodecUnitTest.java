@@ -37,7 +37,7 @@ public class CollectibleDocumentCodecUnitTest {
         writer = new BSONBinaryWriter(new BSONWriterSettings(100),
                                       new BSONBinaryWriterSettings(1024 * 1024),
                                       new BasicOutputBuffer(), true);
-        codec = new CollectibleDocumentCodec(PrimitiveCodecs.createDefault(), new ObjectIdGenerator());
+        codec = new CollectibleDocumentCodec(new ObjectIdGenerator());
     }
 
     @After

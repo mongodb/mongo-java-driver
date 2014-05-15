@@ -17,6 +17,8 @@
 package org.mongodb.codecs;
 
 import org.bson.BSONBinaryWriter;
+import org.bson.codecs.configuration.CodecSource;
+import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.io.BasicOutputBuffer;
 import org.junit.Test;
 import org.mongodb.BSONDocumentBuffer;
@@ -26,6 +28,7 @@ import org.mongodb.MongoCollection;
 import org.mongodb.SimpleBufferProvider;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -34,7 +37,8 @@ import static org.junit.Assert.assertNull;
 public class BSONDocumentBufferCodecTest extends DatabaseTestCase {
 
     private final BSONDocumentBufferCodec codec =
-        new BSONDocumentBufferCodec(new SimpleBufferProvider(), PrimitiveCodecs.createDefault());
+        new BSONDocumentBufferCodec(new SimpleBufferProvider(),
+                                    new RootCodecRegistry(Arrays.<CodecSource>asList(new DocumentCodecSource())));
 
     @Test
     public void shouldBeAbleToQueryThenInsert() {
@@ -59,7 +63,7 @@ public class BSONDocumentBufferCodecTest extends DatabaseTestCase {
         BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer(), true);
         BSONDocumentBuffer documentBuffer;
         try {
-            new DocumentCodec(PrimitiveCodecs.createDefault()).encode(writer, doc);
+            new DocumentCodec().encode(writer, doc);
             documentBuffer = new BSONDocumentBuffer(writer.getBuffer().toByteArray());
         } finally {
             writer.close();
@@ -75,7 +79,7 @@ public class BSONDocumentBufferCodecTest extends DatabaseTestCase {
         BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer(), true);
         BSONDocumentBuffer documentBuffer;
         try {
-            new DocumentCodec(PrimitiveCodecs.createDefault()).encode(writer, doc);
+            new DocumentCodec().encode(writer, doc);
             documentBuffer = new BSONDocumentBuffer(writer.getBuffer().toByteArray());
         } finally {
             writer.close();

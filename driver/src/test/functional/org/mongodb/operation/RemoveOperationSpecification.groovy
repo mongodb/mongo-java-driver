@@ -16,6 +16,7 @@
 
 package org.mongodb.operation
 import category.Async
+import org.bson.types.Binary
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
@@ -57,8 +58,8 @@ class RemoveOperationSpecification extends FunctionalSpecification {
 
     def 'should split removes into batches'() {
         given:
-        Document bigDoc = new Document('bytes', new byte[1024 * 1024 * 16 - 2127])
-        Document smallerDoc = new Document('bytes', new byte[1024 * 16 + 1980])
+        Document bigDoc = new Document('bytes', new Binary(new byte[1024 * 1024 * 16 - 2127]))
+        Document smallerDoc = new Document('bytes', new Binary(new byte[1024 * 16 + 1980]))
         Document simpleDoc = new Document('_id', 1)
         getCollectionHelper().insertDocuments(simpleDoc)
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
@@ -75,8 +76,8 @@ class RemoveOperationSpecification extends FunctionalSpecification {
     @Category(Async)
     def 'should split removes into batches asynchronously'() {
         given:
-        Document bigDoc = new Document('bytes', new byte[1024 * 1024 * 16 - 2127])
-        Document smallerDoc = new Document('bytes', new byte[1024 * 16 + 1980])
+        Document bigDoc = new Document('bytes', new Binary(new byte[1024 * 1024 * 16 - 2127]))
+        Document smallerDoc = new Document('bytes', new Binary(new byte[1024 * 16 + 1980]))
         Document simpleDoc = new Document('_id', 1)
         getCollectionHelper().insertDocuments(simpleDoc)
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,

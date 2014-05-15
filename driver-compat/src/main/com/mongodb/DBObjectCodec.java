@@ -17,18 +17,20 @@
 package com.mongodb;
 
 import org.bson.BSON;
+import org.bson.BSONBinarySubType;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
 import org.bson.types.CodeWScope;
 import org.bson.types.DBPointer;
 import org.bson.types.Symbol;
 import org.mongodb.MongoException;
-import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.codecs.validators.QueryFieldNameValidator;
+import org.mongodb.codecs.BinaryToByteArrayTransformer;
+import org.mongodb.codecs.BinaryToUUIDTransformer;
 import org.mongodb.codecs.validators.Validator;
 
 import java.lang.reflect.Array;
@@ -40,26 +42,19 @@ import static com.mongodb.MongoExceptions.mapException;
 
 @SuppressWarnings("rawtypes")
 class DBObjectCodec implements Codec<DBObject> {
-
-    private final PrimitiveCodecs primitiveCodecs;
+    private final CodecRegistry codecRegistry;
+    private final Map<BSONType, Class<?>> bsonTypeClassMap;
     private final Validator<String> fieldNameValidator;
     private final DB db;
     private final DBObjectFactory objectFactory;
 
-
-    public DBObjectCodec(final DB db, final PrimitiveCodecs primitiveCodecs,
-                         final Validator<String> fieldNameValidator, final DBObjectFactory objectFactory) {
-        if (primitiveCodecs == null) {
-            throw new IllegalArgumentException("primitiveCodecs is null");
-        }
-        this.primitiveCodecs = primitiveCodecs;
+    public DBObjectCodec(final DB db, final Validator<String> fieldNameValidator, final DBObjectFactory objectFactory,
+                         final CodecRegistry codecRegistry, final Map<BSONType, Class<?>> bsonTypeClassMap) {
         this.db = db;
         this.fieldNameValidator = fieldNameValidator;
         this.objectFactory = objectFactory;
-    }
-
-    public DBObjectCodec() {
-        this(null, PrimitiveCodecs.createDefault(), new QueryFieldNameValidator(), new DBObjectFactory());
+        this.codecRegistry = codecRegistry;
+        this.bsonTypeClassMap = bsonTypeClassMap;
     }
 
     //TODO: what about BSON Exceptions?
@@ -95,7 +90,9 @@ class DBObjectCodec implements Codec<DBObject> {
     protected void writeValue(final BSONWriter bsonWriter, final Object initialValue) {
         Object value = BSON.applyEncodingHooks(initialValue);
         try {
-            if (value instanceof DBRefBase) {
+            if (value == null) {
+                bsonWriter.writeNull();
+            } else if (value instanceof DBRefBase) {
                 encodeDBRef(bsonWriter, (DBRefBase) value);
             } else if (value instanceof BasicBSONList) {
                 encodeIterable(bsonWriter, (BasicBSONList) value);
@@ -108,13 +105,14 @@ class DBObjectCodec implements Codec<DBObject> {
             } else if (value instanceof CodeWScope) {
                 encodeCodeWScope(bsonWriter, (CodeWScope) value);
             } else if (value instanceof byte[]) {
-                primitiveCodecs.encode(bsonWriter, new Binary((byte[]) value));
-            } else if (value != null && value.getClass().isArray()) {
+                encodeByteArray(bsonWriter, (byte[]) value);
+            } else if (value.getClass().isArray()) {
                 encodeArray(bsonWriter, value);
             } else if (value instanceof Symbol) {
                 bsonWriter.writeSymbol(((Symbol) value).getSymbol());
             } else {
-                primitiveCodecs.encode(bsonWriter, value);
+                Codec codec = codecRegistry.get(value.getClass());
+                codec.encode(bsonWriter, value);
             }
         } catch (final MongoException e) {
             throw mapException(e);
@@ -130,6 +128,10 @@ class DBObjectCodec implements Codec<DBObject> {
             writeValue(bsonWriter, entry.getValue());
         }
         bsonWriter.writeEndDocument();
+    }
+
+    private void encodeByteArray(final BSONWriter bsonWriter, final byte[] value) {
+        bsonWriter.writeBinaryData(new Binary(value));
     }
 
     private void encodeArray(final BSONWriter bsonWriter, final Object value) {
@@ -202,8 +204,15 @@ class DBObjectCodec implements Codec<DBObject> {
                     DBPointer dbPointer = reader.readDBPointer();
                     initialRetVal = new DBRef(db, dbPointer.getNamespace(), dbPointer.getId());
                     break;
+                case BINARY:
+                    initialRetVal = readBinary(reader);
+                    break;
+                case NULL:
+                    reader.readNull();
+                    initialRetVal = null;
+                    break;
                 default:
-                    initialRetVal = primitiveCodecs.decode(reader);
+                    initialRetVal = codecRegistry.get(bsonTypeClassMap.get(bsonType)).decode(reader);
             }
 
             if (bsonType.isContainer() && fieldName != null) {
@@ -215,6 +224,19 @@ class DBObjectCodec implements Codec<DBObject> {
         }
 
         return BSON.applyDecodingHooks(initialRetVal);
+    }
+
+    private Object readBinary(final BSONReader reader) {
+        Binary binary = reader.readBinaryData();
+        if (binary.getType() == BSONBinarySubType.BINARY.getValue()) {
+            return new BinaryToByteArrayTransformer().transform(binary);
+        } else if (binary.getType() == BSONBinarySubType.OLD_BINARY.getValue()) {
+            return new BinaryToByteArrayTransformer().transform(binary);
+        } else if (binary.getType() == BSONBinarySubType.UUID_LEGACY.getValue()) {
+            return new BinaryToUUIDTransformer().transform(binary);
+        } else {
+            return binary;
+        }
     }
 
     private List readArray(final BSONReader reader, final List<String> path) {

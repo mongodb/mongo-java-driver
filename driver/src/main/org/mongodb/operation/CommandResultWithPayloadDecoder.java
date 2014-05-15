@@ -19,7 +19,6 @@ package org.mongodb.operation;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.codecs.Decoder;
-import org.mongodb.codecs.Codecs;
 import org.mongodb.codecs.DocumentCodec;
 
 import java.util.ArrayList;
@@ -27,16 +26,15 @@ import java.util.Collection;
 
 import static org.bson.BSONType.ARRAY;
 import static org.bson.BSONType.DOCUMENT;
+import static org.bson.BSONType.NULL;
 
 class CommandResultWithPayloadDecoder<T> extends DocumentCodec {
     private final Decoder<T> payloadDecoder;
-    private final Codecs codecs;
     private final String fieldContainingPayload;
 
     CommandResultWithPayloadDecoder(final Decoder<T> payloadDecoder, final String fieldContainingPayload) {
         this.payloadDecoder = payloadDecoder;
         this.fieldContainingPayload = fieldContainingPayload;
-        this.codecs = Codecs.createDefault();
     }
 
     @Override
@@ -53,8 +51,11 @@ class CommandResultWithPayloadDecoder<T> extends DocumentCodec {
                 }
                 reader.readEndArray();
                 return collection;
+            } else if (bsonType == NULL) {
+                reader.readNull();
+                return null;
             } else {
-                return codecs.decode(reader);
+                throw new UnsupportedOperationException("Unable to decode");
             }
         } else {
             return super.readValue(reader, fieldName);

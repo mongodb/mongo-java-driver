@@ -40,14 +40,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static java.util.Arrays.asList;
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
 
 public class DocumentCodecTest {
     private BasicOutputBuffer buffer;
@@ -58,7 +54,7 @@ public class DocumentCodecTest {
     public void setUp() throws Exception {
         buffer = new BasicOutputBuffer();
         writer = new BSONBinaryWriter(buffer, true);
-        documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
+        documentCodec = new DocumentCodec();
     }
 
     @After
@@ -132,67 +128,6 @@ public class DocumentCodecTest {
         Document doc = new Document();
         List<Document> listOfDocuments = asList(new Document("intVal", 1), new Document("anotherInt", 2));
         doc.put("array", listOfDocuments);
-
-        documentCodec.encode(writer, doc);
-
-        InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
-        assertEquals(doc, decodedDocument);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void shouldEncodeArrayContainingDocumentsAndDecodeAsList() throws IOException {
-        Document doc = new Document();
-        Document[] arrayOfDocuments = {new Document("intVal", 1), new Document("anotherInt", 2)};
-        doc.put("array", arrayOfDocuments);
-
-        documentCodec.encode(writer, doc);
-
-        InputBuffer inputBuffer = createInputBuffer();
-        List<Document> expectedListOfDocuments = asList(new Document("intVal", 1),
-                                                        new Document("anotherInt", 2));
-        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
-        assertThat((List<Document>) decodedDocument.get("array"), is(expectedListOfDocuments));
-    }
-
-    @SuppressWarnings("unchecked")
-    @Test
-    public void shouldEncodeArrayOfIntsAndDecodeAsArrayListOfIntegers() throws IOException {
-        Document doc = new Document();
-        doc.put("array", new int[]{1, 2, 3, 4, 5});
-
-        documentCodec.encode(writer, doc);
-
-        InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
-
-        List<Integer> value = asList(1, 2, 3, 4, 5);
-        assertThat((List<Integer>) decodedDocument.get("array"), is(value));
-    }
-
-    @Test
-    public void testMapContainingDocumentsEncoding() throws IOException {
-        Document doc = new Document();
-        Map<String, Document> mapOfDocuments = new HashMap<String, Document>();
-        mapOfDocuments.put("firstDoc", new Document("intVal", 1));
-        mapOfDocuments.put("secondDoc", new Document("anotherInt", 2));
-        doc.put("theMap", mapOfDocuments);
-
-        documentCodec.encode(writer, doc);
-
-        InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
-        assertEquals(doc, decodedDocument);
-    }
-
-    @Test
-    public void testMapContainingStringsEncoding() throws IOException {
-        Document doc = new Document();
-        Map<String, String> mapOfStrings = new HashMap<String, String>();
-        mapOfStrings.put("firstString", "the first string");
-        mapOfStrings.put("secondString", "the second string");
-        doc.put("theMap", mapOfStrings);
 
         documentCodec.encode(writer, doc);
 
