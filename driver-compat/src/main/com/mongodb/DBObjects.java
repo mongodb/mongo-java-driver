@@ -20,17 +20,20 @@ import org.bson.BSONBinaryReader;
 import org.bson.BSONObject;
 import org.bson.BSONReader;
 import org.bson.ByteBufNIO;
+import org.bson.codecs.Decoder;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.codecs.Decoder;
+import org.bson.types.RegularExpression;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoException;
+import org.mongodb.codecs.PatternCodec;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.mongodb.MongoExceptions.mapException;
 import static java.nio.ByteBuffer.wrap;
@@ -121,7 +124,10 @@ final class DBObjects {
             document.addToCollection(key, newList);
         } else if (value instanceof DBRef) {
             DBRef ref = (DBRef) value;
-            document.addToCollection(key, ref.toNew());
+            document.addToCollection(key, new Document("$ref", ref.getRef()).append("$id", ref.getId()));
+        } else if (value instanceof Pattern) {
+            Pattern pattern = (Pattern) value;
+            document.addToCollection(key, new RegularExpression(pattern.pattern(), PatternCodec.getOptionsAsString(pattern)));
         } else if (value instanceof BSONObject) {
             Document nestedDocument = new Document();
             fill((DBObject) value, nestedDocument);

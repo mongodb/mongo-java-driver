@@ -19,15 +19,11 @@ package org.mongodb.protocol;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
-import org.bson.codecs.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.EncoderRegistry;
-import org.mongodb.codecs.PrimitiveCodecs;
-import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
@@ -202,17 +198,5 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
 
     protected boolean isOrdered() {
         return ordered;
-    }
-
-    protected static class CommandCodec<T> extends DocumentCodec {
-        public CommandCodec(final Encoder<T> encoder) {
-            super(PrimitiveCodecs.createDefault(), new QueryFieldNameValidator(), createEncoderRegistry(encoder));
-        }
-
-        private static <T> EncoderRegistry createEncoderRegistry(final Encoder<T> encoder) {
-            EncoderRegistry encoderRegistry = new EncoderRegistry();
-            encoderRegistry.register(encoder.getEncoderClass(), encoder);
-            return encoderRegistry;
-        }
     }
 }

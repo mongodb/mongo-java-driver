@@ -16,6 +16,7 @@
 
 package org.mongodb.protocol;
 
+import org.bson.types.Binary;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,10 +42,11 @@ public class MaxMessageSizeTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() {
+        Binary binary = new Binary(new byte[2048]);
         message = new InsertMessage<Document>("test.test", true, ACKNOWLEDGED,
-                                              Arrays.asList(new InsertRequest<Document>(new Document("bytes", new byte[2048])),
-                                                            new InsertRequest<Document>(new Document("bytes", new byte[2048])),
-                                                            new InsertRequest<Document>(new Document("bytes", new byte[2048]))),
+                                              Arrays.asList(new InsertRequest<Document>(new Document("bytes", binary)),
+                                                            new InsertRequest<Document>(new Document("bytes", binary)),
+                                                            new InsertRequest<Document>(new Document("bytes", binary))),
                                               new DocumentCodec(), MessageSettings.builder().maxMessageSize(4500).build());
         buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
     }

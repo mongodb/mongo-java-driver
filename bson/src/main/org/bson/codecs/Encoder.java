@@ -18,6 +18,13 @@ package org.bson.codecs;
 
 import org.bson.BSONWriter;
 
+/**
+ * Instances of this class are capable of encoding an instance of the type parameter {@code T} into a BSON value.
+ * .
+ * @param <T> the type that the instance can encode into BSON
+ *
+ * @since 3.0
+ */
 public interface Encoder<T> {
 
     /**
@@ -27,6 +34,10 @@ public interface Encoder<T> {
      */
     void encode(BSONWriter writer, T value);
 
-    // necessary because Java doesn't reify generics
+    /**
+     * Returns the Class instance that this encodes. This is necessary because Java does not reify generic types.
+     *
+     * @return the Class instance that this encodes.
+     */
     Class<T> getEncoderClass();
 }

@@ -28,14 +28,14 @@ import java.util.UUID;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class UUIDEncoderTest {
+public class UUIDCodecTest {
 
-    private UUIDEncoder uuidEncoder;
+    private UUIDCodec uuidCodec;
     private BasicOutputBuffer outputBuffer;
 
     @Before
     public void setUp() throws Exception {
-        uuidEncoder = new UUIDEncoder();
+        uuidCodec = new UUIDCodec();
         outputBuffer = new BasicOutputBuffer();
     }
 
@@ -49,7 +49,7 @@ public class UUIDEncoderTest {
             bsonWriter.writeName("_id");
 
             // When
-            uuidEncoder.encode(bsonWriter, uuid);
+            uuidCodec.encode(bsonWriter, uuid);
         } finally {
             bsonWriter.close();
         }

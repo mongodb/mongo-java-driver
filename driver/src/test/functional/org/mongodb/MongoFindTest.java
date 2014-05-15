@@ -18,10 +18,12 @@ package org.mongodb;
 
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
+
 public class MongoFindTest extends DatabaseTestCase {
     @Test(expected = MongoQueryFailureException.class)
     public void shouldThrowQueryFailureException() {
-        collection.insert(new Document("loc", new double[]{0, 0}));
-        collection.find(new Document("loc", new Document("$near", new double[]{0, 0}))).getOne();
+        collection.insert(new Document("loc", asList(0.0, 0.0)));
+        collection.find(new Document("loc", new Document("$near", asList(0.0, 0.0)))).getOne();
     }
 }

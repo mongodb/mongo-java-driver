@@ -52,9 +52,8 @@ class MongoDatabaseImpl implements MongoDatabase {
     public MongoCollectionImpl<Document> getCollection(final String collectionName,
                                                        final MongoCollectionOptions operationOptions) {
         return getCollection(collectionName,
-                             new CollectibleDocumentCodec(operationOptions.withDefaults(options)
-                                                                          .getPrimitiveCodecs(),
-                                                          new ObjectIdGenerator()),
+                             new CollectibleDocumentCodec(
+                                                         new ObjectIdGenerator()),
                              operationOptions);
     }
 

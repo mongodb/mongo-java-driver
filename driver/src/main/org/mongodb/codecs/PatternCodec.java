@@ -42,7 +42,7 @@ public class PatternCodec implements Codec<Pattern> {
         return Pattern.class;
     }
 
-    public String getOptionsAsString(final Pattern pattern) {
+    public static String getOptionsAsString(final Pattern pattern) {
         int flags = pattern.flags();
         StringBuilder buf = new StringBuilder();
 

@@ -17,15 +17,12 @@
 package org.mongodb;
 
 import org.junit.Test;
-import org.mongodb.codecs.PrimitiveCodecs;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 public class MongoClientOptionsTest {
 
@@ -48,13 +45,6 @@ public class MongoClientOptionsTest {
         assertEquals(0, options.getHeartbeatThreadCount());
         assertEquals(15, options.getAcceptableLatencyDifference());
         assertNull(options.getRequiredReplicaSetName());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testPrimitiveCodecsIllegalArguments() {
-        MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
-        builder.primitiveCodecs(null);
-        fail();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -157,8 +147,6 @@ public class MongoClientOptionsTest {
         builder.heartbeatThreadCount(4);
         builder.requiredReplicaSetName("test");
         builder.acceptableLatencyDifference(25);
-        PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
-        builder.primitiveCodecs(primitiveCodecs);
 
         MongoClientOptions options = builder.build();
 
@@ -174,7 +162,6 @@ public class MongoClientOptionsTest {
         assertEquals(1, options.getThreadsAllowedToBlockForConnectionMultiplier());
         assertEquals(true, options.isSocketKeepAlive());
         assertTrue(options.isSSLEnabled());
-        assertSame(primitiveCodecs, options.getPrimitiveCodecs());
         assertEquals(5, options.getHeartbeatFrequency());
         assertEquals(10, options.getHeartbeatConnectRetryFrequency());
         assertEquals(15, options.getHeartbeatConnectTimeout());

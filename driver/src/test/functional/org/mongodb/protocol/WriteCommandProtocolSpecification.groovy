@@ -21,6 +21,8 @@
 
 
 package org.mongodb.protocol
+
+import org.bson.types.Binary
 import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
@@ -112,13 +114,13 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
     def 'should split a large batch'() {
         given:
-        byte[] hugeByteArray = new byte[1024 * 1024 * 16 - 100];
+        def hugeBinary = new Binary(new byte[1024 * 1024 * 16 - 100]);
 
         def documents = [
-                new Document('_id', 1).append('bytes', hugeByteArray),
-                new Document('_id', 2).append('bytes', hugeByteArray),
-                new Document('_id', 3).append('bytes', hugeByteArray),
-                new Document('_id', 4).append('bytes', hugeByteArray)
+                new Document('_id', 1).append('bytes', hugeBinary),
+                new Document('_id', 2).append('bytes', hugeBinary),
+                new Document('_id', 3).append('bytes', hugeBinary),
+                new Document('_id', 4).append('bytes', hugeBinary)
         ]
 
         List<InsertRequest<Document>> insertList = new ArrayList<InsertRequest<Document>>(documents.size());
@@ -137,13 +139,13 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
     def 'should have correct list of processed and unprocessed requests after error on split'() {
         given:
-        byte[] hugeByteArray = new byte[1024 * 1024 * 16 - 100];
+        def hugeBinary = new Binary(new byte[1024 * 1024 * 16 - 100]);
 
         def documents = [
-                new Document('_id', 1).append('bytes', hugeByteArray),
-                new Document('_id', 2).append('bytes', hugeByteArray),
-                new Document('_id', 3).append('bytes', hugeByteArray),
-                new Document('_id', 4).append('bytes', hugeByteArray)
+                new Document('_id', 1).append('bytes', hugeBinary),
+                new Document('_id', 2).append('bytes', hugeBinary),
+                new Document('_id', 3).append('bytes', hugeBinary),
+                new Document('_id', 4).append('bytes', hugeBinary)
         ]
 
         List<InsertRequest<Document>> insertList = new ArrayList<InsertRequest<Document>>(documents.size());
@@ -168,7 +170,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
     def 'should map indices in exception when split is required'() {
         given:
-        byte[] hugeByteArray = new byte[1024 * 1024 * 16 - 100];
+        def hugeBinary = new Binary(new byte[1024 * 1024 * 16 - 100]);
 
         def documents = [
                 new Document('_id', 1),
@@ -186,7 +188,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
         // add a large byte array to each document to force a split after each
         for (def document : documents) {
-            document.append('bytes', hugeByteArray);
+            document.append('bytes', hugeBinary);
         }
         documents[1].put('_id', 5)  // Make the second document a new one
 

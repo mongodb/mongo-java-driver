@@ -21,6 +21,7 @@ import org.bson.BSONBinaryWriter;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.io.BasicInputBuffer;
 import org.mongodb.BSONDocumentBuffer;
 import org.mongodb.CollectibleCodec;
@@ -39,12 +40,12 @@ import java.io.IOException;
  */
 public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuffer> {
     private final BufferProvider bufferProvider;
-    private final PrimitiveCodecs primitiveCodecs;
+    private final CodecRegistry codecRegistry;
 
     public BSONDocumentBufferCodec(final BufferProvider bufferProvider,
-                                   final PrimitiveCodecs primitiveCodecs) {
+                                   final CodecRegistry codecRegistry) {
         this.bufferProvider = bufferProvider;
-        this.primitiveCodecs = primitiveCodecs;
+        this.codecRegistry = codecRegistry;
     }
 
     @Override
@@ -86,7 +87,7 @@ public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuf
             while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
                 String name = reader.readName();
                 if (name.equals("_id")) {
-                    return primitiveCodecs.decode(reader);
+                    return codecRegistry.get(DocumentCodec.getDefaultBsonTypeClassMap().get(reader.getCurrentBSONType())).decode(reader);
                 } else {
                     reader.skipValue();
                 }

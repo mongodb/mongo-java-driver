@@ -17,13 +17,11 @@
 
 
 package org.mongodb
-
 import org.bson.types.ObjectId
+import org.bson.types.RegularExpression
 import org.mongodb.json.JSONMode
 import org.mongodb.json.JSONParseException
 import spock.lang.Specification
-
-import java.util.regex.Pattern
 
 class DocumentSpecification extends Specification {
 
@@ -60,9 +58,6 @@ class DocumentSpecification extends Specification {
     }
 
     def 'test value of method with mode'() {
-        given:
-        Pattern expectedPattern = Pattern.compile('abc', Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
-
         when:
         Document document = Document.valueOf("{'regex' : /abc/im }", JSONMode.JAVASCRIPT);
 
@@ -70,9 +65,9 @@ class DocumentSpecification extends Specification {
         document != null;
         document.keySet().size() == 1;
 
-        Pattern actualPattern = (Pattern) document.get('regex');
-        actualPattern.flags() == expectedPattern.flags();
-        actualPattern.pattern() == expectedPattern.pattern();
+        RegularExpression regularExpression = (RegularExpression) document.get('regex');
+        regularExpression.options == 'im'
+        regularExpression.pattern == 'abc'
     }
 
     def 'should throw an exception when parsing an invalid JSON String'() {
