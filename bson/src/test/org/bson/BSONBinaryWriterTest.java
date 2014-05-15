@@ -30,8 +30,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 
 public class BSONBinaryWriterTest {
 
@@ -253,7 +255,7 @@ public class BSONBinaryWriterTest {
     }
 
     @Test
-    public void testWriteBoolean() {
+    public void testWriteAndReadBoolean() {
         writer.writeStartDocument();
         writer.writeBoolean("b1", true);
         writer.writeBoolean("b2", false);
@@ -262,27 +264,56 @@ public class BSONBinaryWriterTest {
         byte[] expectedValues = {15, 0, 0, 0, 8, 98, 49, 0, 1, 8, 98, 50, 0, 0, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
 
+        BSONReader reader = createReaderForBytes(expectedValues);
+        reader.readStartDocument();
+        assertThat(reader.readBSONType(), is(BSONType.BOOLEAN));
+        assertEquals("b1", reader.readName());
+        assertEquals(true, reader.readBoolean());
+        assertThat(reader.readBSONType(), is(BSONType.BOOLEAN));
+        assertEquals("b2", reader.readName());
+        assertEquals(false, reader.readBoolean());
+        reader.readEndDocument();
     }
 
     @Test
-    public void testWriteString() {
+    public void testWriteAndReadString() {
         writer.writeStartDocument();
 
         writer.writeString("s1", "");
         writer.writeString("s2", "danke");
         writer.writeString("s3", ",+\\\"<>;[]{}@#$%^&*()+_");
-        writer.writeString("s5", "a\u00e9\u3042\u0430\u0432\u0431\u0434");
+        writer.writeString("s4", "a\u00e9\u3042\u0430\u0432\u0431\u0434");
 
         writer.writeEndDocument();
 
         byte[] expectedValues = {82, 0, 0, 0, 2, 115, 49, 0, 1, 0, 0, 0, 0, 2, 115, 50,
                                  0, 6, 0, 0, 0, 100, 97, 110, 107, 101, 0, 2, 115, 51, 0, 23,
                                  0, 0, 0, 44, 43, 92, 34, 60, 62, 59, 91, 93, 123, 125, 64, 35,
-                                 36, 37, 94, 38, 42, 40, 41, 43, 95, 0, 2, 115, 53, 0, 15, 0,
+                                 36, 37, 94, 38, 42, 40, 41, 43, 95, 0, 2, 115, 52, 0, 15, 0,
                                  0, 0, 97, -61, -87, -29, -127, -126, -48, -80, -48, -78, -48, -79, -48, -76, 0,
                                  0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
 
+        BSONReader reader = createReaderForBytes(expectedValues);
+        reader.readStartDocument();
+
+        assertThat(reader.readBSONType(), is(BSONType.STRING));
+        assertEquals("s1", reader.readName());
+        assertEquals("", reader.readString());
+
+        assertThat(reader.readBSONType(), is(BSONType.STRING));
+        assertEquals("s2", reader.readName());
+        assertEquals("danke", reader.readString());
+
+        assertThat(reader.readBSONType(), is(BSONType.STRING));
+        assertEquals("s3", reader.readName());
+        assertEquals(",+\\\"<>;[]{}@#$%^&*()+_", reader.readString());
+
+        assertThat(reader.readBSONType(), is(BSONType.STRING));
+        assertEquals("s4", reader.readName());
+        assertEquals("a\u00e9\u3042\u0430\u0432\u0431\u0434", reader.readString());
+
+        reader.readEndDocument();
     }
 
     @Test
@@ -727,4 +758,8 @@ public class BSONBinaryWriterTest {
         }
     }
     // CHECKSTYLE:ON
+
+    private BSONBinaryReader createReaderForBytes(final byte[] bytes) {
+        return new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+    }
 }
