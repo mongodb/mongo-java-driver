@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 @Immutable
-public final class DBObjectFactory {
+final class DBObjectFactory {
 
     private final Map<List<String>, Class<? extends DBObject>> pathToClassMap;
     private final ReflectionDBObject.JavaWrapper wrapper;

@@ -22,6 +22,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.NotThreadSafe;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
@@ -361,9 +362,10 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             copy.batchSize(copy.getLimit() * -1);
             copy.limit(0);
         }
-        return collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(),
-                                                               new DBObjectCodec()), getReadPreference())
-                         .next();
+        return DBObjects.toDBObject(collection.execute(new QueryOperation<Document>(collection.getNamespace(), copy,
+                                                                                    collection.getDocumentCodec(),
+                                                                                    new DocumentCodec()), getReadPreference())
+                                              .next());
     }
 
     /**

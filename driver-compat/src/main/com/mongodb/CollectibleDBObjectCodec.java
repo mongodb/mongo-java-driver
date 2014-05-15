@@ -16,11 +16,14 @@
 
 package com.mongodb;
 
+import org.bson.BSONType;
 import org.bson.BSONWriter;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.IdGenerator;
-import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.codecs.validators.FieldNameValidator;
+
+import java.util.Map;
 
 /**
  * Codec for documents that go in collections, and therefore have an _id.  Ensures that the _id field is written first.
@@ -29,10 +32,9 @@ class CollectibleDBObjectCodec extends DBObjectCodec implements CollectibleCodec
     private static final String ID_FIELD_NAME = "_id";
     private final IdGenerator idGenerator;
 
-    public CollectibleDBObjectCodec(final DB database, final PrimitiveCodecs primitiveCodecs,
-                                    final IdGenerator idGenerator,
-                                    final DBObjectFactory objectFactory) {
-        super(database, primitiveCodecs, new FieldNameValidator(), objectFactory);
+    public CollectibleDBObjectCodec(final DB database, final IdGenerator idGenerator, final DBObjectFactory objectFactory,
+                                    final CodecRegistry codecRegistry, final Map<BSONType, Class<?>> bsonTypeClassMap) {
+        super(database, new FieldNameValidator(), objectFactory, codecRegistry, bsonTypeClassMap);
         this.idGenerator = idGenerator;
     }
 

@@ -19,14 +19,11 @@ package org.mongodb.operation;
 import org.bson.BSONWriter;
 import org.bson.codecs.Encoder;
 import org.mongodb.Document;
-import org.mongodb.codecs.Codecs;
+import org.mongodb.codecs.DocumentCodec;
 
 import java.util.Map;
 
-class CommandWithPayloadEncoder<T> implements Encoder<Document> {
-    //Commands should be simple documents with no special types, other than the payload document
-    private final Codecs codecs = Codecs.createDefault();
-
+class CommandWithPayloadEncoder<T> extends DocumentCodec {
     private final Encoder<T> payloadEncoder;
     private final String fieldContainingPayload;
 
@@ -35,7 +32,7 @@ class CommandWithPayloadEncoder<T> implements Encoder<Document> {
         this.fieldContainingPayload = fieldContainingPayload;
     }
 
-    //we need to cast the payload to (T) to encode it
+    // we need to cast the payload to (T) to encode it
     @SuppressWarnings("unchecked")
     @Override
     public void encode(final BSONWriter writer, final Document value) {
@@ -48,7 +45,7 @@ class CommandWithPayloadEncoder<T> implements Encoder<Document> {
             if (fieldContainingPayload.equals(fieldName)) {
                 payloadEncoder.encode(writer, (T) entry.getValue());
             } else {
-                codecs.encode(writer, entry.getValue());
+                super.writeValue(writer, entry.getValue());
             }
         }
         writer.writeEndDocument();

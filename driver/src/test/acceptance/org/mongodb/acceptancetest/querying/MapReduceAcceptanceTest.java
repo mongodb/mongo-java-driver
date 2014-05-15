@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.contains;
@@ -36,18 +37,18 @@ import static org.mongodb.Sort.ascending;
 
 public class MapReduceAcceptanceTest extends DatabaseTestCase {
     private void insertLabelData() {
-        collection.save(new Document("_id", 0).append("labels", new String[]{"a", "b"}));
-        collection.save(new Document("_id", 1).append("labels", new String[]{"a", "b"}));
+        collection.save(new Document("_id", 0).append("labels", asList("a", "b")));
+        collection.save(new Document("_id", 1).append("labels", asList("a", "b")));
 
-        collection.save(new Document("_id", 2).append("labels", new String[]{"b", "c"}));
-        collection.save(new Document("_id", 3).append("labels", new String[]{"c", "d"}));
-        collection.save(new Document("_id", 4).append("labels", new String[]{"a", "b"}));
-        collection.save(new Document("_id", 5).append("labels", new String[]{"b", "c"}));
-        collection.save(new Document("_id", 6).append("labels", new String[]{"b", "c"}));
-        collection.save(new Document("_id", 7).append("labels", new String[]{"a", "b"}));
+        collection.save(new Document("_id", 2).append("labels", asList("b", "c")));
+        collection.save(new Document("_id", 3).append("labels", asList("c", "d")));
+        collection.save(new Document("_id", 4).append("labels", asList("a", "b")));
+        collection.save(new Document("_id", 5).append("labels", asList("b", "c")));
+        collection.save(new Document("_id", 6).append("labels", asList("b", "c")));
+        collection.save(new Document("_id", 7).append("labels", asList("a", "b")));
 
-        collection.save(new Document("_id", 8).append("labels", new String[]{"b", "c"}));
-        collection.save(new Document("_id", 9).append("labels", new String[]{"c", "d"}));
+        collection.save(new Document("_id", 8).append("labels", asList("b", "c")));
+        collection.save(new Document("_id", 9).append("labels", asList("c", "d")));
     }
 
     @Test
@@ -137,7 +138,8 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
                                                          + "  for( var i=0; i < values.length; i++ ) "
                                                          + "    sum += values[i]; "
                                                          + "  return sum;"
-                                                         + "}");
+                                                         + "}"
+                                                        );
         // will perform Map Reduce on _ids 2-7
 
         //transforms Documents into LabelCount objects
@@ -181,7 +183,8 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
 
                                                                "  function(key,values){ "
                                                                + "  return Array.sum(values);"
-                                                               + "}");
+                                                               + "}"
+                                                              );
 
         // Then
         List<Document> totalForOrdersWithStatusAPerCustomer = results.into(new ArrayList<Document>());

@@ -14,10 +14,23 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.bson.codecs.configuration;
 
-import org.bson.BSONWriter;
+import org.bson.codecs.Codec;
 
-public interface ComplexTypeEncoder<T> {
-    void encode(BSONWriter bsonWriter, T value);
+/**
+ * A registry of Codec instances searchable by the class that the Codec can encode and decode. 
+ *
+ * @since 3.0
+ */
+public interface CodecRegistry {
+    /**
+     * Gets a {@code Codec} for the given Class.
+     *
+     * @param clazz the class
+     * @param <T> the class type
+     * @return a codec for the given class
+     * @throws CodecConfigurationException if the registry does not contain a codec for the given class.
+     */
+    <T> Codec<T> get(final Class<T> clazz);
 }

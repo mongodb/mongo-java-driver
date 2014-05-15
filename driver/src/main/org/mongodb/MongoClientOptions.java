@@ -17,7 +17,6 @@
 package org.mongodb;
 
 import org.mongodb.annotations.Immutable;
-import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.ConnectionPoolSettings;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerSettings;
@@ -38,7 +37,6 @@ public final class MongoClientOptions {
     private final String description;
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
-    private final PrimitiveCodecs primitiveCodecs;
 
     private final int minConnectionPoolSize;
     private final int maxConnectionPoolSize;
@@ -85,7 +83,6 @@ public final class MongoClientOptions {
         private String description;
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
-        private PrimitiveCodecs primitiveCodecs = PrimitiveCodecs.createDefault();
 
         private int minConnectionPoolSize;
         private int maxConnectionPoolSize = 100;
@@ -287,20 +284,6 @@ public final class MongoClientOptions {
                 throw new IllegalArgumentException("null is not a legal value");
             }
             this.writeConcern = aWriteConcern;
-            return this;
-        }
-
-        /**
-         * Sets the PrimitiveCodecs to use.
-         *
-         * @return {@code this}
-         * @see org.mongodb.MongoClientOptions#getPrimitiveCodecs()
-         */
-        public Builder primitiveCodecs(final PrimitiveCodecs aPrimitiveCodecs) {
-            if (aPrimitiveCodecs == null) {
-                throw new IllegalArgumentException("null is not a legal value");
-            }
-            this.primitiveCodecs = aPrimitiveCodecs;
             return this;
         }
 
@@ -589,15 +572,6 @@ public final class MongoClientOptions {
     }
 
     /**
-     * The primitive codecs to use. <p> Default is {@code PrimitiveCodecs.createDefault()} </p>
-     *
-     * @return primitive codecs
-     */
-    public PrimitiveCodecs getPrimitiveCodecs() {
-        return primitiveCodecs;
-    }
-
-    /**
      * Whether to use SSL. The default is {@code false}.
      *
      * @return true if SSL should be used
@@ -767,7 +741,6 @@ public final class MongoClientOptions {
                + ", socketKeepAlive=" + socketKeepAlive
                + ", readPreference=" + readPreference
                + ", writeConcern=" + writeConcern
-               + ", primitiveCodecs=" + primitiveCodecs
                + ", SSLEnabled=" + SSLEnabled
                + ", alwaysUseMBeans=" + alwaysUseMBeans
                + ", heartbeatFrequency=" + heartbeatFrequency
@@ -793,7 +766,6 @@ public final class MongoClientOptions {
         socketKeepAlive = builder.socketKeepAlive;
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
-        primitiveCodecs = builder.primitiveCodecs;
         SSLEnabled = builder.SSLEnabled;
         alwaysUseMBeans = builder.alwaysUseMBeans;
         heartbeatFrequency = builder.heartbeatFrequency;

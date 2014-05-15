@@ -17,13 +17,12 @@
 package org.mongodb.test;
 
 import org.bson.codecs.Codec;
-import org.mongodb.Document;
 import org.bson.codecs.Encoder;
+import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.InsertOperation;
@@ -45,7 +44,7 @@ public final class CollectionHelper<T> {
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
         this.codec = codec;
         this.namespace = namespace;
-        this.queryEncoder = new DocumentCodec(PrimitiveCodecs.createDefault());
+        this.queryEncoder = new DocumentCodec();
     }
 
     @SuppressWarnings("unchecked")

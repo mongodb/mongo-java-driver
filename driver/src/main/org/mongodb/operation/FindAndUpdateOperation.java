@@ -23,7 +23,6 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.PrimitiveCodecs;
 
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -44,7 +43,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
     private final MongoNamespace namespace;
     private final FindAndUpdate findAndUpdate;
     private final CommandResultWithPayloadDecoder<T> resultDecoder;
-    private final DocumentCodec commandEncoder = new DocumentCodec(PrimitiveCodecs.createDefault());
+    private final DocumentCodec commandEncoder = new DocumentCodec();
 
     public FindAndUpdateOperation(final MongoNamespace namespace, final FindAndUpdate findAndUpdate, final Decoder<T> resultDecoder) {
         this.namespace = namespace;

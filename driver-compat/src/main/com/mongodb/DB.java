@@ -22,7 +22,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.codecs.PrimitiveCodecs;
+import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.operation.CommandReadOperation;
@@ -44,6 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.MongoExceptions.mapException;
 import static com.mongodb.ReadPreference.primary;
+import static java.util.Arrays.asList;
 import static org.mongodb.MongoCredential.createMongoCRCredential;
 
 /**
@@ -88,7 +89,7 @@ public class DB {
      * @param name  the database name - must not be empty and cannot contain spaces
      */
     public DB(final Mongo mongo, final String name) {
-        this(mongo, name, new DocumentCodec(PrimitiveCodecs.createDefault()));
+        this(mongo, name, new org.mongodb.codecs.DocumentCodec(new QueryFieldNameValidator()));
     }
 
     /**
@@ -445,7 +446,7 @@ public class DB {
      * @throws MongoException
      */
     public CommandResult doEval(final String code, final Object... args) {
-        Document commandDocument = new Document("$eval", code).append("args", args);
+        Document commandDocument = new Document("$eval", code).append("args", asList(args));
         return executeCommand(commandDocument);
     }
 

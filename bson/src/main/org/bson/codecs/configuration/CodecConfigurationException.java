@@ -14,6 +14,24 @@
  * limitations under the License.
  */
 
-package org.mongodb.performance.codecs.pojo;
+package org.bson.codecs.configuration;
 
-public class EmptyPojo {}
+/**
+ * An exception indicating that a codec registry has been misconfigured in some way, preventing it from providing a codec for the
+ * requested class.
+ *
+ * @since 3.0
+ */
+public class CodecConfigurationException extends RuntimeException {
+
+    private static final long serialVersionUID = -5656763889202800056L;
+
+    /**
+     * Construct a new instance.
+     *
+     * @param msg the message
+     */
+    public CodecConfigurationException(final String msg) {
+        super(msg);
+    }
+}

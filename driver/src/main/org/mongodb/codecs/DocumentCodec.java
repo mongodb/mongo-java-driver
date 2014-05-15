@@ -20,40 +20,81 @@ import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.CodecSource;
+import org.bson.codecs.configuration.RootCodecRegistry;
+import org.bson.types.BSONTimestamp;
+import org.bson.types.Binary;
+import org.bson.types.Code;
+import org.bson.types.CodeWithScope;
+import org.bson.types.DBPointer;
+import org.bson.types.MaxKey;
+import org.bson.types.MinKey;
+import org.bson.types.ObjectId;
+import org.bson.types.RegularExpression;
+import org.bson.types.Symbol;
+import org.bson.types.Undefined;
 import org.mongodb.Document;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.codecs.validators.Validator;
 
+import java.util.Arrays;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-// TODO: decode into DBRef?
 public class DocumentCodec implements Codec<Document> {
+    private static final Map<BSONType, Class<?>> DEFAULT_BSON_TYPE_CLASS_MAP = createDefaultBsonTypeClassMap();
+
     private final Validator<String> fieldNameValidator;
-    private final Codecs codecs;
+    private final Map<BSONType, Class<?>> bsonTypeClassMap;
+    private final CodecRegistry registry;
+
+    static Map<BSONType, Class<?>> getDefaultBsonTypeClassMap() {
+        return DEFAULT_BSON_TYPE_CLASS_MAP;
+    }
 
     public DocumentCodec() {
-        this(PrimitiveCodecs.createDefault());
+        this(new QueryFieldNameValidator());
     }
 
-    public DocumentCodec(final PrimitiveCodecs primitiveCodecs) {
-        this(primitiveCodecs, new QueryFieldNameValidator());
-    }
-
-    protected DocumentCodec(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator) {
-        this(fieldNameValidator, new Codecs(primitiveCodecs, fieldNameValidator, new EncoderRegistry()));
-    }
-
-    protected DocumentCodec(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator,
-                            final EncoderRegistry encoderRegistry) {
-        this(fieldNameValidator, new Codecs(primitiveCodecs, fieldNameValidator, encoderRegistry));
-    }
-
-    protected DocumentCodec(final Validator<String> fieldNameValidator, final Codecs codecs) {
-        if (codecs == null) {
-            throw new IllegalArgumentException("codecs is null");
-        }
+    public DocumentCodec(final Validator<String> fieldNameValidator) {
         this.fieldNameValidator = fieldNameValidator;
-        this.codecs = codecs;
+        this.bsonTypeClassMap = getDefaultBsonTypeClassMap();
+        this.registry = new RootCodecRegistry(Arrays.<CodecSource>asList(new DocumentCodecSource()));
+    }
+
+    public DocumentCodec(final CodecRegistry registry, final Map<BSONType, Class<?>> bsonTypeClassMap) {
+        this.fieldNameValidator = new QueryFieldNameValidator();
+        this.registry = registry;
+        this.bsonTypeClassMap = bsonTypeClassMap;
+    }
+
+    private static Map<BSONType, Class<?>> createDefaultBsonTypeClassMap() {
+        Map<BSONType, Class<?>> map = new HashMap<BSONType, Class<?>>();
+        map.put(BSONType.ARRAY, List.class);
+        map.put(BSONType.BINARY, Binary.class);
+        map.put(BSONType.BOOLEAN, Boolean.class);
+        map.put(BSONType.DATE_TIME, Date.class);
+        map.put(BSONType.DB_POINTER, DBPointer.class);
+        map.put(BSONType.DOCUMENT, Document.class);
+        map.put(BSONType.DOUBLE, Double.class);
+        map.put(BSONType.INT32, Integer.class);
+        map.put(BSONType.INT64, Long.class);
+        map.put(BSONType.MAX_KEY, MaxKey.class);
+        map.put(BSONType.MIN_KEY, MinKey.class);
+        map.put(BSONType.JAVASCRIPT, Code.class);
+        map.put(BSONType.JAVASCRIPT_WITH_SCOPE, CodeWithScope.class);
+        map.put(BSONType.OBJECT_ID, ObjectId.class);
+        map.put(BSONType.REGULAR_EXPRESSION, RegularExpression.class);
+        map.put(BSONType.STRING, String.class);
+        map.put(BSONType.SYMBOL, Symbol.class);
+        map.put(BSONType.TIMESTAMP, BSONTimestamp.class);
+        map.put(BSONType.UNDEFINED, Undefined.class);
+
+        return map;
     }
 
     @Override
@@ -82,8 +123,26 @@ public class DocumentCodec implements Codec<Document> {
     }
 
     @SuppressWarnings("unchecked")
-    protected void writeValue(final BSONWriter bsonWriter, final Object value) {
-        codecs.encode(bsonWriter, value);
+    protected void writeValue(final BSONWriter writer, final Object value) {
+        if (value == null) {
+            writer.writeNull();
+        } else {
+            getCodec(value).encode(writer, value);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Codec getCodec(final Object value) {
+        Codec codec;
+        if (Document.class.isAssignableFrom(value.getClass())) {
+            codec = this;   // TODO: this is suspicious, but necessary so that nested documents use the same field validator
+        } else {
+            codec = registry.get(value.getClass());
+        }
+        if (codec == null) {
+            throw new CodecConfigurationException("Could not find codec for class " + value.getClass());
+        }
+        return codec;
     }
 
     @Override
@@ -103,10 +162,13 @@ public class DocumentCodec implements Codec<Document> {
 
     protected Object readValue(final BSONReader reader, final String fieldName) {
         BSONType bsonType = reader.getCurrentBSONType();
-        if (bsonType.equals(BSONType.DOCUMENT)) {
-            return this.decode(reader);
+        if (bsonType == BSONType.NULL) {
+            reader.readNull();
+            return null;
+        } else if (bsonType == BSONType.DOCUMENT) {
+            return decode(reader);
         } else {
-            return codecs.decode(reader);
+            return registry.get(bsonTypeClassMap.get(bsonType)).decode(reader);
         }
     }
 

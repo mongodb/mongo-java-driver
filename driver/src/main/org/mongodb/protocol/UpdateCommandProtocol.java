@@ -16,13 +16,15 @@
 
 package org.mongodb.protocol;
 
+import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
-import org.bson.codecs.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
+import org.mongodb.codecs.DocumentCodec;
+import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
@@ -87,7 +89,7 @@ public class UpdateCommandProtocol extends WriteCommandProtocol {
     @Override
     protected UpdateCommandMessage createRequestMessage(final ServerDescription serverDescription) {
         return new UpdateCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), updates,
-                                        new CommandCodec<Document>(queryEncoder), getMessageSettings(serverDescription));
+                                        new DocumentCodec(new QueryFieldNameValidator()), getMessageSettings(serverDescription));
     }
 
     @Override
