@@ -17,18 +17,24 @@
 package example;
 
 import com.mongodb.BasicDBObject;
+import com.mongodb.BulkWriteOperation;
+import com.mongodb.BulkWriteResult;
+import com.mongodb.Cursor;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
+import com.mongodb.ParallelScanOptions;
 
 import java.net.UnknownHostException;
 import java.util.List;
 import java.util.Set;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 /**
- * The tutorial from http://www.mongodb.org/display/DOCS/Java+Tutorial.
+ * The tutorial from http://docs.mongodb.org/ecosystem/tutorial/getting-started-with-java-driver/
  */
 public class QuickTour {
     // CHECKSTYLE:OFF
@@ -55,30 +61,31 @@ public class QuickTour {
         }
 
         // get a collection object to work with
-        DBCollection testCollection = db.getCollection("testCollection");
+        DBCollection coll = db.getCollection("testCollection");
 
         // drop all the data in it
-        testCollection.drop();
+        coll.drop();
 
         // make a document and insert it
-        BasicDBObject doc = new BasicDBObject("name", "MongoDB").append("type", "database")
-                                                                .append("count", 1)
-                                                                .append("info", new BasicDBObject("x", 203).append("y", 102));
+        BasicDBObject doc = new BasicDBObject("name", "MongoDB")
+                .append("type", "database")
+                .append("count", 1)
+                .append("info", new BasicDBObject("x", 203).append("y", 102));
 
-        testCollection.insert(doc);
+        coll.insert(doc);
 
         // get it (since it's the only one in there since we dropped the rest earlier on)
-        DBObject myDoc = testCollection.findOne();
+        DBObject myDoc = coll.findOne();
         System.out.println(myDoc);
 
         // now, lets add lots of little documents to the collection so we can explore queries and cursors
         for (int i = 0; i < 100; i++) {
-            testCollection.insert(new BasicDBObject().append("i", i));
+            coll.insert(new BasicDBObject().append("i", i));
         }
-        System.out.println("total # of documents after inserting 100 small ones (should be 101) " + testCollection.getCount());
+        System.out.println("total # of documents after inserting 100 small ones (should be 101) " + coll.getCount());
 
         // lets get all the documents in the collection and print them out
-        DBCursor cursor = testCollection.find();
+        DBCursor cursor = coll.find();
         try {
             while (cursor.hasNext()) {
                 System.out.println(cursor.next());
@@ -89,7 +96,7 @@ public class QuickTour {
 
         // now use a query to get 1 document out
         BasicDBObject query = new BasicDBObject("i", 71);
-        cursor = testCollection.find(query);
+        cursor = coll.find(query);
 
         try {
             while (cursor.hasNext()) {
@@ -99,9 +106,24 @@ public class QuickTour {
             cursor.close();
         }
 
+        // $ Operators are represented as strings
+        query = new BasicDBObject("j", new BasicDBObject("$ne", 3))
+                .append("k", new BasicDBObject("$gt", 10));
+
+        cursor = coll.find(query);
+
+        try {
+            while(cursor.hasNext()) {
+                System.out.println(cursor.next());
+            }
+        } finally {
+            cursor.close();
+        }
+
         // now use a range query to get a larger subset
-        query = new BasicDBObject("i", new BasicDBObject("$gt", 50));  // i.e. find all where i > 50
-        cursor = testCollection.find(query);
+        // find all where i > 50
+        query = new BasicDBObject("i", new BasicDBObject("$gt", 50));
+        cursor = coll.find(query);
 
         try {
             while (cursor.hasNext()) {
@@ -112,8 +134,8 @@ public class QuickTour {
         }
 
         // range query with multiple constraints
-        query = new BasicDBObject("i", new BasicDBObject("$gt", 20).append("$lte", 30));  // i.e.   20 < i <= 30
-        cursor = testCollection.find(query);
+        query = new BasicDBObject("i", new BasicDBObject("$gt", 20).append("$lte", 30));
+        cursor = coll.find(query);
 
         try {
             while (cursor.hasNext()) {
@@ -123,30 +145,46 @@ public class QuickTour {
             cursor.close();
         }
 
-        // create an index on the "i" field
-        testCollection.createIndex(new BasicDBObject("i", 1));  // create index on "i", ascending
+        // Count all documents in a collection but take a maximum second to do so
+        coll.find().maxTime(1, SECONDS).count();
 
-        // list the indexes on the collection
-        List<DBObject> list = testCollection.getIndexInfo();
-        for (final DBObject o : list) {
-            System.out.println(o);
+        // Bulk operations
+        BulkWriteOperation builder = coll.initializeOrderedBulkOperation();
+        builder.insert(new BasicDBObject("_id", 1));
+        builder.insert(new BasicDBObject("_id", 2));
+        builder.insert(new BasicDBObject("_id", 3));
+
+        builder.find(new BasicDBObject("_id", 1)).updateOne(new BasicDBObject("$set", new BasicDBObject("x", 2)));
+        builder.find(new BasicDBObject("_id", 2)).removeOne();
+        builder.find(new BasicDBObject("_id", 3)).replaceOne(new BasicDBObject("_id", 3).append("x", 4));
+
+        BulkWriteResult result = builder.execute();
+        System.out.println("Ordered bulk write result : " + result);
+
+        // Unordered bulk operation - no guarantee of order of operation
+        builder = coll.initializeUnorderedBulkOperation();
+        builder.find(new BasicDBObject("_id", 1)).removeOne();
+        builder.find(new BasicDBObject("_id", 2)).removeOne();
+
+        result = builder.execute();
+        System.out.println("Ordered bulk write result : " + result);
+
+        // parallelScan
+        ParallelScanOptions parallelScanOptions = ParallelScanOptions
+                .builder()
+                .numCursors(3)
+                .batchSize(300)
+                .build();
+
+        List<Cursor> cursors = coll.parallelScan(parallelScanOptions);
+        for (Cursor pCursor: cursors) {
+            while (pCursor.hasNext()) {
+                System.out.println(pCursor.next());
+            }
         }
 
-        // See if the last operation had an error
-        System.out.println("Last error : " + db.getLastError());
-
-        // see if any previous operation had an error
-        System.out.println("Previous error : " + db.getPreviousError());
-
-        // force an error
-        db.forceError();
-
-        // See if the last operation had an error
-        System.out.println("Last error : " + db.getLastError());
-
-        db.resetError();
-
         // release resources
+        db.dropDatabase();
         mongoClient.close();
     }
     // CHECKSTYLE:ON
