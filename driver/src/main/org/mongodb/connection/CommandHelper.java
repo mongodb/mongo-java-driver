@@ -16,7 +16,7 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;

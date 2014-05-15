@@ -17,7 +17,7 @@
 package com.mongodb;
 
 import org.bson.BSONWriter;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.codecs.ObjectIdGenerator;
 
 class DBEncoderFactoryAdapter implements Encoder<DBObject> {

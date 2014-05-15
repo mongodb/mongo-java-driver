@@ -18,7 +18,7 @@ package org.mongodb.codecs;
 
 import org.bson.BSONWriter;
 import org.mongodb.DBRef;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 
 public class DBRefEncoder implements Encoder<DBRef> {
     private final Codecs codecs;

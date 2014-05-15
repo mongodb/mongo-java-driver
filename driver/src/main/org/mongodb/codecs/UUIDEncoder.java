@@ -19,7 +19,7 @@ package org.mongodb.codecs;
 import org.bson.BSONBinarySubType;
 import org.bson.BSONWriter;
 import org.bson.types.Binary;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 
 import java.util.UUID;
 

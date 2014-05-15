@@ -1,7 +1,7 @@
 package org.mongodb.operation;
 
 import org.mongodb.Block;
-import org.mongodb.Decoder;
+import org.bson.codecs.Decoder;
 import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoCursor;

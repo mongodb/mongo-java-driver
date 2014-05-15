@@ -19,7 +19,7 @@ package org.mongodb.codecs;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.MinKey;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 
 public class MinKeyCodec implements Codec<MinKey> {
     @Override

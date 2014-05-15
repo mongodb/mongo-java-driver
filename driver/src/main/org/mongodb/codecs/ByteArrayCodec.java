@@ -19,7 +19,7 @@ package org.mongodb.codecs;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.Binary;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 
 public class ByteArrayCodec implements Codec<byte[]> {
     @Override

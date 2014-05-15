@@ -17,7 +17,7 @@
 package org.mongodb.protocol;
 
 import org.mongodb.CommandResult;
-import org.mongodb.Decoder;
+import org.bson.codecs.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.connection.ResponseBuffers;

@@ -19,7 +19,7 @@ package org.mongodb.protocol.message;
 import org.bson.BSONBinaryWriter;
 import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.InsertRequest;

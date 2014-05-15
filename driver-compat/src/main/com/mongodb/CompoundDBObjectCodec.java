@@ -18,10 +18,10 @@ package com.mongodb;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 import org.mongodb.CollectibleCodec;
-import org.mongodb.Decoder;
-import org.mongodb.Encoder;
+import org.bson.codecs.Decoder;
+import org.bson.codecs.Encoder;
 
 class CompoundDBObjectCodec implements Codec<DBObject>, CollectibleCodec<DBObject> {
 

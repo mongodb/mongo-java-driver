@@ -20,6 +20,7 @@ import org.bson.BSONBinaryReader;
 import org.bson.BSONBinaryWriter;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
+import org.bson.codecs.Codec;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 

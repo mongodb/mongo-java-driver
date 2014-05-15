@@ -21,7 +21,7 @@ import org.bson.BSONBinaryWriterSettings;
 import org.bson.BSONWriterSettings;
 import org.bson.io.OutputBuffer;
 import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 

@@ -18,7 +18,7 @@ package org.mongodb.codecs;
 
 import org.bson.BSONWriter;
 import org.bson.types.Binary;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 
 public class BinaryEncoder implements Encoder<Binary> {
     @Override

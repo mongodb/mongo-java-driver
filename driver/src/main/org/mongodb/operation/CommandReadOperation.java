@@ -1,9 +1,9 @@
 package org.mongodb.operation;
 
 import org.mongodb.CommandResult;
-import org.mongodb.Decoder;
+import org.bson.codecs.Decoder;
 import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;

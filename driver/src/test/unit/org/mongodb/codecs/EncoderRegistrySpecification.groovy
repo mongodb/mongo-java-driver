@@ -18,7 +18,7 @@ package org.mongodb.codecs
 
 import org.bson.types.CodeWithScope
 import org.mongodb.DBRef
-import org.mongodb.Encoder
+import org.bson.codecs.Encoder
 import spock.lang.Ignore
 import spock.lang.Specification
 import spock.lang.Subject

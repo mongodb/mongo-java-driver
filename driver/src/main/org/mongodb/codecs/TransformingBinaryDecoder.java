@@ -20,7 +20,7 @@ import org.bson.BSONBinarySubType;
 import org.bson.BSONReader;
 import org.bson.types.Binary;
 import org.mongodb.BinaryTransformer;
-import org.mongodb.Decoder;
+import org.bson.codecs.Decoder;
 
 import java.util.HashMap;
 import java.util.Map;

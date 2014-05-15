@@ -20,9 +20,9 @@ import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.bson.types.CodeWithScope;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 import org.mongodb.DBRef;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.codecs.validators.Validator;
 

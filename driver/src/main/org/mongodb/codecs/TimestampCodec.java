@@ -19,7 +19,7 @@ package org.mongodb.codecs;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.BSONTimestamp;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 
 /**
  * Knows how to encode and decode BSON timestamps.

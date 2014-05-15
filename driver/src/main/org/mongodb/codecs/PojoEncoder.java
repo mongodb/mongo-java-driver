@@ -17,7 +17,7 @@
 package org.mongodb.codecs;
 
 import org.bson.BSONWriter;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
