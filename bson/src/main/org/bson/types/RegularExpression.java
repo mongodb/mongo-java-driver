@@ -17,7 +17,9 @@
 package org.bson.types;
 
 /**
- * A Holder class for a BSON regular expression, so that we can delay compiling into a Pattern until necessary.
+ * A holder class for a BSON regular expression, so that we can delay compiling into a Pattern until necessary.
+ *
+ * @since 3.0
  */
 public class RegularExpression {
     private final String pattern;

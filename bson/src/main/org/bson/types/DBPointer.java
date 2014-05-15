@@ -18,6 +18,8 @@ package org.bson.types;
 
 /**
  * Holder for a BSON type DBPointer(0x0c). It's deprecated in BSON Specification and present here because of compatibility reasons.
+ *
+ * @since 3.0
  */
 public class DBPointer {
     private final String namespace;

@@ -20,6 +20,9 @@ import org.bson.BSONObject;
 import org.bson.BasicBSONEncoder;
 import org.bson.io.OutputBuffer;
 
+/**
+ * The default BSON encoder for BSONObject instances.
+ */
 public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
 
     @Override

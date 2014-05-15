@@ -16,9 +16,19 @@
 
 package org.bson;
 
+/**
+ * An exception indicating an invalid BSON operation.
+ *
+ * @since 3.0
+ */
 public class BSONInvalidOperationException extends BSONException {
     private static final long serialVersionUID = 7684248076818601418L;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param message the message
+     */
     public BSONInvalidOperationException(final String message) {
         super(message);
     }

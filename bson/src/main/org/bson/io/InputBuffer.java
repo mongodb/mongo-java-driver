@@ -23,6 +23,11 @@ import java.io.Closeable;
 
 // TODO: fix asymmetry where this is an interface and OutputBuffer is a class.
 // Can this be an abstract class that extends InputStream?
+
+/**
+ *
+ * @since 3.0
+ */
 public interface InputBuffer extends Closeable {
     int getPosition();
 

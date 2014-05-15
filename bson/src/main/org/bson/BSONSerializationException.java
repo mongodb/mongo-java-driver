@@ -16,9 +16,19 @@
 
 package org.bson;
 
+/**
+ * An exception indicating a failure to serialize a BSON value.
+ *
+ * @since 3.0
+ */
 public class BSONSerializationException extends BSONException {
     private static final long serialVersionUID = -5214580094005440780L;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param message the message
+     */
     public BSONSerializationException(final String message) {
         super(message);
     }
