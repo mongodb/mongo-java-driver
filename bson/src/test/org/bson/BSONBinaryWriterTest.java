@@ -49,6 +49,33 @@ public class BSONBinaryWriterTest {
         writer.close();
     }
 
+    @Test(expected = BSONSerializationException.class)
+    public void shouldThrowWhenMaxDocumentSizeIsExceeded() {
+        writer.writeStartDocument();
+        writer.writeBinaryData("b", new Binary(new byte[1024]));
+        writer.writeEndDocument();
+    }
+
+    @Test(expected = BSONSerializationException.class)
+    public void shouldThrowIfAPushedMaxDocumentSizeIsExceeded() {
+        writer.writeStartDocument();
+        writer.pushMaxDocumentSize(10);
+        writer.writeStartDocument("doc");
+        writer.writeString("s", "123456789");
+        writer.writeEndDocument();
+    }
+
+    @Test
+    public void shouldNotThrowIfAPoppedMaxDocumentSizeIsExceeded() {
+        writer.writeStartDocument();
+        writer.pushMaxDocumentSize(10);
+        writer.writeStartDocument("doc");
+        writer.writeEndDocument();
+        writer.popMaxDocumentSize();
+        writer.writeBinaryData("bin", new Binary(new byte[256]));
+        writer.writeEndDocument();
+    }
+
     @Test(expected = BSONInvalidOperationException.class)
     public void shouldThrowExceptionForBooleanWhenWritingBeforeStartingDocument() {
         writer.writeBoolean("b1", true);
@@ -700,23 +727,4 @@ public class BSONBinaryWriterTest {
         }
     }
     // CHECKSTYLE:ON
-
-    @Test(expected = BSONSerializationException.class)
-    public void testPushOfMaxDocumentSize() {
-        writer.writeStartDocument();
-        writer.pushMaxDocumentSize(10);
-        writer.writeStartDocument("doc");
-        writer.writeString("s", "123456789");
-        writer.writeEndDocument();
-    }
-
-    @Test(expected = BSONSerializationException.class)
-    public void testPopOfMaxDocumentSize() {
-        writer.writeStartDocument();
-        writer.pushMaxDocumentSize(10);
-        writer.writeStartDocument("doc");
-        writer.writeEndDocument();
-        writer.writeBinaryData("bin", new Binary(new byte[256]));
-        writer.writeEndDocument();
-    }
 }

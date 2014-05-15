@@ -24,7 +24,7 @@ public class BSONBinaryWriterSettings {
     }
 
     public BSONBinaryWriterSettings() {
-        this(16 * 1024 * 1024);
+        this(Integer.MAX_VALUE);
     }
 
     public int getMaxDocumentSize() {
