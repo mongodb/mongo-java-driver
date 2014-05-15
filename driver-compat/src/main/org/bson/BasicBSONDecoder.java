@@ -17,8 +17,8 @@
 package org.bson;
 
 import org.bson.io.BasicInputBuffer;
+import org.bson.io.Bits;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -59,12 +59,13 @@ public class BasicBSONDecoder implements BSONDecoder {
     }
 
     private byte[] readFully(final InputStream input) throws IOException {
-        byte[] buffer = new byte[8192];
-        int bytesRead;
-        ByteArrayOutputStream output = new ByteArrayOutputStream();
-        while ((bytesRead = input.read(buffer)) != -1) {
-            output.write(buffer, 0, bytesRead);
-        }
-        return output.toByteArray();
+        byte[] sizeBytes = new byte[4];
+        Bits.readFully(input, sizeBytes);
+        int size = Bits.readInt(sizeBytes);
+
+        byte[] buffer = new byte[size];
+        System.arraycopy(sizeBytes, 0, buffer, 0, 4);
+        Bits.readFully(input, buffer, 4, size - 4);
+        return buffer;
     }
 }
