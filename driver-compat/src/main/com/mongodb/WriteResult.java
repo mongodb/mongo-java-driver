@@ -79,12 +79,13 @@ public class WriteResult {
         return updateOfExisting;
     }
 
-
     @Override
     public String toString() {
         return "WriteResult{"
                + "writeConcern=" + writeConcern
                + ", n=" + n
+               + ", updateOfExisting=" + updateOfExisting
+               + ", upsertedId=" + upsertedId
                + '}';
     }
 }
