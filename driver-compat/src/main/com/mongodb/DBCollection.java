@@ -17,11 +17,11 @@
 package com.mongodb;
 
 import org.bson.types.ObjectId;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 import org.mongodb.CollectibleCodec;
-import org.mongodb.Decoder;
+import org.bson.codecs.Decoder;
 import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.Index;
 import org.mongodb.MapReduceCursor;
 import org.mongodb.MapReduceStatistics;

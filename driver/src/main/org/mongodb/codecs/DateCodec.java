@@ -18,7 +18,7 @@ package org.mongodb.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 
 import java.util.Date;
 

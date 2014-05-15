@@ -18,7 +18,7 @@ package org.mongodb.operation;
 
 import org.bson.BSONWriter;
 import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.codecs.Codecs;
 
 import java.util.Map;

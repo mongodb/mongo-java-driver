@@ -22,7 +22,7 @@ import org.bson.io.OutputBuffer;
  * An {@code BSONEncoder} is a class which can be used to turn documents into byte arrays. The {@code BSONEncoder} walks down through the
  * object graph and writes corresponding {@code byte} sequences into underlying {@code OutputBuffer}.
  * <p/>
- * This class is a part of legacy APi. Please check {@link org.mongodb.Encoder} for a new one.
+ * This class is a part of legacy APi. Please check {@link org.bson.codecs.Encoder} for a new one.
  */
 public interface BSONEncoder {
 

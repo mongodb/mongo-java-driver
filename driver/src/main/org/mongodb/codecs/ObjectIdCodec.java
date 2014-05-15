@@ -19,7 +19,7 @@ package org.mongodb.codecs;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 
 public class ObjectIdCodec implements Codec<ObjectId> {
     @Override

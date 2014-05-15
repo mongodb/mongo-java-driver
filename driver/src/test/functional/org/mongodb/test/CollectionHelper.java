@@ -16,9 +16,9 @@
 
 package org.mongodb.test;
 
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;

@@ -21,7 +21,7 @@ import org.bson.BSONReader;
 import org.bson.BSONReaderSettings;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
-import org.mongodb.Decoder;
+import org.bson.codecs.Decoder;
 import org.mongodb.MongoInternalException;
 import org.mongodb.connection.ReplyHeader;
 import org.mongodb.connection.ResponseBuffers;

@@ -17,7 +17,7 @@
 package org.mongodb.operation;
 
 import org.mongodb.Block;
-import org.mongodb.Decoder;
+import org.bson.codecs.Decoder;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;

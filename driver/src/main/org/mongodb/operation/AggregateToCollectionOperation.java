@@ -3,7 +3,7 @@ package org.mongodb.operation;
 import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncWriteBinding;

@@ -18,7 +18,7 @@ package org.mongodb.operation;
 
 import org.bson.BSONReader;
 import org.bson.BSONType;
-import org.mongodb.Decoder;
+import org.bson.codecs.Decoder;
 import org.mongodb.codecs.Codecs;
 import org.mongodb.codecs.DocumentCodec;
 

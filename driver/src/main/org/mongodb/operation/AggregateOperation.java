@@ -18,9 +18,9 @@ package org.mongodb.operation;
 
 import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
-import org.mongodb.Decoder;
+import org.bson.codecs.Decoder;
 import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.Function;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;

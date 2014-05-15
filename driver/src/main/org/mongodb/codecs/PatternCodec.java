@@ -19,7 +19,7 @@ package org.mongodb.codecs;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.RegularExpression;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 
 import java.util.HashMap;
 import java.util.Map;

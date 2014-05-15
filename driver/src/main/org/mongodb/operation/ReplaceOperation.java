@@ -18,7 +18,7 @@ package org.mongodb.operation;
 
 import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.codecs.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.protocol.ReplaceCommandProtocol;

@@ -31,7 +31,7 @@ import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.mongodb.DBRef;
-import org.mongodb.Decoder;
+import org.bson.codecs.Decoder;
 import org.mongodb.json.JSONReader;
 import org.mongodb.json.JSONWriter;
 

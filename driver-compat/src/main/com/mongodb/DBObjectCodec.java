@@ -25,7 +25,7 @@ import org.bson.types.Binary;
 import org.bson.types.CodeWScope;
 import org.bson.types.DBPointer;
 import org.bson.types.Symbol;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 import org.mongodb.MongoException;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;

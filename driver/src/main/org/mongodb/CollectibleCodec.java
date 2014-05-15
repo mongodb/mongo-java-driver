@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import org.bson.codecs.Codec;
+
 public interface CollectibleCodec<T> extends Codec<T> {
     Object getId(T document);
 }
