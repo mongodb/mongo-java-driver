@@ -29,8 +29,8 @@ class DBEncoderFactoryAdapter implements Encoder<DBObject> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final DBObject value) {
-        new DBEncoderAdapter(encoderFactory.create(), new ObjectIdGenerator()).encode(bsonWriter, value);
+    public void encode(final BSONWriter writer, final DBObject value) {
+        new DBEncoderAdapter(encoderFactory.create(), new ObjectIdGenerator()).encode(writer, value);
     }
 
     @Override

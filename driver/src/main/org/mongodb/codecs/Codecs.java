@@ -19,10 +19,10 @@ package org.mongodb.codecs;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
-import org.bson.types.CodeWithScope;
 import org.bson.codecs.Codec;
-import org.mongodb.DBRef;
 import org.bson.codecs.Encoder;
+import org.bson.types.CodeWithScope;
+import org.mongodb.DBRef;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.codecs.validators.Validator;
 
@@ -63,18 +63,18 @@ public class Codecs implements Codec<Object> {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"}) // going to have some unchecked warnings because of all the casting from Object
-    public void encode(final BSONWriter bsonWriter, final Object object) {
+    public void encode(final BSONWriter writer, final Object object) {
         if (object == null || primitiveCodecs.canEncode(object.getClass())) {
-            primitiveCodecs.encode(bsonWriter, object);
+            primitiveCodecs.encode(writer, object);
         } else if (encoderRegistry.get(object.getClass()) != null) {
             Encoder<Object> codec = (Encoder<Object>) encoderRegistry.get(object.getClass());
-            codec.encode(bsonWriter, object);
+            codec.encode(writer, object);
         } else if (object.getClass().isArray()) {
-            arrayCodec.encode(bsonWriter, object);
+            arrayCodec.encode(writer, object);
         } else if (object instanceof Map) {
-            encode(bsonWriter, (Map) object);
+            encode(writer, (Map) object);
         } else {
-            encoderRegistry.getDefaultEncoder().encode(bsonWriter, object);
+            encoderRegistry.getDefaultEncoder().encode(writer, object);
         }
     }
 

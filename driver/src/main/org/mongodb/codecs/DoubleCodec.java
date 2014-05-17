@@ -22,8 +22,8 @@ import org.bson.codecs.Codec;
 
 public class DoubleCodec implements Codec<Double> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final Double value) {
-        bsonWriter.writeDouble(value);
+    public void encode(final BSONWriter writer, final Double value) {
+        writer.writeDouble(value);
     }
 
     @Override

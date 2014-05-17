@@ -17,8 +17,8 @@
 package org.mongodb.operation;
 
 import org.bson.BSONWriter;
-import org.mongodb.Document;
 import org.bson.codecs.Encoder;
+import org.mongodb.Document;
 import org.mongodb.codecs.Codecs;
 
 import java.util.Map;
@@ -38,20 +38,20 @@ class CommandWithPayloadEncoder<T> implements Encoder<Document> {
     //we need to cast the payload to (T) to encode it
     @SuppressWarnings("unchecked")
     @Override
-    public void encode(final BSONWriter bsonWriter, final Document value) {
-        bsonWriter.writeStartDocument();
+    public void encode(final BSONWriter writer, final Document value) {
+        writer.writeStartDocument();
 
         for (final Map.Entry<String, Object> entry : value.entrySet()) {
             String fieldName = entry.getKey();
 
-            bsonWriter.writeName(fieldName);
+            writer.writeName(fieldName);
             if (fieldContainingPayload.equals(fieldName)) {
-                payloadEncoder.encode(bsonWriter, (T) entry.getValue());
+                payloadEncoder.encode(writer, (T) entry.getValue());
             } else {
-                codecs.encode(bsonWriter, entry.getValue());
+                codecs.encode(writer, entry.getValue());
             }
         }
-        bsonWriter.writeEndDocument();
+        writer.writeEndDocument();
     }
 
     @Override

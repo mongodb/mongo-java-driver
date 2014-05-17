@@ -27,12 +27,12 @@ public class FloatArrayCodec implements Encoder<float[]> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final float[] value) {
-        bsonWriter.writeStartArray();
+    public void encode(final BSONWriter writer, final float[] value) {
+        writer.writeStartArray();
         for (final float floatValue : value) {
-            floatCodec.encode(bsonWriter, floatValue);
+            floatCodec.encode(writer, floatValue);
         }
-        bsonWriter.writeEndArray();
+        writer.writeEndArray();
     }
 
     @Override

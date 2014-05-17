@@ -25,8 +25,8 @@ import org.bson.types.BSONTimestamp;
  */
 public class BSONTimestampCodec implements Codec<BSONTimestamp> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final BSONTimestamp value) {
-        bsonWriter.writeTimestamp(value);
+    public void encode(final BSONWriter writer, final BSONTimestamp value) {
+        writer.writeTimestamp(value);
     }
 
     @Override

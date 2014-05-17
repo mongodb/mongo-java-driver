@@ -18,20 +18,20 @@ package org.mongodb.codecs;
 
 import org.bson.BSONBinarySubType;
 import org.bson.BSONWriter;
-import org.bson.types.Binary;
 import org.bson.codecs.Encoder;
+import org.bson.types.Binary;
 
 import java.util.UUID;
 
 public class UUIDEncoder implements Encoder<UUID> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final UUID value) {
+    public void encode(final BSONWriter writer, final UUID value) {
         byte[] bytes = new byte[16];
 
         writeLongToArrayLittleEndian(bytes, 0, value.getMostSignificantBits());
         writeLongToArrayLittleEndian(bytes, 8, value.getLeastSignificantBits());
 
-        bsonWriter.writeBinaryData(new Binary(BSONBinarySubType.UUID_LEGACY, bytes));
+        writer.writeBinaryData(new Binary(BSONBinarySubType.UUID_LEGACY, bytes));
     }
 
     @Override
