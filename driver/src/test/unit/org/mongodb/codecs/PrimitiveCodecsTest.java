@@ -22,16 +22,16 @@ import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
 import org.bson.ByteBufNIO;
+import org.bson.codecs.Decoder;
 import org.bson.io.BasicInputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
+import org.bson.types.DBPointer;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.junit.Test;
-import org.mongodb.DBRef;
-import org.bson.codecs.Decoder;
 import org.mongodb.json.JSONReader;
 import org.mongodb.json.JSONWriter;
 
@@ -241,11 +241,11 @@ public class PrimitiveCodecsTest {
 
         Object object = primitiveCodecs.decode(reader);
 
-        assertThat(object, instanceOf(DBRef.class));
-        DBRef reference = (DBRef) object;
-        assertThat(reference.getRef(), is("b"));
+        assertThat(object, instanceOf(DBPointer.class));
+        DBPointer reference = (DBPointer) object;
+        assertThat(reference.getNamespace(), is("b"));
         assertThat(reference.getId(), instanceOf(ObjectId.class));
-        assertThat((ObjectId) reference.getId(), is(new ObjectId("5209296cd6c4e38cf96fffdc")));
+        assertThat(reference.getId(), is(new ObjectId("5209296cd6c4e38cf96fffdc")));
     }
 
     @Test

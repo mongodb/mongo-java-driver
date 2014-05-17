@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.bson.codecs;
 
+import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.bson.types.Binary;
-import org.bson.codecs.Encoder;
 
-public class BinaryEncoder implements Encoder<Binary> {
+public class NullCodec implements Codec<Object> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final Binary value) {
-        bsonWriter.writeBinaryData(value);
+    public void encode(final BSONWriter bsonWriter, final Object value) {
+        bsonWriter.writeNull();
     }
 
     @Override
-    public Class<Binary> getEncoderClass() {
-        return Binary.class;
+    public Object decode(final BSONReader reader) {
+        reader.readNull();
+        return null;
+    }
+
+    @Override
+    public Class<Object> getEncoderClass() {
+        return null;
     }
 }

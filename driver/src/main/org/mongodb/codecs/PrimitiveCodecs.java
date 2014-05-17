@@ -19,9 +19,17 @@ package org.mongodb.codecs;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
+import org.bson.codecs.BSONTimestampCodec;
+import org.bson.codecs.BinaryCodec;
+import org.bson.codecs.CodeCodec;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DBPointerCodec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.Encoder;
+import org.bson.codecs.MaxKeyCodec;
+import org.bson.codecs.MinKeyCodec;
+import org.bson.codecs.NullCodec;
+import org.bson.codecs.UndefinedCodec;
 import org.mongodb.MongoException;
 
 import java.util.EnumMap;
@@ -100,7 +108,7 @@ public class PrimitiveCodecs implements Codec<Object> {
                .stringCodec(new StringCodec())
                .doubleCodec(new DoubleCodec())
                .dateCodec(new DateCodec())
-               .timestampCodec(new TimestampCodec())
+               .timestampCodec(new BSONTimestampCodec())
                .booleanCodec(new BooleanCodec())
                .patternCodec(new PatternCodec())
                .minKeyCodec(new MinKeyCodec())
@@ -112,9 +120,9 @@ public class PrimitiveCodecs implements Codec<Object> {
                .otherEncoder(new ShortCodec())
                .otherEncoder(new ByteCodec())
                .otherEncoder(new ByteArrayCodec())
-               .otherEncoder(new BinaryEncoder())
+               .otherEncoder(new BinaryCodec())
                .otherEncoder(new UUIDEncoder())
-               .otherDecoder(BSONType.DB_POINTER, new DBPointerDecoder())
+               .otherDecoder(BSONType.DB_POINTER, new DBPointerCodec())
                .binaryDecoder(new TransformingBinaryDecoder())
                .build();
     }

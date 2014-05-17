@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.bson.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.Undefined;
-import org.bson.codecs.Codec;
 
 /**
  * Allows reading and writing of the BSON Undefined type.  On encoding, it will write the correct type to the BSONWriter, but ignore the

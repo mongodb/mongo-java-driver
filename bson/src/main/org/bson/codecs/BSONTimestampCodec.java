@@ -14,27 +14,28 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.bson.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.bson.types.Code;
-import org.bson.codecs.Codec;
+import org.bson.types.BSONTimestamp;
 
-public class CodeCodec implements Codec<Code> {
-
+/**
+ * Knows how to encode and decode BSON timestamps.
+ */
+public class BSONTimestampCodec implements Codec<BSONTimestamp> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final Code value) {
-        bsonWriter.writeJavaScript(value.getCode());
+    public void encode(final BSONWriter bsonWriter, final BSONTimestamp value) {
+        bsonWriter.writeTimestamp(value);
     }
 
     @Override
-    public Code decode(final BSONReader bsonReader) {
-        return new Code(bsonReader.readJavaScript());
+    public BSONTimestamp decode(final BSONReader reader) {
+        return reader.readTimestamp();
     }
 
     @Override
-    public Class<Code> getEncoderClass() {
-        return Code.class;
+    public Class<BSONTimestamp> getEncoderClass() {
+        return BSONTimestamp.class;
     }
 }
