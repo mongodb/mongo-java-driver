@@ -14,29 +14,26 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.bson.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.bson.types.BSONTimestamp;
-import org.bson.codecs.Codec;
+import org.bson.types.MaxKey;
 
-/**
- * Knows how to encode and decode BSON timestamps.
- */
-public class TimestampCodec implements Codec<BSONTimestamp> {
+public class MaxKeyCodec implements Codec<MaxKey> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final BSONTimestamp value) {
-        bsonWriter.writeTimestamp(value);
+    public void encode(final BSONWriter bsonWriter, final MaxKey value) {
+        bsonWriter.writeMaxKey();
     }
 
     @Override
-    public BSONTimestamp decode(final BSONReader reader) {
-        return reader.readTimestamp();
+    public MaxKey decode(final BSONReader reader) {
+        reader.readMaxKey();
+        return new MaxKey();
     }
 
     @Override
-    public Class<BSONTimestamp> getEncoderClass() {
-        return BSONTimestamp.class;
+    public Class<MaxKey> getEncoderClass() {
+        return MaxKey.class;
     }
 }

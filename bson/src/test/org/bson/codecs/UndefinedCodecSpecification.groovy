@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs
-
+package org.bson.codecs
 import org.bson.BSONReader
 import org.bson.BSONWriter
 import org.bson.types.Undefined

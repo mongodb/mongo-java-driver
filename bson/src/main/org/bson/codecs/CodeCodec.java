@@ -14,27 +14,26 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.bson.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.bson.types.MaxKey;
-import org.bson.codecs.Codec;
+import org.bson.types.Code;
 
-public class MaxKeyCodec implements Codec<MaxKey> {
+public class CodeCodec implements Codec<Code> {
+
     @Override
-    public void encode(final BSONWriter bsonWriter, final MaxKey value) {
-        bsonWriter.writeMaxKey();
+    public void encode(final BSONWriter bsonWriter, final Code value) {
+        bsonWriter.writeJavaScript(value.getCode());
     }
 
     @Override
-    public MaxKey decode(final BSONReader reader) {
-        reader.readMaxKey();
-        return new MaxKey();
+    public Code decode(final BSONReader bsonReader) {
+        return new Code(bsonReader.readJavaScript());
     }
 
     @Override
-    public Class<MaxKey> getEncoderClass() {
-        return MaxKey.class;
+    public Class<Code> getEncoderClass() {
+        return Code.class;
     }
 }

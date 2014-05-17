@@ -14,26 +14,31 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.bson.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.bson.codecs.Codec;
+import org.bson.types.DBPointer;
 
-public class NullCodec implements Codec<Object> {
+/**
+ * Converts BSON type DBPointer(0x0c) to database references as DBPointer is deprecated.
+ *
+ * @since 3.0
+ */
+public class DBPointerCodec implements Codec<DBPointer> {
+
     @Override
-    public void encode(final BSONWriter bsonWriter, final Object value) {
-        bsonWriter.writeNull();
+    public DBPointer decode(final BSONReader reader) {
+        return reader.readDBPointer();
     }
 
     @Override
-    public Object decode(final BSONReader reader) {
-        reader.readNull();
-        return null;
+    public void encode(final BSONWriter bsonWriter, final DBPointer value) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
-    public Class<Object> getEncoderClass() {
-        return null;
+    public Class<DBPointer> getEncoderClass() {
+        return DBPointer.class;
     }
 }
