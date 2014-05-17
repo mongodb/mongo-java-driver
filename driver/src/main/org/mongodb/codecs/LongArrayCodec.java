@@ -27,12 +27,12 @@ public class LongArrayCodec implements Encoder<long[]> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final long[] longArray) {
-        bsonWriter.writeStartArray();
+    public void encode(final BSONWriter writer, final long[] longArray) {
+        writer.writeStartArray();
         for (final long longValue : longArray) {
-            longCodec.encode(bsonWriter, longValue);
+            longCodec.encode(writer, longValue);
         }
-        bsonWriter.writeEndArray();
+        writer.writeEndArray();
     }
 
     @Override

@@ -18,8 +18,8 @@ package com.mongodb;
 
 import org.bson.BSONObject;
 import org.bson.BSONWriter;
-import org.bson.types.CodeWScope;
 import org.bson.codecs.Encoder;
+import org.bson.types.CodeWScope;
 import org.mongodb.codecs.Codecs;
 
 class CodeWScopeCodec implements Encoder<CodeWScope> {
@@ -31,9 +31,9 @@ class CodeWScopeCodec implements Encoder<CodeWScope> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final CodeWScope value) {
-        bsonWriter.writeJavaScriptWithScope(value.getCode());
-        writeDocument(bsonWriter, value.getScope());
+    public void encode(final BSONWriter writer, final CodeWScope value) {
+        writer.writeJavaScriptWithScope(value.getCode());
+        writeDocument(writer, value.getScope());
     }
 
     @Override

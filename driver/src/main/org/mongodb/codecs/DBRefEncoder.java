@@ -17,8 +17,8 @@
 package org.mongodb.codecs;
 
 import org.bson.BSONWriter;
-import org.mongodb.DBRef;
 import org.bson.codecs.Encoder;
+import org.mongodb.DBRef;
 
 public class DBRefEncoder implements Encoder<DBRef> {
     private final Codecs codecs;
@@ -28,14 +28,14 @@ public class DBRefEncoder implements Encoder<DBRef> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final DBRef dbRef) {
-        bsonWriter.writeStartDocument();
+    public void encode(final BSONWriter writer, final DBRef dbRef) {
+        writer.writeStartDocument();
 
-        bsonWriter.writeString("$ref", dbRef.getRef());
-        bsonWriter.writeName("$id");
-        codecs.encode(bsonWriter, dbRef.getId());
+        writer.writeString("$ref", dbRef.getRef());
+        writer.writeName("$id");
+        codecs.encode(writer, dbRef.getId());
 
-        bsonWriter.writeEndDocument();
+        writer.writeEndDocument();
     }
 
     @Override

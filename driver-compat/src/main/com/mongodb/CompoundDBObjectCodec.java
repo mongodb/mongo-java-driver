@@ -19,9 +19,9 @@ package com.mongodb;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.codecs.Codec;
-import org.mongodb.CollectibleCodec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.Encoder;
+import org.mongodb.CollectibleCodec;
 
 class CompoundDBObjectCodec implements Codec<DBObject>, CollectibleCodec<DBObject> {
 
@@ -45,8 +45,8 @@ class CompoundDBObjectCodec implements Codec<DBObject>, CollectibleCodec<DBObjec
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final DBObject value) {
-        encoder.encode(bsonWriter, value);
+    public void encode(final BSONWriter writer, final DBObject value) {
+        encoder.encode(writer, value);
     }
 
     @Override

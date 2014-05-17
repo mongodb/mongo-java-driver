@@ -22,8 +22,8 @@ import org.bson.codecs.Codec;
 
 public class ShortCodec implements Codec<Short> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final Short value) {
-        bsonWriter.writeInt32(value);
+    public void encode(final BSONWriter writer, final Short value) {
+        writer.writeInt32(value);
     }
 
     @Override

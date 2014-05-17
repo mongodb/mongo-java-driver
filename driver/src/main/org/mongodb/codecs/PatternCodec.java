@@ -18,8 +18,8 @@ package org.mongodb.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.bson.types.RegularExpression;
 import org.bson.codecs.Codec;
+import org.bson.types.RegularExpression;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,8 +27,8 @@ import java.util.regex.Pattern;
 
 public class PatternCodec implements Codec<Pattern> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final Pattern value) {
-        bsonWriter.writeRegularExpression(new RegularExpression(value.pattern(), getOptionsAsString(value)));
+    public void encode(final BSONWriter writer, final Pattern value) {
+        writer.writeRegularExpression(new RegularExpression(value.pattern(), getOptionsAsString(value)));
     }
 
     @Override

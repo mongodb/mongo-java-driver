@@ -42,12 +42,12 @@ public class IterableCodec implements Codec<Iterable> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final Iterable iterable) {
-        bsonWriter.writeStartArray();
+    public void encode(final BSONWriter writer, final Iterable iterable) {
+        writer.writeStartArray();
         for (final Object value : iterable) {
-            codecs.encode(bsonWriter, value);
+            codecs.encode(writer, value);
         }
-        bsonWriter.writeEndArray();
+        writer.writeEndArray();
     }
 
     // The decode has to do an unchecked cast to turn the decoded object into the correct type

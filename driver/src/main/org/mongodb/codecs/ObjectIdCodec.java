@@ -18,13 +18,13 @@ package org.mongodb.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.bson.types.ObjectId;
 import org.bson.codecs.Codec;
+import org.bson.types.ObjectId;
 
 public class ObjectIdCodec implements Codec<ObjectId> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final ObjectId value) {
-        bsonWriter.writeObjectId(value);
+    public void encode(final BSONWriter writer, final ObjectId value) {
+        writer.writeObjectId(value);
     }
 
     @Override

@@ -25,8 +25,8 @@ import org.bson.codecs.Codec;
  */
 public class FloatCodec implements Codec<Float> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final Float value) {
-        bsonWriter.writeDouble(value);
+    public void encode(final BSONWriter writer, final Float value) {
+        writer.writeDouble(value);
     }
 
     @Override

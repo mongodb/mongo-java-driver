@@ -22,8 +22,8 @@ import org.bson.types.MinKey;
 
 public class MinKeyCodec implements Codec<MinKey> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final MinKey value) {
-        bsonWriter.writeMinKey();
+    public void encode(final BSONWriter writer, final MinKey value) {
+        writer.writeMinKey();
     }
 
     @Override

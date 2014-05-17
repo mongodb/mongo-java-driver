@@ -175,11 +175,11 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         }
 
         @Override
-        public void encode(final BSONWriter bsonWriter, final Person value) {
-            bsonWriter.writeStartDocument();
-            bsonWriter.writeObjectId("_id", value.id);
-            bsonWriter.writeString("name", value.name);
-            bsonWriter.writeEndDocument();
+        public void encode(final BSONWriter writer, final Person value) {
+            writer.writeStartDocument();
+            writer.writeObjectId("_id", value.id);
+            writer.writeString("name", value.name);
+            writer.writeEndDocument();
         }
 
         @Override

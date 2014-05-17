@@ -27,12 +27,12 @@ public class IntegerArrayCodec implements Encoder<int[]> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final int[] intArray) {
-        bsonWriter.writeStartArray();
+    public void encode(final BSONWriter writer, final int[] intArray) {
+        writer.writeStartArray();
         for (final int intValue : intArray) {
-            integerCodec.encode(bsonWriter, intValue);
+            integerCodec.encode(writer, intValue);
         }
-        bsonWriter.writeEndArray();
+        writer.writeEndArray();
     }
 
     @Override

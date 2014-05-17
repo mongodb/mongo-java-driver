@@ -37,8 +37,8 @@ public class PojoCodec<T> implements CollectibleCodec<T> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final T value) {
-        pojoEncoder.encode(bsonWriter, value);
+    public void encode(final BSONWriter writer, final T value) {
+        pojoEncoder.encode(writer, value);
     }
 
     @Override

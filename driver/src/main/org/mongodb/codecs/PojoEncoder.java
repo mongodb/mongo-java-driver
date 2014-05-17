@@ -35,10 +35,10 @@ public class PojoEncoder<T> implements Encoder<T> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final T value) {
-        bsonWriter.writeStartDocument();
-        encodePojo(bsonWriter, value);
-        bsonWriter.writeEndDocument();
+    public void encode(final BSONWriter writer, final T value) {
+        writer.writeStartDocument();
+        encodePojo(writer, value);
+        writer.writeEndDocument();
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"}) //bah.  maybe this isn't even correct

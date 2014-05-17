@@ -39,8 +39,8 @@ public class UndefinedCodec implements Codec<Undefined> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final Undefined value) {
-        bsonWriter.writeUndefined();
+    public void encode(final BSONWriter writer, final Undefined value) {
+        writer.writeUndefined();
     }
 
     @Override
