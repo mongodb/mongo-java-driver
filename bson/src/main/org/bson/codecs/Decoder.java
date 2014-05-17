@@ -19,6 +19,11 @@ package org.bson.codecs;
 import org.bson.BSONReader;
 
 public interface Decoder<T> {
-    //how do we feel about passing an object into this, representing the object to decode into?
-    <E> T decode(BSONReader reader);
+    /**
+     * Decodes a BSON value from the given reader into an instance of the type parameter {@code T}.
+     *
+     * @param reader the BSON reader
+     * @return an instance of the type parameter {@code T}.
+     */
+    T decode(BSONReader reader);
 }
