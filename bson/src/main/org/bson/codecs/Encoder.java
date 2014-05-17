@@ -19,7 +19,13 @@ package org.bson.codecs;
 import org.bson.BSONWriter;
 
 public interface Encoder<T> {
-    void encode(BSONWriter bsonWriter, T value);
+
+    /**
+     * Encode an instance of the type parameter {@code T} into a BSON value.
+     * @param writer the BSON writer to encode into
+     * @param value the value to encode
+     */
+    void encode(BSONWriter writer, T value);
 
     // necessary because Java doesn't reify generics
     Class<T> getEncoderClass();

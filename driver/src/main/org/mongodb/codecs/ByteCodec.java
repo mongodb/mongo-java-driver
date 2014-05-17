@@ -22,8 +22,8 @@ import org.bson.codecs.Codec;
 
 public class ByteCodec implements Codec<Byte> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final Byte value) {
-        bsonWriter.writeInt32(value);
+    public void encode(final BSONWriter writer, final Byte value) {
+        writer.writeInt32(value);
     }
 
     @Override

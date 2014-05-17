@@ -22,8 +22,8 @@ import org.bson.types.MaxKey;
 
 public class MaxKeyCodec implements Codec<MaxKey> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final MaxKey value) {
-        bsonWriter.writeMaxKey();
+    public void encode(final BSONWriter writer, final MaxKey value) {
+        writer.writeMaxKey();
     }
 
     @Override

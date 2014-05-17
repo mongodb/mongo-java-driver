@@ -29,7 +29,7 @@ public class NoCodec implements Codec<Object> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final Object value) {
+    public void encode(final BSONWriter writer, final Object value) {
         throw new EncodingException(format("Could not find an encoder for object '%s' of class '%s'.", value, value.getClass()));
     }
 

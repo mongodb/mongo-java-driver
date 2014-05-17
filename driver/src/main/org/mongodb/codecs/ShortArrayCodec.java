@@ -27,12 +27,12 @@ public class ShortArrayCodec implements Encoder<short[]> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final short[] value) {
-        bsonWriter.writeStartArray();
+    public void encode(final BSONWriter writer, final short[] value) {
+        writer.writeStartArray();
         for (final short shortValue : value) {
-            shortCodec.encode(bsonWriter, shortValue);
+            shortCodec.encode(writer, shortValue);
         }
-        bsonWriter.writeEndArray();
+        writer.writeEndArray();
     }
 
     @Override

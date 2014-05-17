@@ -21,8 +21,8 @@ import org.bson.BSONWriter;
 
 public class NullCodec implements Codec<Object> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final Object value) {
-        bsonWriter.writeNull();
+    public void encode(final BSONWriter writer, final Object value) {
+        writer.writeNull();
     }
 
     @Override

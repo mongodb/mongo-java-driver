@@ -33,7 +33,7 @@ public class DBPointerCodec implements Codec<DBPointer> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final DBPointer value) {
+    public void encode(final BSONWriter writer, final DBPointer value) {
         throw new UnsupportedOperationException();
     }
 

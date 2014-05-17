@@ -57,10 +57,10 @@ public class DocumentCodec implements Codec<Document> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final Document document) {
-        bsonWriter.writeStartDocument();
+    public void encode(final BSONWriter writer, final Document document) {
+        writer.writeStartDocument();
 
-        beforeFields(bsonWriter, document);
+        beforeFields(writer, document);
 
         for (final Map.Entry<String, Object> entry : document.entrySet()) {
             fieldNameValidator.validate(entry.getKey());
@@ -68,10 +68,10 @@ public class DocumentCodec implements Codec<Document> {
             if (skipField(entry.getKey())) {
                 continue;
             }
-            bsonWriter.writeName(entry.getKey());
-            writeValue(bsonWriter, entry.getValue());
+            writer.writeName(entry.getKey());
+            writeValue(writer, entry.getValue());
         }
-        bsonWriter.writeEndDocument();
+        writer.writeEndDocument();
     }
 
     protected void beforeFields(final BSONWriter bsonWriter, final Document document) {

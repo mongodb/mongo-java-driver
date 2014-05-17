@@ -48,10 +48,10 @@ public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuf
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final BSONDocumentBuffer value) {
+    public void encode(final BSONWriter writer, final BSONDocumentBuffer value) {
         BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(value.getByteBuffer()), true);
         try {
-            bsonWriter.pipe(reader);
+            writer.pipe(reader);
         } finally {
             reader.close();
         }

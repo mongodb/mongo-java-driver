@@ -29,14 +29,14 @@ class DBRefEncoder implements Encoder<DBRef> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final DBRef value) {
-        bsonWriter.writeStartDocument();
+    public void encode(final BSONWriter writer, final DBRef value) {
+        writer.writeStartDocument();
 
-        bsonWriter.writeString("$ref", value.getRef());
-        bsonWriter.writeName("$id");
-        codecs.encode(bsonWriter, value.getId());
+        writer.writeString("$ref", value.getRef());
+        writer.writeName("$id");
+        codecs.encode(writer, value.getId());
 
-        bsonWriter.writeEndDocument();
+        writer.writeEndDocument();
     }
 
     @Override

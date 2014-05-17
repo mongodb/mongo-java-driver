@@ -27,12 +27,12 @@ public class BooleanArrayCodec implements Encoder<boolean[]> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final boolean[] value) {
-        bsonWriter.writeStartArray();
+    public void encode(final BSONWriter writer, final boolean[] value) {
+        writer.writeStartArray();
         for (final boolean booleanValue : value) {
-            booleanCodec.encode(bsonWriter, booleanValue);
+            booleanCodec.encode(writer, booleanValue);
         }
-        bsonWriter.writeEndArray();
+        writer.writeEndArray();
     }
 
     @Override

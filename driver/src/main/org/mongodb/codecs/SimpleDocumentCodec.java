@@ -40,16 +40,16 @@ public class SimpleDocumentCodec implements Codec<Document> {
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final Document document) {
-        bsonWriter.writeStartDocument();
+    public void encode(final BSONWriter writer, final Document document) {
+        writer.writeStartDocument();
 
         for (final Map.Entry<String, Object> entry : document.entrySet()) {
             fieldNameValidator.validate(entry.getKey());
 
-            bsonWriter.writeName(entry.getKey());
-            writeValue(bsonWriter, entry.getValue());
+            writer.writeName(entry.getKey());
+            writeValue(writer, entry.getValue());
         }
-        bsonWriter.writeEndDocument();
+        writer.writeEndDocument();
     }
 
     @SuppressWarnings("unchecked")

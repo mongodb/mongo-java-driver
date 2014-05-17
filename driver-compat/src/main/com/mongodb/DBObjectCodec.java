@@ -20,12 +20,12 @@ import org.bson.BSON;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
+import org.bson.codecs.Codec;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
 import org.bson.types.CodeWScope;
 import org.bson.types.DBPointer;
 import org.bson.types.Symbol;
-import org.bson.codecs.Codec;
 import org.mongodb.MongoException;
 import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
@@ -64,20 +64,20 @@ class DBObjectCodec implements Codec<DBObject> {
 
     //TODO: what about BSON Exceptions?
     @Override
-    public void encode(final BSONWriter bsonWriter, final DBObject document) {
-        bsonWriter.writeStartDocument();
+    public void encode(final BSONWriter writer, final DBObject document) {
+        writer.writeStartDocument();
 
-        beforeFields(bsonWriter, document);
+        beforeFields(writer, document);
 
         for (final String key : document.keySet()) {
             validateField(key);
             if (skipField(key)) {
                 continue;
             }
-            bsonWriter.writeName(key);
-            writeValue(bsonWriter, document.get(key));
+            writer.writeName(key);
+            writeValue(writer, document.get(key));
         }
-        bsonWriter.writeEndDocument();
+        writer.writeEndDocument();
     }
 
     protected void beforeFields(final BSONWriter bsonWriter, final DBObject document) {

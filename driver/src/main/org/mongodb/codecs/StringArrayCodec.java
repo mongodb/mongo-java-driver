@@ -23,12 +23,12 @@ public class StringArrayCodec implements Encoder<String[]> {
     private final StringCodec stringCodec = new StringCodec();
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final String[] value) {
-        bsonWriter.writeStartArray();
+    public void encode(final BSONWriter writer, final String[] value) {
+        writer.writeStartArray();
         for (final String string : value) {
-            stringCodec.encode(bsonWriter, string);
+            stringCodec.encode(writer, string);
         }
-        bsonWriter.writeEndArray();
+        writer.writeEndArray();
     }
 
     @Override
