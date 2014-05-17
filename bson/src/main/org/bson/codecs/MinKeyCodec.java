@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.bson.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.MinKey;
-import org.bson.codecs.Codec;
 
 public class MinKeyCodec implements Codec<MinKey> {
     @Override

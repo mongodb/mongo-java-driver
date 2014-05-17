@@ -14,22 +14,30 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.bson.codecs;
 
 import org.bson.BSONReader;
-import org.bson.types.DBPointer;
-import org.mongodb.DBRef;
-import org.bson.codecs.Decoder;
+import org.bson.BSONWriter;
+import org.bson.types.Binary;
 
 /**
- * Converts BSON type DBPointer(0x0c) to database references as DBPointer is deprecated.
+ * A Codec for the BSON Binary type.
+ *
+ * @since 3.0
  */
-public class DBPointerDecoder implements Decoder<DBRef> {
-
+public class BinaryCodec implements Codec<Binary> {
     @Override
-    public DBRef decode(final BSONReader reader) {
-        DBPointer dbPointer = reader.readDBPointer();
-        return new DBRef(dbPointer.getId(), dbPointer.getNamespace());
+    public void encode(final BSONWriter writer, final Binary value) {
+        writer.writeBinaryData(value);
     }
 
+    @Override
+    public Binary decode(final BSONReader reader) {
+        return reader.readBinaryData();
+    }
+
+    @Override
+    public Class<Binary> getEncoderClass() {
+        return Binary.class;
+    }
 }
