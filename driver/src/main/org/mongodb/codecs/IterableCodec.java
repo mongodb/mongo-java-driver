@@ -53,12 +53,12 @@ public class IterableCodec implements Codec<Iterable> {
     // The decode has to do an unchecked cast to turn the decoded object into the correct type
     @SuppressWarnings("unchecked")
     @Override
-    public <E> Iterable<E> decode(final BSONReader reader) {
+    public Iterable decode(final BSONReader reader) {
         reader.readStartArray();
-        Collection<E> collection = collectionFactory.createCollection();
+        Collection collection = collectionFactory.createCollection();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
             // Need to test under which circumstances a ClassCastException might be thrown
-            collection.add((E) decoder.decode(reader));
+            collection.add(decoder.decode(reader));
         }
         reader.readEndArray();
         return collection;
