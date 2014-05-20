@@ -87,7 +87,7 @@ public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuf
             while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
                 String name = reader.readName();
                 if (name.equals("_id")) {
-                    return codecRegistry.get(DocumentCodec.getDefaultBsonTypeClassMap().get(reader.getCurrentBSONType())).decode(reader);
+                    return codecRegistry.get(new BsonTypeClassMap().get(reader.getCurrentBSONType())).decode(reader);
                 } else {
                     reader.skipValue();
                 }

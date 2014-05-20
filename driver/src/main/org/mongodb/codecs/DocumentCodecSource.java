@@ -16,7 +16,6 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONType;
 import org.bson.codecs.BSONTimestampCodec;
 import org.bson.codecs.BinaryCodec;
 import org.bson.codecs.CodeCodec;
@@ -29,33 +28,22 @@ import org.bson.codecs.SymbolCodec;
 import org.bson.codecs.UndefinedCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.CodecSource;
-import org.bson.types.BSONTimestamp;
-import org.bson.types.Binary;
-import org.bson.types.Code;
 import org.bson.types.CodeWithScope;
-import org.bson.types.DBPointer;
-import org.bson.types.MaxKey;
-import org.bson.types.MinKey;
-import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Symbol;
-import org.bson.types.Undefined;
 import org.mongodb.Document;
 
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class DocumentCodecSource implements CodecSource {
     private final Map<Class<?>, Codec<?>> codecs = new HashMap<Class<?>, Codec<?>>();
-    private final Map<BSONType, Class<?>> bsonTypeClassMap;
+    private final BsonTypeClassMap bsonTypeClassMap;
 
     public DocumentCodecSource() {
-        this(createDefaultBsonTypeClassMap());
+        this(new BsonTypeClassMap());
     }
 
-    public DocumentCodecSource(final Map<BSONType, Class<?>> bsonTypeClassMap) {
+    public DocumentCodecSource(final BsonTypeClassMap bsonTypeClassMap) {
         this.bsonTypeClassMap = bsonTypeClassMap;
         addCodecs();
     }
@@ -80,31 +68,6 @@ public class DocumentCodecSource implements CodecSource {
         }
 
         return null;
-    }
-
-    private static Map<BSONType, Class<?>> createDefaultBsonTypeClassMap() {
-        Map<BSONType, Class<?>> map = new HashMap<BSONType, Class<?>>();
-        map.put(BSONType.ARRAY, List.class);
-        map.put(BSONType.BINARY, Binary.class);
-        map.put(BSONType.BOOLEAN, Boolean.class);
-        map.put(BSONType.DATE_TIME, Date.class);
-        map.put(BSONType.DB_POINTER, DBPointer.class);
-        map.put(BSONType.DOCUMENT, Document.class);
-        map.put(BSONType.DOUBLE, Double.class);
-        map.put(BSONType.INT32, Integer.class);
-        map.put(BSONType.INT64, Long.class);
-        map.put(BSONType.MAX_KEY, MaxKey.class);
-        map.put(BSONType.MIN_KEY, MinKey.class);
-        map.put(BSONType.JAVASCRIPT, Code.class);
-        map.put(BSONType.JAVASCRIPT_WITH_SCOPE, CodeWithScope.class);
-        map.put(BSONType.OBJECT_ID, ObjectId.class);
-        map.put(BSONType.REGULAR_EXPRESSION, RegularExpression.class);
-        map.put(BSONType.STRING, String.class);
-        map.put(BSONType.SYMBOL, Symbol.class);
-        map.put(BSONType.TIMESTAMP, BSONTimestamp.class);
-        map.put(BSONType.UNDEFINED, Undefined.class);
-
-        return map;
     }
 
     private void addCodecs() {

@@ -24,14 +24,13 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class ListCodec implements Codec<List> {
     private final CodecRegistry registry;
-    private final Map<BSONType, Class<?>> bsonTypeClassMap;
+    private final BsonTypeClassMap bsonTypeClassMap;
 
     @SuppressWarnings("unchecked")
-    public ListCodec(final CodecRegistry registry, final Map<BSONType, Class<?>> bsonTypeClassMap) {
+    public ListCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap) {
         this.registry = registry;
         this.bsonTypeClassMap = bsonTypeClassMap;
     }

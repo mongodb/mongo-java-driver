@@ -24,37 +24,18 @@ import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.CodecSource;
 import org.bson.codecs.configuration.RootCodecRegistry;
-import org.bson.types.BSONTimestamp;
-import org.bson.types.Binary;
-import org.bson.types.Code;
-import org.bson.types.CodeWithScope;
-import org.bson.types.DBPointer;
-import org.bson.types.MaxKey;
-import org.bson.types.MinKey;
-import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Symbol;
-import org.bson.types.Undefined;
 import org.mongodb.Document;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.codecs.validators.Validator;
 
 import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class DocumentCodec implements Codec<Document> {
-    private static final Map<BSONType, Class<?>> DEFAULT_BSON_TYPE_CLASS_MAP = createDefaultBsonTypeClassMap();
 
     private final Validator<String> fieldNameValidator;
-    private final Map<BSONType, Class<?>> bsonTypeClassMap;
+    private final BsonTypeClassMap bsonTypeClassMap;
     private final CodecRegistry registry;
-
-    static Map<BSONType, Class<?>> getDefaultBsonTypeClassMap() {
-        return DEFAULT_BSON_TYPE_CLASS_MAP;
-    }
 
     public DocumentCodec() {
         this(new QueryFieldNameValidator());
@@ -62,39 +43,14 @@ public class DocumentCodec implements Codec<Document> {
 
     public DocumentCodec(final Validator<String> fieldNameValidator) {
         this.fieldNameValidator = fieldNameValidator;
-        this.bsonTypeClassMap = getDefaultBsonTypeClassMap();
+        this.bsonTypeClassMap = new BsonTypeClassMap();
         this.registry = new RootCodecRegistry(Arrays.<CodecSource>asList(new DocumentCodecSource()));
     }
 
-    public DocumentCodec(final CodecRegistry registry, final Map<BSONType, Class<?>> bsonTypeClassMap) {
+    public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap) {
         this.fieldNameValidator = new QueryFieldNameValidator();
         this.registry = registry;
         this.bsonTypeClassMap = bsonTypeClassMap;
-    }
-
-    private static Map<BSONType, Class<?>> createDefaultBsonTypeClassMap() {
-        Map<BSONType, Class<?>> map = new HashMap<BSONType, Class<?>>();
-        map.put(BSONType.ARRAY, List.class);
-        map.put(BSONType.BINARY, Binary.class);
-        map.put(BSONType.BOOLEAN, Boolean.class);
-        map.put(BSONType.DATE_TIME, Date.class);
-        map.put(BSONType.DB_POINTER, DBPointer.class);
-        map.put(BSONType.DOCUMENT, Document.class);
-        map.put(BSONType.DOUBLE, Double.class);
-        map.put(BSONType.INT32, Integer.class);
-        map.put(BSONType.INT64, Long.class);
-        map.put(BSONType.MAX_KEY, MaxKey.class);
-        map.put(BSONType.MIN_KEY, MinKey.class);
-        map.put(BSONType.JAVASCRIPT, Code.class);
-        map.put(BSONType.JAVASCRIPT_WITH_SCOPE, CodeWithScope.class);
-        map.put(BSONType.OBJECT_ID, ObjectId.class);
-        map.put(BSONType.REGULAR_EXPRESSION, RegularExpression.class);
-        map.put(BSONType.STRING, String.class);
-        map.put(BSONType.SYMBOL, Symbol.class);
-        map.put(BSONType.TIMESTAMP, BSONTimestamp.class);
-        map.put(BSONType.UNDEFINED, Undefined.class);
-
-        return map;
     }
 
     @Override
