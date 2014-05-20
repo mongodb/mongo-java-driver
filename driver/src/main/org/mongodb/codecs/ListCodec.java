@@ -25,35 +25,44 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings({ "unchecked", "rawtypes"})
 public class ListCodec implements Codec<List> {
     private final CodecRegistry registry;
     private final BsonTypeClassMap bsonTypeClassMap;
 
-    @SuppressWarnings("unchecked")
     public ListCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap) {
         this.registry = registry;
         this.bsonTypeClassMap = bsonTypeClassMap;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public List decode(final BSONReader reader) {
         reader.readStartArray();
         List list = new ArrayList();
         while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-            list.add(registry.get(bsonTypeClassMap.get(reader.getCurrentBSONType())).decode(reader));
+            Object value;
+            if (reader.getCurrentBSONType() == BSONType.NULL) {
+                reader.readNull();
+                value = null;
+            } else {
+                value = registry.get(bsonTypeClassMap.get(reader.getCurrentBSONType())).decode(reader);
+            }
+            list.add(value);
         }
         reader.readEndArray();
         return list;
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public void encode(final BSONWriter writer, final List value) {
+    public void encode(final BSONWriter writer, final List list) {
         writer.writeStartArray();
-        for (final Object cur : value) {
-            Codec codec = registry.get(cur.getClass());
-            codec.encode(writer, cur);
+        for (final Object value : list) {
+            if (value == null) {
+                writer.writeNull();
+            } else {
+                Codec codec = registry.get(value.getClass());
+                codec.encode(writer, value);
+            }
         }
         writer.writeEndArray();
     }

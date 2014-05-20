@@ -31,26 +31,49 @@ import org.mongodb.codecs.validators.Validator;
 import java.util.Arrays;
 import java.util.Map;
 
+/**
+ * A Codec for Document instances.
+ *
+ * @see org.mongodb.Document
+ *
+ * @since 3.0
+ */
 public class DocumentCodec implements Codec<Document> {
+
+    private static final CodecRegistry DEFAULT_REGISTRY = new RootCodecRegistry(Arrays.<CodecSource>asList(new DocumentCodecSource()));
+    private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
 
     private final Validator<String> fieldNameValidator;
     private final BsonTypeClassMap bsonTypeClassMap;
     private final CodecRegistry registry;
 
-    public DocumentCodec() {
-        this(new QueryFieldNameValidator());
-    }
-
+    /**
+     * Constructs a new instance using the default {@code DocumentCodecSource} and the default BSON type class map.
+     * @param fieldNameValidator
+     */
     public DocumentCodec(final Validator<String> fieldNameValidator) {
         this.fieldNameValidator = fieldNameValidator;
-        this.bsonTypeClassMap = new BsonTypeClassMap();
-        this.registry = new RootCodecRegistry(Arrays.<CodecSource>asList(new DocumentCodecSource()));
+        this.bsonTypeClassMap = DEFAULT_BSON_TYPE_CLASS_MAP;
+        this.registry = DEFAULT_REGISTRY;
     }
 
+    /**
+     * Construct a new instance with the given registry and BSON type class map.
+     *
+     * @param registry the registry
+     * @param bsonTypeClassMap the BSON type class map
+     */
     public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap) {
         this.fieldNameValidator = new QueryFieldNameValidator();
         this.registry = registry;
         this.bsonTypeClassMap = bsonTypeClassMap;
+    }
+
+    /**
+     * Construct a new instance with a default {@code CodecRegistry} and
+     */
+    public DocumentCodec() {
+        this(new QueryFieldNameValidator());
     }
 
     @Override
@@ -78,27 +101,22 @@ public class DocumentCodec implements Codec<Document> {
         return false;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     protected void writeValue(final BSONWriter writer, final Object value) {
         if (value == null) {
             writer.writeNull();
         } else {
-            getCodec(value).encode(writer, value);
+            Codec codec;
+            if (value.getClass() == Document.class) {
+                codec = this;
+            } else {
+                codec = registry.get(value.getClass());
+                if (codec == null) {
+                    throw new CodecConfigurationException("Could not find codec for class " + value.getClass());
+                }
+            }
+            codec.encode(writer, value);
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private Codec getCodec(final Object value) {
-        Codec codec;
-        if (Document.class.isAssignableFrom(value.getClass())) {
-            codec = this;   // TODO: this is suspicious, but necessary so that nested documents use the same field validator
-        } else {
-            codec = registry.get(value.getClass());
-        }
-        if (codec == null) {
-            throw new CodecConfigurationException("Could not find codec for class " + value.getClass());
-        }
-        return codec;
     }
 
     @Override
