@@ -35,14 +35,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A Codec source for the Document class and all the default Codec implementations on which it depends.
+ *
+ * @since 3.0
+ */
 public class DocumentCodecSource implements CodecSource {
     private final Map<Class<?>, Codec<?>> codecs = new HashMap<Class<?>, Codec<?>>();
     private final BsonTypeClassMap bsonTypeClassMap;
 
+    /**
+     *  Construct a new instance with a default {@code BsonTypeClassMap}.
+     */
     public DocumentCodecSource() {
         this(new BsonTypeClassMap());
     }
 
+    /**
+     *  Construct a new instance with the given instance of {@code BsonTypeClassMap}.
+     *
+     * @param bsonTypeClassMap the {@code BsonTypeClassMap} with which to construct instances of {@code DocumentCodec} and {@code ListCodec}
+     */
     public DocumentCodecSource(final BsonTypeClassMap bsonTypeClassMap) {
         this.bsonTypeClassMap = bsonTypeClassMap;
         addCodecs();
@@ -55,11 +68,11 @@ public class DocumentCodecSource implements CodecSource {
             return (Codec<T>) codecs.get(clazz);
         }
 
-        if (clazz.equals(CodeWithScope.class)) {
+        if (clazz == CodeWithScope.class) {
             return (Codec<T>) new CodeWithScopeCodec(registry.get(Document.class));
         }
 
-        if (Document.class.isAssignableFrom(clazz)) {
+        if (clazz == Document.class) {
             return (Codec<T>) new DocumentCodec(registry, bsonTypeClassMap);
         }
 
