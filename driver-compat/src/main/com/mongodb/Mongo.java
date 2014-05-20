@@ -142,7 +142,7 @@ public class Mongo {
     private final ConcurrentLinkedQueue<ServerCursor> orphanedCursors = new ConcurrentLinkedQueue<ServerCursor>();
     private final ExecutorService cursorCleaningService;
 
-    private final CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.<CodecSource>asList(new PrimitiveCodecSource()));
+    private final CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.<CodecSource>asList(new DBObjectCodecSource()));
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)

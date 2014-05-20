@@ -1858,7 +1858,7 @@ public class DBCollection {
         return new CollectibleDBObjectCodec(getDB(),
                                             new ObjectIdGenerator(),
                                             getObjectFactory(), getDB().getMongo().getCodecRegistry(),
-                                            PrimitiveCodecSource.getDefaultBsonTypeClassMap());
+                                            DBObjectCodecSource.getDefaultBsonTypeClassMap());
     }
 
     private Index toIndex(final DBObject keys, final DBObject options) {
