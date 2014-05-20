@@ -31,30 +31,31 @@ public class BulkWriteRequestBuilder {
     }
 
     /**
-     * Adds a request to remove all matching documents to the bulk operation.
+     * Adds a request to remove all documents in the collection that match the query with which this builder was created.
      */
     public void remove() {
         bulkWriteOperation.addRequest(new RemoveRequest(query, true));
     }
 
     /**
-     * Adds a request to remove one matching documents to the bulk operation.
+     * Adds a request to remove one document in the collection that matches the query with which this builder was created.
      */
     public void removeOne() {
         bulkWriteOperation.addRequest(new RemoveRequest(query, false));
     }
 
     /**
-     * Adds a request to replace one matching documents to the bulk operation.
+     * Adds a request to replace one document in the collection that matches the query with which this builder was created.
      *
-     * @param document the replacement document
+     * @param document the replacement document, which must be structured just as a document you would insert.  It can not contain any
+     *                 update operators.
      */
     public void replaceOne(final DBObject document) {
         new BulkUpdateRequestBuilder(bulkWriteOperation, query, false).replaceOne(document);
     }
 
     /**
-     * Adds a request to replace one matching documents to the bulk operation.
+     * Adds a request to update all documents in the collection that match the query with which this builder was created.
      *
      * @param update the update criteria
      */
@@ -63,7 +64,7 @@ public class BulkWriteRequestBuilder {
     }
 
     /**
-     * Adds a request to update one matching documents to the bulk operation.
+     * Adds a request to update one document in the collection that matches the query with which this builder was created.
      *
      * @param update the update criteria
      */

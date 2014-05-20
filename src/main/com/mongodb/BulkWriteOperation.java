@@ -22,7 +22,11 @@ import java.util.List;
 import static org.bson.util.Assertions.isTrue;
 
 /**
- * A bulk write operation.
+ * A bulk write operation.  A bulk write operation consists of an ordered or unordered collection of write requests,
+ * which can be any combination of inserts, updates, replaces, or removes.
+ *
+ * @see DBCollection#initializeOrderedBulkOperation()
+ * @see com.mongodb.DBCollection#initializeUnorderedBulkOperation()
  *
  * @since 2.12
  */
@@ -60,7 +64,8 @@ public class BulkWriteOperation {
     }
 
     /**
-     * Start building a write request to add to the bulk write operation.
+     * Start building a write request to add to the bulk write operation.  The returned builder can be used to create an update, replace,
+     * or remove request with the given query.
      *
      * @param query the query for an update, replace or remove request
      * @return a builder for a single write request
@@ -71,7 +76,8 @@ public class BulkWriteOperation {
     }
 
     /**
-     * Execute the bulk write operation.
+     * Execute the bulk write operation with the default write concern of the collection from which this came.  Note that the
+     * continueOnError property of the write concern is ignored.
      *
      * @return the result of the bulk write operation.
      * @throws com.mongodb.BulkWriteException
@@ -85,9 +91,10 @@ public class BulkWriteOperation {
     }
 
     /**
-     * Execute the bulk write operation with the given write concern.
+     * Execute the bulk write operation with the given write concern.  Note that the continueOnError property of the write concern is
+     * ignored.
      *
-     * @param writeConcern the write concern to apply to the bulk operation
+     * @param writeConcern the write concern to apply to the bulk operation.
      *
      * @return the result of the bulk write operation.
      * @throws com.mongodb.BulkWriteException

@@ -1619,8 +1619,17 @@ public abstract class DBCollection {
     public abstract List<Cursor> parallelScan(final ParallelScanOptions options);
 
     /**
-     * Creates a builder for an ordered bulk operation.  Write requests included in the bulk operations will be executed in order,
-     * and will halt on the first failure.
+     * Creates a builder for an ordered bulk write operation, consisting of an ordered collection of write requests,
+     * which can be any combination of inserts, updates, replaces, or removes. Write requests included in the bulk operations will be
+     * executed in order, and will halt on the first failure.
+     * <p>
+     * Note: While this bulk write operation will execute on MongoDB 2.4 servers and below, the writes will be performed one at a time,
+     * as that is the only way to preserve the semantics of the value returned from execution or the exception thrown.
+     * <p>
+     * Note: While a bulk write operation with a mix of inserts, updates, replaces, and removes is supported,
+     * the implementation will batch up consecutive requests of the same type and send them to the server one at a time.  For example,
+     * if a bulk write operation consists of 10 inserts followed by 5 updates, followed by 10 more inserts,
+     * it will result in three round trips to the server.
      *
      * @return the builder
      *
@@ -1631,8 +1640,12 @@ public abstract class DBCollection {
     }
 
     /**
-     * Creates a builder for an unordered bulk operation. Write requests included in the bulk operation will be executed in an undefined
-     * order, and all requests will be executed even if some fail.
+     * Creates a builder for an unordered bulk operation, consisting of an unordered collection of write requests,
+     * which can be any combination of inserts, updates, replaces, or removes. Write requests included in the bulk operation will be
+     * executed in an undefined  order, and all requests will be executed even if some fail.
+     * <p>
+     * Note: While this bulk write operation will execute on MongoDB 2.4 servers and below, the writes will be performed one at a time,
+     * as that is the only way to preserve the semantics of the value returned from execution or the exception thrown.
      *
      * @return the builder
      *
@@ -2014,7 +2027,7 @@ public abstract class DBCollection {
      */
     @Deprecated
     public void slaveOk(){
-        addOption( Bytes.QUERYOPTION_SLAVEOK );
+        addOption(Bytes.QUERYOPTION_SLAVEOK);
     }
 
     /**
