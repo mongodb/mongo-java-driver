@@ -41,4 +41,32 @@ public class RegularExpression {
     public String getOptions() {
         return options;
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        RegularExpression that = (RegularExpression) o;
+
+        if (!options.equals(that.options)) {
+            return false;
+        }
+        if (!pattern.equals(that.pattern)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = pattern.hashCode();
+        result = 31 * result + options.hashCode();
+        return result;
+    }
 }
