@@ -16,11 +16,11 @@
 
 package org.bson;
 
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 
 import java.io.Closeable;
 
@@ -49,6 +49,18 @@ public abstract class BSONReader implements Closeable {
      */
     public BSONType getCurrentBSONType() {
         return currentBSONType;
+    }
+
+    /**
+     * Gets the most recently read name.
+     *
+     * @return the most recently read name
+     */
+    public String getCurrentName() {
+        if (state != State.VALUE) {
+            throwInvalidState("getCurrentName", State.VALUE);
+        }
+        return currentName;
     }
 
     protected void setCurrentBSONType(final BSONType newType) {
@@ -289,7 +301,7 @@ public abstract class BSONReader implements Closeable {
             readBSONType();
         }
         if (state != State.NAME) {
-            throwInvalidState("ReadName", State.NAME);
+            throwInvalidState("readName", State.NAME);
         }
 
         state = State.VALUE;
@@ -424,7 +436,7 @@ public abstract class BSONReader implements Closeable {
      *
      * @return The combined timestamp/increment.
      */
-    public abstract BSONTimestamp readTimestamp();
+    public abstract Timestamp readTimestamp();
 
     /**
      * Reads a BSON timestamp element from the reader.
@@ -432,7 +444,7 @@ public abstract class BSONReader implements Closeable {
      * @param name The name of the element.
      * @return The combined timestamp/increment.
      */
-    public BSONTimestamp readTimestamp(final String name) {
+    public Timestamp readTimestamp(final String name) {
         verifyName(name);
         return readTimestamp();
     }

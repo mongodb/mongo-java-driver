@@ -17,11 +17,11 @@
 package org.bson;
 
 import org.bson.io.InputBuffer;
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 
 import static java.lang.String.format;
 
@@ -241,12 +241,12 @@ public class BSONBinaryReader extends BSONReader {
     }
 
     @Override
-    public BSONTimestamp readTimestamp() {
+    public Timestamp readTimestamp() {
         checkPreconditions("readTimestamp", BSONType.TIMESTAMP);
         setState(getNextState());
         int increment = buffer.readInt32();
         int time = buffer.readInt32();
-        return new BSONTimestamp(time, increment);
+        return new Timestamp(time, increment);
     }
 
     @Override

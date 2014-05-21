@@ -16,11 +16,11 @@
 
 package org.bson;
 
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 
 import java.io.Closeable;
 import java.util.Arrays;
@@ -416,7 +416,7 @@ public abstract class BSONWriter implements Closeable {
      *
      * @param value The combined timestamp/increment value.
      */
-    public abstract void writeTimestamp(BSONTimestamp value);
+    public abstract void writeTimestamp(Timestamp value);
 
     /**
      * Writes a BSON Timestamp element to the writer.
@@ -424,7 +424,7 @@ public abstract class BSONWriter implements Closeable {
      * @param name  The name of the element.
      * @param value The combined timestamp/increment value.
      */
-    public void writeTimestamp(final String name, final BSONTimestamp value) {
+    public void writeTimestamp(final String name, final Timestamp value) {
         writeName(name);
         writeTimestamp(value);
     }

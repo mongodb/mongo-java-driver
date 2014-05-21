@@ -18,10 +18,10 @@ package org.bson;
 
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -496,7 +496,7 @@ public class BSONBinaryWriterTest {
     public void testWriteTimestamp() {
         writer.writeStartDocument();
 
-        writer.writeTimestamp("t1", new BSONTimestamp(123999401, 44332));
+        writer.writeTimestamp("t1", new Timestamp(123999401, 44332));
 
         writer.writeEndDocument();
 

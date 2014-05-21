@@ -16,38 +16,32 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
-
-import java.io.Serializable;
-
 /**
- * Represent the minimum key value regardless of the key's type
+ * A mapping from a name to a BsonValue.
+ *
+ * @see org.bson.types.BsonDocument
+ *
+ * @since 3.0
  */
-public final class MinKey extends BsonValue implements Serializable {
+public class BsonElement {
+    private final String name;
+    private final BsonValue value;
 
-    private static final long serialVersionUID = 4075901136671855684L;
-
-    public MinKey() {
+    /**
+     * Construct a new instance with the given key and value
+     * @param name the non-null key
+     * @param value the non-null value
+     */
+    public BsonElement(final String name, final BsonValue value) {
+        this.name = name;
+        this.value = value;
     }
 
-    @Override
-    public BSONType getBsonType() {
-        return BSONType.MIN_KEY;
+    public String getName() {
+        return name;
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        return o instanceof MinKey;
+    public BsonValue getValue() {
+        return value;
     }
-
-    @Override
-    public int hashCode() {
-        return 0;
-    }
-
-    @Override
-    public String toString() {
-        return "MinKey";
-    }
-
 }

@@ -16,15 +16,16 @@
 
 package org.mongodb.codecs;
 
-import org.bson.codecs.BSONTimestampCodec;
 import org.bson.codecs.BinaryCodec;
 import org.bson.codecs.CodeCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DBPointerCodec;
 import org.bson.codecs.MaxKeyCodec;
 import org.bson.codecs.MinKeyCodec;
+import org.bson.codecs.ObjectIdCodec;
 import org.bson.codecs.RegularExpressionCodec;
 import org.bson.codecs.SymbolCodec;
+import org.bson.codecs.TimestampCodec;
 import org.bson.codecs.UndefinedCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.CodecSource;
@@ -98,7 +99,7 @@ public class DocumentCodecSource implements CodecSource {
         addCodec(new RegularExpressionCodec());
         addCodec(new StringCodec());
         addCodec(new SymbolCodec());
-        addCodec(new BSONTimestampCodec());
+        addCodec(new TimestampCodec());
         addCodec(new UndefinedCodec());
     }
 

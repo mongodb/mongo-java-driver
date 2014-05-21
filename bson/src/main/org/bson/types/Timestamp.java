@@ -16,32 +16,48 @@
 
 package org.bson.types;
 
+import org.bson.BSONType;
+
 import java.io.Serializable;
 import java.util.Date;
 
 /**
- * This is used for internal increment values. For normal dates you should use java.util.Date <b>time</b> is seconds since epoch <b>inc<b>
- * is an ordinal.
+ * A value representing the BSON timestamp type.
+ *
+ * @since 3.0
  */
-public final class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
-
-    private static final long serialVersionUID = -3268482672267936464L;
+public final class Timestamp extends BsonValue implements Comparable<Timestamp>, Serializable {
+    private static final long serialVersionUID = 2318841189917887752L;
 
     private final int inc;
     private final Date time;
 
-    public BSONTimestamp() {
+    /**
+     * Construct a new instance with a null time and a 0 increment.
+     */
+    public Timestamp() {
         inc = 0;
         time = null;
     }
 
-    public BSONTimestamp(final int time, final int inc) {
+    /**
+     * Construct a new instance for the given time and increment.
+     *
+     * @param time the number of seconds since the epoch
+     * @param inc the increment.
+     */
+    public Timestamp(final int time, final int inc) {
         this.time = new Date(time * 1000L);
         this.inc = inc;
     }
 
+    @Override
+    public BSONType getBsonType() {
+        return BSONType.TIMESTAMP;
+    }
+
     /**
-     * Gets the time in seconds since epoch
+     * Gets the time in seconds since epoch.
      *
      * @return an int representing time in seconds since epoch
      */
@@ -56,12 +72,16 @@ public final class BSONTimestamp implements Comparable<BSONTimestamp>, Serializa
         return inc;
     }
 
+    @Override
     public String toString() {
-        return "TS time:" + time + " inc:" + inc;
+        return "Timestamp{"
+               + "inc=" + inc
+               + ", time=" + time
+               + '}';
     }
 
     @Override
-    public int compareTo(final BSONTimestamp ts) {
+    public int compareTo(final Timestamp ts) {
         if (getTime() != ts.getTime()) {
             return getTime() - ts.getTime();
         } else {
@@ -70,24 +90,30 @@ public final class BSONTimestamp implements Comparable<BSONTimestamp>, Serializa
     }
 
     @Override
-    public int hashCode() {
-        int prime = 31;
-        int result = 1;
-        result = prime * result + inc;
-        result = prime * result + getTime();
-        return result;
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Timestamp timestamp = (Timestamp) o;
+
+        if (inc != timestamp.inc) {
+            return false;
+        }
+        if (!time.equals(timestamp.time)) {
+            return false;
+        }
+
+        return true;
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (obj == this) {
-            return true;
-        }
-        if (obj instanceof BSONTimestamp) {
-            BSONTimestamp t2 = (BSONTimestamp) obj;
-            return getTime() == t2.getTime() && getInc() == t2.getInc();
-        }
-        return false;
+    public int hashCode() {
+        int result = inc;
+        result = 31 * result + time.hashCode();
+        return result;
     }
-
 }

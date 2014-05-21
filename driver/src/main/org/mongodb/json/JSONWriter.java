@@ -19,10 +19,10 @@ package org.mongodb.json;
 import org.bson.BSONContextType;
 import org.bson.BSONException;
 import org.bson.BSONWriter;
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -422,7 +422,7 @@ public class JSONWriter extends BSONWriter {
     }
 
     @Override
-    public void writeTimestamp(final BSONTimestamp value) {
+    public void writeTimestamp(final Timestamp value) {
         checkPreconditions("writeTimestamp", State.VALUE, State.INITIAL);
 
         try {

@@ -14,26 +14,29 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.bson.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.bson.codecs.Codec;
-import org.bson.types.ObjectId;
+import org.bson.types.Timestamp;
 
-public class ObjectIdCodec implements Codec<ObjectId> {
+/**
+ * A Codec for Timestamp instances.
+ *
+ * @since 3.0
+ */
+public class TimestampCodec implements Codec<Timestamp> {
     @Override
-    public void encode(final BSONWriter writer, final ObjectId value) {
-        writer.writeObjectId(value);
+    public void encode(final BSONWriter writer, final Timestamp value) {
+        writer.writeTimestamp(value);
     }
 
     @Override
-    public ObjectId decode(final BSONReader reader) {
-        return reader.readObjectId();
+    public Timestamp decode(final BSONReader reader) {
+        return reader.readTimestamp();
     }
 
     @Override
-    public Class<ObjectId> getEncoderClass() {
-        return ObjectId.class;
-    }
-}
+    public Class<Timestamp> getEncoderClass() {
+        return Timestamp.class;
+    }}

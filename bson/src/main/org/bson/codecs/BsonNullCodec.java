@@ -14,40 +14,32 @@
  * limitations under the License.
  */
 
-package org.bson.types;
+package org.bson.codecs;
 
-import org.bson.BSONType;
-
-import java.io.Serializable;
+import org.bson.BSONReader;
+import org.bson.BSONWriter;
+import org.bson.types.BsonNull;
 
 /**
- * Represent the minimum key value regardless of the key's type
+ * A Codec for BsonNull instances.
+ *
+ * @since 3.0
  */
-public final class MinKey extends BsonValue implements Serializable {
+public class BsonNullCodec implements Codec<BsonNull> {
 
-    private static final long serialVersionUID = 4075901136671855684L;
-
-    public MinKey() {
+    @Override
+    public BsonNull decode(final BSONReader reader) {
+        reader.readNull();
+        return BsonNull.VALUE;
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.MIN_KEY;
+    public void encode(final BSONWriter writer, final BsonNull value) {
+        writer.writeNull();
     }
 
     @Override
-    public boolean equals(final Object o) {
-        return o instanceof MinKey;
+    public Class<BsonNull> getEncoderClass() {
+        return BsonNull.class;
     }
-
-    @Override
-    public int hashCode() {
-        return 0;
-    }
-
-    @Override
-    public String toString() {
-        return "MinKey";
-    }
-
 }
