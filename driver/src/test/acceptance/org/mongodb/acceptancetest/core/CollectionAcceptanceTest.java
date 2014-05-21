@@ -16,13 +16,13 @@
 
 package org.mongodb.acceptancetest.core;
 
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 import org.junit.Test;
 import org.mongodb.CodeWithScope;
 import org.mongodb.DatabaseTestCase;
@@ -122,7 +122,7 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         doc.append("str", "Hello MongoDB");
         doc.append("double", 1.1);
         doc.append("date", new Date());
-        doc.append("ts", new BSONTimestamp(5, 1));
+        doc.append("ts", new Timestamp(5, 1));
         doc.append("pattern", new RegularExpression("abc"));
         doc.append("minKey", new MinKey());
         doc.append("maxKey", new MaxKey());
@@ -143,7 +143,7 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         assertEquals(String.class, found.get("str").getClass());
         assertEquals(Double.class, found.get("double").getClass());
         assertEquals(Date.class, found.get("date").getClass());
-        assertEquals(BSONTimestamp.class, found.get("ts").getClass());
+        assertEquals(Timestamp.class, found.get("ts").getClass());
         assertEquals(RegularExpression.class, found.get("pattern").getClass());
         assertEquals(MinKey.class, found.get("minKey").getClass());
         assertEquals(MaxKey.class, found.get("maxKey").getClass());

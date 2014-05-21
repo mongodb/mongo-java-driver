@@ -23,13 +23,13 @@ import org.bson.BSONInvalidOperationException;
 import org.bson.BSONReader;
 import org.bson.BSONReaderSettings;
 import org.bson.BSONType;
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.DBPointer;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 
 import javax.xml.bind.DatatypeConverter;
 import java.text.DateFormat;
@@ -451,10 +451,10 @@ public class JSONReader extends BSONReader {
     }
 
     @Override
-    public BSONTimestamp readTimestamp() {
+    public Timestamp readTimestamp() {
         checkPreconditions("readg", BSONType.TIMESTAMP);
         setState(getNextState());
-        return (BSONTimestamp) currentValue;
+        return (Timestamp) currentValue;
     }
 
     @Override
@@ -997,7 +997,7 @@ public class JSONReader extends BSONReader {
         return nameToken.getValue(String.class);
     }
 
-    private BSONTimestamp visitTimestampExtendedJson() {
+    private Timestamp visitTimestampExtendedJson() {
         verifyToken(":");
         JSONToken valueToken = popToken();
         JSONTokenType type = valueToken.getType();
@@ -1010,7 +1010,7 @@ public class JSONReader extends BSONReader {
             throw new JSONParseException("JSON reader expected an integer but found '%s'.", valueToken.getValue());
         }
         verifyToken("}");
-        return new BSONTimestamp(value, 1);
+        return new Timestamp(value, 1);
     }
 
     private void visitJavaScriptExtendedJson() {

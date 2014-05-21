@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// Symbol.java
-
 package org.bson.types;
 
 import org.bson.BSONType;
@@ -23,36 +21,20 @@ import org.bson.BSONType;
 import java.io.Serializable;
 
 /**
- * Class to hold a BSON symbol object, which is an interned string in Ruby
+ * A representation of the BSON Null type.
+ *
+ * @since 3.0
  */
-public class Symbol extends BsonValue implements Serializable {
+public final class BsonNull extends BsonValue implements Serializable {
+    private static final long serialVersionUID = -1197299174370690779L;
 
-    private final String symbol;
-
-    private static final long serialVersionUID = 1326269319883146072L;
-
-    public Symbol(final String s) {
-        if (s == null) {
-            throw new IllegalArgumentException("Value can not be null");
-        }
-        symbol = s;
-    }
+    public static final BsonNull VALUE = new BsonNull();
 
     @Override
     public BSONType getBsonType() {
-        return BSONType.SYMBOL;
+        return BSONType.NULL;
     }
 
-    public String getSymbol() {
-        return symbol;
-    }
-
-    /**
-     * Will compare equal to a String that is equal to the String that this holds
-     *
-     * @param o the Symbol to compare this to
-     * @return true if parameter o is the same as this Symbol
-     */
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -61,23 +43,16 @@ public class Symbol extends BsonValue implements Serializable {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
-        Symbol symbol1 = (Symbol) o;
-
-        if (!symbol.equals(symbol1.symbol)) {
-            return false;
-        }
-
         return true;
     }
 
     @Override
     public int hashCode() {
-        return symbol.hashCode();
+        return 0;
     }
 
     @Override
     public String toString() {
-        return symbol;
+        return "BsonNull";
     }
 }

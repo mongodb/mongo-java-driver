@@ -16,10 +16,10 @@
 
 package org.bson;
 
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 
 import static org.bson.io.Bits.readLong;
 
@@ -198,7 +198,7 @@ class BSONCallbackAdapter extends BSONWriter {
     }
 
     @Override
-    public void writeTimestamp(final BSONTimestamp value) {
+    public void writeTimestamp(final Timestamp value) {
         bsonCallback.gotTimestamp(getName(), value.getTime(), value.getInc());
         setState(getNextState());
     }

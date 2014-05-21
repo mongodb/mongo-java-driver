@@ -16,16 +16,23 @@
 
 package org.bson.types;
 
+import org.bson.BSONType;
+
 import java.io.Serializable;
 
 /**
  * Represent the maximum key value regardless of the key's type
  */
-public class MaxKey implements Serializable {
+public final class MaxKey extends BsonValue implements Serializable {
 
     private static final long serialVersionUID = 5123414776151687185L;
 
     public MaxKey() {
+    }
+
+    @Override
+    public BSONType getBsonType() {
+        return BSONType.MAX_KEY;
     }
 
     @Override

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// Symbol.java
-
 package org.bson.types;
 
 import org.bson.BSONType;
@@ -23,36 +21,58 @@ import org.bson.BSONType;
 import java.io.Serializable;
 
 /**
- * Class to hold a BSON symbol object, which is an interned string in Ruby
+ * A representation of the BSON Int32 type.
+ *
+ * @since 3.0
  */
-public class Symbol extends BsonValue implements Serializable {
+public final class BsonInt32 extends BsonNumber implements Comparable<BsonInt32>, Serializable {
+    private static final long serialVersionUID = 2215506922933899945L;
 
-    private final String symbol;
+    private final int value;
 
-    private static final long serialVersionUID = 1326269319883146072L;
+    /**
+     * Construct a new instance with the given value.
+     *
+     * @param value the value
+     */
+    public BsonInt32(final int value) {
+        this.value = value;
+    }
 
-    public Symbol(final String s) {
-        if (s == null) {
-            throw new IllegalArgumentException("Value can not be null");
-        }
-        symbol = s;
+    @Override
+    public int compareTo(final BsonInt32 o) {
+        return Integer.compare(value, o.value);
     }
 
     @Override
     public BSONType getBsonType() {
-        return BSONType.SYMBOL;
-    }
-
-    public String getSymbol() {
-        return symbol;
+        return BSONType.INT32;
     }
 
     /**
-     * Will compare equal to a String that is equal to the String that this holds
+     * Gets the integer value.
      *
-     * @param o the Symbol to compare this to
-     * @return true if parameter o is the same as this Symbol
+     * @return the value
      */
+    public int getValue() {
+        return value;
+    }
+
+    @Override
+    public int intValue() {
+        return value;
+    }
+
+    @Override
+    public long longValue() {
+        return value;
+    }
+
+    @Override
+    public double doubleValue() {
+        return value;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -62,9 +82,9 @@ public class Symbol extends BsonValue implements Serializable {
             return false;
         }
 
-        Symbol symbol1 = (Symbol) o;
+        BsonInt32 bsonInt32 = (BsonInt32) o;
 
-        if (!symbol.equals(symbol1.symbol)) {
+        if (value != bsonInt32.value) {
             return false;
         }
 
@@ -73,11 +93,13 @@ public class Symbol extends BsonValue implements Serializable {
 
     @Override
     public int hashCode() {
-        return symbol.hashCode();
+        return value;
     }
 
     @Override
     public String toString() {
-        return symbol;
+        return "BsonInt32{"
+               + "value=" + value
+               + '}';
     }
 }

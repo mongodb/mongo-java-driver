@@ -18,10 +18,10 @@ package org.bson;
 
 import org.bson.io.InputBuffer;
 import org.bson.io.OutputBuffer;
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 
 import java.util.Stack;
 
@@ -251,7 +251,7 @@ public class BSONBinaryWriter extends BSONWriter {
     }
 
     @Override
-    public void writeTimestamp(final BSONTimestamp value) {
+    public void writeTimestamp(final Timestamp value) {
         checkPreconditions("writeTimestamp", State.VALUE);
 
         buffer.write(BSONType.TIMESTAMP.getValue());

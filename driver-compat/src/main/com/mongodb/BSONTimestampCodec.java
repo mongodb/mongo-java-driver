@@ -20,19 +20,23 @@ import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.codecs.Codec;
 import org.bson.types.BSONTimestamp;
+import org.bson.types.Timestamp;
 
 /**
  * Knows how to encode and decode BSON timestamps.
+ *
+ * @since 3.0
  */
 public class BSONTimestampCodec implements Codec<BSONTimestamp> {
     @Override
     public void encode(final BSONWriter writer, final BSONTimestamp value) {
-        writer.writeTimestamp(value);
+        writer.writeTimestamp(new Timestamp(value.getTime(), value.getInc()));
     }
 
     @Override
     public BSONTimestamp decode(final BSONReader reader) {
-        return reader.readTimestamp();
+        Timestamp timestamp = reader.readTimestamp();
+        return new BSONTimestamp(timestamp.getTime(), timestamp.getInc());
     }
 
     @Override
