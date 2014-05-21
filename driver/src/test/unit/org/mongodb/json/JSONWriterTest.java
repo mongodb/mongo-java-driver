@@ -17,10 +17,10 @@
 package org.mongodb.json;
 
 import org.bson.BSONInvalidOperationException;
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -606,7 +606,7 @@ public class JSONWriterTest {
     @Test
     public void testTimestampStrict() {
         writer.writeStartDocument();
-        writer.writeTimestamp("timestamp", new BSONTimestamp(1000, 1));
+        writer.writeTimestamp("timestamp", new Timestamp(1000, 1));
         writer.writeEndDocument();
         String expected = "{ \"timestamp\" : { \"$timestamp\" : { \"t\" : 1000, \"i\" : 1 } } }";
         assertEquals(expected, stringWriter.toString());
@@ -616,7 +616,7 @@ public class JSONWriterTest {
     public void testTimestampShell() {
         writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONMode.SHELL));
         writer.writeStartDocument();
-        writer.writeTimestamp("timestamp", new BSONTimestamp(1000, 1));
+        writer.writeTimestamp("timestamp", new Timestamp(1000, 1));
         writer.writeEndDocument();
         String expected = "{ \"timestamp\" : Timestamp(1000, 1) }";
         assertEquals(expected, stringWriter.toString());

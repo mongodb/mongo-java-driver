@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// Code.java
-
 package org.bson.types;
 
 import org.bson.BSONType;
@@ -23,25 +21,49 @@ import org.bson.BSONType;
 import java.io.Serializable;
 
 /**
- * for using the Code type
+ * A representation of the BSON Boolean type.
+ *
+ * @since 3.0
  */
-public class Code extends BsonValue implements Serializable {
+public final class BsonBoolean extends BsonValue implements Comparable<BsonBoolean>, Serializable {
+    private static final long serialVersionUID = 2215506922933899945L;
 
-    private final String code;
+    private final boolean value;
 
-    private static final long serialVersionUID = 475535263314046697L;
+    public static final BsonBoolean TRUE = new BsonBoolean(true);
 
-    public Code(final String code) {
-        this.code = code;
+    public static final BsonBoolean FALSE = new BsonBoolean(false);
+
+    public static BsonBoolean valueOf(final boolean value) {
+        return value ? TRUE : FALSE;
+    }
+
+    /**
+     * Construct a new instance with the given value.
+     *
+     * @param value the value
+     */
+    public BsonBoolean(final boolean value) {
+        this.value = value;
+    }
+
+    @Override
+    public int compareTo(final BsonBoolean o) {
+        return Boolean.compare(value, o.value);
     }
 
     @Override
     public BSONType getBsonType() {
-        return BSONType.JAVASCRIPT;
+        return BSONType.BOOLEAN;
     }
 
-    public String getCode() {
-        return code;
+    /**
+     * Gets the boolean value.
+     *
+     * @return the value
+     */
+    public boolean getValue() {
+        return value;
     }
 
     @Override
@@ -53,9 +75,9 @@ public class Code extends BsonValue implements Serializable {
             return false;
         }
 
-        Code code1 = (Code) o;
+        BsonBoolean that = (BsonBoolean) o;
 
-        if (!code.equals(code1.code)) {
+        if (value != that.value) {
             return false;
         }
 
@@ -64,14 +86,13 @@ public class Code extends BsonValue implements Serializable {
 
     @Override
     public int hashCode() {
-        return code.hashCode();
+        return (value ? 1 : 0);
     }
 
     @Override
     public String toString() {
-        return "Code{"
-               + "code='" + code + '\''
+        return "BsonBoolean{"
+               + "value=" + value
                + '}';
     }
 }
-

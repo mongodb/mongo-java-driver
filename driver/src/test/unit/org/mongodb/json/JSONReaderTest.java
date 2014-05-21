@@ -19,11 +19,11 @@ package org.mongodb.json;
 import org.bson.BSONBinarySubType;
 import org.bson.BSONReader;
 import org.bson.BSONType;
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -456,7 +456,7 @@ public class JSONReaderTest {
         String json = "{ \"$timestamp\" : NumberLong(1234) }";
         bsonReader = new JSONReader(json);
         assertEquals(BSONType.TIMESTAMP, bsonReader.readBSONType());
-        assertEquals(new BSONTimestamp(1234, 1), bsonReader.readTimestamp());
+        assertEquals(new Timestamp(1234, 1), bsonReader.readTimestamp());
         assertEquals(BSONReader.State.DONE, bsonReader.getState());
     }
 

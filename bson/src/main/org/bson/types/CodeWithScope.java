@@ -21,38 +21,39 @@ import org.bson.BSONType;
 import java.io.Serializable;
 
 /**
- * Holder for a BSON type DBPointer(0x0c). It's deprecated in BSON Specification and present here because of compatibility reasons.
+ * A representation of the JavaScript Code with Scope BSON type.
  *
  * @since 3.0
  */
-public class DBPointer extends BsonValue implements Serializable {
-    private static final long serialVersionUID = -5105961452917374359L;
+public class CodeWithScope extends BsonValue implements Serializable {
 
-    private final String namespace;
-    private final ObjectId id;
+    private static final long serialVersionUID = -6284832275113680002L;
 
-    public DBPointer(final String namespace, final ObjectId id) {
-        if (namespace == null) {
-            throw new IllegalArgumentException("namespace can not be null");
+    private final String code;
+    private final BsonDocument scope;
+
+    public CodeWithScope(final String code, final BsonDocument scope) {
+        if (code == null) {
+            throw new IllegalArgumentException("code can not be null");
         }
-        if (id == null) {
-            throw new IllegalArgumentException("id can not be null");
+        if (scope == null) {
+            throw new IllegalArgumentException("scope can not be null");
         }
-        this.namespace = namespace;
-        this.id = id;
+        this.code = code;
+        this.scope = scope;
     }
 
     @Override
     public BSONType getBsonType() {
-        return BSONType.DB_POINTER;
+        return BSONType.JAVASCRIPT_WITH_SCOPE;
     }
 
-    public String getNamespace() {
-        return namespace;
+    public String getCode() {
+        return code;
     }
 
-    public ObjectId getId() {
-        return id;
+    public BsonDocument getScope() {
+        return scope;
     }
 
     @Override
@@ -64,12 +65,12 @@ public class DBPointer extends BsonValue implements Serializable {
             return false;
         }
 
-        DBPointer dbPointer = (DBPointer) o;
+        CodeWithScope that = (CodeWithScope) o;
 
-        if (!id.equals(dbPointer.id)) {
+        if (!code.equals(that.code)) {
             return false;
         }
-        if (!namespace.equals(dbPointer.namespace)) {
+        if (!scope.equals(that.scope)) {
             return false;
         }
 
@@ -78,8 +79,17 @@ public class DBPointer extends BsonValue implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = namespace.hashCode();
-        result = 31 * result + id.hashCode();
+        int result = code.hashCode();
+        result = 31 * result + scope.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "CodeWithScope{"
+               + "code=" + getCode()
+               + "scope=" + scope
+               + '}';
+    }
 }
+

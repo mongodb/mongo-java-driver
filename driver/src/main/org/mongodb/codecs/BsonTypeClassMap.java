@@ -17,7 +17,6 @@
 package org.mongodb.codecs;
 
 import org.bson.BSONType;
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
 import org.bson.types.DBPointer;
@@ -26,6 +25,7 @@ import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Symbol;
+import org.bson.types.Timestamp;
 import org.bson.types.Undefined;
 import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
@@ -170,7 +170,7 @@ public class BsonTypeClassMap {
         map.put(BSONType.REGULAR_EXPRESSION, RegularExpression.class);
         map.put(BSONType.STRING, String.class);
         map.put(BSONType.SYMBOL, Symbol.class);
-        map.put(BSONType.TIMESTAMP, BSONTimestamp.class);
+        map.put(BSONType.TIMESTAMP, Timestamp.class);
         map.put(BSONType.UNDEFINED, Undefined.class);
     }
 }

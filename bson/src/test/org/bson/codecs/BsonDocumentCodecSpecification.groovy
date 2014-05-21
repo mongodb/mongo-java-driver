@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs
+package org.bson.codecs
 
 import org.bson.BSONBinaryReader
 import org.bson.BSONBinaryWriter
@@ -22,7 +22,18 @@ import org.bson.ByteBufNIO
 import org.bson.io.BasicInputBuffer
 import org.bson.io.BasicOutputBuffer
 import org.bson.types.Binary
+import org.bson.types.BsonArray
+import org.bson.types.BsonBoolean
+import org.bson.types.BsonDateTime
+import org.bson.types.BsonDocument
+import org.bson.types.BsonDouble
+import org.bson.types.BsonElement
+import org.bson.types.BsonInt32
+import org.bson.types.BsonInt64
+import org.bson.types.BsonNull
+import org.bson.types.BsonString
 import org.bson.types.Code
+import org.bson.types.CodeWithScope
 import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import org.bson.types.ObjectId
@@ -30,54 +41,54 @@ import org.bson.types.RegularExpression
 import org.bson.types.Symbol
 import org.bson.types.Timestamp
 import org.bson.types.Undefined
-import org.mongodb.CodeWithScope
-import org.mongodb.Document
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
 
-import static java.util.Arrays.asList
-
-class DocumentCodecSpecification extends Specification {
+class BsonDocumentCodecSpecification extends Specification {
     def 'should encode and decode all default types'() {
         given:
-        def doc = new Document()
+        def doc = new BsonDocument(
+                [
+                        new BsonElement('null', new BsonNull()),
+                        new BsonElement('int32', new BsonInt32(42)),
+                        new BsonElement('int64', new BsonInt64(52L)),
+                        new BsonElement('boolean', new BsonBoolean(true)),
+                        new BsonElement('date', new BsonDateTime(new Date().getTime())),
+                        new BsonElement('double', new BsonDouble(62.0)),
+                        new BsonElement('string', new BsonString('the fox ...')),
+                        new BsonElement('minKey', new MinKey()),
+                        new BsonElement('maxKey', new MaxKey()),
+                        new BsonElement('code', new Code('int i = 0;')),
+                        new BsonElement('objectId', new ObjectId()),
+                        new BsonElement('codeWithScope', new CodeWithScope('int x = y', new BsonDocument('y', new BsonInt32(1)))),
+                        new BsonElement('regex', new RegularExpression('^test.*regex.*xyz$', 'i')),
+                        new BsonElement('symbol', new Symbol('ruby stuff')),
+                        new BsonElement('timestamp', new Timestamp(0x12345678, 5)),
+                        new BsonElement('undefined', new Undefined()),
+                        new BsonElement('binary', new Binary((byte) 80, [5, 4, 3, 2, 1] as byte[])),
+                        new BsonElement('array', new BsonArray([new BsonInt32(1), new BsonInt64(2L), new BsonBoolean(true),
+                                                                    new BsonArray([new BsonInt32(1), new BsonInt32(2), new BsonInt32(3)]),
+                                                                    new BsonDocument('a', new BsonInt64(2L))])),
+                        new BsonElement('document', new BsonDocument('a', new BsonInt32(1)))
+                ])
+
         doc.with {
-            put('null', null)
-            put('int32', 42)
-            put('int64', 52L)
-            put('booleanTrue', true)
-            put('booleanFalse', false)
-            put('date', new Date())
 //        put('dbPointer', new DBPointer('foo.bar', new ObjectId()))
-            put('double', 62.0 as double)
-            put('minKey', new MinKey())
-            put('maxKey', new MaxKey())
-            put('code', new Code('int i = 0;'))
-            put('codeWithScope', new CodeWithScope('int x = y', new Document('y', 1)))
-            put('objectId', new ObjectId())
-            put('regex', new RegularExpression('^test.*regex.*xyz$', 'i'))
-            put('string', 'the fox ...')
-            put('symbol', new Symbol('ruby stuff'))
-            put('timestamp', new Timestamp(0x12345678, 5))
-            put('undefined', new Undefined())
-            put('binary', new Binary((byte) 80, [5, 4, 3, 2, 1] as byte[]))
-            put('array', asList(1, 1L, true, [1, 2, 3], new Document('a', 1), null))
-            put('document', new Document('a', 2))
+//            put('codeWithScope', new CodeWithScope('int x = y', new Document('y', 1)))
         }
         when:
         BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer(), false)
-        new DocumentCodec().encode(writer, doc)
+        new BsonDocumentCodec().encode(writer, doc)
         BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(writer.buffer.toByteArray()))),
                                                        true)
-        def decodedDoc = new DocumentCodec().decode(reader)
+        def decodedDoc = new BsonDocumentCodec().decode(reader)
 
         then:
         decodedDoc.get('null') == doc.get('null')
         decodedDoc.get('int32') == doc.get('int32')
         decodedDoc.get('int64') == doc.get('int64')
-        decodedDoc.get('booleanTrue') == doc.get('booleanTrue')
-        decodedDoc.get('booleanFalse') == doc.get('booleanFalse')
+        decodedDoc.get('boolean') == doc.get('boolean')
         decodedDoc.get('date') == doc.get('date')
 //        decodedDoc.get('dbPointer') == doc.get('dbPointer')
         decodedDoc.get('double') == doc.get('double')
@@ -95,4 +106,5 @@ class DocumentCodecSpecification extends Specification {
         decodedDoc.get('array') == doc.get('array')
         decodedDoc.get('document') == doc.get('document')
     }
+
 }

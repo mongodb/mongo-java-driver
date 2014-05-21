@@ -18,6 +18,7 @@ package org.bson;
 
 import org.bson.io.BSONByteBuffer;
 import org.bson.io.BasicInputBuffer;
+import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
 import org.bson.types.CodeWScope;
@@ -26,6 +27,7 @@ import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.RegularExpression;
 import org.bson.types.Symbol;
+import org.bson.types.Timestamp;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -188,7 +190,8 @@ public class LazyBSONObject implements BSONObject {
             case INT32:
                 return reader.readInt32();
             case TIMESTAMP:
-                return reader.readTimestamp();
+                Timestamp timestamp = reader.readTimestamp();
+                return new BSONTimestamp(timestamp.getTime(), timestamp.getInc());
             case INT64:
                 return reader.readInt64();
             case MIN_KEY:
