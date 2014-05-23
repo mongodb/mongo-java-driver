@@ -21,13 +21,13 @@ import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mongodb.CollectibleCodec;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.QueryBuilder;
+import org.mongodb.codecs.CollectibleCodec;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -170,8 +170,18 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
     private class PersonCodec implements CollectibleCodec<Person> {
         @Override
-        public Object getId(final Person person) {
-            return person.id;
+        public boolean documentHasId(final Person document) {
+            return true;
+        }
+
+        @Override
+        public Object getDocumentId(final Person document) {
+            return document.id;
+        }
+
+        @Override
+        public void generateIdIfAbsentFromDocument(final Person person) {
+
         }
 
         @Override

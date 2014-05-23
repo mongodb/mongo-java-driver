@@ -16,7 +16,7 @@
 
 package org.mongodb.async.rxjava;
 
-import org.mongodb.CollectibleCodec;
+import org.bson.codecs.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCollectionOptions;
@@ -46,7 +46,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public <T> MongoCollection<T> getCollection(final String name, final CollectibleCodec<T> codec, final MongoCollectionOptions options) {
+    public <T> MongoCollection<T> getCollection(final String name, final Codec<T> codec, final MongoCollectionOptions options) {
         return new MongoCollectionImpl<T>(wrapped.getCollection(name, codec, options));
     }
 

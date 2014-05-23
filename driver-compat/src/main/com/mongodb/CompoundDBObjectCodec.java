@@ -21,16 +21,13 @@ import org.bson.BSONWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.Encoder;
-import org.mongodb.CollectibleCodec;
 
-class CompoundDBObjectCodec implements Codec<DBObject>, CollectibleCodec<DBObject> {
+class CompoundDBObjectCodec implements Codec<DBObject> {
 
-    private static final String ID_FIELD_NAME = "_id";
+    private final Encoder<DBObject> encoder;
+    private final Decoder<DBObject> decoder;
 
-    private final Encoder<? super DBObject> encoder;
-    private final Decoder<? extends DBObject> decoder;
-
-    public CompoundDBObjectCodec(final Encoder<? super DBObject> encoder, final Decoder<? extends DBObject> decoder) {
+    public CompoundDBObjectCodec(final Encoder<DBObject> encoder, final Decoder<DBObject> decoder) {
         this.encoder = encoder;
         this.decoder = decoder;
     }
@@ -54,16 +51,11 @@ class CompoundDBObjectCodec implements Codec<DBObject>, CollectibleCodec<DBObjec
         return DBObject.class;
     }
 
-    @Override
-    public Object getId(final DBObject document) {
-        return document.get(ID_FIELD_NAME);
-    }
-
-    public Encoder<? super DBObject> getEncoder() {
+    public Encoder<DBObject> getEncoder() {
         return encoder;
     }
 
-    public Decoder<? extends DBObject> getDecoder() {
+    public Decoder<DBObject> getDecoder() {
         return decoder;
     }
 }

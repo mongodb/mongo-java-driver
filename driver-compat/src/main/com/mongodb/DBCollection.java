@@ -20,7 +20,6 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.Encoder;
 import org.bson.types.ObjectId;
-import org.mongodb.CollectibleCodec;
 import org.mongodb.Document;
 import org.mongodb.Index;
 import org.mongodb.MapReduceCursor;
@@ -30,6 +29,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.codecs.ObjectIdGenerator;
+import org.mongodb.codecs.validators.FieldNameValidator;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.AggregateExplainOperation;
@@ -122,6 +122,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @SuppressWarnings({"rawtypes", "deprecation"})
 public class DBCollection {
     private static final String NAMESPACE_KEY_NAME = "ns";
+    public static final String ID_FIELD_NAME = "_id";
     private final DB database;
     private final String name;
     private volatile ReadPreference readPreference;
@@ -135,7 +136,7 @@ public class DBCollection {
     private DBObjectFactory objectFactory;
 
     private final Codec<Document> documentCodec;
-    private CompoundDBObjectCodec objectCodec;
+    private volatile CompoundDBObjectCodec objectCodec;
 
 
     /**
@@ -151,7 +152,7 @@ public class DBCollection {
         this.documentCodec = documentCodec;
         this.optionHolder = new Bytes.OptionHolder(database.getOptionHolder());
         this.objectFactory = new DBObjectFactory();
-        this.objectCodec = new CompoundDBObjectCodec(createCollectibleDBObjectCodec());
+        this.objectCodec = new CompoundDBObjectCodec(getDefaultDBObjectCodec());
     }
 
     /**
@@ -277,13 +278,16 @@ public class DBCollection {
 
         List<InsertRequest<DBObject>> insertRequestList = new ArrayList<InsertRequest<DBObject>>(documents.size());
         for (DBObject cur : documents) {
+            if (cur.get(ID_FIELD_NAME) == null) {
+                cur.put(ID_FIELD_NAME, new ObjectId());
+            }
             insertRequestList.add(new InsertRequest<DBObject>(cur));
         }
         return insert(insertRequestList, encoder, aWriteConcern);
     }
 
     private Encoder<DBObject> toEncoder(final DBEncoder dbEncoder) {
-        return dbEncoder != null ? new DBEncoderAdapter(dbEncoder, new ObjectIdGenerator()) : objectCodec;
+        return dbEncoder != null ? new DBEncoderAdapter(dbEncoder, getIdGenerator()) : objectCodec;
     }
 
     private WriteResult insert(final List<InsertRequest<DBObject>> insertRequestList, final Encoder<DBObject> encoder,
@@ -339,25 +343,24 @@ public class DBCollection {
      * @mongodb.driver.manual tutorial/modify-documents/#modify-a-document-with-save-method Save
      */
     public WriteResult save(final DBObject document, final WriteConcern writeConcern) {
-        Object id = getObjectCodec().getId(document);
+        Object id = document.get(ID_FIELD_NAME);
         if (id == null) {
             return insert(document, writeConcern);
         } else {
-            return replaceOrInsert(document, writeConcern);
+            return replaceOrInsert(document, id, writeConcern);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private WriteResult replaceOrInsert(final DBObject obj, final WriteConcern writeConcern) {
-        Document filter = new Document("_id", getObjectCodec().getId(obj));
+    private WriteResult replaceOrInsert(final DBObject obj, final Object id, final WriteConcern writeConcern) {
+        Document filter = new Document(ID_FIELD_NAME, id);
 
         ReplaceRequest<DBObject> replaceRequest = new ReplaceRequest<DBObject>(filter, obj).upsert(true);
 
         return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(),
                                                                     writeConcern.toNew(), asList(replaceRequest), getDocumentCodec(),
                                                                     getObjectCodec()),
-                                     writeConcern
-                                    );
+                                     writeConcern);
     }
 
     /**
@@ -1651,7 +1654,7 @@ public class DBCollection {
         //Are we are using default factory?
         // If yes then we can use CollectibleDBObjectCodec directly, otherwise it will be wrapped.
         Decoder<DBObject> decoder = (factory == null || factory == DefaultDBDecoder.FACTORY)
-                                    ? createCollectibleDBObjectCodec()
+                                    ? getDefaultDBObjectCodec()
                                     : new DBDecoderAdapter(factory.create(), this, getBufferPool());
         this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), decoder);
     }
@@ -1676,7 +1679,7 @@ public class DBCollection {
         //Are we are using default factory?
         // If yes then we can use CollectibleDBObjectCodec directly, otherwise it will be wrapped.
         Encoder<DBObject> encoder = (factory == null || factory == DefaultDBEncoder.FACTORY)
-                                    ? createCollectibleDBObjectCodec()
+                                    ? getDefaultDBObjectCodec()
                                     : new DBEncoderFactoryAdapter(encoderFactory);
         this.objectCodec = new CompoundDBObjectCodec(encoder, objectCodec.getDecoder());
     }
@@ -1807,9 +1810,12 @@ public class DBCollection {
 
     synchronized void setObjectFactory(final DBObjectFactory factory) {
         this.objectFactory = factory;
-        this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), createCollectibleDBObjectCodec());
+        this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), getDefaultDBObjectCodec());
     }
 
+    private ObjectIdGenerator getIdGenerator() {
+        return new ObjectIdGenerator();
+    }
 
     /**
      * Creates a builder for an ordered bulk operation.  Write requests included in the bulk operations will be executed in order, and will
@@ -1854,11 +1860,9 @@ public class DBCollection {
         return getDB().getMongo().execute(operation, readPreference);
     }
 
-    private CollectibleDBObjectCodec createCollectibleDBObjectCodec() {
-        return new CollectibleDBObjectCodec(getDB(),
-                                            new ObjectIdGenerator(),
-                                            getObjectFactory(), getDB().getMongo().getCodecRegistry(),
-                                            DBObjectCodecSource.getDefaultBsonTypeClassMap());
+    private DBObjectCodec getDefaultDBObjectCodec() {
+        return new DBObjectCodec(getDB(), new FieldNameValidator(), getObjectFactory(), getDB().getMongo().getCodecRegistry(),
+                                 DBObjectCodecSource.getDefaultBsonTypeClassMap(), getIdGenerator());
     }
 
     private Index toIndex(final DBObject keys, final DBObject options) {
@@ -1913,7 +1917,7 @@ public class DBCollection {
         return keys;
     }
 
-    CollectibleCodec<DBObject> getObjectCodec() {
+    Codec<DBObject> getObjectCodec() {
         return objectCodec;
     }
 

@@ -19,14 +19,23 @@ package org.mongodb.test;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
-import org.mongodb.CollectibleCodec;
+import org.mongodb.codecs.CollectibleCodec;
 
 import java.util.Date;
 
 public final class WorkerCodec implements CollectibleCodec<Worker> {
     @Override
-    public Object getId(final Worker worker) {
-        return worker.getId();
+    public boolean documentHasId(final Worker document) {
+        return true;
+    }
+
+    @Override
+    public Object getDocumentId(final Worker document) {
+        return document.getId();
+    }
+
+    @Override
+    public void generateIdIfAbsentFromDocument(final Worker worker) {
     }
 
     @Override

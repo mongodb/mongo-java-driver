@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import org.bson.types.ObjectId;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +27,7 @@ import java.util.List;
  * @since 2.12
  */
 public class BulkWriteOperation {
+    private static final String ID_FIELD_NAME = "_id";
     private final boolean ordered;
     private final DBCollection collection;
     private final List<WriteRequest> requests = new ArrayList<WriteRequest>();
@@ -52,6 +55,9 @@ public class BulkWriteOperation {
      * @param document the document to insert
      */
     public void insert(final DBObject document) {
+        if (document.get(ID_FIELD_NAME) == null) {
+            document.put(ID_FIELD_NAME, new ObjectId());
+        }
         addRequest(new InsertRequest(document));
     }
 
