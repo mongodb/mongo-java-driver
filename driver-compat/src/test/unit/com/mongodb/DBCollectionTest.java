@@ -551,8 +551,8 @@ public class DBCollectionTest extends DatabaseTestCase {
     public void testCompoundCodecWithDefaultValues() {
         assertThat(collection.getObjectCodec(), instanceOf(CompoundDBObjectCodec.class));
         CompoundDBObjectCodec codec = (CompoundDBObjectCodec) collection.getObjectCodec();
-        assertThat(codec.getDecoder(), instanceOf(CollectibleDBObjectCodec.class));
-        assertThat(codec.getEncoder(), instanceOf(CollectibleDBObjectCodec.class));
+        assertThat(codec.getDecoder(), instanceOf(DBObjectCodec.class));
+        assertThat(codec.getEncoder(), instanceOf(DBObjectCodec.class));
     }
 
     @Test

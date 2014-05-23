@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import org.bson.codecs.Codec;
 import org.mongodb.annotations.ThreadSafe;
 
 /**
@@ -35,9 +36,9 @@ public interface MongoDatabase {
 
     MongoCollection<Document> getCollection(String name, MongoCollectionOptions options);
 
-    <T> MongoCollection<T> getCollection(String name, CollectibleCodec<T> codec);
+    <T> MongoCollection<T> getCollection(String name, Codec<T> codec);
 
-    <T> MongoCollection<T> getCollection(String name, CollectibleCodec<T> codec, MongoCollectionOptions options);
+    <T> MongoCollection<T> getCollection(String name, Codec<T> codec, MongoCollectionOptions options);
 
     //TODO: still need to come up with a sensible name for this
     DatabaseAdministration tools();

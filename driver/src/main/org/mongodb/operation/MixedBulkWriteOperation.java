@@ -16,12 +16,12 @@
 
 package org.mongodb.operation;
 
+import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteError;
 import org.mongodb.BulkWriteException;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.BulkWriteUpsert;
 import org.mongodb.Document;
-import org.bson.codecs.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
@@ -31,6 +31,7 @@ import org.mongodb.WriteConcernError;
 import org.mongodb.WriteResult;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
+import org.mongodb.codecs.CollectibleCodec;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
@@ -418,6 +419,11 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
 
         @SuppressWarnings("unchecked")
         RunExecutor getInsertsRunExecutor(final List<InsertRequest<T>> insertRequests, final Connection connection) {
+            if (encoder instanceof CollectibleCodec) {
+                for (InsertRequest<T> cur : insertRequests) {
+                    ((CollectibleCodec<T>) encoder).generateIdIfAbsentFromDocument(cur.getDocument());
+                }
+            }
             return new RunExecutor(connection) {
                 WriteProtocol getWriteProtocol(final int index) {
                     return new InsertProtocol<T>(namespace, ordered, writeConcern, asList(insertRequests.get(index)), encoder

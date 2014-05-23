@@ -16,8 +16,8 @@
 
 package org.mongodb.async;
 
+import org.bson.codecs.Codec;
 import org.mongodb.Block;
-import org.mongodb.CollectibleCodec;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
 import org.mongodb.Function;
@@ -28,6 +28,7 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;
 import org.mongodb.WriteResult;
+import org.mongodb.codecs.CollectibleCodec;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.AsyncReadOperation;
@@ -54,11 +55,11 @@ import static org.mongodb.assertions.Assertions.notNull;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final MongoNamespace namespace;
-    private final CollectibleCodec<T> codec;
+    private final Codec<T> codec;
     private final MongoCollectionOptions options;
     private final MongoClientImpl client;
 
-    public MongoCollectionImpl(final MongoNamespace namespace, final CollectibleCodec<T> codec, final MongoCollectionOptions options,
+    public MongoCollectionImpl(final MongoNamespace namespace, final Codec<T> codec, final MongoCollectionOptions options,
                                final MongoClientImpl client) {
 
         this.namespace = namespace;
@@ -83,7 +84,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public CollectibleCodec<T> getCodec() {
+    public Codec<T> getCodec() {
         return codec;
     }
 
@@ -112,10 +113,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public MongoFuture<WriteResult> save(final T document) {
-        if (codec.getId(document) == null) {
+        if (!(codec instanceof CollectibleCodec)) {
+            throw new UnsupportedOperationException();  // TODO: support this
+        }
+        CollectibleCodec<T> collectibleCodec = (CollectibleCodec<T>) codec;
+        if (!collectibleCodec.documentHasId(document)) {
             return insert(document);
         } else {
-            return find(new Document("_id", codec.getId(document))).upsert().replace(document);
+            return find(new Document("_id", collectibleCodec.getDocumentId(document))).upsert().replace(document);
         }
     }
 

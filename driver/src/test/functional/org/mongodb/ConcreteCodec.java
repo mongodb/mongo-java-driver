@@ -19,6 +19,7 @@ package org.mongodb;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
+import org.mongodb.codecs.CollectibleCodec;
 
 class ConcreteCodec implements CollectibleCodec<Concrete> {
 
@@ -57,7 +58,17 @@ class ConcreteCodec implements CollectibleCodec<Concrete> {
     }
 
     @Override
-    public Object getId(final Concrete document) {
+    public boolean documentHasId(final Concrete document) {
+        return true;
+    }
+
+    @Override
+    public Object getDocumentId(final Concrete document) {
         return document.getId();
+    }
+
+    @Override
+    public void generateIdIfAbsentFromDocument(final Concrete document) {
+
     }
 }

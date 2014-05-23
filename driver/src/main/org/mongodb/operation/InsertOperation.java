@@ -16,10 +16,11 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.BulkWriteResult;
 import org.bson.codecs.Encoder;
+import org.mongodb.BulkWriteResult;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
+import org.mongodb.codecs.CollectibleCodec;
 import org.mongodb.protocol.InsertCommandProtocol;
 import org.mongodb.protocol.InsertProtocol;
 import org.mongodb.protocol.WriteCommandProtocol;
@@ -45,6 +46,11 @@ public class InsertOperation<T> extends BaseWriteOperation {
         super(namespace, ordered, writeConcern);
         this.insertRequestList = notNull("insertList", insertRequestList);
         this.encoder = notNull("encoder", encoder);
+        if (encoder instanceof CollectibleCodec) {
+            for (InsertRequest<T> cur : insertRequestList) {
+                ((CollectibleCodec<T>) encoder).generateIdIfAbsentFromDocument(cur.getDocument());
+            }
+        }
     }
 
     @Override

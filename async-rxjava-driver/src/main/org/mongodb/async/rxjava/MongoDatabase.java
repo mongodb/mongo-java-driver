@@ -16,7 +16,7 @@
 
 package org.mongodb.async.rxjava;
 
-import org.mongodb.CollectibleCodec;
+import org.bson.codecs.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCollectionOptions;
@@ -68,7 +68,7 @@ public interface MongoDatabase {
      * @param <T> the document type
      * @return the collection
      */
-    <T> MongoCollection<T> getCollection(String name, CollectibleCodec<T> codec, MongoCollectionOptions options);
+    <T> MongoCollection<T> getCollection(String name, Codec<T> codec, MongoCollectionOptions options);
 
     /**
      * Asynchronously execute the command described by the given document.

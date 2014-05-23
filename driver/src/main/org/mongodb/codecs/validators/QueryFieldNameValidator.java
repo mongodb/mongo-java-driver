@@ -19,6 +19,8 @@ package org.mongodb.codecs.validators;
 public class QueryFieldNameValidator implements Validator<String> {
     @Override
     public void validate(final String value) {
-        //no-op
+        if (value == null) {
+            throw new IllegalArgumentException("Key can not be null");
+        }
     }
 }
