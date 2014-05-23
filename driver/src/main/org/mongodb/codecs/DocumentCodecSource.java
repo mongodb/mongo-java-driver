@@ -28,7 +28,7 @@ import org.bson.codecs.SymbolCodec;
 import org.bson.codecs.UndefinedCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.CodecSource;
-import org.bson.types.CodeWithScope;
+import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
 
 import java.util.HashMap;

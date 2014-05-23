@@ -20,7 +20,6 @@ import org.bson.BSONType;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
-import org.bson.types.CodeWithScope;
 import org.bson.types.DBPointer;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
@@ -28,6 +27,7 @@ import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Symbol;
 import org.bson.types.Undefined;
+import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
 
 import java.util.Date;
