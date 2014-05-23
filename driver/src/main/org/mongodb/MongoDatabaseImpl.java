@@ -17,9 +17,8 @@
 package org.mongodb;
 
 import org.bson.codecs.Codec;
-import org.mongodb.codecs.CollectibleDocumentCodec;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.ObjectIdGenerator;
+import org.mongodb.codecs.validators.FieldNameValidator;
 import org.mongodb.operation.CommandReadOperation;
 import org.mongodb.operation.CommandWriteOperation;
 
@@ -51,21 +50,18 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public MongoCollectionImpl<Document> getCollection(final String collectionName,
                                                        final MongoCollectionOptions operationOptions) {
-        return getCollection(collectionName,
-                             new CollectibleDocumentCodec(
-                                                         new ObjectIdGenerator()),
-                             operationOptions);
+        return getCollection(collectionName, new DocumentCodec(new FieldNameValidator()), operationOptions);
     }
 
     @Override
     public <T> MongoCollectionImpl<T> getCollection(final String collectionName,
-                                                    final CollectibleCodec<T> codec) {
+                                                    final Codec<T> codec) {
         return getCollection(collectionName, codec, MongoCollectionOptions.builder().build());
     }
 
     @Override
     public <T> MongoCollectionImpl<T> getCollection(final String collectionName,
-                                                    final CollectibleCodec<T> codec,
+                                                    final Codec<T> codec,
                                                     final MongoCollectionOptions operationOptions) {
         return new MongoCollectionImpl<T>(collectionName, this, codec, operationOptions.withDefaults(options), client);
     }

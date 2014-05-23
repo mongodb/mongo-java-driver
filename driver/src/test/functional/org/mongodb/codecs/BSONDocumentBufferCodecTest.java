@@ -16,10 +16,6 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONBinaryWriter;
-import org.bson.codecs.configuration.CodecSource;
-import org.bson.codecs.configuration.RootCodecRegistry;
-import org.bson.io.BasicOutputBuffer;
 import org.junit.Test;
 import org.mongodb.BSONDocumentBuffer;
 import org.mongodb.DatabaseTestCase;
@@ -28,17 +24,15 @@ import org.mongodb.MongoCollection;
 import org.mongodb.SimpleBufferProvider;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class BSONDocumentBufferCodecTest extends DatabaseTestCase {
 
     private final BSONDocumentBufferCodec codec =
-        new BSONDocumentBufferCodec(new SimpleBufferProvider(),
-                                    new RootCodecRegistry(Arrays.<CodecSource>asList(new DocumentCodecSource())));
+        new BSONDocumentBufferCodec(new SimpleBufferProvider()
+        );
 
     @Test
     public void shouldBeAbleToQueryThenInsert() {
@@ -55,36 +49,5 @@ public class BSONDocumentBufferCodecTest extends DatabaseTestCase {
         lazyCollection.insert(docs);
 
         assertEquals(originalDocuments, collection.find().sort(new Document("_id", 1)).into(new ArrayList<Document>()));
-    }
-
-    @Test
-    public void getIdShouldReturnNullForDocumentWithNoId() {
-        Document doc = new Document("a", 1).append("b", new Document("c", 1));
-        BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer(), true);
-        BSONDocumentBuffer documentBuffer;
-        try {
-            new DocumentCodec().encode(writer, doc);
-            documentBuffer = new BSONDocumentBuffer(writer.getBuffer().toByteArray());
-        } finally {
-            writer.close();
-        }
-
-        assertNull(codec.getId(documentBuffer));
-    }
-
-    @Test
-    public void getIdShouldReturnId() {
-        Integer id = 42;
-        Document doc = new Document("a", 1).append("b", new Document("c", 1)).append("_id", id);
-        BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer(), true);
-        BSONDocumentBuffer documentBuffer;
-        try {
-            new DocumentCodec().encode(writer, doc);
-            documentBuffer = new BSONDocumentBuffer(writer.getBuffer().toByteArray());
-        } finally {
-            writer.close();
-        }
-
-        assertEquals(id, codec.getId(documentBuffer));
     }
 }

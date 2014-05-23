@@ -18,6 +18,7 @@ package org.mongodb;
 
 import org.bson.codecs.Codec;
 import org.bson.types.Code;
+import org.mongodb.codecs.CollectibleCodec;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.AggregateOperation;
 import org.mongodb.operation.CountOperation;
@@ -58,10 +59,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final String name;
     private final MongoDatabase database;
     private final MongoCollectionOptions options;
-    private final CollectibleCodec<T> codec;
+    private final Codec<T> codec;
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
-                               final CollectibleCodec<T> codec, final MongoCollectionOptions options,
+                               final Codec<T> codec, final MongoCollectionOptions options,
                                final MongoClientImpl client) {
 
         this.codec = codec;
@@ -132,7 +133,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public CollectibleCodec<T> getCodec() {
+    public Codec<T> getCodec() {
         return codec;
     }
 
@@ -329,11 +330,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult save(final T document) {
-            Object id = getCodec().getId(document);
-            if (id == null) {
+            if (!(codec instanceof CollectibleCodec)) {
+                throw new UnsupportedOperationException();  // TODO: support this
+            }
+            CollectibleCodec<T> collectibleCodec = (CollectibleCodec<T>) codec;
+            if (!collectibleCodec.documentHasId(document)) {
                 return insert(document);
             } else {
-                return upsert().find(new Document("_id", id)).replace(document);
+                return upsert().find(new Document("_id", collectibleCodec.getDocumentId(document))).replace(document);
             }
         }
 

@@ -17,16 +17,14 @@
 package org.mongodb.async;
 
 
-import org.mongodb.CollectibleCodec;
+import org.bson.codecs.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.codecs.CollectibleDocumentCodec;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.operation.CommandWriteOperation;
 
 class MongoDatabaseImpl implements MongoDatabase {
@@ -53,13 +51,12 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public MongoCollection<Document> getCollection(final String name,
                                                        final MongoCollectionOptions options) {
-        return getCollection(name, new CollectibleDocumentCodec(
-                                                               new ObjectIdGenerator()), options);
+        return getCollection(name, new DocumentCodec(), options);
     }
 
 
     @Override
-    public <T> MongoCollection<T> getCollection(final String name, final CollectibleCodec<T> codec, final MongoCollectionOptions options) {
+    public <T> MongoCollection<T> getCollection(final String name, final Codec<T> codec, final MongoCollectionOptions options) {
         return new MongoCollectionImpl<T>(new MongoNamespace(this.name, name), codec, options, client);
     }
 

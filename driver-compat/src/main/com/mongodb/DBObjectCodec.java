@@ -28,9 +28,11 @@ import org.bson.types.Binary;
 import org.bson.types.CodeWScope;
 import org.bson.types.DBPointer;
 import org.bson.types.Symbol;
+import org.mongodb.IdGenerator;
 import org.mongodb.MongoException;
 import org.mongodb.codecs.BinaryToByteArrayTransformer;
 import org.mongodb.codecs.BinaryToUUIDTransformer;
+import org.mongodb.codecs.CollectibleCodec;
 import org.mongodb.codecs.validators.Validator;
 
 import java.lang.reflect.Array;
@@ -41,20 +43,25 @@ import java.util.Map;
 import static com.mongodb.MongoExceptions.mapException;
 
 @SuppressWarnings("rawtypes")
-class DBObjectCodec implements Codec<DBObject> {
+class DBObjectCodec implements CollectibleCodec<DBObject> {
+    private static final String ID_FIELD_NAME = "_id";
+
     private final CodecRegistry codecRegistry;
     private final Map<BSONType, Class<?>> bsonTypeClassMap;
     private final Validator<String> fieldNameValidator;
     private final DB db;
     private final DBObjectFactory objectFactory;
+    private final IdGenerator idGenerator;
 
     public DBObjectCodec(final DB db, final Validator<String> fieldNameValidator, final DBObjectFactory objectFactory,
-                         final CodecRegistry codecRegistry, final Map<BSONType, Class<?>> bsonTypeClassMap) {
+                         final CodecRegistry codecRegistry, final Map<BSONType, Class<?>> bsonTypeClassMap,
+                         final IdGenerator idGenerator) {
         this.db = db;
         this.fieldNameValidator = fieldNameValidator;
         this.objectFactory = objectFactory;
         this.codecRegistry = codecRegistry;
         this.bsonTypeClassMap = bsonTypeClassMap;
+        this.idGenerator = idGenerator;
     }
 
     //TODO: what about BSON Exceptions?
@@ -75,19 +82,62 @@ class DBObjectCodec implements Codec<DBObject> {
         writer.writeEndDocument();
     }
 
-    protected void beforeFields(final BSONWriter bsonWriter, final DBObject document) {
+    @Override
+    public DBObject decode(final BSONReader reader) {
+        List<String> path = new ArrayList<String>(10);
+        return readDocument(reader, path);
     }
 
-    protected boolean skipField(final String key) {
-        return false;
+    @Override
+    public Class<DBObject> getEncoderClass() {
+        return DBObject.class;
     }
 
-    protected void validateField(final String key) {
+    @Override
+    public boolean documentHasId(final DBObject document) {
+        return document.containsKey(ID_FIELD_NAME);
+    }
+
+    @Override
+    public Object getDocumentId(final DBObject document) {
+        if (documentHasId(document)) {
+            return document.get(ID_FIELD_NAME);
+//            BsonDocument idHoldingDocument = new BsonDocument();
+//            BSONWriter writer = new BsonDocumentWriter(idHoldingDocument);
+//            writer.writeStartDocument();
+//            writer.writeName(ID_FIELD_NAME);
+//            writeValue(writer, document.get(ID_FIELD_NAME));
+//            writer.writeEndDocument();
+//            return idHoldingDocument.get(ID_FIELD_NAME);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public void generateIdIfAbsentFromDocument(final DBObject document) {
+        if (!documentHasId(document)) {
+            document.put(ID_FIELD_NAME, idGenerator.generate());
+        }
+    }
+
+    private void beforeFields(final BSONWriter bsonWriter, final DBObject document) {
+        if (document.containsField(ID_FIELD_NAME)) {
+            bsonWriter.writeName(ID_FIELD_NAME);
+            writeValue(bsonWriter, document.get(ID_FIELD_NAME));
+        }
+    }
+
+    private boolean skipField(final String key) {
+        return key.equals(ID_FIELD_NAME);
+    }
+
+    private void validateField(final String key) {
         fieldNameValidator.validate(key);
     }
 
     @SuppressWarnings("unchecked")
-    protected void writeValue(final BSONWriter bsonWriter, final Object initialValue) {
+    private void writeValue(final BSONWriter bsonWriter, final Object initialValue) {
         Object value = BSON.applyEncodingHooks(initialValue);
         try {
             if (value == null) {
@@ -167,17 +217,6 @@ class DBObjectCodec implements Codec<DBObject> {
             writeValue(bsonWriter, cur);
         }
         bsonWriter.writeEndArray();
-    }
-
-    @Override
-    public DBObject decode(final BSONReader reader) {
-        List<String> path = new ArrayList<String>(10);
-        return readDocument(reader, path);
-    }
-
-    @Override
-    public Class<DBObject> getEncoderClass() {
-        return DBObject.class;
     }
 
     private Object readValue(final BSONReader reader, final String fieldName, final List<String> path) {

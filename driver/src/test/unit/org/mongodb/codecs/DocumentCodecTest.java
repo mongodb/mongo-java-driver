@@ -34,6 +34,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
+import org.mongodb.codecs.validators.FieldNameValidator;
+import org.mongodb.codecs.validators.QueryFieldNameValidator;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -43,17 +45,17 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class DocumentCodecTest {
     private BasicOutputBuffer buffer;
     private BSONBinaryWriter writer;
-    private DocumentCodec documentCodec;
 
     @Before
     public void setUp() throws Exception {
         buffer = new BasicOutputBuffer();
         writer = new BSONBinaryWriter(buffer, true);
-        documentCodec = new DocumentCodec();
     }
 
     @After
@@ -63,6 +65,7 @@ public class DocumentCodecTest {
 
     @Test
     public void testPrimitiveBSONTypeCodecs() throws IOException {
+        DocumentCodec documentCodec = new DocumentCodec();
         Document doc = new Document();
         doc.put("oid", new ObjectId());
         doc.put("integer", 1);
@@ -87,6 +90,7 @@ public class DocumentCodecTest {
 
     @Test
     public void testIterableEncoding() throws IOException {
+        DocumentCodec documentCodec = new DocumentCodec();
         Document doc = new Document();
         doc.put("array", asList(1, 2, 3, 4, 5));
 
@@ -99,6 +103,7 @@ public class DocumentCodecTest {
 
     @Test
     public void testCodeWithScopeEncoding() throws IOException {
+        DocumentCodec documentCodec = new DocumentCodec();
         Document doc = new Document();
         doc.put("theCode", new CodeWithScope("javaScript code", new Document("fieldNameOfScope", "valueOfScope")));
 
@@ -110,6 +115,7 @@ public class DocumentCodecTest {
 
     @Test
     public void testIterableContainingOtherIterableEncoding() throws IOException {
+        DocumentCodec documentCodec = new DocumentCodec();
         Document doc = new Document();
         @SuppressWarnings("unchecked")
         List<List<Integer>> listOfLists = asList(asList(1), asList(2));
@@ -124,6 +130,7 @@ public class DocumentCodecTest {
 
     @Test
     public void testIterableContainingDocumentsEncoding() throws IOException {
+        DocumentCodec documentCodec = new DocumentCodec();
         Document doc = new Document();
         List<Document> listOfDocuments = asList(new Document("intVal", 1), new Document("anotherInt", 2));
         doc.put("array", listOfDocuments);
@@ -137,6 +144,7 @@ public class DocumentCodecTest {
 
     @Test
     public void testNestedDocumentEncoding() throws IOException {
+        DocumentCodec documentCodec = new DocumentCodec();
         Document doc = new Document();
         doc.put("nested", new Document("x", 1));
 
@@ -149,6 +157,7 @@ public class DocumentCodecTest {
 
     @Test
     public void shouldNotThrowAnExceptionForValidQueryDocumentFieldNames() throws IOException {
+        DocumentCodec documentCodec = new DocumentCodec();
         Document document = new Document("x.y", 1);
 
         documentCodec.encode(writer, document);
@@ -160,6 +169,7 @@ public class DocumentCodecTest {
 
     @Test
     public void shouldNotThrowAnExceptionForValidNestedQueryDocumentFieldNames() throws IOException {
+        DocumentCodec documentCodec = new DocumentCodec(new QueryFieldNameValidator());
         Document document = new Document("x", new Document("a.b", 1));
 
         documentCodec.encode(writer, document);
@@ -167,6 +177,47 @@ public class DocumentCodecTest {
         InputBuffer inputBuffer = createInputBuffer();
         Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
         assertEquals(document, decodedDocument);
+    }
+
+    @Test
+    public void shouldNotGenerateIdIfPresent() {
+        DocumentCodec documentCodec = new DocumentCodec();
+        Document document = new Document("_id", 1);
+        assertTrue(documentCodec.documentHasId(document));
+        documentCodec.generateIdIfAbsentFromDocument(document);
+        assertTrue(documentCodec.documentHasId(document));
+        assertEquals(1, documentCodec.getDocumentId(document));
+    }
+
+    @Test
+    public void shouldGenerateIdIfAbsent() {
+        DocumentCodec documentCodec = new DocumentCodec();
+        Document document = new Document();
+        assertFalse(documentCodec.documentHasId(document));
+        documentCodec.generateIdIfAbsentFromDocument(document);
+        assertTrue(documentCodec.documentHasId(document));
+        assertEquals(ObjectId.class, documentCodec.getDocumentId(document).getClass());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testThrowsIfDollarInKey() {
+        DocumentCodec documentCodec = new DocumentCodec(new FieldNameValidator());
+        Document document = new Document("$1", 1);
+        documentCodec.encode(writer, document);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testThrowsIfDotInKey() {
+        DocumentCodec documentCodec = new DocumentCodec(new FieldNameValidator());
+        Document document = new Document("a.b", 1);
+        documentCodec.encode(writer, document);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testThrowsIfKeyIsNull() {
+        DocumentCodec documentCodec = new DocumentCodec(new FieldNameValidator());
+        Document document = new Document(null, 1);
+        documentCodec.encode(writer, document);
     }
 
     // TODO: factor into common base class;
