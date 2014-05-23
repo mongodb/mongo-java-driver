@@ -19,9 +19,14 @@ package org.mongodb.codecs;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.codecs.Codec;
-import org.bson.types.CodeWithScope;
+import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
 
+/**
+ * A Codec for CodeWithScope instances.
+ *
+ * @since 3.0
+ */
 public class CodeWithScopeCodec implements Codec<CodeWithScope> {
     private final Codec<Document> documentCodec;
 

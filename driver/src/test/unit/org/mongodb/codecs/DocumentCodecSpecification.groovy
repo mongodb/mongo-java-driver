@@ -15,6 +15,7 @@
  */
 
 package org.mongodb.codecs
+
 import org.bson.BSONBinaryReader
 import org.bson.BSONBinaryWriter
 import org.bson.ByteBufNIO
@@ -23,13 +24,13 @@ import org.bson.io.BasicOutputBuffer
 import org.bson.types.BSONTimestamp
 import org.bson.types.Binary
 import org.bson.types.Code
-import org.bson.types.CodeWithScope
 import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import org.bson.types.ObjectId
 import org.bson.types.RegularExpression
 import org.bson.types.Symbol
 import org.bson.types.Undefined
+import org.mongodb.CodeWithScope
 import org.mongodb.Document
 import spock.lang.Specification
 
