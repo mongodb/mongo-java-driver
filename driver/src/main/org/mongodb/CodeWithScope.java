@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-package org.bson.types;
+package org.mongodb;
 
-import org.mongodb.Document;
+import org.bson.types.Code;
 
 /**
- * for using the CodeWithScope type
+ * A representation of the JavaScript Code with Scope BSON type.
+ *
+ * @since 3.0
  */
 public class CodeWithScope extends Code {
 

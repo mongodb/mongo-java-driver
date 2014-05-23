@@ -27,13 +27,13 @@ import org.bson.io.BasicOutputBuffer;
 import org.bson.io.InputBuffer;
 import org.bson.types.Binary;
 import org.bson.types.Code;
-import org.bson.types.CodeWithScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
 
 import java.io.ByteArrayOutputStream;
