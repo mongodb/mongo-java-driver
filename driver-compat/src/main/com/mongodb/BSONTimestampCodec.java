@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package org.bson.codecs;
+package com.mongodb;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
+import org.bson.codecs.Codec;
 import org.bson.types.BSONTimestamp;
 
 /**
