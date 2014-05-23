@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.bson;
+package org.bson.types;
 
-import org.bson.types.BSONTimestamp;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

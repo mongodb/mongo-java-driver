@@ -17,7 +17,6 @@
 package com.mongodb;
 
 import org.bson.BSONType;
-import org.bson.codecs.BSONTimestampCodec;
 import org.bson.codecs.BinaryCodec;
 import org.bson.codecs.CodeCodec;
 import org.bson.codecs.Codec;
