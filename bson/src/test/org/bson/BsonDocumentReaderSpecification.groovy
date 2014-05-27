@@ -15,6 +15,7 @@
  */
 
 package org.bson
+
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.types.Binary
 import org.bson.types.BsonArray
@@ -29,6 +30,7 @@ import org.bson.types.BsonNull
 import org.bson.types.BsonString
 import org.bson.types.Code
 import org.bson.types.CodeWithScope
+import org.bson.types.DBPointer
 import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import org.bson.types.ObjectId
@@ -38,8 +40,8 @@ import org.bson.types.Timestamp
 import org.bson.types.Undefined
 import spock.lang.Specification
 
-class BsonDocumentWriterSpecification extends Specification {
-    def 'should write all types'() {
+class BsonDocumentReaderSpecification extends Specification {
+    def 'should read all types'() {
         given:
         def doc = new BsonDocument(
                 [
@@ -52,7 +54,7 @@ class BsonDocumentWriterSpecification extends Specification {
                         new BsonElement('string', new BsonString('the fox ...')),
                         new BsonElement('minKey', new MinKey()),
                         new BsonElement('maxKey', new MaxKey()),
-//                        new BsonElement('dbPointer', new DBPointer("test.test", new ObjectId())),
+                        new BsonElement('dbPointer', new DBPointer("test.test", new ObjectId())),
                         new BsonElement('code', new Code('int i = 0;')),
                         new BsonElement('codeWithScope', new CodeWithScope('x', new BsonDocument('x', new BsonInt32(1)))),
                         new BsonElement('objectId', new ObjectId()),
@@ -69,11 +71,11 @@ class BsonDocumentWriterSpecification extends Specification {
 
 
         when:
-        def encodedDoc = new BsonDocument();
-        new BsonDocumentCodec().encode(new BsonDocumentWriter(encodedDoc), doc)
+        def decodedDoc = new BsonDocumentCodec().decode(new BsonDocumentReader(doc))
 
         then:
-        encodedDoc == doc
+        decodedDoc == doc
     }
+
 
 }
