@@ -20,7 +20,6 @@ import org.bson.BSONBinaryReader;
 import org.bson.BSONBinarySubType;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONReaderSettings;
-import org.bson.BSONWriter;
 import org.bson.ByteBufNIO;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
@@ -47,8 +46,8 @@ import static org.junit.Assert.assertEquals;
 
 public class DocumentCodecTest {
     private BasicOutputBuffer buffer;
+    private BSONBinaryWriter writer;
     private DocumentCodec documentCodec;
-    private BSONWriter writer;
 
     @Before
     public void setUp() throws Exception {
