@@ -16,33 +16,23 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONBinaryWriter;
-import org.bson.BSONBinaryWriterSettings;
-import org.bson.BSONWriter;
-import org.bson.BSONWriterSettings;
-import org.bson.io.BasicOutputBuffer;
-import org.junit.After;
+import org.bson.BsonDocumentWriter;
+import org.bson.types.BsonDocument;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
+import org.mongodb.codecs.validators.FieldNameValidator;
 
 import java.io.IOException;
 
 public class CollectibleDocumentCodecUnitTest {
-    private CollectibleDocumentCodec codec;
-    private BSONWriter writer;
+    private DocumentCodec codec;
+    private BsonDocumentWriter writer;
 
     @Before
     public void setUp() throws Exception {
-        writer = new BSONBinaryWriter(new BSONWriterSettings(100),
-                                      new BSONBinaryWriterSettings(1024 * 1024),
-                                      new BasicOutputBuffer(), true);
-        codec = new CollectibleDocumentCodec(new ObjectIdGenerator());
-    }
-
-    @After
-    public void tearDown() {
-        writer.close();
+        writer = new BsonDocumentWriter(new BsonDocument());
+        codec = new DocumentCodec(new FieldNameValidator());
     }
 
     @Test(expected = IllegalArgumentException.class)

@@ -17,10 +17,10 @@
 package org.mongodb.json;
 
 
+import org.bson.AbstractBSONReader;
 import org.bson.BSONBinarySubType;
 import org.bson.BSONContextType;
 import org.bson.BSONInvalidOperationException;
-import org.bson.BSONReader;
 import org.bson.BSONReaderSettings;
 import org.bson.BSONType;
 import org.bson.types.Binary;
@@ -60,9 +60,8 @@ import java.util.TimeZone;
  *
  * @since 3.0.0
  */
-public class JSONReader extends BSONReader {
+public class JSONReader extends AbstractBSONReader {
 
-    private Context context;
     private final JSONScanner scanner;
     private JSONToken pushedToken;
     private Object currentValue;
@@ -76,7 +75,7 @@ public class JSONReader extends BSONReader {
     public JSONReader(final BSONReaderSettings settings, final String json) {
         super(settings);
         scanner = new JSONScanner(json);
-        context = new Context(null, BSONContextType.TOP_LEVEL);
+        setContext(new Context(null, BSONContextType.TOP_LEVEL));
     }
 
     /**
@@ -89,16 +88,12 @@ public class JSONReader extends BSONReader {
     }
 
     @Override
-    public Binary readBinaryData() {
-        checkPreconditions("readBinaryData", BSONType.BINARY);
-        setState(getNextState());
+    protected Binary doReadBinaryData() {
         return (Binary) currentValue;
     }
 
     @Override
-    public boolean readBoolean() {
-        checkPreconditions("readBoolean", BSONType.BOOLEAN);
-        setState(getNextState());
+    protected boolean doReadBoolean() {
         return (Boolean) currentValue;
     }
 
@@ -116,7 +111,7 @@ public class JSONReader extends BSONReader {
             throwInvalidState("readBSONType", State.TYPE);
         }
 
-        if (context.getContextType() == BSONContextType.DOCUMENT) {
+        if (getContext().getContextType() == BSONContextType.DOCUMENT) {
             JSONToken nameToken = popToken();
             switch (nameToken.getType()) {
                 case STRING:
@@ -137,7 +132,7 @@ public class JSONReader extends BSONReader {
         }
 
         JSONToken token = popToken();
-        if (context.getContextType() == BSONContextType.ARRAY && token.getType() == JSONTokenType.END_ARRAY) {
+        if (getContext().getContextType() == BSONContextType.ARRAY && token.getType() == JSONTokenType.END_ARRAY) {
             setState(State.END_OF_ARRAY);
             return BSONType.END_OF_DOCUMENT;
         }
@@ -237,14 +232,14 @@ public class JSONReader extends BSONReader {
             throw new JSONParseException("JSON reader was expecting a value but found '%s'.", token.getValue());
         }
 
-        if (context.getContextType() == BSONContextType.ARRAY || context.getContextType() == BSONContextType.DOCUMENT) {
+        if (getContext().getContextType() == BSONContextType.ARRAY || getContext().getContextType() == BSONContextType.DOCUMENT) {
             JSONToken commaToken = popToken();
             if (commaToken.getType() != JSONTokenType.COMMA) {
                 pushToken(commaToken);
             }
         }
 
-        switch (context.getContextType()) {
+        switch (getContext().getContextType()) {
             case DOCUMENT:
             case SCOPE_DOCUMENT:
             default:
@@ -261,37 +256,29 @@ public class JSONReader extends BSONReader {
     //CHECKSTYLE:ON
 
     @Override
-    public long readDateTime() {
-        checkPreconditions("readDateTime", BSONType.DATE_TIME);
-        setState(getNextState());
+    protected long doReadDateTime() {
         return (Long) currentValue;
     }
 
     @Override
-    public double readDouble() {
-        checkPreconditions("readDouble", BSONType.DOUBLE);
-        setState(getNextState());
+    protected double doReadDouble() {
         return (Double) currentValue;
     }
 
     @Override
-    public void readEndArray() {
-        if (isClosed()) {
-            throw new IllegalStateException("This instance has been closed");
-        }
+    public void doReadEndArray() {
+        setContext(getContext().getParentContext());
 
-        if (context.getContextType() != BSONContextType.ARRAY) {
-            throwInvalidContextType("readEndArray", context.getContextType(), BSONContextType.ARRAY);
+        if (getContext().getContextType() == BSONContextType.ARRAY || getContext().getContextType() == BSONContextType.DOCUMENT) {
+            JSONToken commaToken = popToken();
+            if (commaToken.getType() != JSONTokenType.COMMA) {
+                pushToken(commaToken);
+            }
         }
-        if (getState() == State.TYPE) {
-            readBSONType(); // will set state to EndOfArray if at end of array
-        }
-        if (getState() != State.END_OF_ARRAY) {
-            throwInvalidState("ReadEndArray", State.END_OF_ARRAY);
-        }
+    }
 
-        context = context.popContext();
-        switch (context.getContextType()) {
+    private void setStateOnEnd() {
+        switch (getContext().getContextType()) {
             case ARRAY:
             case DOCUMENT:
                 setState(State.TYPE);
@@ -300,53 +287,23 @@ public class JSONReader extends BSONReader {
                 setState(State.DONE);
                 break;
             default:
-                throw new JSONParseException("Unexpected ContextType %s.", context.contextType);
-        }
-
-        if (context.getContextType() == BSONContextType.ARRAY || context.getContextType() == BSONContextType.DOCUMENT) {
-            JSONToken commaToken = popToken();
-            if (commaToken.getType() != JSONTokenType.COMMA) {
-                pushToken(commaToken);
-            }
+                throw new JSONParseException("Unexpected ContextType %s.", getContext().getContextType());
         }
     }
 
     @Override
-    public void readEndDocument() {
-
-        if (context.getContextType() != BSONContextType.DOCUMENT && context.getContextType() != BSONContextType.SCOPE_DOCUMENT) {
-            throwInvalidContextType("ReadEndDocument", context.getContextType(), BSONContextType.DOCUMENT, BSONContextType.SCOPE_DOCUMENT);
-        }
-        if (getState() == State.TYPE) {
-            readBSONType(); // will set state to EndOfDocument if at end of document
-        }
-        if (getState() != State.END_OF_DOCUMENT) {
-            throwInvalidState("ReadEndDocument", State.END_OF_DOCUMENT);
-        }
-
-        context = context.popContext();
-        if (context != null && context.getContextType() == BSONContextType.JAVASCRIPT_WITH_SCOPE) {
-            context = context.popContext(); // JavaScriptWithScope
+    protected void doReadEndDocument() {
+        setContext(getContext().getParentContext());
+        if (getContext() != null && getContext().getContextType() == BSONContextType.JAVASCRIPT_WITH_SCOPE) {
+            setContext(getContext().getParentContext()); // JavaScriptWithScope
             verifyToken("}"); // outermost closing bracket for JavaScriptWithScope
         }
 
-        if (context == null) {
+        if (getContext() == null) {
             throw new JSONParseException("Unexpected end of document.");
         }
 
-        switch (context.getContextType()) {
-            case ARRAY:
-            case DOCUMENT:
-                setState(State.TYPE);
-                break;
-            case TOP_LEVEL:
-                setState(State.DONE);
-                break;
-            default:
-                throw new JSONParseException("Unexpected ContextType %s.", context.contextType);
-        }
-
-        if (context.getContextType() == BSONContextType.ARRAY || context.getContextType() == BSONContextType.DOCUMENT) {
+        if (getContext().getContextType() == BSONContextType.ARRAY || getContext().getContextType() == BSONContextType.DOCUMENT) {
             JSONToken commaToken = popToken();
             if (commaToken.getType() != JSONTokenType.COMMA) {
                 pushToken(commaToken);
@@ -355,133 +312,87 @@ public class JSONReader extends BSONReader {
     }
 
     @Override
-    public int readInt32() {
-        checkPreconditions("readInt32", BSONType.INT32);
-        setState(getNextState());
+    protected int doReadInt32() {
         return (Integer) currentValue;
     }
 
     @Override
-    public long readInt64() {
-        checkPreconditions("readInt64", BSONType.INT64);
-        setState(getNextState());
+    protected long doReadInt64() {
         return (Long) currentValue;
     }
 
     @Override
-    public String readJavaScript() {
-        checkPreconditions("readJavaScript", BSONType.JAVASCRIPT);
-        setState(getNextState());
+    protected String doReadJavaScript() {
         return (String) currentValue;
     }
 
     @Override
-    public String readJavaScriptWithScope() {
-        checkPreconditions("readJavaScriptWithScope", BSONType.JAVASCRIPT_WITH_SCOPE);
-        context = new Context(context, BSONContextType.JAVASCRIPT_WITH_SCOPE);
-        setState(State.SCOPE_DOCUMENT);
+    public String doReadJavaScriptWithScope() {
         return (String) currentValue;
     }
 
     @Override
-    public void readMaxKey() {
-        checkPreconditions("readMaxKey", BSONType.MAX_KEY);
-        setState(getNextState());
+    protected void doReadMaxKey() {
     }
 
     @Override
-    public void readMinKey() {
-        checkPreconditions("readMinKey", BSONType.MIN_KEY);
-        setState(getNextState());
+    protected void doReadMinKey() {
     }
 
     @Override
-    public void readNull() {
-        checkPreconditions("readNull", BSONType.NULL);
-        setState(getNextState());
+    protected void doReadNull() {
     }
 
     @Override
-    public ObjectId readObjectId() {
-        checkPreconditions("readObjectId", BSONType.OBJECT_ID);
-        setState(getNextState());
+    protected ObjectId doReadObjectId() {
         return (ObjectId) currentValue;
     }
 
     @Override
-    public RegularExpression readRegularExpression() {
-        checkPreconditions("readRegularExpression", BSONType.REGULAR_EXPRESSION);
-        setState(getNextState());
+    protected RegularExpression doReadRegularExpression() {
         return (RegularExpression) currentValue;
     }
 
     @Override
-    public DBPointer readDBPointer() {
-        checkPreconditions("readDBPointer", BSONType.DB_POINTER);
-        setState(getNextState());
+    protected DBPointer doReadDBPointer() {
         return (DBPointer) currentValue;
     }
 
     @Override
-    public void readStartArray() {
-        checkPreconditions("readStartArray", BSONType.ARRAY);
-        context = new Context(context, BSONContextType.ARRAY);
-        setState(State.TYPE);
+    public void doReadStartArray() {
+        setContext(new Context(getContext(), BSONContextType.ARRAY));
     }
 
     @Override
-    public void readStartDocument() {
-        checkPreconditions("readStartDocument", BSONType.DOCUMENT);
-        context = new Context(context, BSONContextType.DOCUMENT);
-        setState(State.TYPE);
+    protected void doReadStartDocument() {
+        setContext(new Context(getContext(), BSONContextType.DOCUMENT));
     }
 
     @Override
-    public String readString() {
-        checkPreconditions("readString", BSONType.STRING);
-        setState(getNextState());
+    protected String doReadString() {
         return (String) currentValue;
     }
 
     @Override
-    public String readSymbol() {
-        checkPreconditions("readSymbol", BSONType.SYMBOL);
-        setState(getNextState());
+    protected String doReadSymbol() {
         return (String) currentValue;
     }
 
     @Override
-    public Timestamp readTimestamp() {
-        checkPreconditions("readg", BSONType.TIMESTAMP);
-        setState(getNextState());
+    protected Timestamp doReadTimestamp() {
         return (Timestamp) currentValue;
     }
 
     @Override
-    public void readUndefined() {
-        checkPreconditions("readUndefined", BSONType.UNDEFINED);
-        setState(getNextState());
+    protected void doReadUndefined() {
     }
 
     @Override
-    public void skipName() {
-        if (isClosed()) {
-            throw new IllegalStateException("This instance has been closed");
-        }
-        if (getState() != State.NAME) {
-            throwInvalidState("skipName", State.NAME);
-        }
-        setState(State.VALUE);
+    protected void doSkipName() {
     }
 
     @Override
-    public void skipValue() {
-        if (isClosed()) {
-            throw new IllegalStateException("This instance has been closed");
-        }
-        if (getState() != State.VALUE) {
-            throwInvalidState("skipValue", State.VALUE);
-        }
+    protected void doSkipValue() {
         switch (getCurrentBSONType()) {
             case ARRAY:
                 readStartArray();
@@ -1037,51 +948,22 @@ public class JSONReader extends BSONReader {
         }
     }
 
-    private void checkPreconditions(final String methodName, final BSONType type) {
-        if (isClosed()) {
-            throw new IllegalStateException("This instance has been closed");
-        }
-
-        verifyBSONType(methodName, type);
+    @Override
+    public Context getContext() {
+        return (Context) super.getContext();
     }
 
-    private State getNextState() {
-        switch (context.contextType) {
-            case ARRAY:
-            case DOCUMENT:
-            case SCOPE_DOCUMENT:
-                return State.TYPE;
-            case TOP_LEVEL:
-                return State.DONE;
-            default:
-                throw new JSONParseException("Unexpected ContextType %s.", context.contextType);
-        }
-    }
-
-    private static class Context {
-        private final Context parentContext;
-        private final BSONContextType contextType;
-
-        Context(final Context parentContext, final BSONContextType contextType) {
-            this.parentContext = parentContext;
-            this.contextType = contextType;
+    protected class Context extends AbstractBSONReader.Context {
+        protected Context(final AbstractBSONReader.Context parentContext, final BSONContextType contextType) {
+            super(parentContext, contextType);
         }
 
-        /**
-         * Creates a clone of the context.
-         *
-         * @return A clone of the context.
-         */
-        public Context copy() {
-            return new Context(parentContext, contextType);
+        protected Context getParentContext() {
+            return (Context) super.getParentContext();
         }
 
-        Context popContext() {
-            return parentContext;
-        }
-
-        public BSONContextType getContextType() {
-            return contextType;
+        protected BSONContextType getContextType() {
+            return super.getContextType();
         }
     }
 }

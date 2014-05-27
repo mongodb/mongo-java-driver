@@ -16,9 +16,9 @@
 
 package org.mongodb.json;
 
+import org.bson.AbstractBSONWriter;
 import org.bson.BSONContextType;
 import org.bson.BSONException;
-import org.bson.BSONWriter;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
@@ -37,7 +37,7 @@ import static javax.xml.bind.DatatypeConverter.printBase64Binary;
  *
  * @since 3.0.0
  */
-public class JSONWriter extends BSONWriter {
+public class JSONWriter extends AbstractBSONWriter {
     private final Writer writer;
     private final JSONWriterSettings settings;
 
@@ -564,7 +564,7 @@ public class JSONWriter extends BSONWriter {
         throw new BSONException("Wrapping IOException", e);
     }
 
-    public class Context extends BSONWriter.Context {
+    public class Context extends AbstractBSONWriter.Context {
         private final String indentation;
         private boolean hasElements;
 
