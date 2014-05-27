@@ -25,7 +25,7 @@ import org.bson.types.Timestamp;
 
 import java.util.Stack;
 
-public class BSONBinaryWriter extends BSONWriter {
+public class BSONBinaryWriter extends AbstractBSONWriter {
     private final BSONBinaryWriterSettings binaryWriterSettings;
 
     private final OutputBuffer buffer;
@@ -345,15 +345,16 @@ public class BSONBinaryWriter extends BSONWriter {
     @Override
     public void pipe(final BSONReader reader) {
         if (reader instanceof BSONBinaryReader) {
+            BSONBinaryReader binaryReader = (BSONBinaryReader) reader;
             if (getState() == State.VALUE) {
                 buffer.write(BSONType.DOCUMENT.getValue());
                 writeCurrentName();
             }
-            InputBuffer inputBuffer = ((BSONBinaryReader) reader).getBuffer();
+            InputBuffer inputBuffer = binaryReader.getBuffer();
             int size = inputBuffer.readInt32();
             buffer.writeInt(size);
             buffer.write(inputBuffer.readBytes(size - 4));
-            reader.setState(BSONReader.State.TYPE);
+            binaryReader.setState(AbstractBSONReader.State.TYPE);
         } else {
             super.pipe(reader);
         }
@@ -399,7 +400,7 @@ public class BSONBinaryWriter extends BSONWriter {
         buffer.backpatchSize(size);
     }
 
-    public class Context extends BSONWriter.Context {
+    public class Context extends AbstractBSONWriter.Context {
         private final int startPosition;
         private int index; // used when contextType is an array
 
@@ -425,7 +426,7 @@ public class BSONBinaryWriter extends BSONWriter {
         }
     }
 
-    protected class Mark extends BSONWriter.Mark {
+    protected class Mark extends AbstractBSONWriter.Mark {
         private final int position;
 
         protected Mark() {

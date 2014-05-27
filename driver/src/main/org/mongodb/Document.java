@@ -16,7 +16,6 @@
 
 package org.mongodb;
 
-import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.codecs.Codec;
 import org.bson.types.ObjectId;
@@ -80,8 +79,7 @@ public class Document implements Map<String, Object>, Serializable {
      *
      * @param s document representation in JSON format that conforms <a href="http://www.json.org/">JSON RFC specifications</a>.
      * @return a corresponding {@code Document} object
-     * @throws org.mongodb.json.JSONParseException
-     *          if the input is invalid
+     * @throws org.mongodb.json.JSONParseException if the input is invalid
      */
     public static Document valueOf(final String s) {
         return Document.valueOf(s, JSONMode.STRICT);
@@ -92,11 +90,10 @@ public class Document implements Map<String, Object>, Serializable {
      *
      * @param s document representation in JSON format
      * @return a corresponding {@code Document} object
-     * @throws org.mongodb.json.JSONParseException
-     *          if the input is invalid
+     * @throws org.mongodb.json.JSONParseException if the input is invalid
      */
     public static Document valueOf(final String s, final JSONMode mode) {
-        BSONReader bsonReader = new JSONReader(new JSONReaderSettings(mode), s);
+        JSONReader bsonReader = new JSONReader(new JSONReaderSettings(mode), s);
         return new DocumentCodec().decode(bsonReader);
     }
 

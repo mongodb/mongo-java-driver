@@ -17,7 +17,6 @@
 package org.mongodb.codecs;
 
 import org.bson.BSONBinaryWriter;
-import org.bson.BSONWriter;
 import org.bson.io.BasicOutputBuffer;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,7 +42,7 @@ public class UUIDCodecTest {
     public void shouldEncodeLongAsLittleEndian() throws IOException {
         // Given
         UUID uuid = new UUID(2L, 1L);
-        BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer, false);
+        BSONBinaryWriter bsonWriter = new BSONBinaryWriter(outputBuffer, false);
         try {
             bsonWriter.writeStartDocument();
             bsonWriter.writeName("_id");

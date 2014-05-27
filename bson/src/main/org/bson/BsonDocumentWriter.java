@@ -45,7 +45,7 @@ import static org.bson.BSONContextType.SCOPE_DOCUMENT;
  *
  * @since 3.0
  */
-public class BsonDocumentWriter extends BSONWriter {
+public class BsonDocumentWriter extends AbstractBSONWriter {
 
     private final BsonDocument document;
 
@@ -256,7 +256,7 @@ public class BsonDocumentWriter extends BSONWriter {
         getContext().add(value);
     }
 
-    private class Context extends BSONWriter.Context {
+    private class Context extends AbstractBSONWriter.Context {
         private BsonValue container;
 
         public Context(final BsonValue container, final BSONContextType contextType, final Context parent) {
