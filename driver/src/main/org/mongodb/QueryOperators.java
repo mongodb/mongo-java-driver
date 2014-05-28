@@ -51,6 +51,9 @@ public final class QueryOperators {
     public static final String CENTER = "$center";
     public static final String POLYGON = "$polygon";
     public static final String CENTER_SPHERE = "$centerSphere";
+    public static final String GEO_WITHIN = "$geoWithin";
+    public static final String GEO_INTERSECTS = "$geoIntersects";
+    public static final String GEOMETRY = "$geometry";
     // (to be implemented in QueryBuilder)
     public static final String MAX_DISTANCE = "$maxDistance";
     public static final String UNIQUE_DOCS = "$uniqueDocs";

@@ -16,6 +16,11 @@
 
 package org.mongodb;
 
+import org.mongodb.geojson.GeoJsonObject;
+import org.mongodb.geojson.GeoJsonObjectType;
+import org.mongodb.geojson.GeoJsonPoint;
+import org.mongodb.geojson.GeoJsonPolygon;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -356,6 +361,58 @@ public class QueryBuilder implements ConvertibleToDocument {
         }
         addOperand(QueryOperators.WITHIN,
                    new Document(QueryOperators.POLYGON, points));
+        return this;
+    }
+
+    /**
+     * Equivalent of the $near operand with GeoJSON support
+     * @param point GeoJSON Point
+     * @return
+     */
+    public QueryBuilder near(final GeoJsonPoint point  ){
+        addOperand( QueryOperators.NEAR,
+                new Document( QueryOperators.GEOMETRY , point) );
+        return this;
+    }
+
+    /**
+     * Equivalent of the $near operand
+     * @param point GeoJSON Point
+     * @param maxDistance max distance
+     * @return {@code this}
+     */
+    public QueryBuilder near(final GeoJsonPoint point, final double maxDistance){
+        addOperand( QueryOperators.NEAR,
+                new Document( QueryOperators.GEOMETRY , point).append(QueryOperators.MAX_DISTANCE,  maxDistance) );
+
+        return this;
+    }
+
+    /**
+     * Equivalent of the $geoWithin operand
+     * @param polygon GeoJSON Polygon
+     * @return {@code this}
+     */
+    public QueryBuilder geoWithin(final GeoJsonPolygon polygon) {
+        addOperand( QueryOperators.GEO_WITHIN,
+                new Document( QueryOperators.GEOMETRY, polygon ) );
+
+        return this;
+    }
+
+    /**
+     * Equivalent of the $geoIntersects operand
+     * @param geoJsonObject GeoJSON object
+     * @return {@code this}
+     */
+    public QueryBuilder geoIntersects(final GeoJsonObject geoJsonObject) {
+        String t = geoJsonObject.getType();
+        if ( t.equals(GeoJsonObjectType.POLYGON) || t.equals(GeoJsonObjectType.POINT) || t.equals(GeoJsonObjectType.LINE_STRING) ) {
+            addOperand( QueryOperators.GEO_INTERSECTS,
+                    new Document( QueryOperators.GEOMETRY, geoJsonObject ) );
+        } else {
+            throw new QueryBuilderException("The geoIntersects operand accept point, line or polygon, and you have sent a "+ t);
+        }
         return this;
     }
 
