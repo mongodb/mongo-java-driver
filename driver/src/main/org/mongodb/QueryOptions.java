@@ -18,6 +18,9 @@
 package org.mongodb;
 
 
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -27,12 +30,12 @@ public class QueryOptions {
     private int batchSize;
     private int maxScan;
     private long maxTimeMS;
-    private Document min;
-    private Document max;
+    private BsonDocument min;
+    private BsonDocument max;
     private boolean isolated;
     private String comment;
     private boolean explain;
-    private Document hint;
+    private BsonDocument hint;
     private boolean returnKey;
     private boolean showDiskLoc;
     private boolean snapshot;
@@ -50,7 +53,7 @@ public class QueryOptions {
         comment = from.comment;
         explain = from.explain;
         if (from.hint != null) {
-            hint = new Document();
+            hint = new BsonDocument();
             hint.putAll(from.hint);
         }
         returnKey = from.returnKey;
@@ -66,7 +69,7 @@ public class QueryOptions {
         return comment;
     }
 
-    public Document getHint() {
+    public BsonDocument getHint() {
         return hint;
     }
 
@@ -78,11 +81,11 @@ public class QueryOptions {
         return maxTimeMS;
     }
 
-    public Document getMin() {
+    public BsonDocument getMin() {
         return min;
     }
 
-    public Document getMax() {
+    public BsonDocument getMax() {
         return max;
     }
 
@@ -128,16 +131,16 @@ public class QueryOptions {
     }
 
     public QueryOptions hint(final String indexName) {
-        hint = new Document(indexName, 1);
+        hint = new BsonDocument(indexName, new BsonInt32(1));
         return this;
     }
 
-    public QueryOptions hint(final Document index) {
+    public QueryOptions hint(final BsonDocument index) {
         hint = index;
         return this;
     }
 
-    public QueryOptions hint(final ConvertibleToDocument index) {
+    public QueryOptions hint(final ConvertibleToBsonDocument index) {
         hint = index.toDocument();
         return this;
     }
@@ -150,7 +153,7 @@ public class QueryOptions {
         return this;
     }
 
-    public QueryOptions max(final Document max) {
+    public QueryOptions max(final BsonDocument max) {
         this.max = max;
         return this;
     }
@@ -165,7 +168,7 @@ public class QueryOptions {
         return this;
     }
 
-    public QueryOptions min(final Document min) {
+    public QueryOptions min(final BsonDocument min) {
         this.min = min;
         return this;
     }

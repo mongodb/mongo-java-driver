@@ -17,6 +17,7 @@
 package org.mongodb.operation;
 
 import org.bson.types.Binary;
+import org.bson.types.BsonDocument;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,8 +57,8 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
         readConnectionSource = getBinding().getReadConnectionSource();
         exhaustConnection = readConnectionSource.getConnection();
-        firstBatch = new QueryProtocol<Document>(collection.getNamespace(), exhaustFlag, 0, 0, new Document(), null,
-                                                 new DocumentCodec(), new DocumentCodec())
+        firstBatch = new QueryProtocol<Document>(collection.getNamespace(), exhaustFlag, 0, 0, new BsonDocument(), null,
+                                                 new DocumentCodec())
                      .execute(exhaustConnection);
 
     }
@@ -68,6 +69,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         readConnectionSource.release();
         super.tearDown();
     }
+
     @Test
     public void testExhaustReadAllDocuments() {
         assumeFalse(isSharded());
@@ -98,8 +100,8 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
             cursor.next();
             cursor.close();
 
-            new QueryProtocol<Document>(collection.getNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, new Document(), null,
-                                        new DocumentCodec(), new DocumentCodec())
+            new QueryProtocol<Document>(collection.getNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, new BsonDocument(), null,
+                                        new DocumentCodec())
             .execute(connection);
 
         } finally {

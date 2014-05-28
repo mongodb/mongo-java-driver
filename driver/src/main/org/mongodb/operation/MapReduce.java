@@ -16,8 +16,8 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.BsonDocument;
 import org.bson.types.Code;
-import org.mongodb.Document;
 
 import java.util.concurrent.TimeUnit;
 
@@ -36,9 +36,9 @@ public class MapReduce {
     private final MapReduceOutputOptions output;
     private final boolean inline;
     private Code finalizeFunction;
-    private Document scope;
-    private Document filter;
-    private Document sortCriteria;
+    private BsonDocument scope;
+    private BsonDocument filter;
+    private BsonDocument sortCriteria;
     private int limit;
     private boolean jsMode;
     private boolean verbose;
@@ -96,7 +96,7 @@ public class MapReduce {
      * @param filter the selection criteria document.
      * @return the same {@code MapReduce} instance as used for the method invocation for chaining
      */
-    public MapReduce filter(final Document filter) {
+    public MapReduce filter(final BsonDocument filter) {
         this.filter = filter;
         return this;
     }
@@ -108,7 +108,7 @@ public class MapReduce {
      * @param sortCriteria sort criteria document
      * @return the same {@code MapReduce} instance as used for the method invocation for chaining
      */
-    public MapReduce sort(final Document sortCriteria) {
+    public MapReduce sort(final BsonDocument sortCriteria) {
         this.sortCriteria = sortCriteria;
         return this;
     }
@@ -119,7 +119,7 @@ public class MapReduce {
      * @param scope scope document
      * @return the same {@code MapReduce} instance as used for the method invocation for chaining
      */
-    public MapReduce scope(final Document scope) {
+    public MapReduce scope(final BsonDocument scope) {
         this.scope = scope;
         return this;
     }
@@ -177,15 +177,15 @@ public class MapReduce {
         return finalizeFunction;
     }
 
-    public Document getFilter() {
+    public BsonDocument getFilter() {
         return filter;
     }
 
-    public Document getSortCriteria() {
+    public BsonDocument getSortCriteria() {
         return sortCriteria;
     }
 
-    public Document getScope() {
+    public BsonDocument getScope() {
         return scope;
     }
 

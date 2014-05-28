@@ -16,39 +16,39 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Document;
+import org.bson.types.BsonDocument;
 
 import java.util.concurrent.TimeUnit;
 
 public class FindAndUpdate extends FindAndModify {
-    private Document updateOperations;
+    private BsonDocument updateOperations;
 
     public FindAndUpdate() {
     }
 
-    public FindAndUpdate updateWith(final Document anUpdateOperations) {
+    public FindAndUpdate updateWith(final BsonDocument anUpdateOperations) {
         this.updateOperations = anUpdateOperations;
         return this;
     }
 
-    public Document getUpdateOperations() {
+    public BsonDocument getUpdateOperations() {
         return updateOperations;
     }
 
     @Override
-    public FindAndUpdate where(final Document filter) {
+    public FindAndUpdate where(final BsonDocument filter) {
         super.where(filter);
         return this;
     }
 
     @Override
-    public FindAndUpdate select(final Document selector) {
+    public FindAndUpdate select(final BsonDocument selector) {
         super.select(selector);
         return this;
     }
 
     @Override
-    public FindAndUpdate sortBy(final Document sortCriteria) {
+    public FindAndUpdate sortBy(final BsonDocument sortCriteria) {
         super.sortBy(sortCriteria);
         return this;
     }

@@ -16,12 +16,14 @@
 
 package org.mongodb;
 
+import org.bson.types.BsonValue;
+
 /**
  * The result of a successful write operation.  If the write was unacknowledged, then {@code wasAcknowledged} will return false and all
  * other methods with throw {@code MongoUnacknowledgedWriteException}.
  *
- * @since 3.0
  * @see WriteConcern#UNACKNOWLEDGED
+ * @since 3.0
  */
 public interface WriteResult {
 
@@ -44,7 +46,6 @@ public interface WriteResult {
      * Returns true if the write was an update of an existing document.
      *
      * @return true if the write was an update of an existing document
-     *
      * @throws UnacknowledgedWriteException if the write was unacknowledged.
      */
     boolean isUpdateOfExisting();
@@ -53,8 +54,7 @@ public interface WriteResult {
      * Returns the value of _id if this write resulted in an upsert.
      *
      * @return the value of _id if this write resulted in an upsert.
-     *
      * @throws UnacknowledgedWriteException if the write was unacknowledged.
      */
-    Object getUpsertedId();   // TODO: Should be of type BsonValue
+    BsonValue getUpsertedId();
 }

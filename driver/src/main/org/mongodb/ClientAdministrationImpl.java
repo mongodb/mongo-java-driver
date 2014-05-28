@@ -16,8 +16,10 @@
 
 package org.mongodb;
 
-import org.bson.codecs.Codec;
-import org.mongodb.codecs.DocumentCodec;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonDouble;
+import org.bson.types.BsonInt32;
 import org.mongodb.operation.CommandReadOperation;
 import org.mongodb.operation.GetDatabaseNamesOperation;
 
@@ -31,9 +33,8 @@ import static org.mongodb.ReadPreference.primary;
  */
 class ClientAdministrationImpl implements ClientAdministration {
     private static final String ADMIN_DATABASE = "admin";
-    private static final Document PING_COMMAND = new Document("ping", 1);
+    private static final BsonDocument PING_COMMAND = new BsonDocument("ping", new BsonInt32(1));
 
-    private final Codec<Document> commandCodec = new DocumentCodec();
     private final MongoClientImpl client;
 
     ClientAdministrationImpl(final MongoClientImpl client) {
@@ -45,10 +46,11 @@ class ClientAdministrationImpl implements ClientAdministration {
     @Override
     public double ping() {
         CommandResult pingResult = client.execute(new CommandReadOperation(ADMIN_DATABASE, PING_COMMAND,
-                                                                           commandCodec, commandCodec),
-                                                  client.getOptions().getReadPreference());
+                                                                           new BsonDocumentCodec()),
+                                                  client.getOptions().getReadPreference()
+                                                 );
 
-        return (Double) pingResult.getResponse().get("ok");
+        return ((BsonDouble) pingResult.getResponse().get("ok")).getValue();
     }
 
     @Override

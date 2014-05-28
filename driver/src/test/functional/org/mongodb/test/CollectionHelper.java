@@ -17,7 +17,8 @@
 package org.mongodb.test;
 
 import org.bson.codecs.Codec;
-import org.bson.codecs.Encoder;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonDocumentWrapper;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
@@ -39,24 +40,30 @@ public final class CollectionHelper<T> {
 
     private Codec<T> codec;
     private MongoNamespace namespace;
-    private Encoder<Document> queryEncoder;
 
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
         this.codec = codec;
         this.namespace = namespace;
-        this.queryEncoder = new DocumentCodec();
     }
 
     @SuppressWarnings("unchecked")
     public void insertDocuments(final T... documents) {
         for (T document : documents) {
             new InsertOperation<T>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                    asList(new InsertRequest<T>(document)), codec).execute(getBinding());
+                                   asList(new InsertRequest<T>(document)), codec).execute(getBinding());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public <I> void insertDocuments(final Codec<I> iCodec, final I... documents) {
+        for (I document : documents) {
+            new InsertOperation<I>(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                   asList(new InsertRequest<I>(document)), iCodec).execute(getBinding());
         }
     }
 
     public List<T> find() {
-        MongoCursor<T> cursor = new QueryOperation<T>(namespace, new Find(), queryEncoder, codec).execute(getBinding());
+        MongoCursor<T> cursor = new QueryOperation<T>(namespace, new Find(), codec).execute(getBinding());
         List<T> results = new ArrayList<T>();
         while (cursor.hasNext()) {
             results.add(cursor.next());
@@ -65,7 +72,7 @@ public final class CollectionHelper<T> {
     }
 
     public List<T> find(final Document filter) {
-        MongoCursor<T> cursor = new QueryOperation<T>(namespace, new Find(filter), queryEncoder, codec).execute(getBinding());
+        MongoCursor<T> cursor = new QueryOperation<T>(namespace, new Find(wrap(filter)), codec).execute(getBinding());
         List<T> results = new ArrayList<T>();
         while (cursor.hasNext()) {
             results.add(cursor.next());
@@ -74,10 +81,14 @@ public final class CollectionHelper<T> {
     }
 
     public long count() {
-        return new CountOperation(namespace, new Find(), new DocumentCodec()).execute(getBinding());
+        return new CountOperation(namespace, new Find()).execute(getBinding());
     }
 
     public long count(final Document filter) {
-        return new CountOperation(namespace, new Find(filter), new DocumentCodec()).execute(getBinding());
+        return new CountOperation(namespace, new Find(wrap(filter))).execute(getBinding());
+    }
+
+    public BsonDocument wrap(final Document document) {
+        return new BsonDocumentWrapper<Document>(document, new DocumentCodec());
     }
 }

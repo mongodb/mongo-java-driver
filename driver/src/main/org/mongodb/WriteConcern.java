@@ -16,6 +16,10 @@
 
 package org.mongodb;
 
+import org.bson.types.BsonBoolean;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonString;
 import org.mongodb.annotations.Immutable;
 
 import java.io.Serializable;
@@ -158,10 +162,10 @@ public class WriteConcern implements Serializable {
      * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
      * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
      *
-     * @param w               number of writes
-     * @param wtimeout        timeout for write operation
-     * @param fsync           whether or not to fsync
-     * @param j               whether writes should wait for a journaling group commit
+     * @param w        number of writes
+     * @param wtimeout timeout for write operation
+     * @param fsync    whether or not to fsync
+     * @param j        whether writes should wait for a journaling group commit
      */
     public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j) {
         isTrueArgument("w >= 0", w >= 0);
@@ -177,10 +181,10 @@ public class WriteConcern implements Serializable {
      * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
      * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
      *
-     * @param w               number of writes
-     * @param wtimeout        timeout for write operation
-     * @param fsync           whether or not to fsync
-     * @param j               whether writes should wait for a journaling group commit
+     * @param w        number of writes
+     * @param wtimeout timeout for write operation
+     * @param fsync    whether or not to fsync
+     * @param j        whether writes should wait for a journaling group commit
      */
     public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j) {
         this.w = notNull("w", w);
@@ -194,13 +198,13 @@ public class WriteConcern implements Serializable {
      *
      * @return The write concern as a Document, even if {@code w <= 0}
      */
-    public Document asDocument() {
+    public BsonDocument asDocument() {
         if (!isAcknowledged()) {
             throw new IllegalStateException("The write is unacknowledged, so no document can be created");
         }
-        Document document = new Document();
+        BsonDocument document = new BsonDocument();
 
-        document.put("w", w);
+        addW(document);
 
         addWTimeout(document);
         addFSync(document);
@@ -211,28 +215,37 @@ public class WriteConcern implements Serializable {
 
     /**
      * The server default is w == 1 and everything else the default value.
-     * @mongodb.driver.manual /reference/replica-configuration/#local.system.replset.settings.getLastErrorDefaults getLastErrorDefaults
+     *
      * @return true if this write concern is the server's default
+     * @mongodb.driver.manual /reference/replica-configuration/#local.system.replset.settings.getLastErrorDefaults getLastErrorDefaults
      */
     public boolean isServerDefault() {
         return w.equals(1) && wtimeout == 0 && !fsync && !j;
     }
 
-    private void addJ(final Document document) {
+    private void addW(final BsonDocument document) {
+        if (w instanceof String) {
+            document.put("w", new BsonString((String) w));
+        } else {
+            document.put("w", new BsonInt32((Integer) w));
+        }
+    }
+
+    private void addJ(final BsonDocument document) {
         if (j) {
-            document.put("j", true);
+            document.put("j", BsonBoolean.TRUE);
         }
     }
 
-    private void addFSync(final Document document) {
+    private void addFSync(final BsonDocument document) {
         if (fsync) {
-            document.put("fsync", true);
+            document.put("fsync", BsonBoolean.TRUE);
         }
     }
 
-    private void addWTimeout(final Document document) {
+    private void addWTimeout(final BsonDocument document) {
         if (wtimeout > 0) {
-            document.put("wtimeout", wtimeout);
+            document.put("wtimeout", new BsonInt32(wtimeout));
         }
     }
 

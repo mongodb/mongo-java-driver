@@ -16,11 +16,14 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.BsonBoolean;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonString;
 import org.mongodb.BulkWriteError;
 import org.mongodb.BulkWriteException;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MongoDuplicateKeyException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
@@ -95,27 +98,27 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
                 final SingleResultFuture<WriteResult> future = new SingleResultFuture<WriteResult>();
                 if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection)) {
                     getCommandProtocol().executeAsync(connection)
-                        .register(new SingleResultCallback<BulkWriteResult>() {
-                            @Override
-                            public void onResult(final BulkWriteResult result, final MongoException e) {
-                                if (e != null) {
-                                    future.init(null, translateException(e));
-                                } else {
-                                    future.init(translateBulkWriteResult(result), null);
-                                }
-                            }
-                        });
+                                        .register(new SingleResultCallback<BulkWriteResult>() {
+                                            @Override
+                                            public void onResult(final BulkWriteResult result, final MongoException e) {
+                                                if (e != null) {
+                                                    future.init(null, translateException(e));
+                                                } else {
+                                                    future.init(translateBulkWriteResult(result), null);
+                                                }
+                                            }
+                                        });
                 } else {
-                   getWriteProtocol().executeAsync(connection).register(new SingleResultCallback<WriteResult>() {
-                       @Override
-                       public void onResult(final WriteResult result, final MongoException e) {
-                           if (e != null) {
-                               future.init(null, translateException(e));
-                           } else {
-                               future.init(result, null);
-                           }
-                       }
-                   });
+                    getWriteProtocol().executeAsync(connection).register(new SingleResultCallback<WriteResult>() {
+                        @Override
+                        public void onResult(final WriteResult result, final MongoException e) {
+                            if (e != null) {
+                                future.init(null, translateException(e));
+                            } else {
+                                future.init(result, null);
+                            }
+                        }
+                    });
                 }
                 return future;
             }
@@ -154,35 +157,35 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
     }
 
     private CommandResult manufactureGetLastErrorCommandResult(final BulkWriteException e) {
-        Document response = new Document();
+        BsonDocument response = new BsonDocument();
         addBulkWriteResultToResponse(e.getWriteResult(), response);
         if (e.getWriteConcernError() != null) {
             response.putAll(e.getWriteConcernError().getDetails());
         }
         if (getLastError(e) != null) {
-            response.put("err", getLastError(e).getMessage());
-            response.put("code", getLastError(e).getCode());
+            response.put("err", new BsonString(getLastError(e).getMessage()));
+            response.put("code", new BsonInt32(getLastError(e).getCode()));
             response.putAll(getLastError(e).getDetails());
 
         } else if (e.getWriteConcernError() != null) {
-            response.put("err", e.getWriteConcernError().getMessage());
-            response.put("code", e.getWriteConcernError().getCode());
+            response.put("err", new BsonString(e.getWriteConcernError().getMessage()));
+            response.put("code", new BsonInt32(e.getWriteConcernError().getCode()));
         }
         return new CommandResult(e.getServerAddress(), response, 0);
     }
 
-    private void addBulkWriteResultToResponse(final BulkWriteResult bulkWriteResult, final Document response) {
-        response.put("ok", 1);
+    private void addBulkWriteResultToResponse(final BulkWriteResult bulkWriteResult, final BsonDocument response) {
+        response.put("ok", new BsonInt32(1));
         if (getType() == INSERT) {
-            response.put("n", 0);
+            response.put("n", new BsonInt32(0));
         } else if (getType() == REMOVE) {
-            response.put("n", bulkWriteResult.getRemovedCount());
+            response.put("n", new BsonInt32(bulkWriteResult.getRemovedCount()));
         } else if (getType() == UPDATE || getType() == REPLACE) {
-            response.put("n", bulkWriteResult.getMatchedCount() + bulkWriteResult.getUpserts().size());
+            response.put("n", new BsonInt32(bulkWriteResult.getMatchedCount() + bulkWriteResult.getUpserts().size()));
             if (bulkWriteResult.getUpserts().isEmpty()) {
-                response.put("updatedExisting", true);
+                response.put("updatedExisting", BsonBoolean.TRUE);
             } else {
-                response.put("updatedExisting", false);
+                response.put("updatedExisting", BsonBoolean.FALSE);
                 response.put("upserted", bulkWriteResult.getUpserts().get(0).getId());
             }
         }

@@ -17,7 +17,9 @@
 package org.mongodb.async;
 
 
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
+import org.bson.types.BsonDocumentWrapper;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCollectionOptions;
@@ -50,7 +52,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoCollection<Document> getCollection(final String name,
-                                                       final MongoCollectionOptions options) {
+                                                   final MongoCollectionOptions options) {
         return getCollection(name, new DocumentCodec(), options);
     }
 
@@ -62,6 +64,8 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoFuture<CommandResult> executeCommand(final Document commandDocument) {
-        return client.execute(new CommandWriteOperation(name, commandDocument, new DocumentCodec(), new DocumentCodec()));
+        return client.execute(new CommandWriteOperation(name, new BsonDocumentWrapper<Document>(commandDocument,
+                                                                                                options.getDocumentCodec()),
+                                                        new BsonDocumentCodec()));
     }
 }

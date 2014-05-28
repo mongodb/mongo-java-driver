@@ -16,18 +16,20 @@
 
 package org.mongodb;
 
+import org.bson.types.BsonDocument;
+
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
  * An error representing a failure by the server to apply the requested write concern to the bulk operation.
  *
- * @since 3.0
  * @mongodb.driver.manual core/write-concern/  Write Concern
+ * @since 3.0
  */
 public class WriteConcernError {
     private final int code;
     private final String message;
-    private final Document details;
+    private final BsonDocument details;
 
     /**
      * Constructs a new instance.
@@ -36,7 +38,7 @@ public class WriteConcernError {
      * @param message the error message
      * @param details any details
      */
-    public WriteConcernError(final int code, final String message, final Document details) {
+    public WriteConcernError(final int code, final String message, final BsonDocument details) {
         this.code = code;
         this.message = notNull("message", message);
         this.details = notNull("details", details);
@@ -65,7 +67,7 @@ public class WriteConcernError {
      *
      * @return the details
      */
-    public Document getDetails() {
+    public BsonDocument getDetails() {
         return details;
     }
 

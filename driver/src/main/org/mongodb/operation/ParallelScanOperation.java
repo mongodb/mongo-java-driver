@@ -16,9 +16,13 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.CommandResult;
 import org.bson.codecs.Decoder;
-import org.mongodb.Document;
+import org.bson.types.BsonArray;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonString;
+import org.bson.types.BsonValue;
+import org.mongodb.CommandResult;
 import org.mongodb.Function;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
@@ -29,7 +33,6 @@ import org.mongodb.binding.AsyncConnectionSource;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ConnectionSource;
 import org.mongodb.binding.ReadBinding;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.protocol.QueryResult;
@@ -44,10 +47,8 @@ import static org.mongodb.operation.OperationHelper.CallableWithConnectionAndSou
 import static org.mongodb.operation.OperationHelper.withConnection;
 
 /**
- * Return a list of cursors over the collection that can be used to scan it in parallel.
- * <p>
- * Note: As of MongoDB 2.6, this operation will work against a mongod, but not a mongos.
- * </p>
+ * Return a list of cursors over the collection that can be used to scan it in parallel. <p> Note: As of MongoDB 2.6, this operation will
+ * work against a mongod, but not a mongos. </p>
  *
  * @param <T> the document type for each cursor
  * @mongodb.server.release 2.6
@@ -62,8 +63,8 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
      * Construct a new instance.
      *
      * @param namespace the namespace
-     * @param decoder the decoder
-     * @param options the options to apply
+     * @param decoder   the decoder
+     * @param options   the options to apply
      */
     public ParallelScanOperation(final MongoNamespace namespace, final ParallelScanOptions options, final Decoder<T> decoder) {
         this.namespace = namespace;
@@ -78,8 +79,7 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
             public List<MongoCursor<T>> call(final ConnectionSource source, final Connection connection) {
                 return executeWrappedCommandProtocol(namespace,
                                                      asCommandDocument(),
-                                                     new DocumentCodec(),
-                                                     new CommandResultWithPayloadDecoder<T>(decoder, "result"),
+                                                     CommandResultDocumentCodec.create(decoder, "firstBatch"),
                                                      connection, binding.getReadPreference(),
                                                      transformer(source));
             }
@@ -94,8 +94,7 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
             public MongoFuture<List<MongoAsyncCursor<T>>> call(final AsyncConnectionSource source, final Connection connection) {
                 return executeWrappedCommandProtocolAsync(namespace,
                                                           asCommandDocument(),
-                                                          new DocumentCodec(),
-                                                          new CommandResultWithPayloadDecoder<T>(decoder, "result"),
+                                                          CommandResultDocumentCodec.create(decoder, "firstBatch"),
                                                           connection, binding.getReadPreference(),
                                                           asyncTransformer(source));
             }
@@ -107,10 +106,11 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
             @Override
             public List<MongoCursor<T>> apply(final CommandResult commandResult) {
                 List<MongoCursor<T>> cursors = new ArrayList<MongoCursor<T>>();
-                for (Document cursorDocument : getCursorDocuments(commandResult)) {
-                    cursors.add(new MongoQueryCursor<T>(namespace, createQueryResult(getCursorDocument(cursorDocument),
+                for (BsonValue cursorValue : getCursorDocuments(commandResult)) {
+                    cursors.add(new MongoQueryCursor<T>(namespace, createQueryResult(getCursorDocument(cursorValue.asDocument()),
                                                                                      commandResult.getAddress()),
-                                                        0, options.getBatchSize(), decoder, source));
+                                                        0, options.getBatchSize(), decoder, source
+                    ));
                 }
                 return cursors;
             }
@@ -122,8 +122,8 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
             @Override
             public List<MongoAsyncCursor<T>> apply(final CommandResult commandResult) {
                 List<MongoAsyncCursor<T>> cursors = new ArrayList<MongoAsyncCursor<T>>();
-                for (Document cursorDocument : getCursorDocuments(commandResult)) {
-                    cursors.add(new MongoAsyncQueryCursor<T>(namespace, createQueryResult(getCursorDocument(cursorDocument),
+                for (BsonValue cursorValue : getCursorDocuments(commandResult)) {
+                    cursors.add(new MongoAsyncQueryCursor<T>(namespace, createQueryResult(getCursorDocument(cursorValue.asDocument()),
                                                                                           commandResult.getAddress()),
                                                              0, options.getBatchSize(), decoder, source
                     ));
@@ -134,21 +134,23 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
     }
 
     @SuppressWarnings("unchecked")
-    private List<Document> getCursorDocuments(final CommandResult commandResult) {
-        return (List<Document>) commandResult.getResponse().get("cursors");
+    private BsonArray getCursorDocuments(final CommandResult commandResult) {
+        return commandResult.getResponse().getArray("cursors");
     }
 
-    private Document getCursorDocument(final Document cursorDocument) {
-        return (Document) cursorDocument.get("cursor");
+    private BsonDocument getCursorDocument(final BsonDocument cursorDocument) {
+        return cursorDocument.getDocument("cursor");
     }
 
     @SuppressWarnings("unchecked")
-    private QueryResult<T> createQueryResult(final Document cursorDocument, final ServerAddress serverAddress) {
-        return new QueryResult<T>((List<T>) cursorDocument.get("firstBatch"), cursorDocument.getLong("id"), serverAddress, 0);
+    private QueryResult<T> createQueryResult(final BsonDocument cursorDocument, final ServerAddress serverAddress) {
+        return new QueryResult<T>(BsonDocumentWrapperHelper.<T>toList(cursorDocument.getArray("firstBatch")),
+                                  cursorDocument.getInt64("id").getValue(), serverAddress, 0);
     }
 
-    private Document asCommandDocument() {
-        return new Document("parallelCollectionScan", namespace.getCollectionName()).append("numCursors", options.getNumCursors());
+    private BsonDocument asCommandDocument() {
+        return new BsonDocument("parallelCollectionScan", new BsonString(namespace.getCollectionName()))
+               .append("numCursors", new BsonInt32(options.getNumCursors()));
     }
 }
 

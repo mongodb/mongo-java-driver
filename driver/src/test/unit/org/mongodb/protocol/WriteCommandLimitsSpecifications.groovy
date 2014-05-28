@@ -18,6 +18,8 @@
 
 package org.mongodb.protocol
 
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
 import org.mongodb.Document
 import org.mongodb.MongoNamespace
 import org.mongodb.SimpleBufferProvider
@@ -43,8 +45,7 @@ class WriteCommandLimitsSpecifications extends Specification {
 
         def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new InsertCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, inserts,
-                                               new DocumentCodec(), new DocumentCodec(),
-                                               MessageSettings.builder().maxWriteBatchSize(3).build());
+                                               new DocumentCodec(), MessageSettings.builder().maxWriteBatchSize(3).build());
 
         when:
         def nextMessage = message.encode(buffer)
@@ -63,8 +64,7 @@ class WriteCommandLimitsSpecifications extends Specification {
 
         def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new InsertCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, inserts,
-                                               new DocumentCodec(), new DocumentCodec(),
-                                               MessageSettings.builder().maxDocumentSize(113).build());
+                                               new DocumentCodec(), MessageSettings.builder().maxDocumentSize(113).build());
 
         when:
         def nextMessage = message.encode(buffer)
@@ -78,12 +78,12 @@ class WriteCommandLimitsSpecifications extends Specification {
         given:
         def deletes = []
         (1..4).each {
-            deletes.add(new RemoveRequest(new Document()))
+            deletes.add(new RemoveRequest(new BsonDocument()))
         }
 
         def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new DeleteCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, deletes,
-                                               new DocumentCodec(), MessageSettings.builder().maxWriteBatchSize(3).build());
+                                               MessageSettings.builder().maxWriteBatchSize(3).build());
 
         when:
         def nextMessage = message.encode(buffer)
@@ -97,12 +97,12 @@ class WriteCommandLimitsSpecifications extends Specification {
         given:
         def deletes = []
         (1..4).each {
-            deletes.add(new RemoveRequest(new Document('_id', it)))
+            deletes.add(new RemoveRequest(new BsonDocument('_id', new BsonInt32(it))))
         }
 
         def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new DeleteCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, deletes,
-                                               new DocumentCodec(), MessageSettings.builder().maxDocumentSize(187).build());
+                                               MessageSettings.builder().maxDocumentSize(187).build());
 
         when:
         def nextMessage = message.encode(buffer)
@@ -116,13 +116,12 @@ class WriteCommandLimitsSpecifications extends Specification {
         given:
         def replaces = []
         (1..4).each {
-            replaces.add(new ReplaceRequest(new Document('_id', it), new Document()))
+            replaces.add(new ReplaceRequest(new BsonDocument('_id', new BsonInt32(it)), new Document()))
         }
 
         def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new ReplaceCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, replaces,
-                                                new DocumentCodec(), new DocumentCodec(),
-                                                MessageSettings.builder().maxWriteBatchSize(3).build());
+                                                new DocumentCodec(), MessageSettings.builder().maxWriteBatchSize(3).build());
 
         when:
         def nextMessage = message.encode(buffer)
@@ -136,13 +135,12 @@ class WriteCommandLimitsSpecifications extends Specification {
         given:
         def replaces = []
         (1..4).each {
-            replaces.add(new ReplaceRequest(new Document('_id', it), new Document()))
+            replaces.add(new ReplaceRequest(new BsonDocument('_id', new BsonInt32(it)), new Document()))
         }
 
         def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new ReplaceCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, replaces,
-                                                new DocumentCodec(), new DocumentCodec(),
-                                                MessageSettings.builder().maxDocumentSize(175).build());
+                                                new DocumentCodec(), MessageSettings.builder().maxDocumentSize(175).build());
 
         when:
         def nextMessage = message.encode(buffer)

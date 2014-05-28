@@ -17,8 +17,8 @@
 package org.mongodb.operation;
 
 import org.bson.codecs.Decoder;
+import org.bson.types.BsonDocument;
 import org.mongodb.Block;
-import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoException;
@@ -28,7 +28,6 @@ import org.mongodb.binding.AsyncConnectionSource;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ConnectionSource;
 import org.mongodb.binding.ReadBinding;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.QueryProtocol;
@@ -40,6 +39,7 @@ import java.util.List;
 import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static org.mongodb.operation.OperationHelper.IdentityTransformer;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
+import static org.mongodb.operation.OperationHelper.getBsonDocumentCodec;
 import static org.mongodb.operation.OperationHelper.withConnection;
 
 final class QueryOperationHelper {
@@ -53,9 +53,9 @@ final class QueryOperationHelper {
         });
     }
 
-    static <V> List<V> queryResultToList(final MongoNamespace namespace, final QueryProtocol<Document> queryProtocol,
-                                         final ReadBinding binding, final Function<Document, V> block) {
-        return queryResultToList(namespace, queryProtocol, new DocumentCodec(), binding, block);
+    static <V> List<V> queryResultToList(final MongoNamespace namespace, final QueryProtocol<BsonDocument> queryProtocol,
+                                         final ReadBinding binding, final Function<BsonDocument, V> block) {
+        return queryResultToList(namespace, queryProtocol, getBsonDocumentCodec(), binding, block);
     }
 
     static <T, V> List<V> queryResultToList(final MongoNamespace namespace, final QueryProtocol<T> queryProtocol, final Decoder<T> decoder,
@@ -91,14 +91,15 @@ final class QueryOperationHelper {
         }
     }
 
-    static MongoFuture<List<Document>> queryResultToListAsync(final MongoNamespace namespace, final QueryProtocol<Document> queryProtocol,
-                                                              final AsyncReadBinding binding) {
-        return queryResultToListAsync(namespace, queryProtocol, binding, new IdentityTransformer<Document>());
+    static MongoFuture<List<BsonDocument>> queryResultToListAsync(final MongoNamespace namespace,
+                                                                  final QueryProtocol<BsonDocument> queryProtocol,
+                                                                  final AsyncReadBinding binding) {
+        return queryResultToListAsync(namespace, queryProtocol, binding, new IdentityTransformer<BsonDocument>());
     }
 
-    static <T> MongoFuture<List<T>> queryResultToListAsync(final MongoNamespace namespace, final QueryProtocol<Document> queryProtocol,
-                                                           final AsyncReadBinding binding, final Function<Document, T> transformer) {
-        return queryResultToListAsync(namespace, queryProtocol, new DocumentCodec(), binding, transformer);
+    static <T> MongoFuture<List<T>> queryResultToListAsync(final MongoNamespace namespace, final QueryProtocol<BsonDocument> queryProtocol,
+                                                           final AsyncReadBinding binding, final Function<BsonDocument, T> transformer) {
+        return queryResultToListAsync(namespace, queryProtocol, getBsonDocumentCodec(), binding, transformer);
     }
 
     static <T> MongoFuture<List<T>> queryResultToListAsync(final MongoNamespace namespace, final QueryProtocol<T> queryProtocol,

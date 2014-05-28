@@ -16,9 +16,8 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.BulkWriteResult;
-import org.mongodb.Document;
 import org.bson.codecs.Encoder;
+import org.mongodb.BulkWriteResult;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.protocol.ReplaceCommandProtocol;
@@ -32,32 +31,29 @@ import static org.mongodb.assertions.Assertions.notNull;
 
 /**
  * An operation that atomically replaces a document in a collection with a new document.
- * @param <T> the document type
  *
+ * @param <T> the document type
  * @since 3.0
  */
 public class ReplaceOperation<T> extends BaseWriteOperation {
     private final List<ReplaceRequest<T>> replaceRequests;
-    private final Encoder<Document> queryEncoder;
     private final Encoder<T> encoder;
 
     public ReplaceOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                            final List<ReplaceRequest<T>> replaceRequests, final Encoder<Document> queryEncoder,
-                            final Encoder<T> encoder) {
+                            final List<ReplaceRequest<T>> replaceRequests, final Encoder<T> encoder) {
         super(namespace, ordered, writeConcern);
         this.replaceRequests = notNull("replace", replaceRequests);
-        this.queryEncoder = notNull("queryEncoder", queryEncoder);
         this.encoder = notNull("encoder", encoder);
     }
 
     @Override
     protected WriteProtocol getWriteProtocol() {
-        return new ReplaceProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, queryEncoder, encoder);
+        return new ReplaceProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, encoder);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol() {
-        return new ReplaceCommandProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, queryEncoder, encoder);
+        return new ReplaceCommandProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, encoder);
     }
 
     @Override

@@ -16,9 +16,10 @@
 
 package org.mongodb.operation;
 
-import org.bson.codecs.Decoder;
-import org.mongodb.Document;
-import org.bson.codecs.Encoder;
+import org.bson.codecs.Codec;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonDocumentWrapper;
+import org.bson.types.BsonString;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncWriteBinding;
@@ -40,31 +41,28 @@ import static org.mongodb.operation.DocumentHelper.putIfTrue;
 public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
     private final MongoNamespace namespace;
     private final FindAndReplace<T> findAndReplace;
-    private final CommandResultWithPayloadDecoder<T> resultDecoder;
-    private final CommandWithPayloadEncoder<T> commandEncoder;
+    private final Codec<T> codec;
 
-    public FindAndReplaceOperation(final MongoNamespace namespace, final FindAndReplace<T> findAndReplace, final Decoder<T> payloadDecoder,
-                                   final Encoder<T> payloadEncoder) {
+    public FindAndReplaceOperation(final MongoNamespace namespace, final FindAndReplace<T> findAndReplace, final Codec<T> codec) {
         this.namespace = namespace;
         this.findAndReplace = findAndReplace;
-        resultDecoder = new CommandResultWithPayloadDecoder<T>(payloadDecoder, "value");
-        commandEncoder = new CommandWithPayloadEncoder<T>("update", payloadEncoder);
+        this.codec = codec;
     }
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getCommand(), commandEncoder, resultDecoder, binding,
-                                             FindAndModifyHelper.<T>transformer());
+        return executeWrappedCommandProtocol(namespace, getCommand(), CommandResultDocumentCodec.create(codec, "value"),
+                                             binding, FindAndModifyHelper.<T>transformer());
     }
 
     @Override
     public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), commandEncoder, resultDecoder, binding,
-                                                  FindAndModifyHelper.<T>transformer());
+        return executeWrappedCommandProtocolAsync(namespace, getCommand(), CommandResultDocumentCodec.create(codec, "value"),
+                                                  binding, FindAndModifyHelper.<T>transformer());
     }
 
-    private Document getCommand() {
-        Document command = new Document("findandmodify", namespace.getCollectionName());
+    private BsonDocument getCommand() {
+        BsonDocument command = new BsonDocument("findandmodify", new BsonString(namespace.getCollectionName()));
         putIfNotNull(command, "query", findAndReplace.getFilter());
         putIfNotNull(command, "fields", findAndReplace.getSelector());
         putIfNotNull(command, "sort", findAndReplace.getSortCriteria());
@@ -72,7 +70,7 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
         putIfTrue(command, "upsert", findAndReplace.isUpsert());
         putIfNotZero(command, "maxTimeMS", findAndReplace.getOptions().getMaxTime(MILLISECONDS));
 
-        command.put("update", findAndReplace.getReplacement());
+        command.put("update", new BsonDocumentWrapper<T>(findAndReplace.getReplacement(), codec));
         return command;
     }
 }

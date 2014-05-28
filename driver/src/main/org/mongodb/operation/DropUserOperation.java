@@ -16,15 +16,15 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.protocol.DeleteProtocol;
 
@@ -44,7 +44,7 @@ import static org.mongodb.operation.OperationHelper.withConnection;
  *
  * @since 3.0
  */
-public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperation<Void>  {
+public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final String database;
     private final String userName;
 
@@ -85,11 +85,11 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
     private DeleteProtocol getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
         return new DeleteProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
-                asList(new RemoveRequest(new Document("user", userName))),
-                new DocumentCodec());
+                                  asList(new RemoveRequest(new BsonDocument("user", new BsonString(userName))))
+        );
     }
 
-    private Document getCommand() {
-        return new Document("dropUser", userName);
+    private BsonDocument getCommand() {
+        return new BsonDocument("dropUser", new BsonString(userName));
     }
 }

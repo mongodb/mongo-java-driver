@@ -16,9 +16,10 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.BsonBoolean;
+import org.bson.types.BsonDocument;
 import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncReadBinding;
@@ -36,16 +37,17 @@ import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  */
 public class AggregateExplainOperation implements AsyncReadOperation<CommandResult>, ReadOperation<CommandResult> {
     private final MongoNamespace namespace;
-    private final List<Document> pipeline;
+    private final List<BsonDocument> pipeline;
     private final AggregationOptions options;
 
     /**
      * Constructs a new instance.
+     *
      * @param namespace the namespace
-     * @param pipeline the aggregation pipeline
-     * @param options the aggregation options
+     * @param pipeline  the aggregation pipeline
+     * @param options   the aggregation options
      */
-    public AggregateExplainOperation(final MongoNamespace namespace, final List<Document> pipeline, final AggregationOptions options) {
+    public AggregateExplainOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final AggregationOptions options) {
         this.namespace = namespace;
         this.pipeline = pipeline;
         this.options = options;
@@ -61,9 +63,9 @@ public class AggregateExplainOperation implements AsyncReadOperation<CommandResu
         return executeWrappedCommandProtocolAsync(namespace, getCommand(), binding);
     }
 
-    private Document getCommand() {
-        Document command = AggregateHelper.asCommandDocument(namespace, pipeline, options);
-        command.put("explain", true);
+    private BsonDocument getCommand() {
+        BsonDocument command = AggregateHelper.asCommandDocument(namespace, pipeline, options);
+        command.put("explain", BsonBoolean.TRUE);
         return command;
     }
 

@@ -16,12 +16,16 @@
 
 package org.mongodb.protocol;
 
+import org.bson.types.BsonArray;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonString;
+import org.bson.types.BsonValue;
 import org.mongodb.BulkWriteError;
 import org.mongodb.BulkWriteException;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.BulkWriteUpsert;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MongoInternalException;
 import org.mongodb.WriteConcernError;
 import org.mongodb.operation.WriteRequest;
@@ -56,59 +60,61 @@ final class WriteCommandResultHelper {
     @SuppressWarnings("unchecked")
     private static List<BulkWriteError> getWriteErrors(final CommandResult commandResult) {
         List<BulkWriteError> writeErrors = new ArrayList<BulkWriteError>();
-        List<Document> writeErrorsDocuments = (List<Document>) commandResult.getResponse().get("writeErrors");
+        BsonArray writeErrorsDocuments = (BsonArray) commandResult.getResponse().get("writeErrors");
         if (writeErrorsDocuments != null) {
-            for (Document cur : writeErrorsDocuments) {
-                writeErrors.add(new BulkWriteError((Integer) cur.get("code"),
-                                                   (String) cur.get("errmsg"),
-                                                   getErrInfo(cur),
-                                                   (Integer) cur.get("index")));
+            for (BsonValue cur : writeErrorsDocuments) {
+                BsonDocument curDocument = (BsonDocument) cur;
+                writeErrors.add(new BulkWriteError(((BsonInt32) curDocument.get("code")).getValue(),
+                                                   ((BsonString) curDocument.get("errmsg")).getValue(),
+                                                   getErrInfo(curDocument),
+                                                   ((BsonInt32) curDocument.get("index")).getValue()));
             }
         }
         return writeErrors;
     }
 
     private static WriteConcernError getWriteConcernError(final CommandResult commandResult) {
-        Document writeConcernErrorDocument = (Document) commandResult.getResponse().get("writeConcernError");
+        BsonDocument writeConcernErrorDocument = (BsonDocument) commandResult.getResponse().get("writeConcernError");
         if (writeConcernErrorDocument == null) {
             return null;
         } else {
-            return new WriteConcernError((Integer) writeConcernErrorDocument.get("code"),
-                                             (String) writeConcernErrorDocument.get("errmsg"),
-                                             getErrInfo(writeConcernErrorDocument));
+            return new WriteConcernError(((BsonInt32) writeConcernErrorDocument.get("code")).getValue(),
+                                         ((BsonString) writeConcernErrorDocument.get("errmsg")).getValue(),
+                                         getErrInfo(writeConcernErrorDocument));
         }
     }
 
     @SuppressWarnings("unchecked")
     private static List<BulkWriteUpsert> getUpsertedItems(final CommandResult commandResult) {
-        Object upsertedValue = commandResult.getResponse().get("upserted");
+        BsonValue upsertedValue = commandResult.getResponse().get("upserted");
         if (upsertedValue == null) {
             return Collections.emptyList();
         } else {
             List<BulkWriteUpsert> bulkWriteUpsertList = new ArrayList<BulkWriteUpsert>();
-            for (Document upsertedItem : (List<Document>) upsertedValue) {
-                bulkWriteUpsertList.add(new BulkWriteUpsert(((Number) upsertedItem.get("index")).intValue(),
-                                                            upsertedItem.get("_id")));
+            for (BsonValue upsertedItem : (BsonArray) upsertedValue) {
+                BsonDocument upsertedItemDocument = (BsonDocument) upsertedItem;
+                bulkWriteUpsertList.add(new BulkWriteUpsert(((BsonInt32) upsertedItemDocument.get("index")).getValue(),
+                                                            upsertedItemDocument.get("_id")));
             }
             return bulkWriteUpsertList;
         }
     }
 
     private static int getCount(final CommandResult commandResult) {
-        return commandResult.getResponse().getInteger("n");
+        return ((BsonInt32) commandResult.getResponse().get("n")).getValue();
     }
 
     private static Integer getModifiedCount(final WriteRequest.Type type, final CommandResult commandResult) {
-        Integer modifiedCount =  (Integer) commandResult.getResponse().get("nModified");
+        BsonInt32 modifiedCount = (BsonInt32) commandResult.getResponse().get("nModified");
         if (modifiedCount == null && !(type == UPDATE || type == REPLACE)) {
-            modifiedCount = 0;
+            modifiedCount = new BsonInt32(0);
         }
-        return modifiedCount;
+        return modifiedCount == null ? null : modifiedCount.getValue();
     }
 
-    private static Document getErrInfo(final Document response) {
-        Document errInfo = (Document) response.get("errInfo");
-        return errInfo != null ? errInfo : new Document();
+    private static BsonDocument getErrInfo(final BsonDocument response) {
+        BsonDocument errInfo = (BsonDocument) response.get("errInfo");
+        return errInfo != null ? errInfo : new BsonDocument();
     }
 
     private WriteCommandResultHelper() {

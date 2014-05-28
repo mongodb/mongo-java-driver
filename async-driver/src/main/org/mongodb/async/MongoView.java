@@ -22,13 +22,8 @@ import org.mongodb.annotations.NotThreadSafe;
 
 /**
  * A view onto a collection.  Operations on the view will change which, how many, and in what order the documents appear in the view when
- * the contents of the view are accessed.
- * <p>
- * If a method specifying a property of this view is called multiple times, the last invocation wins.
- * </p>
- * <p>
- * Instances of this class are mutable and not thread-safe.
- * </p>
+ * the contents of the view are accessed. <p> If a method specifying a property of this view is called multiple times, the last invocation
+ * wins. </p> <p> Instances of this class are mutable and not thread-safe. </p>
  *
  * @param <T> the document type
  * @since 3.0
@@ -102,8 +97,8 @@ public interface MongoView<T> extends MongoWritableView<T>, MongoReadableView<T>
     MongoView<T> fields(ConvertibleToDocument selector);
 
     /**
-     * Specifies that update operations executed on this view will result in inserts if no document with the _id of the document exists
-     * in the collection.
+     * Specifies that update operations executed on this view will result in inserts if no document with the _id of the document exists in
+     * the collection.
      *
      * @return this
      */

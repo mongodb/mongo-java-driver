@@ -15,7 +15,6 @@
  */
 
 
-
 package org.mongodb.connection
 
 import org.mongodb.CommandResult
@@ -59,7 +58,8 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
     def 'should return server version'() {
         given:
         CommandResult commandResult = database.executeCommand(new Document('buildinfo', 1), ReadPreference.primary())
-        def expectedVersion = new ServerVersion((commandResult.getResponse().get('versionArray') as List<Integer>).subList(0, 3))
+        def expectedVersion = new ServerVersion(commandResult.getResponse().getArray('versionArray')
+                                                             .subList(0, 3)*.getValue() as List<Integer>)
 
         when:
         serverStateNotifier.run()
@@ -76,7 +76,7 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
 
         given:
         CommandResult commandResult = database.executeCommand(new Document('ismaster', 1), ReadPreference.primary())
-        def expected = commandResult.response.getInteger('maxWriteBatchSize')
+        def expected = commandResult.response.getInt32('maxWriteBatchSize').getValue()
 
         when:
         serverStateNotifier.run()

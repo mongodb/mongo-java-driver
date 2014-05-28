@@ -15,9 +15,10 @@
  */
 
 
-
 package org.mongodb.operation
+
 import category.Slow
+import org.bson.types.BsonDocument
 import org.bson.types.Timestamp
 import org.junit.experimental.categories.Category
 import org.mongodb.CreateCollectionOptions
@@ -45,7 +46,10 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
     private MongoQueryCursor<Document> cursor
 
     def setup() {
-        for (int i = 0; i < 10; i++) {
+        for (
+                int i = 0;
+                i < 10;
+                i++) {
             collection.insert(new Document('_id', i))
         }
         connectionSource = getBinding().getReadConnectionSource()
@@ -222,7 +226,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000))
 
         collection.insert(new Document('_id', 1).append('ts', new Timestamp(5, 0)))
-        def firstBatch = executeQuery(new Document('ts', new Document('$gte', new Timestamp(5, 0))), 2,
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new Timestamp(5, 0))), 2,
                                       EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData))
 
         when:
@@ -266,7 +270,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         collection.insert(new Document('_id', 1))
 
-        def firstBatch = executeQuery(new Document('ts', new Document('$gte', new Timestamp(5, 0))), 2,
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new Timestamp(5, 0))), 2,
                                       EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData))
 
         when:
@@ -352,7 +356,10 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         char[] array = 'x' * 16000
         String bigString = new String(array)
 
-        for (int i = 11; i < 1000; i++) {
+        for (
+                int i = 11;
+                i < 1000;
+                i++) {
             collection.insert(new Document('_id', i).append('s', bigString))
         }
 
@@ -394,7 +401,10 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
                                                 connectionSource)
 
         then:
-        for (int i = 0; i < 10; i++) {
+        for (
+                int i = 0;
+                i < 10;
+                i++) {
             cursor.next()
         }
         !cursor.hasNext()
@@ -436,14 +446,13 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
     }
 
     private QueryResult<Document> executeQuery(int numToReturn) {
-        executeQuery(new Document(), numToReturn, EnumSet.noneOf(QueryFlag))
+        executeQuery(new BsonDocument(), numToReturn, EnumSet.noneOf(QueryFlag))
     }
 
-    private QueryResult<Document> executeQuery(Document query, int numberToReturn, EnumSet<QueryFlag> queryFlag) {
+    private QueryResult<Document> executeQuery(BsonDocument query, int numberToReturn, EnumSet<QueryFlag> queryFlag) {
         def connection = connectionSource.getConnection()
         try {
-            new QueryProtocol<Document>(collection.getNamespace(), queryFlag, 0, numberToReturn, query, null,
-                                        new DocumentCodec(), new DocumentCodec())
+            new QueryProtocol<Document>(collection.getNamespace(), queryFlag, 0, numberToReturn, query, null, new DocumentCodec())
                     .execute(connection)
         } finally {
             connection.release();

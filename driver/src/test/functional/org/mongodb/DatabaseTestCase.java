@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonDocumentWrapper;
 import org.junit.After;
 import org.junit.Before;
 import org.mongodb.codecs.DocumentCodec;
@@ -65,5 +67,9 @@ public class DatabaseTestCase {
 
     protected CollectionHelper<Document> getCollectionHelper() {
         return new CollectionHelper<Document>(new DocumentCodec(), getNamespace());
+    }
+
+    protected BsonDocument wrap(final Document document) {
+        return new BsonDocumentWrapper<Document>(document, new DocumentCodec());
     }
 }

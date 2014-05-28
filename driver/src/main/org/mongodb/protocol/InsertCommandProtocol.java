@@ -16,13 +16,12 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.BulkWriteResult;
 import org.bson.codecs.Encoder;
+import org.mongodb.BulkWriteResult;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
@@ -85,7 +84,7 @@ public class InsertCommandProtocol<T> extends WriteCommandProtocol {
 
     @Override
     protected InsertCommandMessage<T> createRequestMessage(final ServerDescription serverDescription) {
-        return new InsertCommandMessage<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequests, new DocumentCodec(),
+        return new InsertCommandMessage<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequests,
                                            encoder, getMessageSettings(serverDescription));
     }
 

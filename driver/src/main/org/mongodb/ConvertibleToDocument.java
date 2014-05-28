@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+// TODO: This is temporary during the refactoring
 public interface ConvertibleToDocument {
     Document toDocument();
 }

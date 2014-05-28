@@ -16,11 +16,12 @@
 
 package org.mongodb.operation;
 
+import org.bson.codecs.Decoder;
+import org.bson.types.BsonArray;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt64;
 import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
-import org.bson.codecs.Decoder;
-import org.mongodb.Document;
-import org.bson.codecs.Encoder;
 import org.mongodb.Function;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
@@ -30,7 +31,6 @@ import org.mongodb.binding.AsyncConnectionSource;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ConnectionSource;
 import org.mongodb.binding.ReadBinding;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.protocol.QueryResult;
 
@@ -55,16 +55,14 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
     private static final String FIRST_BATCH = "firstBatch";
 
     private final MongoNamespace namespace;
-    private final List<Document> pipeline;
-    private final Encoder<Document> encoder;
+    private final List<BsonDocument> pipeline;
     private final Decoder<T> decoder;
     private final AggregationOptions options;
 
-    public AggregateOperation(final MongoNamespace namespace, final List<Document> pipeline, final Encoder<Document> encoder,
+    public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
                               final Decoder<T> decoder, final AggregationOptions options) {
         this.namespace = namespace;
         this.pipeline = pipeline;
-        this.encoder = encoder;
         this.decoder = decoder;
         this.options = options;
     }
@@ -74,8 +72,8 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
         return withConnection(binding, new CallableWithConnectionAndSource<MongoCursor<T>>() {
             @Override
             public MongoCursor<T> call(final ConnectionSource source, final Connection connection) {
-                return executeWrappedCommandProtocol(namespace, asCommandDocument(namespace, pipeline, options), encoder,
-                                                     new CommandResultWithPayloadDecoder<T>(decoder, getFieldNameWithResults()),
+                return executeWrappedCommandProtocol(namespace, asCommandDocument(namespace, pipeline, options),
+                                                     CommandResultDocumentCodec.create(decoder, getFieldNameWithResults()),
                                                      connection, binding.getReadPreference(), transformer(source));
             }
         });
@@ -88,7 +86,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
             @Override
             public MongoFuture<MongoAsyncCursor<T>> call(final AsyncConnectionSource source, final Connection connection) {
                 return executeWrappedCommandProtocolAsync(namespace, asCommandDocument(namespace, pipeline, options),
-                                                          new DocumentCodec(), new CommandResultWithPayloadDecoder<T>(decoder, "result"),
+                                                          CommandResultDocumentCodec.create(decoder, getFieldNameWithResults()),
                                                           binding, asyncTransformer(source));
             }
         });
@@ -105,16 +103,16 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
     @SuppressWarnings("unchecked")
     private QueryResult<T> createQueryResult(final CommandResult result) {
         long cursorId;
-        List<T> results;
+        BsonArray results;
         if (isInline()) {
             cursorId = 0;
-            results = (List<T>) result.getResponse().get(RESULT);
+            results = result.getResponse().getArray(RESULT);
         } else {
-            Document cursor = (Document) result.getResponse().get("cursor");
-            cursorId = cursor.getLong("id");
-            results = (List<T>) cursor.get(FIRST_BATCH);
+            BsonDocument cursor = result.getResponse().getDocument("cursor");
+            cursorId = ((BsonInt64) cursor.get("id")).getValue();
+            results = cursor.getArray(FIRST_BATCH);
         }
-        return new QueryResult<T>(results, cursorId, result.getAddress(), 0);
+        return new QueryResult<T>(BsonDocumentWrapperHelper.<T>toList(results), cursorId, result.getAddress(), 0);
     }
 
     private Function<CommandResult, MongoCursor<T>> transformer(final ConnectionSource source) {

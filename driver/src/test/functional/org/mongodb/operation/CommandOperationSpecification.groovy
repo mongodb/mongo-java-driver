@@ -16,12 +16,15 @@
 
 
 package org.mongodb.operation
+
 import category.Async
+import org.bson.codecs.BsonDocumentCodec
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
+import org.bson.types.BsonString
 import org.junit.experimental.categories.Category
-import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoExecutionTimeoutException
-import org.mongodb.codecs.DocumentCodec
 
 import static java.util.Arrays.asList
 import static org.junit.Assume.assumeFalse
@@ -40,8 +43,9 @@ class CommandOperationSpecification extends FunctionalSpecification {
 
         given:
         def commandOperation = new CommandReadOperation(getNamespace().databaseName,
-                                                        new Document('count', getCollectionName()).append('maxTimeMS', 1)
-                                                        , new DocumentCodec(), new DocumentCodec())
+                                                        new BsonDocument('count', new BsonString(getCollectionName()))
+                                                                .append('maxTimeMS', new BsonInt32(1)),
+                                                        new BsonDocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
@@ -61,8 +65,9 @@ class CommandOperationSpecification extends FunctionalSpecification {
 
         given:
         def commandOperation = new CommandReadOperation(getNamespace().databaseName,
-                                                        new Document('count', getCollectionName()).append('maxTimeMS', 1)
-                                                        , new DocumentCodec(), new DocumentCodec())
+                                                        new BsonDocument('count', new BsonString(getCollectionName()))
+                                                                .append('maxTimeMS', new BsonInt32(1)),
+                                                        new BsonDocumentCodec())
         enableMaxTimeFailPoint()
 
         when:

@@ -16,8 +16,12 @@
 
 
 package org.mongodb.operation
+
 import category.Slow
 import org.bson.types.Binary
+import org.bson.types.BsonBoolean
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
 import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import org.mongodb.BulkWriteException
@@ -99,7 +103,7 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true))
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new RemoveRequest(new Document('x', true)).multi(false)],
+                                             [new RemoveRequest(new BsonDocument('x', BsonBoolean.TRUE)).multi(false)],
                                              ordered, ACKNOWLEDGED, new DocumentCodec())
 
         when:
@@ -118,7 +122,7 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true), new Document('x', false))
 
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new RemoveRequest(new Document('x', true))],
+                                             [new RemoveRequest(new BsonDocument('x', BsonBoolean.TRUE))],
                                              ordered, ACKNOWLEDGED, new DocumentCodec())
 
         when:
@@ -136,8 +140,8 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true));
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new UpdateRequest(new Document('x', true),
-                                                                new Document('$set', new Document('y', 1)))],
+                                             [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
+                                                                new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))))],
                                              ordered, ACKNOWLEDGED, new DocumentCodec())
 
         when:
@@ -155,8 +159,9 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true));
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new UpdateRequest(new Document('x', true),
-                                                                new Document('$set', new Document('y', 1))).multi(true)],
+                                             [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
+                                                                new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))))
+                                                      .multi(true)],
                                              ordered, ACKNOWLEDGED, new DocumentCodec())
 
         when:
@@ -172,10 +177,11 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
 
     def 'when no document matches the query, an update of one with upsert should insert a document'() {
         def id = new ObjectId()
-        def query = new Document('_id', id)
+        def query = new BsonDocument('_id', id)
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new UpdateRequest(query, new Document('$set', new Document('x', 2))).upsert(true)],
+                                             [new UpdateRequest(query, new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))))
+                                                      .upsert(true)],
                                              ordered, ACKNOWLEDGED, new DocumentCodec())
 
         when:
@@ -191,10 +197,10 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
 
     def 'when no document matches the query, an update multi with upsert should insert a document'() {
         def id = new ObjectId()
-        def query = new Document('_id', id)
+        def query = new BsonDocument('_id', id)
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new UpdateRequest(query, new Document('$set', new Document('x', 2)))
+                                             [new UpdateRequest(query, new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))))
                                                       .upsert(true).multi(true)],
                                              ordered, ACKNOWLEDGED, new DocumentCodec())
 
@@ -213,8 +219,9 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true));
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new UpdateRequest(new Document('x', true),
-                                                                new Document('$set', new Document('y', 1))).upsert(true)],
+                                             [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
+                                                                new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))))
+                                                      .upsert(true)],
                                              ordered, ACKNOWLEDGED, new DocumentCodec())
 
         when:
@@ -232,8 +239,9 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true));
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new UpdateRequest(new Document('x', true),
-                                                                new Document('$set', new Document('y', 1))).upsert(true).multi(true)],
+                                             [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
+                                                                new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))))
+                                                      .upsert(true).multi(true)],
                                              ordered, ACKNOWLEDGED, new DocumentCodec())
 
         when:
@@ -252,7 +260,8 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         def id = new ObjectId()
         def encoder = new DocumentCodec(new FieldNameValidator())
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new ReplaceRequest(new Document('_id', id), new Document('$set', new Document('x', 1)))
+                                             [new ReplaceRequest(new BsonDocument('_id', id),
+                                                                 new Document('$set', new Document('x', 1)))
                                                       .upsert(true)],
                                              true, ACKNOWLEDGED, encoder)
 
@@ -270,7 +279,8 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         def id = new ObjectId()
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new ReplaceRequest(new Document('_id', id), new Document('_id', id).append('x', 2))
+                                             [new ReplaceRequest(new BsonDocument('_id', id),
+                                                                 new Document('_id', id).append('x', 2))
                                                       .upsert(true)],
                                              ordered, ACKNOWLEDGED, new DocumentCodec())
 
@@ -290,7 +300,8 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true))
 
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new ReplaceRequest(new Document('x', true), new Document('y', 1).append('x', false))
+                                             [new ReplaceRequest(new BsonDocument('x', BsonBoolean.TRUE),
+                                                                 new Document('y', 1).append('x', false))
                                                       .upsert(true)],
                                              ordered, ACKNOWLEDGED, new DocumentCodec())
 
@@ -310,7 +321,7 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document('_id', 1))
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new ReplaceRequest(new Document('_id', 1),
+                                             [new ReplaceRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                                  new Document('_id', 1)
                                                                          .append('x', new Binary(new byte[1024 * 1024 * 16 - 30])))
                                                       .upsert(true)],
@@ -329,10 +340,10 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document('_id', 1), new Document('_id', 2))
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new ReplaceRequest(new Document('_id', 1),
+                                             [new ReplaceRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                                  new Document('_id', 1)
                                                                          .append('x', new Binary(new byte[1024 * 1024 * 16 - 30]))),
-                                              new ReplaceRequest(new Document('_id', 2),
+                                              new ReplaceRequest(new BsonDocument('_id', new BsonInt32(2)),
                                                                  new Document('_id', 2)
                                                                          .append('x', new Binary(new byte[1024 * 1024 * 16 - 30])))],
                                              true, ACKNOWLEDGED, new DocumentCodec())
@@ -380,8 +391,8 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         when:
         def binding = getPinnedBinding()
         def result = op.execute(binding)
-            new InsertOperation<Document>(namespace, true, ACKNOWLEDGED, [new InsertRequest<Document>(new Document('_id', 9))],
-                                          new DocumentCodec()).execute(binding);
+        new InsertOperation<Document>(namespace, true, ACKNOWLEDGED, [new InsertRequest<Document>(new Document('_id', 9))],
+                                      new DocumentCodec()).execute(binding);
 
         then:
         !result.acknowledged
@@ -421,7 +432,8 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new InsertRequest<Document>(new Document('_id', 1)),
-                                              new UpdateRequest(new Document('_id', 1), new Document('$set', new Document('x', 3))),
+                                              new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                                                new BsonDocument('$set', new BsonDocument('x', new BsonInt32(3)))),
                                               new InsertRequest<Document>(new Document('_id', 1))   // this should fail with index 2
                                              ], true, ACKNOWLEDGED, new DocumentCodec())
         when:
@@ -439,7 +451,8 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().insertDocuments(getTestInserts())
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new InsertRequest<Document>(new Document('_id', 1)),
-                                              new UpdateRequest(new Document('_id', 2), new Document('$set', new Document('x', 3))),
+                                              new UpdateRequest(new BsonDocument('_id', new BsonInt32(2)),
+                                                                new BsonDocument('$set', new BsonDocument('x', new BsonInt32(3)))),
                                               new InsertRequest<Document>(new Document('_id', 3))   // this should fail with index 2
                                              ], false, ACKNOWLEDGED, new DocumentCodec())
         when:
@@ -525,15 +538,15 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
     }
 
     private static List<WriteRequest> getTestWrites() {
-        [new UpdateRequest(new Document('_id', 1),
-                           new Document('$set', new Document('x', 2))),
-         new UpdateRequest(new Document('_id', 2),
-                           new Document('$set', new Document('x', 3))),
-         new RemoveRequest(new Document('_id', 3)),
-         new RemoveRequest(new Document('_id', 4)),
-         new ReplaceRequest(new Document('_id', 5),
+        [new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
+                           new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2)))),
+         new UpdateRequest(new BsonDocument('_id', new BsonInt32(2)),
+                           new BsonDocument('$set', new BsonDocument('x', new BsonInt32(3)))),
+         new RemoveRequest(new BsonDocument('_id', new BsonInt32(3))),
+         new RemoveRequest(new BsonDocument('_id', new BsonInt32(4))),
+         new ReplaceRequest(new BsonDocument('_id', new BsonInt32(5)),
                             new Document('_id', 5).append('x', 4)),
-         new ReplaceRequest(new Document('_id', 6),
+         new ReplaceRequest(new BsonDocument('_id', new BsonInt32(6)),
                             new Document('_id', 6).append('x', 5)),
          new InsertRequest<Document>(new Document('_id', 7)),
          new InsertRequest<Document>(new Document('_id', 8))

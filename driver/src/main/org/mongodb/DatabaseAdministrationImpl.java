@@ -16,8 +16,9 @@
 
 package org.mongodb;
 
-import org.bson.codecs.Codec;
-import org.mongodb.codecs.DocumentCodec;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
 import org.mongodb.operation.CommandWriteOperation;
 import org.mongodb.operation.CreateCollectionOperation;
 import org.mongodb.operation.GetCollectionNamesOperation;
@@ -32,10 +33,7 @@ import static org.mongodb.ReadPreference.primary;
  * MongoDatabase in order to keep the API very simple, these should be the methods that are not commonly used by clients of the driver.
  */
 class DatabaseAdministrationImpl implements DatabaseAdministration {
-    private static final Document DROP_DATABASE = new Document("dropDatabase", 1);
-
     private final String databaseName;
-    private final Codec<Document> commandCodec = new DocumentCodec();
     private final MongoClientImpl client;
 
     public DatabaseAdministrationImpl(final String databaseName, final MongoClientImpl client) {
@@ -45,7 +43,8 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public void drop() {
-        client.execute(new CommandWriteOperation(databaseName, DROP_DATABASE, commandCodec, commandCodec));
+        client.execute(new CommandWriteOperation(databaseName, new BsonDocument("dropDatabase", new BsonInt32(1)),
+                                                 new BsonDocumentCodec()));
     }
 
     @Override
