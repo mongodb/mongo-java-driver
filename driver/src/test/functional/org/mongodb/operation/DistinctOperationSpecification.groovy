@@ -17,10 +17,11 @@
 package org.mongodb.operation
 
 import category.Async
+import org.bson.types.BsonArray
 import org.bson.types.BsonDocument
 import org.bson.types.BsonInt32
+import org.bson.types.BsonString
 import org.junit.experimental.categories.Category
-import org.mongodb.Block
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 
@@ -41,8 +42,7 @@ class DistinctOperationSpecification extends FunctionalSpecification {
         def result = op.execute(getBinding());
 
         then:
-        List<String> results = result.toList().sort()
-        results == ['Pete', 'Sam']
+        result.toList().sort() == new BsonArray([new BsonString('Pete'), new BsonString('Sam')])
     }
 
     @Category(Async)
@@ -55,19 +55,10 @@ class DistinctOperationSpecification extends FunctionalSpecification {
 
         when:
         DistinctOperation op = new DistinctOperation(getNamespace(), 'name', new Find())
-        List<Document> docList = []
-        def cursor = op.executeAsync(getAsyncBinding()).get()
-        cursor.forEach(new Block<String>() {
-            @Override
-            void apply(final String value) {
-                if (value != null) {
-                    docList += value
-                }
-            }
-        }).get()
+        def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        docList.sort() == ['Pete', 'Sam']
+        result.sort() == new BsonArray([new BsonString('Pete'), new BsonString('Sam')])
     }
 
     def 'should be able to distinct by name with find'() {
@@ -82,8 +73,7 @@ class DistinctOperationSpecification extends FunctionalSpecification {
         def result = op.execute(getBinding());
 
         then:
-        List<String> results = result.toList().sort()
-        results == ['Pete']
+        result == new BsonArray([new BsonString('Pete')])
     }
 
     @Category(Async)
@@ -95,19 +85,10 @@ class DistinctOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().insertDocuments(pete, sam, pete2)
 
         when:
-        List<Document> docList = []
         DistinctOperation op = new DistinctOperation(getNamespace(), 'name', new Find(new BsonDocument('age', new BsonInt32(25))))
-        def cursor = op.executeAsync(getAsyncBinding()).get()
-        cursor.forEach(new Block<String>() {
-            @Override
-            void apply(final String value) {
-                if (value != null) {
-                    docList += value
-                }
-            }
-        }).get()
+        def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        docList == ['Pete']
+        result == new BsonArray([new BsonString('Pete')])
     }
 }
