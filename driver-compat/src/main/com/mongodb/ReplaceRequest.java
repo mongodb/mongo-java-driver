@@ -18,21 +18,17 @@ package com.mongodb;
 
 import org.bson.types.BsonDocumentWrapper;
 
-import static com.mongodb.DBObjects.toDBObject;
-
 class ReplaceRequest extends WriteRequest {
     private final DBObject query;
     private final DBObject document;
     private final boolean upsert;
+    private final DBObjectCodec codec;
 
-    public ReplaceRequest(final DBObject query, final DBObject document, final boolean upsert) {
+    public ReplaceRequest(final DBObject query, final DBObject document, final boolean upsert, final DBObjectCodec codec) {
         this.query = query;
         this.document = document;
         this.upsert = upsert;
-    }
-
-    ReplaceRequest(final org.mongodb.operation.ReplaceRequest<DBObject> replaceRequest) {
-        this(toDBObject(replaceRequest.getFilter()), replaceRequest.getReplacement(), replaceRequest.isUpsert());
+        this.codec = codec;
     }
 
     public DBObject getQuery() {
@@ -49,7 +45,7 @@ class ReplaceRequest extends WriteRequest {
 
     @Override
     org.mongodb.operation.WriteRequest toNew() {
-        return new org.mongodb.operation.ReplaceRequest<DBObject>(new BsonDocumentWrapper<DBObject>(query, /* TODO */),
-                                                                  document).upsert(isUpsert());
+        return new org.mongodb.operation.ReplaceRequest<DBObject>(new BsonDocumentWrapper<DBObject>(query, codec), document)
+               .upsert(isUpsert());
     }
 }

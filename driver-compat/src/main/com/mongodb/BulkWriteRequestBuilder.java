@@ -24,24 +24,26 @@ package com.mongodb;
 public class BulkWriteRequestBuilder {
     private final BulkWriteOperation bulkWriteOperation;
     private final DBObject query;
+    private final DBObjectCodec codec;
 
-    BulkWriteRequestBuilder(final BulkWriteOperation bulkWriteOperation, final DBObject query) {
+    BulkWriteRequestBuilder(final BulkWriteOperation bulkWriteOperation, final DBObject query, final DBObjectCodec codec) {
         this.bulkWriteOperation = bulkWriteOperation;
         this.query = query;
+        this.codec = codec;
     }
 
     /**
      * Adds a request to remove all matching documents to the bulk operation.
      */
     public void remove() {
-        bulkWriteOperation.addRequest(new RemoveRequest(query, true));
+        bulkWriteOperation.addRequest(new RemoveRequest(query, true, codec));
     }
 
     /**
      * Adds a request to remove one matching documents to the bulk operation.
      */
     public void removeOne() {
-        bulkWriteOperation.addRequest(new RemoveRequest(query, false));
+        bulkWriteOperation.addRequest(new RemoveRequest(query, false, codec));
     }
 
     /**
@@ -50,7 +52,7 @@ public class BulkWriteRequestBuilder {
      * @param document the replacement document
      */
     public void replaceOne(final DBObject document) {
-        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false).replaceOne(document);
+        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec).replaceOne(document);
     }
 
     /**
@@ -59,7 +61,7 @@ public class BulkWriteRequestBuilder {
      * @param update the update criteria
      */
     public void update(final DBObject update) {
-        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false).update(update);
+        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec).update(update);
     }
 
     /**
@@ -68,7 +70,7 @@ public class BulkWriteRequestBuilder {
      * @param update the update criteria
      */
     public void updateOne(final DBObject update) {
-        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false).updateOne(update);
+        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec).updateOne(update);
     }
 
     /**
@@ -77,6 +79,6 @@ public class BulkWriteRequestBuilder {
      * @return a new builder that allows only update and replace, since upsert does not apply to remove.
      */
     public BulkUpdateRequestBuilder upsert() {
-        return new BulkUpdateRequestBuilder(bulkWriteOperation, query, true);
+        return new BulkUpdateRequestBuilder(bulkWriteOperation, query, true, codec);
     }
 }

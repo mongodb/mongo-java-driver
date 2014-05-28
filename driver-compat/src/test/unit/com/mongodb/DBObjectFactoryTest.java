@@ -27,11 +27,11 @@ import static org.junit.Assert.assertThat;
 
 public class DBObjectFactoryTest {
 
-    private DBObjectFactory factory;
+    private DBCollectionObjectFactory factory;
 
     @Before
     public void setUp() {
-        factory = new DBObjectFactory();
+        factory = new DBCollectionObjectFactory();
     }
 
     @Test

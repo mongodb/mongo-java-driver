@@ -23,7 +23,7 @@ import org.bson.types.Timestamp;
 
 import static org.bson.io.Bits.readLong;
 
-class BSONCallbackAdapter extends BSONWriter {
+class BSONCallbackAdapter extends AbstractBSONWriter {
 
     private BSONCallback bsonCallback;
 
@@ -223,7 +223,7 @@ class BSONCallbackAdapter extends BSONWriter {
         }
     }
 
-    public class Context extends BSONWriter.Context {
+    public class Context extends AbstractBSONWriter.Context {
         private int index; // used when contextType is an array
         private BSONCallback callback;
         private String code;

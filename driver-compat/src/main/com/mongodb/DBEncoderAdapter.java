@@ -24,13 +24,14 @@ import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 
 import static java.nio.ByteBuffer.wrap;
+import static org.mongodb.assertions.Assertions.notNull;
 
 class DBEncoderAdapter implements Encoder<DBObject> {
 
     private final DBEncoder encoder;
 
     public DBEncoderAdapter(final DBEncoder encoder) {
-        this.encoder = encoder;
+        this.encoder = notNull("encoder", encoder);
     }
 
     // TODO: this can be optimized to reduce copying of buffers.  For that we'd need an InputBuffer that could iterate

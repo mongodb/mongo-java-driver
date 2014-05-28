@@ -58,31 +58,6 @@ final class BulkWriteHelper {
         return retVal;
     }
 
-    @SuppressWarnings("unchecked")
-    static List<WriteRequest> translateWriteRequests(final List<org.mongodb.operation.WriteRequest> writeRequests) {
-        List<WriteRequest> retVal = new ArrayList<WriteRequest>(writeRequests.size());
-        for (org.mongodb.operation.WriteRequest cur : writeRequests) {
-            switch (cur.getType()) {
-                case INSERT:
-                    retVal.add(new InsertRequest((org.mongodb.operation.InsertRequest<DBObject>) cur));
-                    break;
-                case UPDATE:
-                    retVal.add(new UpdateRequest((org.mongodb.operation.UpdateRequest) cur));
-                    break;
-                case REPLACE:
-                    retVal.add(new ReplaceRequest((org.mongodb.operation.ReplaceRequest<DBObject>) cur));
-                    break;
-                case REMOVE:
-                    retVal.add(new RemoveRequest((org.mongodb.operation.RemoveRequest) cur));
-                    break;
-                default:
-                    throw new MongoInternalException("Unexpected write type: " + cur.getType());
-            }
-        }
-        return retVal;
-
-    }
-
     static List<org.mongodb.operation.WriteRequest> translateWriteRequestsToNew(final List<WriteRequest> writeRequests) {
         List<org.mongodb.operation.WriteRequest> retVal = new ArrayList<org.mongodb.operation.WriteRequest>(writeRequests.size());
         for (WriteRequest cur : writeRequests) {

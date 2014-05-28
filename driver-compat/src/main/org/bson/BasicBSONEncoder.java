@@ -109,7 +109,7 @@ public class BasicBSONEncoder implements BSONEncoder {
     }
 
     protected void putName(final String name) {
-        if (bsonWriter.getState() == BSONWriter.State.NAME) {
+        if (bsonWriter.getState() == AbstractBSONWriter.State.NAME) {
             bsonWriter.writeName(name);
         }
     }

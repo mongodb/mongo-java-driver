@@ -26,6 +26,7 @@ import org.bson.types.BsonValue;
 import java.util.List;
 
 import static org.mongodb.OrderBy.ASC;
+import static org.mongodb.assertions.Assertions.notNull;
 
 
 /**
@@ -184,7 +185,7 @@ public final class Index {
         private boolean sparse = false;
         private int expireAfterSeconds = -1;
         private final BsonDocument keys = new BsonDocument();
-        private final BsonDocument extra = new BsonDocument();
+        private BsonDocument extra = new BsonDocument();
 
         private Builder() {
         }
@@ -292,8 +293,8 @@ public final class Index {
             return this;
         }
 
-        public Builder extra(final String key, final BsonValue value) {
-            extra.put(key, value);
+        public Builder extra(final BsonDocument extra) {
+            this.extra = notNull("extra", extra);
             return this;
         }
 
