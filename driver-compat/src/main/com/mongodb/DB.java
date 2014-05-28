@@ -71,7 +71,7 @@ public class DB {
     private final ConcurrentHashMap<String, DBCollection> collectionCache;
     private final Bytes.OptionHolder optionHolder;
     private final Codec<Document> documentCodec;
-    private final Codec<DBObject> commandCodec = null;
+    private final Codec<DBObject> commandCodec;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
@@ -84,6 +84,7 @@ public class DB {
         this.documentCodec = documentCodec;
         this.collectionCache = new ConcurrentHashMap<String, DBCollection>();
         this.optionHolder = new Bytes.OptionHolder(mongo.getOptionHolder());
+        this.commandCodec = new DBObjectCodec(this, null, getMongo().getCodecRegistry(), DBObjectCodecSource.getDefaultBsonTypeClassMap());
     }
 
     /**
@@ -603,6 +604,10 @@ public class DB {
     }
 
     private BsonDocument wrap(DBObject document, DBEncoder encoder) {
-        return new BsonDocumentWrapper<DBObject>(document, new DBEncoderAdapter(encoder));
+        if (encoder == null) {
+            return wrap(document);
+        } else {
+            return new BsonDocumentWrapper<DBObject>(document, new DBEncoderAdapter(encoder));
+        }
     }
 }

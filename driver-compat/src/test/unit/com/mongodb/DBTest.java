@@ -17,10 +17,11 @@
 package com.mongodb;
 
 import category.ReplicaSet;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.Document;
 import org.mongodb.operation.UserExistsOperation;
 
 import java.net.UnknownHostException;
@@ -289,7 +290,7 @@ public class DBTest extends DatabaseTestCase {
         database.requestStart();
         try {
             database.requestEnsureConnection();
-            database.executeCommand(new Document("ping", 1));
+            database.executeCommand(new BsonDocument("ping", new BsonInt32(1)));
         } finally {
             database.requestDone();
         }

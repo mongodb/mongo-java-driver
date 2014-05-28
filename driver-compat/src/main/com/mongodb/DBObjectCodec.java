@@ -33,7 +33,7 @@ import org.mongodb.MongoException;
 import org.mongodb.codecs.BinaryToByteArrayTransformer;
 import org.mongodb.codecs.BinaryToUUIDTransformer;
 import org.mongodb.codecs.CollectibleCodec;
-import org.mongodb.codecs.validators.Validator;
+import org.mongodb.codecs.ObjectIdGenerator;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -48,29 +48,23 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
 
     private final CodecRegistry codecRegistry;
     private final Map<BSONType, Class<?>> bsonTypeClassMap;
-    private final Validator<String> fieldNameValidator;
     private final DB db;
     private final DBObjectFactory objectFactory;
-    private final IdGenerator idGenerator;
+    private final IdGenerator idGenerator = new ObjectIdGenerator();
 
     public DBObjectCodec(final CodecRegistry codecRegistry, final Map<BSONType, Class<?>> bsonTypeClassMap) {
         this.codecRegistry = codecRegistry;
         this.bsonTypeClassMap = bsonTypeClassMap;
-        this.idGenerator = null;
         this.db = null;
-        this.fieldNameValidator = null;
         this.objectFactory = null;
     }
 
-    public DBObjectCodec(final DB db, final Validator<String> fieldNameValidator, final DBObjectFactory objectFactory,
-                         final CodecRegistry codecRegistry, final Map<BSONType, Class<?>> bsonTypeClassMap,
-                         final IdGenerator idGenerator) {
+    public DBObjectCodec(final DB db, final DBObjectFactory objectFactory,
+                         final CodecRegistry codecRegistry, final Map<BSONType, Class<?>> bsonTypeClassMap) {
         this.db = db;
-        this.fieldNameValidator = fieldNameValidator;
         this.objectFactory = objectFactory;
         this.codecRegistry = codecRegistry;
         this.bsonTypeClassMap = bsonTypeClassMap;
-        this.idGenerator = idGenerator;
     }
 
     //TODO: what about BSON Exceptions?
@@ -81,7 +75,6 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         beforeFields(writer, document);
 
         for (final String key : document.keySet()) {
-            validateField(key);
             if (skipField(key)) {
                 continue;
             }
@@ -104,20 +97,20 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
 
     @Override
     public boolean documentHasId(final DBObject document) {
-        return document.containsKey(ID_FIELD_NAME);
+        return document.containsField(ID_FIELD_NAME);
     }
 
     @Override
     public Object getDocumentId(final DBObject document) {
         if (documentHasId(document)) {
             return document.get(ID_FIELD_NAME);
-//            BsonDocument idHoldingDocument = new BsonDocument();
-//            BSONWriter writer = new BsonDocumentWriter(idHoldingDocument);
-//            writer.writeStartDocument();
-//            writer.writeName(ID_FIELD_NAME);
-//            writeValue(writer, document.get(ID_FIELD_NAME));
-//            writer.writeEndDocument();
-//            return idHoldingDocument.get(ID_FIELD_NAME);
+            //            BsonDocument idHoldingDocument = new BsonDocument();
+            //            BSONWriter writer = new BsonDocumentWriter(idHoldingDocument);
+            //            writer.writeStartDocument();
+            //            writer.writeName(ID_FIELD_NAME);
+            //            writeValue(writer, document.get(ID_FIELD_NAME));
+            //            writer.writeEndDocument();
+            //            return idHoldingDocument.get(ID_FIELD_NAME);
         } else {
             return null;
         }
@@ -139,10 +132,6 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
 
     private boolean skipField(final String key) {
         return key.equals(ID_FIELD_NAME);
-    }
-
-    private void validateField(final String key) {
-        fieldNameValidator.validate(key);
     }
 
     @SuppressWarnings("unchecked")
@@ -182,7 +171,6 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         bsonWriter.writeStartDocument();
 
         for (final Map.Entry<String, Object> entry : document.entrySet()) {
-            validateField(entry.getKey());
             bsonWriter.writeName(entry.getKey());
             writeValue(bsonWriter, entry.getValue());
         }

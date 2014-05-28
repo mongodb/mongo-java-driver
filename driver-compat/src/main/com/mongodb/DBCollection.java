@@ -24,6 +24,7 @@ import org.bson.types.BsonArray;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonDocumentWrapper;
 import org.bson.types.BsonString;
+import org.bson.types.BsonValue;
 import org.bson.types.ObjectId;
 import org.mongodb.Document;
 import org.mongodb.Index;
@@ -33,8 +34,6 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.codecs.ObjectIdGenerator;
-import org.mongodb.codecs.validators.FieldNameValidator;
 import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.AggregateExplainOperation;
@@ -72,7 +71,6 @@ import org.mongodb.operation.ReplaceRequest;
 import org.mongodb.operation.UpdateOperation;
 import org.mongodb.operation.UpdateRequest;
 import org.mongodb.operation.WriteOperation;
-import org.mongodb.util.FieldHelpers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,7 +82,6 @@ import static com.mongodb.AggregationOptions.OutputMode.INLINE;
 import static com.mongodb.BulkWriteHelper.translateBulkWriteResult;
 import static com.mongodb.BulkWriteHelper.translateWriteRequestsToNew;
 import static com.mongodb.DBObjects.toDBList;
-import static com.mongodb.DBObjects.toDBObject;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static java.util.Arrays.asList;
@@ -134,7 +131,7 @@ public class DBCollection {
 
     private DBEncoderFactory encoderFactory;
     private DBDecoderFactory decoderFactory;
-    private DBObjectFactory objectFactory;
+    private DBCollectionObjectFactory objectFactory;
 
     private final Codec<Document> documentCodec;
     private volatile CompoundDBObjectCodec objectCodec;
@@ -152,7 +149,7 @@ public class DBCollection {
         this.database = database;
         this.documentCodec = documentCodec;
         this.optionHolder = new Bytes.OptionHolder(database.getOptionHolder());
-        this.objectFactory = new DBObjectFactory();
+        this.objectFactory = new DBCollectionObjectFactory();
         this.objectCodec = new CompoundDBObjectCodec(getDefaultDBObjectCodec());
     }
 
@@ -1008,7 +1005,9 @@ public class DBCollection {
      */
     public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
         //TODO: test read preference
-        MongoCursor<Document> cursor = execute(new GroupOperation(getNamespace(), cmd.toNew()), readPreference);
+        MongoCursor<DBObject> cursor = execute(new GroupOperation<DBObject>(getNamespace(), cmd.toNew(getDefaultDBObjectCodec()),
+                                                                            getDefaultDBObjectCodec()),
+                                               readPreference);
         return toDBList(cursor);
     }
 
@@ -1134,7 +1133,7 @@ public class DBCollection {
      */
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
         ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference() : command.getReadPreference();
-        MapReduce mapReduce = command.getMapReduce();
+        MapReduce mapReduce = command.getMapReduce(getDefaultDBObjectCodec());
         if (mapReduce.isInline()) {
             MapReduceCursor<DBObject> executionResult = execute(new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(),
                                                                                                                   mapReduce,
@@ -1145,7 +1144,7 @@ public class DBCollection {
         } else {
             MapReduceToCollectionOperation mapReduceOperation = new MapReduceToCollectionOperation(getNamespace(), mapReduce);
             MapReduceStatistics mapReduceStatistics = execute(mapReduceOperation);
-            DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command.getMapReduce());
+            DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command.getMapReduce(getDefaultDBObjectCodec()));
             DBCursor executionResult = mapReduceOutputCollection.find();
             return new MapReduceOutput(command.toDBObject(), executionResult, mapReduceStatistics, mapReduceOutputCollection,
                                        mapReduceOperation.getServerUsed());
@@ -1250,12 +1249,12 @@ public class DBCollection {
         }
         List<BsonDocument> stages = preparePipeline(pipeline);
 
-        BsonString outCollection = stages.get(stages.size() - 1).getString("$out");
+        BsonValue outCollection = stages.get(stages.size() - 1).get("$out");
 
         if (outCollection != null) {
             execute(new AggregateToCollectionOperation(getNamespace(), stages, options.toNew()));
             if (returnCursorForOutCollection) {
-                return new DBCursor(database.getCollection(outCollection.getValue()), new BasicDBObject(), null, primary());
+                return new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(), null, primary());
             } else {
                 return null;
             }
@@ -1372,8 +1371,7 @@ public class DBCollection {
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
      */
     public void createIndex(final DBObject keys, final DBObject options) {
-        execute(new CreateIndexesOperation(Arrays.asList(toIndex(keys, options)), getNamespace()
-        ));
+        execute(new CreateIndexesOperation(Arrays.asList(toIndex(keys, options)), getNamespace()));
     }
 
     /**
@@ -1789,13 +1787,9 @@ public class DBCollection {
         return this.objectFactory;
     }
 
-    synchronized void setObjectFactory(final DBObjectFactory factory) {
+    synchronized void setObjectFactory(final DBCollectionObjectFactory factory) {
         this.objectFactory = factory;
         this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), getDefaultDBObjectCodec());
-    }
-
-    private ObjectIdGenerator getIdGenerator() {
-        return new ObjectIdGenerator();
     }
 
     /**
@@ -1841,9 +1835,9 @@ public class DBCollection {
         return getDB().getMongo().execute(operation, readPreference);
     }
 
-    private DBObjectCodec getDefaultDBObjectCodec() {
-        return new DBObjectCodec(getDB(), new FieldNameValidator(), getObjectFactory(), getDB().getMongo().getCodecRegistry(),
-                                 DBObjectCodecSource.getDefaultBsonTypeClassMap(), getIdGenerator());
+    DBObjectCodec getDefaultDBObjectCodec() {
+        return new DBObjectCodec(getDB(), getObjectFactory(), getDB().getMongo().getCodecRegistry(),
+                                 DBObjectCodecSource.getDefaultBsonTypeClassMap());
     }
 
     private Index toIndex(final DBObject keys, final DBObject options) {
@@ -1858,16 +1852,14 @@ public class DBCollection {
         if (options != null) {
             DBObject optionsCopy = new BasicDBObject(options.toMap());
             indexName = (String) optionsCopy.get("name");
-            unique = FieldHelpers.asBoolean(optionsCopy.removeField("unique"));
-            dropDups = FieldHelpers.asBoolean(optionsCopy.removeField("dropDups"));
-            sparse = FieldHelpers.asBoolean(optionsCopy.removeField("sparse"));
-            background = FieldHelpers.asBoolean(optionsCopy.removeField("background"));
+            unique = removeBoolean(optionsCopy, "unique");
+            dropDups = removeBoolean(optionsCopy, "dropDups");
+            sparse = removeBoolean(optionsCopy, "sparse");
+            background = removeBoolean(optionsCopy, "background");
             if (options.get("expireAfterSeconds") != null) {
                 expireAfterSeconds = Integer.parseInt(optionsCopy.removeField("expireAfterSeconds").toString());
             }
-            for (final String extraKey : optionsCopy.keySet()) {
-                builder.extra(extraKey, optionsCopy.get(extraKey));
-            }
+            builder.extra(new BsonDocumentWrapper<DBObject>(optionsCopy, getDefaultDBObjectCodec()));
         }
 
         builder.name(indexName)
@@ -1879,6 +1871,14 @@ public class DBCollection {
                .addKeys(getKeysFromDBObject(keys));
 
         return builder.build();
+    }
+
+    private boolean removeBoolean(final DBObject document, final String name) {
+        Boolean value = (Boolean) document.removeField(name);
+        if (value == null) {
+            return false;
+        }
+        return value;
     }
 
     private List<Index.Key<?>> getKeysFromDBObject(final DBObject fields) {

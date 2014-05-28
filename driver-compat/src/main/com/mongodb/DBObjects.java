@@ -16,20 +16,14 @@
 
 package com.mongodb;
 
-import org.bson.BSONBinaryReader;
 import org.bson.BSONObject;
-import org.bson.BSONReader;
-import org.bson.ByteBufNIO;
-import org.bson.codecs.Decoder;
+import org.bson.BsonDocumentReader;
 import org.bson.codecs.configuration.CodecSource;
 import org.bson.codecs.configuration.RootCodecRegistry;
-import org.bson.io.BasicInputBuffer;
-import org.bson.io.BasicOutputBuffer;
 import org.bson.types.BsonDocument;
 import org.bson.types.RegularExpression;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;
-import org.mongodb.MongoException;
 import org.mongodb.codecs.PatternCodec;
 
 import java.util.ArrayList;
@@ -39,12 +33,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import static com.mongodb.MongoExceptions.mapException;
-import static java.nio.ByteBuffer.wrap;
-
 final class DBObjects {
     private static final DBObjectCodec codec =
-    new DBObjectCodec(new RootCodecRegistry(Arrays.<CodecSource>asList(new DBObjectCodecSource())),
+    new DBObjectCodec(null, new BasicDBObjectFactory(), new RootCodecRegistry(Arrays.<CodecSource>asList(new DBObjectCodecSource())),
                       DBObjectCodecSource.createDefaultBsonTypeClassMap());
 
     public static Document toDocument(final DBObject obj) {
@@ -53,21 +44,14 @@ final class DBObjects {
         return res;
     }
 
-    public static Document toNullableDocument(final DBObject obj) {
-        if (obj == null) {
-            return null;
-        }
-        return toDocument(obj);
-    }
-
-    public static BasicDBObject toDBObjectAllowNull(final BsonDocument document) {
+    public static DBObject toDBObjectAllowNull(final BsonDocument document) {
         if (document == null) {
             return null;
         }
         return toDBObject(document);
     }
 
-    public static BasicDBObject toDBObject(final BsonDocument document) {
+    public static DBObject toDBObject(final BsonDocument document) {
         return codec.decode(new BsonDocumentReader(document));
     }
 
@@ -157,20 +141,16 @@ final class DBObjects {
         return dbList;
     }
 
-    public static BasicDBList toDBList(final MongoCursor<?> source) {
+    public static BasicDBList toDBList(final MongoCursor<DBObject> source) {
         BasicDBList dbList = new BasicDBList();
         while (source.hasNext()) {
-            Object o = source.next();
-            if (o instanceof Document) {
-                dbList.add(toDBObject((Document) o));
-            } else {
-                dbList.add(o);
-            }
+            dbList.add(source.next());
         }
         return dbList;
     }
 
-    private DBObjects() { }
+    private DBObjects() {
+    }
 
     private interface Container {
         void addToCollection(final String key, final Object value);

@@ -18,8 +18,14 @@ package com.mongodb;
 
 import java.util.List;
 
-interface DBObjectFactory {
-    DBObject getInstance();
+class BasicDBObjectFactory implements DBObjectFactory {
+    @Override
+    public DBObject getInstance() {
+        return new BasicDBObject();
+    }
 
-    DBObject getInstance(List<String> path);
+    @Override
+    public DBObject getInstance(final List<String> path) {
+        return new BasicDBObject();
+    }
 }

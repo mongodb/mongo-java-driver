@@ -41,7 +41,6 @@ public class BulkWriteOperation {
      * Returns true if this is building an ordered bulk write request.
      *
      * @return whether this is building an ordered bulk write operation
-     *
      * @see DBCollection#initializeOrderedBulkOperation()
      * @see DBCollection#initializeUnorderedBulkOperation()
      */
@@ -68,7 +67,7 @@ public class BulkWriteOperation {
      * @return a builder for a single write request
      */
     public BulkWriteRequestBuilder find(final DBObject query) {
-        return new BulkWriteRequestBuilder(this, query);
+        return new BulkWriteRequestBuilder(this, query, collection.getDefaultDBObjectCodec());
     }
 
     /**
@@ -86,7 +85,6 @@ public class BulkWriteOperation {
      * Execute the bulk write operation with the given write concern.
      *
      * @param writeConcern the write concern to apply to the bulk operation
-     *
      * @return the result of the bulk write operation.
      * @throws com.mongodb.BulkWriteException
      * @throws com.mongodb.MongoException
