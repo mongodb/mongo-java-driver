@@ -18,16 +18,16 @@ package org.mongodb.connection;
 
 import category.Async;
 import org.bson.io.OutputBuffer;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.Document;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.event.ConnectionEvent;
 import org.mongodb.event.ConnectionListener;
 import org.mongodb.event.ConnectionMessageReceivedEvent;
@@ -44,8 +44,8 @@ import java.util.EnumSet;
 import java.util.concurrent.CountDownLatch;
 
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.getAsyncStreamFactory;
+import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 
 // This is a Java test so that we can use categories.
@@ -59,6 +59,7 @@ public class InternalStreamConnectionTest {
     public void setUp() throws InterruptedException {
         stream = factory.create(getPrimary());
     }
+
     @After
     public void tearDown() {
         stream.close();
@@ -98,9 +99,9 @@ public class InternalStreamConnectionTest {
                                                                            listener);
         OutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         RequestMessage message = new CommandMessage(new MongoNamespace("admin", COMMAND_COLLECTION_NAME).getFullName(),
-                                                    new Document("ismaster", 1),
+                                                    new BsonDocument("ismaster", new BsonInt32(1)),
                                                     EnumSet.noneOf(QueryFlag.class),
-                                                    new DocumentCodec(), MessageSettings.builder().build());
+                                                    MessageSettings.builder().build());
         message.encode(buffer);
 
         // when

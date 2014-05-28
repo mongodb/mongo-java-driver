@@ -17,18 +17,11 @@
 package org.mongodb.protocol.message;
 
 import org.bson.io.OutputBuffer;
-import org.mongodb.Document;
-import org.bson.codecs.Encoder;
 import org.mongodb.operation.BaseUpdateRequest;
 
 public abstract class BaseUpdateMessage extends RequestMessage {
-    private final Encoder<Document> baseEncoder;
-
-
-    public BaseUpdateMessage(final String collectionName, final OpCode opCode, final Encoder<Document> encoder,
-                             final MessageSettings settings) {
+    public BaseUpdateMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
         super(collectionName, opCode, settings);
-        this.baseEncoder = encoder;
     }
 
     protected void writeBaseUpdate(final OutputBuffer buffer) {
@@ -44,12 +37,8 @@ public abstract class BaseUpdateMessage extends RequestMessage {
         }
         buffer.writeInt(flags);
 
-        addDocument(getUpdateBase().getFilter(), baseEncoder, buffer);
+        addDocument(getUpdateBase().getFilter(), getBsonDocumentCodec(), buffer);
     }
 
     protected abstract BaseUpdateRequest getUpdateBase();
-
-    public Encoder<Document> getBaseEncoder() {
-        return baseEncoder;
-    }
 }

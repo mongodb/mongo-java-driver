@@ -15,7 +15,11 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
+import org.bson.types.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
@@ -42,11 +46,10 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
 
         when:
         def findAndUpdate = new FindAndUpdate()
-                .where(new Document('name', 'Pete'))
-                .updateWith(new Document('$inc', new Document('numberOfJobs', 1)))
+                .where(new BsonDocument('name', new BsonString('Pete')))
+                .updateWith(new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1))))
 
-        FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), findAndUpdate,
-                documentCodec)
+        FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), findAndUpdate, documentCodec)
         Document returnedDocument = operation.execute(getBinding())
 
         then:
@@ -66,11 +69,10 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
 
         when:
         FindAndUpdate findAndUpdate = new FindAndUpdate()
-                .where(new Document('name', 'Pete'))
-                .updateWith(new Document('$inc', new Document('numberOfJobs', 1)))
+                .where(new BsonDocument('name', new BsonString('Pete')))
+                .updateWith(new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1))))
 
-        FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), findAndUpdate,
-                documentCodec)
+        FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), findAndUpdate, documentCodec)
         Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:
@@ -89,11 +91,10 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
 
         when:
         def findAndUpdate = new FindAndUpdate<Worker>()
-                .where(new Document('name', 'Pete'))
-                .updateWith(new Document('$inc', new Document('numberOfJobs', 1)))
+                .where(new BsonDocument('name', new BsonString('Pete')))
+                .updateWith(new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1))))
 
-        FindAndUpdateOperation<Worker> operation = new FindAndUpdateOperation<Worker>(getNamespace(), findAndUpdate,
-                workerCodec)
+        FindAndUpdateOperation<Worker> operation = new FindAndUpdateOperation<Worker>(getNamespace(), findAndUpdate, workerCodec)
         Worker returnedDocument = operation.execute(getBinding())
 
         then:
@@ -113,11 +114,10 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
 
         when:
         FindAndUpdate<Worker> findAndUpdate = new FindAndUpdate<Worker>()
-                .where(new Document('name', 'Pete'))
-                .updateWith(new Document('$inc', new Document('numberOfJobs', 1)))
+                .where(new BsonDocument('name', new BsonString('Pete')))
+                .updateWith(new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1))))
 
-        FindAndUpdateOperation<Worker> operation = new FindAndUpdateOperation<Worker>(getNamespace(), findAndUpdate,
-                workerCodec)
+        FindAndUpdateOperation<Worker> operation = new FindAndUpdateOperation<Worker>(getNamespace(), findAndUpdate, workerCodec)
         Worker returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:

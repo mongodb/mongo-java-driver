@@ -21,33 +21,61 @@ package org.mongodb;
  *
  * @since 3.0
  */
-public interface MapReduceStatistics {
+public class MapReduceStatistics {
+
+    private final int inputCount;
+    private final int outputCount;
+    private final int emitCount;
+    private final int duration;
+
+    /**
+     * Construct a new instance.
+     *
+     * @param inputCount  the input count
+     * @param outputCount the output count
+     * @param emitCount   the emit count
+     * @param duration    the duration.
+     */
+    public MapReduceStatistics(final int inputCount, final int outputCount, final int emitCount, final int duration) {
+        this.inputCount = inputCount;
+        this.outputCount = outputCount;
+        this.emitCount = emitCount;
+        this.duration = duration;
+    }
 
     /**
      * Get the number of documents that were input into the map reduce operation
      *
      * @return the number of documents that read while processing this map reduce
      */
-    int getInputCount();
+    public int getInputCount() {
+        return inputCount;
+    }
 
     /**
      * Get the number of documents generated as a result of this map reduce
      *
      * @return the number of documents output by the map reduce
      */
-    int getOutputCount();
+    public int getOutputCount() {
+        return outputCount;
+    }
 
     /**
      * Get the number of messages emitted from the provided map function.
      *
      * @return the number of items emitted from the map function
      */
-    int getEmitCount();
+    public int getEmitCount() {
+        return emitCount;
+    }
 
     /**
      * Get the amount of time it took to run the map-reduce.
      *
      * @return the duration in milliseconds
      */
-    int getDuration();
+    public int getDuration() {
+        return duration;
+    }
 }

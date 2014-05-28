@@ -16,9 +16,9 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.CommandResult;
 import org.bson.codecs.Decoder;
-import org.mongodb.Document;
+import org.bson.types.BsonDocument;
+import org.mongodb.CommandResult;
 import org.mongodb.MongoException;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
@@ -30,7 +30,7 @@ class CommandResultCallback extends CommandResultBaseCallback {
 
     private final SingleResultCallback<CommandResult> callback;
 
-    public CommandResultCallback(final SingleResultCallback<CommandResult> callback, final Decoder<Document> decoder,
+    public CommandResultCallback(final SingleResultCallback<CommandResult> callback, final Decoder<BsonDocument> decoder,
                                  final long requestId, final ServerAddress serverAddress) {
         super(decoder, requestId, serverAddress);
         this.callback = callback;

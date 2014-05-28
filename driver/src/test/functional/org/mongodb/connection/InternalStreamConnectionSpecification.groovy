@@ -15,16 +15,12 @@
  */
 
 
-
-
-
-
-
 package org.mongodb.connection
-import org.mongodb.Document
+
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
 import org.mongodb.MongoNamespace
 import org.mongodb.ServerCursor
-import org.mongodb.codecs.DocumentCodec
 import org.mongodb.event.ConnectionListener
 import org.mongodb.operation.QueryFlag
 import org.mongodb.protocol.KillCursor
@@ -90,7 +86,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def connection = new InternalStreamConnection(CLUSTER_ID, stream, [], listener)
         def buffer = new ByteBufferOutputBuffer(connection)
         def message = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME).fullName,
-                                         new Document('ismaster', 1), EnumSet.noneOf(QueryFlag), new DocumentCodec(),
+                                         new BsonDocument('ismaster', new BsonInt32(1)), EnumSet.noneOf(QueryFlag),
                                          MessageSettings.builder().build());
         message.encode(buffer);
 

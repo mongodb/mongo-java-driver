@@ -18,8 +18,6 @@ package org.mongodb.protocol.message;
 
 import org.bson.BSONBinaryWriter;
 import org.bson.io.OutputBuffer;
-import org.mongodb.Document;
-import org.bson.codecs.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.BaseUpdateRequest;
@@ -31,9 +29,8 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
     private final List<T> updates;
 
     public BaseUpdateCommandMessage(final MongoNamespace writeNamespace, final boolean ordered, final WriteConcern writeConcern,
-                                    final List<T> updates, final Encoder<Document> commandEncoder,
-                                    final MessageSettings settings) {
-        super(writeNamespace, ordered, writeConcern, commandEncoder, settings);
+                                    final List<T> updates, final MessageSettings settings) {
+        super(writeNamespace, ordered, writeConcern, settings);
         this.updates = updates;
     }
 
@@ -52,7 +49,7 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
             writer.writeName("q");
-            getCommandEncoder().encode(writer, update.getFilter());
+            getBsonDocumentCodec().encode(writer, update.getFilter());
             writer.writeName("u");
             writeUpdate(writer, update);
             if (update.isMulti()) {

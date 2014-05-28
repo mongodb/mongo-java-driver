@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.CreateIndexesOperation;
 import org.mongodb.operation.DropCollectionOperation;
 import org.mongodb.operation.DropIndexOperation;
@@ -48,7 +49,7 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public List<Document> getIndexes() {
-        return client.execute(new GetIndexesOperation(collectionNamespace), primary());
+        return client.execute(new GetIndexesOperation<Document>(collectionNamespace, new DocumentCodec()), primary());
     }
 
     @Override

@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import org.bson.types.BsonDocumentWrapper;
+
 import static com.mongodb.DBObjects.toDBObject;
 
 class ReplaceRequest extends WriteRequest {
@@ -47,6 +49,7 @@ class ReplaceRequest extends WriteRequest {
 
     @Override
     org.mongodb.operation.WriteRequest toNew() {
-        return new org.mongodb.operation.ReplaceRequest<DBObject>(DBObjects.toDocument(query), document).upsert(isUpsert());
+        return new org.mongodb.operation.ReplaceRequest<DBObject>(new BsonDocumentWrapper<DBObject>(query, /* TODO */),
+                                                                  document).upsert(isUpsert());
     }
 }

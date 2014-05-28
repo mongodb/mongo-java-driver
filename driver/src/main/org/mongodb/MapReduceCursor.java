@@ -23,5 +23,11 @@ package org.mongodb;
  * @param <T> the type of each result, usually some sort of document.
  * @since 3.0
  */
-public interface MapReduceCursor<T> extends MongoCursor<T>, MapReduceStatistics {
+public interface MapReduceCursor<T> extends MongoCursor<T> {
+    /**
+     * Get the statistics for this map-reduce operation
+     *
+     * @return the statistics
+     */
+    MapReduceStatistics getStatistics();
 }

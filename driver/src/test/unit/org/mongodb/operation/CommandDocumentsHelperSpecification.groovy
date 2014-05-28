@@ -16,40 +16,49 @@
 
 package org.mongodb.operation
 
+import org.bson.types.BsonBoolean
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
+import org.bson.types.BsonNull
+import org.bson.types.BsonString
 import org.bson.types.Code
-import org.mongodb.Document
 import org.mongodb.operation.MapReduce as MR
 import spock.lang.Specification
 
 class CommandDocumentsHelperSpecification extends Specification {
+    private static final FILTER = new BsonDocument('c', new BsonInt32(1))
+    private static final SCOPE = new BsonDocument('p', new BsonInt32(2)).append('q', new BsonString('s'))
+    private static final NULL = BsonNull.VALUE
 
     @SuppressWarnings('DuplicateMapLiteral')
     def 'should convert into correct documents'() {
+        given:
+
         expect:
-        Document document = CommandDocuments.createMapReduce('foo', mapReduce);
+        BsonDocument document = CommandDocuments.createMapReduce('foo', mapReduce);
         document.get('query') == query
         document.get('sort') == sort
-        document.getInteger('limit', 0) == limit
+        document.getInt32('limit', new BsonInt32(0)).getValue() == limit
         document.get('finalize') == finalize
         document.get('scope') == scope
-        document.getBoolean('jsMode', false) == jsMode
-        document.get('verbose') == verbose
+        document.getBoolean('jsMode', BsonBoolean.FALSE).getValue() == jsMode
+        document.getBoolean('verbose').getValue() == verbose
 
         where:
-        mapReduce                                  | query                | sort | limit | finalize      | scope          | jsMode | verbose
-        new MR(new Code('a'), new Code('b'))       | null                 | null | 0     | null          | null           | false  | false
+        mapReduce                            | query  | sort | limit | finalize      | scope | jsMode | verbose
+        new MR(new Code('a'), new Code('b')) | NULL   | NULL | 0     | NULL          | NULL  | false  | false
         new MR(new Code('a'), new Code('b'))
-                .filter(['c': 1] as Document)      | new Document('c', 1) | null | 0     | null          | null           | false  | false
+                .filter(FILTER)              | FILTER | NULL | 0     | NULL          | NULL  | false  | false
         new MR(new Code('a'), new Code('b'))
-                .finalize(new Code('c'))           | null                 | null | 0     | new Code('c') | null           | false  | false
+                .finalize(new Code('c'))     | NULL   | NULL | 0     | new Code('c') | NULL  | false  | false
         new MR(new Code('a'), new Code('b'))
-                .jsMode()                          | null                 | null | 0     | null          | null           | true   | false
+                .jsMode()                    | NULL   | NULL | 0     | NULL          | NULL  | true   | false
         new MR(new Code('a'), new Code('b'))
-                .verbose()                         | null                 | null | 0     | null          | null           | false  | true
+                .verbose()                   | NULL   | NULL | 0     | NULL          | NULL  | false  | true
         new MR(new Code('a'), new Code('b'))
-                .scope([p: 2, q: 's'] as Document) | null                 | null | 0     | null          | [p: 2, q: 's'] | false  | false
+                .scope(SCOPE)                | NULL   | NULL | 0     | NULL          | SCOPE | false  | false
         new MR(new Code('a'), new Code('b'))
-                .limit(10)                         | null                 | null | 10    | null          | null           | false  | false
+                .limit(10)                   | NULL   | NULL | 10    | NULL          | NULL  | false  | false
     }
 
     @SuppressWarnings('DuplicateMapLiteral')
@@ -70,14 +79,33 @@ class CommandDocumentsHelperSpecification extends Specification {
         ]
         mapReduce = new MR(new Code('a'), new Code('b'), output)
         document << [
-                ['replace': 'foo', 'sharded': false, 'nonAtomic': false] as Document,
-                ['replace': 'foo', 'db': 'bar', 'sharded': false, 'nonAtomic': false] as Document,
-                ['merge': 'foo', 'sharded': false, 'nonAtomic': false] as Document,
-                ['replace': 'foo', 'sharded': false, 'nonAtomic': false] as Document,
-                ['reduce': 'foo', 'db': 'bar', 'sharded': false, 'nonAtomic': false] as Document,
-                ['replace': 'foo', 'sharded': true, 'nonAtomic': false] as Document,
-                ['replace': 'foo', 'sharded': false, 'nonAtomic': true] as Document,
-                ['replace': 'foo', 'db': 'bar', 'sharded': true, 'nonAtomic': false] as Document,
+                new BsonDocument('replace', new BsonString('foo'))
+                        .append('sharded', BsonBoolean.FALSE)
+                        .append('nonAtomic', BsonBoolean.FALSE),
+                new BsonDocument('replace', new BsonString('foo'))
+                        .append('db', new BsonString('bar'))
+                        .append('sharded', BsonBoolean.FALSE)
+                        .append('nonAtomic', BsonBoolean.FALSE),
+                new BsonDocument('merge', new BsonString('foo'))
+                        .append('sharded', BsonBoolean.FALSE)
+                        .append('nonAtomic', BsonBoolean.FALSE),
+                new BsonDocument('replace', new BsonString('foo'))
+                        .append('sharded', BsonBoolean.FALSE)
+                        .append('nonAtomic', BsonBoolean.FALSE),
+                new BsonDocument('reduce', new BsonString('foo'))
+                        .append('db', new BsonString('bar'))
+                        .append('sharded', BsonBoolean.FALSE)
+                        .append('nonAtomic', BsonBoolean.FALSE),
+                new BsonDocument('replace', new BsonString('foo'))
+                        .append('sharded', BsonBoolean.TRUE)
+                        .append('nonAtomic', BsonBoolean.FALSE),
+                new BsonDocument('replace', new BsonString('foo'))
+                        .append('sharded', BsonBoolean.FALSE)
+                        .append('nonAtomic', BsonBoolean.TRUE),
+                new BsonDocument('replace', new BsonString('foo'))
+                        .append('db', new BsonString('bar'))
+                        .append('sharded', BsonBoolean.TRUE)
+                        .append('nonAtomic', BsonBoolean.FALSE)
         ]
     }
 }

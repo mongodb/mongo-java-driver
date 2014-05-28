@@ -17,9 +17,8 @@
 package org.mongodb.protocol.message;
 
 import org.bson.BSONBinaryWriter;
-import org.bson.io.OutputBuffer;
-import org.mongodb.Document;
 import org.bson.codecs.Encoder;
+import org.bson.io.OutputBuffer;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.InsertRequest;
@@ -32,9 +31,9 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
     private final Encoder<T> encoder;
 
     public InsertCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                final List<InsertRequest<T>> insertRequestList, final Encoder<Document> commandEncoder,
+                                final List<InsertRequest<T>> insertRequestList,
                                 final Encoder<T> encoder, final MessageSettings settings) {
-        super(namespace, ordered, writeConcern, commandEncoder, settings);
+        super(namespace, ordered, writeConcern, settings);
         this.insertRequestList = insertRequestList;
         this.encoder = encoder;
     }
@@ -63,8 +62,8 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
             if (exceedsLimits(buffer.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
                 nextMessage = new InsertCommandMessage<T>(getWriteNamespace(), isOrdered(), getWriteConcern(),
-                                                          insertRequestList.subList(i, insertRequestList .size()),
-                                                          getCommandEncoder(), encoder, getSettings());
+                                                          insertRequestList.subList(i, insertRequestList.size()),
+                                                          encoder, getSettings());
                 break;
             }
         }

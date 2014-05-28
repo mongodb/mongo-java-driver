@@ -21,8 +21,11 @@ import org.bson.BSONObject;
 import org.bson.BSONReader;
 import org.bson.ByteBufNIO;
 import org.bson.codecs.Decoder;
+import org.bson.codecs.configuration.CodecSource;
+import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
+import org.bson.types.BsonDocument;
 import org.bson.types.RegularExpression;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;
@@ -30,6 +33,7 @@ import org.mongodb.MongoException;
 import org.mongodb.codecs.PatternCodec;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,30 +43,14 @@ import static com.mongodb.MongoExceptions.mapException;
 import static java.nio.ByteBuffer.wrap;
 
 final class DBObjects {
+    private static final DBObjectCodec codec =
+    new DBObjectCodec(new RootCodecRegistry(Arrays.<CodecSource>asList(new DBObjectCodecSource())),
+                      DBObjectCodecSource.createDefaultBsonTypeClassMap());
+
     public static Document toDocument(final DBObject obj) {
         Document res = new Document();
         fill(obj, res);
         return res;
-    }
-
-    public static Document toDocument(final DBObject obj, final DBEncoder encoder, final Decoder<Document> documentDecoder) {
-        BasicOutputBuffer buffer = new BasicOutputBuffer();
-        encoder.writeObject(buffer, obj);
-        BSONReader bsonReader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(wrap(buffer.toByteArray()))), true);
-        try {
-            return documentDecoder.decode(bsonReader);
-        } catch (final MongoException e) {
-            throw mapException(e);
-        } finally {
-            bsonReader.close();
-        }
-    }
-
-    public static Document toFieldSelectorDocument(final DBObject fields) {
-        if (fields == null) {
-            return null;
-        }
-        return toDocument(fields);
     }
 
     public static Document toNullableDocument(final DBObject obj) {
@@ -72,25 +60,19 @@ final class DBObjects {
         return toDocument(obj);
     }
 
-    public static Document toUpdateOperationsDocument(final DBObject o) {
-        if (o == null) {
+    public static BasicDBObject toDBObjectAllowNull(final BsonDocument document) {
+        if (document == null) {
             return null;
         }
+        return toDBObject(document);
+    }
 
-        return toDocument(o);
+    public static BasicDBObject toDBObject(final BsonDocument document) {
+        return codec.decode(new BsonDocumentReader(document));
     }
 
     public static BasicDBObject toDBObject(final Document document) {
         BasicDBObject res = new BasicDBObject();
-        fill(document, res);
-        return res;
-    }
-
-    public static BasicDBObject toNullableDBObject(final Document document) {
-        if (document == null) {
-            return null;
-        }
-        final BasicDBObject res = new BasicDBObject();
         fill(document, res);
         return res;
     }

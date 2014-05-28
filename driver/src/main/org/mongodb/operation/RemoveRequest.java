@@ -16,18 +16,18 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Document;
+import org.bson.types.BsonDocument;
 
 public class RemoveRequest extends WriteRequest {
-    private final Document filter;
+    private final BsonDocument filter;
     private boolean isMulti = true;
 
-    public RemoveRequest(final Document filter) {
+    public RemoveRequest(final BsonDocument filter) {
         super();
         this.filter = filter;
     }
 
-    public Document getFilter() {
+    public BsonDocument getFilter() {
         return filter;
     }
 

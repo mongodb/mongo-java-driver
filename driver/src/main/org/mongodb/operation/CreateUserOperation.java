@@ -16,15 +16,14 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.BsonDocument;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.protocol.InsertProtocol;
 import org.mongodb.protocol.Protocol;
@@ -37,6 +36,7 @@ import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.VoidTransformer;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
+import static org.mongodb.operation.OperationHelper.getBsonDocumentCodec;
 import static org.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static org.mongodb.operation.OperationHelper.withConnection;
 import static org.mongodb.operation.UserOperationHelper.asCollectionDocument;
@@ -87,12 +87,12 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
     @SuppressWarnings("unchecked")
     private Protocol<WriteResult> getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(user.getCredential().getSource(), "system.users");
-        return new InsertProtocol<Document>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                asList(new InsertRequest<Document>(asCollectionDocument(user))),
-                new DocumentCodec());
+        return new InsertProtocol<BsonDocument>(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                                asList(new InsertRequest<BsonDocument>(asCollectionDocument(user))),
+                                                getBsonDocumentCodec());
     }
 
-    private Document getCommand() {
+    private BsonDocument getCommand() {
         return asCommandDocument(user, "createUser");
     }
 }

@@ -16,8 +16,11 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.BsonArray;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
+import org.bson.types.BsonValue;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
@@ -26,6 +29,7 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
@@ -74,7 +78,7 @@ public class DistinctOperation implements AsyncReadOperation<MongoAsyncCursor<St
         return new Function<CommandResult, MongoCursor<String>>() {
             @Override
             public MongoCursor<String> apply(final CommandResult result) {
-                return new InlineMongoCursor<String>(result.getAddress(), (List<String>) result.getResponse().get("values"));
+                return new InlineMongoCursor<String>(result.getAddress(), bsonArrayToList(result.getResponse().getArray("values")));
             }
         };
     }
@@ -84,14 +88,22 @@ public class DistinctOperation implements AsyncReadOperation<MongoAsyncCursor<St
             @SuppressWarnings("unchecked")
             @Override
             public MongoAsyncCursor<String> apply(final CommandResult result) {
-                return new InlineMongoAsyncCursor<String>((List<String>) result.getResponse().get("values"));
+                return new InlineMongoAsyncCursor<String>(bsonArrayToList(result.getResponse().getArray("values")));
             }
         };
     }
 
-    private Document getCommand() {
-        Document cmd = new Document("distinct", namespace.getCollectionName());
-        cmd.put("key", fieldName);
+    private List<String> bsonArrayToList(final BsonArray array) {
+        List<String> list = new ArrayList<String>(array.size());
+        for (BsonValue cur : array) {
+            list.add(cur.asString().getValue());
+        }
+        return list;
+    }
+
+    private BsonDocument getCommand() {
+        BsonDocument cmd = new BsonDocument("distinct", new BsonString(namespace.getCollectionName()));
+        cmd.put("key", new BsonString(fieldName));
         if (find.getFilter() != null) {
             cmd.put("query", find.getFilter());
         }

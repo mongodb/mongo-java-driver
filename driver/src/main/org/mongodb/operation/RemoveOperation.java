@@ -16,9 +16,9 @@
 
 package org.mongodb.operation;
 
+import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
-import org.bson.codecs.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.protocol.DeleteCommandProtocol;
@@ -48,12 +48,12 @@ public class RemoveOperation extends BaseWriteOperation {
 
     @Override
     protected WriteProtocol getWriteProtocol() {
-        return new DeleteProtocol(getNamespace(), isOrdered(), getWriteConcern(), removeRequests, queryEncoder);
+        return new DeleteProtocol(getNamespace(), isOrdered(), getWriteConcern(), removeRequests);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol() {
-        return new DeleteCommandProtocol(getNamespace(), isOrdered(), getWriteConcern(), removeRequests, queryEncoder);
+        return new DeleteCommandProtocol(getNamespace(), isOrdered(), getWriteConcern(), removeRequests);
     }
 
     @Override

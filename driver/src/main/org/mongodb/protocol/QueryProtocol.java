@@ -17,8 +17,8 @@
 package org.mongodb.protocol;
 
 import org.bson.codecs.Decoder;
+import org.bson.types.BsonDocument;
 import org.mongodb.Document;
-import org.bson.codecs.Encoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.codecs.DocumentCodec;
@@ -48,23 +48,20 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     private final EnumSet<QueryFlag> queryFlags;
     private final int skip;
     private final int numberToReturn;
-    private final Document queryDocument;
-    private final Document fields;
-    private final Encoder<Document> queryEncoder;
+    private final BsonDocument queryDocument;
+    private final BsonDocument fields;
     private final Decoder<T> resultDecoder;
     private final MongoNamespace namespace;
 
     public QueryProtocol(final MongoNamespace namespace, final EnumSet<QueryFlag> queryFlags, final int skip,
-                         final int numberToReturn, final Document queryDocument,
-                         final Document fields, final Encoder<Document> queryEncoder,
-                         final Decoder<T> resultDecoder) {
+                         final int numberToReturn, final BsonDocument queryDocument,
+                         final BsonDocument fields, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
         this.queryFlags = queryFlags;
         this.skip = skip;
         this.numberToReturn = numberToReturn;
         this.queryDocument = queryDocument;
         this.fields = fields;
-        this.queryEncoder = queryEncoder;
         this.resultDecoder = resultDecoder;
     }
 
@@ -92,13 +89,14 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         connection.sendMessageAsync(buffer.getByteBuffers(),
                                     message.getId(),
                                     new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
-                                                                            receiveCallback));
+                                                                            receiveCallback)
+                                   );
         return retVal;
     }
 
     private QueryMessage createQueryMessage(final ServerDescription serverDescription) {
-        return new QueryMessage(namespace.getFullName(), queryFlags, skip, numberToReturn, queryDocument, fields, queryEncoder,
-                                                    getMessageSettings(serverDescription));
+        return new QueryMessage(namespace.getFullName(), queryFlags, skip, numberToReturn, queryDocument, fields,
+                                getMessageSettings(serverDescription));
     }
 
     private QueryMessage sendMessage(final Connection connection) {

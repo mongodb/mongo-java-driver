@@ -15,7 +15,10 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
 import org.junit.experimental.categories.Category
 import org.mongodb.Block
 import org.mongodb.Document
@@ -75,7 +78,7 @@ class DistinctOperationSpecification extends FunctionalSpecification {
         getCollectionHelper().insertDocuments(pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', new Find(new Document('age', 25)))
+        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', new Find(new BsonDocument('age', new BsonInt32(25))))
         def result = op.execute(getBinding());
 
         then:
@@ -93,7 +96,7 @@ class DistinctOperationSpecification extends FunctionalSpecification {
 
         when:
         List<Document> docList = []
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', new Find(new Document('age', 25)))
+        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', new Find(new BsonDocument('age', new BsonInt32(25))))
         def cursor = op.executeAsync(getAsyncBinding()).get()
         cursor.forEach(new Block<String>() {
             @Override

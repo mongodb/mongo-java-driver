@@ -16,14 +16,14 @@
 
 package org.mongodb.protocol;
 
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.types.BsonDocument;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
@@ -162,7 +162,8 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
     private CommandResult receiveMessage(final Connection connection, final RequestMessage message) {
         ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
-            ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, new DocumentCodec(), message.getId());
+            ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
+                                                                                     message.getId());
             CommandResult commandResult = new CommandResult(connection.getServerAddress(), replyMessage.getDocuments().get(0),
                                                             replyMessage.getElapsedNanoseconds());
             if (!commandResult.isOk()) {
@@ -181,7 +182,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
         SingleResultFuture<CommandResult> future = new SingleResultFuture<CommandResult>();
 
         CommandResultCallback receiveCallback = new CommandResultCallback(new SingleResultFutureCallback<CommandResult>(future),
-                                                                          new DocumentCodec(),
+                                                                          new BsonDocumentCodec(),
                                                                           messageId,
                                                                           connection.getServerAddress());
         connection.sendMessageAsync(buffer.getByteBuffers(), messageId,

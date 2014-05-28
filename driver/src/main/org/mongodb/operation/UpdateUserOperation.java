@@ -16,15 +16,15 @@
 
 package org.mongodb.operation;
 
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.types.BsonDocument;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.protocol.ReplaceProtocol;
 
@@ -46,7 +46,7 @@ import static org.mongodb.operation.UserOperationHelper.asCommandDocument;
  *
  * @since 3.0
  */
-public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOperation<Void>  {
+public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final User user;
 
     public UpdateUserOperation(final User user) {
@@ -84,15 +84,15 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
     }
 
     @SuppressWarnings("unchecked")
-    private ReplaceProtocol<Document> getCollectionBasedProtocol() {
+    private ReplaceProtocol<BsonDocument> getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(user.getCredential().getSource(), "system.users");
-        DocumentCodec codec = new DocumentCodec();
-        return new ReplaceProtocol<Document>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                asList(new ReplaceRequest<Document>(asCollectionQueryDocument(user), asCollectionDocument(user))),
-                codec, codec);
+        return new ReplaceProtocol<BsonDocument>(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                                 asList(new ReplaceRequest<BsonDocument>(asCollectionQueryDocument(user),
+                                                                                         asCollectionDocument(user))),
+                                                 new BsonDocumentCodec());
     }
 
-    private Document getCommand() {
+    private BsonDocument getCommand() {
         return asCommandDocument(user, "updateUser");
     }
 

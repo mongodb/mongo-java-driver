@@ -16,10 +16,9 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.CommandResult;
 import org.bson.codecs.Decoder;
-import org.mongodb.Document;
-import org.bson.codecs.Encoder;
+import org.bson.types.BsonDocument;
+import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.ByteBufferOutputBuffer;
@@ -46,18 +45,16 @@ public class CommandProtocol implements Protocol<CommandResult> {
     public static final Logger LOGGER = Loggers.getLogger("protocol.command");
 
     private final MongoNamespace namespace;
-    private final Document command;
-    private final Decoder<Document> commandResultDecoder;
-    private final Encoder<Document> commandEncoder;
+    private final BsonDocument command;
+    private final Decoder<BsonDocument> commandResultDecoder;
     private final EnumSet<QueryFlag> queryFlags;
 
-    public CommandProtocol(final String database, final Document command, final EnumSet<QueryFlag> queryFlags,
-                           final Encoder<Document> commandEncoder, final Decoder<Document> commandResultDecoder) {
+    public CommandProtocol(final String database, final BsonDocument command, final EnumSet<QueryFlag> queryFlags,
+                           final Decoder<BsonDocument> commandResultDecoder) {
         this.queryFlags = queryFlags;
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = command;
         this.commandResultDecoder = commandResultDecoder;
-        this.commandEncoder = commandEncoder;
     }
 
     public CommandResult execute(final Connection connection) {
@@ -72,7 +69,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
     private CommandMessage sendMessage(final Connection connection) {
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         try {
-            CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags, commandEncoder,
+            CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags,
                                                         getMessageSettings(connection.getServerDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers(), message.getId());
@@ -85,7 +82,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
     private CommandResult receiveMessage(final Connection connection, final int messageId) {
         ResponseBuffers responseBuffers = connection.receiveMessage(messageId);
         try {
-            ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, commandResultDecoder, messageId);
+            ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, commandResultDecoder, messageId);
             return createCommandResult(replyMessage, connection.getServerAddress());
         } finally {
             responseBuffers.close();
@@ -99,7 +96,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
         SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
-        CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags, commandEncoder,
+        CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags,
                                                     getMessageSettings(connection.getServerDescription()));
         encodeMessageToBuffer(message, buffer);
 
@@ -113,7 +110,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
         return retVal;
     }
 
-    private CommandResult createCommandResult(final ReplyMessage<Document> replyMessage, final ServerAddress serverAddress) {
+    private CommandResult createCommandResult(final ReplyMessage<BsonDocument> replyMessage, final ServerAddress serverAddress) {
         CommandResult commandResult = new CommandResult(serverAddress,
                                                         replyMessage.getDocuments().get(0),
                                                         replyMessage.getElapsedNanoseconds());

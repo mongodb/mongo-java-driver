@@ -17,8 +17,6 @@
 package org.mongodb.protocol;
 
 import org.mongodb.BulkWriteResult;
-import org.mongodb.Document;
-import org.bson.codecs.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
@@ -44,13 +42,11 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
     private static final Logger LOGGER = Loggers.getLogger("protocol.delete");
 
     private final List<RemoveRequest> removeRequests;
-    private final Encoder<Document> queryEncoder;
 
     public DeleteCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                 final List<RemoveRequest> removeRequests, final Encoder<Document> queryEncoder) {
+                                 final List<RemoveRequest> removeRequests) {
         super(namespace, ordered, writeConcern);
         this.removeRequests = notNull("removes", removeRequests);
-        this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }
 
     @Override
@@ -86,7 +82,7 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
 
     @Override
     protected DeleteCommandMessage createRequestMessage(final ServerDescription serverDescription) {
-        return new DeleteCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), removeRequests, queryEncoder,
+        return new DeleteCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), removeRequests,
                                         getMessageSettings(serverDescription));
     }
 

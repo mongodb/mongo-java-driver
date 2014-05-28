@@ -16,7 +16,11 @@
 
 package com.mongodb;
 
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonDocumentWrapper;
+import org.bson.types.BsonInt32;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;
@@ -27,6 +31,7 @@ import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.operation.CommandReadOperation;
 import org.mongodb.operation.CommandWriteOperation;
+import org.mongodb.operation.CreateCollectionOperation;
 import org.mongodb.operation.CreateUserOperation;
 import org.mongodb.operation.DropUserOperation;
 import org.mongodb.operation.Find;
@@ -41,15 +46,14 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.MongoExceptions.mapException;
 import static com.mongodb.ReadPreference.primary;
 import static java.util.Arrays.asList;
 import static org.mongodb.MongoCredential.createMongoCRCredential;
 
 /**
- * A thread-safe client view of a logical database in a MongoDB cluster. A DB instance can be achieved from a {@link MongoClient}
- * instance using code like:
+ * A thread-safe client view of a logical database in a MongoDB cluster. A DB instance can be achieved from a {@link MongoClient} instance
+ * using code like:
  * <pre>
  * {@code
  * MongoClient mongoClient = new MongoClient();
@@ -57,8 +61,8 @@ import static org.mongodb.MongoCredential.createMongoCRCredential;
  * }
  * </pre>
  *
- * @see MongoClient
  * @mongodb.driver.manual reference/glossary/#term-database database
+ * @see MongoClient
  */
 @ThreadSafe
 public class DB {
@@ -67,7 +71,7 @@ public class DB {
     private final ConcurrentHashMap<String, DBCollection> collectionCache;
     private final Bytes.OptionHolder optionHolder;
     private final Codec<Document> documentCodec;
-    private final Codec<Document> commandCodec = new org.mongodb.codecs.DocumentCodec();
+    private final Codec<DBObject> commandCodec = null;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
@@ -102,8 +106,7 @@ public class DB {
     }
 
     /**
-     * Sets the read preference for this database. Will be used as default for
-     * read operations from any collection in this database. See the
+     * Sets the read preference for this database. Will be used as default for read operations from any collection in this database. See the
      * documentation for {@link ReadPreference} for more information.
      *
      * @param readPreference {@code ReadPreference} to use
@@ -113,8 +116,7 @@ public class DB {
     }
 
     /**
-     * Sets the write concern for this database. It will be used for
-     * write operations to any collection in this database. See the
+     * Sets the write concern for this database. It will be used for write operations to any collection in this database. See the
      * documentation for {@link WriteConcern} for more information.
      *
      * @param writeConcern {@code WriteConcern} to use
@@ -136,7 +138,8 @@ public class DB {
      * Gets the write concern for this database.
      *
      * @return {@code WriteConcern} to be used for write operations, if not specified explicitly
-     */    public WriteConcern getWriteConcern() {
+     */
+    public WriteConcern getWriteConcern() {
         return writeConcern != null ? writeConcern : mongo.getWriteConcern();
     }
 
@@ -163,8 +166,7 @@ public class DB {
     }
 
     /**
-     * Gets a collection with a given name.
-     * If the collection does not exist, a new collection is created.
+     * Gets a collection with a given name. If the collection does not exist, a new collection is created.
      * <p/>
      * This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
      *
@@ -176,8 +178,7 @@ public class DB {
     }
 
     /**
-     * Gets a collection with a given name.
-     * If the collection does not exist, a new collection is created.
+     * Gets a collection with a given name. If the collection does not exist, a new collection is created.
      *
      * @param name the name of the collection to return
      * @return the collection
@@ -205,7 +206,7 @@ public class DB {
      * @throws MongoException
      */
     public void dropDatabase() {
-        executeCommand(new Document("dropDatabase", 1));
+        executeCommand(new BsonDocument("dropDatabase", new BsonInt32(1)));
     }
 
     /**
@@ -234,15 +235,13 @@ public class DB {
      * @throws MongoException
      */
     public Set<String> getCollectionNames() {
-        MongoCursor<Document> cursor = execute(new QueryOperation<Document>(new MongoNamespace(name, "system.namespaces"), new Find(),
-                                                                            commandCodec, commandCodec),
-                                               primary());
-
+        MongoCursor<BsonDocument> cursor = execute(new QueryOperation<BsonDocument>(new MongoNamespace(name, "system.namespaces"),
+                                                                                    new Find(), new BsonDocumentCodec()), primary());
         try {
             HashSet<String> collections = new HashSet<String>();
             int lengthOfDatabaseName = getName().length();
             while (cursor.hasNext()) {
-                String collectionName = cursor.next().getString("name");
+                String collectionName = cursor.next().getString("name").getValue();
                 if (!collectionName.contains("$")) {
                     String collectionNameWithoutDatabasePrefix = collectionName.substring(lengthOfDatabaseName + 1);
                     collections.add(collectionNameWithoutDatabasePrefix);
@@ -255,37 +254,24 @@ public class DB {
     }
 
     /**
-     * Creates a collection with a given name and options.
-     * If the collection does not exist, a new collection is created.
+     * Creates a collection with a given name and options. If the collection does not exist, a new collection is created.
      * <p/>
-     * Possible options:
-     * <ul>
-     * <li>
-     * <b>capped</b> ({@code boolean}) - Enables a collection cap.
-     * False by default. If enabled, you must specify a size parameter.
-     * </li>
-     * <li>
-     * <b>size</b> ({@code int}) - If capped is true, size specifies a maximum size in bytes for the capped collection.
-     * When capped is false, you may use size to preallocate space.
-     * </li>
-     * <li>
-     * <b>max</b> ({@code int}) -   Optional. Specifies a maximum "cap" in number of documents for capped collections.
-     * You must also specify size when specifying max.
-     * </li>
+     * Possible options: <ul> <li> <b>capped</b> ({@code boolean}) - Enables a collection cap. False by default. If enabled, you must
+     * specify a size parameter. </li> <li> <b>size</b> ({@code int}) - If capped is true, size specifies a maximum size in bytes for the
+     * capped collection. When capped is false, you may use size to preallocate space. </li> <li> <b>max</b> ({@code int}) -   Optional.
+     * Specifies a maximum "cap" in number of documents for capped collections. You must also specify size when specifying max. </li>
      * <p/>
      * </ul>
      * <p/>
-     * Note that if the {@code options} parameter is {@code null},
-     * the creation will be deferred to when the collection is written to.
+     * Note that if the {@code options} parameter is {@code null}, the creation will be deferred to when the collection is written to.
      *
-     * @param collectionName    the name of the collection to return
-     * @param options options
+     * @param collectionName the name of the collection to return
+     * @param options        options
      * @return the collection
      * @throws MongoException
      */
     public DBCollection createCollection(final String collectionName, final DBObject options) {
-        CreateCollectionOptions createCollectionOptions = toCreateCollectionOptions(collectionName, options);
-        executeCommand(createCollectionOptions.asDocument());
+        execute(new CreateCollectionOperation(getName(), toCreateCollectionOptions(collectionName, options)));
         return getCollection(collectionName);
     }
 
@@ -336,8 +322,8 @@ public class DB {
     }
 
     /**
-     * Executes a database command. This method calls {@link DB#command(DBObject, ReadPreference) } with the default read
-     * preference for the database.
+     * Executes a database command. This method calls {@link DB#command(DBObject, ReadPreference) } with the default read preference for the
+     * database.
      *
      * @param cmd {@code DBObject} representation of the command to be executed
      * @return result of the command execution
@@ -374,8 +360,7 @@ public class DB {
      */
     public CommandResult command(final DBObject cmd, final ReadPreference readPreference, final DBEncoder encoder) {
         try {
-            Document document = encoder != null ? toDocument(cmd, encoder, commandCodec) : toDocument(cmd);
-            return executeCommand(document, readPreference);
+            return executeCommand(wrap(cmd, encoder), readPreference);
         } catch (CommandFailureException ex) {
             return ex.getCommandResult();
         }
@@ -437,8 +422,8 @@ public class DB {
     }
 
     /**
-     * Evaluates JavaScript functions on the database server.
-     * This is useful if you need to touch a lot of data lightly, in which case network transfer could be a bottleneck.
+     * Evaluates JavaScript functions on the database server. This is useful if you need to touch a lot of data lightly, in which case
+     * network transfer could be a bottleneck.
      *
      * @param code @{code String} representation of JavaScript function
      * @param args arguments to pass to the JavaScript function
@@ -446,14 +431,13 @@ public class DB {
      * @throws MongoException
      */
     public CommandResult doEval(final String code, final Object... args) {
-        Document commandDocument = new Document("$eval", code).append("args", asList(args));
-        return executeCommand(commandDocument);
+        DBObject commandDocument = new BasicDBObject("$eval", code).append("args", asList(args));
+        return executeCommand(wrap(commandDocument));
     }
 
     /**
-     * Calls {@link DB#doEval(java.lang.String, java.lang.Object[]) }.
-     * If the command is successful, the "retval" field is extracted and returned.
-     * Otherwise an exception is thrown.
+     * Calls {@link DB#doEval(java.lang.String, java.lang.Object[]) }. If the command is successful, the "retval" field is extracted and
+     * returned. Otherwise an exception is thrown.
      *
      * @param code @{code String} representation of JavaScript function
      * @param args arguments to pass to the JavaScript function
@@ -467,14 +451,13 @@ public class DB {
     }
 
     /**
-     * Helper method for calling a 'dbStats' command.
-     * It returns storage statistics for a given database.
+     * Helper method for calling a 'dbStats' command. It returns storage statistics for a given database.
      *
      * @return result of the execution
      * @throws MongoException
      */
     public CommandResult getStats() {
-        Document commandDocument = new Document("dbStats", 1).append("scale", 1);
+        BsonDocument commandDocument = new BsonDocument("dbStats", new BsonInt32(1)).append("scale", new BsonInt32(1));
         return executeCommand(commandDocument);
     }
 
@@ -586,12 +569,12 @@ public class DB {
         return getMongo().getCluster();
     }
 
-    CommandResult executeCommand(final Document commandDocument) {
-        return new CommandResult(getMongo().execute(new CommandWriteOperation(getName(), commandDocument, commandCodec, commandCodec)));
+    CommandResult executeCommand(final BsonDocument commandDocument) {
+        return new CommandResult(getMongo().execute(new CommandWriteOperation(getName(), commandDocument, new BsonDocumentCodec())));
     }
 
-    CommandResult executeCommand(final Document commandDocument, final ReadPreference readPreference) {
-        return new CommandResult(getMongo().execute(new CommandReadOperation(getName(), commandDocument, commandCodec, commandCodec),
+    CommandResult executeCommand(final BsonDocument commandDocument, final ReadPreference readPreference) {
+        return new CommandResult(getMongo().execute(new CommandReadOperation(getName(), commandDocument, new BsonDocumentCodec()),
                                                     readPreference));
     }
 
@@ -603,7 +586,7 @@ public class DB {
         return getMongo().getBufferProvider();
     }
 
-    private boolean isValidName(final String databaseName){
+    private boolean isValidName(final String databaseName) {
         return databaseName.length() != 0 && !databaseName.contains(" ");
     }
 
@@ -613,5 +596,13 @@ public class DB {
 
     private <T> T execute(final WriteOperation<T> operation) {
         return getMongo().execute(operation);
+    }
+
+    private BsonDocument wrap(DBObject document) {
+        return new BsonDocumentWrapper<DBObject>(document, commandCodec);
+    }
+
+    private BsonDocument wrap(DBObject document, DBEncoder encoder) {
+        return new BsonDocumentWrapper<DBObject>(document, new DBEncoderAdapter(encoder));
     }
 }

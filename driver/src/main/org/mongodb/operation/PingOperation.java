@@ -16,14 +16,13 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Codec;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
-import org.mongodb.codecs.DocumentCodec;
 
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
@@ -36,9 +35,7 @@ import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  */
 public class PingOperation implements AsyncReadOperation<Double>, ReadOperation<Double> {
     private static final String ADMIN_DATABASE = "admin";
-    private static final Document PING_COMMAND = new Document("ping", 1);
-
-    private final Codec<Document> commandCodec = new DocumentCodec();
+    private static final BsonDocument PING_COMMAND = new BsonDocument("ping", new BsonInt32(1));
 
     @Override
     public MongoFuture<Double> executeAsync(final AsyncReadBinding binding) {
@@ -57,7 +54,7 @@ public class PingOperation implements AsyncReadOperation<Double>, ReadOperation<
         return new Function<CommandResult, Double>() {
             @Override
             public Double apply(final CommandResult result) {
-                return (Double) result.getResponse().get("ok");
+                return result.getResponse().getDouble("ok").doubleValue();
             }
         };
     }

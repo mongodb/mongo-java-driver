@@ -65,7 +65,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public MongoView<T> find(final Document filter) {
-        return new MongoCollectionView(null).find(filter);
+        return new MongoCollectionView(filter);
     }
 
     @Override
