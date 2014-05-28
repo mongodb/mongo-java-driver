@@ -17,6 +17,11 @@
 package org.mongodb;
 
 import org.junit.Test;
+import org.mongodb.geojson.GeoJson;
+import org.mongodb.geojson.GeoJson2DCoordinates;
+import org.mongodb.geojson.GeoJsonPoint;
+import org.mongodb.geojson.GeoJsonPolygon;
+import org.mongodb.geojson.GeoJsonMultiPoint;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
@@ -115,4 +120,89 @@ public class QueryBuilderTest {
 
         assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
     }
+
+    /**
+     * @link http://docs.mongodb.org/manual/reference/operator/queryr/near/
+     */
+    @Test
+    public void shouldCreateCorrectNearGeoJsonQueryWithoutMaxDistance() throws Exception {
+        GeoJsonPoint point = new GeoJsonPoint(new GeoJson2DCoordinates(45.0, 0.5));
+        QueryBuilder queryBuilder = QueryBuilder.query("loc").near(point);
+
+        String expectedQuery = "{ \"loc\" : { \"$near\" : { \"$geometry\" : { \"type\" : \"Point\", \"coordinates\" : [45.0, 0.5] } } } }";
+
+        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+    }
+
+    /**
+     * @link http://docs.mongodb.org/manual/reference/operator/queryr/near/
+     */
+    @Test
+    public void shouldCreateCorrectNearGeoJsonQueryWhenMaxDistanceIsSpecified() throws Exception {
+        GeoJsonPoint point = new GeoJsonPoint(new GeoJson2DCoordinates(45.0, 0.5));
+        QueryBuilder queryBuilder = QueryBuilder.query("loc").near(point, 0.5);
+
+        String expectedQuery = "{ \"loc\" : { \"$near\" : { \"$geometry\" : { \"type\" : \"Point\", "
+                             + "\"coordinates\" : [45.0, 0.5] }, \"$maxDistance\" : 0.5 } } }";
+
+        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+    }
+
+    /**
+     * @link http://docs.mongodb.org/manual/reference/operator/query/geoWithin/
+     */
+    @Test
+    public void shouldCreateCorrectGeoWithinQueryWithSimplePolygon() throws Exception {
+        GeoJsonPolygon polygon = new GeoJsonPolygon(
+                GeoJson.position(-108.62131299999987, 45.00027699999998),
+                GeoJson.position(-104.05769699999995, 44.997380000000135),
+                GeoJson.position(-104.053249, 41.00140600000009),
+                GeoJson.position(-111.04672299999999, 40.99795899999998),
+                GeoJson.position(-111.05519899999989, 45.001321000000075),
+                GeoJson.position(-108.62131299999987, 45.00027699999998));
+        QueryBuilder queryBuilder = QueryBuilder.query("loc").geoWithin(polygon);
+
+        String expectedQuery = "{ \"loc\" : { \"$geoWithin\" : { \"$geometry\" : { \"type\" : \"Polygon\", \"coordinates\" : "
+                                   + "[[[-108.62131299999987, 45.00027699999998], [-104.05769699999995, 44.997380000000135], "
+                                   + "[-104.053249, 41.00140600000009], [-111.04672299999999, 40.99795899999998], [-111.05519899999989, "
+                                   + "45.001321000000075], [-108.62131299999987, 45.00027699999998]]] } } } }";
+
+        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+    }
+
+    /**
+     * @link http://docs.mongodb.org/manual/reference/operator/query/geoIntersects/
+     */
+    @Test
+    public void shouldCreateCorrectGeoIntersectsQueryWithVariousObjects() throws Exception {
+        GeoJsonPolygon polygon = new GeoJsonPolygon(
+                GeoJson.position(-108.62131299999987, 45.00027699999998),
+                GeoJson.position(-104.05769699999995, 44.997380000000135),
+                GeoJson.position(-104.053249, 41.00140600000009),
+                GeoJson.position(-111.04672299999999, 40.99795899999998),
+                GeoJson.position(-111.05519899999989, 45.001321000000075),
+                GeoJson.position(-108.62131299999987, 45.00027699999998));
+        QueryBuilder queryBuilder = QueryBuilder.query("loc").geoIntersects(polygon);
+
+        String expectedQuery = "{ \"loc\" : { \"$geoIntersects\" : { \"$geometry\" : { \"type\" : \"Polygon\", \"coordinates\" : "
+                                   + "[[[-108.62131299999987, 45.00027699999998], [-104.05769699999995, 44.997380000000135], "
+                                   + "[-104.053249, 41.00140600000009], [-111.04672299999999, 40.99795899999998], [-111.05519899999989, "
+                                   + "45.001321000000075], [-108.62131299999987, 45.00027699999998]]] } } } }";
+
+        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+    }
+
+    /**
+     * @link http://docs.mongodb.org/manual/reference/operator/geoIntersects/
+     */
+    @Test(expected = QueryBuilder.QueryBuilderException.class)
+    public void shouldRaiseAnExceptionWhenIntersectsQueryIsUsedWithInvalidTypes() throws Exception {
+        GeoJsonMultiPoint multiPoint = new GeoJsonMultiPoint(
+                new GeoJson2DCoordinates(100.0, 0.0),
+                new GeoJson2DCoordinates(101.0, 1.0)
+       );
+        QueryBuilder queryBuilder = QueryBuilder.query("loc").geoIntersects(multiPoint);
+        queryBuilder.toString(); // to use the variable
+    }
+
 }
