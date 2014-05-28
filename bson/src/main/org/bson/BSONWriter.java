@@ -36,7 +36,6 @@ public abstract class BSONWriter implements Closeable {
     private final BSONWriterSettings settings;
     private State state;
     private Context context;
-    private String currentName;
     private int serializationDepth;
     private boolean closed;
 
@@ -51,7 +50,7 @@ public abstract class BSONWriter implements Closeable {
     }
 
     protected String getName() {
-        return currentName;
+        return context.name;
     }
 
     protected boolean isClosed() {
@@ -276,7 +275,7 @@ public abstract class BSONWriter implements Closeable {
         if (state != State.NAME) {
             throwInvalidState("WriteName", State.NAME);
         }
-        this.currentName = name;
+        context.name = name;
         state = State.VALUE;
     }
 
@@ -675,6 +674,7 @@ public abstract class BSONWriter implements Closeable {
     public class Context {
         private final Context parentContext;
         private final BSONContextType contextType;
+        private String name;
 
         public Context(final Context from) {
             parentContext = from.parentContext;
@@ -708,14 +708,14 @@ public abstract class BSONWriter implements Closeable {
         protected Mark() {
             this.markedContext = BSONWriter.this.context.copy();
             this.markedState = BSONWriter.this.state;
-            this.currentName = BSONWriter.this.currentName;
+            this.currentName = BSONWriter.this.context.name;
             this.serializationDepth = BSONWriter.this.serializationDepth;
         }
 
         protected void reset() {
             setContext(markedContext);
             setState(markedState);
-            BSONWriter.this.currentName = currentName;
+            BSONWriter.this.context.name = currentName;
             BSONWriter.this.serializationDepth = serializationDepth;
         }
     }
