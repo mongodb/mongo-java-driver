@@ -20,7 +20,6 @@ package com.mongodb;
 import org.bson.BSONBinarySubType;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONObject;
-import org.bson.BSONWriter;
 import org.bson.io.OutputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
@@ -835,7 +834,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         @Override
         public int writeObject(final OutputBuffer outputBuffer, final BSONObject document) {
             int start = outputBuffer.getPosition();
-            BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer, false);
+            BSONBinaryWriter bsonWriter = new BSONBinaryWriter(outputBuffer, false);
             try {
                 bsonWriter.writeStartDocument();
                 bsonWriter.writeInt32("_id", 1);

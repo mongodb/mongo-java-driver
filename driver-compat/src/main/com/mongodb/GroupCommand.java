@@ -16,10 +16,9 @@
 
 package com.mongodb;
 
+import org.bson.types.BsonDocumentWrapper;
 import org.bson.types.Code;
 import org.mongodb.operation.Group;
-
-import static com.mongodb.DBObjects.toNullableDocument;
 
 /**
  * This class groups the argument for a group operation and can build the underlying command object
@@ -55,18 +54,15 @@ public class GroupCommand {
         return new BasicDBObject("group", args);
     }
 
-    Group toNew() {
-        Group group = new Group(toNullableDocument(keys),
-                                reduce != null ? new Code(reduce) : null,
-                                toNullableDocument(initial));
+    Group toNew(final DBObjectCodec codec) {
+        Group group = new Group(keys == null ? null : new BsonDocumentWrapper<DBObject>(keys, codec),
+                                reduce == null ? null : new Code(reduce),
+                                initial == null ? null : new BsonDocumentWrapper<DBObject>(initial, codec));
 
-        if (finalize != null) {
-            group.finalizeFunction(new Code(finalize));
-        }
-        if (condition != null) {
-            group.filter(toDocument(condition));
-        }
+        group.finalizeFunction(finalize == null ? null : new Code(finalize));
+        group.filter(condition == null ? null : new BsonDocumentWrapper<DBObject>(condition, codec));
 
         return group;
     }
+
 }

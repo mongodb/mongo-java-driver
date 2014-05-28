@@ -16,6 +16,7 @@
 
 package org.mongodb
 
+import org.bson.types.BsonDocument
 import org.bson.types.BsonString
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -88,8 +89,9 @@ class IndexSpecification extends Specification {
         index.getExtra() == extra
 
         where:
-        index                                                                         | extra
-        Index.builder().addKey('x').build()                                           | [:]
-        Index.builder().addKey('x').extra('extra', new BsonString('special')).build() | ['extra': new BsonString('special')]
+        index                                                                     | extra
+        Index.builder().addKey('x').build()                                       | new BsonDocument()
+        Index.builder().addKey('x')
+             .extra(new BsonDocument('extra', new BsonString('special'))).build() | new BsonDocument('extra': new BsonString('special'))
     }
 }

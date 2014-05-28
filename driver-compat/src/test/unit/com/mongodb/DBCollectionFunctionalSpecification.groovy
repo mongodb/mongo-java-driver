@@ -106,21 +106,6 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         !document.containsField('dropDups')
     }
 
-    def 'should should provided decoder factory for findAndModify'() {
-        given:
-        DBDecoder decoder = Mock()
-        DBDecoderFactory factory = Mock()
-        factory.create() >> decoder
-        collection.setDBDecoderFactory(factory)
-
-        when:
-        collection.findAndModify(null, ~['_id': idOfExistingDocument,
-                                         'c'  : 1])
-
-        then:
-        1 * decoder.decode(_ as byte[], collection)
-    }
-
     def 'drop index should not fail if collection does not exist'() {
         given:
         collection.drop();
@@ -405,8 +390,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
                          'function(o, p){ p.valueFound = true; }');
 
         then:
-        CommandFailureException exception = thrown(CommandFailureException)
-        exception.getCommandResult().getErrorMessage().contains('initial has to be an object')
+        thrown(IllegalArgumentException)
     }
 
     def 'should throw an Exception if no reduce function provided'() {
@@ -417,7 +401,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
                          null);
 
         then:
-        thrown(CommandFailureException)
+        thrown(IllegalArgumentException)
     }
 
     static class ClassA extends BasicDBObject { }

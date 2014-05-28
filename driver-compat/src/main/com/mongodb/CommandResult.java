@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import org.bson.BSONObject;
-
 import static com.mongodb.DBObjects.toDBObject;
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -30,7 +28,7 @@ public class CommandResult extends BasicDBObject {
 
     CommandResult(final org.mongodb.CommandResult commandResult) {
         this(new ServerAddress(commandResult.getAddress()));
-        putAll((BSONObject) toDBObject(commandResult.getResponse()));
+        putAll(toDBObject(commandResult.getResponse()));
     }
 
     CommandResult(final DBObject response, final ServerAddress serverAddress) {
