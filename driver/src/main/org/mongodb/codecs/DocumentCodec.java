@@ -26,8 +26,6 @@ import org.bson.codecs.configuration.CodecSource;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.mongodb.Document;
 import org.mongodb.IdGenerator;
-import org.mongodb.codecs.validators.QueryFieldNameValidator;
-import org.mongodb.codecs.validators.Validator;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -38,7 +36,6 @@ import static org.mongodb.assertions.Assertions.notNull;
  * A Codec for Document instances.
  *
  * @see org.mongodb.Document
- *
  * @since 3.0
  */
 public class DocumentCodec implements CollectibleCodec<Document> {
@@ -47,55 +44,34 @@ public class DocumentCodec implements CollectibleCodec<Document> {
     private static final CodecRegistry DEFAULT_REGISTRY = new RootCodecRegistry(Arrays.<CodecSource>asList(new DocumentCodecSource()));
     private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
 
-    private final Validator<String> fieldNameValidator;
     private final BsonTypeClassMap bsonTypeClassMap;
     private final CodecRegistry registry;
     private final IdGenerator idGenerator;
 
-   /**
+    /**
      * Construct a new instance with a default {@code CodecRegistry} and
      */
     public DocumentCodec() {
-        this(new QueryFieldNameValidator());
-    }
-
-    /**
-     * Constructs a new instance using the default {@code DocumentCodecSource} and the default BSON type class map.
-     * @param fieldNameValidator the field name validator
-     */
-    public DocumentCodec(final Validator<String> fieldNameValidator) {
-        this(DEFAULT_REGISTRY, DEFAULT_BSON_TYPE_CLASS_MAP, fieldNameValidator, new ObjectIdGenerator());
+        this(DEFAULT_REGISTRY, DEFAULT_BSON_TYPE_CLASS_MAP, new ObjectIdGenerator());
     }
 
     /**
      * Construct a new instance with the given registry and BSON type class map.
      *
-     * @param registry the registry
+     * @param registry         the registry
      * @param bsonTypeClassMap the BSON type class map
      */
     public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap) {
-        this(registry, bsonTypeClassMap, new QueryFieldNameValidator(), new ObjectIdGenerator());
+        this(registry, bsonTypeClassMap, new ObjectIdGenerator());
     }
 
     /**
      * Construct a new instance with the given registry and BSON type class map.
      *
-     * @param registry the registry
+     * @param registry         the registry
      * @param bsonTypeClassMap the BSON type class map
      */
     public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final IdGenerator idGenerator) {
-        this(registry, bsonTypeClassMap, new QueryFieldNameValidator(), idGenerator);
-    }
-
-    /**
-     * Construct a new instance with the given registry and BSON type class map.
-     *
-     * @param registry the registry
-     * @param bsonTypeClassMap the BSON type class map
-     */
-    public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap,
-                         final Validator<String> fieldNameValidator, final IdGenerator idGenerator) {
-        this.fieldNameValidator = notNull("fieldNameValidator", fieldNameValidator);
         this.registry = notNull("registry", registry);
         this.bsonTypeClassMap = notNull("bsonTypeClassMap", bsonTypeClassMap);
         this.idGenerator = notNull("idGenerator", idGenerator);
@@ -110,13 +86,13 @@ public class DocumentCodec implements CollectibleCodec<Document> {
     public Object getDocumentId(final Document document) {
         if (documentHasId(document)) {
             return document.get(ID_FIELD_NAME);
-//            BsonDocument idHoldingDocument = new BsonDocument();
-//            BSONWriter writer = new BsonDocumentWriter(idHoldingDocument);
-//            writer.writeStartDocument();
-//            writer.writeName(ID_FIELD_NAME);
-//            writeValue(writer, document.get(ID_FIELD_NAME));
-//            writer.writeEndDocument();
-//            return idHoldingDocument.get(ID_FIELD_NAME);
+            //            BsonDocument idHoldingDocument = new BsonDocument();
+            //            BSONWriter writer = new BsonDocumentWriter(idHoldingDocument);
+            //            writer.writeStartDocument();
+            //            writer.writeName(ID_FIELD_NAME);
+            //            writeValue(writer, document.get(ID_FIELD_NAME));
+            //            writer.writeEndDocument();
+            //            return idHoldingDocument.get(ID_FIELD_NAME);
         } else {
             return null;
         }
@@ -136,8 +112,6 @@ public class DocumentCodec implements CollectibleCodec<Document> {
         beforeFields(writer, document);
 
         for (final Map.Entry<String, Object> entry : document.entrySet()) {
-            fieldNameValidator.validate(entry.getKey());
-
             if (skipField(entry.getKey())) {
                 continue;
             }
@@ -158,7 +132,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
         return key.equals(ID_FIELD_NAME);
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     protected void writeValue(final BSONWriter writer, final Object value) {
         if (value == null) {
             writer.writeNull();

@@ -33,13 +33,27 @@ public class BSONBinaryWriter extends AbstractBSONWriter {
     private final Stack<Integer> maxDocumentSizeStack = new Stack<Integer>();
     private Mark mark;
 
+    public BSONBinaryWriter(final OutputBuffer buffer, final FieldNameValidator validator) {
+        this(new BSONWriterSettings(), new BSONBinaryWriterSettings(), buffer, validator);
+    }
+
     public BSONBinaryWriter(final OutputBuffer buffer, final boolean closeBuffer) {
         this(new BSONWriterSettings(), new BSONBinaryWriterSettings(), buffer, closeBuffer);
     }
 
     public BSONBinaryWriter(final BSONWriterSettings settings, final BSONBinaryWriterSettings binaryWriterSettings,
                             final OutputBuffer buffer, final boolean closeBuffer) {
-        super(settings);
+        this(settings, binaryWriterSettings, buffer, new NoOpFieldNameValidator(), closeBuffer);
+    }
+
+    public BSONBinaryWriter(final BSONWriterSettings settings, final BSONBinaryWriterSettings binaryWriterSettings,
+                            final OutputBuffer buffer, final FieldNameValidator validator) {
+        this(settings, binaryWriterSettings, buffer, validator, false);
+    }
+
+    private BSONBinaryWriter(final BSONWriterSettings settings, final BSONBinaryWriterSettings binaryWriterSettings,
+                             final OutputBuffer buffer, final FieldNameValidator validator, final boolean closeBuffer) {
+        super(settings, validator);
         this.binaryWriterSettings = binaryWriterSettings;
         this.buffer = buffer;
         this.closeBuffer = closeBuffer;

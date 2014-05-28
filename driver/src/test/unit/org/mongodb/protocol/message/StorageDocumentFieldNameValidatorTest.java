@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs.validators;
+package org.mongodb.protocol.message;
 
 import org.junit.Test;
 
-public class FieldNameValidatorTest {
-    private final FieldNameValidator fieldNameValidator = new FieldNameValidator();
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+public class StorageDocumentFieldNameValidatorTest {
+    private final StorageDocumentFieldNameValidator fieldNameValidator = new StorageDocumentFieldNameValidator();
 
     @Test
     public void testFieldValidationSuccess() {
-        fieldNameValidator.validate("ok");
+        assertTrue(fieldNameValidator.validate("ok"));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -31,13 +34,17 @@ public class FieldNameValidatorTest {
         fieldNameValidator.validate(null);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testFieldNameWithDotsValidation() {
-        fieldNameValidator.validate("1.2");
+        assertFalse(fieldNameValidator.validate("1.2"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testFieldNameStartsWithDollarValidation() {
-        fieldNameValidator.validate("$1");
+        assertFalse(fieldNameValidator.validate("$1"));
+        assertTrue(fieldNameValidator.validate("$db"));
+        assertTrue(fieldNameValidator.validate("$ref"));
+        assertTrue(fieldNameValidator.validate("$id"));
     }
+
 }

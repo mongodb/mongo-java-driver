@@ -34,8 +34,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
-import org.mongodb.codecs.validators.FieldNameValidator;
-import org.mongodb.codecs.validators.QueryFieldNameValidator;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -156,30 +154,6 @@ public class DocumentCodecTest {
     }
 
     @Test
-    public void shouldNotThrowAnExceptionForValidQueryDocumentFieldNames() throws IOException {
-        DocumentCodec documentCodec = new DocumentCodec();
-        Document document = new Document("x.y", 1);
-
-        documentCodec.encode(writer, document);
-
-        InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
-        assertEquals(document, decodedDocument);
-    }
-
-    @Test
-    public void shouldNotThrowAnExceptionForValidNestedQueryDocumentFieldNames() throws IOException {
-        DocumentCodec documentCodec = new DocumentCodec(new QueryFieldNameValidator());
-        Document document = new Document("x", new Document("a.b", 1));
-
-        documentCodec.encode(writer, document);
-
-        InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false));
-        assertEquals(document, decodedDocument);
-    }
-
-    @Test
     public void shouldNotGenerateIdIfPresent() {
         DocumentCodec documentCodec = new DocumentCodec();
         Document document = new Document("_id", 1);
@@ -197,27 +171,6 @@ public class DocumentCodecTest {
         documentCodec.generateIdIfAbsentFromDocument(document);
         assertTrue(documentCodec.documentHasId(document));
         assertEquals(ObjectId.class, documentCodec.getDocumentId(document).getClass());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testThrowsIfDollarInKey() {
-        DocumentCodec documentCodec = new DocumentCodec(new FieldNameValidator());
-        Document document = new Document("$1", 1);
-        documentCodec.encode(writer, document);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testThrowsIfDotInKey() {
-        DocumentCodec documentCodec = new DocumentCodec(new FieldNameValidator());
-        Document document = new Document("a.b", 1);
-        documentCodec.encode(writer, document);
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testThrowsIfKeyIsNull() {
-        DocumentCodec documentCodec = new DocumentCodec(new FieldNameValidator());
-        Document document = new Document(null, 1);
-        documentCodec.encode(writer, document);
     }
 
     // TODO: factor into common base class;

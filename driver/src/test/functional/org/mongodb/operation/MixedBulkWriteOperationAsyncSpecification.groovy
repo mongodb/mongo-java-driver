@@ -16,7 +16,6 @@
 
 
 package org.mongodb.operation
-
 import category.Async
 import category.Slow
 import org.bson.types.Binary
@@ -32,7 +31,6 @@ import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.WriteConcern
 import org.mongodb.codecs.DocumentCodec
-import org.mongodb.codecs.validators.FieldNameValidator
 import org.mongodb.protocol.AcknowledgedBulkWriteResult
 
 import static org.junit.Assume.assumeTrue
@@ -260,7 +258,7 @@ class MixedBulkWriteOperationAsyncSpecification extends FunctionalSpecification 
     def 'when a document contains a key with an illegal character, replacing a document with it should throw IllegalArgumentException'() {
         given:
         def id = new ObjectId()
-        def encoder = new DocumentCodec(new FieldNameValidator());
+        def encoder = new DocumentCodec();
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new ReplaceRequest(new BsonDocument('_id', id), new Document('$set', new Document('x', 1)))
                                                       .upsert(true)],

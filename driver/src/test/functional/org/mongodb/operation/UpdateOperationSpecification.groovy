@@ -31,6 +31,22 @@ import static org.mongodb.Fixture.getBinding
 import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
 class UpdateOperationSpecification extends FunctionalSpecification {
+
+    def 'should throw IllegalArgumentException if any top level keys do not start with $'() {
+        given:
+        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))
+                                                                      .append('y', new BsonInt32(1)))),
+                                     new DocumentCodec())
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'should return correct result for update'() {
         given:
         getCollectionHelper().insertDocuments(new Document('_id', 1))
@@ -113,7 +129,7 @@ class UpdateOperationSpecification extends FunctionalSpecification {
                             [new UpdateRequest(new BsonDocument(),
                                                new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2)))
                                                        .append('y', new BsonInt32(2)))],
-                            new DocumentCodec())
+                            new DocumentCodec()).execute(getBinding())
 
         then:
         thrown(IllegalArgumentException)

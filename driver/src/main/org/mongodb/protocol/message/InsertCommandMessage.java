@@ -17,6 +17,7 @@
 package org.mongodb.protocol.message;
 
 import org.bson.BSONBinaryWriter;
+import org.bson.FieldNameValidator;
 import org.bson.codecs.Encoder;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoNamespace;
@@ -24,7 +25,9 @@ import org.mongodb.WriteConcern;
 import org.mongodb.operation.InsertRequest;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
     private final List<InsertRequest<T>> insertRequestList;
@@ -41,6 +44,13 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
     @Override
     public int getItemCount() {
         return insertRequestList.size();
+    }
+
+    @Override
+    protected FieldNameValidator getFieldNameValidator() {
+        Map<String, FieldNameValidator> map = new HashMap<String, FieldNameValidator>();
+        map.put("documents", new StorageDocumentFieldNameValidator());
+        return new RootValidator(new NoOpFieldNameValidator(), map);
     }
 
     public List<InsertRequest<T>> getRequests() {

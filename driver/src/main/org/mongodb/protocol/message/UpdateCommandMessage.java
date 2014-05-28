@@ -17,6 +17,7 @@
 package org.mongodb.protocol.message;
 
 import org.bson.BSONBinaryWriter;
+import org.bson.FieldNameValidator;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.UpdateRequest;
@@ -36,5 +37,10 @@ public class UpdateCommandMessage extends BaseUpdateCommandMessage<UpdateRequest
 
     protected UpdateCommandMessage createNextMessage(final List<UpdateRequest> remainingUpdates) {
         return new UpdateCommandMessage(getWriteNamespace(), isOrdered(), getWriteConcern(), remainingUpdates, getSettings());
+    }
+
+    @Override
+    protected FieldNameValidator getUpdateFieldNameValidator() {
+        return new UpdateFieldNameValidator();
     }
 }

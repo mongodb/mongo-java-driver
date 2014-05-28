@@ -21,7 +21,6 @@ import org.bson.codecs.Codec;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonDocumentWrapper;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.validators.FieldNameValidator;
 import org.mongodb.operation.CommandReadOperation;
 import org.mongodb.operation.CommandWriteOperation;
 
@@ -52,7 +51,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public MongoCollectionImpl<Document> getCollection(final String collectionName,
                                                        final MongoCollectionOptions operationOptions) {
-        return getCollection(collectionName, new DocumentCodec(new FieldNameValidator()), operationOptions);
+        return getCollection(collectionName, new DocumentCodec(), operationOptions);
     }
 
     @Override
