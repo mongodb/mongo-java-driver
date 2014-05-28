@@ -42,7 +42,7 @@ public class CommandMessage extends RequestMessage {
 
         buffer.writeInt(0);
         buffer.writeInt(-1);
-        addDocument(command, getBsonDocumentCodec(), buffer);
+        addDocument(command, getBsonDocumentCodec(), buffer, new NoOpFieldNameValidator());
         return null;
     }
 }

@@ -31,6 +31,7 @@ class CreateIndexesSpecification extends FunctionalSpecification {
     def idIndex = ['_id': 1]
     def field1Index = ['field': 1]
     def field2Index = ['field2': 1]
+    def xyIndex = ['x.y': 1]
 
     def 'should be able to create a single index'() {
         given:
@@ -42,6 +43,18 @@ class CreateIndexesSpecification extends FunctionalSpecification {
 
         then:
         getIndexes()*.get('key') containsAll(idIndex, field1Index)
+    }
+
+    def 'should be able to create a single index on a nested field'() {
+        given:
+        def index = Index.builder().addKey('x.y', ASC).build()
+        def createIndexesOperation = new CreateIndexesOperation([index], getNamespace())
+
+        when:
+        createIndexesOperation.execute(getBinding())
+
+        then:
+        getIndexes()*.get('key') containsAll(idIndex, xyIndex)
     }
 
     @Category(Async)

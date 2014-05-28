@@ -26,7 +26,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.operation.CommandReadOperation;
@@ -94,7 +93,7 @@ public class DB {
      * @param name  the database name - must not be empty and cannot contain spaces
      */
     public DB(final Mongo mongo, final String name) {
-        this(mongo, name, new org.mongodb.codecs.DocumentCodec(new QueryFieldNameValidator()));
+        this(mongo, name, new org.mongodb.codecs.DocumentCodec());
     }
 
     /**
@@ -599,11 +598,11 @@ public class DB {
         return getMongo().execute(operation);
     }
 
-    private BsonDocument wrap(DBObject document) {
+    private BsonDocument wrap(final DBObject document) {
         return new BsonDocumentWrapper<DBObject>(document, commandCodec);
     }
 
-    private BsonDocument wrap(DBObject document, DBEncoder encoder) {
+    private BsonDocument wrap(final DBObject document, final DBEncoder encoder) {
         if (encoder == null) {
             return wrap(document);
         } else {

@@ -14,9 +14,16 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs.validators;
+package org.bson;
 
-public interface Validator<T> {
-    //doesn't feel right for this to be void, and to rely on Exceptions being thrown
-    void validate(T value);
+class NoOpFieldNameValidator implements FieldNameValidator {
+    @Override
+    public boolean validate(final String fieldName) {
+        return true;
+    }
+
+    @Override
+    public FieldNameValidator getValidatorForField(final String fieldName) {
+        return this;
+    }
 }

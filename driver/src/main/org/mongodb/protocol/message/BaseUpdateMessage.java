@@ -37,7 +37,7 @@ public abstract class BaseUpdateMessage extends RequestMessage {
         }
         buffer.writeInt(flags);
 
-        addDocument(getUpdateBase().getFilter(), getBsonDocumentCodec(), buffer);
+        addDocument(getUpdateBase().getFilter(), getBsonDocumentCodec(), buffer, new NoOpFieldNameValidator());
     }
 
     protected abstract BaseUpdateRequest getUpdateBase();

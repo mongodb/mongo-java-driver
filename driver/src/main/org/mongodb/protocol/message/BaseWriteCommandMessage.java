@@ -19,6 +19,7 @@ package org.mongodb.protocol.message;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONBinaryWriterSettings;
 import org.bson.BSONWriterSettings;
+import org.bson.FieldNameValidator;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
@@ -70,7 +71,7 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         int commandStartPosition = buffer.getPosition();
         BSONBinaryWriter writer = new BSONBinaryWriter(new BSONWriterSettings(),
                                                        new BSONBinaryWriterSettings(getSettings().getMaxDocumentSize() + HEADROOM),
-                                                       buffer, false);
+                                                       buffer, getFieldNameValidator());
         try {
             writer.writeStartDocument();
             writeCommandPrologue(writer);
@@ -81,6 +82,8 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         }
         return nextMessage;
     }
+
+    protected abstract FieldNameValidator getFieldNameValidator();
 
     private void writeCommandHeader(final OutputBuffer buffer) {
         buffer.writeInt(0);
