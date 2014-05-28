@@ -16,9 +16,11 @@
 
 package com.mongodb;
 
+import org.bson.BsonDocumentReader;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.Encoder;
+import org.bson.types.BsonArray;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonDocumentWrapper;
 import org.bson.types.BsonString;
@@ -1054,16 +1056,19 @@ public class DBCollection {
      * @return A {@code List} of the distinct values
      * @mongodb.driver.manual reference/command/distinct Distinct Command
      */
+    @SuppressWarnings("unchecked")
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
         Find find = new Find().filter(wrapAllowNull(query));
-        MongoCursor<String> result = execute(new DistinctOperation(getNamespace(), fieldName, find), readPreference);
+        BsonArray distinctArray = execute(new DistinctOperation(getNamespace(), fieldName, find), readPreference);
 
-        List<String> results = new ArrayList<String>();
-        while (result.hasNext()) {
-            results.add(result.next());
+        List distinctList = new ArrayList();
+        for (BsonValue value : distinctArray) {
+            BsonDocument document = new BsonDocument("value", value);
+            DBObject obj = getDefaultDBObjectCodec().decode(new BsonDocumentReader(document));
+            distinctList.add(obj.get("value"));
         }
 
-        return results;
+        return distinctList;
     }
 
     /**
