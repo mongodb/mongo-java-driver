@@ -17,6 +17,7 @@
 package org.mongodb.protocol.message;
 
 import org.bson.BSONBinaryWriter;
+import org.bson.FieldNameValidator;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
@@ -37,6 +38,11 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
     @Override
     public int getItemCount() {
         return deletes.size();
+    }
+
+    @Override
+    protected FieldNameValidator getFieldNameValidator() {
+        return new NoOpFieldNameValidator();
     }
 
     public List<RemoveRequest> getRequests() {

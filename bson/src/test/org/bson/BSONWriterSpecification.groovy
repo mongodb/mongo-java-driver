@@ -334,4 +334,78 @@ class BSONWriterSpecification extends Specification {
         where:
         writer << [new BSONBinaryWriter(new BasicOutputBuffer(), true), new BsonDocumentWriter(new BsonDocument())]
     }
+
+    def shouldThrowOnInvalidFieldName() {
+        given:
+        writer.writeStartDocument();
+        writer.writeString('good', 'string')
+
+        when:
+        writer.writeString('bad', 'string')
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        writer << [new BSONBinaryWriter(new BasicOutputBuffer(), new TestFieldNameValidator('bad'))]
+    }
+
+    def shouldThrowOnInvalidFieldNameNestedInDocument() {
+        given:
+        writer.writeStartDocument()
+        writer.writeName("doc")
+        writer.writeStartDocument()
+        writer.writeString('good', 'string')
+        writer.writeString('bad', 'string')
+
+        when:
+        writer.writeString('bad-child', 'string')
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        writer << [new BSONBinaryWriter(new BasicOutputBuffer(), new TestFieldNameValidator('bad'))]
+    }
+
+    def shouldThrowOnInvalidFieldNameNestedInDocumentInArray() {
+        given:
+        writer.writeStartDocument()
+        writer.writeName("doc")
+        writer.writeStartArray()
+        writer.writeStartDocument()
+        writer.writeString('good', 'string')
+        writer.writeString('bad', 'string')
+
+        when:
+        writer.writeString('bad-child', 'string')
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        writer << [new BSONBinaryWriter(new BasicOutputBuffer(), new TestFieldNameValidator('bad'))]
+    }
+
+
+    class TestFieldNameValidator implements FieldNameValidator {
+        private final String badFieldName;
+
+
+        TestFieldNameValidator(final String badFieldName) {
+            this.badFieldName = badFieldName
+        }
+
+        @Override
+        boolean validate(final String fieldName) {
+            return fieldName != badFieldName
+        }
+
+        @Override
+        FieldNameValidator getValidatorForField(final String fieldName) {
+            return new TestFieldNameValidator(badFieldName + '-child')
+        }
+    }
+
 }
+

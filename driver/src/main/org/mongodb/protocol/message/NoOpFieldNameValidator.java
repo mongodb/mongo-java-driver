@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs.validators;
+package org.mongodb.protocol.message;
 
-public class QueryFieldNameValidator implements Validator<String> {
+import org.bson.FieldNameValidator;
+
+class NoOpFieldNameValidator implements FieldNameValidator {
     @Override
-    public void validate(final String value) {
-        if (value == null) {
-            throw new IllegalArgumentException("Key can not be null");
-        }
+    public boolean validate(final String fieldName) {
+        return true;
+    }
+
+    @Override
+    public FieldNameValidator getValidatorForField(final String fieldName) {
+        return this;
     }
 }

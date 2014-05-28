@@ -24,6 +24,7 @@ import org.bson.types.Timestamp;
 
 import java.io.Closeable;
 import java.util.Arrays;
+import java.util.Stack;
 
 import static java.lang.String.format;
 
@@ -34,6 +35,7 @@ import static java.lang.String.format;
  */
 public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
     private final BSONWriterSettings settings;
+    private final Stack<FieldNameValidator> fieldNameValidatorStack = new Stack<FieldNameValidator>();
     private State state;
     private Context context;
     private int serializationDepth;
@@ -45,7 +47,21 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
      * @param settings The writer settings.
      */
     protected AbstractBSONWriter(final BSONWriterSettings settings) {
+        this(settings, new NoOpFieldNameValidator());
+    }
+
+    /**
+     * Initializes a new instance of the BSONWriter class.
+     *
+     * @param settings  The writer settings.
+     * @param validator the field name validator
+     */
+    protected AbstractBSONWriter(final BSONWriterSettings settings, final FieldNameValidator validator) {
+        if (validator == null) {
+            throw new IllegalArgumentException("Validator can not be null");
+        }
         this.settings = settings;
+        fieldNameValidatorStack.push(validator);
         state = State.INITIAL;
     }
 
@@ -99,11 +115,17 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
 
     @Override
     public void writeEndArray() {
+        if (context.getParentContext() != null && context.getParentContext().name != null) {
+            fieldNameValidatorStack.pop();
+        }
         serializationDepth--;
     }
 
     @Override
     public void writeEndDocument() {
+        if (context.getParentContext() != null && context.getParentContext().name != null) {
+            fieldNameValidatorStack.pop();
+        }
         serializationDepth--;
     }
 
@@ -148,6 +170,12 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
         if (state != State.NAME) {
             throwInvalidState("WriteName", State.NAME);
         }
+        if (name == null) {
+            throw new IllegalArgumentException("BSON field name can not be null");
+        }
+        if (!fieldNameValidatorStack.peek().validate(name)) {
+            throw new IllegalArgumentException(String.format("Invalid BSON field name %s", name));
+        }
         context.name = name;
         state = State.VALUE;
     }
@@ -172,6 +200,9 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
 
     @Override
     public void writeStartArray() {
+        if (context != null && context.name != null) {
+            fieldNameValidatorStack.push(fieldNameValidatorStack.peek().getValidatorForField(getName()));
+        }
         serializationDepth++;
         if (serializationDepth > settings.getMaxSerializationDepth()) {
             throw new BSONSerializationException("Maximum serialization depth exceeded (does the object being "
@@ -187,6 +218,9 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
 
     @Override
     public void writeStartDocument() {
+        if (context != null && context.name != null) {
+            fieldNameValidatorStack.push(fieldNameValidatorStack.peek().getValidatorForField(getName()));
+        }
         serializationDepth++;
         if (serializationDepth > settings.getMaxSerializationDepth()) {
             throw new BSONSerializationException("Maximum serialization depth exceeded (does the object being "

@@ -34,7 +34,6 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.AggregateExplainOperation;
 import org.mongodb.operation.AggregateOperation;
@@ -160,7 +159,7 @@ public class DBCollection {
      * @param name     the name of the collection
      */
     protected DBCollection(final DB database, final String name) {
-        this(name, database, new org.mongodb.codecs.DocumentCodec(new QueryFieldNameValidator()));
+        this(name, database, new org.mongodb.codecs.DocumentCodec());
     }
 
     /**

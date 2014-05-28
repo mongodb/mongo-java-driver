@@ -33,7 +33,7 @@ public class UpdateMessage extends BaseUpdateMessage {
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeBaseUpdate(buffer);
-        addDocument(updates.get(0).getUpdateOperations(), getBsonDocumentCodec(), buffer);
+        addDocument(updates.get(0).getUpdateOperations(), getBsonDocumentCodec(), buffer, new UpdateFieldNameValidator());
         if (updates.size() == 1) {
             return null;
         } else {

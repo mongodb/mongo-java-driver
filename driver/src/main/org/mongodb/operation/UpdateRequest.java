@@ -27,7 +27,6 @@ public class UpdateRequest extends BaseUpdateRequest {
     public UpdateRequest(final BsonDocument filter, final BsonDocument updateOperations) {
         super(filter);
         this.updateOperations = notNull("updateOperations", updateOperations);
-        isValidUpdateOperation("updateOperations", updateOperations);
     }
 
     public BsonDocument getUpdateOperations() {
@@ -56,14 +55,5 @@ public class UpdateRequest extends BaseUpdateRequest {
         return Type.UPDATE;
     }
 
-    private void isValidUpdateOperation(final String name, final BsonDocument updateOperations) {
-        if (updateOperations.keySet().iterator().next().startsWith("$")) {
-            for (String key : updateOperations.keySet()) {
-                if (!key.startsWith("$")) {
-                    throw new IllegalArgumentException("Update document invalid" + name + " keys must start with $" + key);
-                }
-            }
-        }
-    }
 }
 

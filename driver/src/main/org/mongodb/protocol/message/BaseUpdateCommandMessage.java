@@ -17,13 +17,16 @@
 package org.mongodb.protocol.message;
 
 import org.bson.BSONBinaryWriter;
+import org.bson.FieldNameValidator;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.BaseUpdateRequest;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> extends BaseWriteCommandMessage {
     private final List<T> updates;
@@ -78,6 +81,21 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
     public int getItemCount() {
         return updates.size();
     }
+
+    @Override
+    protected FieldNameValidator getFieldNameValidator() {
+        Map<String, FieldNameValidator> updatesMap = new HashMap<String, FieldNameValidator>();
+        updatesMap.put("u", getUpdateFieldNameValidator());
+
+        RootValidator updatesValidator = new RootValidator(new NoOpFieldNameValidator(), updatesMap);
+
+        Map<String, FieldNameValidator> rootMap = new HashMap<String, FieldNameValidator>();
+        rootMap.put("updates", updatesValidator);
+
+        return new RootValidator(new NoOpFieldNameValidator(), rootMap);
+    }
+
+    protected abstract FieldNameValidator getUpdateFieldNameValidator();
 
     @Override
     protected String getCommandName() {
