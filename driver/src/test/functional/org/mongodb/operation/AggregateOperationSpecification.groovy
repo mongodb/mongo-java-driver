@@ -16,12 +16,16 @@
 
 package org.mongodb.operation
 import category.Async
+import org.bson.types.BsonDocument
+import org.bson.types.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.AggregationOptions
 import org.mongodb.Block
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
+
+import java.util.concurrent.TimeUnit
 
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
@@ -38,8 +42,7 @@ class AggregateOperationSpecification extends FunctionalSpecification {
 
     def 'should be able to aggregate'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec(), new DocumentCodec(),
-                                                                 aggregateOptions)
+        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec(), aggregateOptions)
         def result = op.execute(getBinding());
 
         then:
@@ -54,10 +57,9 @@ class AggregateOperationSpecification extends FunctionalSpecification {
     @Category(Async)
     def 'should be able to aggregate asynchronously'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec(), new DocumentCodec(),
-                                                                 aggregateOptions)
+        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec(), aggregateOptions)
         List<Document> docList = []
-        def cursor = op.executeAsync(getAsyncBinding()).get()
+        def cursor = op.executeAsync(getAsyncBinding()).get(1, TimeUnit.SECONDS)
         cursor.forEach(new Block<Document>() {
             @Override
             void apply(final Document value) {
@@ -65,7 +67,7 @@ class AggregateOperationSpecification extends FunctionalSpecification {
                     docList += value
                 }
             }
-        }).get()
+        }).get(1, TimeUnit.SECONDS)
 
         then:
         List<String> results = docList.iterator()*.getString('name')
@@ -78,8 +80,10 @@ class AggregateOperationSpecification extends FunctionalSpecification {
 
     def 'should be able to aggregate with pipeline'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [new Document('$match', new Document('job', 'plumber'))],
-                                                                 new DocumentCodec(), new DocumentCodec(), aggregateOptions)
+        AggregateOperation op = new AggregateOperation<Document>(getNamespace(),
+                                                                 [new BsonDocument('$match',
+                                                                                   new BsonDocument('job', new BsonString('plumber')))],
+                                                                 new DocumentCodec(), aggregateOptions)
         def result = op.execute(getBinding());
 
         then:
@@ -94,10 +98,12 @@ class AggregateOperationSpecification extends FunctionalSpecification {
     @Category(Async)
     def 'should be able to aggregate with pipeline asynchronously'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [new Document('$match', new Document('job', 'plumber'))],
-                                                                 new DocumentCodec(), new DocumentCodec(), aggregateOptions)
+        AggregateOperation op = new AggregateOperation<Document>(getNamespace(),
+                                                                 [new BsonDocument('$match',
+                                                                                   new BsonDocument('job', new BsonString('plumber')))],
+                                                                 new DocumentCodec(), aggregateOptions)
         List<Document> docList = []
-        def cursor = op.executeAsync(getAsyncBinding()).get()
+        def cursor = op.executeAsync(getAsyncBinding()).get(1, TimeUnit.SECONDS)
         cursor.forEach(new Block<Document>() {
             @Override
             void apply(final Document value) {
@@ -105,7 +111,7 @@ class AggregateOperationSpecification extends FunctionalSpecification {
                     docList += value
                 }
             }
-        })
+        }).get(1, TimeUnit.SECONDS)
 
         then:
         List<String> results = docList.iterator()*.getString('name')

@@ -16,13 +16,14 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Document;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.protocol.QueryProtocol;
 
 import java.util.EnumSet;
@@ -54,11 +55,11 @@ public class GetCollectionNamesOperation implements AsyncReadOperation<List<Stri
         return queryResultToListAsync(getNamespace(), getProtocol(), binding, transformer());
     }
 
-    private Function<Document, String> transformer() {
-        return new Function<Document, String>() {
+    private Function<BsonDocument, String> transformer() {
+        return new Function<BsonDocument, String>() {
             @Override
-            public String apply(final Document document) {
-                String collectionName = document.getString("name");
+            public String apply(final BsonDocument document) {
+                String collectionName = ((BsonString) document.get("name")).getValue();
                 if (!collectionName.contains("$")) {
                     return collectionName.substring(databaseName.length() + 1);
                 }
@@ -71,9 +72,9 @@ public class GetCollectionNamesOperation implements AsyncReadOperation<List<Stri
         return new MongoNamespace(databaseName, "system.namespaces");
     }
 
-    private QueryProtocol<Document> getProtocol() {
-        return new QueryProtocol<Document>(getNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, new Document(), null,
-                new DocumentCodec(), new DocumentCodec());
+    private QueryProtocol<BsonDocument> getProtocol() {
+        return new QueryProtocol<BsonDocument>(getNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, new BsonDocument(), null,
+                                               new BsonDocumentCodec());
     }
 
 }

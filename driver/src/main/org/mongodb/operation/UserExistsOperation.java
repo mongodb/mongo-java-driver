@@ -16,20 +16,21 @@
 
 package org.mongodb.operation;
 
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.types.BsonArray;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 
 import java.util.EnumSet;
-import java.util.List;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
@@ -89,29 +90,29 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
         return new Function<CommandResult, Boolean>() {
             @Override
             public Boolean apply(final CommandResult result) {
-                return !result.getResponse().get("users", List.class).isEmpty();
+                BsonArray usersArray = (BsonArray) result.getResponse().get("users");
+                return usersArray != null && !usersArray.isEmpty();
             }
         };
     }
 
-    private Function<QueryResult<Document>, Boolean> transformQueryResult() {
-        return new Function<QueryResult<Document>, Boolean>() {
+    private Function<QueryResult<BsonDocument>, Boolean> transformQueryResult() {
+        return new Function<QueryResult<BsonDocument>, Boolean>() {
             @Override
-            public Boolean apply(final QueryResult<Document> queryResult) {
+            public Boolean apply(final QueryResult<BsonDocument> queryResult) {
                 return !queryResult.getResults().isEmpty();
             }
         };
     }
 
-    private QueryProtocol<Document> getCollectionBasedProtocol() {
+    private QueryProtocol<BsonDocument> getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(database, "system.users");
-        DocumentCodec codec = new DocumentCodec();
-        return new QueryProtocol<Document>(namespace, EnumSet.noneOf(QueryFlag.class), 0, 1,
-                                           new Document("user", userName), null, codec, codec);
+        return new QueryProtocol<BsonDocument>(namespace, EnumSet.noneOf(QueryFlag.class), 0, 1,
+                                               new BsonDocument("user", new BsonString(userName)), null, new BsonDocumentCodec());
     }
 
-    private Document getCommand() {
-        return new Document("usersInfo", userName);
+    private BsonDocument getCommand() {
+        return new BsonDocument("usersInfo", new BsonString(userName));
     }
 
 }

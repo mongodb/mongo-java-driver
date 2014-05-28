@@ -15,12 +15,15 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
+import org.mongodb.codecs.DocumentCodec
 
+import static java.util.concurrent.TimeUnit.SECONDS
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
 import static org.mongodb.OrderBy.ASC
@@ -28,7 +31,7 @@ import static org.mongodb.OrderBy.ASC
 class GetIndexesOperationSpecification extends FunctionalSpecification {
     def 'should return default index on Collection that exists'() {
         given:
-        def operation = new GetIndexesOperation(getNamespace())
+        def operation = new GetIndexesOperation(getNamespace(), new DocumentCodec())
         getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
 
         when:
@@ -42,11 +45,11 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
     @Category(Async)
     def 'should return default index on Collection that exists asynchronously'() {
         given:
-        def operation = new GetIndexesOperation(getNamespace())
+        def operation = new GetIndexesOperation(getNamespace(), new DocumentCodec())
         getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
 
         when:
-        List<Document> indexes = operation.executeAsync(getAsyncBinding()).get()
+        List<Document> indexes = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
 
         then:
         indexes.size() == 1
@@ -55,7 +58,7 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
 
     def 'should return created indexes on Collection'() {
         given:
-        def operation = new GetIndexesOperation(getNamespace())
+        def operation = new GetIndexesOperation(getNamespace(), new DocumentCodec())
         createIndexes(Index.builder().addKey('theField', ASC).build())
 
         when:
@@ -70,11 +73,11 @@ class GetIndexesOperationSpecification extends FunctionalSpecification {
     @Category(Async)
     def 'should return created indexes on Collection asynchronously'() {
         given:
-        def operation = new GetIndexesOperation(getNamespace())
+        def operation = new GetIndexesOperation(getNamespace(), new DocumentCodec())
         createIndexes(Index.builder().addKey('theField', ASC).build())
 
         when:
-        List<Document> indexes = operation.executeAsync(getAsyncBinding()).get()
+        List<Document> indexes = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
 
         then:
         indexes.size() == 2

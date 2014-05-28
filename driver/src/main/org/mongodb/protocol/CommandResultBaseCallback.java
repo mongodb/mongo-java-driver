@@ -16,18 +16,18 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.CommandResult;
 import org.bson.codecs.Decoder;
-import org.mongodb.Document;
+import org.bson.types.BsonDocument;
+import org.mongodb.CommandResult;
 import org.mongodb.MongoException;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.protocol.message.ReplyMessage;
 
 abstract class CommandResultBaseCallback extends ResponseCallback {
-    private final Decoder<Document> decoder;
+    private final Decoder<BsonDocument> decoder;
 
-    public CommandResultBaseCallback(final Decoder<Document> decoder, final long requestId, final ServerAddress serverAddress) {
+    public CommandResultBaseCallback(final Decoder<BsonDocument> decoder, final long requestId, final ServerAddress serverAddress) {
         super(requestId, serverAddress);
         this.decoder = decoder;
     }
@@ -37,7 +37,7 @@ abstract class CommandResultBaseCallback extends ResponseCallback {
             if (e != null || responseBuffers == null) {
                 return callCallback((CommandResult) null, e);
             } else {
-                ReplyMessage<Document> replyMessage = new ReplyMessage<Document>(responseBuffers, decoder, getRequestId());
+                ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, decoder, getRequestId());
                 return callCallback(new CommandResult(getServerAddress(), replyMessage.getDocuments().get(0),
                                                       replyMessage.getElapsedNanoseconds()), null);
             }

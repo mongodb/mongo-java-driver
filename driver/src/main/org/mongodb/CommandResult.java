@@ -16,14 +16,21 @@
 
 package org.mongodb;
 
+import org.bson.types.BsonBoolean;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonDouble;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonInt64;
+import org.bson.types.BsonString;
+import org.bson.types.BsonValue;
 import org.mongodb.connection.ServerAddress;
 
 public class CommandResult {
     private final ServerAddress address;
-    private final Document response;
+    private final BsonDocument response;
     private final long elapsedNanoseconds;
 
-    public CommandResult(final ServerAddress address, final Document response, final long elapsedNanoseconds) {
+    public CommandResult(final ServerAddress address, final BsonDocument response, final long elapsedNanoseconds) {
         this.address = address;
         this.response = response;
         this.elapsedNanoseconds = elapsedNanoseconds;
@@ -39,7 +46,7 @@ public class CommandResult {
         return address;
     }
 
-    public Document getResponse() {
+    public BsonDocument getResponse() {
         return response;
     }
 
@@ -49,23 +56,34 @@ public class CommandResult {
      * @return true if the command completed successfully, false otherwise.
      */
     public boolean isOk() {
-        Object okValue = response.get("ok");
-        if (okValue instanceof Boolean) {
-            return (Boolean) okValue;
-        } else if (okValue instanceof Number) {
-            return ((Number) okValue).intValue() == 1;
+        BsonValue okValue = response.get("ok");
+        if (okValue instanceof BsonBoolean) {
+            return ((BsonBoolean) okValue).getValue();
+        } else if (okValue instanceof BsonInt32) {
+            return ((BsonInt32) okValue).getValue() == 1;
+        } else if (okValue instanceof BsonInt64) {
+            return ((BsonInt64) okValue).getValue() == 1L;
+        } else if (okValue instanceof BsonDouble) {
+            return ((BsonDouble) okValue).getValue() == 1.0;
         } else {
             return false;
         }
     }
 
     public int getErrorCode() {
-        Integer errorCode = (Integer) getResponse().get("code");
-        return (errorCode != null) ? errorCode : -1;
+        if (getResponse().containsKey("code")) {
+            return ((BsonInt32) getResponse().get("code")).getValue();
+        } else {
+            return -1;
+        }
     }
 
     public String getErrorMessage() {
-        return (String) getResponse().get("errmsg");
+        if (getResponse().containsKey("errmsg")) {
+            return ((BsonString) getResponse().get("errmsg")).getValue();
+        } else {
+            return null;
+        }
     }
 
     public long getElapsedNanoseconds() {

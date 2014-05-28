@@ -18,8 +18,6 @@ package org.mongodb.protocol.message;
 
 import org.bson.BSONBinaryWriter;
 import org.bson.io.OutputBuffer;
-import org.mongodb.Document;
-import org.bson.codecs.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.RemoveRequest;
@@ -31,9 +29,8 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
     private final List<RemoveRequest> deletes;
 
     public DeleteCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                final List<RemoveRequest> deletes, final Encoder<Document> commandEncoder,
-                                final MessageSettings settings) {
-        super(namespace, ordered, writeConcern, commandEncoder, settings);
+                                final List<RemoveRequest> deletes, final MessageSettings settings) {
+        super(namespace, ordered, writeConcern, settings);
         this.deletes = deletes;
     }
 
@@ -62,7 +59,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
             writer.writeName("q");
-            getCommandEncoder().encode(writer, removeRequest.getFilter());
+            getBsonDocumentCodec().encode(writer, removeRequest.getFilter());
             writer.writeInt32("limit", removeRequest.isMulti() ? 0 : 1);
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
@@ -70,7 +67,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
                 writer.reset();
                 nextMessage = new DeleteCommandMessage(getWriteNamespace(),
                                                        isOrdered(), getWriteConcern(), deletes.subList(i, deletes.size()),
-                                                       getCommandEncoder(), getSettings());
+                                                       getSettings());
                 break;
             }
         }

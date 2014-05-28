@@ -16,16 +16,21 @@
 
 package org.mongodb.util;
 
+import org.bson.types.BsonBoolean;
+import org.bson.types.BsonNull;
+import org.bson.types.BsonNumber;
+import org.bson.types.BsonValue;
+
 // TODO: Not sure about this class.  Is it generally applicable enough to be public?
 public final class FieldHelpers {
 
-    public static boolean asBoolean(final Object fieldValue) {
-        if (fieldValue == null) {
+    public static boolean asBoolean(final BsonValue fieldValue) {
+        if (fieldValue instanceof BsonNull) {
             return false;
-        } else if (fieldValue instanceof Boolean) {
-            return (Boolean) fieldValue;
-        } else if (fieldValue instanceof Number) {
-            return ((Number) fieldValue).doubleValue() != 0;
+        } else if (fieldValue instanceof BsonBoolean) {
+            return fieldValue.asBoolean().getValue();
+        } else if (fieldValue instanceof BsonNumber) {
+            return fieldValue.asNumber().doubleValue() != 0;
         } else {
             throw new IllegalArgumentException("value is of type " + fieldValue.getClass()
                                                + " and can not be converted to a boolean.");

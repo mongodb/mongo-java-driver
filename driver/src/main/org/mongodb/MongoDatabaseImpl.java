@@ -16,7 +16,10 @@
 
 package org.mongodb;
 
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonDocumentWrapper;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.codecs.validators.FieldNameValidator;
 import org.mongodb.operation.CommandReadOperation;
@@ -29,7 +32,6 @@ class MongoDatabaseImpl implements MongoDatabase {
     private final String name;
     private final MongoClientImpl client;
     private final DatabaseAdministration admin;
-    private final Codec<Document> commandCodec = new DocumentCodec();
 
     public MongoDatabaseImpl(final String name, final MongoClientImpl client, final MongoDatabaseOptions options) {
         this.name = name;
@@ -73,18 +75,22 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public CommandResult executeCommand(final Document command) {
-        return client.execute(new CommandWriteOperation(getName(), command, commandCodec, commandCodec));
+        return client.execute(new CommandWriteOperation(getName(), wrap(command), new BsonDocumentCodec()));
     }
 
     @Override
     public CommandResult executeCommand(final Document command, final ReadPreference readPreference) {
         notNull("readPreference", readPreference);
-        return client.execute(new CommandReadOperation(getName(), command, commandCodec, commandCodec),
+        return client.execute(new CommandReadOperation(getName(), wrap(command), new BsonDocumentCodec()),
                               readPreference);
     }
 
     @Override
     public MongoDatabaseOptions getOptions() {
         return options;
+    }
+
+    private BsonDocument wrap(final Document command) {
+        return new BsonDocumentWrapper<Document>(command, options.getDocumentCodec());
     }
 }

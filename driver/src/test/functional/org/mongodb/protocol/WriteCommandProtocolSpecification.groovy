@@ -15,14 +15,11 @@
  */
 
 
-
-
-
-
-
 package org.mongodb.protocol
 
 import org.bson.types.Binary
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
 import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
@@ -124,7 +121,9 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         ]
 
         List<InsertRequest<Document>> insertList = new ArrayList<InsertRequest<Document>>(documents.size());
-        for (Document cur : documents) {
+        for (
+                Document cur :
+                        documents) {
             insertList.add(new InsertRequest<Document>(cur));
         }
         def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList, new DocumentCodec())
@@ -134,7 +133,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
         then:
         result.insertedCount == 4
-        documents.size() == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec()).execute(getBinding())
+        documents.size() == new CountOperation(collection.getNamespace(), new Find()).execute(getBinding())
     }
 
     def 'should have correct list of processed and unprocessed requests after error on split'() {
@@ -149,7 +148,9 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         ]
 
         List<InsertRequest<Document>> insertList = new ArrayList<InsertRequest<Document>>(documents.size());
-        for (Document cur : documents) {
+        for (
+                Document cur :
+                        documents) {
             insertList.add(new InsertRequest<Document>(cur));
         }
 
@@ -180,14 +181,18 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         ]
 
         List<InsertRequest<Document>> insertList = new ArrayList<InsertRequest<Document>>(documents.size());
-        for (Document cur : documents) {
+        for (
+                Document cur :
+                        documents) {
             insertList.add(new InsertRequest<Document>(cur));
         }
         new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, insertList,
                                   new DocumentCodec()).execute(connection)
 
         // add a large byte array to each document to force a split after each
-        for (def document : documents) {
+        for (
+                def document :
+                        documents) {
             document.append('bytes', hugeBinary);
         }
         documents[1].put('_id', 5)  // Make the second document a new one
@@ -209,9 +214,11 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
     def 'should upsert items'() {
         given:
         def protocol = new UpdateCommandProtocol(getNamespace(), true, ACKNOWLEDGED,
-                                                 [new UpdateRequest(new Document('_id', 1), new Document('$set', new Document('x', 1)))
+                                                 [new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                                                    new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))))
                                                           .upsert(true),
-                                                  new UpdateRequest(new Document('_id', 2), new Document('$set', new Document('x', 2)))
+                                                  new UpdateRequest(new BsonDocument('_id', new BsonInt32(2)),
+                                                                    new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))))
                                                           .upsert(true)],
                                                  new DocumentCodec());
 
@@ -220,6 +227,6 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
         then:
         result.matchedCount == 0;
-        result.upserts == [new BulkWriteUpsert(0, 1), new BulkWriteUpsert(1, 2)]
+        result.upserts == [new BulkWriteUpsert(0, new BsonInt32(1)), new BulkWriteUpsert(1, new BsonInt32(2))]
     }
 }

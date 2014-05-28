@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.annotations.Immutable;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
@@ -29,7 +31,7 @@ import java.util.List;
  * @mongodb.driver.manual applications/replication/#replica-set-read-preference  Read Preference
  */
 @Immutable
-public abstract class ReadPreference implements ConvertibleToDocument {
+public abstract class ReadPreference implements ConvertibleToBsonDocument {
 
     ReadPreference() {
     }
@@ -43,7 +45,7 @@ public abstract class ReadPreference implements ConvertibleToDocument {
      * @return {@code DBObject} representation of this preference
      */
     @Override
-    public abstract Document toDocument();
+    public abstract BsonDocument toDocument();
 
     /**
      * The name of this read preference.
@@ -86,8 +88,8 @@ public abstract class ReadPreference implements ConvertibleToDocument {
         }
 
         @Override
-        public Document toDocument() {
-            return new Document("mode", getName());
+        public BsonDocument toDocument() {
+            return new BsonDocument("mode", new BsonString(getName()));
         }
 
         @Override

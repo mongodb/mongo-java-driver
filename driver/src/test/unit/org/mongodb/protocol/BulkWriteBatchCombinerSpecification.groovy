@@ -16,10 +16,11 @@
 
 package org.mongodb.protocol
 
+import org.bson.types.BsonDocument
+import org.bson.types.BsonString
 import org.mongodb.BulkWriteError
 import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
-import org.mongodb.Document
 import org.mongodb.WriteConcernError
 import org.mongodb.connection.ServerAddress
 import spock.lang.Specification
@@ -69,25 +70,25 @@ class BulkWriteBatchCombinerSpecification extends Specification {
     def 'should sort upserts'() {
         given:
         def combiner = new BulkWriteBatchCombiner(new ServerAddress(), true, ACKNOWLEDGED)
-        combiner.addResult(new AcknowledgedBulkWriteResult(UPDATE, 1, 0, [new BulkWriteUpsert(0, 'id1')]),
-                             new IndexMap.RangeBased().add(0, 6))
-        combiner.addResult(new AcknowledgedBulkWriteResult(UPDATE, 1, 0, [new BulkWriteUpsert(0, 'id2')]),
-                             new IndexMap.RangeBased().add(0, 3))
+        combiner.addResult(new AcknowledgedBulkWriteResult(UPDATE, 1, 0, [new BulkWriteUpsert(0, new BsonString('id1'))]),
+                           new IndexMap.RangeBased().add(0, 6))
+        combiner.addResult(new AcknowledgedBulkWriteResult(UPDATE, 1, 0, [new BulkWriteUpsert(0, new BsonString('id2'))]),
+                           new IndexMap.RangeBased().add(0, 3))
 
         when:
         def result = combiner.getResult()
 
         then:
         result == new AcknowledgedBulkWriteResult(UPDATE, 2, 0,
-                                                  [new BulkWriteUpsert(3, 'id2'),
-                                                   new BulkWriteUpsert(6, 'id1')])
+                                                  [new BulkWriteUpsert(3, new BsonString('id2')),
+                                                   new BulkWriteUpsert(6, new BsonString('id1'))])
     }
 
     def 'should throw exception on write error'() {
         given:
         def combiner = new BulkWriteBatchCombiner(new ServerAddress(), true, ACKNOWLEDGED)
 
-        def error = new BulkWriteError(11000, 'dup key', new Document(), 0)
+        def error = new BulkWriteError(11000, 'dup key', new BsonDocument(), 0)
         combiner.addWriteErrorResult(error, new IndexMap.RangeBased().add(0, 0))
 
         when:
@@ -101,8 +102,8 @@ class BulkWriteBatchCombinerSpecification extends Specification {
     def 'should throw last write concern error'() {
         given:
         def combiner = new BulkWriteBatchCombiner(new ServerAddress(), true, ACKNOWLEDGED)
-        combiner.addWriteConcernErrorResult(new WriteConcernError(65, 'journal error', new Document()));
-        def writeConcernError = new WriteConcernError(75, 'wtimeout', new Document())
+        combiner.addWriteConcernErrorResult(new WriteConcernError(65, 'journal error', new BsonDocument()));
+        def writeConcernError = new WriteConcernError(75, 'wtimeout', new BsonDocument())
         combiner.addWriteConcernErrorResult(writeConcernError)
 
         when:
@@ -125,7 +126,7 @@ class BulkWriteBatchCombinerSpecification extends Specification {
     def 'should stop run on error if ordered'() {
         given:
         def combiner = new BulkWriteBatchCombiner(new ServerAddress(), true, ACKNOWLEDGED)
-        combiner.addWriteErrorResult(new BulkWriteError(11000, 'dup key', new Document(), 0), new IndexMap.RangeBased().add(0, 0))
+        combiner.addWriteErrorResult(new BulkWriteError(11000, 'dup key', new BsonDocument(), 0), new IndexMap.RangeBased().add(0, 0))
 
         expect:
         combiner.shouldStopSendingMoreBatches()
@@ -134,7 +135,7 @@ class BulkWriteBatchCombinerSpecification extends Specification {
     def 'should not stop run on error if unordered'() {
         given:
         def combiner = new BulkWriteBatchCombiner(new ServerAddress(), false, ACKNOWLEDGED)
-        combiner.addWriteErrorResult(new BulkWriteError(11000, 'dup key', new Document(), 0), new IndexMap.RangeBased().add(0, 0))
+        combiner.addWriteErrorResult(new BulkWriteError(11000, 'dup key', new BsonDocument(), 0), new IndexMap.RangeBased().add(0, 0))
 
         expect:
         !combiner.shouldStopSendingMoreBatches()
@@ -143,16 +144,16 @@ class BulkWriteBatchCombinerSpecification extends Specification {
     def 'should sort errors by first index'() {
         given:
         def combiner = new BulkWriteBatchCombiner(new ServerAddress(), false, ACKNOWLEDGED)
-        combiner.addErrorResult([new BulkWriteError(11000, 'dup key', new Document(), 1),
-                                   new BulkWriteError(45, 'wc error', new Document(), 0)],
-                                  null, new IndexMap.RangeBased().add(0, 0).add(1, 1).add(2, 2));
+        combiner.addErrorResult([new BulkWriteError(11000, 'dup key', new BsonDocument(), 1),
+                                 new BulkWriteError(45, 'wc error', new BsonDocument(), 0)],
+                                null, new IndexMap.RangeBased().add(0, 0).add(1, 1).add(2, 2));
 
         when:
         combiner.getResult();
 
         then:
         def e = thrown(BulkWriteException)
-        e.writeErrors == [new BulkWriteError(45, 'wc error', new Document(), 0),
-                          new BulkWriteError(11000, 'dup key', new Document(), 1)]
+        e.writeErrors == [new BulkWriteError(45, 'wc error', new BsonDocument(), 0),
+                          new BulkWriteError(11000, 'dup key', new BsonDocument(), 1)]
     }
 }

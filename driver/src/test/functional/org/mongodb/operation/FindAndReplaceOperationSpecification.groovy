@@ -15,7 +15,10 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
+import org.bson.types.BsonDocument
+import org.bson.types.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
@@ -44,10 +47,10 @@ class FindAndReplaceOperationSpecification extends FunctionalSpecification {
         helper.insertDocuments(pete, sam)
 
         when:
-        FindAndReplace<Document> findAndReplace = new FindAndReplace<Document>(jordan).where(new Document('name', 'Pete'));
+        FindAndReplace<Document> findAndReplace = new FindAndReplace<Document>(jordan)
+                .where(new BsonDocument('name', new BsonString('Pete')));
 
-        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace,
-                documentCodec, documentCodec)
+        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace, documentCodec)
         Document returnedDocument = operation.execute(getBinding())
 
         then:
@@ -67,10 +70,10 @@ class FindAndReplaceOperationSpecification extends FunctionalSpecification {
         helper.insertDocuments(pete, sam)
 
         when:
-        FindAndReplace<Document> findAndReplace = new FindAndReplace<Document>(jordan).where(new Document('name', 'Pete'));
+        FindAndReplace<Document> findAndReplace = new FindAndReplace<Document>(jordan)
+                .where(new BsonDocument('name', new BsonString('Pete')));
 
-        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace,
-                documentCodec, documentCodec)
+        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace, documentCodec)
         Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:
@@ -89,10 +92,9 @@ class FindAndReplaceOperationSpecification extends FunctionalSpecification {
         helper.insertDocuments(pete, sam)
 
         when:
-        FindAndReplace<Worker> findAndReplace = new FindAndReplace<Worker>(jordan).where(new Document('name', 'Pete'));
+        FindAndReplace<Worker> findAndReplace = new FindAndReplace<Worker>(jordan).where(new BsonDocument('name', new BsonString('Pete')));
 
-        FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(getNamespace(), findAndReplace,
-                workerCodec, workerCodec)
+        FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(getNamespace(), findAndReplace, workerCodec)
         Worker returnedDocument = operation.execute(getBinding())
 
         then:
@@ -111,10 +113,9 @@ class FindAndReplaceOperationSpecification extends FunctionalSpecification {
         helper.insertDocuments(pete, sam)
 
         when:
-        FindAndReplace<Worker> findAndReplace = new FindAndReplace<Worker>(jordan).where(new Document('name', 'Pete'));
+        FindAndReplace<Worker> findAndReplace = new FindAndReplace<Worker>(jordan).where(new BsonDocument('name', new BsonString('Pete')));
 
-        FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(getNamespace(), findAndReplace,
-                workerCodec, workerCodec)
+        FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(getNamespace(), findAndReplace, workerCodec)
         Worker returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:

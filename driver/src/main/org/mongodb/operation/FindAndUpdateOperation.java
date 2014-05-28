@@ -17,12 +17,12 @@
 package org.mongodb.operation;
 
 import org.bson.codecs.Decoder;
-import org.mongodb.Document;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
-import org.mongodb.codecs.DocumentCodec;
 
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -36,36 +36,34 @@ import static org.mongodb.operation.DocumentHelper.putIfTrue;
  * An operation that atomically finds and updates a single document.
  *
  * @param <T> The document type
- *
- *  @since 3.0
+ * @since 3.0
  */
 public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
     private final MongoNamespace namespace;
     private final FindAndUpdate findAndUpdate;
-    private final CommandResultWithPayloadDecoder<T> resultDecoder;
-    private final DocumentCodec commandEncoder = new DocumentCodec();
+    private final Decoder<T> decoder;
 
-    public FindAndUpdateOperation(final MongoNamespace namespace, final FindAndUpdate findAndUpdate, final Decoder<T> resultDecoder) {
+    public FindAndUpdateOperation(final MongoNamespace namespace, final FindAndUpdate findAndUpdate, final Decoder<T> decoder) {
         this.namespace = namespace;
         this.findAndUpdate = findAndUpdate;
-        this.resultDecoder = new CommandResultWithPayloadDecoder<T>(resultDecoder, "value");
+        this.decoder = decoder;
     }
 
     @Override
     public T execute(final WriteBinding binding) {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        return executeWrappedCommandProtocol(namespace, getCommand(), commandEncoder, resultDecoder, binding,
+        return executeWrappedCommandProtocol(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "value"), binding,
                                              FindAndModifyHelper.<T>transformer());
     }
 
     @Override
     public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
         validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), commandEncoder, resultDecoder, binding,
+        return executeWrappedCommandProtocolAsync(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "value"), binding,
                                                   FindAndModifyHelper.<T>transformer());
     }
 
-    private void validateUpdateDocumentToEnsureItHasUpdateOperators(final Document value) {
+    private void validateUpdateDocumentToEnsureItHasUpdateOperators(final BsonDocument value) {
         for (final String field : value.keySet()) {
             if (field.startsWith("$")) {
                 return;
@@ -75,8 +73,8 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
                                                   + "Document: %s", value));
     }
 
-    private Document getCommand() {
-        Document command = new Document("findandmodify", namespace.getCollectionName());
+    private BsonDocument getCommand() {
+        BsonDocument command = new BsonDocument("findandmodify", new BsonString(namespace.getCollectionName()));
         putIfNotNull(command, "query", findAndUpdate.getFilter());
         putIfNotNull(command, "fields", findAndUpdate.getSelector());
         putIfNotNull(command, "sort", findAndUpdate.getSortCriteria());

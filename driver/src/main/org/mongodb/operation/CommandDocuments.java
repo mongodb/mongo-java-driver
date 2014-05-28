@@ -16,10 +16,14 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Document;
+import org.bson.types.BsonBoolean;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonNull;
+import org.bson.types.BsonString;
+import org.bson.types.BsonValue;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.mongodb.operation.DocumentHelper.putIfNotNull;
 import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 import static org.mongodb.operation.DocumentHelper.putIfTrue;
 
@@ -27,29 +31,35 @@ final class CommandDocuments {
     private CommandDocuments() {
     }
 
-    static Document createMapReduce(final String collectionName, final MapReduce mapReduce) {
+    static BsonDocument createMapReduce(final String collectionName, final MapReduce mapReduce) {
 
-        Document commandDocument = new Document("mapreduce", collectionName)
-                                   .append("map", mapReduce.getMapFunction())
-                                   .append("reduce", mapReduce.getReduceFunction())
-                                   .append("out", mapReduce.isInline() ? new Document("inline", 1)
-                                                                       : outputAsDocument(mapReduce.getOutput()))
-                                   .append("query", mapReduce.getFilter())
-                                   .append("sort", mapReduce.getSortCriteria())
-                                   .append("finalize", mapReduce.getFinalizeFunction())
-                                   .append("scope", mapReduce.getScope())
-                                   .append("verbose", mapReduce.isVerbose());
+        BsonDocument commandDocument = new BsonDocument("mapreduce", new BsonString(collectionName))
+                                       .append("map", asValueOrNull(mapReduce.getMapFunction()))
+                                       .append("reduce", asValueOrNull(mapReduce.getReduceFunction()))
+                                       .append("out", mapReduce.isInline() ? new BsonDocument("inline", new BsonInt32(1))
+                                                                           : outputAsDocument(mapReduce.getOutput()))
+                                       .append("query", asValueOrNull(mapReduce.getFilter()))
+                                       .append("sort", asValueOrNull(mapReduce.getSortCriteria()))
+                                       .append("finalize", asValueOrNull(mapReduce.getFinalizeFunction()))
+                                       .append("scope", asValueOrNull(mapReduce.getScope()))
+                                       .append("verbose", BsonBoolean.valueOf(mapReduce.isVerbose()));
         putIfNotZero(commandDocument, "limit", mapReduce.getLimit());
         putIfNotZero(commandDocument, "maxTimeMS", mapReduce.getMaxTime(MILLISECONDS));
         putIfTrue(commandDocument, "jsMode", mapReduce.isJsMode());
         return commandDocument;
     }
 
-    private static Document outputAsDocument(final MapReduceOutputOptions output) {
-        Document document = new Document(output.getAction().getValue(), output.getCollectionName());
-        document.append("sharded", output.isSharded());
-        document.append("nonAtomic", output.isNonAtomic());
-        putIfNotNull(document, "db", output.getDatabaseName());
+    private static BsonValue asValueOrNull(final BsonValue value) {
+        return value == null ? BsonNull.VALUE : value;
+    }
+
+    private static BsonDocument outputAsDocument(final MapReduceOutputOptions output) {
+        BsonDocument document = new BsonDocument(output.getAction().getValue(), new BsonString(output.getCollectionName()));
+        document.append("sharded", BsonBoolean.valueOf(output.isSharded()));
+        document.append("nonAtomic", BsonBoolean.valueOf(output.isNonAtomic()));
+        if (output.getDatabaseName() != null) {
+            document.put("db", new BsonString(output.getDatabaseName()));
+        }
         return document;
     }
 }

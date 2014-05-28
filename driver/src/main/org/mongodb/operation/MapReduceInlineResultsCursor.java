@@ -16,9 +16,8 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MapReduceCursor;
+import org.mongodb.MapReduceStatistics;
 import org.mongodb.ServerCursor;
 import org.mongodb.connection.ServerAddress;
 
@@ -33,15 +32,15 @@ import java.util.List;
  * @since 3.0
  */
 class MapReduceInlineResultsCursor<T> implements MapReduceCursor<T> {
-    private final CommandResult commandResult;
-    private final List<T> results;
     private final Iterator<T> iterator;
+    private final MapReduceStatistics statistics;
+    private final ServerAddress serverAddress;
 
     @SuppressWarnings("unchecked")
-    MapReduceInlineResultsCursor(final CommandResult result) {
-        commandResult = result;
-        this.results = (List<T>) commandResult.getResponse().get("results");
-        iterator = this.results.iterator();
+    MapReduceInlineResultsCursor(final List<T> results, final MapReduceStatistics statistics, final ServerAddress serverAddress) {
+        this.statistics = statistics;
+        this.serverAddress = serverAddress;
+        iterator = results.iterator();
     }
 
     @Override
@@ -70,27 +69,11 @@ class MapReduceInlineResultsCursor<T> implements MapReduceCursor<T> {
 
     @Override
     public ServerAddress getServerAddress() {
-        return commandResult.getAddress();
+        return serverAddress;
     }
 
     @Override
-    public int getInputCount() {
-        return ((Document) commandResult.getResponse().get("counts")).getInteger("input");
+    public MapReduceStatistics getStatistics() {
+        return statistics;
     }
-
-    @Override
-    public int getOutputCount() {
-        return ((Document) commandResult.getResponse().get("counts")).getInteger("output");
-    }
-
-    @Override
-    public int getEmitCount() {
-        return ((Document) commandResult.getResponse().get("counts")).getInteger("emit");
-    }
-
-    @Override
-    public int getDuration() {
-        return commandResult.getResponse().getInteger("timeMillis");
-    }
-
 }

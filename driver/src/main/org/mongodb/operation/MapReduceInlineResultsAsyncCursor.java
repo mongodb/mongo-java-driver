@@ -16,10 +16,8 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MapReduceAsyncCursor;
-import org.mongodb.connection.ServerAddress;
+import org.mongodb.MapReduceStatistics;
 
 import java.util.List;
 
@@ -31,35 +29,16 @@ import java.util.List;
  * @since 3.0
  */
 class MapReduceInlineResultsAsyncCursor<T> extends InlineMongoAsyncCursor<T> implements MapReduceAsyncCursor<T> {
-    private final CommandResult commandResult;
 
-    @SuppressWarnings("unchecked")
-    MapReduceInlineResultsAsyncCursor(final CommandResult result) {
-        super((List<T>) result.getResponse().get("results"));
-        commandResult = result;
-    }
+    private final MapReduceStatistics statistics;
 
-    public ServerAddress getServerAddress() {
-        return commandResult.getAddress();
+    public MapReduceInlineResultsAsyncCursor(final List<T> results, final MapReduceStatistics statistics) {
+        super(results);
+        this.statistics = statistics;
     }
 
     @Override
-    public int getInputCount() {
-        return ((Document) commandResult.getResponse().get("counts")).getInteger("input");
-    }
-
-    @Override
-    public int getOutputCount() {
-        return ((Document) commandResult.getResponse().get("counts")).getInteger("output");
-    }
-
-    @Override
-    public int getEmitCount() {
-        return ((Document) commandResult.getResponse().get("counts")).getInteger("emit");
-    }
-
-    @Override
-    public int getDuration() {
-        return commandResult.getResponse().getInteger("timeMillis");
+    public MapReduceStatistics getStatistics() {
+        return statistics;
     }
 }

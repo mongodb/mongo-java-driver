@@ -15,7 +15,10 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
 import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
@@ -32,7 +35,8 @@ class UpdateOperationSpecification extends FunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document('_id', 1))
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     asList(new UpdateRequest(new Document('_id', 1), new Document('$set', new Document('x', 1)))),
+                                     asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))))),
                                      new DocumentCodec())
 
         when:
@@ -50,7 +54,8 @@ class UpdateOperationSpecification extends FunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document('_id', 1))
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     asList(new UpdateRequest(new Document('_id', 1), new Document('$set', new Document('x', 1)))),
+                                     asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))))),
                                      new DocumentCodec())
 
         when:
@@ -67,8 +72,9 @@ class UpdateOperationSpecification extends FunctionalSpecification {
         given:
         def id = new ObjectId()
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     asList(new UpdateRequest(new Document('_id', id),
-                                                              new Document('$set', new Document('x', 1))).upsert(true)),
+                                     asList(new UpdateRequest(new BsonDocument('_id', id),
+                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))).
+                                                    upsert(true)),
                                      new DocumentCodec())
 
         when:
@@ -86,8 +92,9 @@ class UpdateOperationSpecification extends FunctionalSpecification {
         given:
         def id = new ObjectId()
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     asList(new UpdateRequest(new Document('_id', id),
-                                                              new Document('$set', new Document('x', 1))).upsert(true)),
+                                     asList(new UpdateRequest(new BsonDocument('_id', id),
+                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))).
+                                                    upsert(true)),
                                      new DocumentCodec())
 
         when:
@@ -103,9 +110,10 @@ class UpdateOperationSpecification extends FunctionalSpecification {
     def 'when an update request document contains a non $-prefixed key, update should throw IllegalArgumentException'() {
         when:
         new UpdateOperation(getNamespace(), ordered, ACKNOWLEDGED,
-                                    [new UpdateRequest(new Document(),
-                                                       new Document('$set', new Document('x', 2)).append('y', 2))],
-                                    new DocumentCodec())
+                            [new UpdateRequest(new BsonDocument(),
+                                               new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2)))
+                                                       .append('y', new BsonInt32(2)))],
+                            new DocumentCodec())
 
         then:
         thrown(IllegalArgumentException)

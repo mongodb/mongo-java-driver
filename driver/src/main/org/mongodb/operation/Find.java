@@ -16,24 +16,26 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Document;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
+import org.bson.types.BsonValue;
 
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 public class Find extends Query {
-    private Document filter;
-    private Document fields;
-    private Document sortCriteria;
-    private Hint<?> hint;
+    private BsonDocument filter;
+    private BsonDocument fields;
+    private BsonDocument sortCriteria;
+    private BsonValue hint;
     private boolean snapshotMode;
     private boolean explain;
 
     public Find() {
-        this(new Document());
+        this(new BsonDocument());
     }
 
-    public Find(final Document filter) {
+    public Find(final BsonDocument filter) {
         this.filter = filter;
     }
 
@@ -46,15 +48,15 @@ public class Find extends Query {
         snapshotMode = from.snapshotMode;
     }
 
-    public Document getFilter() {
+    public BsonDocument getFilter() {
         return filter;
     }
 
-    public Document getOrder() {
+    public BsonDocument getOrder() {
         return sortCriteria;
     }
 
-    public Hint<?> getHint() {
+    public BsonValue getHint() {
         return hint;
     }
 
@@ -66,22 +68,22 @@ public class Find extends Query {
         return explain;
     }
 
-    public Find where(final Document filter) {
+    public Find where(final BsonDocument filter) {
         this.filter = filter;
         return this;
     }
 
-    public Find filter(final Document filter) {
+    public Find filter(final BsonDocument filter) {
         this.filter = filter;
         return this;
     }
 
-    public Find select(final Document fields) {
+    public Find select(final BsonDocument fields) {
         this.fields = fields;
         return this;
     }
 
-    public Find order(final Document sortCriteria) {
+    public Find order(final BsonDocument sortCriteria) {
         this.sortCriteria = sortCriteria;
         return this;
     }
@@ -111,12 +113,12 @@ public class Find extends Query {
     }
 
     public Find hintIndex(final String indexName) {
-        this.hint = indexName != null ? new Hint<String>(indexName) : null;
+        this.hint = new BsonString(indexName);
         return this;
     }
 
-    public Find hintIndex(final Document keys) {
-        this.hint = keys != null ? new Hint<Document>(keys) : null;
+    public Find hintIndex(final BsonDocument keys) {
+        this.hint = keys;
         return this;
     }
 
@@ -125,7 +127,7 @@ public class Find extends Query {
         return this;
     }
 
-    public Document getFields() {
+    public BsonDocument getFields() {
         return fields;
     }
 
@@ -186,18 +188,5 @@ public class Find extends Query {
         result = 31 * result + (snapshotMode ? 1 : 0);
         result = 31 * result + (explain ? 1 : 0);
         return result;
-    }
-
-    public static class Hint<T> {
-
-        private final T value;
-
-        public Hint(final T value) {
-            this.value = value;
-        }
-
-        public T getValue() {
-            return value;
-        }
     }
 }

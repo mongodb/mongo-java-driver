@@ -16,6 +16,9 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.BsonBoolean;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.MongoFuture;
 import org.mongodb.binding.AsyncWriteBinding;
@@ -24,26 +27,37 @@ import org.mongodb.binding.WriteBinding;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 import static org.mongodb.operation.OperationHelper.ignoreResult;
 
 public class CreateCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final String databaseName;
-    private final CreateCollectionOptions createCollectionOptions;
+    private final CreateCollectionOptions options;
 
-    public CreateCollectionOperation(final String databaseName, final CreateCollectionOptions createCollectionOptions) {
+    public CreateCollectionOperation(final String databaseName, final CreateCollectionOptions options) {
         this.databaseName = notNull("databaseName", databaseName);
-        this.createCollectionOptions = notNull("createCollectionOptions", createCollectionOptions);
+        this.options = notNull("options", options);
     }
 
     @Override
     public Void execute(final WriteBinding binding) {
-        executeWrappedCommandProtocol(databaseName, createCollectionOptions.asDocument(), binding);
+        executeWrappedCommandProtocol(databaseName, asDocument(), binding);
         return null;
     }
 
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return ignoreResult(executeWrappedCommandProtocolAsync(databaseName, createCollectionOptions.asDocument(), binding));
+        return ignoreResult(executeWrappedCommandProtocolAsync(databaseName, asDocument(), binding));
     }
 
+    private BsonDocument asDocument() {
+        BsonDocument document = new BsonDocument("create", new BsonString(options.getCollectionName()));
+        putIfNotZero(document, "size", options.getSizeInBytes());
+        document.put("capped", BsonBoolean.valueOf(options.isCapped()));
+        if (options.isCapped()) {
+            document.put("autoIndexId", BsonBoolean.valueOf(options.isAutoIndex()));
+            putIfNotZero(document, "max", options.getMaxDocuments());
+        }
+        return document;
+    }
 }

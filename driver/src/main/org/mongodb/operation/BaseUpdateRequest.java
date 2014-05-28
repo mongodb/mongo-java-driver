@@ -16,18 +16,18 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Document;
+import org.bson.types.BsonDocument;
 
 public abstract class BaseUpdateRequest extends WriteRequest {
-    private final Document filter;
+    private final BsonDocument filter;
     private boolean isUpsert = false;
 
-    public BaseUpdateRequest(final Document filter) {
+    public BaseUpdateRequest(final BsonDocument filter) {
         super();
         this.filter = filter;
     }
 
-    public Document getFilter() {
+    public BsonDocument getFilter() {
         return filter;
     }
 

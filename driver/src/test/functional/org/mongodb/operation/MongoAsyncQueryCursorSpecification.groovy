@@ -18,7 +18,8 @@ package org.mongodb.operation
 
 import category.Async
 import category.Slow
-import org.bson.types.BSONTimestamp
+import org.bson.types.BsonDocumentWrapper
+import org.bson.types.Timestamp
 import org.junit.experimental.categories.Category
 import org.mongodb.Block
 import org.mongodb.CreateCollectionOptions
@@ -194,10 +195,10 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         Connection connection = source.getConnection().get()
         new DropCollectionOperation(getNamespace()).execute(getBinding())
         new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName(), true, 1000)).execute(getBinding())
-        def ts = new BSONTimestamp(5, 0)
+        def ts = new Timestamp(5, 0)
         getCollectionHelper().insertDocuments([_id: 1, ts: ts] as Document)
 
-        QueryResult<Document> firstBatch = executeQuery([ts: ['$gte': ts]] as Document, 2,
+        QueryResult<Document> firstBatch = executeQuery([ts: ['$gte': ts] as Document ] as Document, 2,
                                                         EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData), connection)
         TestBlock block = new TestBlock(2)
 
@@ -209,9 +210,9 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         block.getIterations() == 1
 
         when:
-        getCollectionHelper().insertDocuments([_id: 2, ts: new BSONTimestamp(1, 0)] as Document)
-        getCollectionHelper().insertDocuments([_id: 3, ts: new BSONTimestamp(6, 0)] as Document)
-        getCollectionHelper().insertDocuments([_id: 4, ts: new BSONTimestamp(8, 0)] as Document)
+        getCollectionHelper().insertDocuments([_id: 2, ts: new Timestamp(1, 0)] as Document)
+        getCollectionHelper().insertDocuments([_id: 3, ts: new Timestamp(6, 0)] as Document)
+        getCollectionHelper().insertDocuments([_id: 4, ts: new Timestamp(8, 0)] as Document)
         future.get()
 
         then:
@@ -243,8 +244,9 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
 
     private QueryResult<Document> executeQuery(final Document query, final int numberToReturn, final EnumSet<QueryFlag> queryFlag,
                                                final Connection connection) {
-        new QueryProtocol<Document>(collection.getNamespace(), queryFlag, 0, numberToReturn, query, null,
-                                           new DocumentCodec(), new DocumentCodec()).execute(connection)
+        new QueryProtocol<Document>(collection.getNamespace(), queryFlag, 0, numberToReturn,
+                                           new BsonDocumentWrapper<Document>(query, new DocumentCodec()), null,
+                                           new DocumentCodec()).execute(connection)
     }
 
     private final class TestBlock implements Block<Document> {

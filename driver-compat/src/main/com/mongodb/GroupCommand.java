@@ -19,7 +19,6 @@ package com.mongodb;
 import org.bson.types.Code;
 import org.mongodb.operation.Group;
 
-import static com.mongodb.DBObjects.toDocument;
 import static com.mongodb.DBObjects.toNullableDocument;
 
 /**

@@ -16,11 +16,11 @@
 
 package org.mongodb.connection;
 
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoCredential;
-import org.mongodb.codecs.DocumentCodec;
 
 import static org.mongodb.connection.CommandHelper.executeCommand;
 import static org.mongodb.connection.NativeAuthenticationHelper.getAuthCommand;
@@ -34,13 +34,13 @@ class NativeAuthenticator extends Authenticator {
     public void authenticate() {
         try {
             CommandResult nonceResponse = executeCommand(getCredential().getSource(),
-                                                         NativeAuthenticationHelper.getNonceCommand(), new DocumentCodec(),
+                                                         NativeAuthenticationHelper.getNonceCommand(),
                                                          getInternalConnection());
 
-            Document authCommand = getAuthCommand(getCredential().getUserName(),
-                                                  getCredential().getPassword(),
-                                                  nonceResponse.getResponse().getString("nonce"));
-            executeCommand(getCredential().getSource(), authCommand, new DocumentCodec(), getInternalConnection());
+            BsonDocument authCommand = getAuthCommand(getCredential().getUserName(),
+                                                      getCredential().getPassword(),
+                                                      ((BsonString) nonceResponse.getResponse().get("nonce")).getValue());
+            executeCommand(getCredential().getSource(), authCommand, getInternalConnection());
         } catch (MongoCommandFailureException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);
         }

@@ -53,6 +53,15 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     private final DBObjectFactory objectFactory;
     private final IdGenerator idGenerator;
 
+    public DBObjectCodec(final CodecRegistry codecRegistry, final Map<BSONType, Class<?>> bsonTypeClassMap) {
+        this.codecRegistry = codecRegistry;
+        this.bsonTypeClassMap = bsonTypeClassMap;
+        this.idGenerator = null;
+        this.db = null;
+        this.fieldNameValidator = null;
+        this.objectFactory = null;
+    }
+
     public DBObjectCodec(final DB db, final Validator<String> fieldNameValidator, final DBObjectFactory objectFactory,
                          final CodecRegistry codecRegistry, final Map<BSONType, Class<?>> bsonTypeClassMap,
                          final IdGenerator idGenerator) {

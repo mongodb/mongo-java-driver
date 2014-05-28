@@ -16,13 +16,12 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Codec;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MongoFuture;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
-import org.mongodb.codecs.DocumentCodec;
 
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
@@ -35,9 +34,8 @@ import static org.mongodb.operation.OperationHelper.VoidTransformer;
  * @since 3.0
  */
 public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private static final Document DROP_DATABASE = new Document("dropDatabase", 1);
+    private static final BsonDocument DROP_DATABASE = new BsonDocument("dropDatabase", new BsonInt32(1));
     private final String databaseName;
-    private final Codec<Document> commandCodec = new DocumentCodec();
 
     public DropDatabaseOperation(final String databaseName) {
         this.databaseName = databaseName;
@@ -45,13 +43,11 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(databaseName, DROP_DATABASE, commandCodec, commandCodec, binding,
-                                             new VoidTransformer<CommandResult>());
+        return executeWrappedCommandProtocol(databaseName, DROP_DATABASE, binding, new VoidTransformer<CommandResult>());
     }
 
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(databaseName, DROP_DATABASE, commandCodec, commandCodec, binding,
-                                                  new VoidTransformer<CommandResult>());
+        return executeWrappedCommandProtocolAsync(databaseName, DROP_DATABASE, binding, new VoidTransformer<CommandResult>());
     }
 }

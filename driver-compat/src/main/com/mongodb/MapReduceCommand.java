@@ -24,7 +24,6 @@ import org.mongodb.operation.MapReduceOutputOptions;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.DBObjects.toDocument;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**

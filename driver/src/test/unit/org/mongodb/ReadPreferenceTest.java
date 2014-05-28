@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.connection.ClusterDescription;
@@ -99,11 +101,11 @@ public class ReadPreferenceTest {
 
     @Test
     public void testStaticPreferences() {
-        assertEquals(new Document("mode", "primary"), ReadPreference.primary().toDocument());
-        assertEquals(new Document("mode", "secondary"), ReadPreference.secondary().toDocument());
-        assertEquals(new Document("mode", "secondaryPreferred"), ReadPreference.secondaryPreferred().toDocument());
-        assertEquals(new Document("mode", "primaryPreferred"), ReadPreference.primaryPreferred().toDocument());
-        assertEquals(new Document("mode", "nearest"), ReadPreference.nearest().toDocument());
+        assertEquals(new BsonDocument("mode", new BsonString("primary")), ReadPreference.primary().toDocument());
+        assertEquals(new BsonDocument("mode", new BsonString("secondary")), ReadPreference.secondary().toDocument());
+        assertEquals(new BsonDocument("mode", new BsonString("secondaryPreferred")), ReadPreference.secondaryPreferred().toDocument());
+        assertEquals(new BsonDocument("mode", new BsonString("primaryPreferred")), ReadPreference.primaryPreferred().toDocument());
+        assertEquals(new BsonDocument("mode", new BsonString("nearest")), ReadPreference.nearest().toDocument());
     }
 
     @Test

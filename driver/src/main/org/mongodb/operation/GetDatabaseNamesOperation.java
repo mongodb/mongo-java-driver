@@ -16,8 +16,11 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.BsonArray;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonValue;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.binding.AsyncReadBinding;
@@ -26,7 +29,6 @@ import org.mongodb.binding.ReadBinding;
 import java.util.ArrayList;
 import java.util.List;
 
-import static java.util.Collections.unmodifiableList;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
@@ -38,8 +40,8 @@ public class GetDatabaseNamesOperation implements AsyncReadOperation<List<String
     /**
      * Executing this will return a list of all the databases names in the MongoDB instance.
      *
-     * @return a List of Strings of the names of all the databases in the MongoDB instance
      * @param binding the binding
+     * @return a List of Strings of the names of all the databases in the MongoDB instance
      */
     @Override
     public List<String> execute(final ReadBinding binding) {
@@ -49,8 +51,8 @@ public class GetDatabaseNamesOperation implements AsyncReadOperation<List<String
     /**
      * Executing this will return a Future list of all the databases names in the MongoDB instance.
      *
-     * @return a Future List of Strings of the names of all the databases in the MongoDB instance
      * @param binding the binding
+     * @return a Future List of Strings of the names of all the databases in the MongoDB instance
      */
     @Override
     public MongoFuture<List<String>> executeAsync(final AsyncReadBinding binding) {
@@ -62,18 +64,18 @@ public class GetDatabaseNamesOperation implements AsyncReadOperation<List<String
             @SuppressWarnings("unchecked")
             @Override
             public List<String> apply(final CommandResult result) {
-                List<Document> databases = (List<Document>) result.getResponse().get("databases");
+                BsonArray databases = result.getResponse().getArray("databases");
 
                 List<String> databaseNames = new ArrayList<String>();
-                for (final Document database : databases) {
-                    databaseNames.add(database.get("name", String.class));
+                for (final BsonValue database : databases) {
+                    databaseNames.add(database.asDocument().getString("name").getValue());
                 }
-                return unmodifiableList(databaseNames);
+                return databaseNames;
             }
         };
     }
 
-    private Document getCommand() {
-        return new Document("listDatabases", 1);
+    private BsonDocument getCommand() {
+        return new BsonDocument("listDatabases", new BsonInt32(1));
     }
 }

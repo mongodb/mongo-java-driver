@@ -17,7 +17,6 @@
 package com.mongodb;
 
 import static com.mongodb.DBObjects.toDBObject;
-import static com.mongodb.DBObjects.toDocument;
 
 class RemoveRequest extends WriteRequest {
     private final DBObject query;

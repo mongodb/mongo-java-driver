@@ -16,6 +16,7 @@
 
 package org.mongodb.protocol;
 
+import org.bson.types.BsonValue;
 import org.mongodb.WriteResult;
 
 /**
@@ -24,9 +25,9 @@ import org.mongodb.WriteResult;
 public class AcknowledgedWriteResult implements WriteResult {
     private final int documentsAffectedCount;
     private final boolean isUpdateOfExisting;
-    private final Object upsertedId;
+    private final BsonValue upsertedId;
 
-    public AcknowledgedWriteResult(final int count, final boolean isUpdateOfExisting, final Object upsertedId) {
+    public AcknowledgedWriteResult(final int count, final boolean isUpdateOfExisting, final BsonValue upsertedId) {
         this.documentsAffectedCount = count;
         this.isUpdateOfExisting = isUpdateOfExisting;
         this.upsertedId = upsertedId;
@@ -48,7 +49,7 @@ public class AcknowledgedWriteResult implements WriteResult {
     }
 
     @Override
-    public Object getUpsertedId() {
+    public BsonValue getUpsertedId() {
         return upsertedId;
     }
 

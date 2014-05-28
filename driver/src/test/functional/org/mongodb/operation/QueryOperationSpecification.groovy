@@ -15,7 +15,10 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
 import org.junit.experimental.categories.Category
 import org.mongodb.Block
 import org.mongodb.Document
@@ -42,6 +45,18 @@ import static org.mongodb.operation.QueryFlag.Exhaust
 
 class QueryOperationSpecification extends FunctionalSpecification {
 
+    def 'should query with no filter'() {
+        def document = new Document()
+        given:
+        collection.insert(document)
+
+        when:
+        def cursor = new QueryOperation<Document>(getNamespace(), new Find().filter(null), new DocumentCodec()).execute(getBinding())
+
+        then:
+        cursor.next() == document
+    }
+
     def 'should throw execution timeout exception from execute'() {
         assumeFalse(isSharded())
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
@@ -49,7 +64,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         given:
         collection.insert(new Document())
         def find = new Find().maxTime(1, SECONDS)
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
@@ -70,7 +85,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         given:
         collection.insert(new Document())
         def find = new Find().maxTime(1, SECONDS)
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
@@ -85,17 +100,19 @@ class QueryOperationSpecification extends FunctionalSpecification {
 
     def '$max should limit items returned'() {
         given:
-        for (i in 1..100) {
+        for (
+                i in
+                        1..100) {
             collection.insert(new Document('x', 'y').append('count', i))
         }
         collection.tools().createIndexes(asList(Index.builder().addKey('count').build()))
         def count = 0;
         def find = new Find()
-        find.getOptions().max(new Document('count', 11))
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
+        find.getOptions().max(new BsonDocument('count', new BsonInt32(11)))
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
         when:
         queryOperation.execute(getBinding()).each {
-            count++ 
+            count++
         }
 
         then:
@@ -104,17 +121,19 @@ class QueryOperationSpecification extends FunctionalSpecification {
 
     def '$min should limit items returned'() {
         given:
-        for (i in 1..100) {
+        for (
+                i in
+                        1..100) {
             collection.insert(new Document('x', 'y').append('count', i))
         }
         collection.tools().createIndexes(asList(Index.builder().addKey('count').build()))
         def count = 0;
         def find = new Find()
-        find.getOptions().min(new Document('count', 10))
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
+        find.getOptions().min(new BsonDocument('count', new BsonInt32(10)))
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
         when:
         queryOperation.execute(getBinding()).each {
-            count++ 
+            count++
         }
 
         then:
@@ -123,16 +142,18 @@ class QueryOperationSpecification extends FunctionalSpecification {
 
     def '$maxScan should limit items returned'() {
         given:
-        for (i in 1..100) {
+        for (
+                i in
+                        1..100) {
             collection.insert(new Document('x', 'y'))
         }
         def count = 0;
         def find = new Find()
         find.getOptions().maxScan(34)
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
         when:
         queryOperation.execute(getBinding()).each {
-            count++ 
+            count++
         }
 
         then:
@@ -141,14 +162,16 @@ class QueryOperationSpecification extends FunctionalSpecification {
 
     def '$returnKey should only return the field that was in an index used to perform the find'() {
         given:
-        for (i in 1..13) {
+        for (
+                i in
+                        1..13) {
             collection.insert(new Document('x', i))
         }
         collection.tools().createIndexes([Index.builder().addKey('x').build()])
 
-        def find = new Find(new Document('x', 7))
+        def find = new Find(new BsonDocument('x', new BsonInt32(7)))
         find.getOptions().returnKey()
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
 
         when:
         def cursor = queryOperation.execute(getBinding())
@@ -158,16 +181,18 @@ class QueryOperationSpecification extends FunctionalSpecification {
         foundItem.keySet().size() == 1
         foundItem['x'] == 7
     }
-    
+
     def '$showDiskLoc should return disk locations'() {
         given:
-        for (i in 1..100) {
+        for (
+                i in
+                        1..100) {
             collection.insert(new Document('x', 'y'))
         }
         def found = true;
         def find = new Find()
         find.getOptions().showDiskLoc()
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
         when:
         queryOperation.execute(getBinding()).each {
             found &= it['$diskLoc'] != null
@@ -181,7 +206,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         assumeTrue(Fixture.isDiscoverableReplicaSet())
         collection.insert(new Document())
         def find = new Find()
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec(), new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
         def binding = new ClusterBinding(getCluster(), ReadPreference.secondary(), 1, SECONDS)
 
         expect:
@@ -191,10 +216,12 @@ class QueryOperationSpecification extends FunctionalSpecification {
     def 'should exhaust'() {
         assumeFalse(isSharded())
 
-        for (i in 1..500) {
+        for (
+                i in
+                        1..500) {
             collection.insert(new Document('_id', i))
         }
-        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find().addFlags(EnumSet.of(Exhaust)), new DocumentCodec(),
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find().addFlags(EnumSet.of(Exhaust)),
                                                           new DocumentCodec())
 
         when:
@@ -218,10 +245,12 @@ class QueryOperationSpecification extends FunctionalSpecification {
     def 'should iterate asynchronously'() {
         assumeFalse(isSharded())
 
-        for (i in 1..500) {
+        for (
+                i in
+                        1..500) {
             collection.insert(new Document('_id', i))
         }
-        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find(), new DocumentCodec(), new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find(), new DocumentCodec())
 
         when:
         def count = 0;
@@ -242,10 +271,12 @@ class QueryOperationSpecification extends FunctionalSpecification {
     def 'should exhaust asynchronously'() {
         assumeFalse(isSharded())
 
-        for (i in 1..500) {
+        for (
+                i in
+                        1..500) {
             collection.insert(new Document('_id', i))
         }
-        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find().addFlags(EnumSet.of(Exhaust)), new DocumentCodec(),
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find().addFlags(EnumSet.of(Exhaust)),
                                                           new DocumentCodec())
 
         when:

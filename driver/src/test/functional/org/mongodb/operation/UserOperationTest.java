@@ -107,8 +107,8 @@ public class UserOperationTest extends DatabaseTestCase {
                                           asList(new InsertRequest<Document>(new Document())),
                                           new DocumentCodec()).execute(binding);
             // then
-            assertEquals(1L, (long) new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()), new Find(),
-                                                       new DocumentCodec())
+            assertEquals(1L, (long) new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()), new Find()
+            )
                                     .execute(getBinding()));
         } finally {
             // cleanup
@@ -135,8 +135,7 @@ public class UserOperationTest extends DatabaseTestCase {
             fail("Should have thrown");
         } catch (MongoException e) {
             // all good
-        }
-        finally {
+        } finally {
             // cleanup
             new DropUserOperation("admin", adminUser.getCredential().getUserName()).execute(getBinding());
             cluster.close();
@@ -156,8 +155,8 @@ public class UserOperationTest extends DatabaseTestCase {
         try {
             // when
             long result = new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()),
-                                             new Find(),
-                                             new DocumentCodec())
+                                             new Find()
+            )
                           .execute(binding);
             // then
             assertEquals(0, result);

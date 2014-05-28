@@ -16,6 +16,7 @@
 
 package org.mongodb.protocol;
 
+import org.bson.types.BsonValue;
 import org.mongodb.UnacknowledgedWriteException;
 import org.mongodb.WriteResult;
 
@@ -39,7 +40,7 @@ public class UnacknowledgedWriteResult implements WriteResult {
     }
 
     @Override
-    public Object getUpsertedId() {
+    public BsonValue getUpsertedId() {
         throw new UnacknowledgedWriteException("Can not get information about an unacknowledged write");
     }
 

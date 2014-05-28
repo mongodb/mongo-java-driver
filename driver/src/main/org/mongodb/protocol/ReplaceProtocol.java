@@ -16,7 +16,6 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.Document;
 import org.bson.codecs.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
@@ -41,14 +40,12 @@ public class ReplaceProtocol<T> extends WriteProtocol {
     private static final org.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.replace");
 
     private final List<ReplaceRequest<T>> replaceRequests;
-    private final Encoder<Document> queryEncoder;
     private final Encoder<T> encoder;
 
     public ReplaceProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<ReplaceRequest<T>> replaceRequests, final Encoder<Document> queryEncoder, final Encoder<T> encoder) {
+                           final List<ReplaceRequest<T>> replaceRequests, final Encoder<T> encoder) {
         super(namespace, ordered, writeConcern);
         this.replaceRequests = replaceRequests;
-        this.queryEncoder = queryEncoder;
         this.encoder = encoder;
     }
 
@@ -80,7 +77,7 @@ public class ReplaceProtocol<T> extends WriteProtocol {
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new ReplaceMessage<T>(getNamespace().getFullName(), replaceRequests, queryEncoder, encoder, settings);
+        return new ReplaceMessage<T>(getNamespace().getFullName(), replaceRequests, encoder, settings);
     }
 
     @Override

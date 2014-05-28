@@ -21,7 +21,6 @@ import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mongodb.ConvertibleToDocument;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
@@ -69,17 +68,6 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         personCollection.insert(new Person("Bob"));
 
         MongoCursor<Person> results = personCollection.find(new Document("name", "Bob")).get();
-
-        assertThat(results.next().name, is("Bob"));
-    }
-
-    @Test
-    public void shouldBeAbleToQueryWithType() {
-        MongoCollection<Person> personCollection = database.getCollection(getCollectionName(), new PersonCodec());
-        Person bob = new Person("Bob");
-        personCollection.insert(bob);
-
-        MongoCursor<Person> results = personCollection.find(bob).get();
 
         assertThat(results.next().name, is("Bob"));
     }
@@ -207,7 +195,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         }
     }
 
-    private class Person implements ConvertibleToDocument {
+    private class Person {
         private ObjectId id = new ObjectId();
         private final String name;
 
@@ -218,11 +206,6 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         public Person(final ObjectId id, final String name) {
             this.id = id;
             this.name = name;
-        }
-
-        @Override
-        public Document toDocument() {
-            return new Document("name", name);
         }
     }
 

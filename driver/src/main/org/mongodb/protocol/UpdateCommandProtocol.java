@@ -23,8 +23,6 @@ import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
-import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.validators.QueryFieldNameValidator;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SingleResultCallback;
@@ -45,13 +43,11 @@ public class UpdateCommandProtocol extends WriteCommandProtocol {
     private static final org.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.update");
 
     private final List<UpdateRequest> updates;
-    private final Encoder<Document> queryEncoder;
 
     public UpdateCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                  final List<UpdateRequest> updates, final Encoder<Document> queryEncoder) {
         super(namespace, ordered, writeConcern);
         this.updates = notNull("update", updates);
-        this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }
 
     @Override
@@ -89,7 +85,7 @@ public class UpdateCommandProtocol extends WriteCommandProtocol {
     @Override
     protected UpdateCommandMessage createRequestMessage(final ServerDescription serverDescription) {
         return new UpdateCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), updates,
-                                        new DocumentCodec(new QueryFieldNameValidator()), getMessageSettings(serverDescription));
+                                        getMessageSettings(serverDescription));
     }
 
     @Override

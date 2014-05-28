@@ -15,12 +15,16 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
 import org.bson.types.Code
 import org.junit.experimental.categories.Category
 import org.mongodb.Block
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
+import org.mongodb.codecs.DocumentCodec
 
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
@@ -34,10 +38,10 @@ class GroupOperationSpecification extends FunctionalSpecification {
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
         getCollectionHelper().insertDocuments(pete, sam, pete2)
 
-        Group group = new Group(new Document('name',  1), new Code('function ( curr, result ) {}'), new Document())
+        Group group = new Group(new BsonDocument('name', new BsonInt32(1)), new Code('function ( curr, result ) {}'), new BsonDocument())
 
         when:
-        GroupOperation op = new GroupOperation(getNamespace(), group)
+        GroupOperation op = new GroupOperation(getNamespace(), group, new DocumentCodec())
         def result = op.execute(getBinding());
 
         then:
@@ -53,13 +57,13 @@ class GroupOperationSpecification extends FunctionalSpecification {
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
         getCollectionHelper().insertDocuments(pete, sam, pete2)
 
-        Group group = new Group(new Document('name',  1), new Code('function ( curr, result ) {}'), new Document())
+        Group group = new Group(new BsonDocument('name', new BsonInt32(1)), new Code('function ( curr, result ) {}'), new BsonDocument())
 
         when:
-        GroupOperation op = new GroupOperation(getNamespace(), group)
+        GroupOperation op = new GroupOperation(getNamespace(), group, new DocumentCodec())
         List<Document> docList = []
         op.executeAsync(getAsyncBinding()).get().forEach(new Block<Document>() {
-           @Override
+            @Override
             void apply(final Document value) {
                 if (value != null) {
                     docList += value

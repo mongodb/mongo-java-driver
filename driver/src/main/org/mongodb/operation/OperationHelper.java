@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.Function;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
@@ -73,6 +74,9 @@ final class OperationHelper {
         return connection.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0;
     }
 
+    static BsonDocumentCodec getBsonDocumentCodec() {
+        return new BsonDocumentCodec();
+    }
 
     static <T> T executeProtocol(final Protocol<T> protocol, final ConnectionSource source) {
         Connection connection = source.getConnection();
