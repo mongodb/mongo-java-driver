@@ -93,7 +93,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
             @SuppressWarnings("unchecked")
             @Override
             public MapReduceCursor<T> apply(final CommandResult result) {
-                return new MapReduceInlineResultsCursor(result);
+                return new MapReduceInlineResultsCursor<T>(result);
             }
         };
     }
