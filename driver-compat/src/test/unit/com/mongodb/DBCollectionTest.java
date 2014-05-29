@@ -285,7 +285,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testUpdateWithDBEncoder() {
-        DBObject document = new BasicDBObject("x", 1);
+        DBObject document = new BasicDBObject("_id", 1).append("x", 1);
         collection.insert(document);
         collection.update(new BasicDBObject("x", 1),
                           new BasicDBObject("y", false),
@@ -294,7 +294,7 @@ public class DBCollectionTest extends DatabaseTestCase {
                           WriteConcern.ACKNOWLEDGED,
                           new MyEncoder());
 
-        assertEquals(2, collection.count());
+        assertEquals(1, collection.count());
         assertThat(collection.find(), hasItem(MyEncoder.getConstantObject()));
     }
 
