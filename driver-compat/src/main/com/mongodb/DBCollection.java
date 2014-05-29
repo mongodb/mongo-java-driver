@@ -291,8 +291,7 @@ public class DBCollection {
                                final WriteConcern writeConcern) {
         return executeWriteOperation(new InsertOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
                                                                    insertRequestList, encoder),
-                                     writeConcern
-                                    );
+                                     writeConcern);
     }
 
     WriteResult executeWriteOperation(final BaseWriteOperation operation, final WriteConcern writeConcern) {
@@ -375,17 +374,7 @@ public class DBCollection {
      */
     public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi,
                               final WriteConcern aWriteConcern) {
-        if (update == null) {
-            throw new IllegalArgumentException("update can not be null");
-        }
-
-        if (query == null) {
-            throw new IllegalArgumentException("update query can not be null");
-        }
-
-        UpdateRequest mongoUpdate = new UpdateRequest(wrap(query), wrap(update)).upsert(upsert).multi(multi);
-
-        return updateInternal(mongoUpdate, aWriteConcern);
+        return update(query, update, upsert, multi, aWriteConcern, null);
     }
 
     /**
@@ -402,6 +391,7 @@ public class DBCollection {
      * @return the result of the operation
      * @mongodb.driver.manual tutorial/modify-documents/ Modify
      */
+    @SuppressWarnings("unchecked")
     public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi,
                               final WriteConcern aWriteConcern, final DBEncoder encoder) {
         if (update == null) {
@@ -412,15 +402,18 @@ public class DBCollection {
             throw new IllegalArgumentException("update query can not be null");
         }
 
-        UpdateRequest mongoUpdate = new UpdateRequest(wrap(query, encoder), wrap(update, encoder)).upsert(upsert).multi(multi);
+        if (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")) {
+            UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, encoder)).upsert(upsert).multi(multi);
 
-        return updateInternal(mongoUpdate, aWriteConcern);
-    }
-
-    private WriteResult updateInternal(final UpdateRequest update, final WriteConcern writeConcern) {
-        return executeWriteOperation(new UpdateOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
-                                                         asList(update), documentCodec),
-                                     writeConcern);
+            return executeWriteOperation(new UpdateOperation(getNamespace(), !aWriteConcern.getContinueOnError(), aWriteConcern.toNew(),
+                                                             asList(updateRequest), documentCodec),
+                                         aWriteConcern);
+        } else {
+            ReplaceRequest<DBObject> replaceRequest = new ReplaceRequest<DBObject>(wrap(query), update).upsert(upsert);
+            return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), true, aWriteConcern.toNew(),
+                                                                        asList(replaceRequest), toEncoder(encoder)),
+                                         aWriteConcern);
+        }
     }
 
     /**
@@ -1929,6 +1922,10 @@ public class DBCollection {
     }
 
     BsonDocument wrap(final DBObject document, final DBEncoder encoder) {
-        return new BsonDocumentWrapper<DBObject>(document, new DBEncoderAdapter(encoder));
+        if (encoder == null) {
+            return wrap(document);
+        } else {
+            return new BsonDocumentWrapper<DBObject>(document, new DBEncoderAdapter(encoder));
+        }
     }
 }
