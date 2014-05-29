@@ -104,6 +104,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
+        public MongoView<T> addFlags(final int option) {
+            wrappedView.addFlags(option);
+            return this;
+        }
+
+        @Override
         public MongoView<T> find(final Document filter) {
             wrappedView.find(filter);
             return this;

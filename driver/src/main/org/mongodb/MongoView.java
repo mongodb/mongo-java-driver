@@ -18,6 +18,8 @@ package org.mongodb;
 
 public interface MongoView<T> extends MongoWritableView<T>, MongoReadableView<T>, MongoIterable<T> {
 
+    MongoView<T> addFlags(final int option);
+
     MongoView<T> find(Document filter);
 
     MongoView<T> find(ConvertibleToDocument filter);

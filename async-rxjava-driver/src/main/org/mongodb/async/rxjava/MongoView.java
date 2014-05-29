@@ -37,6 +37,14 @@ import org.mongodb.annotations.NotThreadSafe;
 public interface MongoView<T> extends MongoWritableView<T>, MongoReadableView<T>, MongoIterable<T> {
 
     /**
+     * Adds a query option - see Bytes.QUERYOPTION_* for list.
+     *
+     * @param option the option to be added
+     * @return a view on this collection with the query with the query flag set
+     */
+    MongoView<T> addFlags(final int option);
+
+    /**
      * Updates the filter applied to the documents in the view.
      *
      * @param filter the filter

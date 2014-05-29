@@ -36,6 +36,7 @@ import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.InsertRequest;
+import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.ReplaceOperation;
 import org.mongodb.operation.ReplaceRequest;
@@ -129,6 +130,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         private final Find find = new Find();
         private final ReadPreference readPreference = options.getReadPreference();
         private boolean upsert;
+
+        @Override
+        public MongoView<T> addFlags(final int option) {
+            find.addFlags(QueryFlag.toSet(option));
+            return this;
+        }
 
         @Override
         public MongoFuture<T> one() {
