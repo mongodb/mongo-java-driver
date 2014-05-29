@@ -96,6 +96,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }));
     }
 
+    @Override
+    public CollectionAdministration tools() {
+        return new CollectionAdministrationImpl(wrapped.tools());
+    }
+
     private final class MongoCollectionView implements MongoView<T> {
         private final org.mongodb.async.MongoView<T> wrappedView;
 

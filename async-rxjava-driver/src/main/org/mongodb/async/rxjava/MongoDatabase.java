@@ -78,4 +78,9 @@ public interface MongoDatabase {
      * successfully.
      */
     Observable<CommandResult> executeCommand(Document commandDocument);
+
+    /**
+     * @return the DatabaseAdministration that provides admin methods that can be performed
+     */
+    DatabaseAdministration tools();
 }

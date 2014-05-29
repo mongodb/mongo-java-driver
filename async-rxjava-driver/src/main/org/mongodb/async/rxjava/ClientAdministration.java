@@ -16,26 +16,23 @@
 
 package org.mongodb.async.rxjava;
 
-class MongoClientImpl implements MongoClient {
+import rx.Observable;
 
-    private final org.mongodb.async.MongoClient wrapped;
+/**
+ * All the commands that can be run without needing a specific database.
+ *
+ * @since 3.0
+ */
+public interface ClientAdministration {
+    /**
+     * @return a non-null number if the server is reachable.
+     * @mongodb.driver.manual reference/commands/ping Ping
+     */
+    Observable<Double> ping();
 
-    public MongoClientImpl(final org.mongodb.async.MongoClient wrapped) {
-        this.wrapped = wrapped;
-    }
-
-    @Override
-    public MongoDatabase getDatabase(final String name) {
-        return new MongoDatabaseImpl(wrapped.getDatabase(name));
-    }
-
-    @Override
-    public void close() {
-        wrapped.close();
-    }
-
-    @Override
-    public ClientAdministration tools() {
-        return new ClientAdministrationImpl(wrapped.tools());
-    }
+    /**
+     * @return an Observable containing the names of all the databases on the server
+     * @mongodb.driver.manual reference/commands/listDatabases List Databases
+     */
+    Observable<String> getDatabaseNames();
 }
