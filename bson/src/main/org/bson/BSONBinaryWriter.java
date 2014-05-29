@@ -355,6 +355,16 @@ public class BSONBinaryWriter extends AbstractBSONWriter {
             buffer.writeInt(size);
             buffer.write(inputBuffer.readBytes(size - 4));
             binaryReader.setState(AbstractBSONReader.State.TYPE);
+
+            if (getContext() == null) {
+                setState(State.DONE);
+            } else {
+                if (getContext().getContextType() == BSONContextType.JAVASCRIPT_WITH_SCOPE) {
+                    backpatchSize(); // size of the JavaScript with scope value
+                    setContext(getContext().getParentContext());
+                }
+                setState(getNextState());
+            }
         } else {
             super.pipe(reader);
         }

@@ -527,6 +527,87 @@ public class BSONBinaryWriterTest {
         reader2.readEndDocument();
     }
 
+    @Test
+    public void testPipeDocumentIntoDocument() {
+        writer.writeStartDocument();
+        writer.writeString("str", "value");
+        writer.writeEndDocument();
+
+        byte[] bytes = writer.getBuffer().toByteArray();
+
+        BSONBinaryWriter newWriter = new BSONBinaryWriter(new BasicOutputBuffer(), true);
+        BSONBinaryReader reader1 = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+
+        newWriter.writeStartDocument();
+        newWriter.writeName("doc");
+        newWriter.pipe(reader1);
+        newWriter.writeEndDocument();
+
+        BSONBinaryReader reader2 = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
+                                                                                                                     .toByteArray()))),
+                                                        true);
+
+        //checking what writer piped
+        reader2.readStartDocument();
+        assertEquals("doc", reader2.readName());
+        reader2.readStartDocument();
+        assertEquals("value", reader2.readString("str"));
+        reader2.readEndDocument();
+        reader2.readEndDocument();
+    }
+
+    @Test
+    public void testPipeDocumentIntoTopLevel() {
+        writer.writeStartDocument();
+        writer.writeString("str", "value");
+        writer.writeEndDocument();
+
+        byte[] bytes = writer.getBuffer().toByteArray();
+
+        BSONBinaryWriter newWriter = new BSONBinaryWriter(new BasicOutputBuffer(), true);
+        BSONBinaryReader reader1 = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+
+        newWriter.pipe(reader1);
+
+        BSONBinaryReader reader2 = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
+                                                                                                                     .toByteArray()))),
+                                                        true);
+
+        //checking what writer piped
+        reader2.readStartDocument();
+        assertEquals("value", reader2.readString("str"));
+        reader2.readEndDocument();
+    }
+
+    @Test
+    public void testPipeDocumentIntoScopeDocument() {
+        writer.writeStartDocument();
+        writer.writeInt32("i", 0);
+        writer.writeEndDocument();
+
+        byte[] bytes = writer.getBuffer().toByteArray();
+
+        BSONBinaryWriter newWriter = new BSONBinaryWriter(new BasicOutputBuffer(), true);
+        BSONBinaryReader reader1 = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+
+        newWriter.writeStartDocument();
+        newWriter.writeJavaScriptWithScope("js", "i++");
+        newWriter.pipe(reader1);
+        newWriter.writeEndDocument();
+
+        BSONBinaryReader reader2 = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
+                                                                                                                     .toByteArray()))),
+                                                        true);
+
+        //checking what writer piped
+        reader2.readStartDocument();
+        reader2.readJavaScriptWithScope("js");
+        reader2.readStartDocument();
+        assertEquals(0, reader2.readInt32("i"));
+        reader2.readEndDocument();
+        reader2.readEndDocument();
+    }
+
     // CHECKSTYLE:OFF
     @Test
     public void testMarkAndReset() throws IOException {
