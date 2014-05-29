@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.async;
+
+import org.mongodb.Document;
+import org.mongodb.Index;
+import org.mongodb.MongoFuture;
 
 import java.util.List;
 
@@ -30,19 +34,19 @@ public interface CollectionAdministration {
      * @mongodb.driver.manual reference/method/db.collection.createIndex/ Ensure Index
      * @see Index
      */
-    void createIndexes(List<Index> indexes);
+    MongoFuture<Void> createIndexes(List<Index> indexes);
 
     /**
      * @return all the indexes on this collection
      * @mongodb.driver.manual reference/method/db.collection.getIndexes/ getIndexes
      */
-    List<Document> getIndexes();
+    MongoFuture<List<Document>> getIndexes();
 
     /**
      * @return true is this is a capped collection
      * @mongodb.driver.manual reference/method/db.collection.isCapped/ isCapped
      */
-    boolean isCapped();
+    MongoFuture<Boolean> isCapped();
 
     /**
      * Return statistics document for this collection, from collstats command
@@ -50,14 +54,14 @@ public interface CollectionAdministration {
      * @return statistics document
      * @mongodb.driver.manual reference/command/collStats/ collStats
      */
-    Document getStatistics();
+    MongoFuture<Document> getStatistics();
 
     /**
      * Drops this collection from the Database.
      *
      * @mongodb.driver.manual reference/command/drop/ Drop Collection
      */
-    void drop();
+    MongoFuture<Void> drop();
 
     /**
      * Drops the given index.
@@ -65,13 +69,13 @@ public interface CollectionAdministration {
      * @param index the details of the index to remove
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
      */
-    void dropIndex(Index index);
+    MongoFuture<Void> dropIndex(Index index);
 
     /**
      * Drop all the indexes on this collection, except for the default on _id.
      *
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
      */
-    void dropIndexes();
+    MongoFuture<Void> dropIndexes();
 
 }

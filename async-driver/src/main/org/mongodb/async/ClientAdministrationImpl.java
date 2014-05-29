@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.async;
 
+import org.mongodb.MongoFuture;
 import org.mongodb.operation.GetDatabaseNamesOperation;
 import org.mongodb.operation.PingOperation;
 
@@ -23,11 +24,8 @@ import java.util.List;
 
 import static org.mongodb.ReadPreference.primary;
 
-/**
- * Contains the commands that can be run on MongoDB that do not require a database to be selected first.
- * These commands can be accessed via MongoClient.
- */
-class ClientAdministrationImpl implements ClientAdministration {
+public class ClientAdministrationImpl implements ClientAdministration {
+
     private final MongoClientImpl client;
 
     ClientAdministrationImpl(final MongoClientImpl client) {
@@ -35,12 +33,12 @@ class ClientAdministrationImpl implements ClientAdministration {
     }
 
     @Override
-    public double ping() {
+    public MongoFuture<Double> ping() {
         return client.execute(new PingOperation(), primary());
     }
 
     @Override
-    public List<String> getDatabaseNames() {
+    public MongoFuture<List<String>> getDatabaseNames() {
         return client.execute(new GetDatabaseNamesOperation(), primary());
     }
 }

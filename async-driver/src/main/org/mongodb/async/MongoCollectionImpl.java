@@ -118,6 +118,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
     }
 
+    @Override
+    public CollectionAdministration tools() {
+        return new CollectionAdministrationImpl(client, namespace);
+    }
+
     <V> MongoFuture<V> execute(final AsyncWriteOperation<V> writeOperation) {
         return client.execute(writeOperation);
     }

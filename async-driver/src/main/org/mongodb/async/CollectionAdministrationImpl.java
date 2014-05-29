@@ -14,8 +14,12 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.async;
 
+import org.mongodb.Document;
+import org.mongodb.Index;
+import org.mongodb.MongoFuture;
+import org.mongodb.MongoNamespace;
 import org.mongodb.operation.CreateIndexesOperation;
 import org.mongodb.operation.DropCollectionOperation;
 import org.mongodb.operation.DropIndexOperation;
@@ -28,10 +32,12 @@ import java.util.List;
 import static org.mongodb.ReadPreference.primary;
 
 /**
- * Encapsulates functionality that is not part of the day-to-day use of a Collection.  For example, via this admin class you can create
- * indexes and drop the collection.
+ * Provides the functionality for a collection that is useful for administration, but not necessarily in the course of normal use of a
+ * collection.
+ *
+ * @since 3.0
  */
-class CollectionAdministrationImpl implements CollectionAdministration {
+public class CollectionAdministrationImpl implements CollectionAdministration {
 
     private final MongoClientImpl client;
     private final MongoNamespace collectionNamespace;
@@ -44,37 +50,37 @@ class CollectionAdministrationImpl implements CollectionAdministration {
     }
 
     @Override
-    public void createIndexes(final List<Index> indexes) {
-        client.execute(new CreateIndexesOperation(indexes, collectionNamespace));
+    public MongoFuture<Void> createIndexes(final List<Index> indexes) {
+        return client.execute(new CreateIndexesOperation(indexes, collectionNamespace));
     }
 
     @Override
-    public List<Document> getIndexes() {
+    public MongoFuture<List<Document>> getIndexes() {
         return client.execute(new GetIndexesOperation(collectionNamespace), primary());
     }
 
     @Override
-    public boolean isCapped() {
+    public MongoFuture<Boolean> isCapped() {
         return client.execute(new GetIsCappedOperation(collectionNamespace), primary());
     }
 
     @Override
-    public Document getStatistics() {
+    public MongoFuture<Document> getStatistics() {
         return client.execute(new GetStatisticsOperation(collectionNamespace), primary());
     }
 
     @Override
-    public void drop() {
-        client.execute(new DropCollectionOperation(collectionNamespace));
+    public MongoFuture<Void> drop() {
+        return client.execute(new DropCollectionOperation(collectionNamespace));
     }
 
     @Override
-    public void dropIndex(final Index index) {
-        client.execute(new DropIndexOperation(collectionNamespace, index.getName()));
+    public MongoFuture<Void> dropIndex(final Index index) {
+        return client.execute(new DropIndexOperation(collectionNamespace, index.getName()));
     }
 
     @Override
-    public void dropIndexes() {
-        client.execute(new DropIndexOperation(collectionNamespace, "*"));
+    public MongoFuture<Void> dropIndexes() {
+        return client.execute(new DropIndexOperation(collectionNamespace, "*"));
     }
 }
