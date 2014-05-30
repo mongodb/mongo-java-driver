@@ -25,6 +25,7 @@ import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.InputBuffer;
 import org.bson.types.Binary;
+import org.bson.types.BsonInt32;
 import org.bson.types.Code;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
@@ -160,7 +161,7 @@ public class DocumentCodecTest {
         assertTrue(documentCodec.documentHasId(document));
         documentCodec.generateIdIfAbsentFromDocument(document);
         assertTrue(documentCodec.documentHasId(document));
-        assertEquals(1, documentCodec.getDocumentId(document));
+        assertEquals(new BsonInt32(1), documentCodec.getDocumentId(document));
     }
 
     @Test

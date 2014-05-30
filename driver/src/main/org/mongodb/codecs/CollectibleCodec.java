@@ -17,6 +17,7 @@
 package org.mongodb.codecs;
 
 import org.bson.codecs.Codec;
+import org.bson.types.BsonValue;
 
 /**
  * A Codec that generates complete BSON documents for storage in a MongoDB collection.
@@ -40,10 +41,12 @@ public interface CollectibleCodec<T> extends Codec<T> {
     boolean documentHasId(T document);
 
     /**
-     * Gets the _id of the given document.
+     * Gets the _id of the given document if it contains one, otherwise throws {@code IllegalArgumentException}.  To avoid the latter
+     * case, call {@code documentHasId} first to check.
      *
      * @param document the document from which to get the _id
-     * @return the _id of the document, or null if it does not have one
+     * @return the _id of the document
+     * @throws java.lang.IllegalStateException if the document does not contain an _id
      */
-    Object getDocumentId(T document);
+    BsonValue getDocumentId(T document);
 }

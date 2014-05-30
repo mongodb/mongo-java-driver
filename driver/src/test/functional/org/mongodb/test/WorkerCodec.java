@@ -30,7 +30,7 @@ public final class WorkerCodec implements CollectibleCodec<Worker> {
     }
 
     @Override
-    public Object getDocumentId(final Worker document) {
+    public ObjectId getDocumentId(final Worker document) {
         return document.getId();
     }
 

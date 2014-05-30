@@ -63,7 +63,7 @@ class ConcreteCodec implements CollectibleCodec<Concrete> {
     }
 
     @Override
-    public Object getDocumentId(final Concrete document) {
+    public ObjectId getDocumentId(final Concrete document) {
         return document.getId();
     }
 
