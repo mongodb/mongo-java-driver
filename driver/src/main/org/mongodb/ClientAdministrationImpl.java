@@ -36,7 +36,7 @@ class ClientAdministrationImpl implements ClientAdministration {
 
     @Override
     public double ping() {
-        return client.execute(new PingOperation(), primary());
+        return client.execute(new PingOperation(), client.getOptions().getReadPreference());
     }
 
     @Override

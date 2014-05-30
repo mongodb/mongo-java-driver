@@ -45,6 +45,7 @@ import org.mongodb.operation.WriteOperation;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -171,8 +172,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoView<T> addFlags(final int option) {
-            findOp.addFlags(QueryFlag.toSet(option));
+        public MongoView<T> cursorFlags(final  EnumSet<QueryFlag> flags) {
+            findOp.addFlags(flags);
             return this;
         }
 

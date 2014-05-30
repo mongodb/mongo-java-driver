@@ -16,9 +16,13 @@
 
 package org.mongodb;
 
+import org.mongodb.operation.QueryFlag;
+
+import java.util.EnumSet;
+
 public interface MongoView<T> extends MongoWritableView<T>, MongoReadableView<T>, MongoIterable<T> {
 
-    MongoView<T> addFlags(final int option);
+    MongoView<T> cursorFlags(final EnumSet<QueryFlag> flags);
 
     MongoView<T> find(Document filter);
 

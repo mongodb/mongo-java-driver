@@ -46,6 +46,7 @@ import org.mongodb.operation.UpdateRequest;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -137,8 +138,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         private boolean upsert;
 
         @Override
-        public MongoView<T> addFlags(final int option) {
-            find.addFlags(QueryFlag.toSet(option));
+        public MongoView<T> cursorFlags(final EnumSet<QueryFlag> flags) {
+            find.addFlags(flags);
             return this;
         }
 
