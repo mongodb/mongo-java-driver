@@ -108,6 +108,12 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
     }
 
     @Override
+    public void writeDBPointer(final String name, final DBPointer value) {
+        writeName(name);
+        writeDBPointer(value);
+    }
+
+    @Override
     public void writeDouble(final String name, final double value) {
         writeName(name);
         writeDouble(value);
@@ -256,13 +262,6 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
     public void writeUndefined(final String name) {
         writeName(name);
         writeUndefined();
-    }
-
-    private void writeDBPointer(final DBPointer dbPointer) {
-        writeStartDocument();
-        writeString("$ref", dbPointer.getNamespace());
-        writeObjectId("$id", dbPointer.getId());
-        writeEndDocument();
     }
 
     protected State getNextState() {
