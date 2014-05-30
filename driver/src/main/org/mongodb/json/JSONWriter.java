@@ -20,6 +20,7 @@ import org.bson.AbstractBSONWriter;
 import org.bson.BSONContextType;
 import org.bson.BSONException;
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Timestamp;
@@ -465,6 +466,19 @@ public class JSONWriter extends AbstractBSONWriter {
         } catch (IOException e) {
             throwBSONException(e);
         }
+    }
+
+    @Override
+    public void writeDBPointer(final DBPointer value) {
+        checkPreconditions("writeDBPointer", State.VALUE, State.INITIAL);
+
+        writeStartDocument();
+        writeString("$ref", value.getNamespace());
+        writeObjectId("$id", value.getId());
+        writeEndDocument();
+
+
+        setState(getNextState());
     }
 
     private void writeNameHelper(final String name) throws IOException {

@@ -19,6 +19,7 @@ package org.bson;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Timestamp;
@@ -326,6 +327,27 @@ public class BSONBinaryWriterTest {
 
         byte[] expectedValues = {17, 0, 0, 0, 17, 116, 49, 0, 44, -83, 0, 0, -87, 20, 100, 7, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
+    }
+
+    @Test
+    public void testWriteDBPointer() {
+        writer.writeStartDocument();
+
+        DBPointer dbPointer = new DBPointer("my.test", new ObjectId("50d3332018c6a1d8d1662b61"));
+        writer.writeDBPointer("pt", dbPointer);
+
+        writer.writeEndDocument();
+
+        byte[] expectedValues = {33, 0, 0, 0, 12, 112, 116, 0, 8, 0, 0, 0, 109, 121, 46, 116, 101, 115, 116, 0, 80, -45, 51, 32, 24, -58,
+                                 -95, -40, -47, 102, 43, 97, 0};
+        assertArrayEquals(expectedValues, buffer.toByteArray());
+
+        BSONReader reader = createReaderForBytes(expectedValues);
+        reader.readStartDocument();
+        assertThat(reader.readBSONType(), is(BSONType.DB_POINTER));
+        assertEquals("pt", reader.readName());
+        assertEquals(dbPointer, reader.readDBPointer());
+        reader.readEndDocument();
     }
 
     @Test

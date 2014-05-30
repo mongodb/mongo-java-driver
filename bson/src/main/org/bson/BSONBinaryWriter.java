@@ -19,6 +19,7 @@ package org.bson;
 import org.bson.io.InputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Timestamp;
@@ -282,6 +283,19 @@ public class BSONBinaryWriter extends AbstractBSONWriter {
 
         buffer.write(BSONType.UNDEFINED.getValue());
         writeCurrentName();
+
+        setState(getNextState());
+    }
+
+    @Override
+    public  void writeDBPointer(final DBPointer dbPointer) {
+        checkPreconditions("writeDBPointer", State.VALUE);
+
+        buffer.write(BSONType.DB_POINTER.getValue());
+        writeCurrentName();
+
+        buffer.writeString(dbPointer.getNamespace());
+        buffer.write(dbPointer.getId().toByteArray());
 
         setState(getNextState());
     }

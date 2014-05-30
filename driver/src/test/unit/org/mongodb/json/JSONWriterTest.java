@@ -18,6 +18,7 @@ package org.mongodb.json;
 
 import org.bson.BSONInvalidOperationException;
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Timestamp;
@@ -628,6 +629,15 @@ public class JSONWriterTest {
         writer.writeUndefined("undefined");
         writer.writeEndDocument();
         String expected = "{ \"undefined\" : undefined }";
+        assertEquals(expected, stringWriter.toString());
+    }
+
+    @Test
+    public void testDBPointer() {
+        writer.writeStartDocument();
+        writer.writeDBPointer("dbPointer", new DBPointer("my.test", new ObjectId("4d0ce088e447ad08b4721a37")));
+        writer.writeEndDocument();
+        String expected = "{ \"dbPointer\" : { \"$ref\" : \"my.test\", \"$id\" : { \"$oid\" : \"4d0ce088e447ad08b4721a37\" } } }";
         assertEquals(expected, stringWriter.toString());
     }
 }
