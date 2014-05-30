@@ -21,10 +21,13 @@ import org.bson.BSONBinarySubType;
 import org.bson.BSONReader;
 import org.bson.BSONType;
 import org.bson.BSONWriter;
+import org.bson.BsonDocumentWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonValue;
 import org.bson.types.CodeWScope;
 import org.bson.types.DBPointer;
 import org.bson.types.Symbol;
@@ -101,19 +104,23 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     }
 
     @Override
-    public Object getDocumentId(final DBObject document) {
-        if (documentHasId(document)) {
-            return document.get(ID_FIELD_NAME);
-            //            BsonDocument idHoldingDocument = new BsonDocument();
-            //            BSONWriter writer = new BsonDocumentWriter(idHoldingDocument);
-            //            writer.writeStartDocument();
-            //            writer.writeName(ID_FIELD_NAME);
-            //            writeValue(writer, document.get(ID_FIELD_NAME));
-            //            writer.writeEndDocument();
-            //            return idHoldingDocument.get(ID_FIELD_NAME);
-        } else {
-            return null;
+    public BsonValue getDocumentId(final DBObject document) {
+        if (!documentHasId(document)) {
+            throw new IllegalStateException("The document does not contain an _id");
         }
+
+        Object id = document.get(ID_FIELD_NAME);
+        if (id instanceof BsonValue) {
+            return (BsonValue) id;
+        }
+
+        BsonDocument idHoldingDocument = new BsonDocument();
+        BSONWriter writer = new BsonDocumentWriter(idHoldingDocument);
+        writer.writeStartDocument();
+        writer.writeName(ID_FIELD_NAME);
+        writeValue(writer, id);
+        writer.writeEndDocument();
+        return idHoldingDocument.get(ID_FIELD_NAME);
     }
 
     @Override

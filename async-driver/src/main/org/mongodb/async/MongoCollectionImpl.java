@@ -17,6 +17,7 @@
 package org.mongodb.async;
 
 import org.bson.codecs.Codec;
+import org.bson.types.BsonDocument;
 import org.bson.types.BsonDocumentWrapper;
 import org.mongodb.Block;
 import org.mongodb.ConvertibleToDocument;
@@ -121,7 +122,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         if (!collectibleCodec.documentHasId(document)) {
             return insert(document);
         } else {
-            return find(new Document("_id", collectibleCodec.getDocumentId(document))).upsert().replace(document);
+            return new MongoCollectionView().find(new BsonDocument("_id", collectibleCodec.getDocumentId(document)))
+                                            .upsert()
+                                            .replace(document);
         }
     }
 
@@ -193,6 +196,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoView<T> find(final ConvertibleToDocument filter) {
             return find(filter.toDocument());
+        }
+
+        MongoView<T> find(final BsonDocument filter) {
+            find.filter(filter);
+            return this;
         }
 
         @Override
