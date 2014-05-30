@@ -82,7 +82,7 @@ public final class Fixture {
 
     public static synchronized MongoDatabase getDefaultDatabase() {
         if (defaultDatabase == null) {
-            defaultDatabase = getMongoClient().getDatabase("DriverTest-" + System.nanoTime());
+            defaultDatabase = getMongoClient().getDatabase("DriverTest-" + 1);
         }
         return defaultDatabase;
     }

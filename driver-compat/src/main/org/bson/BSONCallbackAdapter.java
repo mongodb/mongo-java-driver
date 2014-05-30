@@ -17,6 +17,7 @@
 package org.bson;
 
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Timestamp;
@@ -207,6 +208,11 @@ class BSONCallbackAdapter extends AbstractBSONWriter {
     public void writeUndefined() {
         bsonCallback.gotUndefined(getName());
         setState(getNextState());
+    }
+
+    @Override
+    public void writeDBPointer(final DBPointer value) {
+        bsonCallback.gotDBRef(getName(), value.getNamespace(), value.getId());
     }
 
     @Override

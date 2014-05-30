@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson
+package org.mongodb.protocol
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.types.Binary
 import org.bson.types.BsonArray
@@ -37,13 +37,19 @@ import org.bson.types.RegularExpression
 import org.bson.types.Symbol
 import org.bson.types.Timestamp
 import org.bson.types.Undefined
-import spock.lang.Specification
+import org.mongodb.FunctionalSpecification
+import org.mongodb.WriteConcern
+import org.mongodb.operation.InsertRequest
+import org.mongodb.operation.QueryFlag
 
-class BsonDocumentWriterSpecification extends Specification {
-    def 'should write all types'() {
+import static org.mongodb.Fixture.getBinding
+
+class InsertProtocolSpecification extends FunctionalSpecification {
+    def 'should insert all types'() {
         given:
         def doc = new BsonDocument(
                 [
+                        new BsonElement('_id', new ObjectId()),
                         new BsonElement('null', new BsonNull()),
                         new BsonElement('int32', new BsonInt32(42)),
                         new BsonElement('int64', new BsonInt64(52L)),
@@ -53,7 +59,7 @@ class BsonDocumentWriterSpecification extends Specification {
                         new BsonElement('string', new BsonString('the fox ...')),
                         new BsonElement('minKey', new MinKey()),
                         new BsonElement('maxKey', new MaxKey()),
-                        new BsonElement('dbPointer', new DBPointer("test.test", new ObjectId())),
+                        new BsonElement('dbPointer', new DBPointer('test.test', new ObjectId())),
                         new BsonElement('code', new Code('int i = 0;')),
                         new BsonElement('codeWithScope', new CodeWithScope('x', new BsonDocument('x', new BsonInt32(1)))),
                         new BsonElement('objectId', new ObjectId()),
@@ -69,12 +75,18 @@ class BsonDocumentWriterSpecification extends Specification {
                 ])
 
 
+
         when:
-        def encodedDoc = new BsonDocument();
-        new BsonDocumentCodec().encode(new BsonDocumentWriter(encodedDoc), doc)
+        def connection = getBinding().getWriteConnectionSource().getConnection()
+        new InsertProtocol<BsonDocument>(getNamespace(), true, WriteConcern.ACKNOWLEDGED, [new InsertRequest<BsonDocument>(doc)],
+                new BsonDocumentCodec()).execute(connection);
+
 
         then:
-        encodedDoc == doc
-    }
+        new QueryProtocol<BsonDocument>(getNamespace(), EnumSet.noneOf(QueryFlag), 0, 1, new BsonDocument(), new BsonDocument(),
+                                        new BsonDocumentCodec()).execute(connection).getResults()[0]
 
+        cleanup:
+        connection.release();
+    }
 }

@@ -187,8 +187,7 @@ public class BSONBinaryReader extends AbstractBSONReader {
 
     @Override
     protected DBPointer doReadDBPointer() {
-        buffer.readInt32(); //according to 2.x namespace is preceded by integer - length of namespace
-        return new DBPointer(buffer.readCString(), buffer.readObjectId());
+        return new DBPointer(buffer.readString(), buffer.readObjectId());
     }
 
     @Override

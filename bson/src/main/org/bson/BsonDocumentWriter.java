@@ -29,6 +29,7 @@ import org.bson.types.BsonString;
 import org.bson.types.BsonValue;
 import org.bson.types.Code;
 import org.bson.types.CodeWithScope;
+import org.bson.types.DBPointer;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
@@ -173,6 +174,13 @@ public class BsonDocumentWriter extends AbstractBSONWriter {
     public void writeUndefined() {
         checkPreconditions("writeUndefined", State.VALUE);
         write(new Undefined());
+        setState(getNextState());
+    }
+
+    @Override
+    public void writeDBPointer(final DBPointer value) {
+        checkPreconditions("writeDBPointer", State.VALUE);
+        write(value);
         setState(getNextState());
     }
 

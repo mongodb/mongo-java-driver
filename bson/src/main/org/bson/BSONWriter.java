@@ -17,6 +17,7 @@
 package org.bson;
 
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Timestamp;
@@ -71,6 +72,21 @@ public interface BSONWriter {
      * @param value The number of milliseconds since the Unix epoch.
      */
     void writeDateTime(String name, long value);
+
+    /**
+     * Writes a BSON DBPointer to the writer.
+     *
+     * @param value The DBPointer to write
+     */
+    void writeDBPointer(DBPointer value);
+
+    /**
+     * Writes a BSON DBPointer element to the writer.
+     *
+     * @param name  The name of the element.
+     * @param value The DBPointer to write
+     */
+    void writeDBPointer(String name, DBPointer value);
 
     /**
      * Writes a BSON Double to the writer.
