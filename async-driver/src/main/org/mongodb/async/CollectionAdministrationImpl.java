@@ -24,8 +24,6 @@ import org.mongodb.operation.CreateIndexesOperation;
 import org.mongodb.operation.DropCollectionOperation;
 import org.mongodb.operation.DropIndexOperation;
 import org.mongodb.operation.GetIndexesOperation;
-import org.mongodb.operation.GetIsCappedOperation;
-import org.mongodb.operation.GetStatisticsOperation;
 
 import java.util.List;
 
@@ -57,16 +55,6 @@ public class CollectionAdministrationImpl implements CollectionAdministration {
     @Override
     public MongoFuture<List<Document>> getIndexes() {
         return client.execute(new GetIndexesOperation(collectionNamespace), primary());
-    }
-
-    @Override
-    public MongoFuture<Boolean> isCapped() {
-        return client.execute(new GetIsCappedOperation(collectionNamespace), primary());
-    }
-
-    @Override
-    public MongoFuture<Document> getStatistics() {
-        return client.execute(new GetStatisticsOperation(collectionNamespace), primary());
     }
 
     @Override

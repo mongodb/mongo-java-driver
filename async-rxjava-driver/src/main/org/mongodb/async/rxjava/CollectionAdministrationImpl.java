@@ -71,26 +71,6 @@ public class CollectionAdministrationImpl implements CollectionAdministration {
     }
 
     @Override
-    public Observable<Boolean> isCapped() {
-        return Observable.create(new OnSubscribeAdapter<Boolean>(new OnSubscribeAdapter.FutureFunction<Boolean>() {
-            @Override
-            public MongoFuture<Boolean> apply() {
-                return wrapped.isCapped();
-            }
-        }));
-    }
-
-    @Override
-    public Observable<Document> getStatistics() {
-        return Observable.create(new OnSubscribeAdapter<Document>(new OnSubscribeAdapter.FutureFunction<Document>() {
-            @Override
-            public MongoFuture<Document> apply() {
-                return wrapped.getStatistics();
-            }
-        }));
-    }
-
-    @Override
     public Observable<Void> drop() {
         return Observable.create(new OnSubscribeAdapter<Void>(new OnSubscribeAdapter.FutureFunction<Void>() {
             @Override

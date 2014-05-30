@@ -39,20 +39,6 @@ public interface CollectionAdministration {
     List<Document> getIndexes();
 
     /**
-     * @return true is this is a capped collection
-     * @mongodb.driver.manual reference/method/db.collection.isCapped/ isCapped
-     */
-    boolean isCapped();
-
-    /**
-     * Return statistics document for this collection, from collstats command
-     *
-     * @return statistics document
-     * @mongodb.driver.manual reference/command/collStats/ collStats
-     */
-    Document getStatistics();
-
-    /**
      * Drops this collection from the Database.
      *
      * @mongodb.driver.manual reference/command/drop/ Drop Collection

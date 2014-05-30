@@ -24,6 +24,7 @@ import org.mongodb.Document;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoDatabase;
+import org.mongodb.ReadPreference;
 
 import java.util.List;
 
@@ -39,6 +40,7 @@ import static org.mongodb.Fixture.getMongoClient;
  * Documents the basic functionality available for Databases via the Java driver.
  */
 public class DatabaseAcceptanceTest extends DatabaseTestCase {
+
     @Test
     public void shouldCreateCollection() {
         database.tools().createCollection(getCollectionName());
@@ -55,7 +57,9 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         assertThat(collections.contains(getCollectionName()), is(true));
 
         MongoCollection<Document> collection = database.getCollection(getCollectionName());
-        assertThat(collection.tools().isCapped(), is(true));
+        Document collStatsCommand = new Document("collStats", getCollectionName());
+        Boolean isCapped = database.executeCommand(collStatsCommand, ReadPreference.primary()).getResponse().getBoolean("capped");
+        assertThat(isCapped, is(true));
 
         assertThat("Should have the default index on _id", collection.tools().getIndexes().size(), is(1));
     }
@@ -68,7 +72,9 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         assertThat(collections.contains(getCollectionName()), is(true));
 
         MongoCollection<Document> collection = database.getCollection(getCollectionName());
-        assertThat(collection.tools().isCapped(), is(true));
+        Document collStatsCommand = new Document("collStats", getCollectionName());
+        Boolean isCapped = database.executeCommand(collStatsCommand, ReadPreference.primary()).getResponse().getBoolean("capped");
+        assertThat(isCapped, is(true));
 
         assertThat("Should NOT have the default index on _id", collection.tools().getIndexes().size(), is(0));
     }
@@ -86,8 +92,8 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         assertThat(collections.contains(getCollectionName()), is(true));
 
         MongoCollection<Document> collection = database.getCollection(getCollectionName());
-        Document collectionStatistics = collection.tools().getStatistics();
-
+        Document collStatsCommand = new Document("collStats", getCollectionName());
+        Document collectionStatistics = database.executeCommand(collStatsCommand, ReadPreference.primary()).getResponse();
         assertThat("max is set correctly in collection statistics", (Integer) collectionStatistics.get("max"), is(maxDocuments));
     }
 

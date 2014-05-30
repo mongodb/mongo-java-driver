@@ -16,8 +16,6 @@
 
 package org.mongodb.async.rxjava
 
-import org.mongodb.CreateCollectionOptions
-import org.mongodb.Document
 import org.mongodb.Index
 
 import static org.mongodb.OrderBy.ASC
@@ -92,46 +90,6 @@ class CollectionAdministrationSpecification extends FunctionalSpecification {
 
         then:
         getAsList(collection.tools().getIndexes()) *.get('key') == [idIndex]
-    }
-
-    def 'getStatistics should not error on nonexistent collection'() {
-        when:
-        def database = getMongoClient().getDatabase(databaseName)
-
-        then:
-        !getAsList(database.tools().getCollectionNames()).contains(collectionName)
-        get(collection.tools().getStatistics()).get('ok') == 0.0
-    }
-
-    def 'getStatistics should return statistics for the collection'() {
-        when:
-        def database = getMongoClient().getDatabase(databaseName)
-        get(database.tools().createCollection(collectionName))
-
-        then:
-        get(collection.tools().getStatistics()).get('count') == 0
-
-        when:
-        get(collection.insert(new Document()))
-
-        then:
-        get(collection.tools().getStatistics()).get('count') == 1
-    }
-
-    def 'isCapped should indicate capped status'() {
-        when:
-        def database = getMongoClient().getDatabase(databaseName)
-        get(database.tools().createCollection(collectionName))
-
-        then:
-        !get(collection.tools().isCapped())
-
-        when:
-        get(collection.tools().drop())
-        get(database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1024)))
-
-        then:
-        get(collection.tools().isCapped())
     }
 
 }

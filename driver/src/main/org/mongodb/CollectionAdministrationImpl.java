@@ -20,8 +20,6 @@ import org.mongodb.operation.CreateIndexesOperation;
 import org.mongodb.operation.DropCollectionOperation;
 import org.mongodb.operation.DropIndexOperation;
 import org.mongodb.operation.GetIndexesOperation;
-import org.mongodb.operation.GetIsCappedOperation;
-import org.mongodb.operation.GetStatisticsOperation;
 
 import java.util.List;
 
@@ -51,16 +49,6 @@ class CollectionAdministrationImpl implements CollectionAdministration {
     @Override
     public List<Document> getIndexes() {
         return client.execute(new GetIndexesOperation(collectionNamespace), primary());
-    }
-
-    @Override
-    public boolean isCapped() {
-        return client.execute(new GetIsCappedOperation(collectionNamespace), primary());
-    }
-
-    @Override
-    public Document getStatistics() {
-        return client.execute(new GetStatisticsOperation(collectionNamespace), primary());
     }
 
     @Override
