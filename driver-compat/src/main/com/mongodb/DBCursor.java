@@ -520,8 +520,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the first matching document
      */
     public DBObject one() {
-        return collection.findOne(getQuery(), getKeysWanted(), DBObjects.toDBObjectAllowNull(find.getOrder()), getReadPreference(),
-                                  find.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
+        return collection.findOne(getQuery(), getKeysWanted(), find.getOrder() == null ? null : DBObjects.toDBObject(find.getOrder()),
+                                  getReadPreference(), find.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
     }
 
     /**
@@ -574,7 +574,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the field selector that cursor used
      */
     public DBObject getKeysWanted() {
-        return DBObjects.toDBObjectAllowNull(find.getFields());
+        return find.getFields() == null ? null : DBObjects.toDBObject(find.getFields());
     }
 
     /**
