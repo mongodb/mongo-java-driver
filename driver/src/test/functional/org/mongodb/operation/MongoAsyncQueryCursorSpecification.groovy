@@ -188,7 +188,7 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
     }
 
     @Category(Slow)
-    def 'test tailable'() {
+    def 'Cursor should be tailable'() {
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = source.getConnection().get()
@@ -206,7 +206,6 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
                                                                        firstBatch, 5, 2, new DocumentCodec(),
                                                                        source).forEach(block)
         then:
-        sleep(100)
         block.getIterations() == 1
 
         when:
