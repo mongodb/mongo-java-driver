@@ -80,7 +80,6 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.AggregationOptions.OutputMode.INLINE;
 import static com.mongodb.BulkWriteHelper.translateBulkWriteResult;
 import static com.mongodb.BulkWriteHelper.translateWriteRequestsToNew;
-import static com.mongodb.DBObjects.toDBList;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static java.util.Arrays.asList;
@@ -1888,6 +1887,14 @@ public class DBCollection {
             }
         }
         return keys;
+    }
+
+    public static BasicDBList toDBList(final MongoCursor<DBObject> source) {
+        BasicDBList dbList = new BasicDBList();
+        while (source.hasNext()) {
+            dbList.add(source.next());
+        }
+        return dbList;
     }
 
     Codec<DBObject> getObjectCodec() {
