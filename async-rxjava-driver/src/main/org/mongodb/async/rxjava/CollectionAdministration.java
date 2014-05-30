@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.async.rxjava;
+
+import org.mongodb.Document;
+import org.mongodb.Index;
+import rx.Observable;
 
 import java.util.List;
 
@@ -30,20 +34,20 @@ public interface CollectionAdministration {
      * @mongodb.driver.manual reference/method/db.collection.createIndex/ Ensure Index
      * @see Index
      */
-    void createIndexes(List<Index> indexes);
+    Observable<Void> createIndexes(List<Index> indexes);
 
     /**
      * @return all the indexes on this collection
      * @mongodb.driver.manual reference/method/db.collection.getIndexes/ getIndexes
      */
-    List<Document> getIndexes();
+    Observable<Document> getIndexes();
 
     /**
      * Drops this collection from the Database.
      *
      * @mongodb.driver.manual reference/command/drop/ Drop Collection
      */
-    void drop();
+    Observable<Void> drop();
 
     /**
      * Drops the given index.
@@ -51,13 +55,13 @@ public interface CollectionAdministration {
      * @param index the details of the index to remove
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
      */
-    void dropIndex(Index index);
+    Observable<Void> dropIndex(Index index);
 
     /**
      * Drop all the indexes on this collection, except for the default on _id.
      *
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
      */
-    void dropIndexes();
+    Observable<Void> dropIndexes();
 
 }

@@ -26,9 +26,11 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 import org.mongodb.connection.SingleResultCallback;
+import org.mongodb.operation.QueryFlag;
 import rx.Observable;
 import rx.Subscriber;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import static org.mongodb.async.rxjava.OnSubscribeAdapter.FutureFunction;
@@ -96,11 +98,22 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }));
     }
 
+    @Override
+    public CollectionAdministration tools() {
+        return new CollectionAdministrationImpl(wrapped.tools());
+    }
+
     private final class MongoCollectionView implements MongoView<T> {
         private final org.mongodb.async.MongoView<T> wrappedView;
 
         private MongoCollectionView(final Document filter) {
             wrappedView = wrapped.find(filter);
+        }
+
+        @Override
+        public MongoView<T> cursorFlags(final EnumSet<QueryFlag> flags) {
+            wrappedView.cursorFlags(flags);
+            return this;
         }
 
         @Override

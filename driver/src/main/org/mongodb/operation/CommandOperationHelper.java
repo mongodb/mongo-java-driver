@@ -364,7 +364,7 @@ final class CommandOperationHelper {
 
     static CommandResult ignoreNameSpaceErrors(final MongoCommandFailureException e) {
         String message = e.getErrorMessage();
-        if (!message.startsWith("ns not found")) {
+        if (!message.startsWith("ns not found") && !(message.matches("Collection \\[(.*)\\] not found."))) {
             throw e;
         }
         return e.getCommandResult();

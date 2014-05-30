@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.async;
 
+import org.mongodb.CreateCollectionOptions;
+import org.mongodb.MongoFuture;
 import org.mongodb.operation.CreateCollectionOperation;
 import org.mongodb.operation.DropDatabaseOperation;
 import org.mongodb.operation.GetCollectionNamesOperation;
@@ -26,10 +28,12 @@ import java.util.List;
 import static org.mongodb.ReadPreference.primary;
 
 /**
- * Runs the admin commands for a selected database.  This should be accessed from MongoDatabase.  The methods here are not implemented in
- * MongoDatabase in order to keep the API very simple, these should be the methods that are not commonly used by clients of the driver.
+ * The administrative commands that can be run against a selected database.  Application developers should not normally need to call these
+ * methods.
+ *
+ * @since 3.0
  */
-class DatabaseAdministrationImpl implements DatabaseAdministration {
+public class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     private final String databaseName;
     private final MongoClientImpl client;
@@ -40,33 +44,32 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     }
 
     @Override
-    public void drop() {
-        client.execute(new DropDatabaseOperation(databaseName));
+    public MongoFuture<Void> drop() {
+        return client.execute(new DropDatabaseOperation(databaseName));
     }
 
     @Override
-    public List<String> getCollectionNames() {
+    public MongoFuture<List<String>> getCollectionNames() {
         return client.execute(new GetCollectionNamesOperation(databaseName), primary());
     }
 
     @Override
-    public void createCollection(final String collectionName) {
-        createCollection(new CreateCollectionOptions(collectionName));
+    public MongoFuture<Void> createCollection(final String collectionName) {
+        return createCollection(new CreateCollectionOptions(collectionName));
     }
 
     @Override
-    public void createCollection(final CreateCollectionOptions createCollectionOptions) {
-        client.execute(new CreateCollectionOperation(databaseName, createCollectionOptions));
+    public MongoFuture<Void> createCollection(final CreateCollectionOptions createCollectionOptions) {
+        return client.execute(new CreateCollectionOperation(databaseName, createCollectionOptions));
     }
 
     @Override
-    public void renameCollection(final String oldCollectionName, final String newCollectionName) {
-        client.execute(new RenameCollectionOperation(databaseName, oldCollectionName, newCollectionName, false));
+    public MongoFuture<Void> renameCollection(final String oldCollectionName, final String newCollectionName) {
+        return client.execute(new RenameCollectionOperation(databaseName, oldCollectionName, newCollectionName, false));
     }
 
     @Override
-    public void renameCollection(final String oldCollectionName, final String newCollectionName, final boolean dropTarget) {
-        client.execute(new RenameCollectionOperation(databaseName, oldCollectionName, newCollectionName, dropTarget));
+    public MongoFuture<Void> renameCollection(final String oldCollectionName, final String newCollectionName, final boolean dropTarget) {
+        return client.execute(new RenameCollectionOperation(databaseName, oldCollectionName, newCollectionName, dropTarget));
     }
-
 }

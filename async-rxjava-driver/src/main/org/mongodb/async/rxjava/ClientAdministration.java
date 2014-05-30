@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.async.rxjava;
 
-import java.util.List;
+import rx.Observable;
 
 /**
  * All the commands that can be run without needing a specific database.
@@ -28,11 +28,11 @@ public interface ClientAdministration {
      * @return a non-null number if the server is reachable.
      * @mongodb.driver.manual reference/commands/ping Ping
      */
-    double ping();
+    Observable<Double> ping();
 
     /**
-     * @return a List of the names of all the databases on the server
+     * @return an Observable containing the names of all the databases on the server
      * @mongodb.driver.manual reference/commands/listDatabases List Databases
      */
-    List<String> getDatabaseNames();
+    Observable<String> getDatabaseNames();
 }

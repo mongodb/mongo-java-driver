@@ -95,4 +95,9 @@ public interface MongoCollection<T> {
      * @return the result of the save
      */
     MongoFuture<WriteResult> save(T document);
+
+    /**
+     * @return the CollectionAdministration that provides admin methods that can be performed
+     */
+    CollectionAdministration tools();
 }

@@ -45,4 +45,9 @@ public interface MongoClient extends Closeable {
      * sockets and background monitoring threads.
      */
     void close();
+
+    /**
+     * @return the ClientAdministration that provides admin methods that can be performed
+     */
+    ClientAdministration tools();
 }

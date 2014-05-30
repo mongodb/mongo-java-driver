@@ -36,6 +36,7 @@ import org.mongodb.operation.CountOperation;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.InsertRequest;
+import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.ReplaceOperation;
 import org.mongodb.operation.ReplaceRequest;
@@ -45,6 +46,7 @@ import org.mongodb.operation.UpdateRequest;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -117,6 +119,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
     }
 
+    @Override
+    public CollectionAdministration tools() {
+        return new CollectionAdministrationImpl(client, namespace);
+    }
+
     <V> MongoFuture<V> execute(final AsyncWriteOperation<V> writeOperation) {
         return client.execute(writeOperation);
     }
@@ -129,6 +136,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         private final Find find = new Find();
         private final ReadPreference readPreference = options.getReadPreference();
         private boolean upsert;
+
+        @Override
+        public MongoView<T> cursorFlags(final EnumSet<QueryFlag> flags) {
+            find.addFlags(flags);
+            return this;
+        }
 
         @Override
         public MongoFuture<T> one() {

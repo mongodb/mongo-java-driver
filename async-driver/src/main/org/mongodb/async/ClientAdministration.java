@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.async;
+
+import org.mongodb.MongoFuture;
 
 import java.util.List;
 
@@ -28,11 +30,11 @@ public interface ClientAdministration {
      * @return a non-null number if the server is reachable.
      * @mongodb.driver.manual reference/commands/ping Ping
      */
-    double ping();
+    MongoFuture<Double> ping();
 
     /**
      * @return a List of the names of all the databases on the server
      * @mongodb.driver.manual reference/commands/listDatabases List Databases
      */
-    List<String> getDatabaseNames();
+    MongoFuture<List<String>> getDatabaseNames();
 }
