@@ -191,6 +191,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return this;
         }
 
+        MongoView<T> find(final BsonDocument filter) {
+            findOp.filter(filter);
+            return this;
+        }
+
         @Override
         public MongoView<T> find(final ConvertibleToDocument filter) {
             return find(filter.toDocument());
@@ -343,7 +348,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             if (!collectibleCodec.documentHasId(document)) {
                 return insert(document);
             } else {
-                return upsert().find(new Document("_id", collectibleCodec.getDocumentId(document))).replace(document);
+                return find(new BsonDocument("_id", collectibleCodec.getDocumentId(document))).upsert().replace(document);
             }
         }
 

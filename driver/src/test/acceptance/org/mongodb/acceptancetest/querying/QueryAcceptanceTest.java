@@ -163,7 +163,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         }
 
         @Override
-        public Object getDocumentId(final Person document) {
+        public ObjectId getDocumentId(final Person document) {
             return document.id;
         }
 
