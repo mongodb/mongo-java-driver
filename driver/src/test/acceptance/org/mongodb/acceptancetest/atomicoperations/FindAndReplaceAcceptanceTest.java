@@ -17,7 +17,6 @@
 package org.mongodb.acceptancetest.atomicoperations;
 
 import org.bson.types.ObjectId;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
@@ -146,17 +145,4 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
         assertThat("Document retrieved from replaceOneAndGet with filter that doesn't match should match the replacement document",
                    document, equalTo(replacementDocument));
     }
-
-    @Ignore("Currently BsonBinaryWriter validation is not flexible enough to handle this validation")
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldThrowAnExceptionIfReplacementContainsUpdateOperators() {
-        Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        collection.insert(documentInserted);
-
-        collection.find()
-                  .getOneAndReplace(new Document("$inc", new Document("someNumber", "635")));
-    }
-
-    //TODO: should not be able to change the ID of a document
-
 }

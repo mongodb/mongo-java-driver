@@ -15,7 +15,6 @@
  */
 
 package org.mongodb.operation
-
 import category.Async
 import org.bson.types.BsonDocument
 import org.bson.types.BsonString
@@ -29,7 +28,6 @@ import org.mongodb.test.WorkerCodec
 
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
-
 //TODO: what about custom Date formats?
 //TODO: test null returns
 class FindAndReplaceOperationSpecification extends FunctionalSpecification {
@@ -121,5 +119,28 @@ class FindAndReplaceOperationSpecification extends FunctionalSpecification {
         then:
         returnedDocument == pete
         helper.find().get(0) == jordan
+    }
+
+    def 'should throw an exception if replacement contains update operators'() {
+        when:
+        def findAndReplace = new FindAndReplace<Document>(new Document('$inc', 1))
+                .where(new BsonDocument('name', new BsonString('Pete')));
+
+        new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace, documentCodec).execute(getBinding())
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    @Category(Async)
+    def 'should throw an exception if replacement contains update operators asynchronously'() {
+        when:
+        def findAndReplace = new FindAndReplace<Document>(new Document('$inc', 1))
+                .where(new BsonDocument('name', new BsonString('Pete')));
+
+        new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace, documentCodec).executeAsync(getAsyncBinding()).get()
+
+        then:
+        thrown(IllegalArgumentException)
     }
 }
