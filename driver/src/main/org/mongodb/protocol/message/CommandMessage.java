@@ -16,6 +16,7 @@
 
 package org.mongodb.protocol.message;
 
+import org.bson.FieldNameValidator;
 import org.bson.io.OutputBuffer;
 import org.bson.types.BsonDocument;
 import org.mongodb.operation.QueryFlag;
@@ -27,12 +28,19 @@ import static org.mongodb.protocol.message.RequestMessage.OpCode.OP_QUERY;
 public class CommandMessage extends RequestMessage {
     private final EnumSet<QueryFlag> queryFlags;
     private final BsonDocument command;
+    private final FieldNameValidator validator;
 
     public CommandMessage(final String collectionName, final BsonDocument command, final EnumSet<QueryFlag> queryFlags,
                           final MessageSettings settings) {
+        this(collectionName, command, queryFlags, new NoOpFieldNameValidator(), settings);
+    }
+
+    public CommandMessage(final String collectionName, final BsonDocument command, final EnumSet<QueryFlag> queryFlags,
+                          final FieldNameValidator validator, final MessageSettings settings) {
         super(collectionName, OP_QUERY, settings);
         this.queryFlags = queryFlags;
         this.command = command;
+        this.validator = validator;
     }
 
     @Override
@@ -42,7 +50,7 @@ public class CommandMessage extends RequestMessage {
 
         buffer.writeInt(0);
         buffer.writeInt(-1);
-        addDocument(command, getBsonDocumentCodec(), buffer, new NoOpFieldNameValidator());
+        addDocument(command, getBsonDocumentCodec(), buffer, validator);
         return null;
     }
 }

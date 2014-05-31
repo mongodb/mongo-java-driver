@@ -16,6 +16,7 @@
 
 package org.mongodb.protocol;
 
+import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 import org.bson.types.BsonDocument;
 import org.mongodb.CommandResult;
@@ -48,10 +49,17 @@ public class CommandProtocol implements Protocol<CommandResult> {
     private final BsonDocument command;
     private final Decoder<BsonDocument> commandResultDecoder;
     private final EnumSet<QueryFlag> queryFlags;
+    private final FieldNameValidator fieldNameValidator;
 
     public CommandProtocol(final String database, final BsonDocument command, final EnumSet<QueryFlag> queryFlags,
                            final Decoder<BsonDocument> commandResultDecoder) {
+        this(database, command, queryFlags, null, commandResultDecoder);
+    }
+
+    public CommandProtocol(final String database, final BsonDocument command, final EnumSet<QueryFlag> queryFlags,
+                           final FieldNameValidator fieldNameValidator, final Decoder<BsonDocument> commandResultDecoder) {
         this.queryFlags = queryFlags;
+        this.fieldNameValidator = fieldNameValidator;
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = command;
         this.commandResultDecoder = commandResultDecoder;
@@ -69,7 +77,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
     private CommandMessage sendMessage(final Connection connection) {
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         try {
-            CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags,
+            CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags, fieldNameValidator,
                                                         getMessageSettings(connection.getServerDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers(), message.getId());
@@ -96,7 +104,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
         SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
 
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
-        CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags,
+        CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags, fieldNameValidator,
                                                     getMessageSettings(connection.getServerDescription()));
         encodeMessageToBuffer(message, buffer);
 

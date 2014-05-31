@@ -18,7 +18,12 @@ package org.mongodb.protocol.message;
 
 import org.bson.FieldNameValidator;
 
-class NoOpFieldNameValidator implements FieldNameValidator {
+/**
+ * A field name validator that treats all fields as valid.
+ *
+ * @since 3.0
+ */
+public class NoOpFieldNameValidator implements FieldNameValidator {
     @Override
     public boolean validate(final String fieldName) {
         return true;

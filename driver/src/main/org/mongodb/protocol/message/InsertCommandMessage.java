@@ -50,7 +50,7 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
     protected FieldNameValidator getFieldNameValidator() {
         Map<String, FieldNameValidator> map = new HashMap<String, FieldNameValidator>();
         map.put("documents", new StorageDocumentFieldNameValidator());
-        return new RootValidator(new NoOpFieldNameValidator(), map);
+        return new MappedFieldNameValidator(new NoOpFieldNameValidator(), map);
     }
 
     public List<InsertRequest<T>> getRequests() {

@@ -18,7 +18,12 @@ package org.mongodb.protocol.message;
 
 import org.bson.FieldNameValidator;
 
-class UpdateFieldNameValidator implements org.bson.FieldNameValidator {
+/**
+ * A field name validator for update documents.  It ensures that all top-level fields start with a '$'.
+ *
+ * @since 3.0
+ */
+public class UpdateFieldNameValidator implements org.bson.FieldNameValidator {
     @Override
     public boolean validate(final String fieldName) {
         return fieldName.startsWith("$");
