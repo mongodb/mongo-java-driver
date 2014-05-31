@@ -87,12 +87,12 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
         Map<String, FieldNameValidator> updatesMap = new HashMap<String, FieldNameValidator>();
         updatesMap.put("u", getUpdateFieldNameValidator());
 
-        RootValidator updatesValidator = new RootValidator(new NoOpFieldNameValidator(), updatesMap);
+        MappedFieldNameValidator updatesValidator = new MappedFieldNameValidator(new NoOpFieldNameValidator(), updatesMap);
 
         Map<String, FieldNameValidator> rootMap = new HashMap<String, FieldNameValidator>();
         rootMap.put("updates", updatesValidator);
 
-        return new RootValidator(new NoOpFieldNameValidator(), rootMap);
+        return new MappedFieldNameValidator(new NoOpFieldNameValidator(), rootMap);
     }
 
     protected abstract FieldNameValidator getUpdateFieldNameValidator();

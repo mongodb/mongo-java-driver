@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.bson.FieldNameValidator;
 import org.bson.codecs.Codec;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonDocumentWrapper;
@@ -24,6 +25,12 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
+import org.mongodb.protocol.message.MappedFieldNameValidator;
+import org.mongodb.protocol.message.NoOpFieldNameValidator;
+import org.mongodb.protocol.message.StorageDocumentFieldNameValidator;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
@@ -51,14 +58,15 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getCommand(), CommandResultDocumentCodec.create(codec, "value"),
+        return executeWrappedCommandProtocol(namespace, getCommand(), getValidator(), CommandResultDocumentCodec.create(codec, "value"),
                                              binding, FindAndModifyHelper.<T>transformer());
     }
 
     @Override
     public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), CommandResultDocumentCodec.create(codec, "value"),
-                                                  binding, FindAndModifyHelper.<T>transformer());
+        return executeWrappedCommandProtocolAsync(namespace, getCommand(), getValidator(),
+                                                  CommandResultDocumentCodec.create(codec, "value"), binding,
+                                                  FindAndModifyHelper.<T>transformer());
     }
 
     private BsonDocument getCommand() {
@@ -72,5 +80,12 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
 
         command.put("update", new BsonDocumentWrapper<T>(findAndReplace.getReplacement(), codec));
         return command;
+    }
+
+    private FieldNameValidator getValidator() {
+        Map<String, FieldNameValidator> map = new HashMap<String, FieldNameValidator>();
+        map.put("update", new StorageDocumentFieldNameValidator());
+
+        return new MappedFieldNameValidator(new NoOpFieldNameValidator(), map);
     }
 }

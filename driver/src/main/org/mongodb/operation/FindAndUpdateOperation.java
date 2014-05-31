@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonString;
@@ -23,8 +24,13 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
+import org.mongodb.protocol.message.MappedFieldNameValidator;
+import org.mongodb.protocol.message.NoOpFieldNameValidator;
+import org.mongodb.protocol.message.UpdateFieldNameValidator;
 
-import static java.lang.String.format;
+import java.util.HashMap;
+import java.util.Map;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
@@ -51,26 +57,16 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
 
     @Override
     public T execute(final WriteBinding binding) {
-        validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        return executeWrappedCommandProtocol(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "value"), binding,
+        return executeWrappedCommandProtocol(namespace, getCommand(), getValidator(),
+                                             CommandResultDocumentCodec.create(decoder, "value"), binding,
                                              FindAndModifyHelper.<T>transformer());
     }
 
     @Override
     public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
-        validateUpdateDocumentToEnsureItHasUpdateOperators(findAndUpdate.getUpdateOperations());
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "value"), binding,
+        return executeWrappedCommandProtocolAsync(namespace, getCommand(), getValidator(),
+                                                  CommandResultDocumentCodec.create(decoder, "value"), binding,
                                                   FindAndModifyHelper.<T>transformer());
-    }
-
-    private void validateUpdateDocumentToEnsureItHasUpdateOperators(final BsonDocument value) {
-        for (final String field : value.keySet()) {
-            if (field.startsWith("$")) {
-                return;
-            }
-        }
-        throw new IllegalArgumentException(format("Find and update requires an update operator (beginning with '$') in the update "
-                                                  + "Document: %s", value));
     }
 
     private BsonDocument getCommand() {
@@ -86,4 +82,10 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
         return command;
     }
 
+    private FieldNameValidator getValidator() {
+        Map<String, FieldNameValidator> map = new HashMap<String, FieldNameValidator>();
+        map.put("update", new UpdateFieldNameValidator());
+
+        return new MappedFieldNameValidator(new NoOpFieldNameValidator(), map);
+    }
 }

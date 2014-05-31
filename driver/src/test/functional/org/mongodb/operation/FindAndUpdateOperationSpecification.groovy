@@ -90,7 +90,7 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
         helper.insertDocuments(pete, sam)
 
         when:
-        def findAndUpdate = new FindAndUpdate<Worker>()
+        def findAndUpdate = new FindAndUpdate()
                 .where(new BsonDocument('name', new BsonString('Pete')))
                 .updateWith(new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1))))
 
@@ -113,7 +113,7 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
         helper.insertDocuments(pete, sam)
 
         when:
-        FindAndUpdate<Worker> findAndUpdate = new FindAndUpdate<Worker>()
+        def findAndUpdate = new FindAndUpdate()
                 .where(new BsonDocument('name', new BsonString('Pete')))
                 .updateWith(new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1))))
 
@@ -125,4 +125,29 @@ class FindAndUpdateOperationSpecification extends FunctionalSpecification {
         helper.find().size() == 2;
         helper.find().get(0).numberOfJobs == 4
     }
+
+
+    def 'should throw an exception if update contains fields that are not update operators'() {
+        when:
+        def findAndUpdate = new FindAndUpdate().updateWith(new BsonDocument('x', new BsonInt32(1)))
+                .where(new BsonDocument('name', new BsonString('Pete')));
+
+        new FindAndUpdateOperation(getNamespace(), findAndUpdate, documentCodec).execute(getBinding())
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    @Category(Async)
+    def 'should throw an exception if update contains fields that are not update operators asynchronously'() {
+        when:
+        def findAndUpdate = new FindAndUpdate().updateWith(new BsonDocument('x', new BsonInt32(1)))
+                .where(new BsonDocument('name', new BsonString('Pete')));
+
+        new FindAndUpdateOperation(getNamespace(), findAndUpdate, documentCodec).executeAsync(getAsyncBinding()).get()
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
 }

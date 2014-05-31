@@ -21,7 +21,13 @@ import org.bson.FieldNameValidator;
 import java.util.Arrays;
 import java.util.List;
 
-class StorageDocumentFieldNameValidator implements FieldNameValidator {
+/**
+ * A field name validator for document that are meant for storage in MongoDB collections.  It ensures that no fields contain a '.',
+ * or start with '$' (with the exception of "$db", "$ref", and "$id", so that DBRefs are not rejected).
+ *
+ * @since 3.0
+ */
+public class StorageDocumentFieldNameValidator implements FieldNameValidator {
     // Have to support DBRef fields
     private static final List<String> EXCEPTIONS = Arrays.asList("$db", "$ref", "$id");
 
