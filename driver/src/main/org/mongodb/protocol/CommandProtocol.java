@@ -52,11 +52,6 @@ public class CommandProtocol implements Protocol<CommandResult> {
     private final FieldNameValidator fieldNameValidator;
 
     public CommandProtocol(final String database, final BsonDocument command, final EnumSet<QueryFlag> queryFlags,
-                           final Decoder<BsonDocument> commandResultDecoder) {
-        this(database, command, queryFlags, null, commandResultDecoder);
-    }
-
-    public CommandProtocol(final String database, final BsonDocument command, final EnumSet<QueryFlag> queryFlags,
                            final FieldNameValidator fieldNameValidator, final Decoder<BsonDocument> commandResultDecoder) {
         this.queryFlags = queryFlags;
         this.fieldNameValidator = fieldNameValidator;
