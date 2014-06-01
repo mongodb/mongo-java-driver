@@ -17,10 +17,11 @@
 
 
 package org.mongodb
+
+import org.bson.json.JsonMode
+import org.bson.json.JsonParseException
 import org.bson.types.ObjectId
 import org.bson.types.RegularExpression
-import org.mongodb.json.JSONMode
-import org.mongodb.json.JSONParseException
 import spock.lang.Specification
 
 class DocumentSpecification extends Specification {
@@ -59,7 +60,7 @@ class DocumentSpecification extends Specification {
 
     def 'test value of method with mode'() {
         when:
-        Document document = Document.valueOf("{'regex' : /abc/im }", JSONMode.JAVASCRIPT);
+        Document document = Document.valueOf("{'regex' : /abc/im }", JsonMode.JAVASCRIPT);
 
         then:
         document != null;
@@ -75,7 +76,7 @@ class DocumentSpecification extends Specification {
         Document.valueOf("{ 'int' : 1, 'string' : }");
 
         then:
-        thrown(JSONParseException)
+        thrown(JsonParseException)
     }
 
     def 'should produce nice JSON when calling toString'() {

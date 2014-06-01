@@ -14,26 +14,24 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.bson.json;
 
 import org.bson.BsonReaderSettings;
-import org.mongodb.annotations.Immutable;
 
 /**
  * Settings to control the behavior of a {@code JSONReader} instance.
  *
- * @see JSONWriter
- * @since 3.0.0
+ * @see JsonWriter
+ * @since 3.0
  */
-@Immutable
-public class JSONReaderSettings extends BsonReaderSettings {
-    private final JSONMode inputMode;
+public class JsonReaderSettings extends BsonReaderSettings {
+    private final JsonMode inputMode;
 
     /**
      * Creates a new instance with default values for all properties.
      */
-    public JSONReaderSettings() {
-        this(JSONMode.STRICT);
+    public JsonReaderSettings() {
+        this(JsonMode.STRICT);
     }
 
     /**
@@ -41,7 +39,7 @@ public class JSONReaderSettings extends BsonReaderSettings {
      *
      * @param mode the input mode
      */
-    public JSONReaderSettings(final JSONMode mode) {
+    public JsonReaderSettings(final JsonMode mode) {
         this.inputMode = mode;
     }
 }

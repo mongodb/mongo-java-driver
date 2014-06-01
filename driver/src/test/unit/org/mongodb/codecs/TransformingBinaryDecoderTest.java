@@ -17,10 +17,10 @@
 package org.mongodb.codecs;
 
 import org.bson.BsonBinarySubType;
+import org.bson.json.JsonReader;
+import org.bson.json.JsonWriter;
 import org.bson.types.Binary;
 import org.junit.Test;
-import org.mongodb.json.JSONReader;
-import org.mongodb.json.JSONWriter;
 
 import java.io.StringWriter;
 import java.util.UUID;
@@ -32,7 +32,7 @@ public class TransformingBinaryDecoderTest {
     @Test
     public void testDecode() {
         StringWriter stringWriter = new StringWriter();
-        JSONWriter writer = new JSONWriter(stringWriter);
+        JsonWriter writer = new JsonWriter(stringWriter);
         writer.writeStartDocument();
         writer.writeBinaryData("subtype0", new Binary(BsonBinarySubType.BINARY, new byte[]{0}));
         writer.writeBinaryData("subtype1", new Binary(BsonBinarySubType.FUNCTION, new byte[]{1}));
@@ -46,7 +46,7 @@ public class TransformingBinaryDecoderTest {
         writer.writeBinaryData("subtype80", new Binary(BsonBinarySubType.USER_DEFINED, new byte[]{(byte) 0x80}));
         writer.writeEndDocument();
 
-        JSONReader reader = new JSONReader(stringWriter.toString());
+        JsonReader reader = new JsonReader(stringWriter.toString());
         TransformingBinaryDecoder decoder = new TransformingBinaryDecoder();
         reader.readStartDocument();
 

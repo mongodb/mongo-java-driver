@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.bson.json;
 
-public class JSONBuffer {
+class JsonBuffer {
 
     private final String buffer;
     private int position;
 
-    public JSONBuffer(final String buffer) {
+    public JsonBuffer(final String buffer) {
         this.buffer = buffer;
     }
 

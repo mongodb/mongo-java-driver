@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.bson.json;
 
 import org.bson.AbstractBsonWriter;
 import org.bson.BSONException;
@@ -36,17 +36,17 @@ import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 /**
  * A {@code BSONWriter} implementation that outputs a JSON representation of BSON.
  *
- * @since 3.0.0
+ * @since 3.0
  */
-public class JSONWriter extends AbstractBsonWriter {
+public class JsonWriter extends AbstractBsonWriter {
     private final Writer writer;
-    private final JSONWriterSettings settings;
+    private final JsonWriterSettings settings;
 
-    public JSONWriter(final Writer writer) {
-        this(writer, new JSONWriterSettings());
+    public JsonWriter(final Writer writer) {
+        this(writer, new JsonWriterSettings());
     }
 
-    public JSONWriter(final Writer writer, final JSONWriterSettings settings) {
+    public JsonWriter(final Writer writer, final JsonWriterSettings settings) {
         super(settings);
         this.settings = settings;
         this.writer = writer;
@@ -54,7 +54,7 @@ public class JSONWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public Context getContext() {
+    protected Context getContext() {
         return (Context) super.getContext();
     }
 
