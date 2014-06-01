@@ -217,7 +217,6 @@ public abstract class BsonValue {
         return (Code) this;
     }
 
-
     /**
      * Gets this value as a CodeWithScope if it is one, otherwise throws exception
      *
@@ -229,6 +228,161 @@ public abstract class BsonValue {
         return (CodeWithScope) this;
     }
 
+
+    /**
+     * Returns true if this is a BsonDocument, false otherwise.
+     *
+     * @return true if this is a BsonDocument, false otherwise
+     */
+    public boolean isDocument() {
+        return this instanceof BsonDocument;
+    }
+
+    /**
+     * Returns true if this is a BsonArray, false otherwise.
+     *
+     * @return true if this is a BsonArray, false otherwise
+     */
+    public boolean isArray() {
+        return this instanceof BsonArray;
+    }
+
+    /**
+     * Returns true if this is a BsonString, false otherwise.
+     *
+     * @return true if this is a BsonString, false otherwise
+     */
+    public boolean isString() {
+        return this instanceof BsonString;
+    }
+
+    /**
+     * Returns true if this is a BsonNumber, false otherwise.
+     *
+     * @return true if this is a BsonNumber, false otherwise
+     */
+    public boolean isNumber() {
+        return isInt32() || isInt64() || isDouble();
+    }
+
+    /**
+     * Returns true if this is a BsonInt32, false otherwise.
+     *
+     * @return true if this is a BsonInt32, false otherwise
+     */
+    public boolean isInt32() {
+        return this instanceof BsonInt32;
+    }
+
+    /**
+     * Returns true if this is a BsonInt64, false otherwise.
+     *
+     * @return true if this is a BsonInt64, false otherwise
+     */
+    public boolean isInt64() {
+        return this instanceof BsonInt64;
+    }
+
+    /**
+     * Returns true if this is a BsonDouble, false otherwise.
+     *
+     * @return true if this is a BsonDouble, false otherwise
+     */
+    public boolean isDouble() {
+        return this instanceof BsonDouble;
+
+    }
+
+    /**
+     * Returns true if this is a , false otherwise.
+     *
+     * @return true if this is a , false otherwise
+     */
+    public boolean isBoolean() {
+        return this instanceof BsonBoolean;
+
+    }
+
+    /**
+     * Returns true if this is an ObjectId, false otherwise.
+     *
+     * @return true if this is an ObjectId, false otherwise
+     */
+    public boolean isObjectId() {
+        return this instanceof ObjectId;
+    }
+
+    /**
+     * Returns true if this is a DBPointer, false otherwise.
+     *
+     * @return true if this is a DBPointer, false otherwise
+     */
+    public boolean isDBPointer() {
+        return this instanceof DBPointer;
+    }
+
+    /**
+     * Returns true if this is a Timestamp, false otherwise.
+     *
+     * @return true if this is a Timestamp, false otherwise
+     */
+    public boolean isTimestamp() {
+        return this instanceof Timestamp;
+    }
+
+    /**
+     * Returns true if this is a Binary, false otherwise.
+     *
+     * @return true if this is a Binary, false otherwise
+     */
+    public boolean isBinary() {
+        return this instanceof Binary;
+    }
+
+    /**
+     * Returns true if this is a BsonDateTime, false otherwise.
+     *
+     * @return true if this is a BsonDateTime, false otherwise
+     */
+    public boolean isDateTime() {
+        return this instanceof BsonDateTime;
+    }
+
+    /**
+     * Returns true if this is a Symbol, false otherwise.
+     *
+     * @return true if this is a Symbol, false otherwise
+     */
+    public boolean isSymbol() {
+        return this instanceof Symbol;
+    }
+
+    /**
+     * Returns true if this is a RegularExpression, false otherwise.
+     *
+     * @return true if this is a RegularExpression, false otherwise
+     */
+    public boolean isRegularExpression() {
+        return this instanceof RegularExpression;
+    }
+
+    /**
+     * Returns true if this is a Code, false otherwise.
+     *
+     * @return true if this is a Code, false otherwise
+     */
+    public boolean isJavaScript() {
+        return this instanceof Code;
+    }
+
+    /**
+     * Returns true if this is a CodeWithScope, false otherwise.
+     *
+     * @return true if this is a CodeWithScope, false otherwise
+     */
+    public boolean isJavaScriptWithScope() {
+        return this instanceof CodeWithScope;
+    }
 
     private void throwIfInvalidType(final BSONType expectedType) {
         if (getBsonType() != expectedType) {
