@@ -16,7 +16,6 @@
 
 package org.mongodb.protocol;
 
-import org.bson.BSONType;
 import org.bson.types.BsonArray;
 import org.bson.types.BsonBoolean;
 import org.bson.types.BsonDocument;
@@ -113,7 +112,7 @@ final class ProtocolHelper {
     }
 
     private static String getWriteErrorMessage(final BsonDocument response) {
-        if (response.containsKey("err") && response.get("err").getBsonType() == BSONType.STRING) {
+        if (response.isString("err")) {
             return response.getString("err").getValue();
         } else {
             return null;
