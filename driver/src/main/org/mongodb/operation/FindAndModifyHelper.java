@@ -16,7 +16,6 @@
 
 package org.mongodb.operation;
 
-import org.bson.BSONType;
 import org.mongodb.CommandResult;
 import org.mongodb.Function;
 
@@ -27,7 +26,7 @@ final class FindAndModifyHelper {
             @SuppressWarnings("unchecked")
             @Override
             public T apply(final CommandResult result) {
-                if (!result.getResponse().containsKey("value") || (result.getResponse().get("value").getBsonType() != BSONType.DOCUMENT)) {
+                if (!result.getResponse().isDocument("value")) {
                     return null;
                 }
                 return BsonDocumentWrapperHelper.toDocument(result.getResponse().getDocument("value", null));
