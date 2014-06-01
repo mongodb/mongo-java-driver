@@ -191,6 +191,111 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
         return get(key).asString();
     }
 
+
+    /**
+     * Returns true if the value of the key is a BsonDocument, returns false if the document does not contain the key.
+     *
+     * @param key the key
+     * @return true if the value of the key is a BsonDocument, returns false if the document does not contain the key.
+     */
+    public boolean isDocument(final Object key) {
+        if (!containsKey(key)) {
+            return false;
+        }
+        return get(key).isDocument();
+    }
+
+    /**
+     * Returns true if the value of the key is a BsonArray, returns false if the document does not contain the key.
+     *
+     * @param key the key
+     * @return true if the value of the key is a BsonArray, returns false if the document does not contain the key.
+     */
+    public boolean isArray(final Object key) {
+        if (!containsKey(key)) {
+            return false;
+        }
+        return get(key).isArray();
+    }
+
+    /**
+     * Returns true if the value of the key is a BsonNumber, returns false if the document does not contain the key.
+     *
+     * @param key the key
+     * @return true if the value of the key is a BsonNumber, returns false if the document does not contain the key.
+     */
+    public boolean isNumber(final Object key) {
+        if (!containsKey(key)) {
+            return false;
+        }
+        return get(key).isNumber();
+    }
+
+    /**
+     * Returns true if the value of the key is a BsonInt32, returns false if the document does not contain the key.
+     *
+     * @param key the key
+     * @return true if the value of the key is a BsonInt32, returns false if the document does not contain the key.
+     */
+    public boolean isInt32(final Object key) {
+        if (!containsKey(key)) {
+            return false;
+        }
+        return get(key).isInt32();
+    }
+
+    /**
+     * Returns true if the value of the key is a BsonInt64, returns false if the document does not contain the key.
+     *
+     * @param key the key
+     * @return true if the value of the key is a BsonInt64, returns false if the document does not contain the key.
+     */
+    public boolean istInt64(final Object key) {
+        if (!containsKey(key)) {
+            return false;
+        }
+        return get(key).isInt64();
+    }
+
+    /**
+     * Returns true if the value of the key is a BsonDouble, returns false if the document does not contain the key.
+     *
+     * @param key the key
+     * @return true if the value of the key is a BsonDouble, returns false if the document does not contain the key.
+     */
+    public boolean isDouble(final Object key) {
+        if (!containsKey(key)) {
+            return false;
+        }
+        return get(key).isDouble();
+    }
+
+    /**
+     * Returns true if the value of the key is a BsonBoolean, returns false if the document does not contain the key.
+     *
+     * @param key the key
+     * @return true if the value of the key is a BsonBoolean, returns false if the document does not contain the key.
+     */
+    public boolean isBoolean(final Object key) {
+        if (!containsKey(key)) {
+            return false;
+        }
+        return get(key).isBoolean();
+    }
+
+    /**
+     * Returns true if the value of the key is a BsonString, returns false if the document does not contain the key.
+     *
+     * @param key the key
+     * @return true if the value of the key is a BsonString, returns false if the document does not contain the key.
+     */
+    public boolean isString(final Object key) {
+        if (!containsKey(key)) {
+            return false;
+        }
+        return get(key).isString();
+    }
+
     /**
      * If the document does not contain the given key, return the given default value.  Otherwise, gets the value of the key as a
      * BsonDocument.
