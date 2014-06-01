@@ -389,7 +389,7 @@ public class BsonBinaryWriterTest {
 
         BasicInputBuffer basicInputBuffer = new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray())));
 
-        BsonBinaryReader reader = new BsonBinaryReader(new BsonReaderSettings(), basicInputBuffer, false);
+        BsonBinaryReader reader = new BsonBinaryReader(basicInputBuffer, false);
 
         try {
             assertEquals(BsonType.DOCUMENT, reader.readBSONType());
@@ -660,7 +660,7 @@ public class BsonBinaryWriterTest {
 
         BasicInputBuffer basicInputBuffer = new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray())));
 
-        BsonBinaryReader reader = new BsonBinaryReader(new BsonReaderSettings(), basicInputBuffer, true);
+        BsonBinaryReader reader = new BsonBinaryReader(basicInputBuffer, true);
 
         try {
             reader.readStartDocument();

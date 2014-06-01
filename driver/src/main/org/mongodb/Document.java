@@ -20,7 +20,6 @@ import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonReader;
-import org.bson.json.JsonReaderSettings;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 import org.bson.types.ObjectId;
@@ -82,18 +81,7 @@ public class Document implements Map<String, Object>, Serializable {
      * @throws org.bson.json.JsonParseException if the input is invalid
      */
     public static Document valueOf(final String s) {
-        return Document.valueOf(s, JsonMode.STRICT);
-    }
-
-    /**
-     * Converts a string in JSON format to a {@code Document}
-     *
-     * @param s document representation in JSON format
-     * @return a corresponding {@code Document} object
-     * @throws org.bson.json.JsonParseException if the input is invalid
-     */
-    public static Document valueOf(final String s, final JsonMode mode) {
-        JsonReader bsonReader = new JsonReader(new JsonReaderSettings(mode), s);
+        JsonReader bsonReader = new JsonReader(s);
         return new DocumentCodec().decode(bsonReader);
     }
 

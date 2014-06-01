@@ -21,7 +21,6 @@ import org.bson.AbstractBsonReader;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonContextType;
 import org.bson.BsonInvalidOperationException;
-import org.bson.BsonReaderSettings;
 import org.bson.BsonType;
 import org.bson.types.Binary;
 import org.bson.types.DBPointer;
@@ -67,24 +66,14 @@ public class JsonReader extends AbstractBsonReader {
     private Object currentValue;
 
     /**
-     * Constructs new {@code JSONReader}
+     * Constructs a new instance with the given JSON string.
      *
-     * @param settings The reader settings.
      * @param json     A string representation of a JSON.
      */
-    public JsonReader(final BsonReaderSettings settings, final String json) {
-        super(settings);
+    public JsonReader(final String json) {
+        super();
         scanner = new JsonScanner(json);
         setContext(new Context(null, BsonContextType.TOP_LEVEL));
-    }
-
-    /**
-     * Constructs new {@code JSONReader} with default settings.
-     *
-     * @param json A string representation of a JSON.
-     */
-    public JsonReader(final String json) {
-        this(new BsonReaderSettings(), json);
     }
 
     @Override
