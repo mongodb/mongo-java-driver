@@ -33,7 +33,6 @@ import static java.util.Arrays.asList;
  * @since 3.0
  */
 public abstract class AbstractBsonReader implements Closeable, BsonReader {
-    private final BsonReaderSettings settings;
     private State state;
     private Context context;
     private BsonType currentBsonType;
@@ -43,10 +42,8 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     /**
      * Initializes a new instance of the BSONReader class.
      *
-     * @param settings The reader settings.
      */
-    protected AbstractBsonReader(final BsonReaderSettings settings) {
-        this.settings = settings;
+    protected AbstractBsonReader() {
         state = State.INITIAL;
     }
 
@@ -65,13 +62,6 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
 
     protected void setCurrentBsonType(final BsonType newType) {
         currentBsonType = newType;
-    }
-
-    /**
-     * @return The settings of the reader.
-     */
-    public BsonReaderSettings getSettings() {
-        return settings;
     }
 
     /**

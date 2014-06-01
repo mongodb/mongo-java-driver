@@ -19,7 +19,6 @@ package org.mongodb.codecs;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonBinaryWriter;
-import org.bson.BsonReaderSettings;
 import org.bson.ByteBufNIO;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
@@ -83,7 +82,7 @@ public class DocumentCodecTest {
         documentCodec.encode(writer, doc);
 
         InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(new BsonReaderSettings(), inputBuffer, false));
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
@@ -96,7 +95,7 @@ public class DocumentCodecTest {
         documentCodec.encode(writer, doc);
 
         InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(new BsonReaderSettings(), inputBuffer, false));
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
@@ -108,7 +107,7 @@ public class DocumentCodecTest {
 
         documentCodec.encode(writer, doc);
 
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(new BsonReaderSettings(), createInputBuffer(), false));
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(createInputBuffer(), false));
         assertEquals(doc, decodedDocument);
     }
 
@@ -123,7 +122,7 @@ public class DocumentCodecTest {
         documentCodec.encode(writer, doc);
 
         InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(new BsonReaderSettings(), inputBuffer, false));
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
@@ -137,7 +136,7 @@ public class DocumentCodecTest {
         documentCodec.encode(writer, doc);
 
         InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(new BsonReaderSettings(), inputBuffer, false));
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 
@@ -150,7 +149,7 @@ public class DocumentCodecTest {
         documentCodec.encode(writer, doc);
 
         InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(new BsonReaderSettings(), inputBuffer, false));
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false));
         assertEquals(doc, decodedDocument);
     }
 

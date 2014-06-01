@@ -18,7 +18,6 @@
 
 package org.mongodb
 
-import org.bson.json.JsonMode
 import org.bson.json.JsonParseException
 import org.bson.types.ObjectId
 import org.bson.types.RegularExpression
@@ -60,7 +59,7 @@ class DocumentSpecification extends Specification {
 
     def 'test value of method with mode'() {
         when:
-        Document document = Document.valueOf("{'regex' : /abc/im }", JsonMode.JAVASCRIPT);
+        Document document = Document.valueOf("{'regex' : /abc/im }");
 
         then:
         document != null;
