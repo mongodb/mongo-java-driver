@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.bson.json;
 
 /**
  * An enumeration of the supported output modes of {@code JSONWriter}.  The first three correspond to the syntax documented <a
  * href="http://www.mongodb.org/display/DOCS/Mongo+Extended+JSON">here</a>.
  *
- * @see JSONWriter
- * @since 3.0.0
+ * @see JsonWriter
+ * @since 3.0
  */
-public enum JSONMode {
+public enum JsonMode {
 
     /**
      * This mode produces output conforming to the <a href="http://www.json.org">JSON RFC spec</a>.

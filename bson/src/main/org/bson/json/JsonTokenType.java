@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.bson.json;
 
-public enum JSONTokenType {
+enum JsonTokenType {
     /**
      * An invalid token.
      */

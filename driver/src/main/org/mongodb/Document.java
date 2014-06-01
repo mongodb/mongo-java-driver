@@ -18,13 +18,13 @@ package org.mongodb;
 
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.json.JsonMode;
+import org.bson.json.JsonReader;
+import org.bson.json.JsonReaderSettings;
+import org.bson.json.JsonWriter;
+import org.bson.json.JsonWriterSettings;
 import org.bson.types.ObjectId;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.json.JSONMode;
-import org.mongodb.json.JSONReader;
-import org.mongodb.json.JSONReaderSettings;
-import org.mongodb.json.JSONWriter;
-import org.mongodb.json.JSONWriterSettings;
 
 import java.io.Serializable;
 import java.io.StringWriter;
@@ -79,10 +79,10 @@ public class Document implements Map<String, Object>, Serializable {
      *
      * @param s document representation in JSON format that conforms <a href="http://www.json.org/">JSON RFC specifications</a>.
      * @return a corresponding {@code Document} object
-     * @throws org.mongodb.json.JSONParseException if the input is invalid
+     * @throws org.bson.json.JsonParseException if the input is invalid
      */
     public static Document valueOf(final String s) {
-        return Document.valueOf(s, JSONMode.STRICT);
+        return Document.valueOf(s, JsonMode.STRICT);
     }
 
     /**
@@ -90,10 +90,10 @@ public class Document implements Map<String, Object>, Serializable {
      *
      * @param s document representation in JSON format
      * @return a corresponding {@code Document} object
-     * @throws org.mongodb.json.JSONParseException if the input is invalid
+     * @throws org.bson.json.JsonParseException if the input is invalid
      */
-    public static Document valueOf(final String s, final JSONMode mode) {
-        JSONReader bsonReader = new JSONReader(new JSONReaderSettings(mode), s);
+    public static Document valueOf(final String s, final JsonMode mode) {
+        JsonReader bsonReader = new JsonReader(new JsonReaderSettings(mode), s);
         return new DocumentCodec().decode(bsonReader);
     }
 
@@ -259,7 +259,7 @@ public class Document implements Map<String, Object>, Serializable {
         //TODO: WARNING - this toString will not work if the Document contains any non-standard types,
         // i.e. anything that requires a custom codec, like POJOs or custom CollectibleCodecs for generic Collections
         StringWriter writer = new StringWriter();
-        BsonWriter bsonWriter = new JSONWriter(writer, new JSONWriterSettings(JSONMode.STRICT));
+        BsonWriter bsonWriter = new JsonWriter(writer, new JsonWriterSettings(JsonMode.STRICT));
         Codec<Document> codec = new DocumentCodec();
         codec.encode(bsonWriter, this);
 

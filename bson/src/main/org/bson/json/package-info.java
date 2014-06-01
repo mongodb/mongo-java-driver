@@ -19,4 +19,4 @@
  * <p>JSON serialization and deserialization.</p>
  * </body>
  */
-package org.mongodb.json;
+package org.bson.json;

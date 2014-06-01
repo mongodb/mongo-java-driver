@@ -14,29 +14,27 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.bson.json;
 
 import org.bson.BsonWriterSettings;
-import org.mongodb.annotations.Immutable;
 
 /**
  * Settings to control the behavior of a {@code JSONWriter} instance.
  *
- * @see JSONWriter
- * @since 3.0.0
+ * @see JsonWriter
+ * @since 3.0
  */
-@Immutable
-public class JSONWriterSettings extends BsonWriterSettings {
+public class JsonWriterSettings extends BsonWriterSettings {
     private final boolean indent;
     private final String newLineCharacters;
     private final String indentCharacters;
-    private final JSONMode outputMode;
+    private final JsonMode outputMode;
 
     /**
      * Creates a new instance with default values for all properties.
      */
-    public JSONWriterSettings() {
-        this(JSONMode.STRICT, false, null, null);
+    public JsonWriterSettings() {
+        this(JsonMode.STRICT, false, null, null);
     }
 
     /**
@@ -44,7 +42,7 @@ public class JSONWriterSettings extends BsonWriterSettings {
      *
      * @param outputMode the output mode
      */
-    public JSONWriterSettings(final JSONMode outputMode) {
+    public JsonWriterSettings(final JsonMode outputMode) {
         this(outputMode, false, null, null);
     }
 
@@ -53,8 +51,8 @@ public class JSONWriterSettings extends BsonWriterSettings {
      *
      * @param indent whether indent mode is enabled
      */
-    public JSONWriterSettings(final boolean indent) {
-        this(JSONMode.STRICT, true, "  ", null);
+    public JsonWriterSettings(final boolean indent) {
+        this(JsonMode.STRICT, true, "  ", null);
     }
 
     /**
@@ -63,7 +61,7 @@ public class JSONWriterSettings extends BsonWriterSettings {
      * @param outputMode the output mode
      * @param indent     whether indent mode is enabled
      */
-    public JSONWriterSettings(final JSONMode outputMode, final boolean indent) {
+    public JsonWriterSettings(final JsonMode outputMode, final boolean indent) {
         this(outputMode, true, "  ", null);
     }
 
@@ -74,7 +72,7 @@ public class JSONWriterSettings extends BsonWriterSettings {
      * @param outputMode       the output mode
      * @param indentCharacters the indent characters
      */
-    public JSONWriterSettings(final JSONMode outputMode, final String indentCharacters) {
+    public JsonWriterSettings(final JsonMode outputMode, final String indentCharacters) {
         this(outputMode, true, indentCharacters, null);
     }
 
@@ -85,12 +83,12 @@ public class JSONWriterSettings extends BsonWriterSettings {
      * @param indentCharacters  the indent characters
      * @param newLineCharacters the new line character(s) to use
      */
-    public JSONWriterSettings(final JSONMode outputMode, final String indentCharacters,
+    public JsonWriterSettings(final JsonMode outputMode, final String indentCharacters,
                               final String newLineCharacters) {
         this(outputMode, true, indentCharacters, newLineCharacters);
     }
 
-    private JSONWriterSettings(final JSONMode outputMode, final boolean indent, final String indentCharacters,
+    private JsonWriterSettings(final JsonMode outputMode, final boolean indent, final String indentCharacters,
                                final String newLineCharacters) {
         if (indent) {
             if (indentCharacters == null) {
@@ -147,7 +145,7 @@ public class JSONWriterSettings extends BsonWriterSettings {
      *
      * @return the output mode.
      */
-    public JSONMode getOutputMode() {
+    public JsonMode getOutputMode() {
         return outputMode;
     }
 }

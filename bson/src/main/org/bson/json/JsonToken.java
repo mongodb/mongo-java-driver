@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.bson.json;
 
 /**
  * A JSON token.
  */
-public class JSONToken {
+class JsonToken {
 
     private final Object value;
-    private final JSONTokenType type;
+    private final JsonTokenType type;
 
-    public JSONToken(final JSONTokenType type, final Object value) {
+    public JsonToken(final JsonTokenType type, final Object value) {
         this.value = value;
         this.type = type;
     }
@@ -45,7 +45,7 @@ public class JSONToken {
         }
     }
 
-    public JSONTokenType getType() {
+    public JsonTokenType getType() {
         return type;
     }
 }
