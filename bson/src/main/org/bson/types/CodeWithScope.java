@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -44,8 +44,8 @@ public class CodeWithScope extends BsonValue implements Serializable {
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.JAVASCRIPT_WITH_SCOPE;
+    public BsonType getBsonType() {
+        return BsonType.JAVASCRIPT_WITH_SCOPE;
     }
 
     public String getCode() {

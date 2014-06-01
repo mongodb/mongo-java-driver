@@ -16,15 +16,15 @@
 
 package org.mongodb;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.ObjectId;
 import org.mongodb.codecs.CollectibleCodec;
 
 class ConcreteCodec implements CollectibleCodec<Concrete> {
 
     @Override
-    public void encode(final BSONWriter writer, final Concrete c) {
+    public void encode(final BsonWriter writer, final Concrete c) {
         writer.writeStartDocument();
         if (c.getId() == null) {
             c.setId(new ObjectId());
@@ -39,7 +39,7 @@ class ConcreteCodec implements CollectibleCodec<Concrete> {
     }
 
     @Override
-    public Concrete decode(final BSONReader reader) {
+    public Concrete decode(final BsonReader reader) {
         reader.readStartDocument();
         ObjectId id = reader.readObjectId("_id");
         String str = reader.readString("str");

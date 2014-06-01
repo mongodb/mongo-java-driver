@@ -22,7 +22,12 @@ import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Timestamp;
 
-public interface BSONWriter {
+/**
+ * An interface for writing a logical BSON document using a push-oriented API.
+ *
+ * @since 3.0
+ */
+public interface BsonWriter {
     /**
      * Flushes any pending data to the output destination.
      */
@@ -247,7 +252,7 @@ public interface BSONWriter {
     /**
      * Writes the start of a BSON array to the writer.
      *
-     * @throws org.bson.BSONSerializationException if maximum serialization depth exceeded.
+     * @throws BsonSerializationException if maximum serialization depth exceeded.
      */
     void writeStartArray();
 
@@ -261,7 +266,7 @@ public interface BSONWriter {
     /**
      * Writes the start of a BSON document to the writer.
      *
-     * @throws org.bson.BSONSerializationException if maximum serialization depth exceeded.
+     * @throws BsonSerializationException if maximum serialization depth exceeded.
      */
     void writeStartDocument();
 
@@ -334,5 +339,5 @@ public interface BSONWriter {
      *
      * @param reader The source.
      */
-    void pipe(BSONReader reader);
+    void pipe(BsonReader reader);
 }

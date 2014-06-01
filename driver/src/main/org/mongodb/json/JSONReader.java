@@ -17,12 +17,12 @@
 package org.mongodb.json;
 
 
-import org.bson.AbstractBSONReader;
-import org.bson.BSONBinarySubType;
-import org.bson.BSONContextType;
-import org.bson.BSONInvalidOperationException;
-import org.bson.BSONReaderSettings;
-import org.bson.BSONType;
+import org.bson.AbstractBsonReader;
+import org.bson.BsonBinarySubType;
+import org.bson.BsonContextType;
+import org.bson.BsonInvalidOperationException;
+import org.bson.BsonReaderSettings;
+import org.bson.BsonType;
 import org.bson.types.Binary;
 import org.bson.types.DBPointer;
 import org.bson.types.MaxKey;
@@ -60,7 +60,7 @@ import java.util.TimeZone;
  *
  * @since 3.0.0
  */
-public class JSONReader extends AbstractBSONReader {
+public class JSONReader extends AbstractBsonReader {
 
     private final JSONScanner scanner;
     private JSONToken pushedToken;
@@ -72,10 +72,10 @@ public class JSONReader extends AbstractBSONReader {
      * @param settings The reader settings.
      * @param json     A string representation of a JSON.
      */
-    public JSONReader(final BSONReaderSettings settings, final String json) {
+    public JSONReader(final BsonReaderSettings settings, final String json) {
         super(settings);
         scanner = new JSONScanner(json);
-        setContext(new Context(null, BSONContextType.TOP_LEVEL));
+        setContext(new Context(null, BsonContextType.TOP_LEVEL));
     }
 
     /**
@@ -84,7 +84,7 @@ public class JSONReader extends AbstractBSONReader {
      * @param json A string representation of a JSON.
      */
     public JSONReader(final String json) {
-        this(new BSONReaderSettings(), json);
+        this(new BsonReaderSettings(), json);
     }
 
     @Override
@@ -99,7 +99,7 @@ public class JSONReader extends AbstractBSONReader {
 
     //CHECKSTYLE:OFF
     @Override
-    public BSONType readBSONType() {
+    public BsonType readBSONType() {
         if (isClosed()) {
             throw new IllegalStateException("This instance has been closed");
         }
@@ -111,7 +111,7 @@ public class JSONReader extends AbstractBSONReader {
             throwInvalidState("readBSONType", State.TYPE);
         }
 
-        if (getContext().getContextType() == BSONContextType.DOCUMENT) {
+        if (getContext().getContextType() == BsonContextType.DOCUMENT) {
             JSONToken nameToken = popToken();
             switch (nameToken.getType()) {
                 case STRING:
@@ -120,7 +120,7 @@ public class JSONReader extends AbstractBSONReader {
                     break;
                 case END_OBJECT:
                     setState(State.END_OF_DOCUMENT);
-                    return BSONType.END_OF_DOCUMENT;
+                    return BsonType.END_OF_DOCUMENT;
                 default:
                     throw new JSONParseException("JSON reader was expecting a name but found '%s'.", nameToken.getValue());
             }
@@ -132,81 +132,81 @@ public class JSONReader extends AbstractBSONReader {
         }
 
         JSONToken token = popToken();
-        if (getContext().getContextType() == BSONContextType.ARRAY && token.getType() == JSONTokenType.END_ARRAY) {
+        if (getContext().getContextType() == BsonContextType.ARRAY && token.getType() == JSONTokenType.END_ARRAY) {
             setState(State.END_OF_ARRAY);
-            return BSONType.END_OF_DOCUMENT;
+            return BsonType.END_OF_DOCUMENT;
         }
 
         boolean noValueFound = false;
         switch (token.getType()) {
             case BEGIN_ARRAY:
-                setCurrentBSONType(BSONType.ARRAY);
+                setCurrentBsonType(BsonType.ARRAY);
                 break;
             case BEGIN_OBJECT:
                 visitExtendedJSON();
                 break;
             case DOUBLE:
-                setCurrentBSONType(BSONType.DOUBLE);
+                setCurrentBsonType(BsonType.DOUBLE);
                 currentValue = token.getValue();
                 break;
             case END_OF_FILE:
-                setCurrentBSONType(BSONType.END_OF_DOCUMENT);
+                setCurrentBsonType(BsonType.END_OF_DOCUMENT);
                 break;
             case INT32:
-                setCurrentBSONType(BSONType.INT32);
+                setCurrentBsonType(BsonType.INT32);
                 currentValue = token.getValue();
                 break;
             case INT64:
-                setCurrentBSONType(BSONType.INT64);
+                setCurrentBsonType(BsonType.INT64);
                 currentValue = token.getValue();
                 break;
             case REGULAR_EXPRESSION:
-                setCurrentBSONType(BSONType.REGULAR_EXPRESSION);
+                setCurrentBsonType(BsonType.REGULAR_EXPRESSION);
                 currentValue = token.getValue();
                 break;
             case STRING:
-                setCurrentBSONType(BSONType.STRING);
+                setCurrentBsonType(BsonType.STRING);
                 currentValue = token.getValue();
                 break;
             case UNQUOTED_STRING:
                 String value = token.getValue(String.class);
 
                 if ("false".equals(value) || "true".equals(value)) {
-                    setCurrentBSONType(BSONType.BOOLEAN);
+                    setCurrentBsonType(BsonType.BOOLEAN);
                     currentValue = Boolean.parseBoolean(value);
                 } else if ("Infinity".equals(value)) {
-                    setCurrentBSONType(BSONType.DOUBLE);
+                    setCurrentBsonType(BsonType.DOUBLE);
                     currentValue = Double.POSITIVE_INFINITY;
                 } else if ("NaN".equals(value)) {
-                    setCurrentBSONType(BSONType.DOUBLE);
+                    setCurrentBsonType(BsonType.DOUBLE);
                     currentValue = Double.NaN;
                 } else if ("null".equals(value)) {
-                    setCurrentBSONType(BSONType.NULL);
+                    setCurrentBsonType(BsonType.NULL);
                 } else if ("undefined".equals(value)) {
-                    setCurrentBSONType(BSONType.UNDEFINED);
+                    setCurrentBsonType(BsonType.UNDEFINED);
                 } else if ("BinData".equals(value)) {
-                    setCurrentBSONType(BSONType.BINARY);
+                    setCurrentBsonType(BsonType.BINARY);
                     currentValue = visitBinDataConstructor();
                 } else if ("Date".equals(value)) {
-                    setCurrentBSONType(BSONType.DATE_TIME);
+                    setCurrentBsonType(BsonType.DATE_TIME);
                     currentValue = visitDateTimeConstructor(); // withNew = false
                 } else if ("HexData".equals(value)) {
-                    setCurrentBSONType(BSONType.BINARY);
+                    setCurrentBsonType(BsonType.BINARY);
                     currentValue = visitHexDataConstructor();
                 } else if ("ISODate".equals(value)) {
-                    setCurrentBSONType(BSONType.DATE_TIME);
+                    setCurrentBsonType(BsonType.DATE_TIME);
                     currentValue = visitISODateTimeConstructor();
                 } else if ("NumberLong".equals(value)) {
-                    setCurrentBSONType(BSONType.INT64);
+                    setCurrentBsonType(BsonType.INT64);
                     currentValue = visitNumberLongConstructor();
                 } else if ("ObjectId".equals(value)) {
-                    setCurrentBSONType(BSONType.OBJECT_ID);
+                    setCurrentBsonType(BsonType.OBJECT_ID);
                     currentValue = visitObjectIdConstructor();
                 } else if ("RegExp".equals(value)) {
-                    setCurrentBSONType(BSONType.REGULAR_EXPRESSION);
+                    setCurrentBsonType(BsonType.REGULAR_EXPRESSION);
                     currentValue = visitRegularExpressionConstructor();
                 } else if ("DBPointer".equals(value)) {
-                    setCurrentBSONType(BSONType.DB_POINTER);
+                    setCurrentBsonType(BsonType.DB_POINTER);
                     currentValue = visitDBPointerConstructor();
                 } else if ("UUID".equals(value)
                            || "GUID".equals(value)
@@ -216,7 +216,7 @@ public class JSONReader extends AbstractBSONReader {
                            || "JGUID".equals(value)
                            || "PYUUID".equals(value)
                            || "PYGUID".equals(value)) {
-                    setCurrentBSONType(BSONType.BINARY);
+                    setCurrentBsonType(BsonType.BINARY);
                     currentValue = visitUUIDConstructor(value);
                 } else if ("new".equals(value)) {
                     visitNew();
@@ -232,7 +232,7 @@ public class JSONReader extends AbstractBSONReader {
             throw new JSONParseException("JSON reader was expecting a value but found '%s'.", token.getValue());
         }
 
-        if (getContext().getContextType() == BSONContextType.ARRAY || getContext().getContextType() == BSONContextType.DOCUMENT) {
+        if (getContext().getContextType() == BsonContextType.ARRAY || getContext().getContextType() == BsonContextType.DOCUMENT) {
             JSONToken commaToken = popToken();
             if (commaToken.getType() != JSONTokenType.COMMA) {
                 pushToken(commaToken);
@@ -251,7 +251,7 @@ public class JSONReader extends AbstractBSONReader {
                 setState(State.VALUE);
                 break;
         }
-        return getCurrentBSONType();
+        return getCurrentBsonType();
     }
     //CHECKSTYLE:ON
 
@@ -269,7 +269,7 @@ public class JSONReader extends AbstractBSONReader {
     public void doReadEndArray() {
         setContext(getContext().getParentContext());
 
-        if (getContext().getContextType() == BSONContextType.ARRAY || getContext().getContextType() == BSONContextType.DOCUMENT) {
+        if (getContext().getContextType() == BsonContextType.ARRAY || getContext().getContextType() == BsonContextType.DOCUMENT) {
             JSONToken commaToken = popToken();
             if (commaToken.getType() != JSONTokenType.COMMA) {
                 pushToken(commaToken);
@@ -294,7 +294,7 @@ public class JSONReader extends AbstractBSONReader {
     @Override
     protected void doReadEndDocument() {
         setContext(getContext().getParentContext());
-        if (getContext() != null && getContext().getContextType() == BSONContextType.JAVASCRIPT_WITH_SCOPE) {
+        if (getContext() != null && getContext().getContextType() == BsonContextType.JAVASCRIPT_WITH_SCOPE) {
             setContext(getContext().getParentContext()); // JavaScriptWithScope
             verifyToken("}"); // outermost closing bracket for JavaScriptWithScope
         }
@@ -303,7 +303,7 @@ public class JSONReader extends AbstractBSONReader {
             throw new JSONParseException("Unexpected end of document.");
         }
 
-        if (getContext().getContextType() == BSONContextType.ARRAY || getContext().getContextType() == BSONContextType.DOCUMENT) {
+        if (getContext().getContextType() == BsonContextType.ARRAY || getContext().getContextType() == BsonContextType.DOCUMENT) {
             JSONToken commaToken = popToken();
             if (commaToken.getType() != JSONTokenType.COMMA) {
                 pushToken(commaToken);
@@ -360,12 +360,12 @@ public class JSONReader extends AbstractBSONReader {
 
     @Override
     public void doReadStartArray() {
-        setContext(new Context(getContext(), BSONContextType.ARRAY));
+        setContext(new Context(getContext(), BsonContextType.ARRAY));
     }
 
     @Override
     protected void doReadStartDocument() {
-        setContext(new Context(getContext(), BSONContextType.DOCUMENT));
+        setContext(new Context(getContext(), BsonContextType.DOCUMENT));
     }
 
     @Override
@@ -393,10 +393,10 @@ public class JSONReader extends AbstractBSONReader {
 
     @Override
     protected void doSkipValue() {
-        switch (getCurrentBSONType()) {
+        switch (getCurrentBsonType()) {
             case ARRAY:
                 readStartArray();
-                while (readBSONType() != BSONType.END_OF_DOCUMENT) {
+                while (readBSONType() != BsonType.END_OF_DOCUMENT) {
                     skipValue();
                 }
                 readEndArray();
@@ -412,7 +412,7 @@ public class JSONReader extends AbstractBSONReader {
                 break;
             case DOCUMENT:
                 readStartDocument();
-                while (readBSONType() != BSONType.END_OF_DOCUMENT) {
+                while (readBSONType() != BsonType.END_OF_DOCUMENT) {
                     skipName();
                     skipValue();
                 }
@@ -433,7 +433,7 @@ public class JSONReader extends AbstractBSONReader {
             case JAVASCRIPT_WITH_SCOPE:
                 readJavaScriptWithScope();
                 readStartDocument();
-                while (readBSONType() != BSONType.END_OF_DOCUMENT) {
+                while (readBSONType() != BsonType.END_OF_DOCUMENT) {
                     skipName();
                     skipValue();
                 }
@@ -484,7 +484,7 @@ public class JSONReader extends AbstractBSONReader {
         if (pushedToken == null) {
             pushedToken = token;
         } else {
-            throw new BSONInvalidOperationException("There is already a pending token.");
+            throw new BsonInvalidOperationException("There is already a pending token.");
         }
     }
 
@@ -521,28 +521,28 @@ public class JSONReader extends AbstractBSONReader {
 
         if ("BinData".equals(value)) {
             currentValue = visitBinDataConstructor();
-            setCurrentBSONType(BSONType.BINARY);
+            setCurrentBsonType(BsonType.BINARY);
         } else if ("Date".equals(value)) {
             currentValue = visitDateTimeConstructor();
-            setCurrentBSONType(BSONType.DATE_TIME);
+            setCurrentBsonType(BsonType.DATE_TIME);
         } else if ("HexData".equals(value)) {
             currentValue = visitHexDataConstructor();
-            setCurrentBSONType(BSONType.BINARY);
+            setCurrentBsonType(BsonType.BINARY);
         } else if ("ISODate".equals(value)) {
             currentValue = visitISODateTimeConstructor();
-            setCurrentBSONType(BSONType.DATE_TIME);
+            setCurrentBsonType(BsonType.DATE_TIME);
         } else if ("NumberLong".equals(value)) {
             currentValue = visitNumberLongConstructor();
-            setCurrentBSONType(BSONType.INT64);
+            setCurrentBsonType(BsonType.INT64);
         } else if ("ObjectId".equals(value)) {
             currentValue = visitObjectIdConstructor();
-            setCurrentBSONType(BSONType.OBJECT_ID);
+            setCurrentBsonType(BsonType.OBJECT_ID);
         } else if ("RegExp".equals(value)) {
             currentValue = visitRegularExpressionConstructor();
-            setCurrentBSONType(BSONType.REGULAR_EXPRESSION);
+            setCurrentBsonType(BsonType.REGULAR_EXPRESSION);
         } else if ("DBPointer".equals(value)) {
             currentValue = visitDBPointerConstructor();
-            setCurrentBSONType(BSONType.DB_POINTER);
+            setCurrentBsonType(BsonType.DB_POINTER);
         } else if ("UUID".equals(value)
                    || "GUID".equals(value)
                    || "CSUUID".equals(value)
@@ -552,7 +552,7 @@ public class JSONReader extends AbstractBSONReader {
                    || "PYUUID".equals(value)
                    || "PYGUID".equals(value)) {
             currentValue = visitUUIDConstructor(value);
-            setCurrentBSONType(BSONType.BINARY);
+            setCurrentBsonType(BsonType.BINARY);
         } else {
             throw new JSONParseException("JSON reader expected a type name but found '%s'.", value);
         }
@@ -566,43 +566,43 @@ public class JSONReader extends AbstractBSONReader {
         if (type == JSONTokenType.STRING || type == JSONTokenType.UNQUOTED_STRING) {
             if ("$binary".equals(value)) {
                 currentValue = visitBinDataExtendedJson();
-                setCurrentBSONType(BSONType.BINARY);
+                setCurrentBsonType(BsonType.BINARY);
                 return;
             } else if ("$code".equals(value)) {
                 visitJavaScriptExtendedJson();
                 return;
             } else if ("$date".equals(value)) {
                 currentValue = visitDateTimeExtendedJson();
-                setCurrentBSONType(BSONType.DATE_TIME);
+                setCurrentBsonType(BsonType.DATE_TIME);
                 return;
             } else if ("$maxkey".equals(value)) {
                 currentValue = visitMaxKeyExtendedJson();
-                setCurrentBSONType(BSONType.MAX_KEY);
+                setCurrentBsonType(BsonType.MAX_KEY);
                 return;
             } else if ("$minkey".equals(value)) {
                 currentValue = visitMinKeyExtendedJson();
-                setCurrentBSONType(BSONType.MIN_KEY);
+                setCurrentBsonType(BsonType.MIN_KEY);
                 return;
             } else if ("$oid".equals(value)) {
                 currentValue = visitObjectIdExtendedJson();
-                setCurrentBSONType(BSONType.OBJECT_ID);
+                setCurrentBsonType(BsonType.OBJECT_ID);
                 return;
             } else if ("$regex".equals(value)) {
                 currentValue = visitRegularExpressionExtendedJson();
-                setCurrentBSONType(BSONType.REGULAR_EXPRESSION);
+                setCurrentBsonType(BsonType.REGULAR_EXPRESSION);
                 return;
             } else if ("$symbol".equals(value)) {
                 currentValue = visitSymbolExtendedJson();
-                setCurrentBSONType(BSONType.SYMBOL);
+                setCurrentBsonType(BsonType.SYMBOL);
                 return;
             } else if ("$timestamp".equals(value)) {
                 currentValue = visitTimestampExtendedJson();
-                setCurrentBSONType(BSONType.TIMESTAMP);
+                setCurrentBsonType(BsonType.TIMESTAMP);
                 return;
             }
         }
         pushToken(nameToken);
-        setCurrentBSONType(BSONType.DOCUMENT);
+        setCurrentBsonType(BsonType.DOCUMENT);
     }
 
     private Binary visitBinDataConstructor() {
@@ -632,9 +632,9 @@ public class JSONReader extends AbstractBSONReader {
         verifyToken(")");
         String hexString = bytesToken.getValue(String.class).replaceAll("\\{", "").replaceAll("\\}", "").replaceAll("-", "");
         byte[] bytes = DatatypeConverter.parseHexBinary(hexString);
-        BSONBinarySubType subType = BSONBinarySubType.UUID_STANDARD;
+        BsonBinarySubType subType = BsonBinarySubType.UUID_STANDARD;
         if (!"UUID".equals(uuidConstructorName) || !"GUID".equals(uuidConstructorName)) {
-            subType = BSONBinarySubType.UUID_LEGACY;
+            subType = BsonBinarySubType.UUID_LEGACY;
         }
         return new Binary(subType, bytes);
     }
@@ -749,7 +749,7 @@ public class JSONReader extends AbstractBSONReader {
             hex = "0" + hex;
         }
 
-        for (final BSONBinarySubType subType : BSONBinarySubType.values()) {
+        for (final BsonBinarySubType subType : BsonBinarySubType.values()) {
             if (subType.getValue() == subTypeToken.getValue(Integer.class)) {
                 return new Binary(subType, DatatypeConverter.parseHexBinary(hex));
             }
@@ -832,7 +832,7 @@ public class JSONReader extends AbstractBSONReader {
 
         byte subType = (byte) Integer.parseInt(subTypeToken.getValue(String.class), 16);
 
-        for (final BSONBinarySubType st : BSONBinarySubType.values()) {
+        for (final BsonBinarySubType st : BsonBinarySubType.values()) {
             if (st.getValue() == subType) {
                 return new Binary(st, DatatypeConverter.parseBase64Binary(bytesToken.getValue(String.class)));
             }
@@ -937,11 +937,11 @@ public class JSONReader extends AbstractBSONReader {
                 verifyToken(":");
                 setState(State.VALUE);
                 currentValue = codeToken.getValue();
-                setCurrentBSONType(BSONType.JAVASCRIPT_WITH_SCOPE);
+                setCurrentBsonType(BsonType.JAVASCRIPT_WITH_SCOPE);
                 break;
             case END_OBJECT:
                 currentValue = codeToken.getValue();
-                setCurrentBSONType(BSONType.JAVASCRIPT);
+                setCurrentBsonType(BsonType.JAVASCRIPT);
                 break;
             default:
                 throw new JSONParseException("JSON reader expected ',' or '}' but found '%s'.", codeToken.getValue());
@@ -953,8 +953,8 @@ public class JSONReader extends AbstractBSONReader {
         return (Context) super.getContext();
     }
 
-    protected class Context extends AbstractBSONReader.Context {
-        protected Context(final AbstractBSONReader.Context parentContext, final BSONContextType contextType) {
+    protected class Context extends AbstractBsonReader.Context {
+        protected Context(final AbstractBsonReader.Context parentContext, final BsonContextType contextType) {
             super(parentContext, contextType);
         }
 
@@ -962,7 +962,7 @@ public class JSONReader extends AbstractBSONReader {
             return (Context) super.getParentContext();
         }
 
-        protected BSONContextType getContextType() {
+        protected BsonContextType getContextType() {
             return super.getContextType();
         }
     }

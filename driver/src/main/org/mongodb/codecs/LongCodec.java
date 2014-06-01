@@ -16,18 +16,18 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 
 public class LongCodec implements Codec<Long> {
     @Override
-    public void encode(final BSONWriter writer, final Long value) {
+    public void encode(final BsonWriter writer, final Long value) {
         writer.writeInt64(value);
     }
 
     @Override
-    public Long decode(final BSONReader reader) {
+    public Long decode(final BsonReader reader) {
         return reader.readInt64();
     }
 

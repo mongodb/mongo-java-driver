@@ -16,8 +16,8 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.BsonDouble;
 
 /**
@@ -27,12 +27,12 @@ import org.bson.types.BsonDouble;
  */
 public class BsonDoubleCodec implements Codec<BsonDouble> {
     @Override
-    public BsonDouble decode(final BSONReader reader) {
+    public BsonDouble decode(final BsonReader reader) {
         return new BsonDouble(reader.readDouble());
     }
 
     @Override
-    public void encode(final BSONWriter writer, final BsonDouble value) {
+    public void encode(final BsonWriter writer, final BsonDouble value) {
         writer.writeDouble(value.getValue());
     }
 

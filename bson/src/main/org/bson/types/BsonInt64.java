@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -43,8 +43,8 @@ public final class BsonInt64 extends BsonNumber implements Comparable<BsonInt64>
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.INT64;
+    public BsonType getBsonType() {
+        return BsonType.INT64;
     }
 
 

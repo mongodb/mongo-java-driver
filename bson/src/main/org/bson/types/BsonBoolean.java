@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -53,8 +53,8 @@ public final class BsonBoolean extends BsonValue implements Comparable<BsonBoole
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.BOOLEAN;
+    public BsonType getBsonType() {
+        return BsonType.BOOLEAN;
     }
 
     /**

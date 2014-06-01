@@ -16,8 +16,8 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.Undefined;
 
 /**
@@ -28,18 +28,18 @@ import org.bson.types.Undefined;
  * The undefined type is deprecated (see the spec).
  *
  * @see <a href="http://bsonspec.org/spec.html">BSON Spec</a>
- * @see org.bson.BSONType#UNDEFINED
+ * @see org.bson.BsonType#UNDEFINED
  * @since 3.0
  */
 public class UndefinedCodec implements Codec<Undefined> {
     @Override
-    public Undefined decode(final BSONReader reader) {
+    public Undefined decode(final BsonReader reader) {
         reader.readUndefined();
         return new Undefined();
     }
 
     @Override
-    public void encode(final BSONWriter writer, final Undefined value) {
+    public void encode(final BsonWriter writer, final Undefined value) {
         writer.writeUndefined();
     }
 

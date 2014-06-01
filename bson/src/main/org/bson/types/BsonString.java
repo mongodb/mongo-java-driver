@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -48,8 +48,8 @@ public class BsonString extends BsonValue implements Comparable<BsonString>, Ser
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.STRING;
+    public BsonType getBsonType() {
+        return BsonType.STRING;
     }
 
     /**

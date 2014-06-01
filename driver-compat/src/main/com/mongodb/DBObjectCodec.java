@@ -17,11 +17,11 @@
 package com.mongodb;
 
 import org.bson.BSON;
-import org.bson.BSONBinarySubType;
-import org.bson.BSONReader;
-import org.bson.BSONType;
-import org.bson.BSONWriter;
+import org.bson.BsonBinarySubType;
 import org.bson.BsonDocumentWriter;
+import org.bson.BsonReader;
+import org.bson.BsonType;
+import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BasicBSONList;
@@ -50,12 +50,12 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     private static final String ID_FIELD_NAME = "_id";
 
     private final CodecRegistry codecRegistry;
-    private final Map<BSONType, Class<?>> bsonTypeClassMap;
+    private final Map<BsonType, Class<?>> bsonTypeClassMap;
     private final DB db;
     private final DBObjectFactory objectFactory;
     private final IdGenerator idGenerator = new ObjectIdGenerator();
 
-    public DBObjectCodec(final CodecRegistry codecRegistry, final Map<BSONType, Class<?>> bsonTypeClassMap) {
+    public DBObjectCodec(final CodecRegistry codecRegistry, final Map<BsonType, Class<?>> bsonTypeClassMap) {
         this.codecRegistry = codecRegistry;
         this.bsonTypeClassMap = bsonTypeClassMap;
         this.db = null;
@@ -63,7 +63,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     }
 
     public DBObjectCodec(final DB db, final DBObjectFactory objectFactory,
-                         final CodecRegistry codecRegistry, final Map<BSONType, Class<?>> bsonTypeClassMap) {
+                         final CodecRegistry codecRegistry, final Map<BsonType, Class<?>> bsonTypeClassMap) {
         this.db = db;
         this.objectFactory = objectFactory;
         this.codecRegistry = codecRegistry;
@@ -72,7 +72,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
 
     //TODO: what about BSON Exceptions?
     @Override
-    public void encode(final BSONWriter writer, final DBObject document) {
+    public void encode(final BsonWriter writer, final DBObject document) {
         writer.writeStartDocument();
 
         beforeFields(writer, document);
@@ -88,7 +88,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     }
 
     @Override
-    public DBObject decode(final BSONReader reader) {
+    public DBObject decode(final BsonReader reader) {
         List<String> path = new ArrayList<String>(10);
         return readDocument(reader, path);
     }
@@ -115,7 +115,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         }
 
         BsonDocument idHoldingDocument = new BsonDocument();
-        BSONWriter writer = new BsonDocumentWriter(idHoldingDocument);
+        BsonWriter writer = new BsonDocumentWriter(idHoldingDocument);
         writer.writeStartDocument();
         writer.writeName(ID_FIELD_NAME);
         writeValue(writer, id);
@@ -130,7 +130,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         }
     }
 
-    private void beforeFields(final BSONWriter bsonWriter, final DBObject document) {
+    private void beforeFields(final BsonWriter bsonWriter, final DBObject document) {
         if (document.containsField(ID_FIELD_NAME)) {
             bsonWriter.writeName(ID_FIELD_NAME);
             writeValue(bsonWriter, document.get(ID_FIELD_NAME));
@@ -142,7 +142,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     }
 
     @SuppressWarnings("unchecked")
-    private void writeValue(final BSONWriter bsonWriter, final Object initialValue) {
+    private void writeValue(final BsonWriter bsonWriter, final Object initialValue) {
         Object value = BSON.applyEncodingHooks(initialValue);
         try {
             if (value == null) {
@@ -174,7 +174,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         }
     }
 
-    private void encodeEmbeddedObject(final BSONWriter bsonWriter, final Map<String, Object> document) {
+    private void encodeEmbeddedObject(final BsonWriter bsonWriter, final Map<String, Object> document) {
         bsonWriter.writeStartDocument();
 
         for (final Map.Entry<String, Object> entry : document.entrySet()) {
@@ -184,11 +184,11 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         bsonWriter.writeEndDocument();
     }
 
-    private void encodeByteArray(final BSONWriter bsonWriter, final byte[] value) {
+    private void encodeByteArray(final BsonWriter bsonWriter, final byte[] value) {
         bsonWriter.writeBinaryData(new Binary(value));
     }
 
-    private void encodeArray(final BSONWriter bsonWriter, final Object value) {
+    private void encodeArray(final BsonWriter bsonWriter, final Object value) {
         bsonWriter.writeStartArray();
 
         int size = Array.getLength(value);
@@ -199,7 +199,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         bsonWriter.writeEndArray();
     }
 
-    private void encodeDBRef(final BSONWriter bsonWriter, final DBRefBase dbRef) {
+    private void encodeDBRef(final BsonWriter bsonWriter, final DBRefBase dbRef) {
         bsonWriter.writeStartDocument();
 
         bsonWriter.writeString("$ref", dbRef.getRef());
@@ -210,12 +210,12 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     }
 
     @SuppressWarnings("unchecked")
-    private void encodeCodeWScope(final BSONWriter bsonWriter, final CodeWScope value) {
+    private void encodeCodeWScope(final BsonWriter bsonWriter, final CodeWScope value) {
         bsonWriter.writeJavaScriptWithScope(value.getCode());
         encodeEmbeddedObject(bsonWriter, value.getScope().toMap());
     }
 
-    private void encodeIterable(final BSONWriter bsonWriter, final Iterable iterable) {
+    private void encodeIterable(final BsonWriter bsonWriter, final Iterable iterable) {
         bsonWriter.writeStartArray();
         for (final Object cur : iterable) {
             writeValue(bsonWriter, cur);
@@ -223,10 +223,10 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         bsonWriter.writeEndArray();
     }
 
-    private Object readValue(final BSONReader reader, final String fieldName, final List<String> path) {
+    private Object readValue(final BsonReader reader, final String fieldName, final List<String> path) {
         Object initialRetVal;
         try {
-            BSONType bsonType = reader.getCurrentBSONType();
+            BsonType bsonType = reader.getCurrentBsonType();
 
             if (bsonType.isContainer() && fieldName != null) {
                 //if we got into some new context like nested document or array
@@ -269,34 +269,34 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         return BSON.applyDecodingHooks(initialRetVal);
     }
 
-    private Object readBinary(final BSONReader reader) {
+    private Object readBinary(final BsonReader reader) {
         Binary binary = reader.readBinaryData();
-        if (binary.getType() == BSONBinarySubType.BINARY.getValue()) {
+        if (binary.getType() == BsonBinarySubType.BINARY.getValue()) {
             return new BinaryToByteArrayTransformer().transform(binary);
-        } else if (binary.getType() == BSONBinarySubType.OLD_BINARY.getValue()) {
+        } else if (binary.getType() == BsonBinarySubType.OLD_BINARY.getValue()) {
             return new BinaryToByteArrayTransformer().transform(binary);
-        } else if (binary.getType() == BSONBinarySubType.UUID_LEGACY.getValue()) {
+        } else if (binary.getType() == BsonBinarySubType.UUID_LEGACY.getValue()) {
             return new BinaryToUUIDTransformer().transform(binary);
         } else {
             return binary;
         }
     }
 
-    private List readArray(final BSONReader reader, final List<String> path) {
+    private List readArray(final BsonReader reader, final List<String> path) {
         reader.readStartArray();
         BasicDBList list = new BasicDBList();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
             list.add(readValue(reader, null, path));   // TODO: why is this a warning?
         }
         reader.readEndArray();
         return list;
     }
 
-    private DBObject readDocument(final BSONReader reader, final List<String> path) {
+    private DBObject readDocument(final BsonReader reader, final List<String> path) {
         DBObject document = objectFactory.getInstance(path);
 
         reader.readStartDocument();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
             String fieldName = reader.readName();
             document.put(fieldName, readValue(reader, fieldName, path));
         }
@@ -305,7 +305,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         return document;
     }
 
-    private CodeWScope readCodeWScope(final BSONReader reader, final List<String> path) {
+    private CodeWScope readCodeWScope(final BsonReader reader, final List<String> path) {
         return new CodeWScope(reader.readJavaScriptWithScope(), readDocument(reader, path));
     }
 

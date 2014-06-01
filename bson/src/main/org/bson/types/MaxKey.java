@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -31,8 +31,8 @@ public final class MaxKey extends BsonValue implements Serializable {
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.MAX_KEY;
+    public BsonType getBsonType() {
+        return BsonType.MAX_KEY;
     }
 
     @Override

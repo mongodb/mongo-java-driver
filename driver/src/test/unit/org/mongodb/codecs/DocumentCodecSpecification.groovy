@@ -16,8 +16,8 @@
 
 package org.mongodb.codecs
 
-import org.bson.BSONBinaryReader
-import org.bson.BSONBinaryWriter
+import org.bson.BsonBinaryReader
+import org.bson.BsonBinaryWriter
 import org.bson.ByteBufNIO
 import org.bson.io.BasicInputBuffer
 import org.bson.io.BasicOutputBuffer
@@ -66,9 +66,9 @@ class DocumentCodecSpecification extends Specification {
             put('document', new Document('a', 2))
         }
         when:
-        BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer(), false)
+        BsonBinaryWriter writer = new BsonBinaryWriter(new BasicOutputBuffer(), false)
         new DocumentCodec().encode(writer, doc)
-        BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(writer.buffer.toByteArray()))),
+        BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(writer.buffer.toByteArray()))),
                                                        true)
         def decodedDoc = new DocumentCodec().decode(reader)
 

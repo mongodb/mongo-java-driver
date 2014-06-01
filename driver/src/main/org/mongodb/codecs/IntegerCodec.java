@@ -16,18 +16,18 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 
 public class IntegerCodec implements Codec<Integer> {
     @Override
-    public void encode(final BSONWriter writer, final Integer value) {
+    public void encode(final BsonWriter writer, final Integer value) {
         writer.writeInt32(value);
     }
 
     @Override
-    public Integer decode(final BSONReader reader) {
+    public Integer decode(final BsonReader reader) {
         return reader.readInt32();
     }
 

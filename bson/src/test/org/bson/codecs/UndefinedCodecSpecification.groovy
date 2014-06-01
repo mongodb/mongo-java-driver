@@ -15,8 +15,9 @@
  */
 
 package org.bson.codecs
-import org.bson.BSONReader
-import org.bson.BSONWriter
+
+import org.bson.BsonReader
+import org.bson.BsonWriter
 import org.bson.types.Undefined
 import spock.lang.Specification
 import spock.lang.Subject
@@ -32,7 +33,7 @@ class UndefinedCodecSpecification extends Specification {
 
     def 'should decode undefined type from BSONReader'() {
         given:
-        BSONReader reader = Mock()
+        BsonReader reader = Mock()
 
         when:
         def result = codec.decode(reader)
@@ -45,7 +46,7 @@ class UndefinedCodecSpecification extends Specification {
 
     def 'should encode undefined type to BSONWriter'() {
         given:
-        BSONWriter writer = Mock()
+        BsonWriter writer = Mock()
 
         when:
         codec.encode(writer, new Undefined())

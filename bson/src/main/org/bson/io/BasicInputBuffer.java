@@ -16,7 +16,7 @@
 
 package org.bson.io;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 import org.bson.ByteBuf;
 import org.bson.types.ObjectId;
 
@@ -84,8 +84,8 @@ public class BasicInputBuffer implements InputBuffer {
     }
 
     @Override
-    public BSONType readBSONType() {
-        return BSONType.findByValue(buffer.get());
+    public BsonType readBSONType() {
+        return BsonType.findByValue(buffer.get());
     }
 
     @Override

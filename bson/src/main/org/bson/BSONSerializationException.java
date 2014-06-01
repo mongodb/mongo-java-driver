@@ -21,7 +21,7 @@ package org.bson;
  *
  * @since 3.0
  */
-public class BSONSerializationException extends BSONException {
+public class BsonSerializationException extends BSONException {
     private static final long serialVersionUID = -5214580094005440780L;
 
     /**
@@ -29,7 +29,7 @@ public class BSONSerializationException extends BSONException {
      *
      * @param message the message
      */
-    public BSONSerializationException(final String message) {
+    public BsonSerializationException(final String message) {
         super(message);
     }
 }

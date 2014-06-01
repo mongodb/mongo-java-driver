@@ -17,11 +17,11 @@
 package org.bson;
 
 /**
- * Used by BSONReaders and BSONWriters to represent the current context.
+ * Used by BSONReader and BSONWriter implementations to represent the current context.
  *
  * @since 3.0.0
  */
-public enum BSONContextType {
+public enum BsonContextType {
     /**
      * The top level of a BSON document.
      */

@@ -22,11 +22,16 @@ import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Timestamp;
 
-public interface BSONReader {
+/**
+ * An interface for reading a logical BSON document using a pull-oriented API.
+ *
+ * @since 3.0
+ */
+public interface BsonReader {
     /**
      * @return The current BSONType.
      */
-    BSONType getCurrentBSONType();
+    BsonType getCurrentBsonType();
 
     /**
      * Gets the most recently read name.
@@ -70,7 +75,7 @@ public interface BSONReader {
      *
      * @return A BSONType.
      */
-    BSONType readBSONType();
+    BsonType readBSONType();
 
     /**
      * Reads a BSON DateTime from the reader.

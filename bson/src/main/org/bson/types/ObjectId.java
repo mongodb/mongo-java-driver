@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 import org.bson.diagnostics.Loggers;
 
 import java.io.Serializable;
@@ -270,8 +270,8 @@ public final class ObjectId extends BsonValue implements Comparable<ObjectId>, S
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.OBJECT_ID;
+    public BsonType getBsonType() {
+        return BsonType.OBJECT_ID;
     }
 
     /**

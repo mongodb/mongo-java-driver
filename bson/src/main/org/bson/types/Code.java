@@ -18,7 +18,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -36,8 +36,8 @@ public class Code extends BsonValue implements Serializable {
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.JAVASCRIPT;
+    public BsonType getBsonType() {
+        return BsonType.JAVASCRIPT;
     }
 
     public String getCode() {

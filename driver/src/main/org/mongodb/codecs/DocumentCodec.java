@@ -16,10 +16,10 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONType;
-import org.bson.BSONWriter;
 import org.bson.BsonDocumentWriter;
+import org.bson.BsonReader;
+import org.bson.BsonType;
+import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -97,7 +97,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
         }
 
         BsonDocument idHoldingDocument = new BsonDocument();
-        BSONWriter writer = new BsonDocumentWriter(idHoldingDocument);
+        BsonWriter writer = new BsonDocumentWriter(idHoldingDocument);
         writer.writeStartDocument();
         writer.writeName(ID_FIELD_NAME);
         writeValue(writer, id);
@@ -113,7 +113,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
     }
 
     @Override
-    public void encode(final BSONWriter writer, final Document document) {
+    public void encode(final BsonWriter writer, final Document document) {
         writer.writeStartDocument();
 
         beforeFields(writer, document);
@@ -128,7 +128,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
         writer.writeEndDocument();
     }
 
-    private void beforeFields(final BSONWriter bsonWriter, final Document document) {
+    private void beforeFields(final BsonWriter bsonWriter, final Document document) {
         if (document.containsKey(ID_FIELD_NAME)) {
             bsonWriter.writeName(ID_FIELD_NAME);
             writeValue(bsonWriter, document.get(ID_FIELD_NAME));
@@ -140,7 +140,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    protected void writeValue(final BSONWriter writer, final Object value) {
+    protected void writeValue(final BsonWriter writer, final Object value) {
         if (value == null) {
             writer.writeNull();
         } else {
@@ -158,11 +158,11 @@ public class DocumentCodec implements CollectibleCodec<Document> {
     }
 
     @Override
-    public Document decode(final BSONReader reader) {
+    public Document decode(final BsonReader reader) {
         Document document = new Document();
 
         reader.readStartDocument();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
             String fieldName = reader.readName();
             document.put(fieldName, readValue(reader, fieldName));
         }
@@ -172,12 +172,12 @@ public class DocumentCodec implements CollectibleCodec<Document> {
         return document;
     }
 
-    protected Object readValue(final BSONReader reader, final String fieldName) {
-        BSONType bsonType = reader.getCurrentBSONType();
-        if (bsonType == BSONType.NULL) {
+    protected Object readValue(final BsonReader reader, final String fieldName) {
+        BsonType bsonType = reader.getCurrentBsonType();
+        if (bsonType == BsonType.NULL) {
             reader.readNull();
             return null;
-        } else if (bsonType == BSONType.DOCUMENT) {
+        } else if (bsonType == BsonType.DOCUMENT) {
             return decode(reader);
         } else {
             return registry.get(bsonTypeClassMap.get(bsonType)).decode(reader);

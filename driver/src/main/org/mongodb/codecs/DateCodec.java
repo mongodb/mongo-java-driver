@@ -16,20 +16,20 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 
 import java.util.Date;
 
 public class DateCodec implements Codec<Date> {
     @Override
-    public void encode(final BSONWriter writer, final Date value) {
+    public void encode(final BsonWriter writer, final Date value) {
         writer.writeDateTime(value.getTime());
     }
 
     @Override
-    public Date decode(final BSONReader reader) {
+    public Date decode(final BsonReader reader) {
         return new Date(reader.readDateTime());
     }
 

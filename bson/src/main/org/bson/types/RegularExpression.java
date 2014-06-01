@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -41,8 +41,8 @@ public final class RegularExpression extends BsonValue implements Serializable {
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.REGULAR_EXPRESSION;
+    public BsonType getBsonType() {
+        return BsonType.REGULAR_EXPRESSION;
     }
 
     public String getPattern() {

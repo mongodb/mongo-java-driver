@@ -16,8 +16,8 @@
 
 package org.bson.codecs.configuration;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 
 class LazyCodec<T> implements Codec<T> {
@@ -31,7 +31,7 @@ class LazyCodec<T> implements Codec<T> {
     }
 
     @Override
-    public void encode(final BSONWriter writer, final T value) {
+    public void encode(final BsonWriter writer, final T value) {
         getWrapped().encode(writer, value);
     }
 
@@ -41,7 +41,7 @@ class LazyCodec<T> implements Codec<T> {
     }
 
     @Override
-    public T decode(final BSONReader reader) {
+    public T decode(final BsonReader reader) {
         return getWrapped().decode(reader);
     }
 

@@ -16,9 +16,9 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONType;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonType;
+import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -36,16 +36,16 @@ public class ListCodec implements Codec<List> {
     }
 
     @Override
-    public List decode(final BSONReader reader) {
+    public List decode(final BsonReader reader) {
         reader.readStartArray();
         List list = new ArrayList();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
             Object value;
-            if (reader.getCurrentBSONType() == BSONType.NULL) {
+            if (reader.getCurrentBsonType() == BsonType.NULL) {
                 reader.readNull();
                 value = null;
             } else {
-                value = registry.get(bsonTypeClassMap.get(reader.getCurrentBSONType())).decode(reader);
+                value = registry.get(bsonTypeClassMap.get(reader.getCurrentBsonType())).decode(reader);
             }
             list.add(value);
         }
@@ -54,7 +54,7 @@ public class ListCodec implements Codec<List> {
     }
 
     @Override
-    public void encode(final BSONWriter writer, final List list) {
+    public void encode(final BsonWriter writer, final List list) {
         writer.writeStartArray();
         for (final Object value : list) {
             if (value == null) {

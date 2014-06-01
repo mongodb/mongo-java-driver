@@ -16,8 +16,8 @@
 
 package org.mongodb;
 
-import org.bson.BSONBinaryReader;
-import org.bson.BSONBinaryWriter;
+import org.bson.BsonBinaryReader;
+import org.bson.BsonBinaryWriter;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 import org.bson.codecs.Codec;
@@ -55,7 +55,7 @@ public class BSONDocumentBuffer {
      * @param codec    the codec to facilitate the transformation
      */
     public <T> BSONDocumentBuffer(final T document, final Codec<T> codec) {
-        BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer(), true);
+        BsonBinaryWriter writer = new BsonBinaryWriter(new BasicOutputBuffer(), true);
         try {
             codec.encode(writer, document);
             this.bytes = writer.getBuffer().toByteArray();
@@ -83,7 +83,7 @@ public class BSONDocumentBuffer {
      * @return the decoded document
      */
     public <T> T decode(final Codec<T> codec) {
-        BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(getByteBuffer()), true);
+        BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(getByteBuffer()), true);
         try {
             return codec.decode(reader);
         } finally {

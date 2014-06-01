@@ -16,14 +16,14 @@
 
 package org.bson;
 
-public class BSONBinaryWriterSettings {
+public class BsonBinaryWriterSettings {
     private final int maxDocumentSize;
 
-    public BSONBinaryWriterSettings(final int maxDocumentSize) {
+    public BsonBinaryWriterSettings(final int maxDocumentSize) {
         this.maxDocumentSize = maxDocumentSize;
     }
 
-    public BSONBinaryWriterSettings() {
+    public BsonBinaryWriterSettings() {
         this(Integer.MAX_VALUE);
     }
 

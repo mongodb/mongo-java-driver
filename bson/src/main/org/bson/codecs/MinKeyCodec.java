@@ -16,18 +16,18 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.MinKey;
 
 public class MinKeyCodec implements Codec<MinKey> {
     @Override
-    public void encode(final BSONWriter writer, final MinKey value) {
+    public void encode(final BsonWriter writer, final MinKey value) {
         writer.writeMinKey();
     }
 
     @Override
-    public MinKey decode(final BSONReader reader) {
+    public MinKey decode(final BsonReader reader) {
         reader.readMinKey();
         return new MinKey();
     }

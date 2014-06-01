@@ -16,5 +16,5 @@
 
 package org.bson;
 
-public class BSONReaderSettings {
+public class BsonReaderSettings {
 }

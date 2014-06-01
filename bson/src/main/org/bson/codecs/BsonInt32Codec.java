@@ -16,8 +16,8 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.BsonInt32;
 
 /**
@@ -27,12 +27,12 @@ import org.bson.types.BsonInt32;
  */
 public class BsonInt32Codec implements Codec<BsonInt32> {
     @Override
-    public BsonInt32 decode(final BSONReader reader) {
+    public BsonInt32 decode(final BsonReader reader) {
         return new BsonInt32(reader.readInt32());
     }
 
     @Override
-    public void encode(final BSONWriter writer, final BsonInt32 value) {
+    public void encode(final BsonWriter writer, final BsonInt32 value) {
         writer.writeInt32(value.getValue());
     }
 

@@ -16,19 +16,19 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.Code;
 
 public class CodeCodec implements Codec<Code> {
 
     @Override
-    public void encode(final BSONWriter writer, final Code value) {
+    public void encode(final BsonWriter writer, final Code value) {
         writer.writeJavaScript(value.getCode());
     }
 
     @Override
-    public Code decode(final BSONReader bsonReader) {
+    public Code decode(final BsonReader bsonReader) {
         return new Code(bsonReader.readJavaScript());
     }
 

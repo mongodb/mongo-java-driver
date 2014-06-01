@@ -79,7 +79,7 @@ class LazyBSONObjectSpecification extends Specification {
         new MinKey()                                                          | [8, 0, 0, 0, -1, 102, 0, 0]
         new MaxKey()                                                          | [8, 0, 0, 0, 127, 102, 0, 0]
 
-        type = BSONType.findByValue(bytes[4])
+        type = BsonType.findByValue(bytes[4])
     }
 
     def 'should have nested items as lazy'() {

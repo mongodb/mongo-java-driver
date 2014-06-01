@@ -16,9 +16,9 @@
 
 package org.mongodb.json;
 
-import org.bson.AbstractBSONWriter;
-import org.bson.BSONContextType;
+import org.bson.AbstractBsonWriter;
 import org.bson.BSONException;
+import org.bson.BsonContextType;
 import org.bson.types.Binary;
 import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
@@ -38,7 +38,7 @@ import static javax.xml.bind.DatatypeConverter.printBase64Binary;
  *
  * @since 3.0.0
  */
-public class JSONWriter extends AbstractBSONWriter {
+public class JSONWriter extends AbstractBsonWriter {
     private final Writer writer;
     private final JSONWriterSettings settings;
 
@@ -50,7 +50,7 @@ public class JSONWriter extends AbstractBSONWriter {
         super(settings);
         this.settings = settings;
         this.writer = writer;
-        setContext(new Context(null, BSONContextType.TOP_LEVEL, ""));
+        setContext(new Context(null, BsonContextType.TOP_LEVEL, ""));
     }
 
     @Override
@@ -78,7 +78,7 @@ public class JSONWriter extends AbstractBSONWriter {
             }
             writer.write("{");
 
-            BSONContextType contextType = (getState() == State.SCOPE_DOCUMENT) ? BSONContextType.SCOPE_DOCUMENT : BSONContextType.DOCUMENT;
+            BsonContextType contextType = (getState() == State.SCOPE_DOCUMENT) ? BsonContextType.SCOPE_DOCUMENT : BsonContextType.DOCUMENT;
             setContext(new Context(getContext(), contextType, settings.getIndentCharacters()));
             setState(State.NAME);
         } catch (IOException e) {
@@ -102,7 +102,7 @@ public class JSONWriter extends AbstractBSONWriter {
                 writer.write(" }");
             }
 
-            if (getContext().getContextType() == BSONContextType.SCOPE_DOCUMENT) {
+            if (getContext().getContextType() == BsonContextType.SCOPE_DOCUMENT) {
                 setContext(getContext().getParentContext());
                 writeEndDocument();
             } else {
@@ -129,7 +129,7 @@ public class JSONWriter extends AbstractBSONWriter {
             writeNameHelper(getName());
             writer.write("[");
 
-            setContext(new Context(getContext(), BSONContextType.ARRAY, settings.getIndentCharacters()));
+            setContext(new Context(getContext(), BsonContextType.ARRAY, settings.getIndentCharacters()));
             setState(State.VALUE);
         } catch (IOException e) {
             throwBSONException(e);
@@ -578,11 +578,11 @@ public class JSONWriter extends AbstractBSONWriter {
         throw new BSONException("Wrapping IOException", e);
     }
 
-    public class Context extends AbstractBSONWriter.Context {
+    public class Context extends AbstractBsonWriter.Context {
         private final String indentation;
         private boolean hasElements;
 
-        public Context(final Context parentContext, final BSONContextType contextType, final String indentChars) {
+        public Context(final Context parentContext, final BsonContextType contextType, final String indentChars) {
             super(parentContext, contextType);
             this.indentation = (parentContext == null) ? indentChars : parentContext.indentation + indentChars;
         }
