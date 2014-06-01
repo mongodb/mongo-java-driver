@@ -192,7 +192,7 @@ final class CommandOperationHelper {
                                                        final Decoder<BsonDocument> decoder,
                                                        final Connection connection, final ReadPreference readPreference) {
         return new CommandProtocol(namespace.getDatabaseName(), wrapCommand(command, readPreference, connection.getServerDescription()),
-                                   getQueryFlags(readPreference), decoder).execute(connection);
+                                   getQueryFlags(readPreference), new NoOpFieldNameValidator(), decoder).execute(connection);
     }
 
     static CommandResult executeWrappedCommandProtocol(final String database, final BsonDocument command,
@@ -381,7 +381,7 @@ final class CommandOperationHelper {
                                                                          final Function<CommandResult, T> transformer) {
         final SingleResultFuture<T> future = new SingleResultFuture<T>();
         new CommandProtocol(database, wrapCommand(command, readPreference, connection.getServerDescription()),
-                            getQueryFlags(readPreference), decoder)
+                            getQueryFlags(readPreference), new NoOpFieldNameValidator(), decoder)
         .executeAsync(connection).register(new SingleResultCallback<CommandResult>() {
             @Override
             public void onResult(final CommandResult result, final MongoException e) {
