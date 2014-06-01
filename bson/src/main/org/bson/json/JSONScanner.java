@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.bson.json;
 
 import org.bson.types.RegularExpression;
 
 /**
- * Parses the string representation of a JSON object into a set of {@link JSONToken}-derived objects.
+ * Parses the string representation of a JSON object into a set of {@link JsonToken}-derived objects.
  *
- * @since 3.0.0
+ * @since 3.0
  */
-class JSONScanner {
+class JsonScanner {
 
-    private final JSONBuffer buffer;
+    private final JsonBuffer buffer;
 
     /**
      * Constructs a a new {@code JSONScanner} that produces values scanned from specified {@code JSONBuffer}.
      *
      * @param buffer A buffer to be scanned.
      */
-    public JSONScanner(final JSONBuffer buffer) {
+    public JsonScanner(final JsonBuffer buffer) {
         this.buffer = buffer;
     }
 
@@ -41,8 +41,8 @@ class JSONScanner {
      *
      * @param json A string representation of a JSON to be scanned.
      */
-    public JSONScanner(final String json) {
-        this(new JSONBuffer(json));
+    public JsonScanner(final String json) {
+        this(new JsonBuffer(json));
     }
 
     /**
@@ -50,35 +50,35 @@ class JSONScanner {
      * {@code JSONTokenType.END_OF_FILE} type.
      *
      * @return The next token.
-     * @throws JSONParseException if source is invalid.
+     * @throws JsonParseException if source is invalid.
      */
-    public JSONToken nextToken() {
+    public JsonToken nextToken() {
 
         int c = buffer.read();
         while (c != -1 && Character.isWhitespace(c)) {
             c = buffer.read();
         }
         if (c == -1) {
-            return new JSONToken(JSONTokenType.END_OF_FILE, "<eof>");
+            return new JsonToken(JsonTokenType.END_OF_FILE, "<eof>");
         }
 
         switch (c) {
             case '{':
-                return new JSONToken(JSONTokenType.BEGIN_OBJECT, "{");
+                return new JsonToken(JsonTokenType.BEGIN_OBJECT, "{");
             case '}':
-                return new JSONToken(JSONTokenType.END_OBJECT, "}");
+                return new JsonToken(JsonTokenType.END_OBJECT, "}");
             case '[':
-                return new JSONToken(JSONTokenType.BEGIN_ARRAY, "[");
+                return new JsonToken(JsonTokenType.BEGIN_ARRAY, "[");
             case ']':
-                return new JSONToken(JSONTokenType.END_ARRAY, "]");
+                return new JsonToken(JsonTokenType.END_ARRAY, "]");
             case '(':
-                return new JSONToken(JSONTokenType.LEFT_PAREN, "(");
+                return new JsonToken(JsonTokenType.LEFT_PAREN, "(");
             case ')':
-                return new JSONToken(JSONTokenType.RIGHT_PAREN, ")");
+                return new JsonToken(JsonTokenType.RIGHT_PAREN, ")");
             case ':':
-                return new JSONToken(JSONTokenType.COLON, ":");
+                return new JsonToken(JsonTokenType.COLON, ":");
             case ',':
-                return new JSONToken(JSONTokenType.COMMA, ",");
+                return new JsonToken(JsonTokenType.COMMA, ",");
             case '\'':
             case '"':
                 return scanString((char) c);
@@ -92,7 +92,7 @@ class JSONScanner {
                 } else {
                     int position = buffer.getPosition();
                     buffer.unread(c);
-                    throw new JSONParseException("Invalid JSON input. Position: %d. Character: '%c'.", position, c);
+                    throw new JsonParseException("Invalid JSON input. Position: %d. Character: '%c'.", position, c);
                 }
         }
     }
@@ -109,9 +109,9 @@ class JSONScanner {
      * Options can include 'i','m','x','s'
      *
      * @return The regular expression token.
-     * @throws JSONParseException if regular expression representation is not valid.
+     * @throws JsonParseException if regular expression representation is not valid.
      */
-    private JSONToken scanRegularExpression() {
+    private JsonToken scanRegularExpression() {
 
         int start = buffer.getPosition() - 1;
         int options = -1;
@@ -170,9 +170,9 @@ class JSONScanner {
                     int end = buffer.getPosition();
                     RegularExpression regex
                         = new RegularExpression(buffer.substring(start + 1, options - 1), buffer.substring(options, end));
-                    return new JSONToken(JSONTokenType.REGULAR_EXPRESSION, regex);
+                    return new JsonToken(JsonTokenType.REGULAR_EXPRESSION, regex);
                 case INVALID:
-                    throw new JSONParseException("Invalid JSON regular expression. Position: %d.", buffer.getPosition());
+                    throw new JsonParseException("Invalid JSON regular expression. Position: %d.", buffer.getPosition());
                 default:
             }
         }
@@ -183,7 +183,7 @@ class JSONScanner {
      *
      * @return The string token.
      */
-    private JSONToken scanUnquotedString() {
+    private JsonToken scanUnquotedString() {
         int start = buffer.getPosition() - 1;
         int c = buffer.read();
         while (c == '$' || c == '_' || Character.isLetterOrDigit(c)) {
@@ -191,7 +191,7 @@ class JSONScanner {
         }
         buffer.unread(c);
         String lexeme = buffer.substring(start, buffer.getPosition());
-        return new JSONToken(JSONTokenType.UNQUOTED_STRING, lexeme);
+        return new JsonToken(JsonTokenType.UNQUOTED_STRING, lexeme);
     }
 
     /**
@@ -211,10 +211,10 @@ class JSONScanner {
      * </pre>
      *
      * @return The number token.
-     * @throws JSONParseException if number representation is invalid.
+     * @throws JsonParseException if number representation is invalid.
      */
     //CHECKSTYLE:OFF
-    private JSONToken scanNumber(final char firstChar) {
+    private JsonToken scanNumber(final char firstChar) {
 
         int c = firstChar;
 
@@ -234,7 +234,7 @@ class JSONScanner {
                 break;
         }
 
-        JSONTokenType type = JSONTokenType.INT64;
+        JsonTokenType type = JsonTokenType.INT64;
 
 
         while (true) {
@@ -312,7 +312,7 @@ class JSONScanner {
                     }
                     break;
                 case SAW_DECIMAL_POINT:
-                    type = JSONTokenType.DOUBLE;
+                    type = JsonTokenType.DOUBLE;
                     if (Character.isDigit(c)) {
                         state = NumberState.SAW_FRACTION_DIGITS;
                     } else {
@@ -344,7 +344,7 @@ class JSONScanner {
                     }
                     break;
                 case SAW_EXPONENT_LETTER:
-                    type = JSONTokenType.DOUBLE;
+                    type = JsonTokenType.DOUBLE;
                     switch (c) {
                         case '+':
                         case '-':
@@ -396,7 +396,7 @@ class JSONScanner {
                         c = buffer.read();
                     }
                     if (sawMinusInfinity) {
-                        type = JSONTokenType.DOUBLE;
+                        type = JsonTokenType.DOUBLE;
                         switch (c) {
                             case ',':
                             case '}':
@@ -422,18 +422,18 @@ class JSONScanner {
 
             switch (state) {
                 case INVALID:
-                    throw new JSONParseException("Invalid JSON number");
+                    throw new JsonParseException("Invalid JSON number");
                 case DONE:
                     buffer.unread(c);
                     String lexeme = buffer.substring(start, buffer.getPosition());
-                    if (type == JSONTokenType.DOUBLE) {
-                        return new JSONToken(JSONTokenType.DOUBLE, Double.parseDouble(lexeme));
+                    if (type == JsonTokenType.DOUBLE) {
+                        return new JsonToken(JsonTokenType.DOUBLE, Double.parseDouble(lexeme));
                     } else {
                         long value = Long.parseLong(lexeme);
                         if (value < Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-                            return new JSONToken(JSONTokenType.INT64, value);
+                            return new JsonToken(JsonTokenType.INT64, value);
                         } else {
-                            return new JSONToken(JSONTokenType.INT32, (int) value);
+                            return new JsonToken(JsonTokenType.INT32, (int) value);
                         }
                     }
                 default:
@@ -449,7 +449,7 @@ class JSONScanner {
      * @return The string token.
      */
     //CHECKSTYLE:OFF
-    private JSONToken scanString(final char quoteCharacter) {
+    private JsonToken scanString(final char quoteCharacter) {
 
         StringBuilder sb = new StringBuilder();
 
@@ -497,20 +497,20 @@ class JSONScanner {
                             }
                             break;
                         default:
-                            throw new JSONParseException("Invalid escape sequence in JSON string '\\%c'.", c);
+                            throw new JsonParseException("Invalid escape sequence in JSON string '\\%c'.", c);
                     }
                     break;
 
                 default:
                     if (c == quoteCharacter) {
-                        return new JSONToken(JSONTokenType.STRING, sb.toString());
+                        return new JsonToken(JsonTokenType.STRING, sb.toString());
                     }
                     if (c != -1) {
                         sb.append((char) c);
                     }
             }
             if (c == -1) {
-                throw new JSONParseException("End of file in JSON string.");
+                throw new JsonParseException("End of file in JSON string.");
             }
         }
     }

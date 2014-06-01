@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-package org.mongodb.json;
+package org.bson.json;
 
 
 import static java.lang.String.format;
 
 /**
  * JSONParseException indicates some exception happened during JSON processing.
+ *
+ * @since 3.0
  */
-public class JSONParseException extends RuntimeException {
+public class JsonParseException extends RuntimeException {
 
 
     private static final long serialVersionUID = -6722022620020198727L;
@@ -30,7 +32,7 @@ public class JSONParseException extends RuntimeException {
     /**
      * Constructs a new runtime exception with null as its detail message.
      */
-    public JSONParseException() {
+    public JsonParseException() {
         super();
     }
 
@@ -39,7 +41,7 @@ public class JSONParseException extends RuntimeException {
      *
      * @param s The detail message.
      */
-    public JSONParseException(final String s) {
+    public JsonParseException(final String s) {
         super(s);
     }
 
@@ -49,7 +51,7 @@ public class JSONParseException extends RuntimeException {
      * @param pattern A {@link  java.util.Formatter format string}.
      * @param args    the arguments to insert into the pattern String
      */
-    public JSONParseException(final String pattern, final Object... args) {
+    public JsonParseException(final String pattern, final Object... args) {
         super(format(pattern, args));
     }
 
@@ -58,7 +60,7 @@ public class JSONParseException extends RuntimeException {
      *
      * @param t the throwable root case
      */
-    public JSONParseException(final Throwable t) {
+    public JsonParseException(final Throwable t) {
         super(t);
     }
 }
