@@ -16,8 +16,8 @@
 
 package org.mongodb;
 
+import org.bson.codecs.Codec;
 import org.mongodb.annotations.Immutable;
-import org.mongodb.codecs.PrimitiveCodecs;
 
 @Immutable
 public final class MongoCollectionOptions extends MongoDatabaseOptions {
@@ -27,8 +27,6 @@ public final class MongoCollectionOptions extends MongoDatabaseOptions {
 
     public MongoCollectionOptions withDefaults(final MongoDatabaseOptions options) {
         Builder builder = new Builder();
-        builder.primitiveCodecs = getPrimitiveCodecs() != null ? getPrimitiveCodecs()
-                                                               : options.getPrimitiveCodecs();
         builder.writeConcern = getWriteConcern() != null ? getWriteConcern() : options.getWriteConcern();
         builder.readPreference = getReadPreference() != null ? getReadPreference() : options.getReadPreference();
         builder.documentCodec = getDocumentCodec() != null ? getDocumentCodec() : options.getDocumentCodec();
@@ -37,15 +35,15 @@ public final class MongoCollectionOptions extends MongoDatabaseOptions {
 
     public static final class Builder extends MongoDatabaseOptions.Builder {
         public MongoCollectionOptions build() {
-            return new MongoCollectionOptions(primitiveCodecs, writeConcern, readPreference, documentCodec);
+            return new MongoCollectionOptions(writeConcern, readPreference, documentCodec);
         }
 
         private Builder() {
         }
     }
 
-    private MongoCollectionOptions(final PrimitiveCodecs primitiveCodecs, final WriteConcern writeConcern,
-                                   final ReadPreference readPreference, final Codec<Document> documentCodec) {
-        super(primitiveCodecs, writeConcern, readPreference, documentCodec);
+    private MongoCollectionOptions(final WriteConcern writeConcern, final ReadPreference readPreference,
+                                   final Codec<Document> documentCodec) {
+        super(writeConcern, readPreference, documentCodec);
     }
 }

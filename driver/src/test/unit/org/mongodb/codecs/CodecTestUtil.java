@@ -19,21 +19,15 @@ package org.mongodb.codecs;
 import org.bson.BSONBinaryReader;
 import org.bson.BSONBinaryWriter;
 import org.bson.ByteBufNIO;
+import org.bson.codecs.Codec;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
-import org.mongodb.Codec;
 import org.mongodb.Document;
 
 import java.nio.ByteBuffer;
 
 public final class CodecTestUtil {
-    private CodecTestUtil() { }
-
     static BSONBinaryReader prepareReaderWithObjectToBeDecoded(final Object objectToDecode) {
-        return prepareReaderWithObjectToBeDecoded(objectToDecode, Codecs.createDefault());
-    }
-
-    static BSONBinaryReader prepareReaderWithObjectToBeDecoded(final Object objectToDecode, final Codecs codecs) {
         //Need to encode it wrapped in a document to conform to the validation
         Document document = new Document("wrapperDocument", objectToDecode);
 
@@ -42,7 +36,7 @@ public final class CodecTestUtil {
         BSONBinaryWriter writer = new BSONBinaryWriter(outputBuffer, true);
         byte[] documentAsByteArrayForReader;
         try {
-            codecs.encode(writer, document);
+            new DocumentCodec().encode(writer, document);
             documentAsByteArrayForReader = outputBuffer.toByteArray();
         } finally {
             writer.close();
@@ -71,4 +65,6 @@ public final class CodecTestUtil {
 
         return new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(documentAsByteArrayForReader))), false);
     }
+
+    private CodecTestUtil() { }
 }

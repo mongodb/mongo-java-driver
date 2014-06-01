@@ -16,8 +16,9 @@
 
 package org.mongodb.protocol.message;
 
+import org.bson.FieldNameValidator;
+import org.bson.codecs.Encoder;
 import org.bson.io.OutputBuffer;
-import org.mongodb.Encoder;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.InsertRequest;
 
@@ -45,7 +46,7 @@ public class InsertMessage<T> extends RequestMessage {
         for (int i = 0; i < insertRequestList.size(); i++) {
             T document = insertRequestList.get(i).getDocument();
             int pos = buffer.getPosition();
-            addDocument(document, encoder, buffer);
+            addDocument(document, encoder, buffer, createValidator());
             if (buffer.getPosition() - messageStartPosition > getSettings().getMaxMessageSize()) {
                 buffer.truncateToPosition(pos);
                 return new InsertMessage<T>(getCollectionName(), ordered, writeConcern,
@@ -53,6 +54,14 @@ public class InsertMessage<T> extends RequestMessage {
             }
         }
         return null;
+    }
+
+    private FieldNameValidator createValidator() {
+        if (getCollectionName().endsWith(".system.indexes")) {
+            return new NoOpFieldNameValidator();
+        } else {
+            return new StorageDocumentFieldNameValidator();
+        }
     }
 
     private void writeInsertPrologue(final OutputBuffer buffer) {

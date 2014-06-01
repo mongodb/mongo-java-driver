@@ -18,14 +18,15 @@ package org.bson;
 
 import org.bson.io.InputBuffer;
 import org.bson.io.OutputBuffer;
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 
 import java.util.Stack;
 
-public class BSONBinaryWriter extends BSONWriter {
+public class BSONBinaryWriter extends AbstractBSONWriter {
     private final BSONBinaryWriterSettings binaryWriterSettings;
 
     private final OutputBuffer buffer;
@@ -33,13 +34,27 @@ public class BSONBinaryWriter extends BSONWriter {
     private final Stack<Integer> maxDocumentSizeStack = new Stack<Integer>();
     private Mark mark;
 
+    public BSONBinaryWriter(final OutputBuffer buffer, final FieldNameValidator validator) {
+        this(new BSONWriterSettings(), new BSONBinaryWriterSettings(), buffer, validator);
+    }
+
     public BSONBinaryWriter(final OutputBuffer buffer, final boolean closeBuffer) {
         this(new BSONWriterSettings(), new BSONBinaryWriterSettings(), buffer, closeBuffer);
     }
 
     public BSONBinaryWriter(final BSONWriterSettings settings, final BSONBinaryWriterSettings binaryWriterSettings,
                             final OutputBuffer buffer, final boolean closeBuffer) {
-        super(settings);
+        this(settings, binaryWriterSettings, buffer, new NoOpFieldNameValidator(), closeBuffer);
+    }
+
+    public BSONBinaryWriter(final BSONWriterSettings settings, final BSONBinaryWriterSettings binaryWriterSettings,
+                            final OutputBuffer buffer, final FieldNameValidator validator) {
+        this(settings, binaryWriterSettings, buffer, validator, false);
+    }
+
+    private BSONBinaryWriter(final BSONWriterSettings settings, final BSONBinaryWriterSettings binaryWriterSettings,
+                             final OutputBuffer buffer, final FieldNameValidator validator, final boolean closeBuffer) {
+        super(settings, validator);
         this.binaryWriterSettings = binaryWriterSettings;
         this.buffer = buffer;
         this.closeBuffer = closeBuffer;
@@ -251,7 +266,7 @@ public class BSONBinaryWriter extends BSONWriter {
     }
 
     @Override
-    public void writeTimestamp(final BSONTimestamp value) {
+    public void writeTimestamp(final Timestamp value) {
         checkPreconditions("writeTimestamp", State.VALUE);
 
         buffer.write(BSONType.TIMESTAMP.getValue());
@@ -268,6 +283,19 @@ public class BSONBinaryWriter extends BSONWriter {
 
         buffer.write(BSONType.UNDEFINED.getValue());
         writeCurrentName();
+
+        setState(getNextState());
+    }
+
+    @Override
+    public  void writeDBPointer(final DBPointer dbPointer) {
+        checkPreconditions("writeDBPointer", State.VALUE);
+
+        buffer.write(BSONType.DB_POINTER.getValue());
+        writeCurrentName();
+
+        buffer.writeString(dbPointer.getNamespace());
+        buffer.write(dbPointer.getId().toByteArray());
 
         setState(getNextState());
     }
@@ -345,15 +373,26 @@ public class BSONBinaryWriter extends BSONWriter {
     @Override
     public void pipe(final BSONReader reader) {
         if (reader instanceof BSONBinaryReader) {
+            BSONBinaryReader binaryReader = (BSONBinaryReader) reader;
             if (getState() == State.VALUE) {
                 buffer.write(BSONType.DOCUMENT.getValue());
                 writeCurrentName();
             }
-            InputBuffer inputBuffer = ((BSONBinaryReader) reader).getBuffer();
+            InputBuffer inputBuffer = binaryReader.getBuffer();
             int size = inputBuffer.readInt32();
             buffer.writeInt(size);
             buffer.write(inputBuffer.readBytes(size - 4));
-            reader.setState(BSONReader.State.TYPE);
+            binaryReader.setState(AbstractBSONReader.State.TYPE);
+
+            if (getContext() == null) {
+                setState(State.DONE);
+            } else {
+                if (getContext().getContextType() == BSONContextType.JAVASCRIPT_WITH_SCOPE) {
+                    backpatchSize(); // size of the JavaScript with scope value
+                    setContext(getContext().getParentContext());
+                }
+                setState(getNextState());
+            }
         } else {
             super.pipe(reader);
         }
@@ -399,7 +438,7 @@ public class BSONBinaryWriter extends BSONWriter {
         buffer.backpatchSize(size);
     }
 
-    public class Context extends BSONWriter.Context {
+    public class Context extends AbstractBSONWriter.Context {
         private final int startPosition;
         private int index; // used when contextType is an array
 
@@ -425,7 +464,7 @@ public class BSONBinaryWriter extends BSONWriter {
         }
     }
 
-    protected class Mark extends BSONWriter.Mark {
+    protected class Mark extends AbstractBSONWriter.Mark {
         private final int position;
 
         protected Mark() {

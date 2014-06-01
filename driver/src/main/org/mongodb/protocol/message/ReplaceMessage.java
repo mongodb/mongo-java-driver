@@ -16,9 +16,8 @@
 
 package org.mongodb.protocol.message;
 
+import org.bson.codecs.Encoder;
 import org.bson.io.OutputBuffer;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.operation.BaseUpdateRequest;
 import org.mongodb.operation.ReplaceRequest;
 
@@ -29,8 +28,8 @@ public class ReplaceMessage<T> extends BaseUpdateMessage {
     private final Encoder<T> encoder;
 
     public ReplaceMessage(final String collectionName, final List<ReplaceRequest<T>> replaceRequests,
-                          final Encoder<Document> baseEncoder, final Encoder<T> encoder, final MessageSettings settings) {
-        super(collectionName, OpCode.OP_UPDATE, baseEncoder, settings);
+                          final Encoder<T> encoder, final MessageSettings settings) {
+        super(collectionName, OpCode.OP_UPDATE, settings);
         this.replaceRequests = replaceRequests;
         this.encoder = encoder;
     }
@@ -38,12 +37,11 @@ public class ReplaceMessage<T> extends BaseUpdateMessage {
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeBaseUpdate(buffer);
-        addDocument(replaceRequests.get(0).getReplacement(), encoder, buffer);
+        addDocument(replaceRequests.get(0).getReplacement(), encoder, buffer, new StorageDocumentFieldNameValidator());
         if (replaceRequests.size() == 1) {
             return null;
         } else {
-            return new ReplaceMessage<T>(getCollectionName(), replaceRequests.subList(1, replaceRequests.size()), getBaseEncoder(), encoder,
-                                         getSettings());
+            return new ReplaceMessage<T>(getCollectionName(), replaceRequests.subList(1, replaceRequests.size()), encoder, getSettings());
         }
     }
 

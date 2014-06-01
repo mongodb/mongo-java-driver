@@ -208,8 +208,8 @@ public class MongoAsyncQueryCursorTest extends DatabaseTestCase {
 
     private QueryResult<Document> executeQuery(final Document query, final int numberToReturn, final EnumSet<QueryFlag> queryFlag,
                                                final Connection connection) {
-        return new QueryProtocol<Document>(collection.getNamespace(), queryFlag, 0, numberToReturn, query, null,
-                                           new DocumentCodec(), new DocumentCodec())
+        return new QueryProtocol<Document>(collection.getNamespace(), queryFlag, 0, numberToReturn, wrap(query), null,
+                                           new DocumentCodec())
                .execute(connection);
     }
 

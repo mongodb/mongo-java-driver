@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import org.bson.BsonDocumentReader;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.CreateIndexesOperation;
 import org.mongodb.operation.DropCollectionOperation;
 import org.mongodb.operation.DropIndexOperation;
@@ -54,7 +56,7 @@ class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public List<Document> getIndexes() {
-        return client.execute(new GetIndexesOperation(collectionNamespace), primary());
+        return client.execute(new GetIndexesOperation<Document>(collectionNamespace, new DocumentCodec()), primary());
     }
 
     @Override
@@ -70,7 +72,7 @@ class CollectionAdministrationImpl implements CollectionAdministration {
         CommandResult commandResult = database.executeCommand(collStatsCommand, primary());
         ErrorHandling.handleErrors(commandResult);
 
-        return commandResult.getResponse();
+        return new DocumentCodec().decode(new BsonDocumentReader(commandResult.getResponse()));
     }
 
     @Override

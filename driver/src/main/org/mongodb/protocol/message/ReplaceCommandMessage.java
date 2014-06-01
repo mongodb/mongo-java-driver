@@ -17,8 +17,8 @@
 package org.mongodb.protocol.message;
 
 import org.bson.BSONBinaryWriter;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.FieldNameValidator;
+import org.bson.codecs.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.ReplaceRequest;
@@ -29,9 +29,9 @@ public class ReplaceCommandMessage<T> extends BaseUpdateCommandMessage<ReplaceRe
     private final Encoder<T> encoder;
 
     public ReplaceCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                 final List<ReplaceRequest<T>> replaceRequests, final Encoder<Document> queryEncoder,
+                                 final List<ReplaceRequest<T>> replaceRequests,
                                  final Encoder<T> encoder, final MessageSettings settings) {
-        super(namespace, ordered, writeConcern, replaceRequests, queryEncoder, settings);
+        super(namespace, ordered, writeConcern, replaceRequests, settings);
         this.encoder = encoder;
     }
 
@@ -42,7 +42,12 @@ public class ReplaceCommandMessage<T> extends BaseUpdateCommandMessage<ReplaceRe
 
     @Override
     protected ReplaceCommandMessage<T> createNextMessage(final List<ReplaceRequest<T>> remainingUpdates) {
-        return new ReplaceCommandMessage<T>(getWriteNamespace(), isOrdered(), getWriteConcern(), remainingUpdates, getCommandEncoder(),
+        return new ReplaceCommandMessage<T>(getWriteNamespace(), isOrdered(), getWriteConcern(), remainingUpdates,
                                             encoder, getSettings());
+    }
+
+    @Override
+    protected FieldNameValidator getUpdateFieldNameValidator() {
+        return new StorageDocumentFieldNameValidator();
     }
 }

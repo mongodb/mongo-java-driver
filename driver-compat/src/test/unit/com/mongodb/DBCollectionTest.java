@@ -20,7 +20,6 @@ package com.mongodb;
 import org.bson.BSONBinarySubType;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONObject;
-import org.bson.BSONWriter;
 import org.bson.io.OutputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
@@ -286,7 +285,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testUpdateWithDBEncoder() {
-        DBObject document = new BasicDBObject("x", 1);
+        DBObject document = new BasicDBObject("_id", 1).append("x", 1);
         collection.insert(document);
         collection.update(new BasicDBObject("x", 1),
                           new BasicDBObject("y", false),
@@ -295,7 +294,7 @@ public class DBCollectionTest extends DatabaseTestCase {
                           WriteConcern.ACKNOWLEDGED,
                           new MyEncoder());
 
-        assertEquals(2, collection.count());
+        assertEquals(1, collection.count());
         assertThat(collection.find(), hasItem(MyEncoder.getConstantObject()));
     }
 
@@ -551,8 +550,8 @@ public class DBCollectionTest extends DatabaseTestCase {
     public void testCompoundCodecWithDefaultValues() {
         assertThat(collection.getObjectCodec(), instanceOf(CompoundDBObjectCodec.class));
         CompoundDBObjectCodec codec = (CompoundDBObjectCodec) collection.getObjectCodec();
-        assertThat(codec.getDecoder(), instanceOf(CollectibleDBObjectCodec.class));
-        assertThat(codec.getEncoder(), instanceOf(CollectibleDBObjectCodec.class));
+        assertThat(codec.getDecoder(), instanceOf(DBObjectCodec.class));
+        assertThat(codec.getEncoder(), instanceOf(DBObjectCodec.class));
     }
 
     @Test
@@ -816,7 +815,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         @Override
         public int writeObject(final OutputBuffer outputBuffer, final BSONObject document) {
             int start = outputBuffer.getPosition();
-            BSONWriter bsonWriter = new BSONBinaryWriter(outputBuffer, false);
+            BSONBinaryWriter bsonWriter = new BSONBinaryWriter(outputBuffer, false);
             try {
                 bsonWriter.writeStartDocument();
                 bsonWriter.writeInt32("_id", 1);

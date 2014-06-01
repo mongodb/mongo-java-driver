@@ -19,22 +19,23 @@ package org.mongodb;
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
 import org.bson.types.ObjectId;
+import org.mongodb.codecs.CollectibleCodec;
 
 class ConcreteCodec implements CollectibleCodec<Concrete> {
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final Concrete c) {
-        bsonWriter.writeStartDocument();
+    public void encode(final BSONWriter writer, final Concrete c) {
+        writer.writeStartDocument();
         if (c.getId() == null) {
             c.setId(new ObjectId());
         }
-        bsonWriter.writeObjectId("_id", c.getId());
-        bsonWriter.writeString("str", c.getStr());
-        bsonWriter.writeInt32("i", c.getI());
-        bsonWriter.writeInt64("l", c.getL());
-        bsonWriter.writeDouble("d", c.getD());
-        bsonWriter.writeDateTime("date", c.getDate());
-        bsonWriter.writeEndDocument();
+        writer.writeObjectId("_id", c.getId());
+        writer.writeString("str", c.getStr());
+        writer.writeInt32("i", c.getI());
+        writer.writeInt64("l", c.getL());
+        writer.writeDouble("d", c.getD());
+        writer.writeDateTime("date", c.getDate());
+        writer.writeEndDocument();
     }
 
     @Override
@@ -57,7 +58,17 @@ class ConcreteCodec implements CollectibleCodec<Concrete> {
     }
 
     @Override
-    public Object getId(final Concrete document) {
+    public boolean documentHasId(final Concrete document) {
+        return true;
+    }
+
+    @Override
+    public ObjectId getDocumentId(final Concrete document) {
         return document.getId();
+    }
+
+    @Override
+    public void generateIdIfAbsentFromDocument(final Concrete document) {
+
     }
 }

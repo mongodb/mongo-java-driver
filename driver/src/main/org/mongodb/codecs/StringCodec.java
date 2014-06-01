@@ -18,12 +18,12 @@ package org.mongodb.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 
 public class StringCodec implements Codec<String> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final String value) {
-        bsonWriter.writeString(value);
+    public void encode(final BSONWriter writer, final String value) {
+        writer.writeString(value);
     }
 
     @Override

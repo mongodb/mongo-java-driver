@@ -17,10 +17,11 @@
 package org.mongodb.json;
 
 import org.bson.BSONInvalidOperationException;
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -606,7 +607,7 @@ public class JSONWriterTest {
     @Test
     public void testTimestampStrict() {
         writer.writeStartDocument();
-        writer.writeTimestamp("timestamp", new BSONTimestamp(1000, 1));
+        writer.writeTimestamp("timestamp", new Timestamp(1000, 1));
         writer.writeEndDocument();
         String expected = "{ \"timestamp\" : { \"$timestamp\" : { \"t\" : 1000, \"i\" : 1 } } }";
         assertEquals(expected, stringWriter.toString());
@@ -616,7 +617,7 @@ public class JSONWriterTest {
     public void testTimestampShell() {
         writer = new JSONWriter(stringWriter, new JSONWriterSettings(JSONMode.SHELL));
         writer.writeStartDocument();
-        writer.writeTimestamp("timestamp", new BSONTimestamp(1000, 1));
+        writer.writeTimestamp("timestamp", new Timestamp(1000, 1));
         writer.writeEndDocument();
         String expected = "{ \"timestamp\" : Timestamp(1000, 1) }";
         assertEquals(expected, stringWriter.toString());
@@ -628,6 +629,15 @@ public class JSONWriterTest {
         writer.writeUndefined("undefined");
         writer.writeEndDocument();
         String expected = "{ \"undefined\" : undefined }";
+        assertEquals(expected, stringWriter.toString());
+    }
+
+    @Test
+    public void testDBPointer() {
+        writer.writeStartDocument();
+        writer.writeDBPointer("dbPointer", new DBPointer("my.test", new ObjectId("4d0ce088e447ad08b4721a37")));
+        writer.writeEndDocument();
+        String expected = "{ \"dbPointer\" : { \"$ref\" : \"my.test\", \"$id\" : { \"$oid\" : \"4d0ce088e447ad08b4721a37\" } } }";
         assertEquals(expected, stringWriter.toString());
     }
 }

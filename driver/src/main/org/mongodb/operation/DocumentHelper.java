@@ -16,27 +16,38 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Document;
+import org.bson.types.BsonBoolean;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonInt64;
+import org.bson.types.BsonValue;
 
 final class DocumentHelper {
 
-    private DocumentHelper() { }
+    private DocumentHelper() {
+    }
 
-    static void putIfTrue(final Document command, final String key, final boolean condition) {
+    static void putIfTrue(final BsonDocument command, final String key, final boolean condition) {
         if (condition) {
-            command.put(key, condition);
+            command.put(key, BsonBoolean.TRUE);
         }
     }
 
-    static void putIfNotNull(final Document command, final String key, final Object value) {
+    static void putIfNotNull(final BsonDocument command, final String key, final BsonValue value) {
         if (value != null) {
             command.put(key, value);
         }
     }
 
-    static void putIfNotZero(final Document command, final String key, final Number value) {
-        if (value.longValue() != 0) {
-            command.put(key, value);
+    static void putIfNotZero(final BsonDocument command, final String key, final int value) {
+        if (value != 0) {
+            command.put(key, new BsonInt32(value));
+        }
+    }
+
+    static void putIfNotZero(final BsonDocument command, final String key, final long value) {
+        if (value != 0) {
+            command.put(key, new BsonInt64(value));
         }
     }
 }

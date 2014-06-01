@@ -16,8 +16,8 @@
 
 package org.mongodb.async.rxjava;
 
+import org.bson.codecs.Codec;
 import org.mongodb.Block;
-import org.mongodb.CollectibleCodec;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
 import org.mongodb.MongoCollectionOptions;
@@ -57,13 +57,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public CollectibleCodec<T> getCodec() {
+    public Codec<T> getCodec() {
         return wrapped.getCodec();
     }
 
     @Override
     public MongoView<T> find(final Document filter) {
-        return new MongoCollectionView(null).find(filter);
+        return new MongoCollectionView(filter);
     }
 
     @Override

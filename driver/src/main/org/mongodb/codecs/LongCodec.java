@@ -18,12 +18,12 @@ package org.mongodb.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 
 public class LongCodec implements Codec<Long> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final Long value) {
-        bsonWriter.writeInt64(value);
+    public void encode(final BSONWriter writer, final Long value) {
+        writer.writeInt64(value);
     }
 
     @Override

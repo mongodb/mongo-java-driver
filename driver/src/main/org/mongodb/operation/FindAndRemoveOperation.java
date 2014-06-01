@@ -16,13 +16,14 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Decoder;
-import org.mongodb.Document;
+import org.bson.codecs.Decoder;
+import org.bson.types.BsonBoolean;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
-import org.mongodb.codecs.DocumentCodec;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
@@ -38,34 +39,37 @@ import static org.mongodb.operation.DocumentHelper.putIfNotZero;
 public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
     private final MongoNamespace namespace;
     private final FindAndRemove<T> findAndRemove;
-    private final CommandResultWithPayloadDecoder<T> resultDecoder;
+    private final Decoder<T> resultDecoder;
 
     public FindAndRemoveOperation(final MongoNamespace namespace, final FindAndRemove<T> findAndRemove, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
         this.findAndRemove = findAndRemove;
-        this.resultDecoder = new CommandResultWithPayloadDecoder<T>(resultDecoder, "value");
+        this.resultDecoder = resultDecoder;
     }
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getFindAndRemoveDocument(), new DocumentCodec(), resultDecoder, binding,
-                                             FindAndModifyHelper.<T>transformer());
+        return executeWrappedCommandProtocol(namespace, getFindAndRemoveDocument(),
+                                             CommandResultDocumentCodec.create(resultDecoder, "value"),
+                                             binding, FindAndModifyHelper.<T>transformer());
     }
 
     @Override
     public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getFindAndRemoveDocument(), new DocumentCodec(), resultDecoder, binding,
-                                                  FindAndModifyHelper.<T>transformer());
+        return executeWrappedCommandProtocolAsync(namespace, getFindAndRemoveDocument(),
+                                                  CommandResultDocumentCodec.create(resultDecoder, "value"),
+                                                  binding, FindAndModifyHelper.<T>transformer());
     }
 
-    private Document getFindAndRemoveDocument() {
-        Document command = new Document("findandmodify", namespace.getCollectionName());
+    private BsonDocument getFindAndRemoveDocument() {
+        BsonDocument command = new BsonDocument("findandmodify", new BsonString(namespace.getCollectionName()));
         putIfNotNull(command, "query", findAndRemove.getFilter());
         putIfNotNull(command, "fields", findAndRemove.getSelector());
         putIfNotNull(command, "sort", findAndRemove.getSortCriteria());
         putIfNotZero(command, "maxTimeMS", findAndRemove.getOptions().getMaxTime(MILLISECONDS));
 
-        command.put("remove", true);
+        command.put("remove", BsonBoolean.TRUE);
         return command;
     }
+
 }

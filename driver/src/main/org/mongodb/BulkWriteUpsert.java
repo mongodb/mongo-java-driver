@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import org.bson.types.BsonValue;
+
 /**
  * Represents an item in the bulk write that was upserted.
  *
@@ -23,9 +25,9 @@ package org.mongodb;
  */
 public class BulkWriteUpsert {
     private final int index;
-    private final Object id;  // TODO: change to BsonValue, when such a concept exists
+    private final BsonValue id;
 
-    public BulkWriteUpsert(final int index, final Object id) {
+    public BulkWriteUpsert(final int index, final BsonValue id) {
         this.index = index;
         this.id = id;
     }
@@ -44,7 +46,7 @@ public class BulkWriteUpsert {
      *
      * @return the id
      */
-    public Object getId() {
+    public BsonValue getId() {
         return id;
     }
 

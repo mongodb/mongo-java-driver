@@ -19,9 +19,8 @@ package org.mongodb.protocol.message;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONBinaryWriterSettings;
 import org.bson.BSONWriterSettings;
+import org.bson.FieldNameValidator;
 import org.bson.io.OutputBuffer;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 
@@ -35,16 +34,14 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
     private final MongoNamespace writeNamespace;
     private final boolean ordered;
     private final WriteConcern writeConcern;
-    private final Encoder<Document> commandEncoder;
 
     public BaseWriteCommandMessage(final MongoNamespace writeNamespace, final boolean ordered, final WriteConcern writeConcern,
-                                   final Encoder<Document> commandEncoder, final MessageSettings settings) {
+                                   final MessageSettings settings) {
         super(new MongoNamespace(writeNamespace.getDatabaseName(), COMMAND_COLLECTION_NAME).getFullName(), OP_QUERY, settings);
 
         this.writeNamespace = writeNamespace;
         this.ordered = ordered;
         this.writeConcern = writeConcern;
-        this.commandEncoder = commandEncoder;
     }
 
     public MongoNamespace getWriteNamespace() {
@@ -57,10 +54,6 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
 
     public boolean isOrdered() {
         return ordered;
-    }
-
-    public Encoder<Document> getCommandEncoder() {
-        return commandEncoder;
     }
 
     public BaseWriteCommandMessage encode(final OutputBuffer buffer) {
@@ -78,7 +71,7 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         int commandStartPosition = buffer.getPosition();
         BSONBinaryWriter writer = new BSONBinaryWriter(new BSONWriterSettings(),
                                                        new BSONBinaryWriterSettings(getSettings().getMaxDocumentSize() + HEADROOM),
-                                                       buffer, false);
+                                                       buffer, getFieldNameValidator());
         try {
             writer.writeStartDocument();
             writeCommandPrologue(writer);
@@ -89,6 +82,8 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         }
         return nextMessage;
     }
+
+    protected abstract FieldNameValidator getFieldNameValidator();
 
     private void writeCommandHeader(final OutputBuffer buffer) {
         buffer.writeInt(0);
@@ -123,7 +118,7 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         writer.writeBoolean("ordered", ordered);
         if (!getWriteConcern().isServerDefault()) {
             writer.writeName("writeConcern");
-            getCommandEncoder().encode(writer, getWriteConcern().asDocument());
+            getBsonDocumentCodec().encode(writer, getWriteConcern().asDocument());
         }
     }
 }

@@ -17,23 +17,23 @@
 package org.mongodb.protocol.message;
 
 import org.bson.BSONBinaryWriter;
+import org.bson.FieldNameValidator;
 import org.bson.io.OutputBuffer;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.BaseUpdateRequest;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> extends BaseWriteCommandMessage {
     private final List<T> updates;
 
     public BaseUpdateCommandMessage(final MongoNamespace writeNamespace, final boolean ordered, final WriteConcern writeConcern,
-                                    final List<T> updates, final Encoder<Document> commandEncoder,
-                                    final MessageSettings settings) {
-        super(writeNamespace, ordered, writeConcern, commandEncoder, settings);
+                                    final List<T> updates, final MessageSettings settings) {
+        super(writeNamespace, ordered, writeConcern, settings);
         this.updates = updates;
     }
 
@@ -52,7 +52,7 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
             writer.writeName("q");
-            getCommandEncoder().encode(writer, update.getFilter());
+            getBsonDocumentCodec().encode(writer, update.getFilter());
             writer.writeName("u");
             writeUpdate(writer, update);
             if (update.isMulti()) {
@@ -81,6 +81,21 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
     public int getItemCount() {
         return updates.size();
     }
+
+    @Override
+    protected FieldNameValidator getFieldNameValidator() {
+        Map<String, FieldNameValidator> updatesMap = new HashMap<String, FieldNameValidator>();
+        updatesMap.put("u", getUpdateFieldNameValidator());
+
+        MappedFieldNameValidator updatesValidator = new MappedFieldNameValidator(new NoOpFieldNameValidator(), updatesMap);
+
+        Map<String, FieldNameValidator> rootMap = new HashMap<String, FieldNameValidator>();
+        rootMap.put("updates", updatesValidator);
+
+        return new MappedFieldNameValidator(new NoOpFieldNameValidator(), rootMap);
+    }
+
+    protected abstract FieldNameValidator getUpdateFieldNameValidator();
 
     @Override
     protected String getCommandName() {

@@ -65,7 +65,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
 
         @Subject
         def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor,
-                                                              new org.mongodb.connection.ServerAddress());
+                                                  new org.mongodb.connection.ServerAddress());
 
         when:
         def collectionName = mapReduceOutput.getCollectionName();
@@ -101,7 +101,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
 
         @Subject
         def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), null, mapReduceStats, null,
-                                                              new org.mongodb.connection.ServerAddress());
+                                                  new org.mongodb.connection.ServerAddress());
 
         expect:
         mapReduceOutput.getDuration() == expectedDuration;
@@ -112,11 +112,11 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         def expectedDuration = 2774
 
         MapReduceCursor mongoCursor = Mock();
-        mongoCursor.getDuration() >> expectedDuration
+        mongoCursor.getStatistics() >> new MapReduceStatistics(5, 10, 5, expectedDuration)
 
         @Subject
         def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor,
-                                                              new org.mongodb.connection.ServerAddress());
+                                                  new org.mongodb.connection.ServerAddress());
 
         expect:
         mapReduceOutput.getDuration() == expectedDuration
@@ -128,10 +128,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         def expectedOutputCount = 4
         def expectedEmitCount = 6
 
-        MapReduceStatistics mapReduceStats = Mock();
-        mapReduceStats.getInputCount() >> expectedInputCount
-        mapReduceStats.getOutputCount() >> expectedOutputCount
-        mapReduceStats.getEmitCount() >> expectedEmitCount
+        MapReduceStatistics mapReduceStats = new MapReduceStatistics(expectedInputCount, expectedOutputCount, expectedEmitCount, 5)
 
         @Subject
         def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), null, mapReduceStats, null, null);
@@ -147,15 +144,14 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         def expectedInputCount = 3
         def expectedOutputCount = 4
         def expectedEmitCount = 6
+        def expectedDuration = 10
 
-        MapReduceCursor mapReduceStats = Mock();
-        mapReduceStats.getInputCount() >> expectedInputCount
-        mapReduceStats.getOutputCount() >> expectedOutputCount
-        mapReduceStats.getEmitCount() >> expectedEmitCount
+        MapReduceCursor mapReduceCursor = Mock();
+        mapReduceCursor.getStatistics() >> new MapReduceStatistics(expectedInputCount, expectedOutputCount, expectedEmitCount,
+                                                                   expectedDuration)
 
         @Subject
-        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mapReduceStats,
-                                                              new org.mongodb.connection.ServerAddress());
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mapReduceCursor, new org.mongodb.connection.ServerAddress());
 
         expect:
         mapReduceOutput.getInputCount() == expectedInputCount

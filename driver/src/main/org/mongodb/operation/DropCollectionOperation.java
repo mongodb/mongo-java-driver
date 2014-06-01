@@ -16,7 +16,8 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Document;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
@@ -59,11 +60,11 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
         return ignoreResult(ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
-                                                                                            binding)));
+                                                                                     binding)));
     }
 
-    private Document getCommand() {
-        return new Document("drop", namespace.getCollectionName());
+    private BsonDocument getCommand() {
+        return new BsonDocument("drop", new BsonString(namespace.getCollectionName()));
     }
 
 }

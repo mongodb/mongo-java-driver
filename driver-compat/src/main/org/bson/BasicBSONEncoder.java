@@ -28,6 +28,7 @@ import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Symbol;
+import org.bson.types.Timestamp;
 
 import java.lang.reflect.Array;
 import java.util.Date;
@@ -108,7 +109,7 @@ public class BasicBSONEncoder implements BSONEncoder {
     }
 
     protected void putName(final String name) {
-        if (bsonWriter.getState() == BSONWriter.State.NAME) {
+        if (bsonWriter.getState() == AbstractBSONWriter.State.NAME) {
             bsonWriter.writeName(name);
         }
     }
@@ -194,7 +195,7 @@ public class BasicBSONEncoder implements BSONEncoder {
 
     protected void putTimestamp(final String name, final BSONTimestamp timestamp) {
         putName(name);
-        bsonWriter.writeTimestamp(timestamp);
+        bsonWriter.writeTimestamp(new Timestamp(timestamp.getTime(), timestamp.getInc()));
     }
 
     protected void putCode(final String name, final Code code) {

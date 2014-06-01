@@ -16,6 +16,7 @@
 
 package org.mongodb.operation
 import category.Async
+import org.bson.types.Binary
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
@@ -161,8 +162,8 @@ class InsertOperationSpecification extends FunctionalSpecification {
         byte[] smallerByteArray = new byte[1024 * 16 + 1980];
 
         def documents = [
-                new InsertRequest<Document>(new Document('bytes', hugeByteArray)),
-                new InsertRequest<Document>(new Document('bytes', smallerByteArray))
+                new InsertRequest<Document>(new Document('bytes', new Binary(hugeByteArray))),
+                new InsertRequest<Document>(new Document('bytes', new Binary(smallerByteArray)))
         ]
 
         when:
@@ -179,8 +180,8 @@ class InsertOperationSpecification extends FunctionalSpecification {
         byte[] smallerByteArray = new byte[1024 * 16 + 1980];
 
         def documents = [
-                new InsertRequest<Document>(new Document('bytes', hugeByteArray)),
-                new InsertRequest<Document>(new Document('bytes', smallerByteArray))
+                new InsertRequest<Document>(new Document('bytes', new Binary(hugeByteArray))),
+                new InsertRequest<Document>(new Document('bytes', new Binary(smallerByteArray)))
         ]
 
         when:

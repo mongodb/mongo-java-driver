@@ -16,7 +16,7 @@
 
 package org.mongodb.async.rxjava;
 
-import org.mongodb.CollectibleCodec;
+import org.bson.codecs.Codec;
 import org.mongodb.Document;
 import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoNamespace;
@@ -52,7 +52,7 @@ public interface MongoCollection<T> {
      *
      * @return the codec
      */
-    CollectibleCodec<T> getCodec();
+    Codec<T> getCodec();
 
     /**
      * Create a view on the collection with the given filter. This method does not do any I/O.

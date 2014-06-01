@@ -16,12 +16,18 @@
 
 package org.bson.types;
 
+import org.bson.BSONType;
+
+import java.io.Serializable;
+
 /**
  * A holder class for a BSON regular expression, so that we can delay compiling into a Pattern until necessary.
  *
  * @since 3.0
  */
-public class RegularExpression {
+public final class RegularExpression extends BsonValue implements Serializable {
+    private static final long serialVersionUID = 198506456131942797L;
+
     private final String pattern;
     private final String options;
 
@@ -34,11 +40,44 @@ public class RegularExpression {
         this(pattern, "");
     }
 
+    @Override
+    public BSONType getBsonType() {
+        return BSONType.REGULAR_EXPRESSION;
+    }
+
     public String getPattern() {
         return pattern;
     }
 
     public String getOptions() {
         return options;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        RegularExpression that = (RegularExpression) o;
+
+        if (!options.equals(that.options)) {
+            return false;
+        }
+        if (!pattern.equals(that.pattern)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = pattern.hashCode();
+        result = 31 * result + options.hashCode();
+        return result;
     }
 }

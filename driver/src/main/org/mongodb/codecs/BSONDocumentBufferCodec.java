@@ -19,11 +19,10 @@ package org.mongodb.codecs;
 import org.bson.BSONBinaryReader;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONReader;
-import org.bson.BSONType;
 import org.bson.BSONWriter;
+import org.bson.codecs.Codec;
 import org.bson.io.BasicInputBuffer;
 import org.mongodb.BSONDocumentBuffer;
-import org.mongodb.CollectibleCodec;
 import org.mongodb.MongoInternalException;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ByteBufferOutputBuffer;
@@ -37,21 +36,18 @@ import java.io.IOException;
  * <p/>
  * This should even be usable as a nested document codec by adding an instance of it to a PrimitiveCodecs instance.
  */
-public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuffer> {
+public class BSONDocumentBufferCodec implements Codec<BSONDocumentBuffer> {
     private final BufferProvider bufferProvider;
-    private final PrimitiveCodecs primitiveCodecs;
 
-    public BSONDocumentBufferCodec(final BufferProvider bufferProvider,
-                                   final PrimitiveCodecs primitiveCodecs) {
+    public BSONDocumentBufferCodec(final BufferProvider bufferProvider) {
         this.bufferProvider = bufferProvider;
-        this.primitiveCodecs = primitiveCodecs;
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final BSONDocumentBuffer value) {
+    public void encode(final BSONWriter writer, final BSONDocumentBuffer value) {
         BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(value.getByteBuffer()), true);
         try {
-            bsonWriter.pipe(reader);
+            writer.pipe(reader);
         } finally {
             reader.close();
         }
@@ -76,25 +72,6 @@ public class BSONDocumentBufferCodec implements CollectibleCodec<BSONDocumentBuf
     @Override
     public Class<BSONDocumentBuffer> getEncoderClass() {
         return BSONDocumentBuffer.class;
-    }
-
-    @Override
-    public Object getId(final BSONDocumentBuffer document) {
-        BSONReader reader = new BSONBinaryReader(new BasicInputBuffer(document.getByteBuffer()), true);
-        try {
-            reader.readStartDocument();
-            while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
-                String name = reader.readName();
-                if (name.equals("_id")) {
-                    return primitiveCodecs.decode(reader);
-                } else {
-                    reader.skipValue();
-                }
-            }
-            return null;
-        } finally {
-            reader.close();
-        }
     }
 
     // Just so we don't have to copy the buffer

@@ -60,7 +60,7 @@ class PooledConnectionProvider implements ConnectionProvider {
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.settings = notNull("settings", settings);
         UsageTrackingInternalConnectionItemFactory connectionItemFactory
-            = new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory);
+        = new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory);
         pool = new ConcurrentPool<UsageTrackingInternalConnection>(settings.getMaxSize(), connectionItemFactory);
         maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createTimer();
@@ -280,7 +280,7 @@ class PooledConnectionProvider implements ConnectionProvider {
         @Override
         public UsageTrackingInternalConnection create() {
             UsageTrackingInternalConnection internalConnection =
-                new UsageTrackingInternalConnection(internalConnectionFactory.create(serverAddress), generation.get());
+            new UsageTrackingInternalConnection(internalConnectionFactory.create(serverAddress), generation.get());
             LOGGER.info(format("Opened connection [%s] to %s", internalConnection.getId(), serverAddress));
             connectionPoolListener.connectionAdded(new ConnectionEvent(clusterId, serverAddress, internalConnection.getId()));
             return internalConnection;
@@ -301,8 +301,8 @@ class PooledConnectionProvider implements ConnectionProvider {
             if (!closed) {
                 connectionPoolListener.connectionRemoved(new ConnectionEvent(clusterId, serverAddress, connection.getId()));
             }
-            connection.close();
             LOGGER.info(format("Closed connection [%s] to %s because %s.", connection.getId(), serverAddress, reason));
+            connection.close();
         }
 
         @Override

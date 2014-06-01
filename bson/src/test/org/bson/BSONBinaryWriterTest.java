@@ -18,10 +18,11 @@ package org.bson;
 
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -75,182 +76,6 @@ public class BSONBinaryWriterTest {
         writer.writeEndDocument();
         writer.popMaxDocumentSize();
         writer.writeBinaryData("bin", new Binary(new byte[256]));
-        writer.writeEndDocument();
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowExceptionForBooleanWhenWritingBeforeStartingDocument() {
-        writer.writeBoolean("b1", true);
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowExceptionForArrayWhenWritingBeforeStartingDocument() {
-        writer.writeStartArray();
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowExceptionForNullWhenWritingBeforeStartingDocument() {
-        writer.writeNull();
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowExceptionForStringWhenStateIsValue() {
-        writer.writeStartDocument();
-        writer.writeString("SomeString");
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowExceptionWhenEndingAnArrayWhenStateIsValue() {
-        writer.writeStartDocument();
-        writer.writeEndArray();
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowExceptionWhenWritingASecondName() {
-        writer.writeStartDocument();
-        writer.writeName("f1");
-        writer.writeName("i2");
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowExceptionWhenEndingADocumentBeforeValueIsWritten() {
-        writer.writeStartDocument();
-        writer.writeName("f1");
-        writer.writeEndDocument();
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowAnExceptionWhenTryingToWriteASecondValue() {
-        writer.writeStartDocument();
-        writer.writeName("f1");
-        writer.writeDouble(100);
-        writer.writeString("i2");
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowAnExceptionWhenTryingToWriteJavaScript() {
-        writer.writeStartDocument();
-        writer.writeName("f1");
-        writer.writeDouble(100);
-        writer.writeJavaScript("var i");
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowAnExceptionWhenWritingANameInAnArray() {
-        writer.writeStartDocument();
-        writer.writeName("f1");
-        writer.writeDouble(100);
-        writer.writeStartArray("f2");
-        writer.writeName("i3");
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowAnExceptionWhenEndingDocumentInTheMiddleOfWritingAnArray() {
-        writer.writeStartDocument();
-        writer.writeName("f1");
-        writer.writeDouble(100);
-        writer.writeStartArray("f2");
-        writer.writeEndDocument();
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowAnExceptionWhenEndingAnArrayInASubDocument() {
-        writer.writeStartDocument();
-        writer.writeName("f1");
-        writer.writeDouble(100);
-        writer.writeStartArray("f2");
-        writer.writeStartDocument();
-        writer.writeEndArray();
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowAnExceptionWhenWritingANameInAnArrayEvenWhenSubDocumentExistsInArray() {
-        //Does this test even make sense?
-        writer.writeStartDocument();
-        writer.writeName("f1");
-        writer.writeDouble(100);
-        writer.writeStartArray("f2");
-        writer.writeStartDocument();
-        writer.writeEndDocument();
-        writer.writeName("i3");
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowExceptionWhenWritingObjectsIntoNestedArrays() {
-        //This test seem redundant?
-        writer.writeStartDocument();
-        writer.writeName("f1");
-        writer.writeDouble(100);
-        writer.writeStartArray("f2");
-        writer.writeStartArray();
-        writer.writeStartArray();
-        writer.writeStartArray();
-        writer.writeInt64("i4", 10);
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowAnExceptionWhenAttemptingToEndAnArrayThatWasNotStarted() {
-        writer.writeStartDocument();
-        writer.writeStartArray("f2");
-        writer.writeEndArray();
-        writer.writeEndArray();
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope1() {
-        writer.writeStartDocument();
-        writer.writeJavaScriptWithScope("js1", "var i = 1");
-
-        writer.writeBoolean("b4", true);
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope2() {
-        //do we really need to test every type written after writeJavaScriptWithScope?
-        writer.writeStartDocument();
-        writer.writeJavaScriptWithScope("js1", "var i = 1");
-
-        writer.writeBinaryData(new Binary(new byte[]{0, 0, 1, 0}));
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope3() {
-        //do we really need to test every type written after writeJavaScriptWithScope?
-        writer.writeStartDocument();
-        writer.writeJavaScriptWithScope("js1", "var i = 1");
-
-        writer.writeStartArray();
-    }
-
-    @Test(expected = BSONInvalidOperationException.class)
-    public void shouldThrowAnErrorIfTryingToWriteNamesIntoAJavascriptScope4() {
-        //do we really need to test every type written after writeJavaScriptWithScope?
-        writer.writeStartDocument();
-        writer.writeJavaScriptWithScope("js1", "var i = 1");
-
-        writer.writeEndDocument();
-    }
-
-    @Test(expected = BSONException.class)
-    public void shouldThrowAnErrorIfKeyContainsNullCharacter() {
-        writer.writeStartDocument();
-        writer.writeBoolean("h\u0000i", true);
-    }
-
-    @Test
-    public void shouldNotThrowAnErrorIfValueContainsNullCharacter() {
-        writer.writeStartDocument();
-        writer.writeString("x", "h\u0000i");
-    }
-
-    @Test
-    public void shouldNotThrowAnExceptionIfCorrectlyStartingAndEndingDocumentsAndSubdocuments() {
-        writer.writeStartDocument();
-        writer.writeJavaScriptWithScope("js1", "var i = 1");
-
-        writer.writeStartDocument();
-        writer.writeEndDocument();
-
         writer.writeEndDocument();
     }
 
@@ -496,12 +321,33 @@ public class BSONBinaryWriterTest {
     public void testWriteTimestamp() {
         writer.writeStartDocument();
 
-        writer.writeTimestamp("t1", new BSONTimestamp(123999401, 44332));
+        writer.writeTimestamp("t1", new Timestamp(123999401, 44332));
 
         writer.writeEndDocument();
 
         byte[] expectedValues = {17, 0, 0, 0, 17, 116, 49, 0, 44, -83, 0, 0, -87, 20, 100, 7, 0};
         assertArrayEquals(expectedValues, buffer.toByteArray());
+    }
+
+    @Test
+    public void testWriteDBPointer() {
+        writer.writeStartDocument();
+
+        DBPointer dbPointer = new DBPointer("my.test", new ObjectId("50d3332018c6a1d8d1662b61"));
+        writer.writeDBPointer("pt", dbPointer);
+
+        writer.writeEndDocument();
+
+        byte[] expectedValues = {33, 0, 0, 0, 12, 112, 116, 0, 8, 0, 0, 0, 109, 121, 46, 116, 101, 115, 116, 0, 80, -45, 51, 32, 24, -58,
+                                 -95, -40, -47, 102, 43, 97, 0};
+        assertArrayEquals(expectedValues, buffer.toByteArray());
+
+        BSONReader reader = createReaderForBytes(expectedValues);
+        reader.readStartDocument();
+        assertThat(reader.readBSONType(), is(BSONType.DB_POINTER));
+        assertEquals("pt", reader.readName());
+        assertEquals(dbPointer, reader.readDBPointer());
+        reader.readEndDocument();
     }
 
     @Test
@@ -700,6 +546,87 @@ public class BSONBinaryWriterTest {
         reader2.readStartDocument();
         reader2.readEndDocument();
         reader2.readEndArray();
+        reader2.readEndDocument();
+    }
+
+    @Test
+    public void testPipeDocumentIntoDocument() {
+        writer.writeStartDocument();
+        writer.writeString("str", "value");
+        writer.writeEndDocument();
+
+        byte[] bytes = writer.getBuffer().toByteArray();
+
+        BSONBinaryWriter newWriter = new BSONBinaryWriter(new BasicOutputBuffer(), true);
+        BSONBinaryReader reader1 = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+
+        newWriter.writeStartDocument();
+        newWriter.writeName("doc");
+        newWriter.pipe(reader1);
+        newWriter.writeEndDocument();
+
+        BSONBinaryReader reader2 = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
+                                                                                                                     .toByteArray()))),
+                                                        true);
+
+        //checking what writer piped
+        reader2.readStartDocument();
+        assertEquals("doc", reader2.readName());
+        reader2.readStartDocument();
+        assertEquals("value", reader2.readString("str"));
+        reader2.readEndDocument();
+        reader2.readEndDocument();
+    }
+
+    @Test
+    public void testPipeDocumentIntoTopLevel() {
+        writer.writeStartDocument();
+        writer.writeString("str", "value");
+        writer.writeEndDocument();
+
+        byte[] bytes = writer.getBuffer().toByteArray();
+
+        BSONBinaryWriter newWriter = new BSONBinaryWriter(new BasicOutputBuffer(), true);
+        BSONBinaryReader reader1 = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+
+        newWriter.pipe(reader1);
+
+        BSONBinaryReader reader2 = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
+                                                                                                                     .toByteArray()))),
+                                                        true);
+
+        //checking what writer piped
+        reader2.readStartDocument();
+        assertEquals("value", reader2.readString("str"));
+        reader2.readEndDocument();
+    }
+
+    @Test
+    public void testPipeDocumentIntoScopeDocument() {
+        writer.writeStartDocument();
+        writer.writeInt32("i", 0);
+        writer.writeEndDocument();
+
+        byte[] bytes = writer.getBuffer().toByteArray();
+
+        BSONBinaryWriter newWriter = new BSONBinaryWriter(new BasicOutputBuffer(), true);
+        BSONBinaryReader reader1 = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+
+        newWriter.writeStartDocument();
+        newWriter.writeJavaScriptWithScope("js", "i++");
+        newWriter.pipe(reader1);
+        newWriter.writeEndDocument();
+
+        BSONBinaryReader reader2 = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
+                                                                                                                     .toByteArray()))),
+                                                        true);
+
+        //checking what writer piped
+        reader2.readStartDocument();
+        reader2.readJavaScriptWithScope("js");
+        reader2.readStartDocument();
+        assertEquals(0, reader2.readInt32("i"));
+        reader2.readEndDocument();
         reader2.readEndDocument();
     }
 

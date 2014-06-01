@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import org.bson.types.BsonDocument;
+
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -27,7 +29,7 @@ public class BulkWriteError {
     private final int index;
     private final int code;
     private final String message;
-    private final Document details;
+    private final BsonDocument details;
 
     /**
      * Constructs a new instance.
@@ -37,7 +39,7 @@ public class BulkWriteError {
      * @param details details about the error
      * @param index   the index of the item in the bulk write operation that had this error
      */
-    public BulkWriteError(final int code, final String message, final Document details, final int index) {
+    public BulkWriteError(final int code, final String message, final BsonDocument details, final int index) {
         this.code = code;
         this.message = notNull("message", message);
         this.details = notNull("details", details);
@@ -67,7 +69,7 @@ public class BulkWriteError {
      *
      * @return the details
      */
-    public Document getDetails() {
+    public BsonDocument getDetails() {
         return details;
     }
 

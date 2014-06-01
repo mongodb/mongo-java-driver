@@ -35,6 +35,45 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setObjectClass(BasicDBObject)
     }
 
+    def 'should update a document'() {
+        when:
+        collection.update(new BasicDBObject('_id', 1), new BasicDBObject('$set', new BasicDBObject('x', 1)), true, false)
+
+        then:
+        collection.findOne(new BasicDBObject('_id', 1)) == new BasicDBObject('_id', 1).append('x', 1)
+
+        when:
+        collection.update(new BasicDBObject('_id', 2), new BasicDBObject('$set', new BasicDBObject('x', 1)));
+
+        then:
+        collection.findOne(new BasicDBObject('_id', 2)) == null
+    }
+
+    def 'should update multiple documents'() {
+        given:
+        collection.insert([new BasicDBObject('x', 1), new BasicDBObject('x', 1)])
+
+        when:
+        collection.update(new BasicDBObject('x', 1), new BasicDBObject('$set', new BasicDBObject('x', 2)), false, true);
+
+        then:
+        collection.count(new BasicDBObject('x', 2)) == 2
+    }
+
+    def 'should replace a document'() {
+        when:
+        collection.update(new BasicDBObject('_id', 1), new BasicDBObject('_id', 1).append('x', 1), true, false)
+
+        then:
+        collection.findOne(new BasicDBObject('_id', 1)) == new BasicDBObject('_id', 1).append('x', 1)
+
+        when:
+        collection.update(new BasicDBObject('_id', 2), new BasicDBObject('_id', 2).append('x', 1))
+
+        then:
+        collection.findOne(new BasicDBObject('_id', 2)) == null
+    }
+
     def 'should drop collection that exists'() {
         given:
         collection.insert(~['name': 'myName']);
@@ -104,21 +143,6 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         document.get('somethingOdd') == 'jeff'
         document.get('background') == true
         !document.containsField('dropDups')
-    }
-
-    def 'should should provided decoder factory for findAndModify'() {
-        given:
-        DBDecoder decoder = Mock()
-        DBDecoderFactory factory = Mock()
-        factory.create() >> decoder
-        collection.setDBDecoderFactory(factory)
-
-        when:
-        collection.findAndModify(null, ~['_id': idOfExistingDocument,
-                                         'c'  : 1])
-
-        then:
-        1 * decoder.decode(_ as byte[], collection)
     }
 
     def 'drop index should not fail if collection does not exist'() {
@@ -240,7 +264,10 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
     def 'should return a list of all the values of a given field without duplicates'() {
         given:
         collection.drop()
-        for (int i = 0; i < 100; i++) {
+        for (
+                int i = 0;
+                i < 100;
+                i++) {
             def document = ~['_id': i,
                              'x'  : i % 10]
             collection.save(document);
@@ -258,7 +285,10 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
     def 'should query database for values and return a list of all the distinct values of a given field that match the filter'() {
         given:
         collection.drop()
-        for (int i = 0; i < 100; i++) {
+        for (
+                int i = 0;
+                i < 100;
+                i++) {
             def document = ~['_id'        : i,
                              'x'          : i % 10,
                              'isOddNumber': i % 2]
@@ -405,8 +435,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
                          'function(o, p){ p.valueFound = true; }');
 
         then:
-        CommandFailureException exception = thrown(CommandFailureException)
-        exception.getCommandResult().getErrorMessage().contains('initial has to be an object')
+        thrown(IllegalArgumentException)
     }
 
     def 'should throw an Exception if no reduce function provided'() {
@@ -417,10 +446,10 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
                          null);
 
         then:
-        thrown(CommandFailureException)
+        thrown(IllegalArgumentException)
     }
 
     static class ClassA extends BasicDBObject { }
-    static class ClassB extends BasicDBObject { }
 
+    static class ClassB extends BasicDBObject { }
 }

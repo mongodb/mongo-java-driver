@@ -18,14 +18,14 @@ package org.mongodb.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
 
 import java.util.Date;
 
 public class DateCodec implements Codec<Date> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final Date value) {
-        bsonWriter.writeDateTime(value.getTime());
+    public void encode(final BSONWriter writer, final Date value) {
+        writer.writeDateTime(value.getTime());
     }
 
     @Override

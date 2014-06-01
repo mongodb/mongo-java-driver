@@ -16,7 +16,9 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.Document;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonString;
 import org.mongodb.MongoInternalException;
 
 import java.io.ByteArrayOutputStream;
@@ -29,25 +31,25 @@ public final class NativeAuthenticationHelper {
 
     private static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
 
-    static Document getAuthCommand(final String userName, final char[] password, final String nonce) {
+    static BsonDocument getAuthCommand(final String userName, final char[] password, final String nonce) {
         return getAuthCommand(userName, createAuthenticationHash(userName, password), nonce);
     }
 
-    static Document getAuthCommand(final String userName, final String authHash, final String nonce) {
+    static BsonDocument getAuthCommand(final String userName, final String authHash, final String nonce) {
         String key = nonce + userName + authHash;
 
-        Document cmd = new Document();
+        BsonDocument cmd = new BsonDocument();
 
-        cmd.put("authenticate", 1);
-        cmd.put("user", userName);
-        cmd.put("nonce", nonce);
-        cmd.put("key", hexMD5(key.getBytes(UTF_8_CHARSET)));
+        cmd.put("authenticate", new BsonInt32(1));
+        cmd.put("user", new BsonString(userName));
+        cmd.put("nonce", new BsonString(nonce));
+        cmd.put("key", new BsonString(hexMD5(key.getBytes(UTF_8_CHARSET))));
 
         return cmd;
     }
 
-    static Document getNonceCommand() {
-        return new Document("getnonce", 1);
+    static BsonDocument getNonceCommand() {
+        return new BsonDocument("getnonce", new BsonInt32(1));
     }
 
     public static String createAuthenticationHash(final String userName, final char[] password) {

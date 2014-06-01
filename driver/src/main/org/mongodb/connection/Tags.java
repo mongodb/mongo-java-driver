@@ -16,6 +16,10 @@
 
 package org.mongodb.connection;
 
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
+import org.mongodb.ConvertibleToBsonDocument;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +32,7 @@ import static org.mongodb.assertions.Assertions.isTrue;
  *
  * @mongodb.driver.manual tutorial/configure-replica-set-tag-sets Tag Sets
  */
-public class Tags implements Map<String, String> {
+public class Tags implements Map<String, String>, ConvertibleToBsonDocument {
     private final boolean frozen;
     private final Map<String, String> wrapped;
 
@@ -159,5 +163,16 @@ public class Tags implements Map<String, String> {
     @Override
     public String toString() {
         return wrapped.toString();
+    }
+
+    @Override
+    public BsonDocument toDocument() {
+        BsonDocument document = new BsonDocument();
+
+        for (Map.Entry<String, String> entry : wrapped.entrySet()) {
+            document.put(entry.getKey(), new BsonString(entry.getValue()));
+        }
+
+        return document;
     }
 }

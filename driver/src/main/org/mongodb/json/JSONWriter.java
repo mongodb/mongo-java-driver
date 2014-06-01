@@ -16,13 +16,14 @@
 
 package org.mongodb.json;
 
+import org.bson.AbstractBSONWriter;
 import org.bson.BSONContextType;
 import org.bson.BSONException;
-import org.bson.BSONWriter;
-import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
+import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
+import org.bson.types.Timestamp;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -37,7 +38,7 @@ import static javax.xml.bind.DatatypeConverter.printBase64Binary;
  *
  * @since 3.0.0
  */
-public class JSONWriter extends BSONWriter {
+public class JSONWriter extends AbstractBSONWriter {
     private final Writer writer;
     private final JSONWriterSettings settings;
 
@@ -422,7 +423,7 @@ public class JSONWriter extends BSONWriter {
     }
 
     @Override
-    public void writeTimestamp(final BSONTimestamp value) {
+    public void writeTimestamp(final Timestamp value) {
         checkPreconditions("writeTimestamp", State.VALUE, State.INITIAL);
 
         try {
@@ -465,6 +466,19 @@ public class JSONWriter extends BSONWriter {
         } catch (IOException e) {
             throwBSONException(e);
         }
+    }
+
+    @Override
+    public void writeDBPointer(final DBPointer value) {
+        checkPreconditions("writeDBPointer", State.VALUE, State.INITIAL);
+
+        writeStartDocument();
+        writeString("$ref", value.getNamespace());
+        writeObjectId("$id", value.getId());
+        writeEndDocument();
+
+
+        setState(getNextState());
     }
 
     private void writeNameHelper(final String name) throws IOException {
@@ -564,7 +578,7 @@ public class JSONWriter extends BSONWriter {
         throw new BSONException("Wrapping IOException", e);
     }
 
-    public class Context extends BSONWriter.Context {
+    public class Context extends AbstractBSONWriter.Context {
         private final String indentation;
         private boolean hasElements;
 

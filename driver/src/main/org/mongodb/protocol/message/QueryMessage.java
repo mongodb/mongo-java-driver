@@ -17,32 +17,29 @@
 package org.mongodb.protocol.message;
 
 import org.bson.io.OutputBuffer;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.types.BsonDocument;
 import org.mongodb.operation.QueryFlag;
 
 import java.util.EnumSet;
 
 public class QueryMessage extends BaseQueryMessage {
-    private final Encoder<Document> encoder;
-    private final Document queryDocument;
-    private final Document fields;
+    private final BsonDocument queryDocument;
+    private final BsonDocument fields;
 
     public QueryMessage(final String collectionName, final EnumSet<QueryFlag> queryFlags, final int skip,
-                        final int numberToReturn, final Document queryDocument,
-                        final Document fields, final Encoder<Document> encoder, final MessageSettings settings) {
+                        final int numberToReturn, final BsonDocument queryDocument,
+                        final BsonDocument fields, final MessageSettings settings) {
         super(collectionName, queryFlags, skip, numberToReturn, settings);
         this.queryDocument = queryDocument;
         this.fields = fields;
-        this.encoder = encoder;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeQueryPrologue(buffer);
-        addDocument(queryDocument, encoder, buffer);
+        addDocument(queryDocument, getBsonDocumentCodec(), buffer, new NoOpFieldNameValidator());
         if (fields != null) {
-            addDocument(fields, encoder, buffer);
+            addDocument(fields, getBsonDocumentCodec(), buffer, new NoOpFieldNameValidator());
         }
         return null;
     }

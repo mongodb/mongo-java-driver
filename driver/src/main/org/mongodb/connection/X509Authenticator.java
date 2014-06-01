@@ -16,11 +16,12 @@
 
 package org.mongodb.connection;
 
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonString;
 import org.mongodb.AuthenticationMechanism;
-import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoCredential;
-import org.mongodb.codecs.DocumentCodec;
 
 import static org.mongodb.connection.CommandHelper.executeCommand;
 
@@ -32,19 +33,19 @@ class X509Authenticator extends Authenticator {
     @Override
     void authenticate() {
         try {
-            Document authCommand = getAuthCommand(getCredential().getUserName());
-            executeCommand(getCredential().getSource(), authCommand, new DocumentCodec(), getInternalConnection());
+            BsonDocument authCommand = getAuthCommand(getCredential().getUserName());
+            executeCommand(getCredential().getSource(), authCommand, getInternalConnection());
         } catch (MongoCommandFailureException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);
         }
     }
 
-    private Document getAuthCommand(final String userName) {
-        Document cmd = new Document();
+    private BsonDocument getAuthCommand(final String userName) {
+        BsonDocument cmd = new BsonDocument();
 
-        cmd.put("authenticate", 1);
-        cmd.put("user", userName);
-        cmd.put("mechanism", AuthenticationMechanism.MONGODB_X509.getMechanismName());
+        cmd.put("authenticate", new BsonInt32(1));
+        cmd.put("user", new BsonString(userName));
+        cmd.put("mechanism", new BsonString(AuthenticationMechanism.MONGODB_X509.getMechanismName()));
 
         return cmd;
     }

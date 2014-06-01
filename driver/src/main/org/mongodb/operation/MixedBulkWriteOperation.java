@@ -16,12 +16,14 @@
 
 package org.mongodb.operation;
 
+import org.bson.codecs.Encoder;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
+import org.bson.types.BsonValue;
 import org.mongodb.BulkWriteError;
 import org.mongodb.BulkWriteException;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.BulkWriteUpsert;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
@@ -31,6 +33,7 @@ import org.mongodb.WriteConcernError;
 import org.mongodb.WriteResult;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
+import org.mongodb.codecs.CollectibleCodec;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerDescription;
@@ -85,10 +88,11 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
 
     /**
      * Construct a new instance.
-     * @param namespace      the namespace to write to
-     * @param writeRequests  the list of runWrites to execute
-     * @param ordered        whether the runWrites must be executed in order.
-     * @param encoder        the encoder
+     *
+     * @param namespace     the namespace to write to
+     * @param writeRequests the list of runWrites to execute
+     * @param ordered       whether the runWrites must be executed in order.
+     * @param encoder       the encoder
      */
     public MixedBulkWriteOperation(final MongoNamespace namespace, final List<WriteRequest> writeRequests, final boolean ordered,
                                    final WriteConcern writeConcern, final Encoder<T> encoder) {
@@ -103,10 +107,10 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
     /**
      * Executes a bulk write operation.
      *
+     * @param binding the WriteBinding        for the operation
      * @return the bulk write result.
      * @throws org.mongodb.BulkWriteException if a failure to complete the bulk write is detected based on the response from the server
      * @throws org.mongodb.MongoException     for general failures
-     * @param binding the WriteBinding        for the operation
      */
     @Override
     public BulkWriteResult execute(final WriteBinding binding) {
@@ -139,10 +143,10 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
     /**
      * Executes a bulk write operation asynchronously.
      *
+     * @param binding the AsyncWriteBinding   for the operation
      * @return the future bulk write result.
      * @throws org.mongodb.BulkWriteException if a failure to complete the bulk write is detected based on the response from the server
      * @throws org.mongodb.MongoException     for general failures
-     * @param binding the AsyncWriteBinding   for the operation
      */
     @Override
     public MongoFuture<BulkWriteResult> executeAsync(final AsyncWriteBinding binding) {
@@ -157,7 +161,8 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
                 final BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getServerDescription()
                                                                                                            .getAddress(),
                                                                                                  ordered,
-                                                                                                 writeConcern);
+                                                                                                 writeConcern
+                );
                 Iterator<Run> runs = getRunGenerator(connection.getServerDescription()).iterator();
                 executeRunsAsync(runs, connection, bulkWriteBatchCombiner, future);
                 return future;
@@ -381,13 +386,12 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
                     return new ReplaceProtocol<T>(namespace,
                                                   ordered, writeConcern,
                                                   asList(replaceRequests.get(index)),
-                                                  new DocumentCodec(),
                                                   encoder
                     );
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new ReplaceCommandProtocol<T>(namespace, ordered, writeConcern, replaceRequests, new DocumentCodec(), encoder);
+                    return new ReplaceCommandProtocol<T>(namespace, ordered, writeConcern, replaceRequests, encoder);
                 }
 
                 @Override
@@ -400,12 +404,12 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
         RunExecutor getRemovesRunExecutor(final List<RemoveRequest> removeRequests, final Connection connection) {
             return new RunExecutor(connection) {
                 WriteProtocol getWriteProtocol(final int index) {
-                    return new DeleteProtocol(namespace, ordered, writeConcern, asList(removeRequests.get(index)), new DocumentCodec()
+                    return new DeleteProtocol(namespace, ordered, writeConcern, asList(removeRequests.get(index))
                     );
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new DeleteCommandProtocol(namespace, ordered, writeConcern, removeRequests, new DocumentCodec()
+                    return new DeleteCommandProtocol(namespace, ordered, writeConcern, removeRequests
                     );
                 }
 
@@ -418,6 +422,11 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
 
         @SuppressWarnings("unchecked")
         RunExecutor getInsertsRunExecutor(final List<InsertRequest<T>> insertRequests, final Connection connection) {
+            if (encoder instanceof CollectibleCodec) {
+                for (InsertRequest<T> cur : insertRequests) {
+                    ((CollectibleCodec<T>) encoder).generateIdIfAbsentFromDocument(cur.getDocument());
+                }
+            }
             return new RunExecutor(connection) {
                 WriteProtocol getWriteProtocol(final int index) {
                     return new InsertProtocol<T>(namespace, ordered, writeConcern, asList(insertRequests.get(index)), encoder
@@ -444,7 +453,7 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
             return new RunExecutor(connection) {
                 WriteProtocol getWriteProtocol(final int index) {
 
-                    return new UpdateProtocol(namespace, ordered, writeConcern, asList(updates.get(index)), new DocumentCodec());
+                    return new UpdateProtocol(namespace, ordered, writeConcern, asList(updates.get(index)));
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
@@ -492,7 +501,7 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
                                 bulkWriteBatchCombiner.addResult(getResult(writeResult), indexMap);
                             }
                         } catch (MongoWriteException writeException) {
-                            if (writeException.getCommandResult().getResponse().get("wtimeout") != null)  {
+                            if (writeException.getCommandResult().getResponse().get("wtimeout") != null) {
                                 bulkWriteBatchCombiner.addWriteConcernErrorResult(getWriteConcernError(writeException));
                             } else {
                                 bulkWriteBatchCombiner.addWriteErrorResult(getBulkWriteError(writeException), indexMap);
@@ -518,12 +527,12 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
                 }
             }
 
-            private void executeRunWritesAsync(final int numberOfRuns, final int currentPosition,  final Connection connection,
+            private void executeRunWritesAsync(final int numberOfRuns, final int currentPosition, final Connection connection,
                                                final BulkWriteBatchCombiner bulkWriteBatchCombiner,
                                                final SingleResultFuture<BulkWriteResult> future) {
 
                 final IndexMap indexMap = IndexMap.create(currentPosition, 1).add(0, currentPosition);
-                getWriteProtocol(currentPosition).executeAsync(connection).register(new SingleResultCallback<WriteResult>(){
+                getWriteProtocol(currentPosition).executeAsync(connection).register(new SingleResultCallback<WriteResult>() {
 
                     @Override
                     public void onResult(final WriteResult result, final MongoException e) {
@@ -576,13 +585,13 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
 
             private WriteConcernError getWriteConcernError(final MongoWriteException writeException) {
                 return new WriteConcernError(writeException.getErrorCode(),
-                                                 writeException.getCommandResult().getResponse().getString("err"),
-                                                 translateGetLastErrorResponseToErrInfo(writeException.getCommandResult().getResponse()));
+                                             ((BsonString) writeException.getCommandResult().getResponse().get("err")).getValue(),
+                                             translateGetLastErrorResponseToErrInfo(writeException.getCommandResult().getResponse()));
             }
 
-            private Document translateGetLastErrorResponseToErrInfo(final Document response) {
-                Document errInfo = new Document();
-                for (Map.Entry<String, Object> entry : response.entrySet()) {
+            private BsonDocument translateGetLastErrorResponseToErrInfo(final BsonDocument response) {
+                BsonDocument errInfo = new BsonDocument();
+                for (Map.Entry<String, BsonValue> entry : response.entrySet()) {
                     if (IGNORED_KEYS.contains(entry.getKey())) {
                         continue;
                     }

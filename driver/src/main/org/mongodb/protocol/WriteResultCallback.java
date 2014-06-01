@@ -16,9 +16,9 @@
 
 package org.mongodb.protocol;
 
+import org.bson.codecs.Decoder;
+import org.bson.types.BsonDocument;
 import org.mongodb.CommandResult;
-import org.mongodb.Decoder;
-import org.mongodb.Document;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
@@ -38,7 +38,7 @@ class WriteResultCallback extends CommandResultBaseCallback {
     private final Connection connection;
 
     // CHECKSTYLE:OFF
-    public WriteResultCallback(final SingleResultFuture<WriteResult> future, final Decoder<Document> decoder,
+    public WriteResultCallback(final SingleResultFuture<WriteResult> future, final Decoder<BsonDocument> decoder,
                                final MongoNamespace namespace, final RequestMessage nextMessage,
                                final boolean ordered, final WriteConcern writeConcern, final long requestId,
                                final Connection connection) {

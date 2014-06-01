@@ -16,6 +16,8 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.Binary;
+import org.bson.types.BsonDocument;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +41,7 @@ import static org.mongodb.ReadPreference.primary;
 
 public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 
-    private final byte[] bytes = new byte[10000];
+    private final Binary binary = new Binary(new byte[10000]);
     private EnumSet<QueryFlag> exhaustFlag = EnumSet.of(QueryFlag.Exhaust);
     private QueryResult<Document> firstBatch;
     private Connection exhaustConnection;
@@ -50,13 +52,13 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         super.setUp();
 
         for (int i = 0; i < 1000; i++) {
-            collection.insert(new Document("_id", i).append("bytes", bytes));
+            collection.insert(new Document("_id", i).append("bytes", binary));
         }
 
         readConnectionSource = getBinding().getReadConnectionSource();
         exhaustConnection = readConnectionSource.getConnection();
-        firstBatch = new QueryProtocol<Document>(collection.getNamespace(), exhaustFlag, 0, 0, new Document(), null,
-                                                 new DocumentCodec(), new DocumentCodec())
+        firstBatch = new QueryProtocol<Document>(collection.getNamespace(), exhaustFlag, 0, 0, new BsonDocument(), null,
+                                                 new DocumentCodec())
                      .execute(exhaustConnection);
 
     }
@@ -67,6 +69,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         readConnectionSource.release();
         super.tearDown();
     }
+
     @Test
     public void testExhaustReadAllDocuments() {
         assumeFalse(isSharded());
@@ -97,8 +100,8 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
             cursor.next();
             cursor.close();
 
-            new QueryProtocol<Document>(collection.getNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, new Document(), null,
-                                        new DocumentCodec(), new DocumentCodec())
+            new QueryProtocol<Document>(collection.getNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, new BsonDocument(), null,
+                                        new DocumentCodec())
             .execute(connection);
 
         } finally {

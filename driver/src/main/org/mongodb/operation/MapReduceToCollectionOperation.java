@@ -16,8 +16,8 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.BsonDocument;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MapReduceStatistics;
 import org.mongodb.MongoFuture;
@@ -92,12 +92,12 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
             @Override
             public MapReduceStatistics apply(final CommandResult result) {
                 serverUsed = result.getAddress();
-                return new MapReduceIntoCollectionStatistics(result);
+                return MapReduceHelper.createStatistics(result);
             }
         };
     }
 
-    private Document getCommand() {
+    private BsonDocument getCommand() {
         return createMapReduce(namespace.getCollectionName(), mapReduce);
     }
 }

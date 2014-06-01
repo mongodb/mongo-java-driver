@@ -16,12 +16,17 @@
 
 package com.mongodb;
 
+import org.bson.BsonDocumentReader;
+import org.bson.codecs.Codec;
+import org.bson.codecs.Decoder;
+import org.bson.codecs.Encoder;
+import org.bson.types.BsonArray;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonDocumentWrapper;
+import org.bson.types.BsonString;
+import org.bson.types.BsonValue;
 import org.bson.types.ObjectId;
-import org.mongodb.Codec;
-import org.mongodb.CollectibleCodec;
-import org.mongodb.Decoder;
 import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.Index;
 import org.mongodb.MapReduceCursor;
 import org.mongodb.MapReduceStatistics;
@@ -29,8 +34,6 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.OrderBy;
 import org.mongodb.annotations.ThreadSafe;
-import org.mongodb.codecs.ObjectIdGenerator;
-import org.mongodb.codecs.PrimitiveCodecs;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.AggregateExplainOperation;
 import org.mongodb.operation.AggregateOperation;
@@ -67,7 +70,6 @@ import org.mongodb.operation.ReplaceRequest;
 import org.mongodb.operation.UpdateOperation;
 import org.mongodb.operation.UpdateRequest;
 import org.mongodb.operation.WriteOperation;
-import org.mongodb.util.FieldHelpers;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,12 +80,6 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.AggregationOptions.OutputMode.INLINE;
 import static com.mongodb.BulkWriteHelper.translateBulkWriteResult;
 import static com.mongodb.BulkWriteHelper.translateWriteRequestsToNew;
-import static com.mongodb.DBObjects.toDBList;
-import static com.mongodb.DBObjects.toDBObject;
-import static com.mongodb.DBObjects.toDocument;
-import static com.mongodb.DBObjects.toFieldSelectorDocument;
-import static com.mongodb.DBObjects.toNullableDocument;
-import static com.mongodb.DBObjects.toUpdateOperationsDocument;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static java.util.Arrays.asList;
@@ -122,6 +118,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @SuppressWarnings({"rawtypes", "deprecation"})
 public class DBCollection {
     private static final String NAMESPACE_KEY_NAME = "ns";
+    public static final String ID_FIELD_NAME = "_id";
     private final DB database;
     private final String name;
     private volatile ReadPreference readPreference;
@@ -132,10 +129,10 @@ public class DBCollection {
 
     private DBEncoderFactory encoderFactory;
     private DBDecoderFactory decoderFactory;
-    private DBObjectFactory objectFactory;
+    private DBCollectionObjectFactory objectFactory;
 
     private final Codec<Document> documentCodec;
-    private CompoundDBObjectCodec objectCodec;
+    private volatile CompoundDBObjectCodec objectCodec;
 
 
     /**
@@ -150,8 +147,8 @@ public class DBCollection {
         this.database = database;
         this.documentCodec = documentCodec;
         this.optionHolder = new Bytes.OptionHolder(database.getOptionHolder());
-        this.objectFactory = new DBObjectFactory();
-        this.objectCodec = new CompoundDBObjectCodec(createCollectibleDBObjectCodec());
+        this.objectFactory = new DBCollectionObjectFactory();
+        this.objectCodec = new CompoundDBObjectCodec(getDefaultDBObjectCodec());
     }
 
     /**
@@ -161,7 +158,7 @@ public class DBCollection {
      * @param name     the name of the collection
      */
     protected DBCollection(final DB database, final String name) {
-        this(name, database, new DocumentCodec(PrimitiveCodecs.createDefault()));
+        this(name, database, new org.mongodb.codecs.DocumentCodec());
     }
 
     /**
@@ -277,21 +274,23 @@ public class DBCollection {
 
         List<InsertRequest<DBObject>> insertRequestList = new ArrayList<InsertRequest<DBObject>>(documents.size());
         for (DBObject cur : documents) {
+            if (cur.get(ID_FIELD_NAME) == null) {
+                cur.put(ID_FIELD_NAME, new ObjectId());
+            }
             insertRequestList.add(new InsertRequest<DBObject>(cur));
         }
         return insert(insertRequestList, encoder, aWriteConcern);
     }
 
     private Encoder<DBObject> toEncoder(final DBEncoder dbEncoder) {
-        return dbEncoder != null ? new DBEncoderAdapter(dbEncoder, new ObjectIdGenerator()) : objectCodec;
+        return dbEncoder != null ? new DBEncoderAdapter(dbEncoder) : objectCodec;
     }
 
     private WriteResult insert(final List<InsertRequest<DBObject>> insertRequestList, final Encoder<DBObject> encoder,
                                final WriteConcern writeConcern) {
         return executeWriteOperation(new InsertOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
                                                                    insertRequestList, encoder),
-                                     writeConcern
-                                    );
+                                     writeConcern);
     }
 
     WriteResult executeWriteOperation(final BaseWriteOperation operation, final WriteConcern writeConcern) {
@@ -339,25 +338,24 @@ public class DBCollection {
      * @mongodb.driver.manual tutorial/modify-documents/#modify-a-document-with-save-method Save
      */
     public WriteResult save(final DBObject document, final WriteConcern writeConcern) {
-        Object id = getObjectCodec().getId(document);
+        Object id = document.get(ID_FIELD_NAME);
         if (id == null) {
             return insert(document, writeConcern);
         } else {
-            return replaceOrInsert(document, writeConcern);
+            return replaceOrInsert(document, id, writeConcern);
         }
     }
 
     @SuppressWarnings("unchecked")
-    private WriteResult replaceOrInsert(final DBObject obj, final WriteConcern writeConcern) {
-        Document filter = new Document("_id", getObjectCodec().getId(obj));
+    private WriteResult replaceOrInsert(final DBObject obj, final Object id, final WriteConcern writeConcern) {
+        DBObject filter = new BasicDBObject(ID_FIELD_NAME, id);
 
-        ReplaceRequest<DBObject> replaceRequest = new ReplaceRequest<DBObject>(filter, obj).upsert(true);
+        ReplaceRequest<DBObject> replaceRequest = new ReplaceRequest<DBObject>(wrap(filter), obj).upsert(true);
 
         return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(),
-                                                                    writeConcern.toNew(), asList(replaceRequest), getDocumentCodec(),
+                                                                    writeConcern.toNew(), asList(replaceRequest),
                                                                     getObjectCodec()),
-                                     writeConcern
-                                    );
+                                     writeConcern);
     }
 
     /**
@@ -375,19 +373,7 @@ public class DBCollection {
      */
     public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi,
                               final WriteConcern aWriteConcern) {
-        if (update == null) {
-            throw new IllegalArgumentException("update can not be null");
-        }
-
-        if (query == null) {
-            throw new IllegalArgumentException("update query can not be null");
-        }
-
-        UpdateRequest mongoUpdate = new UpdateRequest(toDocument(query), toDocument(update))
-                                    .upsert(upsert)
-                                    .multi(multi);
-
-        return updateInternal(mongoUpdate, aWriteConcern);
+        return update(query, update, upsert, multi, aWriteConcern, null);
     }
 
     /**
@@ -404,6 +390,7 @@ public class DBCollection {
      * @return the result of the operation
      * @mongodb.driver.manual tutorial/modify-documents/ Modify
      */
+    @SuppressWarnings("unchecked")
     public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi,
                               final WriteConcern aWriteConcern, final DBEncoder encoder) {
         if (update == null) {
@@ -414,19 +401,18 @@ public class DBCollection {
             throw new IllegalArgumentException("update query can not be null");
         }
 
-        Document filter = toDocument(query, encoder, getDocumentCodec());
-        Document updateOperations = toDocument(update, encoder, getDocumentCodec());
-        UpdateRequest mongoUpdate = new UpdateRequest(filter, updateOperations).upsert(upsert)
-                                                                               .multi(multi);
+        if (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")) {
+            UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, encoder)).upsert(upsert).multi(multi);
 
-        return updateInternal(mongoUpdate, aWriteConcern);
-    }
-
-    private WriteResult updateInternal(final UpdateRequest update, final WriteConcern writeConcern) {
-        return executeWriteOperation(new UpdateOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
-                                                         asList(update), documentCodec),
-                                     writeConcern
-                                    );
+            return executeWriteOperation(new UpdateOperation(getNamespace(), !aWriteConcern.getContinueOnError(), aWriteConcern.toNew(),
+                                                             asList(updateRequest), documentCodec),
+                                         aWriteConcern);
+        } else {
+            ReplaceRequest<DBObject> replaceRequest = new ReplaceRequest<DBObject>(wrap(query), update).upsert(upsert);
+            return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), true, aWriteConcern.toNew(),
+                                                                        asList(replaceRequest), toEncoder(encoder)),
+                                         aWriteConcern);
+        }
     }
 
     /**
@@ -491,10 +477,7 @@ public class DBCollection {
      */
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
         return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
-                                                         asList(new RemoveRequest(toDocument(query))),
-                                                         documentCodec),
-                                     writeConcern
-                                    );
+                                                         asList(new RemoveRequest(wrap(query))), documentCodec), writeConcern);
     }
 
     /**
@@ -508,13 +491,10 @@ public class DBCollection {
      * @mongodb.driver.manual tutorial/remove-documents/ Remove
      */
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern, final DBEncoder encoder) {
-        Document filter = toDocument(query, encoder, getDocumentCodec());
-        RemoveRequest removeRequest = new RemoveRequest(filter);
+        RemoveRequest removeRequest = new RemoveRequest(wrap(query, encoder));
 
         return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
-                                                         asList(removeRequest), getDocumentCodec()),
-                                     writeConcern
-                                    );
+                                                         asList(removeRequest), getDocumentCodec()), writeConcern);
     }
 
     /**
@@ -682,13 +662,13 @@ public class DBCollection {
                      final ReadPreference readPreference, final long maxTime, final TimeUnit maxTimeUnit) {
 
 
-        Find find = new Find().select(toFieldSelectorDocument(projection))
-                              .where(toDocument(query))
-                              .order(toDocument(sort))
+        Find find = new Find().select(wrapAllowNull(projection))
+                              .where(wrapAllowNull(query))
+                              .order(wrapAllowNull(sort))
                               .batchSize(-1)
                               .maxTime(maxTime, maxTimeUnit);
 
-        MongoCursor<DBObject> cursor = execute(new QueryOperation<DBObject>(getNamespace(), find, documentCodec, objectCodec),
+        MongoCursor<DBObject> cursor = execute(new QueryOperation<DBObject>(getNamespace(), find, objectCodec),
                                                readPreference);
 
         return cursor.hasNext() ? cursor.next() : null;
@@ -914,11 +894,9 @@ public class DBCollection {
         }
 
         // TODO: investigate case of int to long for skip
-        Find find = new Find(toDocument(query)).limit((int) limit)
-                                               .skip((int) skip)
-                                               .maxTime(maxTime, maxTimeUnit);
+        Find find = new Find(wrapAllowNull(query)).limit((int) limit).skip((int) skip).maxTime(maxTime, maxTimeUnit);
 
-        return execute(new CountOperation(getNamespace(), find, getDocumentCodec()), readPreference);
+        return execute(new CountOperation(getNamespace(), find), readPreference);
     }
 
     /**
@@ -1018,7 +996,9 @@ public class DBCollection {
      */
     public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
         //TODO: test read preference
-        MongoCursor<Document> cursor = execute(new GroupOperation(getNamespace(), cmd.toNew()), readPreference);
+        MongoCursor<DBObject> cursor = execute(new GroupOperation<DBObject>(getNamespace(), cmd.toNew(getDefaultDBObjectCodec()),
+                                                                            getDefaultDBObjectCodec()),
+                                               readPreference);
         return toDBList(cursor);
     }
 
@@ -1066,16 +1046,19 @@ public class DBCollection {
      * @return A {@code List} of the distinct values
      * @mongodb.driver.manual reference/command/distinct Distinct Command
      */
+    @SuppressWarnings("unchecked")
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
-        Find find = new Find().filter(toDocument(query));
-        MongoCursor<String> result = execute(new DistinctOperation(getNamespace(), fieldName, find), readPreference);
+        Find find = new Find().filter(wrapAllowNull(query));
+        BsonArray distinctArray = execute(new DistinctOperation(getNamespace(), fieldName, find), readPreference);
 
-        List<String> results = new ArrayList<String>();
-        while (result.hasNext()) {
-            results.add(result.next());
+        List distinctList = new ArrayList();
+        for (BsonValue value : distinctArray) {
+            BsonDocument document = new BsonDocument("value", value);
+            DBObject obj = getDefaultDBObjectCodec().decode(new BsonDocumentReader(document));
+            distinctList.add(obj.get("value"));
         }
 
-        return results;
+        return distinctList;
     }
 
     /**
@@ -1141,17 +1124,18 @@ public class DBCollection {
      */
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
         ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference() : command.getReadPreference();
-        MapReduce mapReduce = command.getMapReduce();
+        MapReduce mapReduce = command.getMapReduce(getDefaultDBObjectCodec());
         if (mapReduce.isInline()) {
             MapReduceCursor<DBObject> executionResult = execute(new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(),
                                                                                                                   mapReduce,
                                                                                                                   objectCodec),
-                                                                readPreference);
+                                                                readPreference
+                                                               );
             return new MapReduceOutput(command.toDBObject(), executionResult, executionResult.getServerAddress());
         } else {
             MapReduceToCollectionOperation mapReduceOperation = new MapReduceToCollectionOperation(getNamespace(), mapReduce);
             MapReduceStatistics mapReduceStatistics = execute(mapReduceOperation);
-            DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command.getMapReduce());
+            DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command.getMapReduce(getDefaultDBObjectCodec()));
             DBCursor executionResult = mapReduceOutputCollection.find();
             return new MapReduceOutput(command.toDBObject(), executionResult, mapReduceStatistics, mapReduceOutputCollection,
                                        mapReduceOperation.getServerUsed());
@@ -1254,21 +1238,21 @@ public class DBCollection {
         if (options == null) {
             throw new IllegalArgumentException("options can not be null");
         }
-        List<Document> stages = preparePipeline(pipeline);
+        List<BsonDocument> stages = preparePipeline(pipeline);
 
-        String outCollection = stages.get(stages.size() - 1).getString("$out");
+        BsonValue outCollection = stages.get(stages.size() - 1).get("$out");
 
         if (outCollection != null) {
-            execute(new AggregateToCollectionOperation(getNamespace(), stages, getDocumentCodec(), options.toNew()));
+            execute(new AggregateToCollectionOperation(getNamespace(), stages, options.toNew()));
             if (returnCursorForOutCollection) {
-                return new DBCursor(database.getCollection(outCollection), new BasicDBObject(), null, primary());
+                return new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(), null, primary());
             } else {
                 return null;
             }
         } else {
-            MongoCursor<DBObject> cursor = execute(new AggregateOperation<DBObject>(getNamespace(), stages, documentCodec, objectCodec,
+            MongoCursor<DBObject> cursor = execute(new AggregateOperation<DBObject>(getNamespace(), stages, objectCodec,
                                                                                     options.toNew()),
-                                                    readPreference);
+                                                   readPreference);
             return new MongoCursorAdapter(cursor);
         }
     }
@@ -1289,29 +1273,26 @@ public class DBCollection {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Document> preparePipeline(final List<DBObject> pipeline) {
+    private List<BsonDocument> preparePipeline(final List<DBObject> pipeline) {
         if (pipeline.isEmpty()) {
             throw new MongoException("Aggregation pipelines can not be empty");
         }
-        List<Document> stages = new ArrayList<Document>();
+        List<BsonDocument> stages = new ArrayList<BsonDocument>();
         for (final DBObject op : pipeline) {
-            stages.add(toDocument(op));
+            stages.add(wrap(op));
         }
 
         return stages;
     }
 
     /**
-     * Return a list of cursors over the collection that can be used to scan it in parallel.
-     * <p>
-     *     Note: As of MongoDB 2.6, this method will work against a mongod, but not a mongos.
-     * </p>
+     * Return a list of cursors over the collection that can be used to scan it in parallel. <p> Note: As of MongoDB 2.6, this method will
+     * work against a mongod, but not a mongos. </p>
      *
      * @param options the parallel scan options
      * @return a list of cursors, whose size may be less than the number requested
-     * @since 2.12
-     *
      * @mongodb.server.release 2.6
+     * @since 2.12
      */
     public List<Cursor> parallelScan(final ParallelScanOptions options) {
         List<Cursor> cursors = new ArrayList<Cursor>();
@@ -1319,13 +1300,15 @@ public class DBCollection {
         List<MongoCursor<DBObject>> mongoCursors = execute(new ParallelScanOperation<DBObject>(getNamespace(), options.toNew(),
                                                                                                objectCodec),
                                                            options.getReadPreference() != null
-                                                           ? options.getReadPreference() : getReadPreference());
+                                                           ? options.getReadPreference() : getReadPreference()
+                                                          );
 
         for (MongoCursor<DBObject> mongoCursor : mongoCursors) {
             cursors.add(new MongoCursorAdapter(mongoCursor));
         }
         return cursors;
     }
+
     /**
      * Get the name of a collection.
      *
@@ -1379,8 +1362,7 @@ public class DBCollection {
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
      */
     public void createIndex(final DBObject keys, final DBObject options) {
-        execute(new CreateIndexesOperation(Arrays.asList(toIndex(keys, options)), getNamespace()
-        ));
+        execute(new CreateIndexesOperation(Arrays.asList(toIndex(keys, options)), getNamespace()));
     }
 
     /**
@@ -1484,17 +1466,13 @@ public class DBCollection {
                                   final boolean remove, final DBObject update,
                                   final boolean returnNew, final boolean upsert,
                                   final long maxTime, final TimeUnit maxTimeUnit) {
-        Decoder<DBObject> resultDecoder = getDBDecoderFactory() != null
-                                          ? new DBDecoderAdapter(getDBDecoderFactory().create(), this, getBufferPool())
-                                          : getObjectCodec();
-
         WriteOperation<DBObject> operation;
         if (remove) {
-            FindAndRemove<DBObject> findAndRemove = new FindAndRemove<DBObject>().where(toNullableDocument(query))
-                                                                                 .sortBy(toNullableDocument(sort))
+            FindAndRemove<DBObject> findAndRemove = new FindAndRemove<DBObject>().where(wrapAllowNull(query))
+                                                                                 .sortBy(wrapAllowNull(sort))
                                                                                  .returnNew(returnNew)
                                                                                  .maxTime(maxTime, maxTimeUnit);
-            operation = new FindAndRemoveOperation<DBObject>(getNamespace(), findAndRemove, resultDecoder);
+            operation = new FindAndRemoveOperation<DBObject>(getNamespace(), findAndRemove, objectCodec);
         } else {
             if (update == null) {
                 throw new IllegalArgumentException("Update document can't be null");
@@ -1502,23 +1480,23 @@ public class DBCollection {
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
 
                 FindAndUpdate findAndUpdate = new FindAndUpdate()
-                                              .where(toNullableDocument(query))
-                                              .sortBy(toNullableDocument(sort))
+                                              .where(wrapAllowNull(query))
+                                              .sortBy(wrapAllowNull(sort))
                                               .returnNew(returnNew)
-                                              .select(toFieldSelectorDocument(fields))
-                                              .updateWith(toUpdateOperationsDocument(update))
+                                              .select(wrapAllowNull(fields))
+                                              .updateWith(wrapAllowNull(update))
                                               .upsert(upsert)
                                               .maxTime(maxTime, maxTimeUnit);
-                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, resultDecoder);
+                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, objectCodec);
             } else {
                 FindAndReplace<DBObject> findAndReplace = new FindAndReplace<DBObject>(update)
-                                                          .where(toNullableDocument(query))
-                                                          .sortBy(toNullableDocument(sort))
-                                                          .select(toFieldSelectorDocument(fields))
+                                                          .where(wrapAllowNull(query))
+                                                          .sortBy(wrapAllowNull(sort))
+                                                          .select(wrapAllowNull(fields))
                                                           .returnNew(returnNew)
                                                           .upsert(upsert)
                                                           .maxTime(maxTime, maxTimeUnit);
-                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), findAndReplace, resultDecoder, objectCodec);
+                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), findAndReplace, objectCodec);
             }
         }
 
@@ -1651,7 +1629,7 @@ public class DBCollection {
         //Are we are using default factory?
         // If yes then we can use CollectibleDBObjectCodec directly, otherwise it will be wrapped.
         Decoder<DBObject> decoder = (factory == null || factory == DefaultDBDecoder.FACTORY)
-                                    ? createCollectibleDBObjectCodec()
+                                    ? getDefaultDBObjectCodec()
                                     : new DBDecoderAdapter(factory.create(), this, getBufferPool());
         this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), decoder);
     }
@@ -1676,7 +1654,7 @@ public class DBCollection {
         //Are we are using default factory?
         // If yes then we can use CollectibleDBObjectCodec directly, otherwise it will be wrapped.
         Encoder<DBObject> encoder = (factory == null || factory == DefaultDBEncoder.FACTORY)
-                                    ? createCollectibleDBObjectCodec()
+                                    ? getDefaultDBObjectCodec()
                                     : new DBEncoderFactoryAdapter(encoderFactory);
         this.objectCodec = new CompoundDBObjectCodec(encoder, objectCodec.getDecoder());
     }
@@ -1688,12 +1666,7 @@ public class DBCollection {
      * @throws MongoException
      */
     public List<DBObject> getIndexInfo() {
-        List<Document> indexDocumentList = execute(new GetIndexesOperation(getNamespace()), primary());
-        List<DBObject> indexDBObjectList = new ArrayList<DBObject>(indexDocumentList.size());
-        for (Document cur : indexDocumentList) {
-            indexDBObjectList.add(toDBObject(cur));
-        }
-        return indexDBObjectList;
+        return execute(new GetIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec()), primary());
     }
 
     /**
@@ -1743,7 +1716,7 @@ public class DBCollection {
      * @mongodb.driver.manual /reference/command/collStats/ collStats command
      */
     public CommandResult getStats() {
-        return getDB().executeCommand(new Document("collStats", getName()));
+        return getDB().executeCommand(new BsonDocument("collStats", new BsonString(getName())));
     }
 
     /**
@@ -1805,11 +1778,10 @@ public class DBCollection {
         return this.objectFactory;
     }
 
-    synchronized void setObjectFactory(final DBObjectFactory factory) {
+    synchronized void setObjectFactory(final DBCollectionObjectFactory factory) {
         this.objectFactory = factory;
-        this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), createCollectibleDBObjectCodec());
+        this.objectCodec = new CompoundDBObjectCodec(objectCodec.getEncoder(), getDefaultDBObjectCodec());
     }
-
 
     /**
      * Creates a builder for an ordered bulk operation.  Write requests included in the bulk operations will be executed in order, and will
@@ -1854,15 +1826,9 @@ public class DBCollection {
         return getDB().getMongo().execute(operation, readPreference);
     }
 
-    private CollectibleDBObjectCodec createCollectibleDBObjectCodec() {
-        return new CollectibleDBObjectCodec(getDB(),
-                                            getPrimitiveCodecs(),
-                                            new ObjectIdGenerator(),
-                                            getObjectFactory());
-    }
-
-    private PrimitiveCodecs getPrimitiveCodecs() {
-        return PrimitiveCodecs.createDefault();
+    DBObjectCodec getDefaultDBObjectCodec() {
+        return new DBObjectCodec(getDB(), getObjectFactory(), getDB().getMongo().getCodecRegistry(),
+                                 DBObjectCodecSource.getDefaultBsonTypeClassMap());
     }
 
     private Index toIndex(final DBObject keys, final DBObject options) {
@@ -1877,16 +1843,14 @@ public class DBCollection {
         if (options != null) {
             DBObject optionsCopy = new BasicDBObject(options.toMap());
             indexName = (String) optionsCopy.get("name");
-            unique = FieldHelpers.asBoolean(optionsCopy.removeField("unique"));
-            dropDups = FieldHelpers.asBoolean(optionsCopy.removeField("dropDups"));
-            sparse = FieldHelpers.asBoolean(optionsCopy.removeField("sparse"));
-            background = FieldHelpers.asBoolean(optionsCopy.removeField("background"));
+            unique = removeBoolean(optionsCopy, "unique");
+            dropDups = removeBoolean(optionsCopy, "dropDups");
+            sparse = removeBoolean(optionsCopy, "sparse");
+            background = removeBoolean(optionsCopy, "background");
             if (options.get("expireAfterSeconds") != null) {
                 expireAfterSeconds = Integer.parseInt(optionsCopy.removeField("expireAfterSeconds").toString());
             }
-            for (final String extraKey : optionsCopy.keySet()) {
-                builder.extra(extraKey, optionsCopy.get(extraKey));
-            }
+            builder.extra(new BsonDocumentWrapper<DBObject>(optionsCopy, getDefaultDBObjectCodec()));
         }
 
         builder.name(indexName)
@@ -1898,6 +1862,14 @@ public class DBCollection {
                .addKeys(getKeysFromDBObject(keys));
 
         return builder.build();
+    }
+
+    private boolean removeBoolean(final DBObject document, final String name) {
+        Boolean value = (Boolean) document.removeField(name);
+        if (value == null) {
+            return false;
+        }
+        return value;
     }
 
     private List<Index.Key<?>> getKeysFromDBObject(final DBObject fields) {
@@ -1917,7 +1889,15 @@ public class DBCollection {
         return keys;
     }
 
-    CollectibleCodec<DBObject> getObjectCodec() {
+    public static BasicDBList toDBList(final MongoCursor<DBObject> source) {
+        BasicDBList dbList = new BasicDBList();
+        while (source.hasNext()) {
+            dbList.add(source.next());
+        }
+        return dbList;
+    }
+
+    Codec<DBObject> getObjectCodec() {
         return objectCodec;
     }
 
@@ -1935,5 +1915,24 @@ public class DBCollection {
 
     BufferProvider getBufferPool() {
         return getDB().getBufferPool();
+    }
+
+    BsonDocument wrapAllowNull(final DBObject document) {
+        if (document == null) {
+            return null;
+        }
+        return wrap(document);
+    }
+
+    BsonDocument wrap(final DBObject document) {
+        return new BsonDocumentWrapper<DBObject>(document, getDefaultDBObjectCodec());
+    }
+
+    BsonDocument wrap(final DBObject document, final DBEncoder encoder) {
+        if (encoder == null) {
+            return wrap(document);
+        } else {
+            return new BsonDocumentWrapper<DBObject>(document, new DBEncoderAdapter(encoder));
+        }
     }
 }

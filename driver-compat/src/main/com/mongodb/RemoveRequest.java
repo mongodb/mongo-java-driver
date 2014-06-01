@@ -16,20 +16,17 @@
 
 package com.mongodb;
 
-import static com.mongodb.DBObjects.toDBObject;
-import static com.mongodb.DBObjects.toDocument;
+import org.bson.types.BsonDocumentWrapper;
 
 class RemoveRequest extends WriteRequest {
     private final DBObject query;
     private final boolean multi;
+    private final DBObjectCodec codec;
 
-    public RemoveRequest(final DBObject query, final boolean multi) {
+    public RemoveRequest(final DBObject query, final boolean multi, final DBObjectCodec codec) {
         this.query = query;
         this.multi = multi;
-    }
-
-    RemoveRequest(final org.mongodb.operation.RemoveRequest removeRequest) {
-        this(toDBObject(removeRequest.getFilter()), removeRequest.isMulti());
+        this.codec = codec;
     }
 
     public DBObject getQuery() {
@@ -42,6 +39,6 @@ class RemoveRequest extends WriteRequest {
 
     @Override
     org.mongodb.operation.WriteRequest toNew() {
-        return new org.mongodb.operation.RemoveRequest(toDocument(query)).multi(isMulti());
+        return new org.mongodb.operation.RemoveRequest(new BsonDocumentWrapper<DBObject>(query, codec)).multi(isMulti());
     }
 }

@@ -18,30 +18,33 @@ package org.mongodb.codecs;
 
 import org.bson.BSONReader;
 import org.bson.BSONWriter;
-import org.bson.types.CodeWithScope;
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
+import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
 
+/**
+ * A Codec for CodeWithScope instances.
+ *
+ * @since 3.0
+ */
 public class CodeWithScopeCodec implements Codec<CodeWithScope> {
-    private final Codecs codecs;
-    private final SimpleDocumentCodec simpleDocumentCodec;
+    private final Codec<Document> documentCodec;
 
-    public CodeWithScopeCodec(final Codecs codecs) {
-        this.codecs = codecs;
-        simpleDocumentCodec = new SimpleDocumentCodec(codecs);
+    public CodeWithScopeCodec(final Codec<Document> documentCodec) {
+        this.documentCodec = documentCodec;
     }
 
     @Override
     public CodeWithScope decode(final BSONReader bsonReader) {
         String code = bsonReader.readJavaScriptWithScope();
-        Document scope = simpleDocumentCodec.decode(bsonReader);
+        Document scope = documentCodec.decode(bsonReader);
         return new CodeWithScope(code, scope);
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final CodeWithScope codeWithScope) {
-        bsonWriter.writeJavaScriptWithScope(codeWithScope.getCode());
-        codecs.encode(bsonWriter, codeWithScope.getScope());
+    public void encode(final BSONWriter writer, final CodeWithScope codeWithScope) {
+        writer.writeJavaScriptWithScope(codeWithScope.getCode());
+        documentCodec.encode(writer, codeWithScope.getScope());
     }
 
     @Override

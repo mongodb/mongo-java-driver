@@ -17,18 +17,21 @@
 package org.mongodb;
 
 public class CreateCollectionOptions {
-    private final Document createDocument;
     private final String collectionName;
+    private final boolean autoIndex;
+    private final long maxDocuments;
+    private final boolean capped;
+    private final long sizeInBytes;
 
     public CreateCollectionOptions(final String collectionName) {
         this(collectionName, false, 0, true);
     }
 
-    public CreateCollectionOptions(final String collectionName, final boolean capped, final int sizeInBytes) {
+    public CreateCollectionOptions(final String collectionName, final boolean capped, final long sizeInBytes) {
         this(collectionName, capped, sizeInBytes, true);
     }
 
-    public CreateCollectionOptions(final String collectionName, final boolean capped, final int sizeInBytes,
+    public CreateCollectionOptions(final String collectionName, final boolean capped, final long sizeInBytes,
                                    final boolean autoIndex) {
         this(collectionName, capped, sizeInBytes, autoIndex, 0);
     }
@@ -36,25 +39,29 @@ public class CreateCollectionOptions {
     public CreateCollectionOptions(final String collectionName, final boolean capped, final long sizeInBytes,
                                    final boolean autoIndex, final long maxDocuments) {
         this.collectionName = collectionName;
-        createDocument = new Document("create", collectionName);
-        createDocument.put("capped", capped);
-        //I want this to be >0 (seems correct) but for backwards compatibility with some of the tests had to change this
-        if (sizeInBytes != 0) {
-            createDocument.put("size", sizeInBytes);
-        }
-        if (capped) {
-            createDocument.put("autoIndexId", autoIndex);
-            if (maxDocuments > 0) {
-                createDocument.put("max", maxDocuments);
-            }
-        }
+        this.capped = capped;
+        this.sizeInBytes = sizeInBytes;
+        this.autoIndex = autoIndex;
+        this.maxDocuments = maxDocuments;
     }
 
     public String getCollectionName() {
         return collectionName;
     }
 
-    public Document asDocument() {
-        return createDocument;
+    public boolean isAutoIndex() {
+        return autoIndex;
+    }
+
+    public long getMaxDocuments() {
+        return maxDocuments;
+    }
+
+    public boolean isCapped() {
+        return capped;
+    }
+
+    public long getSizeInBytes() {
+        return sizeInBytes;
     }
 }

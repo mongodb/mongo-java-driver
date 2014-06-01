@@ -15,12 +15,11 @@
  */
 
 
-
-
-
-
-
 package org.mongodb.protocol
+
+import org.bson.types.Binary
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
 import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
@@ -112,17 +111,19 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
     def 'should split a large batch'() {
         given:
-        byte[] hugeByteArray = new byte[1024 * 1024 * 16 - 100];
+        def hugeBinary = new Binary(new byte[1024 * 1024 * 16 - 100]);
 
         def documents = [
-                new Document('_id', 1).append('bytes', hugeByteArray),
-                new Document('_id', 2).append('bytes', hugeByteArray),
-                new Document('_id', 3).append('bytes', hugeByteArray),
-                new Document('_id', 4).append('bytes', hugeByteArray)
+                new Document('_id', 1).append('bytes', hugeBinary),
+                new Document('_id', 2).append('bytes', hugeBinary),
+                new Document('_id', 3).append('bytes', hugeBinary),
+                new Document('_id', 4).append('bytes', hugeBinary)
         ]
 
         List<InsertRequest<Document>> insertList = new ArrayList<InsertRequest<Document>>(documents.size());
-        for (Document cur : documents) {
+        for (
+                Document cur :
+                        documents) {
             insertList.add(new InsertRequest<Document>(cur));
         }
         def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList, new DocumentCodec())
@@ -132,22 +133,24 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
         then:
         result.insertedCount == 4
-        documents.size() == new CountOperation(collection.getNamespace(), new Find(), new DocumentCodec()).execute(getBinding())
+        documents.size() == new CountOperation(collection.getNamespace(), new Find()).execute(getBinding())
     }
 
     def 'should have correct list of processed and unprocessed requests after error on split'() {
         given:
-        byte[] hugeByteArray = new byte[1024 * 1024 * 16 - 100];
+        def hugeBinary = new Binary(new byte[1024 * 1024 * 16 - 100]);
 
         def documents = [
-                new Document('_id', 1).append('bytes', hugeByteArray),
-                new Document('_id', 2).append('bytes', hugeByteArray),
-                new Document('_id', 3).append('bytes', hugeByteArray),
-                new Document('_id', 4).append('bytes', hugeByteArray)
+                new Document('_id', 1).append('bytes', hugeBinary),
+                new Document('_id', 2).append('bytes', hugeBinary),
+                new Document('_id', 3).append('bytes', hugeBinary),
+                new Document('_id', 4).append('bytes', hugeBinary)
         ]
 
         List<InsertRequest<Document>> insertList = new ArrayList<InsertRequest<Document>>(documents.size());
-        for (Document cur : documents) {
+        for (
+                Document cur :
+                        documents) {
             insertList.add(new InsertRequest<Document>(cur));
         }
 
@@ -168,7 +171,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
     def 'should map indices in exception when split is required'() {
         given:
-        byte[] hugeByteArray = new byte[1024 * 1024 * 16 - 100];
+        def hugeBinary = new Binary(new byte[1024 * 1024 * 16 - 100]);
 
         def documents = [
                 new Document('_id', 1),
@@ -178,15 +181,19 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         ]
 
         List<InsertRequest<Document>> insertList = new ArrayList<InsertRequest<Document>>(documents.size());
-        for (Document cur : documents) {
+        for (
+                Document cur :
+                        documents) {
             insertList.add(new InsertRequest<Document>(cur));
         }
         new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, insertList,
                                   new DocumentCodec()).execute(connection)
 
         // add a large byte array to each document to force a split after each
-        for (def document : documents) {
-            document.append('bytes', hugeByteArray);
+        for (
+                def document :
+                        documents) {
+            document.append('bytes', hugeBinary);
         }
         documents[1].put('_id', 5)  // Make the second document a new one
 
@@ -207,9 +214,11 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
     def 'should upsert items'() {
         given:
         def protocol = new UpdateCommandProtocol(getNamespace(), true, ACKNOWLEDGED,
-                                                 [new UpdateRequest(new Document('_id', 1), new Document('$set', new Document('x', 1)))
+                                                 [new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                                                    new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))))
                                                           .upsert(true),
-                                                  new UpdateRequest(new Document('_id', 2), new Document('$set', new Document('x', 2)))
+                                                  new UpdateRequest(new BsonDocument('_id', new BsonInt32(2)),
+                                                                    new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))))
                                                           .upsert(true)],
                                                  new DocumentCodec());
 
@@ -218,6 +227,6 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
         then:
         result.matchedCount == 0;
-        result.upserts == [new BulkWriteUpsert(0, 1), new BulkWriteUpsert(1, 2)]
+        result.upserts == [new BulkWriteUpsert(0, new BsonInt32(1)), new BulkWriteUpsert(1, new BsonInt32(2))]
     }
 }

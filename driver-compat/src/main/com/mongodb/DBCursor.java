@@ -17,8 +17,7 @@
 package com.mongodb;
 
 
-import org.mongodb.Decoder;
-import org.mongodb.Document;
+import org.bson.codecs.Decoder;
 import org.mongodb.MongoCursor;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.NotThreadSafe;
@@ -33,8 +32,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.DBObjects.toDocument;
-import static com.mongodb.DBObjects.toNullableDocument;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -81,11 +78,12 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     public DBCursor(final DBCollection collection, final DBObject query, final DBObject fields, final ReadPreference readPreference) {
         this(collection,
              new Find()
-             .where(toDocument(query))
-             .select(DBObjects.toFieldSelectorDocument(fields))
-             .hintIndex(toNullableDocument(lookupSuitableHints(query, collection.getHintFields())))
+             .where(collection.wrapAllowNull(query))
+             .select(collection.wrapAllowNull(fields))
+             .hintIndex(collection.wrapAllowNull(lookupSuitableHints(query, collection.getHintFields())))
              .addFlags(QueryFlag.toSet(collection.getOptions())),
-             readPreference);
+             readPreference
+            );
     }
 
     private DBCursor(final DBCollection collection, final Find find, final ReadPreference readPreference) {
@@ -117,7 +115,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
 
         if (cursor == null) {
-            cursor = collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), find, collection.getDocumentCodec(),
+            cursor = collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), find,
                                                                      resultDecoder), getReadPreference());
         }
 
@@ -253,7 +251,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBCursor max(final DBObject max) {
-        find.getOptions().max(new Document(DBObjects.toDocument(max)));
+        find.getOptions().max(collection.wrap(max));
         return this;
     }
 
@@ -264,7 +262,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBCursor min(final DBObject min) {
-        find.getOptions().min(new Document(DBObjects.toDocument(min)));
+        find.getOptions().min(collection.wrap(min));
         return this;
     }
 
@@ -300,7 +298,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return same DBCursor for chaining operations
      */
     public DBCursor hint(final DBObject indexKeys) {
-        find.hintIndex(toDocument(indexKeys));
+        find.hintIndex(collection.wrap(indexKeys));
         return this;
     }
 
@@ -361,8 +359,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             copy.batchSize(copy.getLimit() * -1);
             copy.limit(0);
         }
-        return collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getDocumentCodec(),
-                                                               new DBObjectCodec()), getReadPreference())
+        return collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getObjectCodec()),
+                                  getReadPreference())
                          .next();
     }
 
@@ -373,7 +371,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return a cursor pointing to the first element of the sorted results
      */
     public DBCursor sort(final DBObject orderBy) {
-        find.order(toDocument(orderBy));
+        find.order(collection.wrap(orderBy));
         return this;
     }
 
@@ -522,8 +520,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the first matching document
      */
     public DBObject one() {
-        return collection.findOne(getQuery(), getKeysWanted(), DBObjects.toNullableDBObject(find.getOrder()), getReadPreference(),
-                                  find.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
+        return collection.findOne(getQuery(), getKeysWanted(), find.getOrder() == null ? null : DBObjects.toDBObject(find.getOrder()),
+                                  getReadPreference(), find.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
     }
 
     /**
@@ -576,7 +574,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the field selector that cursor used
      */
     public DBObject getKeysWanted() {
-        return DBObjects.toNullableDBObject(find.getFields());
+        return find.getFields() == null ? null : DBObjects.toDBObject(find.getFields());
     }
 
     /**

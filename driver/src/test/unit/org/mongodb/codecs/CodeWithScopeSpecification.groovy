@@ -18,7 +18,7 @@ package org.mongodb.codecs
 
 import org.bson.BSONBinaryReader
 import org.bson.BSONWriter
-import org.bson.types.CodeWithScope
+import org.mongodb.CodeWithScope
 import org.mongodb.Document
 import spock.lang.Specification
 import spock.lang.Subject
@@ -29,7 +29,7 @@ class CodeWithScopeSpecification extends Specification {
     private final BSONWriter bsonWriter = Mock();
 
     @Subject
-    private final CodeWithScopeCodec codeWithScopeCodec = new CodeWithScopeCodec(Codecs.createDefault());
+    private final CodeWithScopeCodec codeWithScopeCodec = new CodeWithScopeCodec(new DocumentCodec());
 
     def 'should encode code with scope as java script followed by document of scope'() {
         given:

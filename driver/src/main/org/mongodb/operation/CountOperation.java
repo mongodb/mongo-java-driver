@@ -16,19 +16,21 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
-import org.mongodb.codecs.DocumentCodec;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.DocumentHelper.putIfNotNull;
+import static org.mongodb.operation.DocumentHelper.putIfNotZero;
+import static org.mongodb.operation.OperationHelper.getBsonDocumentCodec;
 
 /**
  * An operation that executes a count.
@@ -36,50 +38,41 @@ import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  * @since 3.0
  */
 public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
-    private final Encoder<Document> encoder;
     private final MongoNamespace namespace;
     private final Find find;
 
-    public CountOperation(final MongoNamespace namespace, final Find find, final Encoder<Document> encoder) {
+    public CountOperation(final MongoNamespace namespace, final Find find) {
         this.namespace = namespace;
         this.find = find;
-        this.encoder = encoder;
     }
 
 
     public Long execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, asCommandDocument(), encoder, new DocumentCodec(), binding, transformer());
+        return executeWrappedCommandProtocol(namespace, asCommandDocument(), getBsonDocumentCodec(), binding,
+                                             transformer());
     }
 
     @Override
     public MongoFuture<Long> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, asCommandDocument(), encoder, new DocumentCodec(), binding, transformer());
+        return executeWrappedCommandProtocolAsync(namespace, asCommandDocument(), getBsonDocumentCodec(),
+                                                  binding, transformer());
     }
 
     private Function<CommandResult, Long> transformer() {
         return new Function<CommandResult, Long>() {
             @Override
             public Long apply(final CommandResult result) {
-                return ((Number) result.getResponse().get("n")).longValue();
+                return (result.getResponse().getNumber("n")).longValue();
             }
         };
     }
 
-    private Document asCommandDocument() {
-        Document document = new Document("count", namespace.getCollectionName());
-
-        if (find.getFilter() != null) {
-            document.put("query", find.getFilter());
-        }
-        if (find.getLimit() > 0) {
-            document.put("limit", find.getLimit());
-        }
-        if (find.getSkip() > 0) {
-            document.put("skip", find.getSkip());
-        }
-        if (find.getOptions().getMaxTime(MILLISECONDS) > 0) {
-            document.put("maxTimeMS", find.getOptions().getMaxTime(MILLISECONDS));
-        }
+    private BsonDocument asCommandDocument() {
+        BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
+        putIfNotNull(document, "query", find.getFilter());
+        putIfNotZero(document, "limit", find.getLimit());
+        putIfNotZero(document, "skip", find.getSkip());
+        putIfNotZero(document, "maxTimeMS", find.getOptions().getMaxTime(MILLISECONDS));
         return document;
     }
 }

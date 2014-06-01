@@ -15,7 +15,12 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
+import org.bson.codecs.BsonDocumentCodec
+import org.bson.types.Binary
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
@@ -30,7 +35,7 @@ class RemoveOperationSpecification extends FunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document('_id', 1))
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     [new RemoveRequest(new Document('_id', 1))],
+                                     [new RemoveRequest(new BsonDocument('_id', new BsonInt32(1)))],
                                      new DocumentCodec())
 
         when:
@@ -45,7 +50,7 @@ class RemoveOperationSpecification extends FunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document('_id', 1))
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     [new RemoveRequest(new Document('_id', 1))],
+                                     [new RemoveRequest(new BsonDocument('_id', new BsonInt32(1)))],
                                      new DocumentCodec())
 
         when:
@@ -57,12 +62,12 @@ class RemoveOperationSpecification extends FunctionalSpecification {
 
     def 'should split removes into batches'() {
         given:
-        Document bigDoc = new Document('bytes', new byte[1024 * 1024 * 16 - 2127])
-        Document smallerDoc = new Document('bytes', new byte[1024 * 16 + 1980])
-        Document simpleDoc = new Document('_id', 1)
-        getCollectionHelper().insertDocuments(simpleDoc)
+        def bigDoc = new BsonDocument('bytes', new Binary(new byte[1024 * 1024 * 16 - 2127]))
+        def smallerDoc = new BsonDocument('bytes', new Binary(new byte[1024 * 16 + 1980]))
+        def simpleDoc = new BsonDocument('_id', new BsonInt32(1))
+        getCollectionHelper().insertDocuments(new BsonDocumentCodec(), simpleDoc)
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     [new RemoveRequest(bigDoc), new RemoveRequest(smallerDoc),  new RemoveRequest(simpleDoc)],
+                                     [new RemoveRequest(bigDoc), new RemoveRequest(smallerDoc), new RemoveRequest(simpleDoc)],
                                      new DocumentCodec())
 
         when:
@@ -75,12 +80,12 @@ class RemoveOperationSpecification extends FunctionalSpecification {
     @Category(Async)
     def 'should split removes into batches asynchronously'() {
         given:
-        Document bigDoc = new Document('bytes', new byte[1024 * 1024 * 16 - 2127])
-        Document smallerDoc = new Document('bytes', new byte[1024 * 16 + 1980])
-        Document simpleDoc = new Document('_id', 1)
-        getCollectionHelper().insertDocuments(simpleDoc)
+        def bigDoc = new BsonDocument('bytes', new Binary(new byte[1024 * 1024 * 16 - 2127]))
+        def smallerDoc = new BsonDocument('bytes', new Binary(new byte[1024 * 16 + 1980]))
+        def simpleDoc = new BsonDocument('_id', new BsonInt32(1))
+        getCollectionHelper().insertDocuments(new BsonDocumentCodec(), simpleDoc)
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     [new RemoveRequest(bigDoc), new RemoveRequest(smallerDoc),  new RemoveRequest(simpleDoc)],
+                                     [new RemoveRequest(bigDoc), new RemoveRequest(smallerDoc), new RemoveRequest(simpleDoc)],
                                      new DocumentCodec())
 
         when:

@@ -16,12 +16,12 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Document;
+import org.bson.types.BsonDocument;
 
 public abstract class FindAndModify extends Query {
-    private Document filter;
-    private Document selector;
-    private Document sortCriteria;
+    private BsonDocument filter;
+    private BsonDocument selector;
+    private BsonDocument sortCriteria;
     private boolean returnNew;
     private boolean upsert;
 
@@ -29,17 +29,17 @@ public abstract class FindAndModify extends Query {
     }
 
     //CHECKSTYLE:OFF
-    public FindAndModify where(final Document filter) {
+    public FindAndModify where(final BsonDocument filter) {
         this.filter = filter;
         return this;
     }
 
-    public FindAndModify select(final Document selector) {
+    public FindAndModify select(final BsonDocument selector) {
         this.selector = selector;
         return this;
     }
 
-    public FindAndModify sortBy(final Document sortCriteria) {
+    public FindAndModify sortBy(final BsonDocument sortCriteria) {
         this.sortCriteria = sortCriteria;
         return this;
     }
@@ -56,15 +56,15 @@ public abstract class FindAndModify extends Query {
     }
     //CHECKSTYLE:ON
 
-    public Document getFilter() {
+    public BsonDocument getFilter() {
         return filter;
     }
 
-    public Document getSelector() {
+    public BsonDocument getSelector() {
         return selector;
     }
 
-    public Document getSortCriteria() {
+    public BsonDocument getSortCriteria() {
         return sortCriteria;
     }
 

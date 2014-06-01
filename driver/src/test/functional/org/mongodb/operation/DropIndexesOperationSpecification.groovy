@@ -15,12 +15,14 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 import org.mongodb.MongoException
+import org.mongodb.codecs.DocumentCodec
 
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
@@ -109,7 +111,7 @@ class DropIndexesOperationSpecification extends FunctionalSpecification {
         given:
         def operation = new DropIndexOperation(getNamespace(), '*');
         createIndexes(Index.builder().addKey('theField', ASC).build(),
-                Index.builder().addKey('theOtherField', ASC).build())
+                      Index.builder().addKey('theOtherField', ASC).build())
 
         when:
         operation.execute(getBinding())
@@ -142,7 +144,7 @@ class DropIndexesOperationSpecification extends FunctionalSpecification {
     }
 
     def getIndexes() {
-        new GetIndexesOperation(getNamespace()).execute(getBinding())
+        new GetIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
     }
 
 }

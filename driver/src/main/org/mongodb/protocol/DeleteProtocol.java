@@ -16,8 +16,6 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
@@ -41,13 +39,11 @@ public class DeleteProtocol extends WriteProtocol {
     private static final Logger LOGGER = Loggers.getLogger("protocol.delete");
 
     private final List<RemoveRequest> deletes;
-    private final Encoder<Document> queryEncoder;
 
     public DeleteProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                          final List<RemoveRequest> deletes, final Encoder<Document> queryEncoder) {
+                          final List<RemoveRequest> deletes) {
         super(namespace, ordered, writeConcern);
         this.deletes = deletes;
-        this.queryEncoder = queryEncoder;
     }
 
     @Override
@@ -79,7 +75,7 @@ public class DeleteProtocol extends WriteProtocol {
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new DeleteMessage(getNamespace().getFullName(), deletes, queryEncoder, settings);
+        return new DeleteMessage(getNamespace().getFullName(), deletes, settings);
     }
 
     @Override

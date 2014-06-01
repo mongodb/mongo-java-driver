@@ -16,6 +16,7 @@
 
 package org.mongodb.protocol;
 
+import org.bson.types.Binary;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,7 +40,7 @@ public class MaxDocumentSizeTest {
     @Before
     public void setUp() {
         message = new InsertMessage<Document>("test.test", true, ACKNOWLEDGED,
-                                              asList(new InsertRequest<Document>(new Document("bytes", new byte[2048]))),
+                                              asList(new InsertRequest<Document>(new Document("bytes", new Binary(new byte[2048])))),
                                               new DocumentCodec(), MessageSettings.builder().maxDocumentSize(1024).build());
         buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
     }
