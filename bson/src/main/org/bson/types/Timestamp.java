@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -52,8 +52,8 @@ public final class Timestamp extends BsonValue implements Comparable<Timestamp>,
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.TIMESTAMP;
+    public BsonType getBsonType() {
+        return BsonType.TIMESTAMP;
     }
 
     /**

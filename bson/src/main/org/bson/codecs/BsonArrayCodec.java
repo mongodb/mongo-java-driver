@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONType;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonType;
+import org.bson.BsonWriter;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BsonArray;
 import org.bson.types.BsonValue;
@@ -39,11 +39,11 @@ public class BsonArrayCodec implements Codec<BsonArray> {
     }
 
     @Override
-    public BsonArray decode(final BSONReader reader) {
+    public BsonArray decode(final BsonReader reader) {
         reader.readStartArray();
 
         List<BsonValue> list = new ArrayList<BsonValue>();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
             list.add(readValue(reader));
         }
 
@@ -54,7 +54,7 @@ public class BsonArrayCodec implements Codec<BsonArray> {
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public void encode(final BSONWriter writer, final BsonArray array) {
+    public void encode(final BsonWriter writer, final BsonArray array) {
         writer.writeStartArray();
 
         for (BsonValue value : array) {
@@ -77,8 +77,8 @@ public class BsonArrayCodec implements Codec<BsonArray> {
      * @param reader the read to read the value from
      * @return the non-null value read from the reader
      */
-    protected BsonValue readValue(final BSONReader reader) {
-        return registry.get(BsonValueCodecSource.getClassForBsonType(reader.getCurrentBSONType())).decode(reader);
+    protected BsonValue readValue(final BsonReader reader) {
+        return registry.get(BsonValueCodecSource.getClassForBsonType(reader.getCurrentBsonType())).decode(reader);
     }
 
 }

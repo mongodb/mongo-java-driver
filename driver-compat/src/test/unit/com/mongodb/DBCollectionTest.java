@@ -17,9 +17,9 @@
 package com.mongodb;
 
 
-import org.bson.BSONBinarySubType;
-import org.bson.BSONBinaryWriter;
 import org.bson.BSONObject;
+import org.bson.BsonBinarySubType;
+import org.bson.BsonBinaryWriter;
 import org.bson.io.OutputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
@@ -410,7 +410,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test
     public void testOtherBinary() {
         byte[] data = {1, 2, 3};
-        Binary binaryValue = new Binary(BSONBinarySubType.USER_DEFINED, data);
+        Binary binaryValue = new Binary(BsonBinarySubType.USER_DEFINED, data);
         collection.insert(new BasicDBObject("binary", binaryValue));
         assertEquals(binaryValue, collection.findOne().get("binary"));
     }
@@ -815,7 +815,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         @Override
         public int writeObject(final OutputBuffer outputBuffer, final BSONObject document) {
             int start = outputBuffer.getPosition();
-            BSONBinaryWriter bsonWriter = new BSONBinaryWriter(outputBuffer, false);
+            BsonBinaryWriter bsonWriter = new BsonBinaryWriter(outputBuffer, false);
             try {
                 bsonWriter.writeStartDocument();
                 bsonWriter.writeInt32("_id", 1);

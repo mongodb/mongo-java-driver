@@ -16,8 +16,8 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.Binary;
 
 /**
@@ -27,12 +27,12 @@ import org.bson.types.Binary;
  */
 public class BinaryCodec implements Codec<Binary> {
     @Override
-    public void encode(final BSONWriter writer, final Binary value) {
+    public void encode(final BsonWriter writer, final Binary value) {
         writer.writeBinaryData(value);
     }
 
     @Override
-    public Binary decode(final BSONReader reader) {
+    public Binary decode(final BsonReader reader) {
         return reader.readBinaryData();
     }
 

@@ -16,8 +16,8 @@
 
 package com.mongodb;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.Encoder;
@@ -37,12 +37,12 @@ class CompoundDBObjectCodec implements Codec<DBObject> {
     }
 
     @Override
-    public DBObject decode(final BSONReader reader) {
+    public DBObject decode(final BsonReader reader) {
         return decoder.decode(reader);
     }
 
     @Override
-    public void encode(final BSONWriter writer, final DBObject value) {
+    public void encode(final BsonWriter writer, final DBObject value) {
         encoder.encode(writer, value);
     }
 

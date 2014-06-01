@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -43,8 +43,8 @@ public class DBPointer extends BsonValue implements Serializable {
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.DB_POINTER;
+    public BsonType getBsonType() {
+        return BsonType.DB_POINTER;
     }
 
     public String getNamespace() {

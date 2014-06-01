@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -57,8 +57,8 @@ public final class BsonArray extends BsonValue implements List<BsonValue>, Seria
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.ARRAY;
+    public BsonType getBsonType() {
+        return BsonType.ARRAY;
     }
 
     @Override

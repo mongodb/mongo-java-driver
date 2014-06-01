@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -45,8 +45,8 @@ public class BsonDateTime extends BsonValue implements Comparable<BsonDateTime>,
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.DATE_TIME;
+    public BsonType getBsonType() {
+        return BsonType.DATE_TIME;
     }
 
     /**

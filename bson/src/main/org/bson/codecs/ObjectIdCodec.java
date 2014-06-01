@@ -16,8 +16,8 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.ObjectId;
 
 /**
@@ -27,12 +27,12 @@ import org.bson.types.ObjectId;
  */
 public class ObjectIdCodec implements Codec<ObjectId> {
     @Override
-    public void encode(final BSONWriter writer, final ObjectId value) {
+    public void encode(final BsonWriter writer, final ObjectId value) {
         writer.writeObjectId(value);
     }
 
     @Override
-    public ObjectId decode(final BSONReader reader) {
+    public ObjectId decode(final BsonReader reader) {
         return reader.readObjectId();
     }
 

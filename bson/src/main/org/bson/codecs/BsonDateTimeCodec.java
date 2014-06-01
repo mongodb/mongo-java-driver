@@ -16,8 +16,8 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.BsonDateTime;
 
 /**
@@ -27,12 +27,12 @@ import org.bson.types.BsonDateTime;
  */
 public class BsonDateTimeCodec implements Codec<BsonDateTime> {
     @Override
-    public BsonDateTime decode(final BSONReader reader) {
+    public BsonDateTime decode(final BsonReader reader) {
         return new BsonDateTime(reader.readDateTime());
     }
 
     @Override
-    public void encode(final BSONWriter writer, final BsonDateTime value) {
+    public void encode(final BsonWriter writer, final BsonDateTime value) {
         writer.writeDateTime(value.getValue());
     }
 

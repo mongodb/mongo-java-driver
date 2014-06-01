@@ -16,18 +16,18 @@
 
 package org.bson;
 
-public class BSONWriterSettings {
-    private final int maxSerializationDepth;
+public class BsonBinaryWriterSettings {
+    private final int maxDocumentSize;
 
-    public BSONWriterSettings(final int maxSerializationDepth) {
-        this.maxSerializationDepth = maxSerializationDepth;
+    public BsonBinaryWriterSettings(final int maxDocumentSize) {
+        this.maxDocumentSize = maxDocumentSize;
     }
 
-    public BSONWriterSettings() {
-        this(1024);
+    public BsonBinaryWriterSettings() {
+        this(Integer.MAX_VALUE);
     }
 
-    public int getMaxSerializationDepth() {
-        return maxSerializationDepth;
+    public int getMaxDocumentSize() {
+        return maxDocumentSize;
     }
 }

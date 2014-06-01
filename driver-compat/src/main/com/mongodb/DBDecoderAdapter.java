@@ -16,8 +16,8 @@
 
 package com.mongodb;
 
-import org.bson.BSONBinaryWriter;
-import org.bson.BSONReader;
+import org.bson.BsonBinaryWriter;
+import org.bson.BsonReader;
 import org.bson.codecs.Decoder;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.ByteBufferOutputBuffer;
@@ -37,8 +37,8 @@ class DBDecoderAdapter implements Decoder<DBObject> {
     }
 
     @Override
-    public DBObject decode(final BSONReader reader) {
-        BSONBinaryWriter binaryWriter = new BSONBinaryWriter(new ByteBufferOutputBuffer(bufferProvider), true);
+    public DBObject decode(final BsonReader reader) {
+        BsonBinaryWriter binaryWriter = new BsonBinaryWriter(new ByteBufferOutputBuffer(bufferProvider), true);
         try {
             binaryWriter.pipe(reader);
             BufferExposingByteArrayOutputStream byteArrayOutputStream =

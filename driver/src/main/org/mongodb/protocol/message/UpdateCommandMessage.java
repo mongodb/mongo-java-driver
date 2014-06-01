@@ -16,7 +16,7 @@
 
 package org.mongodb.protocol.message;
 
-import org.bson.BSONBinaryWriter;
+import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
@@ -31,7 +31,7 @@ public class UpdateCommandMessage extends BaseUpdateCommandMessage<UpdateRequest
         super(namespace, ordered, writeConcern, updates, messageSettings);
     }
 
-    protected void writeUpdate(final BSONBinaryWriter writer, final UpdateRequest update) {
+    protected void writeUpdate(final BsonBinaryWriter writer, final UpdateRequest update) {
         getBsonDocumentCodec().encode(writer, update.getUpdateOperations());
     }
 

@@ -16,10 +16,10 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONBinaryReader;
-import org.bson.BSONBinaryWriter;
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonBinaryReader;
+import org.bson.BsonBinaryWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.io.BasicInputBuffer;
 import org.mongodb.BSONDocumentBuffer;
@@ -44,8 +44,8 @@ public class BSONDocumentBufferCodec implements Codec<BSONDocumentBuffer> {
     }
 
     @Override
-    public void encode(final BSONWriter writer, final BSONDocumentBuffer value) {
-        BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(value.getByteBuffer()), true);
+    public void encode(final BsonWriter writer, final BSONDocumentBuffer value) {
+        BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(value.getByteBuffer()), true);
         try {
             writer.pipe(reader);
         } finally {
@@ -54,8 +54,8 @@ public class BSONDocumentBufferCodec implements Codec<BSONDocumentBuffer> {
     }
 
     @Override
-    public BSONDocumentBuffer decode(final BSONReader reader) {
-        BSONBinaryWriter writer = new BSONBinaryWriter(new ByteBufferOutputBuffer(bufferProvider), true);
+    public BSONDocumentBuffer decode(final BsonReader reader) {
+        BsonBinaryWriter writer = new BsonBinaryWriter(new ByteBufferOutputBuffer(bufferProvider), true);
         try {
             writer.pipe(reader);
             BufferExposingByteArrayOutputStream byteArrayOutputStream = new BufferExposingByteArrayOutputStream(writer.getBuffer().size());

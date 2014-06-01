@@ -38,20 +38,20 @@ import org.bson.types.Symbol;
 import org.bson.types.Timestamp;
 import org.bson.types.Undefined;
 
-import static org.bson.BSONContextType.DOCUMENT;
-import static org.bson.BSONContextType.SCOPE_DOCUMENT;
+import static org.bson.BsonContextType.DOCUMENT;
+import static org.bson.BsonContextType.SCOPE_DOCUMENT;
 
 /**
  * Writes into an instance of BsonDocument.
  *
  * @since 3.0
  */
-public class BsonDocumentWriter extends AbstractBSONWriter {
+public class BsonDocumentWriter extends AbstractBsonWriter {
 
     private final BsonDocument document;
 
     public BsonDocumentWriter(final BsonDocument document) {
-        super(new BSONWriterSettings());
+        super(new BsonWriterSettings());
         this.document = document;
         setContext(new Context());
     }
@@ -109,7 +109,7 @@ public class BsonDocumentWriter extends AbstractBSONWriter {
     public void writeJavaScriptWithScope(final String code) {
         checkPreconditions("writeJavaScriptWithScope", State.VALUE);
 
-        setContext(new Context(new BsonString(code), BSONContextType.JAVASCRIPT_WITH_SCOPE, getContext()));
+        setContext(new Context(new BsonString(code), BsonContextType.JAVASCRIPT_WITH_SCOPE, getContext()));
 
         setState(State.SCOPE_DOCUMENT);
     }
@@ -200,7 +200,7 @@ public class BsonDocumentWriter extends AbstractBSONWriter {
                 setContext(new Context(new BsonDocument(), SCOPE_DOCUMENT, getContext()));
                 break;
             default:
-                throw new BSONInvalidOperationException("Unexpected state " + getState());
+                throw new BsonInvalidOperationException("Unexpected state " + getState());
         }
 
         setState(State.NAME);
@@ -215,13 +215,13 @@ public class BsonDocumentWriter extends AbstractBSONWriter {
         BsonValue value = getContext().container;
         setContext(getContext().getParentContext());
 
-        if (getContext().getContextType() == BSONContextType.JAVASCRIPT_WITH_SCOPE) {
+        if (getContext().getContextType() == BsonContextType.JAVASCRIPT_WITH_SCOPE) {
             BsonDocument scope = (BsonDocument) value;
             BsonString code = (BsonString) getContext().container;
             setContext(getContext().getParentContext());
             write(new CodeWithScope(code.getValue(), scope));
         } else {
-            if (getContext().getContextType() == BSONContextType.TOP_LEVEL) {
+            if (getContext().getContextType() == BsonContextType.TOP_LEVEL) {
                 setState(State.DONE);
             } else {
                 write(value);
@@ -235,7 +235,7 @@ public class BsonDocumentWriter extends AbstractBSONWriter {
         checkPreconditions("writeStartArray", State.VALUE);
         super.writeStartArray();
 
-        setContext(new Context(new BsonArray(), BSONContextType.ARRAY, getContext()));
+        setContext(new Context(new BsonArray(), BsonContextType.ARRAY, getContext()));
         setState(State.VALUE);
     }
 
@@ -264,16 +264,16 @@ public class BsonDocumentWriter extends AbstractBSONWriter {
         getContext().add(value);
     }
 
-    private class Context extends AbstractBSONWriter.Context {
+    private class Context extends AbstractBsonWriter.Context {
         private BsonValue container;
 
-        public Context(final BsonValue container, final BSONContextType contextType, final Context parent) {
+        public Context(final BsonValue container, final BsonContextType contextType, final Context parent) {
             super(parent, contextType);
             this.container = container;
         }
 
         public Context() {
-            super(null, BSONContextType.TOP_LEVEL);
+            super(null, BsonContextType.TOP_LEVEL);
         }
 
         void add(final BsonValue value) {

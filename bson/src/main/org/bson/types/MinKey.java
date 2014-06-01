@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -31,8 +31,8 @@ public final class MinKey extends BsonValue implements Serializable {
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.MIN_KEY;
+    public BsonType getBsonType() {
+        return BsonType.MIN_KEY;
     }
 
     @Override

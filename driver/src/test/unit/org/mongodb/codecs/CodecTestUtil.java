@@ -16,8 +16,8 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONBinaryReader;
-import org.bson.BSONBinaryWriter;
+import org.bson.BsonBinaryReader;
+import org.bson.BsonBinaryWriter;
 import org.bson.ByteBufNIO;
 import org.bson.codecs.Codec;
 import org.bson.io.BasicInputBuffer;
@@ -27,13 +27,13 @@ import org.mongodb.Document;
 import java.nio.ByteBuffer;
 
 public final class CodecTestUtil {
-    static BSONBinaryReader prepareReaderWithObjectToBeDecoded(final Object objectToDecode) {
+    static BsonBinaryReader prepareReaderWithObjectToBeDecoded(final Object objectToDecode) {
         //Need to encode it wrapped in a document to conform to the validation
         Document document = new Document("wrapperDocument", objectToDecode);
 
         BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
 
-        BSONBinaryWriter writer = new BSONBinaryWriter(outputBuffer, true);
+        BsonBinaryWriter writer = new BsonBinaryWriter(outputBuffer, true);
         byte[] documentAsByteArrayForReader;
         try {
             new DocumentCodec().encode(writer, document);
@@ -42,7 +42,7 @@ public final class CodecTestUtil {
             writer.close();
         }
 
-        BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(documentAsByteArrayForReader))),
+        BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(documentAsByteArrayForReader))),
                                                        false);
 
         //have to read off the wrapper document so the reader is in the correct position for the test
@@ -51,10 +51,10 @@ public final class CodecTestUtil {
         return reader;
     }
 
-    static <T> BSONBinaryReader prepareReaderWithObjectToBeDecoded(final T objectToDecode, final Codec<T> codec) {
+    static <T> BsonBinaryReader prepareReaderWithObjectToBeDecoded(final T objectToDecode, final Codec<T> codec) {
         BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
 
-        BSONBinaryWriter writer = new BSONBinaryWriter(outputBuffer, true);
+        BsonBinaryWriter writer = new BsonBinaryWriter(outputBuffer, true);
         byte[] documentAsByteArrayForReader;
         try {
             codec.encode(writer, objectToDecode);
@@ -63,7 +63,7 @@ public final class CodecTestUtil {
             writer.close();
         }
 
-        return new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(documentAsByteArrayForReader))), false);
+        return new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(documentAsByteArrayForReader))), false);
     }
 
     private CodecTestUtil() { }

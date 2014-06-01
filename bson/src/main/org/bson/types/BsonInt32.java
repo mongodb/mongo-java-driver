@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -45,8 +45,8 @@ public final class BsonInt32 extends BsonNumber implements Comparable<BsonInt32>
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.INT32;
+    public BsonType getBsonType() {
+        return BsonType.INT32;
     }
 
     /**

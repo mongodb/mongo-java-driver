@@ -12,12 +12,12 @@ import org.bson.types.Timestamp;
 import java.util.Iterator;
 import java.util.Map;
 
-public class BsonDocumentReader extends AbstractBSONReader {
+public class BsonDocumentReader extends AbstractBsonReader {
     private BsonValue currentValue;
 
     public BsonDocumentReader(final BsonDocument document) {
-        super(new BSONReaderSettings());
-        setContext(new Context(null, BSONContextType.TOP_LEVEL, document));
+        super(new BsonReaderSettings());
+        setContext(new Context(null, BsonContextType.TOP_LEVEL, document));
         currentValue = document;
     }
 
@@ -112,18 +112,18 @@ public class BsonDocumentReader extends AbstractBSONReader {
     @Override
     protected void doReadStartArray() {
         BsonArray array = currentValue.asArray();
-        setContext(new Context(getContext(), BSONContextType.ARRAY, array));
+        setContext(new Context(getContext(), BsonContextType.ARRAY, array));
     }
 
     @Override
     protected void doReadStartDocument() {
         BsonDocument document;
-        if (currentValue.getBsonType() == BSONType.JAVASCRIPT_WITH_SCOPE) {
+        if (currentValue.getBsonType() == BsonType.JAVASCRIPT_WITH_SCOPE) {
             document = currentValue.asJavaScriptWithScope().getScope();
         } else {
             document = currentValue.asDocument();
         }
-        setContext(new Context(getContext(), BSONContextType.DOCUMENT, document));
+        setContext(new Context(getContext(), BsonContextType.DOCUMENT, document));
     }
 
     @Override
@@ -154,12 +154,12 @@ public class BsonDocumentReader extends AbstractBSONReader {
     }
 
     @Override
-    public BSONType readBSONType() {
+    public BsonType readBSONType() {
         if (getState() == State.INITIAL || getState() == State.SCOPE_DOCUMENT) {
             // there is an implied type of Document for the top level and for scope documents
-            setCurrentBSONType(BSONType.DOCUMENT);
+            setCurrentBsonType(BsonType.DOCUMENT);
             setState(State.VALUE);
-            return getCurrentBSONType();
+            return getCurrentBsonType();
         }
 
         switch (getContext().getContextType()) {
@@ -167,7 +167,7 @@ public class BsonDocumentReader extends AbstractBSONReader {
                 currentValue = getContext().getNextValue();
                 if (currentValue == null) {
                     setState(State.END_OF_ARRAY);
-                    return BSONType.END_OF_DOCUMENT;
+                    return BsonType.END_OF_DOCUMENT;
                 }
                 setState(State.VALUE);
                 break;
@@ -175,7 +175,7 @@ public class BsonDocumentReader extends AbstractBSONReader {
                 Map.Entry<String, BsonValue> currentElement = getContext().getNextElement();
                 if (currentElement == null) {
                     setState(State.END_OF_DOCUMENT);
-                    return BSONType.END_OF_DOCUMENT;
+                    return BsonType.END_OF_DOCUMENT;
                 }
                 setCurrentName(currentElement.getKey());
                 currentValue = currentElement.getValue();
@@ -185,8 +185,8 @@ public class BsonDocumentReader extends AbstractBSONReader {
                 throw new BSONException("Invalid ContextType.");
         }
 
-        setCurrentBSONType(currentValue.getBsonType());
-        return getCurrentBSONType();
+        setCurrentBsonType(currentValue.getBsonType());
+        return getCurrentBsonType();
     }
 
     @Override
@@ -194,16 +194,16 @@ public class BsonDocumentReader extends AbstractBSONReader {
         return (Context) super.getContext();
     }
 
-    protected static class Context extends AbstractBSONReader.Context {
+    protected static class Context extends AbstractBsonReader.Context {
         private Iterator<Map.Entry<String, BsonValue>> documentIterator;
         private Iterator<BsonValue> arrayIterator;
 
-        protected Context(final Context parentContext, final BSONContextType contextType, final BsonArray array) {
+        protected Context(final Context parentContext, final BsonContextType contextType, final BsonArray array) {
             super(parentContext, contextType);
             arrayIterator = array.iterator();
         }
 
-        protected Context(final Context parentContext, final BSONContextType contextType, final BsonDocument document) {
+        protected Context(final Context parentContext, final BsonContextType contextType, final BsonDocument document) {
             super(parentContext, contextType);
             documentIterator = document.entrySet().iterator();
         }

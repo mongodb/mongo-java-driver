@@ -33,8 +33,8 @@ import static java.lang.String.format;
  *
  * @since 3.0.0
  */
-public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
-    private final BSONWriterSettings settings;
+public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
+    private final BsonWriterSettings settings;
     private final Stack<FieldNameValidator> fieldNameValidatorStack = new Stack<FieldNameValidator>();
     private State state;
     private Context context;
@@ -46,7 +46,7 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
      *
      * @param settings The writer settings.
      */
-    protected AbstractBSONWriter(final BSONWriterSettings settings) {
+    protected AbstractBsonWriter(final BsonWriterSettings settings) {
         this(settings, new NoOpFieldNameValidator());
     }
 
@@ -56,7 +56,7 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
      * @param settings  The writer settings.
      * @param validator the field name validator
      */
-    protected AbstractBSONWriter(final BSONWriterSettings settings, final FieldNameValidator validator) {
+    protected AbstractBsonWriter(final BsonWriterSettings settings, final FieldNameValidator validator) {
         if (validator == null) {
             throw new IllegalArgumentException("Validator can not be null");
         }
@@ -211,7 +211,7 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
         }
         serializationDepth++;
         if (serializationDepth > settings.getMaxSerializationDepth()) {
-            throw new BSONSerializationException("Maximum serialization depth exceeded (does the object being "
+            throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being "
                                                  + "serialized have a circular reference?).");
         }
     }
@@ -229,7 +229,7 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
         }
         serializationDepth++;
         if (serializationDepth > settings.getMaxSerializationDepth()) {
-            throw new BSONSerializationException("Maximum serialization depth exceeded (does the object being "
+            throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being "
                                                  + "serialized have a circular reference?).");
         }
     }
@@ -265,7 +265,7 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
     }
 
     protected State getNextState() {
-        if (getContext().getContextType() == BSONContextType.ARRAY) {
+        if (getContext().getContextType() == BsonContextType.ARRAY) {
             return State.VALUE;
         } else {
             return State.NAME;
@@ -297,15 +297,15 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
      * @param methodName        The name of the method.
      * @param actualContextType The actual ContextType.
      * @param validContextTypes The valid ContextTypes.
-     * @throws BSONInvalidOperationException
+     * @throws BsonInvalidOperationException
      */
-    protected void throwInvalidContextType(final String methodName, final BSONContextType actualContextType,
-                                           final BSONContextType... validContextTypes) {
+    protected void throwInvalidContextType(final String methodName, final BsonContextType actualContextType,
+                                           final BsonContextType... validContextTypes) {
         String validContextTypesString = StringUtils.join(" or ", Arrays.asList(validContextTypes));
         String message = format("%s can only be called when ContextType is %s, "
                                 + "not when ContextType is %s.", methodName, validContextTypesString,
                                 actualContextType);
-        throw new BSONInvalidOperationException(message);
+        throw new BsonInvalidOperationException(message);
     }
 
     /**
@@ -313,7 +313,7 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
      *
      * @param methodName  The name of the method.
      * @param validStates The valid states.
-     * @throws BSONInvalidOperationException
+     * @throws BsonInvalidOperationException
      */
     protected void throwInvalidState(final String methodName, final State... validStates) {
         String message;
@@ -330,14 +330,14 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
                 }
                 message = format("%s %s value cannot be written to the root level of a BSON document.", article,
                                  typeName);
-                throw new BSONInvalidOperationException(message);
+                throw new BsonInvalidOperationException(message);
             }
         }
 
         String validStatesString = StringUtils.join(" or ", Arrays.asList(validStates));
         message = format("%s can only be called when State is %s, not when State is %s", methodName,
                          validStatesString, state);
-        throw new BSONInvalidOperationException(message);
+        throw new BsonInvalidOperationException(message);
     }
 
     @Override
@@ -346,14 +346,14 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
     }
 
     @Override
-    public void pipe(final BSONReader reader) {
+    public void pipe(final BsonReader reader) {
         pipeDocument(reader);
     }
 
-    private void pipeDocument(final BSONReader reader) {
+    private void pipeDocument(final BsonReader reader) {
         reader.readStartDocument();
         writeStartDocument();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
             writeName(reader.readName());
             pipeValue(reader);
         }
@@ -361,23 +361,23 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
         writeEndDocument();
     }
 
-    private void pipeArray(final BSONReader reader) {
+    private void pipeArray(final BsonReader reader) {
         reader.readStartArray();
         writeStartArray();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
             pipeValue(reader);
         }
         reader.readEndArray();
         writeEndArray();
     }
 
-    private void pipeJavascriptWithScope(final BSONReader reader) {
+    private void pipeJavascriptWithScope(final BsonReader reader) {
         writeJavaScriptWithScope(reader.readJavaScriptWithScope());
         pipeDocument(reader);
     }
 
-    private void pipeValue(final BSONReader reader) {
-        switch (reader.getCurrentBSONType()) {
+    private void pipeValue(final BsonReader reader) {
+        switch (reader.getCurrentBsonType()) {
             case DOCUMENT:
                 pipeDocument(reader);
                 break;
@@ -443,7 +443,7 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
                 writeMaxKey();
                 break;
             default:
-                throw new IllegalArgumentException("unhandled BSON type: " + reader.getCurrentBSONType());
+                throw new IllegalArgumentException("unhandled BSON type: " + reader.getCurrentBsonType());
         }
     }
 
@@ -481,7 +481,7 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
 
     public class Context {
         private final Context parentContext;
-        private final BSONContextType contextType;
+        private final BsonContextType contextType;
         private String name;
 
         public Context(final Context from) {
@@ -489,7 +489,7 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
             contextType = from.contextType;
         }
 
-        public Context(final Context parentContext, final BSONContextType contextType) {
+        public Context(final Context parentContext, final BsonContextType contextType) {
             this.parentContext = parentContext;
             this.contextType = contextType;
         }
@@ -498,7 +498,7 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
             return parentContext;
         }
 
-        public BSONContextType getContextType() {
+        public BsonContextType getContextType() {
             return contextType;
         }
 
@@ -514,17 +514,17 @@ public abstract class AbstractBSONWriter implements BSONWriter, Closeable {
         private final int serializationDepth;
 
         protected Mark() {
-            this.markedContext = AbstractBSONWriter.this.context.copy();
-            this.markedState = AbstractBSONWriter.this.state;
-            this.currentName = AbstractBSONWriter.this.context.name;
-            this.serializationDepth = AbstractBSONWriter.this.serializationDepth;
+            this.markedContext = AbstractBsonWriter.this.context.copy();
+            this.markedState = AbstractBsonWriter.this.state;
+            this.currentName = AbstractBsonWriter.this.context.name;
+            this.serializationDepth = AbstractBsonWriter.this.serializationDepth;
         }
 
         protected void reset() {
             setContext(markedContext);
             setState(markedState);
-            AbstractBSONWriter.this.context.name = currentName;
-            AbstractBSONWriter.this.serializationDepth = serializationDepth;
+            AbstractBsonWriter.this.context.name = currentName;
+            AbstractBsonWriter.this.serializationDepth = serializationDepth;
         }
     }
 }

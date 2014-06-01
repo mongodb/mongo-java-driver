@@ -16,7 +16,7 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.CodecSource;
 import org.bson.types.Binary;
@@ -52,7 +52,7 @@ import java.util.Map;
  * @since 3.0
  */
 public class BsonValueCodecSource implements CodecSource {
-    private static final Map<BSONType, Class<? extends BsonValue>> DEFAULT_BSON_TYPE_CLASS_MAP;
+    private static final Map<BsonType, Class<? extends BsonValue>> DEFAULT_BSON_TYPE_CLASS_MAP;
 
     private final Map<Class<?>, Codec<?>> codecs = new HashMap<Class<?>, Codec<?>>();
 
@@ -63,7 +63,7 @@ public class BsonValueCodecSource implements CodecSource {
         addCodecs();
     }
 
-    public static Class<? extends BsonValue> getClassForBsonType(final BSONType bsonType) {
+    public static Class<? extends BsonValue> getClassForBsonType(final BsonType bsonType) {
         return DEFAULT_BSON_TYPE_CLASS_MAP.get(bsonType);
     }
 
@@ -118,28 +118,28 @@ public class BsonValueCodecSource implements CodecSource {
     }
 
     static {
-        Map<BSONType, Class<? extends BsonValue>> map = new HashMap<BSONType, Class<? extends BsonValue>>();
+        Map<BsonType, Class<? extends BsonValue>> map = new HashMap<BsonType, Class<? extends BsonValue>>();
 
-        map.put(BSONType.NULL, BsonNull.class);
-        map.put(BSONType.ARRAY, BsonArray.class);
-        map.put(BSONType.BINARY, Binary.class);
-        map.put(BSONType.BOOLEAN, BsonBoolean.class);
-        map.put(BSONType.DATE_TIME, BsonDateTime.class);
-        map.put(BSONType.DB_POINTER, DBPointer.class);
-        map.put(BSONType.DOCUMENT, BsonDocument.class);
-        map.put(BSONType.DOUBLE, BsonDouble.class);
-        map.put(BSONType.INT32, BsonInt32.class);
-        map.put(BSONType.INT64, BsonInt64.class);
-        map.put(BSONType.MAX_KEY, MaxKey.class);
-        map.put(BSONType.MIN_KEY, MinKey.class);
-        map.put(BSONType.JAVASCRIPT, Code.class);
-        map.put(BSONType.JAVASCRIPT_WITH_SCOPE, CodeWithScope.class);
-        map.put(BSONType.OBJECT_ID, ObjectId.class);
-        map.put(BSONType.REGULAR_EXPRESSION, RegularExpression.class);
-        map.put(BSONType.STRING, BsonString.class);
-        map.put(BSONType.SYMBOL, Symbol.class);
-        map.put(BSONType.TIMESTAMP, Timestamp.class);
-        map.put(BSONType.UNDEFINED, Undefined.class);
+        map.put(BsonType.NULL, BsonNull.class);
+        map.put(BsonType.ARRAY, BsonArray.class);
+        map.put(BsonType.BINARY, Binary.class);
+        map.put(BsonType.BOOLEAN, BsonBoolean.class);
+        map.put(BsonType.DATE_TIME, BsonDateTime.class);
+        map.put(BsonType.DB_POINTER, DBPointer.class);
+        map.put(BsonType.DOCUMENT, BsonDocument.class);
+        map.put(BsonType.DOUBLE, BsonDouble.class);
+        map.put(BsonType.INT32, BsonInt32.class);
+        map.put(BsonType.INT64, BsonInt64.class);
+        map.put(BsonType.MAX_KEY, MaxKey.class);
+        map.put(BsonType.MIN_KEY, MinKey.class);
+        map.put(BsonType.JAVASCRIPT, Code.class);
+        map.put(BsonType.JAVASCRIPT_WITH_SCOPE, CodeWithScope.class);
+        map.put(BsonType.OBJECT_ID, ObjectId.class);
+        map.put(BsonType.REGULAR_EXPRESSION, RegularExpression.class);
+        map.put(BsonType.STRING, BsonString.class);
+        map.put(BsonType.SYMBOL, Symbol.class);
+        map.put(BsonType.TIMESTAMP, Timestamp.class);
+        map.put(BsonType.UNDEFINED, Undefined.class);
 
         DEFAULT_BSON_TYPE_CLASS_MAP = Collections.unmodifiableMap(map);
     }

@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -45,8 +45,8 @@ public class BsonDouble extends BsonNumber implements Comparable<BsonDouble>, Se
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.DOUBLE;
+    public BsonType getBsonType() {
+        return BsonType.DOUBLE;
     }
 
     /**

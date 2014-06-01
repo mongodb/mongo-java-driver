@@ -16,8 +16,8 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.Symbol;
 
 /**
@@ -27,12 +27,12 @@ import org.bson.types.Symbol;
  */
 public class SymbolCodec implements Codec<Symbol> {
     @Override
-    public Symbol decode(final BSONReader reader) {
+    public Symbol decode(final BsonReader reader) {
         return new Symbol(reader.readSymbol());
     }
 
     @Override
-    public void encode(final BSONWriter writer, final Symbol value) {
+    public void encode(final BsonWriter writer, final Symbol value) {
         writer.writeSymbol(value.getSymbol());
     }
 

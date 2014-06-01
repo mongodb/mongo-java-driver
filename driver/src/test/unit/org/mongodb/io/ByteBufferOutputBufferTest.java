@@ -16,7 +16,7 @@
 
 package org.mongodb.io;
 
-import org.bson.BSONSerializationException;
+import org.bson.BsonSerializationException;
 import org.junit.Test;
 import org.mongodb.SimpleBufferProvider;
 import org.mongodb.connection.ByteBufferOutputBuffer;
@@ -81,7 +81,7 @@ public class ByteBufferOutputBufferTest {
         assertTrue(Arrays.equals(randomBytesTwo, a21));
     }
 
-    @Test(expected = BSONSerializationException.class)
+    @Test(expected = BsonSerializationException.class)
     public void nullCharacterInCStringShouldThrowSerializationException() {
         ByteBufferOutputBuffer buf = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         buf.writeCString("hell\u0000world");

@@ -16,11 +16,11 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONBinarySubType;
-import org.bson.BSONReader;
+import org.bson.BsonBinarySubType;
+import org.bson.BsonReader;
+import org.bson.codecs.Decoder;
 import org.bson.types.Binary;
 import org.mongodb.BinaryTransformer;
-import org.bson.codecs.Decoder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,13 +31,13 @@ public class TransformingBinaryDecoder implements Decoder<Object> {
 
     public TransformingBinaryDecoder() {
         subTypeTransformerMap = new HashMap<Byte, BinaryTransformer>();
-        subTypeTransformerMap.put(BSONBinarySubType.BINARY.getValue(), new BinaryToByteArrayTransformer());
-        subTypeTransformerMap.put(BSONBinarySubType.OLD_BINARY.getValue(), new BinaryToByteArrayTransformer());
-        subTypeTransformerMap.put(BSONBinarySubType.UUID_LEGACY.getValue(), new BinaryToUUIDTransformer());
+        subTypeTransformerMap.put(BsonBinarySubType.BINARY.getValue(), new BinaryToByteArrayTransformer());
+        subTypeTransformerMap.put(BsonBinarySubType.OLD_BINARY.getValue(), new BinaryToByteArrayTransformer());
+        subTypeTransformerMap.put(BsonBinarySubType.UUID_LEGACY.getValue(), new BinaryToUUIDTransformer());
     }
 
     @Override
-    public Object decode(final BSONReader reader) {
+    public Object decode(final BsonReader reader) {
         Binary binary = reader.readBinaryData();
         BinaryTransformer transformer = subTypeTransformerMap.get(binary.getType());
         if (transformer == null) {

@@ -16,7 +16,7 @@
 
 package org.mongodb.json;
 
-import org.bson.BSONWriterSettings;
+import org.bson.BsonWriterSettings;
 import org.mongodb.annotations.Immutable;
 
 /**
@@ -26,7 +26,7 @@ import org.mongodb.annotations.Immutable;
  * @since 3.0.0
  */
 @Immutable
-public class JSONWriterSettings extends BSONWriterSettings {
+public class JSONWriterSettings extends BsonWriterSettings {
     private final boolean indent;
     private final String newLineCharacters;
     private final String indentCharacters;

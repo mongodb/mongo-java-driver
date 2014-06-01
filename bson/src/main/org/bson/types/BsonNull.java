@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -31,8 +31,8 @@ public final class BsonNull extends BsonValue implements Serializable {
     public static final BsonNull VALUE = new BsonNull();
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.NULL;
+    public BsonType getBsonType() {
+        return BsonType.NULL;
     }
 
     @Override

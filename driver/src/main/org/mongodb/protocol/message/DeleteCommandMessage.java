@@ -16,7 +16,7 @@
 
 package org.mongodb.protocol.message;
 
-import org.bson.BSONBinaryWriter;
+import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoNamespace;
@@ -56,7 +56,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
 
     @Override
     protected BaseWriteCommandMessage writeTheWrites(final OutputBuffer buffer, final int commandStartPosition,
-                                                     final BSONBinaryWriter writer) {
+                                                     final BsonBinaryWriter writer) {
         DeleteCommandMessage nextMessage = null;
         writer.writeStartArray("deletes");
         for (int i = 0; i < deletes.size(); i++) {

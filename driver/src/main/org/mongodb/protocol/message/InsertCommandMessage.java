@@ -16,7 +16,7 @@
 
 package org.mongodb.protocol.message;
 
-import org.bson.BSONBinaryWriter;
+import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Encoder;
 import org.bson.io.OutputBuffer;
@@ -62,7 +62,7 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
     }
 
     protected InsertCommandMessage<T> writeTheWrites(final OutputBuffer buffer, final int commandStartPosition,
-                                                     final BSONBinaryWriter writer) {
+                                                     final BsonBinaryWriter writer) {
         InsertCommandMessage<T> nextMessage = null;
         writer.writeStartArray("documents");
         writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());

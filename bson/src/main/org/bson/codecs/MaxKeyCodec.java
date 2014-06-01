@@ -16,18 +16,18 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.MaxKey;
 
 public class MaxKeyCodec implements Codec<MaxKey> {
     @Override
-    public void encode(final BSONWriter writer, final MaxKey value) {
+    public void encode(final BsonWriter writer, final MaxKey value) {
         writer.writeMaxKey();
     }
 
     @Override
-    public MaxKey decode(final BSONReader reader) {
+    public MaxKey decode(final BsonReader reader) {
         reader.readMaxKey();
         return new MaxKey();
     }

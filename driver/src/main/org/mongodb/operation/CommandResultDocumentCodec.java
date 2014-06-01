@@ -16,8 +16,8 @@
 
 package org.mongodb.operation;
 
-import org.bson.BSONReader;
-import org.bson.BSONType;
+import org.bson.BsonReader;
+import org.bson.BsonType;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
@@ -47,11 +47,11 @@ class CommandResultDocumentCodec<T> extends BsonDocumentCodec {
     }
 
     @Override
-    protected BsonValue readValue(final BSONReader reader) {
+    protected BsonValue readValue(final BsonReader reader) {
         if (reader.getCurrentName().equals(fieldContainingPayload)) {
-            if (reader.getCurrentBSONType() == BSONType.DOCUMENT) {
+            if (reader.getCurrentBsonType() == BsonType.DOCUMENT) {
                 return new BsonDocumentWrapper<T>(payloadDecoder.decode(reader), null);
-            } else if (reader.getCurrentBSONType() == BSONType.ARRAY) {
+            } else if (reader.getCurrentBsonType() == BsonType.ARRAY) {
                 return new CommandResultArrayCodec<T>(getCodecRegistry(), payloadDecoder).decode(reader);
             }
         }
