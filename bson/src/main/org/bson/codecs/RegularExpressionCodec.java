@@ -16,8 +16,8 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.RegularExpression;
 
 /**
@@ -27,12 +27,12 @@ import org.bson.types.RegularExpression;
  */
 public class RegularExpressionCodec implements Codec<RegularExpression> {
     @Override
-    public RegularExpression decode(final BSONReader reader) {
+    public RegularExpression decode(final BsonReader reader) {
         return reader.readRegularExpression();
     }
 
     @Override
-    public void encode(final BSONWriter writer, final RegularExpression value) {
+    public void encode(final BsonWriter writer, final RegularExpression value) {
         writer.writeRegularExpression(value);
     }
 

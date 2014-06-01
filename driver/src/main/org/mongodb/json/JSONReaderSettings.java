@@ -16,7 +16,7 @@
 
 package org.mongodb.json;
 
-import org.bson.BSONReaderSettings;
+import org.bson.BsonReaderSettings;
 import org.mongodb.annotations.Immutable;
 
 /**
@@ -26,7 +26,7 @@ import org.mongodb.annotations.Immutable;
  * @since 3.0.0
  */
 @Immutable
-public class JSONReaderSettings extends BSONReaderSettings {
+public class JSONReaderSettings extends BsonReaderSettings {
     private final JSONMode inputMode;
 
     /**

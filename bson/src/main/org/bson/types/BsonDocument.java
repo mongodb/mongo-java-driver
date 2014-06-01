@@ -17,8 +17,8 @@
 package org.bson.types;
 
 import org.bson.BSONException;
-import org.bson.BSONInvalidOperationException;
-import org.bson.BSONType;
+import org.bson.BsonInvalidOperationException;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -65,8 +65,8 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.DOCUMENT;
+    public BsonType getBsonType() {
+        return BsonType.DOCUMENT;
     }
 
     @Override
@@ -99,7 +99,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonDocument
-     * @throws org.bson.BSONInvalidOperationException if the document does not contain the key or the value is not a BsonDocument
+     * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not a BsonDocument
      */
     public BsonDocument getDocument(final Object key) {
         throwIfKeyAbsent(key);
@@ -111,7 +111,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonArray
-     * @throws org.bson.BSONInvalidOperationException if the document does not contain the key or the value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
      */
     public BsonArray getArray(final Object key) {
         throwIfKeyAbsent(key);
@@ -124,7 +124,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonNumber
-     * @throws org.bson.BSONInvalidOperationException if the document does not contain the key or the value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
      */
     public BsonNumber getNumber(final Object key) {
         throwIfKeyAbsent(key);
@@ -136,7 +136,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonInt32
-     * @throws org.bson.BSONInvalidOperationException if the document does not contain the key or the value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
      */
     public BsonInt32 getInt32(final Object key) {
         throwIfKeyAbsent(key);
@@ -148,7 +148,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonInt64
-     * @throws org.bson.BSONInvalidOperationException if the document does not contain the key or the value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
      */
     public BsonInt64 getInt64(final Object key) {
         throwIfKeyAbsent(key);
@@ -160,7 +160,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonDouble
-     * @throws org.bson.BSONInvalidOperationException if the document does not contain the key or the value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
      */
     public BsonDouble getDouble(final Object key) {
         throwIfKeyAbsent(key);
@@ -172,7 +172,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonBoolean
-     * @throws org.bson.BSONInvalidOperationException if the document does not contain the key or the value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
      */
     public BsonBoolean getBoolean(final Object key) {
         throwIfKeyAbsent(key);
@@ -184,7 +184,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonString
-     * @throws org.bson.BSONInvalidOperationException if the document does not contain the key or the value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
      */
     public BsonString getString(final Object key) {
         throwIfKeyAbsent(key);
@@ -302,7 +302,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonDocument
-     * @throws org.bson.BSONInvalidOperationException if the document contains the key but the value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
      */
     public BsonDocument getDocument(final Object key, final BsonDocument defaultValue) {
         if (!containsKey(key)) {
@@ -317,7 +317,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonArray
-     * @throws org.bson.BSONInvalidOperationException if the document contains the key but the value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
      */
     public BsonArray getArray(final Object key, final BsonArray defaultValue) {
         if (!containsKey(key)) {
@@ -332,7 +332,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonInt32
-     * @throws org.bson.BSONInvalidOperationException if the document contains the key but the value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
      */
     public BsonInt32 getInt32(final Object key, final BsonInt32 defaultValue) {
         if (!containsKey(key)) {
@@ -346,7 +346,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonInt64
-     * @throws org.bson.BSONInvalidOperationException if the document contains the key but the value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
      */
     public BsonInt64 getInt64(final Object key, final BsonInt64 defaultValue) {
         if (!containsKey(key)) {
@@ -361,7 +361,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonDouble
-     * @throws org.bson.BSONInvalidOperationException if the document contains the key but the value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
      */
     public BsonDouble getDouble(final Object key, final BsonDouble defaultValue) {
         if (!containsKey(key)) {
@@ -376,7 +376,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonBoolean
-     * @throws org.bson.BSONInvalidOperationException if the document contains the key but the value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
      */
     public BsonBoolean getBoolean(final Object key, final BsonBoolean defaultValue) {
         if (!containsKey(key)) {
@@ -391,7 +391,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      *
      * @param key the key
      * @return the value of the key as a BsonString
-     * @throws org.bson.BSONInvalidOperationException if the document contains the key but the value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
      */
     public BsonString getString(final Object key, final BsonString defaultValue) {
         if (!containsKey(key)) {
@@ -402,7 +402,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
 
     private void throwIfKeyAbsent(final Object key) {
         if (!containsKey(key)) {
-            throw new BSONInvalidOperationException("Document does not contain key " + key);
+            throw new BsonInvalidOperationException("Document does not contain key " + key);
         }
     }
 

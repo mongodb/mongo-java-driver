@@ -24,7 +24,7 @@ import org.bson.types.Timestamp;
 
 import static org.bson.io.Bits.readLong;
 
-class BSONCallbackAdapter extends AbstractBSONWriter {
+class BsonCallbackAdapter extends AbstractBsonWriter {
 
     private BSONCallback bsonCallback;
 
@@ -34,7 +34,7 @@ class BSONCallbackAdapter extends AbstractBSONWriter {
      * @param settings     The writer settings.
      * @param bsonCallback The callback to inform of operations on this writer
      */
-    protected BSONCallbackAdapter(final BSONWriterSettings settings, final BSONCallback bsonCallback) {
+    protected BsonCallbackAdapter(final BsonWriterSettings settings, final BSONCallback bsonCallback) {
         super(settings);
         this.bsonCallback = bsonCallback;
     }
@@ -48,18 +48,18 @@ class BSONCallbackAdapter extends AbstractBSONWriter {
     public void writeStartArray() {
         super.writeStartArray();
         bsonCallback.arrayStart(getName());
-        setContext(new Context(getContext(), BSONContextType.ARRAY));
+        setContext(new Context(getContext(), BsonContextType.ARRAY));
         setState(State.VALUE);
     }
 
     @Override
     public void writeStartDocument() {
         super.writeStartDocument();
-        BSONContextType contextType = getState() == State.SCOPE_DOCUMENT
-                                      ? BSONContextType.SCOPE_DOCUMENT
-                                      : BSONContextType.DOCUMENT;
+        BsonContextType contextType = getState() == State.SCOPE_DOCUMENT
+                                      ? BsonContextType.SCOPE_DOCUMENT
+                                      : BsonContextType.DOCUMENT;
 
-        if (getContext() == null || contextType == BSONContextType.SCOPE_DOCUMENT) {
+        if (getContext() == null || contextType == BsonContextType.SCOPE_DOCUMENT) {
             bsonCallback.objectStart();
         } else {
             bsonCallback.objectStart(getName());
@@ -71,8 +71,8 @@ class BSONCallbackAdapter extends AbstractBSONWriter {
     @Override
     public void writeEndArray() {
         super.writeEndArray();
-        if (getContext().getContextType() != BSONContextType.ARRAY) {
-            throwInvalidContextType("WriteEndArray", getContext().getContextType(), BSONContextType.ARRAY);
+        if (getContext().getContextType() != BsonContextType.ARRAY) {
+            throwInvalidContextType("WriteEndArray", getContext().getContextType(), BsonContextType.ARRAY);
         }
         setContext(getContext().getParentContext());
         setState(getNextState());
@@ -82,16 +82,16 @@ class BSONCallbackAdapter extends AbstractBSONWriter {
     @Override
     public void writeEndDocument() {
         super.writeEndDocument();
-        BSONContextType contextType = getContext().getContextType();
+        BsonContextType contextType = getContext().getContextType();
 
-        if (contextType != BSONContextType.DOCUMENT && contextType != BSONContextType.SCOPE_DOCUMENT) {
-            throwInvalidContextType("WriteEndDocument", contextType, BSONContextType.DOCUMENT, BSONContextType.SCOPE_DOCUMENT);
+        if (contextType != BsonContextType.DOCUMENT && contextType != BsonContextType.SCOPE_DOCUMENT) {
+            throwInvalidContextType("WriteEndDocument", contextType, BsonContextType.DOCUMENT, BsonContextType.SCOPE_DOCUMENT);
         }
 
         setContext(getContext().getParentContext());
         bsonCallback.objectDone();
 
-        if (contextType == BSONContextType.SCOPE_DOCUMENT) {
+        if (contextType == BsonContextType.SCOPE_DOCUMENT) {
             Object scope = bsonCallback.get();
             bsonCallback = getContext().callback;
             bsonCallback.gotCodeWScope(getContext().name, getContext().code, scope);
@@ -100,7 +100,7 @@ class BSONCallbackAdapter extends AbstractBSONWriter {
 
     @Override
     public void writeBinaryData(final Binary binary) {
-        if (binary.getType() == BSONBinarySubType.UUID_LEGACY.getValue()) {
+        if (binary.getType() == BsonBinarySubType.UUID_LEGACY.getValue()) {
             bsonCallback.gotUUID(getName(),
                                  readLong(binary.getData(), 0),
                                  readLong(binary.getData(), 8));
@@ -222,20 +222,20 @@ class BSONCallbackAdapter extends AbstractBSONWriter {
 
     @Override
     protected String getName() {
-        if (getContext().getContextType() == BSONContextType.ARRAY) {
+        if (getContext().getContextType() == BsonContextType.ARRAY) {
             return Integer.toString(getContext().index++);
         } else {
             return super.getName();
         }
     }
 
-    public class Context extends AbstractBSONWriter.Context {
+    public class Context extends AbstractBsonWriter.Context {
         private int index; // used when contextType is an array
         private BSONCallback callback;
         private String code;
         private String name;
 
-        public Context(final Context parentContext, final BSONContextType contextType) {
+        public Context(final Context parentContext, final BsonContextType contextType) {
             super(parentContext, contextType);
         }
 

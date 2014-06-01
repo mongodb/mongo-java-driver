@@ -16,8 +16,8 @@
 
 package org.mongodb.test;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.ObjectId;
 import org.mongodb.codecs.CollectibleCodec;
 
@@ -39,7 +39,7 @@ public final class WorkerCodec implements CollectibleCodec<Worker> {
     }
 
     @Override
-    public void encode(final BSONWriter writer, final Worker value) {
+    public void encode(final BsonWriter writer, final Worker value) {
         writer.writeStartDocument();
         writer.writeObjectId("_id", value.getId());
         writer.writeString("name", value.getName());
@@ -50,7 +50,7 @@ public final class WorkerCodec implements CollectibleCodec<Worker> {
     }
 
     @Override
-    public Worker decode(final BSONReader reader) {
+    public Worker decode(final BsonReader reader) {
         reader.readStartDocument();
         ObjectId id = reader.readObjectId("_id");
         String name = reader.readString("name");

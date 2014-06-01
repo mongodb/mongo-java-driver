@@ -16,7 +16,7 @@
 
 package org.mongodb.operation;
 
-import org.bson.BSONWriter;
+import org.bson.BsonWriter;
 import org.bson.codecs.Encoder;
 import org.mongodb.Document;
 import org.mongodb.codecs.DocumentCodec;
@@ -35,7 +35,7 @@ class CommandWithPayloadEncoder<T> extends DocumentCodec {
     // we need to cast the payload to (T) to encode it
     @SuppressWarnings("unchecked")
     @Override
-    public void encode(final BSONWriter writer, final Document value) {
+    public void encode(final BsonWriter writer, final Document value) {
         writer.writeStartDocument();
 
         for (final Map.Entry<String, Object> entry : value.entrySet()) {

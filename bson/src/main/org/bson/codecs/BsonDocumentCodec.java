@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONType;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonType;
+import org.bson.BsonWriter;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.CodecSource;
 import org.bson.codecs.configuration.RootCodecRegistry;
@@ -62,11 +62,11 @@ public class BsonDocumentCodec implements Codec<BsonDocument> {
     }
 
     @Override
-    public BsonDocument decode(final BSONReader reader) {
+    public BsonDocument decode(final BsonReader reader) {
         List<BsonElement> keyValuePairs = new ArrayList<BsonElement>();
 
         reader.readStartDocument();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
             String fieldName = reader.readName();
             keyValuePairs.add(new BsonElement(fieldName, readValue(reader)));
         }
@@ -83,12 +83,12 @@ public class BsonDocumentCodec implements Codec<BsonDocument> {
      * @param reader the read to read the value from
      * @return the non-null value read from the reader
      */
-    protected BsonValue readValue(final BSONReader reader) {
-        return codecRegistry.get(BsonValueCodecSource.getClassForBsonType(reader.getCurrentBSONType())).decode(reader);
+    protected BsonValue readValue(final BsonReader reader) {
+        return codecRegistry.get(BsonValueCodecSource.getClassForBsonType(reader.getCurrentBsonType())).decode(reader);
     }
 
     @Override
-    public void encode(final BSONWriter writer, final BsonDocument value) {
+    public void encode(final BsonWriter writer, final BsonDocument value) {
         writer.writeStartDocument();
 
         for (Map.Entry<String, BsonValue> entry : value.entrySet()) {
@@ -100,7 +100,7 @@ public class BsonDocumentCodec implements Codec<BsonDocument> {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private void writeValue(final BSONWriter writer, final BsonValue value) {
+    private void writeValue(final BsonWriter writer, final BsonValue value) {
         Codec codec = codecRegistry.get(BsonValueCodecSource.getClassForBsonType(value.getBsonType()));
         codec.encode(writer, value);
     }

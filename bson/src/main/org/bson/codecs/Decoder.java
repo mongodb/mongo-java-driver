@@ -16,7 +16,7 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
+import org.bson.BsonReader;
 
 public interface Decoder<T> {
     /**
@@ -25,5 +25,5 @@ public interface Decoder<T> {
      * @param reader the BSON reader
      * @return an instance of the type parameter {@code T}.
      */
-    T decode(BSONReader reader);
+    T decode(BsonReader reader);
 }

@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.bson.BSONWriter;
+import org.bson.BsonWriter;
 import org.bson.codecs.Encoder;
 
 class DBEncoderFactoryAdapter implements Encoder<DBObject> {
@@ -28,7 +28,7 @@ class DBEncoderFactoryAdapter implements Encoder<DBObject> {
     }
 
     @Override
-    public void encode(final BSONWriter writer, final DBObject value) {
+    public void encode(final BsonWriter writer, final DBObject value) {
         new DBEncoderAdapter(encoderFactory.create()).encode(writer, value);
     }
 

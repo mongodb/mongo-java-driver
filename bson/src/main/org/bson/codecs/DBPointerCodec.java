@@ -16,8 +16,8 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.DBPointer;
 
 /**
@@ -28,12 +28,12 @@ import org.bson.types.DBPointer;
 public class DBPointerCodec implements Codec<DBPointer> {
 
     @Override
-    public DBPointer decode(final BSONReader reader) {
+    public DBPointer decode(final BsonReader reader) {
         return reader.readDBPointer();
     }
 
     @Override
-    public void encode(final BSONWriter writer, final DBPointer value) {
+    public void encode(final BsonWriter writer, final DBPointer value) {
         writer.writeDBPointer(value);
     }
 

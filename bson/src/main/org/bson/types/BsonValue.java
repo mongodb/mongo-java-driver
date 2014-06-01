@@ -16,8 +16,8 @@
 
 package org.bson.types;
 
-import org.bson.BSONInvalidOperationException;
-import org.bson.BSONType;
+import org.bson.BsonInvalidOperationException;
+import org.bson.BsonType;
 
 /**
  * Base class for any BSON type.
@@ -36,16 +36,16 @@ public abstract class BsonValue {
      *
      * @return the BSON type, which may not be null (but may be BSONType.NULL)
      */
-    public abstract BSONType getBsonType();
+    public abstract BsonType getBsonType();
 
     /**
      * Gets this value as a BsonDocument if it is one, otherwise throws exception
      *
      * @return a BsonDocument
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonDocument asDocument() {
-        throwIfInvalidType(BSONType.DOCUMENT);
+        throwIfInvalidType(BsonType.DOCUMENT);
         return (BsonDocument) this;
     }
 
@@ -53,10 +53,10 @@ public abstract class BsonValue {
      * Gets this value as a BsonArray if it is one, otherwise throws exception
      *
      * @return a BsonArray
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonArray asArray() {
-        throwIfInvalidType(BSONType.ARRAY);
+        throwIfInvalidType(BsonType.ARRAY);
         return (BsonArray) this;
     }
 
@@ -64,10 +64,10 @@ public abstract class BsonValue {
      * Gets this value as a BsonString if it is one, otherwise throws exception
      *
      * @return a BsonArray
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonString asString() {
-        throwIfInvalidType(BSONType.STRING);
+        throwIfInvalidType(BsonType.STRING);
         return (BsonString) this;
     }
 
@@ -75,11 +75,11 @@ public abstract class BsonValue {
      * Gets this value as a BsonNumber if it is one, otherwise throws exception
      *
      * @return a BsonArray
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonNumber asNumber() {
-        if (getBsonType() != BSONType.INT32 && getBsonType() != BSONType.INT64 && getBsonType() != BSONType.DOUBLE) {
-            throw new BSONInvalidOperationException(String.format("Value expected to be of a numerical BSON type is of unexpected type %s",
+        if (getBsonType() != BsonType.INT32 && getBsonType() != BsonType.INT64 && getBsonType() != BsonType.DOUBLE) {
+            throw new BsonInvalidOperationException(String.format("Value expected to be of a numerical BSON type is of unexpected type %s",
                                                                   getBsonType()));
         }
         return (BsonNumber) this;
@@ -89,10 +89,10 @@ public abstract class BsonValue {
      * Gets this value as a BsonString if it is one, otherwise throws exception
      *
      * @return a BsonArray
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonInt32 asInt32() {
-        throwIfInvalidType(BSONType.INT32);
+        throwIfInvalidType(BsonType.INT32);
         return (BsonInt32) this;
     }
 
@@ -100,10 +100,10 @@ public abstract class BsonValue {
      * Gets this value as a BsonString if it is one, otherwise throws exception
      *
      * @return a BsonArray
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonInt64 asInt64() {
-        throwIfInvalidType(BSONType.INT64);
+        throwIfInvalidType(BsonType.INT64);
         return (BsonInt64) this;
     }
 
@@ -111,10 +111,10 @@ public abstract class BsonValue {
      * Gets this value as a BsonString if it is one, otherwise throws exception
      *
      * @return a BsonArray
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonDouble asDouble() {
-        throwIfInvalidType(BSONType.DOUBLE);
+        throwIfInvalidType(BsonType.DOUBLE);
         return (BsonDouble) this;
     }
 
@@ -122,10 +122,10 @@ public abstract class BsonValue {
      * Gets this value as a BsonString if it is one, otherwise throws exception
      *
      * @return a BsonArray
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonBoolean asBoolean() {
-        throwIfInvalidType(BSONType.BOOLEAN);
+        throwIfInvalidType(BsonType.BOOLEAN);
         return (BsonBoolean) this;
     }
 
@@ -133,10 +133,10 @@ public abstract class BsonValue {
      * Gets this value as an ObjectId if it is one, otherwise throws exception
      *
      * @return an ObjectId
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public ObjectId asObjectId() {
-        throwIfInvalidType(BSONType.OBJECT_ID);
+        throwIfInvalidType(BsonType.OBJECT_ID);
         return (ObjectId) this;
     }
 
@@ -144,10 +144,10 @@ public abstract class BsonValue {
      * Gets this value as a DBPointer if it is one, otherwise throws exception
      *
      * @return an DBPointer
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public DBPointer asDBPointer() {
-        throwIfInvalidType(BSONType.DB_POINTER);
+        throwIfInvalidType(BsonType.DB_POINTER);
         return (DBPointer) this;
     }
 
@@ -155,10 +155,10 @@ public abstract class BsonValue {
      * Gets this value as a Timestamp if it is one, otherwise throws exception
      *
      * @return an Timestamp
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public Timestamp asTimestamp() {
-        throwIfInvalidType(BSONType.TIMESTAMP);
+        throwIfInvalidType(BsonType.TIMESTAMP);
         return (Timestamp) this;
     }
 
@@ -166,10 +166,10 @@ public abstract class BsonValue {
      * Gets this value as a Binary if it is one, otherwise throws exception
      *
      * @return an Binary
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public Binary asBinary() {
-        throwIfInvalidType(BSONType.BINARY);
+        throwIfInvalidType(BsonType.BINARY);
         return (Binary) this;
     }
 
@@ -177,10 +177,10 @@ public abstract class BsonValue {
      * Gets this value as a BsonDateTime if it is one, otherwise throws exception
      *
      * @return an BsonDateTime
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public BsonDateTime asDateTime() {
-        throwIfInvalidType(BSONType.DATE_TIME);
+        throwIfInvalidType(BsonType.DATE_TIME);
         return (BsonDateTime) this;
     }
 
@@ -188,10 +188,10 @@ public abstract class BsonValue {
      * Gets this value as a Symbol if it is one, otherwise throws exception
      *
      * @return an Symbol
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public Symbol asSymbol() {
-        throwIfInvalidType(BSONType.SYMBOL);
+        throwIfInvalidType(BsonType.SYMBOL);
         return (Symbol) this;
     }
 
@@ -199,10 +199,10 @@ public abstract class BsonValue {
      * Gets this value as a RegularExpression if it is one, otherwise throws exception
      *
      * @return an ObjectId
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public RegularExpression asRegularExpression() {
-        throwIfInvalidType(BSONType.REGULAR_EXPRESSION);
+        throwIfInvalidType(BsonType.REGULAR_EXPRESSION);
         return (RegularExpression) this;
     }
 
@@ -210,10 +210,10 @@ public abstract class BsonValue {
      * Gets this value as a Code if it is one, otherwise throws exception
      *
      * @return a Code
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public Code asJavaScript() {
-        throwIfInvalidType(BSONType.JAVASCRIPT);
+        throwIfInvalidType(BsonType.JAVASCRIPT);
         return (Code) this;
     }
 
@@ -221,10 +221,10 @@ public abstract class BsonValue {
      * Gets this value as a CodeWithScope if it is one, otherwise throws exception
      *
      * @return a CodeWithScope
-     * @throws org.bson.BSONInvalidOperationException if this value is not of the expected type
+     * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
     public CodeWithScope asJavaScriptWithScope() {
-        throwIfInvalidType(BSONType.JAVASCRIPT_WITH_SCOPE);
+        throwIfInvalidType(BsonType.JAVASCRIPT_WITH_SCOPE);
         return (CodeWithScope) this;
     }
 
@@ -384,9 +384,9 @@ public abstract class BsonValue {
         return this instanceof CodeWithScope;
     }
 
-    private void throwIfInvalidType(final BSONType expectedType) {
+    private void throwIfInvalidType(final BsonType expectedType) {
         if (getBsonType() != expectedType) {
-            throw new BSONInvalidOperationException(String.format("Value expected to be of type %s is of unexpected type %s",
+            throw new BsonInvalidOperationException(String.format("Value expected to be of type %s is of unexpected type %s",
                                                                   expectedType, getBsonType()));
         }
     }

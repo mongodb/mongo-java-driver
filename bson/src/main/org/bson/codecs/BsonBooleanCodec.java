@@ -16,8 +16,8 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.BsonBoolean;
 
 /**
@@ -27,13 +27,13 @@ import org.bson.types.BsonBoolean;
  */
 public class BsonBooleanCodec implements Codec<BsonBoolean> {
     @Override
-    public BsonBoolean decode(final BSONReader reader) {
+    public BsonBoolean decode(final BsonReader reader) {
         boolean value = reader.readBoolean();
         return BsonBoolean.valueOf(value);
     }
 
     @Override
-    public void encode(final BSONWriter writer, final BsonBoolean value) {
+    public void encode(final BsonWriter writer, final BsonBoolean value) {
         writer.writeBoolean(value.getValue());
     }
 

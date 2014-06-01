@@ -16,9 +16,9 @@
 
 package org.bson.types;
 
-import org.bson.BSONInvalidOperationException;
-import org.bson.BSONWriter;
 import org.bson.BsonDocumentWriter;
+import org.bson.BsonInvalidOperationException;
+import org.bson.BsonWriter;
 import org.bson.codecs.Encoder;
 
 import java.util.Collection;
@@ -146,11 +146,11 @@ public class BsonDocumentWrapper<T> extends BsonDocument {
 
     private BsonDocument getUnwrapped() {
         if (encoder == null) {
-            throw new BSONInvalidOperationException("Can not unwrap a BsonDocumentWrapper with no Encoder");
+            throw new BsonInvalidOperationException("Can not unwrap a BsonDocumentWrapper with no Encoder");
         }
         if (unwrapped == null) {
             BsonDocument unwrapped = new BsonDocument();
-            BSONWriter writer = new BsonDocumentWriter(unwrapped);
+            BsonWriter writer = new BsonDocumentWriter(unwrapped);
             encoder.encode(writer, document);
             this.unwrapped = unwrapped;
         }

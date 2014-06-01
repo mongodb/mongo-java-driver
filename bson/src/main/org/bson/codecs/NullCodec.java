@@ -16,17 +16,17 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 
 public class NullCodec implements Codec<Object> {
     @Override
-    public void encode(final BSONWriter writer, final Object value) {
+    public void encode(final BsonWriter writer, final Object value) {
         writer.writeNull();
     }
 
     @Override
-    public Object decode(final BSONReader reader) {
+    public Object decode(final BsonReader reader) {
         reader.readNull();
         return null;
     }

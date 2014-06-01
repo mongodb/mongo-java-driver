@@ -16,14 +16,14 @@
 
 package org.mongodb.operation;
 
-import org.bson.BSONReader;
+import org.bson.BsonReader;
 import org.bson.codecs.BsonArrayCodec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BsonDocumentWrapper;
 import org.bson.types.BsonValue;
 
-import static org.bson.BSONType.DOCUMENT;
+import static org.bson.BsonType.DOCUMENT;
 
 class CommandResultArrayCodec<T> extends BsonArrayCodec {
     private final Decoder<T> payloadDecoder;
@@ -34,8 +34,8 @@ class CommandResultArrayCodec<T> extends BsonArrayCodec {
     }
 
     @Override
-    protected BsonValue readValue(final BSONReader reader) {
-        if (reader.getCurrentBSONType() == DOCUMENT) {
+    protected BsonValue readValue(final BsonReader reader) {
+        if (reader.getCurrentBsonType() == DOCUMENT) {
             return new BsonDocumentWrapper<T>(payloadDecoder.decode(reader), null);
         } else {
             return super.readValue(reader);

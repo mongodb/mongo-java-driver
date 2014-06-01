@@ -17,19 +17,33 @@
 package org.bson;
 
 /**
- * An exception indicating a failure to serialize a BSON value.
+ * Used by BSONReader and BSONWriter implementations to represent the current context.
  *
- * @since 3.0
+ * @since 3.0.0
  */
-public class BSONSerializationException extends BSONException {
-    private static final long serialVersionUID = -5214580094005440780L;
+public enum BsonContextType {
+    /**
+     * The top level of a BSON document.
+     */
+    TOP_LEVEL,
 
     /**
-     * Construct a new instance.
-     *
-     * @param message the message
+     * A (possibly embedded) BSON document.
      */
-    public BSONSerializationException(final String message) {
-        super(message);
-    }
+    DOCUMENT,
+
+    /**
+     * A BSON array.
+     */
+    ARRAY,
+
+    /**
+     * A JAVASCRIPT_WITH_SCOPE BSON value.
+     */
+    JAVASCRIPT_WITH_SCOPE,
+
+    /**
+     * The scope document of a JAVASCRIPT_WITH_SCOPE BSON value.
+     */
+    SCOPE_DOCUMENT
 }

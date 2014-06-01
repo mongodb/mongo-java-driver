@@ -16,8 +16,8 @@
 
 package org.mongodb.acceptancetest.querying;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -32,8 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static org.bson.BSONType.INT32;
-import static org.bson.BSONType.INT64;
+import static org.bson.BsonType.INT32;
+import static org.bson.BsonType.INT64;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mongodb.QueryBuilder.query;
@@ -173,7 +173,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         }
 
         @Override
-        public void encode(final BSONWriter writer, final Person value) {
+        public void encode(final BsonWriter writer, final Person value) {
             writer.writeStartDocument();
             writer.writeObjectId("_id", value.id);
             writer.writeString("name", value.name);
@@ -181,7 +181,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         }
 
         @Override
-        public Person decode(final BSONReader reader) {
+        public Person decode(final BsonReader reader) {
             reader.readStartDocument();
             ObjectId id = reader.readObjectId("_id");
             String name = reader.readString("name");

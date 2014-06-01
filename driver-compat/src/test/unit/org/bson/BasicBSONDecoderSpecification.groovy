@@ -92,7 +92,7 @@ class BasicBSONDecoderSpecification extends Specification {
         ['k1': new MinKey()]                                     | [9, 0, 0, 0, -1, 107, 49, 0, 0]
         ['k2': new MaxKey()]                                     | [9, 0, 0, 0, 127, 107, 50, 0, 0]
 
-        type = BSONType.findByValue(bytes[4])
+        type = BsonType.findByValue(bytes[4])
     }
 
     def 'should decode complex structures'() {
@@ -146,7 +146,7 @@ class BasicBSONDecoderSpecification extends Specification {
         //gotBinaryArray
         //gotUUID
         //gotCodeWScope
-        type = BSONType.findByValue(bytes[4])
+        type = BsonType.findByValue(bytes[4])
     }
 
     def 'should throw exception when input is invalid'() {
@@ -158,10 +158,10 @@ class BasicBSONDecoderSpecification extends Specification {
 
         where:
         exception                  | bytes
-        BSONSerializationException | [13, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0]
+        BsonSerializationException | [13, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0]
         BufferUnderflowException   | [12, 0, 0, 0, 17, 97, 0, 1, 0, 0, 0, 0]
-        BSONSerializationException | [12, 0, 2, 0, 16, 97, 0, 1, 0, 0, 0, 0]
-        BSONSerializationException | [5, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0]
+        BsonSerializationException | [12, 0, 2, 0, 16, 97, 0, 1, 0, 0, 0, 0]
+        BsonSerializationException | [5, 0, 0, 0, 16, 97, 0, 1, 0, 0, 0, 0]
         BufferUnderflowException   | [5, 0, 0, 0, 16, 97, 45, 1, 0, 0, 0, 0]
     }
 }

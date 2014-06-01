@@ -27,11 +27,16 @@ import java.io.Closeable;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
-public abstract class AbstractBSONReader implements Closeable, BSONReader {
-    private final BSONReaderSettings settings;
+/**
+ * Abstract base class for BsonReader implementations.
+ *
+ * @since 3.0
+ */
+public abstract class AbstractBsonReader implements Closeable, BsonReader {
+    private final BsonReaderSettings settings;
     private State state;
     private Context context;
-    private BSONType currentBSONType;
+    private BsonType currentBsonType;
     private String currentName;
     private boolean closed;
 
@@ -40,14 +45,14 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
      *
      * @param settings The reader settings.
      */
-    protected AbstractBSONReader(final BSONReaderSettings settings) {
+    protected AbstractBsonReader(final BsonReaderSettings settings) {
         this.settings = settings;
         state = State.INITIAL;
     }
 
     @Override
-    public BSONType getCurrentBSONType() {
-        return currentBSONType;
+    public BsonType getCurrentBsonType() {
+        return currentBsonType;
     }
 
     @Override
@@ -58,14 +63,14 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
         return currentName;
     }
 
-    protected void setCurrentBSONType(final BSONType newType) {
-        currentBSONType = newType;
+    protected void setCurrentBsonType(final BsonType newType) {
+        currentBsonType = newType;
     }
 
     /**
      * @return The settings of the reader.
      */
-    public BSONReaderSettings getSettings() {
+    public BsonReaderSettings getSettings() {
         return settings;
     }
 
@@ -145,7 +150,7 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
 
     @Override
     public Binary readBinaryData() {
-        checkPreconditions("readBinaryData", BSONType.BINARY);
+        checkPreconditions("readBinaryData", BsonType.BINARY);
         setState(getNextState());
 
         return doReadBinaryData();
@@ -153,24 +158,24 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
 
     @Override
     public boolean readBoolean() {
-        checkPreconditions("readBoolean", BSONType.BOOLEAN);
+        checkPreconditions("readBoolean", BsonType.BOOLEAN);
         setState(getNextState());
         return doReadBoolean();
     }
 
     @Override
-    public abstract BSONType readBSONType();
+    public abstract BsonType readBSONType();
 
     @Override
     public long readDateTime() {
-        checkPreconditions("readDateTime", BSONType.DATE_TIME);
+        checkPreconditions("readDateTime", BsonType.DATE_TIME);
         setState(getNextState());
         return doReadDateTime();
     }
 
     @Override
     public double readDouble() {
-        checkPreconditions("readDouble", BSONType.DOUBLE);
+        checkPreconditions("readDouble", BsonType.DOUBLE);
         setState(getNextState());
         return doReadDouble();
     }
@@ -180,8 +185,8 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
         if (isClosed()) {
             throw new IllegalStateException("BSONBinaryWriter");
         }
-        if (getContext().getContextType() != BSONContextType.ARRAY) {
-            throwInvalidContextType("readEndArray", getContext().getContextType(), BSONContextType.ARRAY);
+        if (getContext().getContextType() != BsonContextType.ARRAY) {
+            throwInvalidContextType("readEndArray", getContext().getContextType(), BsonContextType.ARRAY);
         }
         if (getState() == State.TYPE) {
             readBSONType(); // will set state to EndOfArray if at end of array
@@ -200,9 +205,9 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
         if (isClosed()) {
             throw new IllegalStateException("BSONBinaryWriter");
         }
-        if (getContext().getContextType() != BSONContextType.DOCUMENT && getContext().getContextType() != BSONContextType.SCOPE_DOCUMENT) {
+        if (getContext().getContextType() != BsonContextType.DOCUMENT && getContext().getContextType() != BsonContextType.SCOPE_DOCUMENT) {
             throwInvalidContextType("readEndDocument",
-                                    getContext().getContextType(), BSONContextType.DOCUMENT, BSONContextType.SCOPE_DOCUMENT);
+                                    getContext().getContextType(), BsonContextType.DOCUMENT, BsonContextType.SCOPE_DOCUMENT);
         }
         if (getState() == State.TYPE) {
             readBSONType(); // will set state to EndOfDocument if at end of document
@@ -218,7 +223,7 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
 
     @Override
     public int readInt32() {
-        checkPreconditions("readInt32", BSONType.INT32);
+        checkPreconditions("readInt32", BsonType.INT32);
         setState(getNextState());
         return doReadInt32();
 
@@ -226,105 +231,105 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
 
     @Override
     public long readInt64() {
-        checkPreconditions("readInt64", BSONType.INT64);
+        checkPreconditions("readInt64", BsonType.INT64);
         setState(getNextState());
         return doReadInt64();
     }
 
     @Override
     public String readJavaScript() {
-        checkPreconditions("readJavaScript", BSONType.JAVASCRIPT);
+        checkPreconditions("readJavaScript", BsonType.JAVASCRIPT);
         setState(getNextState());
         return doReadJavaScript();
     }
 
     @Override
     public String readJavaScriptWithScope() {
-        checkPreconditions("readJavaScriptWithScope", BSONType.JAVASCRIPT_WITH_SCOPE);
+        checkPreconditions("readJavaScriptWithScope", BsonType.JAVASCRIPT_WITH_SCOPE);
         setState(State.SCOPE_DOCUMENT);
         return doReadJavaScriptWithScope();
     }
 
     @Override
     public void readMaxKey() {
-        checkPreconditions("readMaxKey", BSONType.MAX_KEY);
+        checkPreconditions("readMaxKey", BsonType.MAX_KEY);
         setState(getNextState());
         doReadMaxKey();
     }
 
     @Override
     public void readMinKey() {
-        checkPreconditions("readMinKey", BSONType.MIN_KEY);
+        checkPreconditions("readMinKey", BsonType.MIN_KEY);
         setState(getNextState());
         doReadMinKey();
     }
 
     @Override
     public void readNull() {
-        checkPreconditions("readNull", BSONType.NULL);
+        checkPreconditions("readNull", BsonType.NULL);
         setState(getNextState());
         doReadNull();
     }
 
     @Override
     public ObjectId readObjectId() {
-        checkPreconditions("readObjectId", BSONType.OBJECT_ID);
+        checkPreconditions("readObjectId", BsonType.OBJECT_ID);
         setState(getNextState());
         return doReadObjectId();
     }
 
     @Override
     public RegularExpression readRegularExpression() {
-        checkPreconditions("readRegularExpression", BSONType.REGULAR_EXPRESSION);
+        checkPreconditions("readRegularExpression", BsonType.REGULAR_EXPRESSION);
         setState(getNextState());
         return doReadRegularExpression();
     }
 
     @Override
     public DBPointer readDBPointer() {
-        checkPreconditions("readDBPointer", BSONType.DB_POINTER);
+        checkPreconditions("readDBPointer", BsonType.DB_POINTER);
         setState(getNextState());
         return doReadDBPointer();
     }
 
     @Override
     public void readStartArray() {
-        checkPreconditions("readStartArray", BSONType.ARRAY);
+        checkPreconditions("readStartArray", BsonType.ARRAY);
         doReadStartArray();
         setState(State.TYPE);
     }
 
     @Override
     public void readStartDocument() {
-        checkPreconditions("readStartDocument", BSONType.DOCUMENT);
+        checkPreconditions("readStartDocument", BsonType.DOCUMENT);
         doReadStartDocument();
         setState(State.TYPE);
     }
 
     @Override
     public String readString() {
-        checkPreconditions("readString", BSONType.STRING);
+        checkPreconditions("readString", BsonType.STRING);
         setState(getNextState());
         return doReadString();
     }
 
     @Override
     public String readSymbol() {
-        checkPreconditions("readSymbol", BSONType.SYMBOL);
+        checkPreconditions("readSymbol", BsonType.SYMBOL);
         setState(getNextState());
         return doReadSymbol();
     }
 
     @Override
     public Timestamp readTimestamp() {
-        checkPreconditions("readTimestamp", BSONType.TIMESTAMP);
+        checkPreconditions("readTimestamp", BsonType.TIMESTAMP);
         setState(getNextState());
         return doReadTimestamp();
     }
 
     @Override
     public void readUndefined() {
-        checkPreconditions("readUndefined", BSONType.UNDEFINED);
+        checkPreconditions("readUndefined", BsonType.UNDEFINED);
         setState(getNextState());
         doReadUndefined();
     }
@@ -488,14 +493,14 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
      * @param methodName        The name of the method.
      * @param actualContextType The actual ContextType.
      * @param validContextTypes The valid ContextTypes.
-     * @throws BSONInvalidOperationException
+     * @throws BsonInvalidOperationException
      */
-    protected void throwInvalidContextType(final String methodName, final BSONContextType actualContextType,
-                                           final BSONContextType... validContextTypes) {
+    protected void throwInvalidContextType(final String methodName, final BsonContextType actualContextType,
+                                           final BsonContextType... validContextTypes) {
         String validContextTypesString = StringUtils.join(" or ", asList(validContextTypes));
         String message = format("%s can only be called when ContextType is %s, not when ContextType is %s.",
                                 methodName, validContextTypesString, actualContextType);
-        throw new BSONInvalidOperationException(message);
+        throw new BsonInvalidOperationException(message);
     }
 
     /**
@@ -503,22 +508,22 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
      *
      * @param methodName  The name of the method.
      * @param validStates The valid states.
-     * @throws BSONInvalidOperationException
+     * @throws BsonInvalidOperationException
      */
     protected void throwInvalidState(final String methodName, final State... validStates) {
         String validStatesString = StringUtils.join(" or ", asList(validStates));
         String message = format("%s can only be called when State is %s, not when State is %s.",
                                 methodName, validStatesString, state);
-        throw new BSONInvalidOperationException(message);
+        throw new BsonInvalidOperationException(message);
     }
 
     /**
      * Verifies the current state and BSONType of the reader.
      *
      * @param methodName       The name of the method calling this one.
-     * @param requiredBSONType The required BSON type.
+     * @param requiredBsonType The required BSON type.
      */
-    protected void verifyBSONType(final String methodName, final BSONType requiredBSONType) {
+    protected void verifyBSONType(final String methodName, final BsonType requiredBsonType) {
         if (state == State.INITIAL || state == State.SCOPE_DOCUMENT || state == State.TYPE) {
             readBSONType();
         }
@@ -529,10 +534,10 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
         if (state != State.VALUE) {
             throwInvalidState(methodName, State.VALUE);
         }
-        if (currentBSONType != requiredBSONType) {
+        if (currentBsonType != requiredBsonType) {
             String message = format("%s can only be called when CurrentBSONType is %s, not when CurrentBSONType is %s.",
-                                    methodName, requiredBSONType, currentBSONType);
-            throw new BSONInvalidOperationException(message);
+                                    methodName, requiredBsonType, currentBsonType);
+            throw new BsonInvalidOperationException(message);
         }
     }
 
@@ -540,7 +545,7 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
      * Verifies the name of the current element.
      *
      * @param expectedName The expected name.
-     * @throws BSONSerializationException
+     * @throws BsonSerializationException
      */
     protected void verifyName(final String expectedName) {
         readBSONType();
@@ -548,11 +553,11 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
         if (!actualName.equals(expectedName)) {
             String message = format("Expected element name to be '%s', not '%s'.",
                                     expectedName, actualName);
-            throw new BSONSerializationException(message);
+            throw new BsonSerializationException(message);
         }
     }
 
-    protected void checkPreconditions(final String methodName, final BSONType type) {
+    protected void checkPreconditions(final String methodName, final BsonType type) {
         if (isClosed()) {
             throw new IllegalStateException("BSONWriter is closed");
         }
@@ -597,9 +602,9 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
 
     protected static class Context {
         private final Context parentContext;
-        private final BSONContextType contextType;
+        private final BsonContextType contextType;
 
-        protected Context(final Context parentContext, final BSONContextType contextType) {
+        protected Context(final Context parentContext, final BsonContextType contextType) {
             this.parentContext = parentContext;
             this.contextType = contextType;
         }
@@ -608,7 +613,7 @@ public abstract class AbstractBSONReader implements Closeable, BSONReader {
             return parentContext;
         }
 
-        protected BSONContextType getContextType() {
+        protected BsonContextType getContextType() {
             return contextType;
         }
     }

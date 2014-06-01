@@ -16,7 +16,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -26,15 +26,15 @@ import java.io.Serializable;
  * <p/>
  *
  * @see <a href="http://bsonspec.org/spec.html">BSON Spec</a>
- * @see org.bson.BSONType#UNDEFINED
+ * @see org.bson.BsonType#UNDEFINED
  * @since 3.0
  */
 public final class Undefined extends BsonValue implements Serializable {
     private static final long serialVersionUID = -6947231726163165009L;
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.UNDEFINED;
+    public BsonType getBsonType() {
+        return BsonType.UNDEFINED;
     }
 
     @Override

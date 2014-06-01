@@ -16,7 +16,7 @@
 
 package org.mongodb.protocol.message;
 
-import org.bson.BSONBinaryWriter;
+import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoNamespace;
@@ -43,7 +43,7 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
 
     @Override
     protected BaseUpdateCommandMessage<T> writeTheWrites(final OutputBuffer buffer, final int commandStartPosition,
-                                                         final BSONBinaryWriter writer) {
+                                                         final BsonBinaryWriter writer) {
         BaseUpdateCommandMessage<T> nextMessage = null;
         writer.writeStartArray("updates");
         for (int i = 0; i < updates.size(); i++) {
@@ -73,7 +73,7 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
         return nextMessage;
     }
 
-    protected abstract void writeUpdate(final BSONBinaryWriter writer, final T update);
+    protected abstract void writeUpdate(final BsonBinaryWriter writer, final T update);
 
     protected abstract BaseUpdateCommandMessage<T> createNextMessage(List<T> remainingUpdates);
 

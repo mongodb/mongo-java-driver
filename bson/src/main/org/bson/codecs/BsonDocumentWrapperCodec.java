@@ -16,8 +16,8 @@
 
 package org.bson.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonDocumentWrapper;
 
@@ -48,13 +48,13 @@ public class BsonDocumentWrapperCodec implements Codec<BsonDocumentWrapper> {
      * @return the document
      */
     @Override
-    public BsonDocumentWrapper decode(final BSONReader reader) {
+    public BsonDocumentWrapper decode(final BsonReader reader) {
         throw new UnsupportedOperationException("Decoding into a BsonDocumentWrapper is not allowed");
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public void encode(final BSONWriter writer, final BsonDocumentWrapper value) {
+    public void encode(final BsonWriter writer, final BsonDocumentWrapper value) {
         if (value.isUnwrapped()) {
             bsonDocumentCodec.encode(writer, value);
         } else {

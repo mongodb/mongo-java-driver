@@ -16,8 +16,8 @@
 
 package org.bson.codecs
 
-import org.bson.BSONBinaryReader
-import org.bson.BSONBinaryWriter
+import org.bson.BsonBinaryReader
+import org.bson.BsonBinaryWriter
 import org.bson.ByteBufNIO
 import org.bson.io.BasicInputBuffer
 import org.bson.io.BasicOutputBuffer
@@ -78,9 +78,9 @@ class BsonDocumentCodecSpecification extends Specification {
 //            put('codeWithScope', new CodeWithScope('int x = y', new Document('y', 1)))
         }
         when:
-        BSONBinaryWriter writer = new BSONBinaryWriter(new BasicOutputBuffer(), false)
+        BsonBinaryWriter writer = new BsonBinaryWriter(new BasicOutputBuffer(), false)
         new BsonDocumentCodec().encode(writer, doc)
-        BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(writer.buffer.toByteArray()))),
+        BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(writer.buffer.toByteArray()))),
                                                        true)
         def decodedDoc = new BsonDocumentCodec().decode(reader)
 

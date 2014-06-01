@@ -16,7 +16,7 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 import org.bson.types.Binary;
 import org.bson.types.Code;
 import org.bson.types.DBPointer;
@@ -127,7 +127,7 @@ import java.util.Map;
  * @since 3.0
  */
 public class BsonTypeClassMap {
-    private final Map<BSONType, Class<?>> map = new HashMap<BSONType, Class<?>>();
+    private final Map<BsonType, Class<?>> map = new HashMap<BsonType, Class<?>>();
 
     /**
      * Construct an instance with the default mapping, but replacing the default mapping with any values contained in the given map.
@@ -135,7 +135,7 @@ public class BsonTypeClassMap {
      *
      * @param replacementsForDefaults the replacement mappings
      */
-    public BsonTypeClassMap(final Map<BSONType, Class<?>> replacementsForDefaults) {
+    public BsonTypeClassMap(final Map<BsonType, Class<?>> replacementsForDefaults) {
         this();
         map.putAll(replacementsForDefaults);
     }
@@ -148,29 +148,29 @@ public class BsonTypeClassMap {
     }
 
 
-    Class<?> get(final BSONType bsonType) {
+    Class<?> get(final BsonType bsonType) {
         return map.get(bsonType);
     }
 
     private void addDefaults() {
-        map.put(BSONType.ARRAY, List.class);
-        map.put(BSONType.BINARY, Binary.class);
-        map.put(BSONType.BOOLEAN, Boolean.class);
-        map.put(BSONType.DATE_TIME, Date.class);
-        map.put(BSONType.DB_POINTER, DBPointer.class);
-        map.put(BSONType.DOCUMENT, Document.class);
-        map.put(BSONType.DOUBLE, Double.class);
-        map.put(BSONType.INT32, Integer.class);
-        map.put(BSONType.INT64, Long.class);
-        map.put(BSONType.MAX_KEY, MaxKey.class);
-        map.put(BSONType.MIN_KEY, MinKey.class);
-        map.put(BSONType.JAVASCRIPT, Code.class);
-        map.put(BSONType.JAVASCRIPT_WITH_SCOPE, CodeWithScope.class);
-        map.put(BSONType.OBJECT_ID, ObjectId.class);
-        map.put(BSONType.REGULAR_EXPRESSION, RegularExpression.class);
-        map.put(BSONType.STRING, String.class);
-        map.put(BSONType.SYMBOL, Symbol.class);
-        map.put(BSONType.TIMESTAMP, Timestamp.class);
-        map.put(BSONType.UNDEFINED, Undefined.class);
+        map.put(BsonType.ARRAY, List.class);
+        map.put(BsonType.BINARY, Binary.class);
+        map.put(BsonType.BOOLEAN, Boolean.class);
+        map.put(BsonType.DATE_TIME, Date.class);
+        map.put(BsonType.DB_POINTER, DBPointer.class);
+        map.put(BsonType.DOCUMENT, Document.class);
+        map.put(BsonType.DOUBLE, Double.class);
+        map.put(BsonType.INT32, Integer.class);
+        map.put(BsonType.INT64, Long.class);
+        map.put(BsonType.MAX_KEY, MaxKey.class);
+        map.put(BsonType.MIN_KEY, MinKey.class);
+        map.put(BsonType.JAVASCRIPT, Code.class);
+        map.put(BsonType.JAVASCRIPT_WITH_SCOPE, CodeWithScope.class);
+        map.put(BsonType.OBJECT_ID, ObjectId.class);
+        map.put(BsonType.REGULAR_EXPRESSION, RegularExpression.class);
+        map.put(BsonType.STRING, String.class);
+        map.put(BsonType.SYMBOL, Symbol.class);
+        map.put(BsonType.TIMESTAMP, Timestamp.class);
+        map.put(BsonType.UNDEFINED, Undefined.class);
     }
 }

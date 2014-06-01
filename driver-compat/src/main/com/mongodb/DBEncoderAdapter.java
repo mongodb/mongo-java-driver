@@ -16,8 +16,8 @@
 
 package com.mongodb;
 
-import org.bson.BSONBinaryReader;
-import org.bson.BSONWriter;
+import org.bson.BsonBinaryReader;
+import org.bson.BsonWriter;
 import org.bson.ByteBufNIO;
 import org.bson.codecs.Encoder;
 import org.bson.io.BasicInputBuffer;
@@ -37,11 +37,11 @@ class DBEncoderAdapter implements Encoder<DBObject> {
     // TODO: this can be optimized to reduce copying of buffers.  For that we'd need an InputBuffer that could iterate
     //       over an array of ByteBuffer instances from a PooledByteBufferOutputBuffer
     @Override
-    public void encode(final BSONWriter writer, final DBObject document) {
+    public void encode(final BsonWriter writer, final DBObject document) {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
         try {
             encoder.writeObject(buffer, document);
-            BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(wrap(buffer.toByteArray()))), true);
+            BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(wrap(buffer.toByteArray()))), true);
             try {
                 writer.pipe(reader);
             } finally {

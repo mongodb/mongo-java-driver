@@ -16,34 +16,5 @@
 
 package org.bson;
 
-/**
- * Used by BSONReaders and BSONWriters to represent the current context.
- *
- * @since 3.0.0
- */
-public enum BSONContextType {
-    /**
-     * The top level of a BSON document.
-     */
-    TOP_LEVEL,
-
-    /**
-     * A (possibly embedded) BSON document.
-     */
-    DOCUMENT,
-
-    /**
-     * A BSON array.
-     */
-    ARRAY,
-
-    /**
-     * A JAVASCRIPT_WITH_SCOPE BSON value.
-     */
-    JAVASCRIPT_WITH_SCOPE,
-
-    /**
-     * The scope document of a JAVASCRIPT_WITH_SCOPE BSON value.
-     */
-    SCOPE_DOCUMENT
+public class BsonReaderSettings {
 }

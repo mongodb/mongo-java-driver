@@ -16,7 +16,7 @@
 
 package org.mongodb.protocol.message;
 
-import org.bson.BSONBinaryWriter;
+import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Encoder;
@@ -89,7 +89,7 @@ public abstract class RequestMessage {
     protected abstract RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition);
 
     protected <T> void addDocument(final T obj, final Encoder<T> encoder, final OutputBuffer buffer, final FieldNameValidator validator) {
-        BSONBinaryWriter writer = new BSONBinaryWriter(buffer, validator);
+        BsonBinaryWriter writer = new BsonBinaryWriter(buffer, validator);
         try {
             int startPosition = buffer.getPosition();
             encoder.encode(writer, obj);

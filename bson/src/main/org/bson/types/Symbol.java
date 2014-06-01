@@ -18,7 +18,7 @@
 
 package org.bson.types;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
@@ -39,8 +39,8 @@ public class Symbol extends BsonValue implements Serializable {
     }
 
     @Override
-    public BSONType getBsonType() {
-        return BSONType.SYMBOL;
+    public BsonType getBsonType() {
+        return BsonType.SYMBOL;
     }
 
     public String getSymbol() {
