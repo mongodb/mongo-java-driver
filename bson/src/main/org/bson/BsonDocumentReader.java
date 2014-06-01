@@ -16,7 +16,7 @@ public class BsonDocumentReader extends AbstractBsonReader {
     private BsonValue currentValue;
 
     public BsonDocumentReader(final BsonDocument document) {
-        super(new BsonReaderSettings());
+        super();
         setContext(new Context(null, BsonContextType.TOP_LEVEL, document));
         currentValue = document;
     }
