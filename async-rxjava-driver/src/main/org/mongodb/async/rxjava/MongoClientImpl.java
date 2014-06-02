@@ -33,4 +33,9 @@ class MongoClientImpl implements MongoClient {
     public void close() {
         wrapped.close();
     }
+
+    @Override
+    public ClientAdministration tools() {
+        return new ClientAdministrationImpl(wrapped.tools());
+    }
 }

@@ -90,18 +90,6 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldGetStatistics() {
-        String newCollectionName = "shouldGetStatistics";
-        database.tools().createCollection(newCollectionName);
-        MongoCollection<Document> newCollection = database.getCollection(newCollectionName);
-
-        Document collectionStatistics = newCollection.tools().getStatistics();
-        assertThat(collectionStatistics, is(notNullValue()));
-
-        assertThat((String) collectionStatistics.get("ns"), is(getDatabaseName() + "." + newCollectionName));
-    }
-
-    @Test
     public void shouldDropExistingCollection() {
         String collectionName = "shouldDropExistingCollection";
         database.tools().createCollection(collectionName);

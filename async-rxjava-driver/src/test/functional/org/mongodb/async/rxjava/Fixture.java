@@ -62,7 +62,7 @@ public final class Fixture {
         return observable.timeout(1, SECONDS).toBlockingObservable().last();
     }
 
-    public static List<Document> getAsList(final Observable<Document> observable) {
+    public static <T> List<T> getAsList(final Observable<T> observable) {
         return observable.timeout(1, SECONDS).toList().toBlockingObservable().last();
     }
 }

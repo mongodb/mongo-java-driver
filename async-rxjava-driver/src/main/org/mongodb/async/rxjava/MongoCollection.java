@@ -89,4 +89,9 @@ public interface MongoCollection<T> {
      * successfully.
      */
     Observable<WriteResult> save(T document);
+
+    /**
+     * @return the CollectionAdministration that provides admin methods that can be performed
+     */
+    CollectionAdministration tools();
 }

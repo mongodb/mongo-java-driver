@@ -59,4 +59,9 @@ class MongoDatabaseImpl implements MongoDatabase {
              }
          }));
     }
+
+    @Override
+    public DatabaseAdministration tools() {
+        return new DatabaseAdministrationImpl(wrapped.tools());
+    }
 }

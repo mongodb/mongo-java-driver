@@ -14,16 +14,29 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.mongodb.async
 
-// TODO: should also check for ok?
-final class ErrorHandling {
-    static void handleErrors(final CommandResult commandResult) {
-        if (commandResult.getErrorMessage() != null) {
-            throw new MongoCommandFailureException(commandResult);
-        }
+import org.mongodb.Document
+
+import static org.mongodb.async.Fixture.getMongoClient
+
+class ClientAdministrationSpecification extends FunctionalSpecification {
+
+    def 'ping should be greater than 0'() {
+        when:
+        def client = getMongoClient()
+
+        then:
+        client.tools().ping().get() > 0.0
     }
 
-    private ErrorHandling() {
+    def 'should return the database name in getDatabaseNames'() {
+        when:
+        collection.insert(['_id': 1] as Document)
+        def client = getMongoClient()
+
+        then:
+        client.tools().getDatabaseNames().get().contains(databaseName)
     }
+
 }
