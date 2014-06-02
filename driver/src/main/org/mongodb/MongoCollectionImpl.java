@@ -32,6 +32,7 @@ import org.mongodb.operation.InsertRequest;
 import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceToCollectionOperation;
 import org.mongodb.operation.MapReduceWithInlineResultsOperation;
+import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
 import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.RemoveOperation;
@@ -44,6 +45,7 @@ import org.mongodb.operation.WriteOperation;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -167,6 +169,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoCursor<T> iterator() {
             return get();
+        }
+
+        @Override
+        public MongoView<T> cursorFlags(final  EnumSet<QueryFlag> flags) {
+            findOp.addFlags(flags);
+            return this;
         }
 
         @Override
