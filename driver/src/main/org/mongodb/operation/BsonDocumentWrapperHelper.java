@@ -30,7 +30,7 @@ final class BsonDocumentWrapperHelper {
     static <T> List<T> toList(final BsonArray array) {
         List<T> list = new ArrayList<T>();
         for (BsonValue cur : array) {
-            list.add(((BsonDocumentWrapper<T>) cur).getDocument());
+            list.add(((BsonDocumentWrapper<T>) cur).getWrappedDocument());
         }
         return list;
     }
@@ -40,7 +40,7 @@ final class BsonDocumentWrapperHelper {
         if (document == null) {
             return null;
         }
-        return ((BsonDocumentWrapper<T>) document).getDocument();
+        return ((BsonDocumentWrapper<T>) document).getWrappedDocument();
     }
 
     private BsonDocumentWrapperHelper() {

@@ -39,26 +39,26 @@ public class BsonDocumentWrapper<T> extends BsonDocument {
 
     private static final long serialVersionUID = 4164303588753136248L;
 
-    private final transient T document;
+    private final transient T wrappedDocument;
     private final transient Encoder<T> encoder;
     private BsonDocument unwrapped;
 
     /**
      * Construct a new instance with the given document and encoder for the document.
      *
-     * @param document the wrapped document
+     * @param wrappedDocument the wrapped document
      * @param encoder  the encoder for the wrapped document
      */
-    public BsonDocumentWrapper(final T document, final Encoder<T> encoder) {
-        if (document == null) {
+    public BsonDocumentWrapper(final T wrappedDocument, final Encoder<T> encoder) {
+        if (wrappedDocument == null) {
             throw new IllegalArgumentException("Document can not be null");
         }
-        this.document = document;
+        this.wrappedDocument = wrappedDocument;
         this.encoder = encoder;
     }
 
-    public T getDocument() {
-        return document;
+    public T getWrappedDocument() {
+        return wrappedDocument;
     }
 
     public Encoder<T> getEncoder() {
@@ -151,7 +151,7 @@ public class BsonDocumentWrapper<T> extends BsonDocument {
         if (unwrapped == null) {
             BsonDocument unwrapped = new BsonDocument();
             BsonWriter writer = new BsonDocumentWriter(unwrapped);
-            encoder.encode(writer, document);
+            encoder.encode(writer, wrappedDocument);
             this.unwrapped = unwrapped;
         }
         return unwrapped;
