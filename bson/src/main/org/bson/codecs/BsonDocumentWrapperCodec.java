@@ -59,7 +59,7 @@ public class BsonDocumentWrapperCodec implements Codec<BsonDocumentWrapper> {
             bsonDocumentCodec.encode(writer, value);
         } else {
             Encoder encoder = value.getEncoder();
-            encoder.encode(writer, value.getDocument());
+            encoder.encode(writer, value.getWrappedDocument());
         }
     }
 
