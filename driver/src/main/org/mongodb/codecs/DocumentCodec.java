@@ -21,7 +21,6 @@ import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
-import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.CodecSource;
 import org.bson.codecs.configuration.RootCodecRegistry;
@@ -43,7 +42,7 @@ import static org.mongodb.assertions.Assertions.notNull;
  */
 public class DocumentCodec implements CollectibleCodec<Document> {
 
-    public static final String ID_FIELD_NAME = "_id";
+    private static final String ID_FIELD_NAME = "_id";
     private static final CodecRegistry DEFAULT_REGISTRY = new RootCodecRegistry(Arrays.<CodecSource>asList(new DocumentCodecSource()));
     private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
 
@@ -144,15 +143,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
         if (value == null) {
             writer.writeNull();
         } else {
-            Codec codec;
-            if (value.getClass() == Document.class) {
-                codec = this;
-            } else {
-                codec = registry.get(value.getClass());
-                if (codec == null) {
-                    throw new CodecConfigurationException("Could not find codec for class " + value.getClass());
-                }
-            }
+            Codec codec = registry.get(value.getClass());
             codec.encode(writer, value);
         }
     }
@@ -177,8 +168,6 @@ public class DocumentCodec implements CollectibleCodec<Document> {
         if (bsonType == BsonType.NULL) {
             reader.readNull();
             return null;
-        } else if (bsonType == BsonType.DOCUMENT) {
-            return decode(reader);
         } else {
             return registry.get(bsonTypeClassMap.get(bsonType)).decode(reader);
         }
