@@ -127,6 +127,26 @@ public class DocumentCodec implements CollectibleCodec<Document> {
         writer.writeEndDocument();
     }
 
+    @Override
+    public Document decode(final BsonReader reader) {
+        Document document = new Document();
+
+        reader.readStartDocument();
+        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
+            String fieldName = reader.readName();
+            document.put(fieldName, readValue(reader));
+        }
+
+        reader.readEndDocument();
+
+        return document;
+    }
+
+    @Override
+    public Class<Document> getEncoderClass() {
+        return Document.class;
+    }
+
     private void beforeFields(final BsonWriter bsonWriter, final Document document) {
         if (document.containsKey(ID_FIELD_NAME)) {
             bsonWriter.writeName(ID_FIELD_NAME);
@@ -139,7 +159,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    protected void writeValue(final BsonWriter writer, final Object value) {
+    private void writeValue(final BsonWriter writer, final Object value) {
         if (value == null) {
             writer.writeNull();
         } else {
@@ -148,22 +168,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
         }
     }
 
-    @Override
-    public Document decode(final BsonReader reader) {
-        Document document = new Document();
-
-        reader.readStartDocument();
-        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
-            String fieldName = reader.readName();
-            document.put(fieldName, readValue(reader, fieldName));
-        }
-
-        reader.readEndDocument();
-
-        return document;
-    }
-
-    protected Object readValue(final BsonReader reader, final String fieldName) {
+    private Object readValue(final BsonReader reader) {
         BsonType bsonType = reader.getCurrentBsonType();
         if (bsonType == BsonType.NULL) {
             reader.readNull();
@@ -172,10 +177,4 @@ public class DocumentCodec implements CollectibleCodec<Document> {
             return registry.get(bsonTypeClassMap.get(bsonType)).decode(reader);
         }
     }
-
-    @Override
-    public Class<Document> getEncoderClass() {
-        return Document.class;
-    }
-
 }
