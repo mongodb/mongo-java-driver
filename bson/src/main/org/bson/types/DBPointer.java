@@ -26,6 +26,12 @@ public class DBPointer {
     private final ObjectId id;
 
     public DBPointer(final String namespace, final ObjectId id) {
+        if (namespace == null) {
+            throw new IllegalArgumentException("namespace can not be null");
+        }
+        if (id == null) {
+            throw new IllegalArgumentException("id can not be null");
+        }
         this.namespace = namespace;
         this.id = id;
     }
@@ -36,5 +42,33 @@ public class DBPointer {
 
     public ObjectId getId() {
         return id;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        DBPointer dbPointer = (DBPointer) o;
+
+        if (!id.equals(dbPointer.id)) {
+            return false;
+        }
+        if (!namespace.equals(dbPointer.namespace)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = namespace.hashCode();
+        result = 31 * result + id.hashCode();
+        return result;
     }
 }
