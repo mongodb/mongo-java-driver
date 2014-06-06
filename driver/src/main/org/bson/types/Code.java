@@ -37,23 +37,34 @@ public class Code implements Serializable {
         return code;
     }
 
+    @Override
     public boolean equals(final Object o) {
-        if (!(o instanceof Code)) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
             return false;
         }
 
-        Code c = (Code) o;
-        return code.equals(c.code);
+        Code code1 = (Code) o;
+
+        if (!code.equals(code1.code)) {
+            return false;
+        }
+
+        return true;
     }
 
+    @Override
     public int hashCode() {
         return code.hashCode();
     }
 
     @Override
     public String toString() {
-        return getCode();
+        return "Code{"
+               + "code='" + code + '\''
+               + '}';
     }
-
 }
 
