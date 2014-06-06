@@ -29,11 +29,14 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslHandler;
+import io.netty.handler.timeout.ReadTimeoutException;
+import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.util.concurrent.GenericFutureListener;
 import org.bson.ByteBuf;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoInterruptedException;
 import org.mongodb.connection.AsyncCompletionHandler;
+import org.mongodb.connection.MongoSocketOpenException;
 import org.mongodb.connection.SSLSettings;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SocketSettings;
@@ -47,12 +50,15 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 /**
  * A Stream implementation based on Netty 4.0.
  */
 final class NettyStream implements Stream {
     private final ServerAddress address;
     private final ByteBufAllocator allocator;
+    private final ChannelFuture channelFuture;
     private SocketChannel socketChannel;
     private volatile boolean isClosed;
 
@@ -67,29 +73,53 @@ final class NettyStream implements Stream {
         Bootstrap b = new Bootstrap();
         b.group(workerGroup);
         b.channel(NioSocketChannel.class);
+
+        b.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, settings.getConnectTimeout(MILLISECONDS));
+        b.option(ChannelOption.TCP_NODELAY, true);
         b.option(ChannelOption.SO_KEEPALIVE, settings.isKeepAlive());
+
+        if (settings.getReceiveBufferSize() > 0) {
+            b.option(ChannelOption.SO_RCVBUF, settings.getReceiveBufferSize());
+        }
+        if (settings.getSendBufferSize() > 0) {
+            b.option(ChannelOption.SO_SNDBUF, settings.getReceiveBufferSize());
+        }
+        b.option(ChannelOption.ALLOCATOR, allocator);
+
         b.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(final SocketChannel ch) throws Exception {
                 socketChannel = ch;
-                ch.config().setAllocator(allocator);
                 if (sslSettings.isEnabled()) {
                     SSLEngine engine = SSLContext.getDefault().createSSLEngine();
                     engine.setUseClientMode(true);
 
                     ch.pipeline().addFirst("ssl", new SslHandler(engine, false));
                 }
+                ch.pipeline().addLast("readTimeoutHandler", new ReadTimeoutHandler(settings.getReadTimeout(MILLISECONDS), MILLISECONDS));
                 ch.pipeline().addLast(new InboundBufferHandler());
             }
         });
 
-        // TODO: probably not a good idea.  And what about connect timeout?
-        b.connect(address.getHost(), address.getPort()).syncUninterruptibly();
+        this.channelFuture = b.connect(address.getHost(), address.getPort());
     }
 
     @Override
     public ByteBuf getBuffer(final int size) {
         return new NettyByteBuf(allocator.buffer(size, size));
+    }
+
+    private void ensureOpen(final AsyncCompletionHandler<Void> handler) {
+        if (!channelFuture.isDone()) {
+            channelFuture.syncUninterruptibly();
+        }
+        if (!channelFuture.isSuccess()) {
+            handler.failed(new MongoSocketOpenException("Exception opening socket", address, channelFuture.cause()));
+        } else if (pendingException != null) {
+            handler.failed(pendingException);
+        } else {
+            handler.completed(null);
+        }
     }
 
     @Override
@@ -108,53 +138,72 @@ final class NettyStream implements Stream {
 
     @Override
     public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
-        final CompositeByteBuf composite = PooledByteBufAllocator.DEFAULT.compositeBuffer();
-        for (ByteBuf cur : buffers) {
-            io.netty.buffer.ByteBuf byteBuf = ((NettyByteBuf) cur).asByteBuf();
-            composite.addComponent(byteBuf.retain());
-            composite.writerIndex(composite.writerIndex() + byteBuf.writerIndex());
-        }
-        socketChannel.writeAndFlush(composite).addListener(new GenericFutureListener<ChannelFuture>() {
+        ensureOpen(new AsyncCompletionHandler<Void>() {
             @Override
-            public void operationComplete(final ChannelFuture future) throws Exception {
-                if (!future.isSuccess()) {
-                    handler.failed(future.cause());
-                } else {
-                    handler.completed(null);
+            public void completed(final Void t) {
+                final CompositeByteBuf composite = PooledByteBufAllocator.DEFAULT.compositeBuffer();
+                for (ByteBuf cur : buffers) {
+                    io.netty.buffer.ByteBuf byteBuf = ((NettyByteBuf) cur).asByteBuf();
+                    composite.addComponent(byteBuf.retain());
+                    composite.writerIndex(composite.writerIndex() + byteBuf.writerIndex());
                 }
+                socketChannel.writeAndFlush(composite).addListener(new GenericFutureListener<ChannelFuture>() {
+                    @Override
+                    public void operationComplete(final ChannelFuture future) throws Exception {
+                        if (!future.isSuccess()) {
+                            handler.failed(future.cause());
+                        } else {
+                            handler.completed(null);
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void failed(final Throwable t) {
+                handler.failed(t);
             }
         });
     }
 
     @Override
     public synchronized void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
-        if (pendingException != null) {
-            handler.failed(pendingException);
-        } else if (!hasBytesAvailable(numBytes)) {
-            pendingReader = new PendingReader(numBytes, handler);
-        } else {
-            CompositeByteBuf composite = allocator.compositeBuffer(pendingInboundBuffers.size());
-            int bytesNeeded = numBytes;
-            for (Iterator<io.netty.buffer.ByteBuf> iter = pendingInboundBuffers.iterator(); iter.hasNext();) {
-                io.netty.buffer.ByteBuf next = iter.next();
-                int bytesNeededFromCurrentBuffer = Math.min(next.readableBytes(), bytesNeeded);
-                if (bytesNeededFromCurrentBuffer == next.readableBytes()) {
-                    composite.addComponent(next);
-                    iter.remove();
+        ensureOpen(new AsyncCompletionHandler<Void>() {
+            @Override
+            public void completed(final Void t) {
+                if (!hasBytesAvailable(numBytes)) {
+                    pendingReader = new PendingReader(numBytes, handler);
                 } else {
-                    next.retain();
-                    composite.addComponent(next.readSlice(bytesNeededFromCurrentBuffer));
-                }
-                composite.writerIndex(composite.writerIndex() + bytesNeededFromCurrentBuffer);
-                bytesNeeded -= bytesNeededFromCurrentBuffer;
-                if (bytesNeeded == 0) {
-                    break;
+                    CompositeByteBuf composite = allocator.compositeBuffer(pendingInboundBuffers.size());
+                    int bytesNeeded = numBytes;
+                    for (Iterator<io.netty.buffer.ByteBuf> iter = pendingInboundBuffers.iterator(); iter.hasNext();) {
+                        io.netty.buffer.ByteBuf next = iter.next();
+                        int bytesNeededFromCurrentBuffer = Math.min(next.readableBytes(), bytesNeeded);
+                        if (bytesNeededFromCurrentBuffer == next.readableBytes()) {
+                            composite.addComponent(next);
+                            iter.remove();
+                        } else {
+                            next.retain();
+                            composite.addComponent(next.readSlice(bytesNeededFromCurrentBuffer));
+                        }
+                        composite.writerIndex(composite.writerIndex() + bytesNeededFromCurrentBuffer);
+                        bytesNeeded -= bytesNeededFromCurrentBuffer;
+                        if (bytesNeeded == 0) {
+                            break;
+                        }
+                    }
+                    NettyByteBuf buffer = new NettyByteBuf(composite);
+
+                    handler.completed(buffer.flip());
                 }
             }
-            NettyByteBuf buffer = new NettyByteBuf(composite);
 
-            handler.completed(buffer.flip());
-        }
+            @Override
+            public void failed(final Throwable t) {
+                handler.failed(t);
+            }
+        });
+
     }
 
     private boolean hasBytesAvailable(final int numBytes) {
@@ -216,7 +265,12 @@ final class NettyStream implements Stream {
 
         @Override
         public void exceptionCaught(final ChannelHandlerContext ctx, final Throwable t) {
-            handleException(t);
+            if (t instanceof ReadTimeoutException) {
+                handleException(new MongoNettyReadTimeoutException("Timeout while receiving message", address, (ReadTimeoutException) t));
+            } else {
+                handleException(t);
+            }
+            ctx.close();
         }
     }
 
@@ -256,6 +310,10 @@ final class NettyStream implements Stream {
                 if (throwable != null) {
                     if (throwable instanceof IOException) {
                         throw (IOException) throwable;
+                    } else if (throwable instanceof MongoNettyReadTimeoutException) {
+                        throw (MongoNettyReadTimeoutException) throwable;
+                    } else if (throwable instanceof MongoSocketOpenException) {
+                        throw (MongoSocketOpenException) throwable;
                     } else {
                         throw new MongoInternalException("Exception thrown from Netty Stream", throwable);
                     }

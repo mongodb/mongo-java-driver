@@ -183,7 +183,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
 // Project specific behavior            //
 //////////////////////////////////////////
 
-def nettyVersion = '4.0.18.Final'
+def nettyVersion = '4.0.19.Final'
 
 project(':bson') {}
 

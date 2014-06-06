@@ -20,6 +20,7 @@ import org.bson.ByteBuf;
 import org.mongodb.operation.SingleResultFuture;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
@@ -126,7 +127,11 @@ final class AsynchronousSocketChannelStream implements Stream {
 
                     @Override
                     public void failed(final Throwable exc, final Object attachment) {
-                        handler.failed(exc);
+                        if (exc instanceof ConnectException) {
+                            handler.failed(new MongoSocketOpenException("Exception opening socket", serverAddress, exc));
+                        } else {
+                            handler.failed(exc);
+                        }
                     }
                 });
             }
