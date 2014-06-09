@@ -129,7 +129,7 @@ public class GridFSTest extends DatabaseTestCase {
             inputFile.save(0);
             fail("should have received an exception about a chunk size being zero");
         } catch (MongoException e) {
-            //We expect this exception to complain about the chunksize
+            // We expect this exception to complain about the chunksize
             assertTrue(e.toString().contains("chunkSize must be greater than zero"));
         }
     }
@@ -145,7 +145,7 @@ public class GridFSTest extends DatabaseTestCase {
         GridFSInputFile inputFile = gridFS.createFile(randomBytes);
         inputFile.setFilename("bad_chunk_size.bin");
 
-        //For good measure let's save and restore the bytes
+        // For good measure let's save and restore the bytes
         inputFile.save(1024);
         GridFSDBFile savedFile = gridFS.findOne(new BasicDBObject("_id", inputFile.getId()));
         ByteArrayOutputStream savedFileByteStream = new ByteArrayOutputStream();
@@ -166,10 +166,9 @@ public class GridFSTest extends DatabaseTestCase {
         os.close();
     }
 
-
     @Test
     public void testInputStreamSkipping() throws Exception {
-        //int chunkSize = 5;
+        // int chunkSize = 5;
         int chunkSize = GridFS.DEFAULT_CHUNKSIZE;
         int fileSize = (int) (7.25 * chunkSize);
 
@@ -177,7 +176,7 @@ public class GridFSTest extends DatabaseTestCase {
         for (int idx = 0; idx < fileSize; ++idx) {
             fileBytes[idx] = (byte) (idx % 251);
         }
-        //Don't want chunks to be aligned at byte position 0
+        // Don't want chunks to be aligned at byte position 0
 
         GridFSInputFile inputFile = gridFS.createFile(fileBytes);
         inputFile.setFilename("input_stream_skipping.bin");
@@ -186,7 +185,7 @@ public class GridFSTest extends DatabaseTestCase {
         GridFSDBFile savedFile = gridFS.findOne(new BasicDBObject("_id", inputFile.getId()));
         InputStream inputStream = savedFile.getInputStream();
 
-        //Quick run-through, make sure the file is as expected
+        // Quick run-through, make sure the file is as expected
         for (int idx = 0; idx < fileSize; ++idx) {
             assertEquals((byte) (idx % 251), (byte) inputStream.read());
         }
@@ -213,7 +212,7 @@ public class GridFSTest extends DatabaseTestCase {
         position += 3 * chunkSize;
         assertEquals((byte) (position++ % 251), (byte) inputStream.read());
 
-        //Make sure skipping works when we skip to an exact chunk boundary
+        // Make sure skipping works when we skip to an exact chunk boundary
         long toSkip = inputStream.available();
         skipped = inputStream.skip(toSkip);
         assertEquals(toSkip, skipped);

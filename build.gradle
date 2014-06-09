@@ -187,6 +187,10 @@ def nettyVersion = '4.0.18.Final'
 
 project(':bson') {}
 
+project(':util') {
+    apply plugin: 'eclipse'
+}
+
 project(':driver') {
     apply plugin: 'groovy'
     apply plugin: 'codenarc'

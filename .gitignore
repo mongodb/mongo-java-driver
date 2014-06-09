@@ -10,6 +10,7 @@
 
 build
 out
+bin
 mongo*.jar
 
 # Eclipse files
@@ -30,3 +31,4 @@ atlassian-ide-plugin.xml
 
 # code review
 codereview.rc
+
