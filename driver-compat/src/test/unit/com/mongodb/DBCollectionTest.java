@@ -463,7 +463,8 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test
     public void testReflectionObject() {
         collection.setObjectClass(Tweet.class);
-        collection.insert(new Tweet(1, "Lorem", new Date(12)));
+        Tweet insertedTweet = new Tweet(1, "Lorem", new Date(12));
+        collection.insert(insertedTweet);
 
         assertThat(collection.count(), is(1L));
 
@@ -474,10 +475,28 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertThat(tweet.getUserId(), is(1L));
         assertThat(tweet.getMessage(), is("Lorem"));
         assertThat(tweet.getDate(), is(new Date(12)));
+
+        insertedTweet.setMessage("Lorem 2");
+
+        DBObject replacedTweet = collection.findAndModify(new BasicDBObject(), insertedTweet);
+        assertThat(replacedTweet, instanceOf(Tweet.class));
+        tweet = (Tweet) replacedTweet;
+
+        assertThat(tweet.getUserId(), is(1L));
+        assertThat(tweet.getMessage(), is("Lorem"));
+        assertThat(tweet.getDate(), is(new Date(12)));
+
+        DBObject removedTweet = collection.findAndRemove(new BasicDBObject());
+        assertThat(removedTweet, instanceOf(Tweet.class));
+        tweet = (Tweet) removedTweet;
+
+        assertThat(tweet.getUserId(), is(1L));
+        assertThat(tweet.getMessage(), is("Lorem 2"));
+        assertThat(tweet.getDate(), is(new Date(12)));
     }
 
     @Test
-    public void testReflectionObjectAtLeve2() {
+    public void testReflectionObjectAtLevel2() {
         collection.insert(new BasicDBObject("t", new Tweet(1, "Lorem", new Date(12))));
         collection.setInternalClass("t", Tweet.class);
 
