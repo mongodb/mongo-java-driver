@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import org.mongodb.file.MongoFile;
-import org.mongodb.file.common.MongoFileConstants;
+import org.mongodb.file.MongoFileConstants;
 
 public class CountingOutputStream extends OutputStream {
 
@@ -41,5 +41,9 @@ public class CountingOutputStream extends OutputStream {
 
         inputFile.put(key.toString(), count);
         inputFile.save();
+    }
+
+    public long getCount() {
+        return count;
     }
 }

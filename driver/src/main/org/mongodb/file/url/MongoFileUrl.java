@@ -5,8 +5,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.bson.types.ObjectId;
+import org.mongodb.file.util.CompressionMediaTypes;
 import org.mongodb.file.util.FileUtil;
-import org.mongodb.file.writing.CompressionMediaTypes;
 
 /**
  * 

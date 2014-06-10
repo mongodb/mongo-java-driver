@@ -10,8 +10,7 @@ import org.mongodb.ServerCursor;
 import org.mongodb.connection.ServerAddress;
 
 /**
- * This class is a surrogate holder for the actual MongoCursor object
- * underneath. It store the
+ * This class is a surrogate holder for the actual MongoCursor object underneath. It store the
  * 
  * @author David Buschman
  * 
@@ -36,7 +35,10 @@ public class MongoFileCursor implements MongoCursor<MongoFile>, Iterator<MongoFi
     @Override
     public MongoFile next() {
 
-        return new MongoFile(store, cursor.next());
+        if (cursor.hasNext()) {
+            return new MongoFile(store, cursor.next());
+        }
+        return null;
     }
 
     @Override
@@ -68,8 +70,8 @@ public class MongoFileCursor implements MongoCursor<MongoFile>, Iterator<MongoFi
     }
 
     /**
-     * This method will iterate the cursor a return all of the object from the
-     * cursor. Be sure you know the size of your result set.
+     * This method will iterate the cursor a return all of the object from the cursor. Be sure you know the size of your result
+     * set.
      * 
      * @return a List<MongoFile> objects
      */

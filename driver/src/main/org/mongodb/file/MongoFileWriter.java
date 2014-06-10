@@ -6,7 +6,6 @@ import java.io.OutputStream;
 
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
-import org.mongodb.file.common.MongoFileConstants;
 import org.mongodb.file.url.MongoFileUrl;
 import org.mongodb.file.util.BytesCopier;
 import org.mongodb.file.writing.BufferedChunksOutputStream;
@@ -31,7 +30,7 @@ public class MongoFileWriter {
      * Stream the data to the file
      * 
      * @param in
-     * @return the fileurl object
+     * @return the file object
      * 
      * @throws IOException
      * @throws IllegalArgumentException

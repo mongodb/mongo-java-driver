@@ -3,8 +3,8 @@ package com.mongodb.gridfs.io;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import org.mongodb.file.common.InputFile;
-import org.mongodb.file.common.MongoFileConstants;
+import org.mongodb.file.MongoFileConstants;
+import org.mongodb.file.writing.InputFile;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.util.Util;

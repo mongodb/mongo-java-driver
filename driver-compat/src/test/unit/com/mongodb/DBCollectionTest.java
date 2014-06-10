@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-
 import org.bson.BSONBinarySubType;
 import org.bson.BSONBinaryWriter;
 import org.bson.BSONObject;
@@ -29,6 +28,7 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
 
@@ -154,9 +154,8 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testUpdate() {
-        WriteResult res = collection.update(new BasicDBObject("_id", 1),
-                                            new BasicDBObject("$set", new BasicDBObject("x", 2)),
-                                            true, false);
+        WriteResult res = collection.update(new BasicDBObject("_id", 1), new BasicDBObject("$set", new BasicDBObject("x", 2)),
+                true, false);
         assertNotNull(res);
         assertEquals(1L, collection.count());
         assertEquals(new BasicDBObject("_id", 1).append("x", 2), collection.findOne());
@@ -288,12 +287,8 @@ public class DBCollectionTest extends DatabaseTestCase {
     public void testUpdateWithDBEncoder() {
         DBObject document = new BasicDBObject("x", 1);
         collection.insert(document);
-        collection.update(new BasicDBObject("x", 1),
-                          new BasicDBObject("y", false),
-                          true,
-                          false,
-                          WriteConcern.ACKNOWLEDGED,
-                          new MyEncoder());
+        collection.update(new BasicDBObject("x", 1), new BasicDBObject("y", false), true, false, WriteConcern.ACKNOWLEDGED,
+                new MyEncoder());
 
         assertEquals(2, collection.count());
         assertThat(collection.find(), hasItem(MyEncoder.getConstantObject()));
@@ -325,13 +320,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
         DBObject doc = new BasicDBObject("_id", 2).append("p", "foo");
 
-        DBObject newDoc = collection.findAndModify(new BasicDBObject("p", "bar"),
-                                                   null,
-                                                   null,
-                                                   false,
-                                                   doc,
-                                                   false,
-                                                   true);
+        DBObject newDoc = collection.findAndModify(new BasicDBObject("p", "bar"), null, null, false, doc, false, true);
         assertNull(newDoc);
         assertEquals(doc, collection.findOne(null, null, new BasicDBObject("_id", -1)));
     }
@@ -339,8 +328,8 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test
     public void testFindAndUpdate() {
         collection.insert(new BasicDBObject("_id", 1).append("x", true));
-        DBObject newDoc = collection.findAndModify(new BasicDBObject("x", true),
-                                                   new BasicDBObject("$set", new BasicDBObject("x", false)));
+        DBObject newDoc = collection.findAndModify(new BasicDBObject("x", true), new BasicDBObject("$set", new BasicDBObject("x",
+                false)));
         assertNotNull(newDoc);
         assertEquals(new BasicDBObject("_id", 1).append("x", true), newDoc);
         assertEquals(new BasicDBObject("_id", 1).append("x", false), collection.findOne());
@@ -349,46 +338,44 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test
     public void findAndUpdateAndReturnNew() {
         collection.insert(new BasicDBObject("_id", 1).append("x", true));
-        DBObject newDoc = collection.findAndModify(new BasicDBObject("x", false),
-                                                   null,
-                                                   null,
-                                                   false,
-                                                   new BasicDBObject("$set", new BasicDBObject("x", false)),
-                                                   true,
-                                                   true);
+        DBObject newDoc = collection.findAndModify(new BasicDBObject("x", false), null, null, false, new BasicDBObject("$set",
+                new BasicDBObject("x", false)), true, true);
         assertNotNull(newDoc);
         assertThat(newDoc, hasSubdocument(new BasicDBObject("x", false)));
     }
 
     @Test(expected = MongoExecutionTimeoutException.class)
+    @Ignore
     public void testFindAndUpdateTimeout() {
         assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
         try {
-            collection.findAndModify(new BasicDBObject("_id", 1), null, null, false, new BasicDBObject("$set", new BasicDBObject("x", 1)),
-                                     false, false, 1, TimeUnit.SECONDS);
+            collection.findAndModify(new BasicDBObject("_id", 1), null, null, false, new BasicDBObject("$set", new BasicDBObject(
+                    "x", 1)), false, false, 1, TimeUnit.SECONDS);
         } finally {
             disableMaxTimeFailPoint();
         }
     }
 
     @Test(expected = MongoExecutionTimeoutException.class)
+    @Ignore
     public void testFindAndReplaceTimeout() {
         assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
         try {
-            collection.findAndModify(new BasicDBObject("_id", 1), null, null, false, new BasicDBObject("x", 1), false, false,
-                                     1, TimeUnit.SECONDS);
+            collection.findAndModify(new BasicDBObject("_id", 1), null, null, false, new BasicDBObject("x", 1), false, false, 1,
+                    TimeUnit.SECONDS);
         } finally {
             disableMaxTimeFailPoint();
         }
     }
 
     @Test(expected = MongoExecutionTimeoutException.class)
+    @Ignore
     public void testFindAndRemoveTimeout() {
         assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
@@ -425,17 +412,16 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDotKeysArrayFail() {
-        //JAVA-794
-        DBObject obj = new BasicDBObject("x", 1).append("y", 2)
-                                                .append("array", new Object[]{new BasicDBObject("foo.bar", "baz")});
+        // JAVA-794
+        DBObject obj = new BasicDBObject("x", 1).append("y", 2).append("array",
+                new Object[] {new BasicDBObject("foo.bar", "baz")});
         collection.insert(obj);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testDotKeysListFail() {
-        //JAVA-794
-        DBObject obj = new BasicDBObject("x", 1).append("y", 2)
-                                                .append("array", asList(new BasicDBObject("foo.bar", "baz")));
+        // JAVA-794
+        DBObject obj = new BasicDBObject("x", 1).append("y", 2).append("array", asList(new BasicDBObject("foo.bar", "baz")));
         collection.insert(obj);
     }
 
@@ -443,7 +429,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     public void testDotKeysMapInArrayFail() {
         final Map<String, Object> map = new HashMap<String, Object>(1);
         map.put("foo.bar", 2);
-        DBObject obj = new BasicDBObject("x", 1).append("y", 2).append("array", new Object[]{map});
+        DBObject obj = new BasicDBObject("x", 1).append("y", 2).append("array", new Object[] {map});
         collection.insert(obj);
     }
 
@@ -454,11 +440,10 @@ public class DBCollectionTest extends DatabaseTestCase {
         collection.setInternalClass("a.b", NestedTwoDBObject.class);
 
         DBObject doc = new TopLevelDBObject().append("a", new NestedOneDBObject().append("b", asList(new NestedTwoDBObject()))
-                                                                                 .append("c", new BasicDBObject()));
+                .append("c", new BasicDBObject()));
         collection.save(doc);
         assertEquals(doc, collection.findOne());
     }
-
 
     @Test
     public void testReflectionObject() {
@@ -512,9 +497,9 @@ public class DBCollectionTest extends DatabaseTestCase {
         doc.append("null", null);
         doc.append("uuid", UUID.randomUUID());
         doc.append("db ref", new com.mongodb.DBRef(collection.getDB(), "test", new ObjectId()));
-        doc.append("binary", new Binary((byte) 42, new byte[]{10, 11, 12}));
-        doc.append("byte array", new byte[]{1, 2, 3});
-        doc.append("int array", new int[]{4, 5, 6});
+        doc.append("binary", new Binary((byte) 42, new byte[] {10, 11, 12}));
+        doc.append("byte array", new byte[] {1, 2, 3});
+        doc.append("int array", new int[] {4, 5, 6});
         doc.append("list", asList(7, 8, 9));
         doc.append("doc list", asList(new Document("x", 1), new Document("x", 2)));
 
@@ -545,7 +530,6 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertTrue(found.get("list") instanceof List);
         assertTrue(found.get("doc list") instanceof List);
     }
-
 
     @Test
     public void testCompoundCodecWithDefaultValues() {
@@ -584,13 +568,9 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test
     public void testBulkWriteOperation() {
         // given
-        collection.insert(Arrays.<DBObject>asList(new BasicDBObject("_id", 3),
-                                                  new BasicDBObject("_id", 4),
-                                                  new BasicDBObject("_id", 5),
-                                                  new BasicDBObject("_id", 6).append("z", 1),
-                                                  new BasicDBObject("_id", 7).append("z", 1),
-                                                  new BasicDBObject("_id", 8).append("z", 2),
-                                                  new BasicDBObject("_id", 9).append("z", 2)));
+        collection.insert(Arrays.<DBObject>asList(new BasicDBObject("_id", 3), new BasicDBObject("_id", 4), new BasicDBObject(
+                "_id", 5), new BasicDBObject("_id", 6).append("z", 1), new BasicDBObject("_id", 7).append("z", 1),
+                new BasicDBObject("_id", 8).append("z", 2), new BasicDBObject("_id", 9).append("z", 2)));
 
         // when
         BulkWriteOperation bulkWriteOperation = collection.initializeOrderedBulkOperation();
@@ -598,9 +578,9 @@ public class DBCollectionTest extends DatabaseTestCase {
         ObjectId upsertOneId = new ObjectId();
         ObjectId upsertTwoId = new ObjectId();
         bulkWriteOperation.find(new BasicDBObject("_id", upsertOneId)).upsert()
-                          .updateOne(new BasicDBObject("$set", new BasicDBObject("x", 2)));
+                .updateOne(new BasicDBObject("$set", new BasicDBObject("x", 2)));
         bulkWriteOperation.find(new BasicDBObject("_id", upsertTwoId)).upsert()
-                          .replaceOne(new BasicDBObject("_id", upsertTwoId).append("y", 2));
+                .replaceOne(new BasicDBObject("_id", upsertTwoId).append("y", 2));
         bulkWriteOperation.find(new BasicDBObject("_id", 3)).removeOne();
         bulkWriteOperation.find(new BasicDBObject("_id", 4)).updateOne(new BasicDBObject("$set", new BasicDBObject("x", 1)));
         bulkWriteOperation.find(new BasicDBObject("_id", 5)).replaceOne(new BasicDBObject("_id", 5).append("y", 1));
@@ -618,19 +598,14 @@ public class DBCollectionTest extends DatabaseTestCase {
         if (result.isModifiedCountAvailable()) {
             assertEquals(4, result.getModifiedCount());
         }
-        assertEquals(Arrays.asList(new BulkWriteUpsert(1, upsertOneId),
-                                   new BulkWriteUpsert(2, upsertTwoId)),
-                     result.getUpserts());
+        assertEquals(Arrays.asList(new BulkWriteUpsert(1, upsertOneId), new BulkWriteUpsert(2, upsertTwoId)), result.getUpserts());
 
-        assertEquals(Arrays.<DBObject>asList(new BasicDBObject("_id", 0),
-                                             new BasicDBObject("_id", 4).append("x", 1),
-                                             new BasicDBObject("_id", 5).append("y", 1),
-                                             new BasicDBObject("_id", 8).append("z", 3),
-                                             new BasicDBObject("_id", 9).append("z", 3),
-                                             new BasicDBObject("_id", upsertOneId).append("x", 2),
-                                             new BasicDBObject("_id", upsertTwoId).append("y", 2)),
+        assertEquals(Arrays.<DBObject>asList(new BasicDBObject("_id", 0), new BasicDBObject("_id", 4).append("x", 1),
+                new BasicDBObject("_id", 5).append("y", 1), new BasicDBObject("_id", 8).append("z", 3), new BasicDBObject("_id",
+                        9).append("z", 3), new BasicDBObject("_id", upsertOneId).append("x", 2), new BasicDBObject("_id",
+                        upsertTwoId).append("y", 2)),
 
-                     collection.find().sort(new BasicDBObject("_id", 1)).toArray());
+        collection.find().sort(new BasicDBObject("_id", 1)).toArray());
     }
 
     @Test
@@ -652,7 +627,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         }
 
         assertEquals(Arrays.<DBObject>asList(new BasicDBObject("_id", 0), new BasicDBObject("_id", 1)),
-                     collection.find().sort(new BasicDBObject("_id", 1)).toArray());
+                collection.find().sort(new BasicDBObject("_id", 1)).toArray());
 
     }
 
@@ -674,8 +649,9 @@ public class DBCollectionTest extends DatabaseTestCase {
             assertEquals(1, e.getWriteErrors().size());
         }
 
-        assertEquals(Arrays.<DBObject>asList(new BasicDBObject("_id", 0), new BasicDBObject("_id", 1), new BasicDBObject("_id", 2)),
-                     collection.find().sort(new BasicDBObject("_id", 1)).toArray());
+        assertEquals(
+                Arrays.<DBObject>asList(new BasicDBObject("_id", 0), new BasicDBObject("_id", 1), new BasicDBObject("_id", 2)),
+                collection.find().sort(new BasicDBObject("_id", 1)).toArray());
 
     }
 
@@ -707,8 +683,8 @@ public class DBCollectionTest extends DatabaseTestCase {
         assumeTrue(isDiscoverableReplicaSet());
         ObjectId id = new ObjectId();
         try {
-            WriteResult res = collection.update(new BasicDBObject("_id", id), new BasicDBObject("$set", new BasicDBObject("x", 1)),
-                                                true, false, new WriteConcern(5, 1, false, false));
+            WriteResult res = collection.update(new BasicDBObject("_id", id),
+                    new BasicDBObject("$set", new BasicDBObject("x", 1)), true, false, new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
         } catch (WriteConcernException e) {
             assertNotNull(e.getCommandResult().get("err"));
@@ -739,7 +715,8 @@ public class DBCollectionTest extends DatabaseTestCase {
             BulkWriteResult res = bulkWriteOperation.execute(new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
         } catch (BulkWriteException e) {
-            assertNotNull(e.getWriteConcernError());  // unclear what else we can reliably assert here
+            assertNotNull(e.getWriteConcernError()); // unclear what else we can
+                                                     // reliably assert here
         }
     }
 
@@ -829,9 +806,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         }
 
         public static DBObject getConstantObject() {
-            return new BasicDBObject()
-                   .append("_id", 1)
-                   .append("s", "foo");
+            return new BasicDBObject().append("_id", 1).append("s", "foo");
         }
     }
 

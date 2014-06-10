@@ -6,7 +6,7 @@ import java.util.Date;
 
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
-import org.mongodb.file.common.MongoFileConstants;
+import org.mongodb.file.MongoFileConstants;
 
 /**
  * A sink object the absorbs all the chunks that are sent to it and create

@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Date;
 
+// Test data for testing chunking in MongoFile impl
 public final class LoremIpsum {
 
     private LoremIpsum() {
@@ -21,6 +22,14 @@ public final class LoremIpsum {
 
         MongoFileWriter writer = store.createNew(filename, mediaType, expiresAt, true);
         writer.write(new ByteArrayInputStream(LOREM_IPSUM.getBytes()));
+    }
+
+    public static byte[] getBytes() {
+        return LOREM_IPSUM.getBytes();
+    }
+
+    public static String getString() {
+        return LOREM_IPSUM;
     }
 
     public static final String LOREM_IPSUM = "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas facilisis leo "

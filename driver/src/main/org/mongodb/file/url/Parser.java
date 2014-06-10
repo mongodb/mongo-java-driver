@@ -4,7 +4,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 import org.bson.types.ObjectId;
-import org.mongodb.file.writing.CompressionMediaTypes;
+import org.mongodb.file.util.CompressionMediaTypes;
 
 public final class Parser {
 

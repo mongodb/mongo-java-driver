@@ -16,24 +16,25 @@
 
 package com.mongodb.gridfs;
 
-import com.mongodb.BasicDBObject;
-import com.mongodb.DBObject;
-import com.mongodb.DatabaseTestCase;
-import com.mongodb.MongoException;
-import org.bson.types.ObjectId;
-import org.junit.Before;
-import org.junit.Test;
+import static java.nio.charset.Charset.defaultCharset;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import static java.nio.charset.Charset.defaultCharset;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import org.bson.types.ObjectId;
+import org.junit.Before;
+import org.junit.Test;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBObject;
+import com.mongodb.DatabaseTestCase;
+import com.mongodb.MongoException;
 
 public class GridFSTest extends DatabaseTestCase {
     private GridFS gridFS;

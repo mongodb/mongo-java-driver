@@ -19,9 +19,9 @@ import java.io.OutputStream;
 import java.util.Date;
 
 import org.bson.types.ObjectId;
-import org.mongodb.file.common.InputFile;
-import org.mongodb.file.common.MongoFileConstants;
+import org.mongodb.file.MongoFileConstants;
 import org.mongodb.file.util.BytesCopier;
+import org.mongodb.file.writing.InputFile;
 
 import com.mongodb.DBCollection;
 import com.mongodb.MongoException;

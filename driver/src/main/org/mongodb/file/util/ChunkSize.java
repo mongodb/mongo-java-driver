@@ -22,7 +22,7 @@ public enum ChunkSize {
 
     // number of bytes to give as breathing room for other parts of the JSON
     // document in the chunks collection
-    // and 1 k offset for poser of 2 sizing
+    // and 1 k offset for power of 2 sizing
     private static final int BREATHING_ROOM = 1024 + 200;
 
 }

@@ -1,4 +1,4 @@
-package org.mongodb.file.common;
+package org.mongodb.file;
 
 import java.util.Set;
 import java.util.TreeSet;

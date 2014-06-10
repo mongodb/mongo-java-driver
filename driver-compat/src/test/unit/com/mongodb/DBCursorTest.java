@@ -16,10 +16,10 @@
 
 package com.mongodb;
 
-
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Iterator;
@@ -134,7 +134,6 @@ public class DBCursorTest extends DatabaseTestCase {
         assertEquals(9, cursor.next().get("_id"));
     }
 
-
     @Test
     public void shouldReturnResultsInTheOrderTheyAreOnDiskWhenNaturalSortApplied() {
         // Given
@@ -143,8 +142,8 @@ public class DBCursorTest extends DatabaseTestCase {
         collection.insert(new BasicDBObject("name", "Bob"));
 
         // When
-        DBCursor sortedCollection = collection.find(new BasicDBObject("name", new BasicDBObject("$exists", true)))
-                                              .sort(new BasicDBObject("$natural", 1));
+        DBCursor sortedCollection = collection.find(new BasicDBObject("name", new BasicDBObject("$exists", true))).sort(
+                new BasicDBObject("$natural", 1));
 
         // Then
         assertThat(sortedCollection.next().get("name").toString(), is("Chris"));
@@ -160,8 +159,8 @@ public class DBCursorTest extends DatabaseTestCase {
         collection.insert(new BasicDBObject("name", "Bob"));
 
         // When
-        DBCursor sortedCollection = collection.find(new BasicDBObject("name", new BasicDBObject("$exists", true)))
-                                              .sort(new BasicDBObject("$natural", -1));
+        DBCursor sortedCollection = collection.find(new BasicDBObject("name", new BasicDBObject("$exists", true))).sort(
+                new BasicDBObject("$natural", -1));
 
         // Then
         assertThat(sortedCollection.next().get("name").toString(), is("Bob"));
@@ -280,55 +279,54 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMaxScan() {
-        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .addSpecial("$maxScan", 4), 4);
+        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).addSpecial(
+                "$maxScan", 4), 4);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).maxScan(4), 4);
     }
-    
+
     @Test
     public void testMax() {
-        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .addSpecial("$max", new BasicDBObject("x", 4)), 4);
-        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .max(new BasicDBObject("x", 4)), 4);
+        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).addSpecial(
+                "$max", new BasicDBObject("x", 4)), 4);
+        countResults(
+                new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).max(new BasicDBObject(
+                        "x", 4)), 4);
     }
-    
+
     @Test
     public void testMin() {
-        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .addSpecial("$min", new BasicDBObject("x", 4)), 6);
-        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .min(new BasicDBObject("x", 4)), 6);
+        countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).addSpecial(
+                "$min", new BasicDBObject("x", 4)), 6);
+        countResults(
+                new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).min(new BasicDBObject(
+                        "x", 4)), 6);
     }
 
     @Test
     public void testReturnKey() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .addSpecial("$returnKey", true);
+                .addSpecial("$returnKey", true);
         try {
             while (cursor.hasNext()) {
-                Assert.assertNull(cursor.next()
-                                        .get("_id"));
+                Assert.assertNull(cursor.next().get("_id"));
             }
         } finally {
             cursor.close();
         }
-        cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .returnKey();
+        cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).returnKey();
         try {
             while (cursor.hasNext()) {
-                Assert.assertNull(cursor.next()
-                                        .get("_id"));
+                Assert.assertNull(cursor.next().get("_id"));
             }
         } finally {
             cursor.close();
         }
     }
-    
+
     @Test
     public void testShowDiskLoc() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .addSpecial("$showDiskLoc", true);
+                .addSpecial("$showDiskLoc", true);
         try {
             while (cursor.hasNext()) {
                 DBObject next = cursor.next();
@@ -337,8 +335,7 @@ public class DBCursorTest extends DatabaseTestCase {
         } finally {
             cursor.close();
         }
-        cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .showDiskLoc();
+        cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).showDiskLoc();
         try {
             while (cursor.hasNext()) {
                 DBObject next = cursor.next();
@@ -348,11 +345,11 @@ public class DBCursorTest extends DatabaseTestCase {
             cursor.close();
         }
     }
-    
+
     @Test
     public void testSnapshot() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .addSpecial("$snapshot", true);
+                .addSpecial("$snapshot", true);
         try {
             while (cursor.hasNext()) {
                 cursor.next();
@@ -361,7 +358,7 @@ public class DBCursorTest extends DatabaseTestCase {
             cursor.close();
         }
     }
-    
+
     private void countResults(final DBCursor cursor, final int expected) {
         int count = 0;
         while (cursor.hasNext()) {
@@ -380,7 +377,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
         // when
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                              .comment(expectedComment);
+                .comment(expectedComment);
         while (cursor.hasNext()) {
             cursor.next();
         }
@@ -398,13 +395,12 @@ public class DBCursorTest extends DatabaseTestCase {
         for (int i = 0; i < NUMBER_OF_DOCUMENTS; i++) {
             collection.insert(new BasicDBObject("y", i).append("someOtherKey", "someOtherValue"));
         }
-        //set an index on the field "y"
+        // set an index on the field "y"
         collection.createIndex(new BasicDBObject("y", 1));
 
         // When
         // find a document by using a search on the field in the index
-        DBCursor cursor = collection.find(new BasicDBObject("y", 7))
-                                    .returnKey();
+        DBCursor cursor = collection.find(new BasicDBObject("y", 7)).returnKey();
 
         // Then
         DBObject foundItem = cursor.next();
@@ -413,6 +409,7 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
+    @Ignore
     public void testMaxTimeForIterator() {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         enableMaxTimeFailPoint();
@@ -429,6 +426,7 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
+    @Ignore
     public void testMaxTimeForIterable() {
         assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
@@ -446,6 +444,7 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
+    @Ignore
     public void testMaxTimeForOne() {
         assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
@@ -463,6 +462,7 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
+    @Ignore
     public void testMaxTimeForCount() {
         assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
@@ -480,6 +480,7 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
+    @Ignore
     public void testMaxTimeForSize() {
         assumeFalse(isSharded());
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));

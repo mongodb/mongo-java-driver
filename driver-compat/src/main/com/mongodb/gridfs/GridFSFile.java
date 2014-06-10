@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.bson.BSONObject;
-import org.mongodb.file.common.MongoFileConstants;
+import org.mongodb.file.MongoFileConstants;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;

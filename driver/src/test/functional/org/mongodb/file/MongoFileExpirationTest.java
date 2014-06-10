@@ -19,8 +19,10 @@ public class MongoFileExpirationTest extends DatabaseTestCase {
 
         super.setUp(); // database connection
 
-        MongoFileStoreConfig config = new MongoFileStoreConfig("expire");
-        config.setWriteConcern(WriteConcern.JOURNALED);
+        MongoFileStoreConfig config = MongoFileStoreConfig.builder()//
+                .bucket("expire").writeConcern(WriteConcern.JOURNALED)//
+                .build();
+
         store = new MongoFileStore(database, config);
     }
 
@@ -31,7 +33,7 @@ public class MongoFileExpirationTest extends DatabaseTestCase {
         LoremIpsum.createTempFile(store, "/foo/bar1.txt", "text/plain", TimeMachine.now().backward(2).days().inTime());
         LoremIpsum.createTempFile(store, "/foo/bar1.txt", "text/plain", TimeMachine.from(now).forward(5).seconds().inTime());
 
-        MongoFileCursor cursor = store.query().find("/foo/bar1.txt");
+        MongoFileCursor cursor = store.find("/foo/bar1.txt");
         assertTrue(Math.abs(now - (2 * 24 * 60 * 60 * 1000) - cursor.next().getExpiresAt().getTime()) <= 1);
         assertTrue(Math.abs(now + (5 * 1000) - cursor.next().getExpiresAt().getTime()) <= 1);
 

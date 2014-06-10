@@ -1,14 +1,12 @@
-package org.mongodb.file.writing;
+package org.mongodb.file.util;
 
 import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Simple initial list for mediaTypes that we should not try to compress, since
- * they are already compressed.
+ * Simple initial list for mediaTypes that we should not try to compress, since they are already compressed.
  * 
- * TODO : I want this to be auto-discovered based on runtime statistics of
- * compression.
+ * TODO : I want this to be auto-discovered based on runtime statistics of compression.
  * 
  * @author David Buschman
  * 
@@ -17,8 +15,7 @@ public final class CompressionMediaTypes {
 
     private static Set<String> noCompressionTypes = new TreeSet<String>();
 
-    // below is a list on types that are already compressed, so don't compress
-    // again
+    // below is a list on types that are already compressed, so don't compress again
     static {
         noCompressionTypes.add("application/x-bzip2");
         noCompressionTypes.add("application/x-gzip");

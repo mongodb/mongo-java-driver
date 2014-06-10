@@ -1,7 +1,7 @@
 package org.mongodb.file;
 
-import org.mongodb.file.common.InputFile;
 import org.mongodb.file.writing.ChunksStatisticsAdapter;
+import org.mongodb.file.writing.InputFile;
 
 /**
  * Adapter to handle the custom parts of data collection from each chunk

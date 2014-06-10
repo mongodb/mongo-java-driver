@@ -5,14 +5,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.logging.Logger;
-import java.util.zip.GZIPInputStream;
 
 import org.bson.types.ObjectId;
 import org.mongodb.CommandResult;
@@ -20,20 +17,20 @@ import org.mongodb.Document;
 import org.mongodb.Index;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCollectionOptions;
+import org.mongodb.MongoCursor;
 import org.mongodb.MongoDatabase;
 import org.mongodb.MongoException;
+import org.mongodb.MongoView;
 import org.mongodb.OrderBy;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
-import org.mongodb.file.common.MongoFileConstants;
-import org.mongodb.file.reading.CountingInputStream;
-import org.mongodb.file.reading.FileChunksInputStreamSource;
+import org.mongodb.diagnostics.Loggers;
+import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.file.url.MongoFileUrl;
-import org.mongodb.file.util.BytesCopier;
 
 public class MongoFileStore {
 
-    private static final Logger LOGGER = Logger.getLogger("me.davidbuschman.mongofs");
+    private static final Logger LOGGER = Loggers.getLogger("file");
 
     private final MongoCollection<Document> filesCollection;
     private final MongoCollection<Document> chunksCollection;
@@ -92,30 +89,25 @@ public class MongoFileStore {
 
     private void checkForExpireAtIndex(final MongoCollection<Document> coll, final int secondsDelay) {
 
-        // Document options = new Document()//
-        // .append("name", "ttl")//
-        // .append("expireAfterSeconds", secondsDelay)//
-        // .append("background", true)//
-        // .append("safe", true);
-        // ensureIndex(new Document().append("expireAt", 1), options);
+        // check for existing
+        for (Document document : coll.tools().getIndexes()) {
+            if ("ttl".equals(document.get("name"))) {
+                return;
+            }
+        }
 
+        // build one
         Index idx = Index.builder()//
                 .addKey("expireAt", OrderBy.ASC)//
                 .expireAfterSeconds(secondsDelay)//
                 .name("ttl")//
+                .sparse() //
                 .background(true)//
                 .build();
 
         coll.tools().createIndexes(java.util.Collections.singletonList(idx));
 
     }
-
-    /*
-     * filesCollection.ensureIndex(new Document() .append("filename",
-     * 1).append("uploadDate", 1)); } if (chunksCollection.find().count() <
-     * 1000) { chunksCollection.ensureIndex( new Document().append("files_id",
-     * 1).append("n", 1), new Document().append("unique", true));
-     */
 
     private void createIdIndexes(final MongoCollection<Document> fileColl, final MongoCollection<Document> chunksColl) {
         Index filesIdx = Index.builder()//
@@ -147,8 +139,41 @@ public class MongoFileStore {
     }
 
     /**
-     * Create a new file entry in the datastore, then a MongoFile object to
-     * start writing to it.
+     * Run a test command to the mongoDB to test connectivity and the server is running
+     * 
+     * @return true if a connection could be made
+     * 
+     * @throws MongoException
+     */
+    public boolean validateConnection() {
+
+        try {
+            // String command = String.format(
+            // "{ touch: \"%s\", data: false, index: true }",
+            // config.getBucket() + ".files");
+
+            Document doc = new Document() //
+                    .append("touch", config.getBucket() + ".files") //
+                    .append("data", Boolean.FALSE) //
+                    .append("index", Boolean.TRUE);
+
+            CommandResult commandResult = filesCollection.getDatabase().executeCommand(doc);
+            if (!commandResult.isOk()) {
+                throw new MongoException(commandResult.getErrorMessage());
+            }
+
+            return true;
+        } catch (Exception e) {
+            throw new MongoException("Unable to run command on server", e);
+        }
+    }
+
+    //
+    // writing
+    // //////////////////
+
+    /**
+     * Create a new file entry in the datastore, then a MongoFile object to start writing to it.
      * 
      * NOTE : the system will determine if compression is needed
      * 
@@ -166,15 +191,13 @@ public class MongoFileStore {
      */
     public MongoFileWriter createNew(final String filename, final String mediaType) throws IOException {
 
-        return createNew(filename, mediaType, null, true);
+        return createNew(filename, mediaType, null, config.isEnableCompression());
     }
 
     /**
-     * Create a new file entry in the datastore, then a MongoFile object to
-     * start writing to it.
+     * Create a new file entry in the datastore, then a MongoFile object to start writing to it.
      * 
-     * NOTE : if compress = false and the media type is compressible, the file
-     * will not be stored compressed in the store
+     * NOTE : if compress = false and the media type is compressible, the file will not be stored compressed in the store
      * 
      * @param filename
      *            the name of the new file
@@ -183,14 +206,12 @@ public class MongoFileStore {
      * @param expiresAt
      *            the date when the file should be expired
      * @param compress
-     *            should use compression if the mime type allows ( zip files
-     *            will not be compressed even compress = true )
+     *            should use compression if the mime type allows ( zip files will not be compressed even compress = true )
      * 
      * @return a writer to write datq to for this file
      * 
      * @throws IllegalStateException
-     *             if compression is disabled in the configuration but ask for
-     *             on the command line
+     *             if compression is disabled in the configuration but ask for on the command line
      * @throws IOException
      *             if an error occurs during reading and/or writing
      * @throws IllegalArgumentException
@@ -215,7 +236,7 @@ public class MongoFileStore {
         MongoFileUrl mongoFileUrl = MongoFileUrl//
                 .construct(new ObjectId(), filename, mediaType, null, compress);
 
-        MongoFile mongoFile = new MongoFile(this, mongoFileUrl, config.getChunkSize(), compress);
+        MongoFile mongoFile = new MongoFile(this, mongoFileUrl, config.getChunkSize(), mongoFileUrl.isStoredCompressed());
         if (expiresAt != null) {
             mongoFile.setExpiresAt(expiresAt);
         }
@@ -234,8 +255,7 @@ public class MongoFileStore {
      * @return the MongoFile object created for this file object
      * 
      * @throws IllegalStateException
-     *             if compression is disabled in the configuration but ask for
-     *             on the command line
+     *             if compression is disabled in the configuration but ask for on the command line
      * @throws IOException
      *             if an error occurs during reading and/or writing
      * @throws IllegalArgumentException
@@ -268,8 +288,7 @@ public class MongoFileStore {
      * @return the MongoFile object created for this file object
      * 
      * @throws IllegalStateException
-     *             if compression is disabled in the configuration but ask for
-     *             on the command line
+     *             if compression is disabled in the configuration but ask for on the command line
      * @throws IOException
      *             if an error occurs during reading and/or writing
      * @throws IllegalArgumentException
@@ -309,8 +328,7 @@ public class MongoFileStore {
      * @return the MongoFile object created for this file object
      * 
      * @throws IllegalStateException
-     *             if compression is disabled in the configuration but ask for
-     *             on the command line
+     *             if compression is disabled in the configuration but ask for on the command line
      * @throws IOException
      *             if an error occurs during reading and/or writing
      * @throws IllegalArgumentException
@@ -339,8 +357,7 @@ public class MongoFileStore {
      * @return the MongoFile object created for this file object
      * 
      * @throws IllegalStateException
-     *             if compression is disabled in the configuration but ask for
-     *             on the command line
+     *             if compression is disabled in the configuration but ask for on the command line
      * @throws IOException
      *             if an error occurs during reading and/or writing
      * @throws IllegalArgumentException
@@ -353,6 +370,10 @@ public class MongoFileStore {
         return createNew(filename, mediaType, expiresAt, compress).write(inputStream);
     }
 
+    //
+    // read
+    // ////////////////////
+
     /**
      * Returns a reader for the passed in URL
      * 
@@ -364,16 +385,16 @@ public class MongoFileStore {
      * @throws IllegalArgumentException
      *             if required parameters are null
      */
-    public MongoFile getFile(final URL url) {
+    public MongoFile findOne(final URL url) {
 
         if (url == null) {
             throw new IllegalArgumentException("url cannot be null");
         }
-        return getFile(MongoFileUrl.construct(url));
+        return findOne(MongoFileUrl.construct(url));
     }
 
     /**
-     * Returns a reader for the passed in file object
+     * Returns a MongoFile for the passed in file url
      * 
      * @param url
      * 
@@ -383,15 +404,19 @@ public class MongoFileStore {
      * @throws IllegalArgumentException
      *             if required parameters are null
      */
-    public MongoFile getFile(final MongoFileUrl url) {
+    public MongoFile findOne(final MongoFileUrl url) {
 
         if (url == null) {
             throw new IllegalArgumentException("url cannot be null");
         }
-        Document file = (Document) filesCollection.find(//
-                new Document().append(MongoFileConstants._id.toString(), url.getMongoFileId()));
+        MongoCursor<Document> cursor = filesCollection.find(//
+                new Document().append(MongoFileConstants._id.toString(), url.getMongoFileId())).get();
 
-        file = deletedFileCheck(file);
+        if (!cursor.hasNext()) {
+            return null;
+        }
+
+        Document file = deletedFileCheck(cursor.next());
         return file == null ? null : new MongoFile(this, file);
     }
 
@@ -409,23 +434,110 @@ public class MongoFileStore {
         if (url == null) {
             throw new IllegalArgumentException("mongoFile cannot be null");
         }
-        Document file = (Document) filesCollection.find(//
-                new Document().append(MongoFileConstants._id.toString(), url.getMongoFileId()));
-        file = deletedFileCheck(file);
-        return file != null;
+
+        return findOne(url) != null;
     }
 
     /**
-     * Give this file an expiration date so I can be removed and resources its
-     * recovered.Use the TimeMachine DSL to easyily create expiration dates.
+     * REturns true if the file can be accessed from the database
      * 
-     * This uses MongoDB's ttl indexes feature to allow a server background
-     * thread to remove the file. According to their documentation, this may not
-     * happen immediately at the time the file is set to expire.
+     * @param id
+     * @return
+     */
+    public boolean exists(final ObjectId id) {
+        return null != findOne(id);
+    }
+
+    /**
+     * finds one file matching the given id. Equivalent to findOne(id)
+     * 
+     * @param id
+     * @return the MongoFile object
+     * @throws MongoException
+     */
+    public MongoFile findOne(final ObjectId id) {
+
+        Document one = this.getFilesCollection().find(new Document("_id", id)).getOne();
+        if (one == null) {
+            return null;
+        }
+        one = deletedFileCheck(one);
+        if (one == null) {
+            return null;
+        }
+        return new MongoFile(this, one);
+    }
+
+    /**
+     * finds a list of files matching the given filename
+     * 
+     * @param filename
+     * @return the MongoFileCursor object
+     * @throws MongoException
+     */
+    public MongoFileCursor find(final String filename) {
+
+        return find(filename, null);
+    }
+
+    /**
+     * finds a list of files matching the given filename
+     * 
+     * @param filename
+     * @param sort
+     * @return the MongoFileCursor object
+     * @throws MongoException
+     */
+    public MongoFileCursor find(final String filename, final Document sort) {
+
+        return find(new Document(MongoFileConstants.filename.toString(), filename), sort);
+    }
+
+    /**
+     * finds a list of files matching the given query
+     * 
+     * @param query
+     * @return the MongoFileCursor object
+     * @throws MongoException
+     */
+    public MongoFileCursor find(final Document query) {
+
+        return find(query, null);
+    }
+
+    /**
+     * finds a list of files matching the given query
+     * 
+     * @param query
+     * @param sort
+     * @return the MongoFileCursor object
+     * @throws MongoException
+     */
+    public MongoFileCursor find(final Document query, final Document sort) {
+
+        MongoView<Document> c = this.getFilesCollection().find(query);
+        if (sort != null) {
+            c.sort(sort);
+        }
+
+        MongoCursor<Document> cursor = c.get();
+        return new MongoFileCursor(this, cursor);
+    }
+
+    //
+    // remove methods
+    // ////////////////////
+
+    /**
+     * Give a file an expiration date so I can be removed and resources its recovered.
+     * 
+     * Use the TimeMachine DSL to easily create expiration dates.
+     * 
+     * This uses MongoDB's TTL indexes feature to allow a server background thread to remove the file. According to their
+     * documentation, this may not happen immediately at the time the file is set to expire.
      * 
      * 
-     * NOTE: The MongoFileStore has methods which perform immediate update of
-     * the document in the MongoDB collection.
+     * NOTE: The MongoFileStore has remove methods which perform immediate removal of the file in the MongoFileStore.
      * 
      * @param file
      *            the MongoFile to fix
@@ -434,7 +546,6 @@ public class MongoFileStore {
      * 
      * @throws MalformedURLException
      */
-
     public void expireFile(final MongoFile file, final Date when) throws MalformedURLException {
 
         MongoFileUrl url = file.getURL();
@@ -444,97 +555,6 @@ public class MongoFileStore {
 
         setExpiresAt(filesQuery, chunksQuery, when, false);
     }
-
-    /**
-     * Run a test command to the mongoDB to test connectivity and the server is
-     * running
-     * 
-     * @return true if a connection could be made
-     * 
-     * @throws MongoException
-     */
-    public boolean validateConnection() {
-
-        try {
-            // String command = String.format(
-            // "{ touch: \"%s\", data: false, index: true }",
-            // config.getBucket() + ".files");
-
-            Document doc = new Document().append("touch", config.getBucket() + ".files").append("data", Boolean.FALSE)
-                    .append("index", Boolean.TRUE);
-
-            CommandResult commandResult = filesCollection.getDatabase().executeCommand(doc);
-
-            if (!commandResult.isOk()) {
-                throw new MongoException(commandResult.getErrorMessage());
-            }
-
-            return true;
-        } catch (Exception e) {
-            throw new MongoException("Unable to run command on server", e);
-        }
-    }
-
-    /**
-     * Return an input stream to read the file content data from
-     * 
-     * @param file
-     *            the MongoFile object
-     * 
-     * @return an input stream to read from
-     * 
-     * @throws IOException
-     */
-    public InputStream read(final MongoFile file) throws IOException {
-
-        // returned = counting <- chunks
-        //
-        // or
-        //
-        // returned = gzip <- counting <- chunks
-        InputStream returned = new FileChunksInputStreamSource(this, file);
-        returned = new CountingInputStream(returned);
-
-        if (file.getURL().isStoredCompressed()) {
-            returned = new GZIPInputStream(returned);
-        }
-
-        return returned;
-    }
-
-    /**
-     * Return a dynamic query object to do ad-hoc file lookups
-     * 
-     * @return a query object
-     */
-    public MongoFileQuery query() {
-
-        return new MongoFileQuery(this);
-    }
-
-    /**
-     * Copy the content to the given output stream
-     * 
-     * @param file
-     *            the MongoFile to lookup
-     * 
-     * @param out
-     *            the output stream to write to
-     * 
-     * @param flush
-     *            should the output stream be flush when all the data has been
-     *            written.
-     * 
-     * @throws IOException
-     */
-    public void read(final MongoFile file, final OutputStream out, final boolean flush) throws IOException {
-
-        new BytesCopier(file.read(), out).transfer(flush);
-    }
-
-    //
-    // remove methods
-    // ////////////////////
 
     /**
      * Remove a file from the database identified by the given MongoFile
@@ -629,8 +649,7 @@ public class MongoFileStore {
     /**
      * Delete all files that match the given criteria
      * 
-     * This code was taken from --
-     * https://github.com/mongodb/mongo-java-driver/pull/171
+     * This code was taken from -- https://github.com/mongodb/mongo-java-driver/pull/171
      * 
      * @param query
      *            the selection criteria
@@ -647,7 +666,7 @@ public class MongoFileStore {
         }
         // can't remove chunks without files_id thus keep them
         List<ObjectId> filesIds = new ArrayList<ObjectId>();
-        for (MongoFile f : query().find(query)) {
+        for (MongoFile f : find(query)) {
             filesIds.add(f.getId());
         }
 
@@ -717,6 +736,10 @@ public class MongoFileStore {
 
         return chunksCollection;
     }
+
+    //
+    // toString
+    // //////////////////
 
     @Override
     public String toString() {

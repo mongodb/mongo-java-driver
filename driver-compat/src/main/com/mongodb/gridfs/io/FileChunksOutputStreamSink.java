@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Date;
 
-import org.mongodb.file.common.MongoFileConstants;
+import org.mongodb.file.MongoFileConstants;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;

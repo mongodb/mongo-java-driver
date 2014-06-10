@@ -2,24 +2,27 @@ package org.mongodb.file;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
 import org.bson.types.ObjectId;
 import org.mongodb.Document;
 import org.mongodb.MongoException;
-import org.mongodb.file.common.InputFile;
-import org.mongodb.file.common.MongoFileConstants;
+import org.mongodb.file.reading.CountingInputStream;
+import org.mongodb.file.reading.FileChunksInputStreamSource;
 import org.mongodb.file.url.MongoFileUrl;
 import org.mongodb.file.url.Parser;
+import org.mongodb.file.util.BytesCopier;
+import org.mongodb.file.writing.InputFile;
 
 /**
- * Object to hold the state of the file's metatdata. To persist this outside of
- * MongoFS, use the getURL() and persist that.
+ * Object to hold the state of the file's metatdata. To persist this outside of MongoFS, use the getURL() and persist that.
  * 
  * @author David Buschman
  * 
@@ -42,6 +45,7 @@ public class MongoFile implements InputFile {
 
         this.store = store;
         this.surrogate = surrogate;
+        this.compress = (surrogate == null) ? false : (surrogate.getString(MongoFileConstants.compressionFormat) != null);
     }
 
     /**
@@ -54,15 +58,16 @@ public class MongoFile implements InputFile {
 
         this.store = store;
         this.compress = compress;
-        this.surrogate = new Document();
-        this.surrogate.put(MongoFileConstants._id.toString(), url.getMongoFileId());
-        this.surrogate.put(MongoFileConstants.uploadDate.toString(), new Date());
 
-        this.surrogate.put(MongoFileConstants.chunkSize.toString(), chunkSize);
-        this.surrogate.put(MongoFileConstants.filename.toString(), url.getFilePath());
-        this.surrogate.put(MongoFileConstants.contentType.toString(), url.getMediaType());
+        surrogate = new Document();
+        surrogate.put(MongoFileConstants._id.toString(), url.getMongoFileId());
+        surrogate.put(MongoFileConstants.uploadDate.toString(), new Date());
+
+        surrogate.put(MongoFileConstants.chunkSize.toString(), chunkSize);
+        surrogate.put(MongoFileConstants.filename.toString(), url.getFilePath());
+        surrogate.put(MongoFileConstants.contentType.toString(), url.getMediaType());
         if (url.getCompressionFormat() != null) {
-            this.surrogate.put(MongoFileConstants.compressionFormat.toString(), url.getCompressionFormat());
+            surrogate.put(MongoFileConstants.compressionFormat.toString(), url.getCompressionFormat());
         }
     }
 
@@ -71,7 +76,7 @@ public class MongoFile implements InputFile {
     // //////////////////
     private String getBucketName() {
 
-        return this.store.getFilesCollection().getName().split("\\.")[0];
+        return store.getFilesCollection().getName().split("\\.")[0];
     }
 
     /**
@@ -81,26 +86,25 @@ public class MongoFile implements InputFile {
      */
     public void save() {
 
-        this.store.getFilesCollection().save(surrogate);
+        store.getFilesCollection().save(surrogate);
     }
 
     /**
-     * Verifies that the MD5 matches between the database and the local file.
-     * This should be called after transferring a file.
+     * Verifies that the MD5 matches between the database and the local file. This should be called after transferring a file.
      * 
      * @throws MongoException
      */
     public void validate() {
 
         MongoFileConstants md5key = MongoFileConstants.md5;
-        String md5 = this.getString(md5key);
+        String md5 = getString(md5key);
         if (md5 == null) {
             throw new MongoException("no md5 stored");
         }
 
-        Document cmd = new Document("filemd5", this.get(MongoFileConstants._id));
+        Document cmd = new Document("filemd5", get(MongoFileConstants._id));
         cmd.put("root", getBucketName());
-        Document res = this.store.getFilesCollection().getDatabase().executeCommand(cmd).getResponse();
+        Document res = store.getFilesCollection().getDatabase().executeCommand(cmd).getResponse();
         if (res != null && res.containsKey(md5key.toString())) {
             String m = res.get(md5key.toString()).toString();
             if (m.equals(md5)) {
@@ -117,12 +121,12 @@ public class MongoFile implements InputFile {
     public MongoFileUrl getURL() throws MalformedURLException {
 
         if (surrogate != null) {
-            URL url = Parser.construct(this.getId(), this.getFilename(), this.getContentType(),
-                    (String) this.get(MongoFileConstants.compressionFormat.toString()), false);
+            URL url = Parser.construct(getId(), getFilename(), getContentType(),
+                    (String) get(MongoFileConstants.compressionFormat.toString()), false);
             return MongoFileUrl.construct(url);
         }
-        return MongoFileUrl.construct(this.getId(), this.getFilename(), this.getContentType(),
-                (String) this.get(MongoFileConstants.compressionFormat.toString()), compress);
+        return MongoFileUrl.construct(getId(), getFilename(), getContentType(),
+                (String) get(MongoFileConstants.compressionFormat.toString()), compress);
     }
 
     /**
@@ -132,9 +136,39 @@ public class MongoFile implements InputFile {
      * 
      * @throws IOException
      */
-    public InputStream read() throws IOException {
+    public final InputStream getInputStream() throws IOException {
 
-        return store.read(this);
+        // returned <- counting <- chunks
+        //
+        // or
+        //
+        // returned <- gzip <- counting <- chunks
+        InputStream returned = new FileChunksInputStreamSource(store, this);
+        returned = new CountingInputStream(this, returned);
+
+        if (getURL().isStoredCompressed()) {
+            returned = new GZIPInputStream(returned);
+        }
+
+        return returned;
+    }
+
+    /**
+     * Copy the content to the given output stream
+     * 
+     * @param out
+     *            the output stream to write to
+     * 
+     * @param flush
+     *            should the output stream be flush when all the data has been written.
+     * 
+     * @throws IOException
+     */
+    public OutputStream readInto(final OutputStream out, final boolean flush) throws IOException {
+
+        new BytesCopier(getInputStream(), out).transfer(flush);
+
+        return out;
     }
 
     //
@@ -154,9 +188,9 @@ public class MongoFile implements InputFile {
 
         // for compatibility with legacy GridFS implementations, if -1 comes
         // back, then legacy file
-        int chunkCount = this.getInt(MongoFileConstants.chunkCount, -1);
+        int chunkCount = getInt(MongoFileConstants.chunkCount, -1);
         if (chunkCount == -1) {
-            chunkCount = (int) Math.ceil((double) this.getLength() / this.getChunkSize());
+            chunkCount = (int) Math.ceil((double) getLength() / getChunkSize());
         }
         return chunkCount;
     }
@@ -168,7 +202,7 @@ public class MongoFile implements InputFile {
      */
     public long getLength() {
 
-        return this.getLong(MongoFileConstants.length);
+        return getLong(MongoFileConstants.length);
     }
 
     /**
@@ -178,7 +212,7 @@ public class MongoFile implements InputFile {
      */
     public String getMD5() {
 
-        return this.getString(MongoFileConstants.md5);
+        return getString(MongoFileConstants.md5);
     }
 
     /**
@@ -198,7 +232,7 @@ public class MongoFile implements InputFile {
      */
     public String getFilename() {
 
-        return this.getString(MongoFileConstants.filename);
+        return getString(MongoFileConstants.filename);
     }
 
     /**
@@ -208,7 +242,7 @@ public class MongoFile implements InputFile {
      */
     public String getContentType() {
 
-        return this.getString(MongoFileConstants.contentType);
+        return getString(MongoFileConstants.contentType);
     }
 
     /**
@@ -218,7 +252,7 @@ public class MongoFile implements InputFile {
      */
     public int getChunkSize() {
 
-        return this.getInt(MongoFileConstants.chunkSize);
+        return getInt(MongoFileConstants.chunkSize);
     }
 
     /**
@@ -228,7 +262,7 @@ public class MongoFile implements InputFile {
      */
     public Date getUploadDate() {
 
-        return (Date) this.get(MongoFileConstants.uploadDate);
+        return (Date) get(MongoFileConstants.uploadDate);
     }
 
     /**
@@ -246,20 +280,19 @@ public class MongoFile implements InputFile {
     // /////////////////////////
 
     /**
-     * Gets the aliases from the metadata. note: to set aliases, call put(
-     * "aliases" , List<String> )
+     * Gets the aliases from the metadata. note: to set aliases, call put( "aliases" , List<String> )
      * 
      * @return list of aliases
      */
     @SuppressWarnings("unchecked")
     public List<String> getAliases() {
 
-        return (List<String>) this.get(MongoFileConstants.aliases);
+        return (List<String>) get(MongoFileConstants.aliases);
     }
 
     public void setAliases(final List<String> aliases) {
 
-        this.put(MongoFileConstants.aliases, aliases);
+        put(MongoFileConstants.aliases, aliases);
     }
 
     /**
@@ -269,7 +302,7 @@ public class MongoFile implements InputFile {
      */
     public Document getMetaData() {
 
-        return (Document) this.get(MongoFileConstants.metadata);
+        return (Document) get(MongoFileConstants.metadata);
     }
 
     /**
@@ -280,7 +313,7 @@ public class MongoFile implements InputFile {
      */
     public void setMetaData(final Document metadata) {
 
-        this.put(MongoFileConstants.metadata, metadata);
+        put(MongoFileConstants.metadata, metadata);
     }
 
     /**
@@ -291,7 +324,7 @@ public class MongoFile implements InputFile {
      */
     public Object setInMetaData(final String key, final Object value) {
 
-        Document object = (Document) this.get(MongoFileConstants.metadata);
+        Document object = (Document) get(MongoFileConstants.metadata);
         if (object == null) {
             object = new Document();
             setMetaData(object);
@@ -306,7 +339,7 @@ public class MongoFile implements InputFile {
      */
     /* package */void setExpiresAt(final Date when) {
 
-        this.put(MongoFileConstants.expireAt, when);
+        put(MongoFileConstants.expireAt, when);
     }
 
     /**
@@ -316,7 +349,7 @@ public class MongoFile implements InputFile {
      */
     public Date getExpiresAt() {
 
-        return this.getDate(MongoFileConstants.expireAt, null);
+        return getDate(MongoFileConstants.expireAt, null);
     }
 
     //
@@ -591,7 +624,7 @@ public class MongoFile implements InputFile {
         return keySet().contains(key);
     }
 
-    public Set<String> keySet() {
+    private Set<String> keySet() {
 
         Set<String> keys = new HashSet<String>();
         keys.addAll(MongoFileConstants.getFields(true));
@@ -603,6 +636,11 @@ public class MongoFile implements InputFile {
     public String toString() {
 
         return surrogate.toString();
+    }
+
+    public boolean isCompressed() {
+
+        return compress;
     }
 
 }

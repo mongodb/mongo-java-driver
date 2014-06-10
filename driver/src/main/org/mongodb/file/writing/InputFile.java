@@ -1,4 +1,4 @@
-package org.mongodb.file.common;
+package org.mongodb.file.writing;
 
 public interface InputFile {
 

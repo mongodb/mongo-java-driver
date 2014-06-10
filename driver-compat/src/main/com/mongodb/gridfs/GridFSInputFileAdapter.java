@@ -1,6 +1,6 @@
 package com.mongodb.gridfs;
 
-import org.mongodb.file.common.InputFile;
+import org.mongodb.file.writing.InputFile;
 
 import com.mongodb.gridfs.io.ChunksStatisticsAdapter;
 

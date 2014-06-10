@@ -5,7 +5,7 @@ import java.io.OutputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.mongodb.file.MongoFile;
-import org.mongodb.file.common.MongoFileConstants;
+import org.mongodb.file.MongoFileConstants;
 
 /**
  * 
