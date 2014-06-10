@@ -116,16 +116,11 @@ final class NettyStream implements Stream {
             channelFuture.addListener(new GenericFutureListener<Future<? super Void>>() {
                 @Override
                 public void operationComplete(final Future<? super Void> future) throws Exception {
-                    ensureOpen(handler);
+                   handler.completed(null);
                 }
             });
-            return;
-        }
-
-        if (!channelFuture.isSuccess()) {
+        } else if (!channelFuture.isSuccess()) {
             handler.failed(new MongoSocketOpenException("Exception opening socket", address, channelFuture.cause()));
-        } else if (pendingException != null) {
-            handler.failed(pendingException);
         } else {
             handler.completed(null);
         }
