@@ -112,14 +112,22 @@ final class NettyStream implements Stream {
     }
 
     private void ensureOpen(final AsyncCompletionHandler<Void> handler) {
-        if (!channelFuture.isDone()) {
+        if (pendingException != null) {
+            handler.failed(pendingException);
+        } else if (!channelFuture.isDone()) {
             channelFuture.addListener(new GenericFutureListener<Future<? super Void>>() {
                 @Override
                 public void operationComplete(final Future<? super Void> future) throws Exception {
-                   handler.completed(null);
+                   ensureOpenWasSuccessful(handler);
                 }
             });
-        } else if (!channelFuture.isSuccess()) {
+        } else {
+            ensureOpenWasSuccessful(handler);
+        }
+    }
+
+    private void ensureOpenWasSuccessful(final AsyncCompletionHandler<Void> handler) {
+        if (!channelFuture.isSuccess()) {
             handler.failed(new MongoSocketOpenException("Exception opening socket", address, channelFuture.cause()));
         } else {
             handler.completed(null);
