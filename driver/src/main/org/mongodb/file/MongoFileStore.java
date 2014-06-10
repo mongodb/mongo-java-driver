@@ -442,7 +442,7 @@ public class MongoFileStore {
      * REturns true if the file can be accessed from the database
      * 
      * @param id
-     * @return
+     * @return true if file exists in the DataStore
      */
     public boolean exists(final ObjectId id) {
         return null != findOne(id);

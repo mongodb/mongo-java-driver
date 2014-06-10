@@ -8,7 +8,7 @@ public final class MongoFileStoreConfig {
 
     public static final ChunkSize DEFAULT_CHUNKSIZE = ChunkSize.medium_256K;
 
-    private String bucket = "mongofs";
+    private String bucket = "fileStore";
     private WriteConcern writeConcern = WriteConcern.JOURNALED;
     private ReadPreference readPreference = ReadPreference.primary();
     private boolean enableCompression = true;

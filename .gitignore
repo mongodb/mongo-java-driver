@@ -32,3 +32,5 @@ atlassian-ide-plugin.xml
 # code review
 codereview.rc
 
+# Groovy
+.groovy
