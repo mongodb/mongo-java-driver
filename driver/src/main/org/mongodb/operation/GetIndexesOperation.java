@@ -33,7 +33,10 @@ import static org.mongodb.operation.QueryOperationHelper.queryResultToList;
 import static org.mongodb.operation.QueryOperationHelper.queryResultToListAsync;
 
 /**
- * An operation that gets the indexes that have been created on a collection.
+ * An operation that gets the indexes that have been created on a collection.  For flexibility,
+ * the type of each document returned is generic.
+ *
+ * @param <T> the document type for each index
  *
  * @since 3.0
  */
@@ -41,6 +44,12 @@ public class GetIndexesOperation<T> implements AsyncReadOperation<List<T>>, Read
     private final MongoNamespace collectionNamespace;
     private final Decoder<T> decoder;
 
+    /**
+     * Construct a new instance
+     *
+     * @param collectionNamespace the namespace of the collection to get the indexes for
+     * @param decoder the decoder for the indexes
+     */
     public GetIndexesOperation(final MongoNamespace collectionNamespace, final Decoder<T> decoder) {
         this.collectionNamespace = notNull("collectionNamespace", collectionNamespace);
         this.decoder = decoder;
