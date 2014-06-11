@@ -12,9 +12,23 @@ import org.bson.types.Timestamp;
 import java.util.Iterator;
 import java.util.Map;
 
+/**
+ * A {@code BsonReader} implementation that reads from an instance of {@code BsonDocument}.  This can be used to decode a {@code
+ * BsonDocument} using a {@code Decoder}.
+ *
+ * @see org.bson.types.BsonDocument
+ * @see org.bson.codecs.Decoder
+ *
+ * @since 3.0
+ */
 public class BsonDocumentReader extends AbstractBsonReader {
     private BsonValue currentValue;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param document the document to read from
+     */
     public BsonDocumentReader(final BsonDocument document) {
         super();
         setContext(new Context(null, BsonContextType.TOP_LEVEL, document));

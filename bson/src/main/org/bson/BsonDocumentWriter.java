@@ -42,7 +42,11 @@ import static org.bson.BsonContextType.DOCUMENT;
 import static org.bson.BsonContextType.SCOPE_DOCUMENT;
 
 /**
- * Writes into an instance of BsonDocument.
+ * A {@code BsonWriter} implementation that writes to an instance of {@code BsonDocument}.  This can be used to encode an object into a
+ * {@code BsonDocument} using an {@code Encoder}.
+ *
+ * @see org.bson.types.BsonDocument
+ * @see org.bson.codecs.Encoder
  *
  * @since 3.0
  */
@@ -50,6 +54,11 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
 
     private final BsonDocument document;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param document the document to write to
+     */
     public BsonDocumentWriter(final BsonDocument document) {
         super(new BsonWriterSettings());
         this.document = document;

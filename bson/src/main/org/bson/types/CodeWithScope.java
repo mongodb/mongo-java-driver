@@ -32,6 +32,12 @@ public class CodeWithScope extends BsonValue implements Serializable {
     private final String code;
     private final BsonDocument scope;
 
+    /**
+     * Construct a new instance with the given code and scope.
+     *
+     * @param code the code
+     * @param scope the scope
+     */
     public CodeWithScope(final String code, final BsonDocument scope) {
         if (code == null) {
             throw new IllegalArgumentException("code can not be null");
@@ -48,10 +54,20 @@ public class CodeWithScope extends BsonValue implements Serializable {
         return BsonType.JAVASCRIPT_WITH_SCOPE;
     }
 
+    /**
+     * Get the code.
+     *
+     * @return the code
+     */
     public String getCode() {
         return code;
     }
 
+    /**
+     * Get the scope.
+     *
+     * @return the scope
+     */
     public BsonDocument getScope() {
         return scope;
     }

@@ -31,6 +31,12 @@ public class DBPointer extends BsonValue implements Serializable {
     private final String namespace;
     private final ObjectId id;
 
+    /**
+     * Construct a new instance with the given namespace and id.
+     *
+     * @param namespace the namespace
+     * @param id the id
+     */
     public DBPointer(final String namespace, final ObjectId id) {
         if (namespace == null) {
             throw new IllegalArgumentException("namespace can not be null");
@@ -47,10 +53,20 @@ public class DBPointer extends BsonValue implements Serializable {
         return BsonType.DB_POINTER;
     }
 
+    /**
+     * Gets the namespace.
+     *
+     * @return the namespace
+     */
     public String getNamespace() {
         return namespace;
     }
 
+    /**
+     * Gets the id.
+     *
+     * @return the id
+     */
     public ObjectId getId() {
         return id;
     }
