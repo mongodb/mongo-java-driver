@@ -191,6 +191,78 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
         return get(key).asString();
     }
 
+    /**
+     * Gets the value of the key if it is a BsonDateTime, or throws if not.
+     *
+     * @param key the key
+     * @return the value of the key as a BsonDateTime
+     * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
+     */
+    public BsonDateTime getDateTime(final Object key) {
+        throwIfKeyAbsent(key);
+        return get(key).asDateTime();
+    }
+
+    /**
+     * Gets the value of the key if it is a Timestamp, or throws if not.
+     *
+     * @param key the key
+     * @return the value of the key as a Timestamp
+     * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
+     */
+    public Timestamp getTimestamp(final Object key) {
+        throwIfKeyAbsent(key);
+        return get(key).asTimestamp();
+    }
+
+    /**
+     * Gets the value of the key if it is a ObjectId, or throws if not.
+     *
+     * @param key the key
+     * @return the value of the key as a ObjectId
+     * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
+     */
+    public ObjectId getObjectId(final Object key) {
+        throwIfKeyAbsent(key);
+        return get(key).asObjectId();
+    }
+
+    /**
+     * Gets the value of the key if it is a RegularExpression, or throws if not.
+     *
+     * @param key the key
+     * @return the value of the key as a RegularExpression
+     * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
+     */
+    public RegularExpression getRegularExpression(final Object key) {
+        throwIfKeyAbsent(key);
+        return get(key).asRegularExpression();
+    }
+
+    /**
+     * Gets the value of the key if it is a Binary, or throws if not.
+     *
+     * @param key the key
+     * @return the value of the key as a Binary
+     * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
+     */
+    public Binary getBinary(final Object key) {
+        throwIfKeyAbsent(key);
+        return get(key).asBinary();
+    }
+
+    /**
+     * Returns true if the value of the key is a BsonNull, returns false if the document does not contain the key.
+     *
+     * @param key the key
+     * @return true if the value of the key is a BsonNull, returns false if the document does not contain the key.
+     */
+    public boolean isNull(final Object key) {
+        if (!containsKey(key)) {
+            return false;
+        }
+        return get(key).isNull();
+    }
 
     /**
      * Returns true if the value of the key is a BsonDocument, returns false if the document does not contain the key.
@@ -250,7 +322,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      * @param key the key
      * @return true if the value of the key is a BsonInt64, returns false if the document does not contain the key.
      */
-    public boolean istInt64(final Object key) {
+    public boolean isInt64(final Object key) {
         if (!containsKey(key)) {
             return false;
         }
@@ -297,6 +369,70 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
     }
 
     /**
+     * Returns true if the value of the key is a BsonDateTime, returns false if the document does not contain the key.
+     *
+     * @param key the key
+     * @return true if the value of the key is a BsonDateTime, returns false if the document does not contain the key.
+     */
+    public boolean isDateTime(final Object key) {
+        if (!containsKey(key)) {
+            return false;
+        }
+        return get(key).isDateTime();
+    }
+
+    /**
+     * Returns true if the value of the key is a Timestamp, returns false if the document does not contain the key.
+     *
+     * @param key the key
+     * @return true if the value of the key is a Timestamp, returns false if the document does not contain the key.
+     */
+    public boolean isTimestamp(final Object key) {
+        if (!containsKey(key)) {
+            return false;
+        }
+        return get(key).isTimestamp();
+    }
+
+    /**
+     * Returns true if the value of the key is a ObjectId, returns false if the document does not contain the key.
+     *
+     * @param key the key
+     * @return true if the value of the key is a ObjectId, returns false if the document does not contain the key.
+     */
+    public boolean isObjectId(final Object key) {
+        if (!containsKey(key)) {
+            return false;
+        }
+        return get(key).isObjectId();
+    }
+
+    /**
+     * Returns true if the value of the key is a Binary, returns false if the document does not contain the key.
+     *
+     * @param key the key
+     * @return true if the value of the key is a Binary, returns false if the document does not contain the key.
+     */
+    public boolean isBinary(final Object key) {
+        if (!containsKey(key)) {
+            return false;
+        }
+        return get(key).isBinary();
+    }
+
+    /**
+     * If the document does not contain the given key, return the given default value.  Otherwise, gets the value of the key.
+     *
+     * @param key the key
+     * @param defaultValue the default value
+     * @return the value of the key as a BsonValue
+     */
+    public BsonValue get(final Object key, final BsonValue defaultValue) {
+        BsonValue value = get(key);
+        return value != null ? value : defaultValue;
+    }
+
+    /**
      * If the document does not contain the given key, return the given default value.  Otherwise, gets the value of the key as a
      * BsonDocument.
      *
@@ -324,6 +460,21 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
             return defaultValue;
         }
         return get(key).asArray();
+    }
+
+    /**
+     * If the document does not contain the given key, return the given default value.  Otherwise, gets the value of the key as a
+     * BsonNumber.
+     *
+     * @param key the key
+     * @return the value of the key as a BsonNumber
+     * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
+     */
+    public BsonNumber getNumber(final Object key, final BsonNumber defaultValue) {
+        if (!containsKey(key)) {
+            return defaultValue;
+        }
+        return get(key).asNumber();
     }
 
     /**
@@ -398,6 +549,81 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
             return defaultValue;
         }
         return get(key).asString();
+    }
+
+    /**
+     * If the document does not contain the given key, return the given default value.  Otherwise, gets the value of the key as a
+     * BsonDateTime.
+     *
+     * @param key the key
+     * @return the value of the key as a BsonDateTime
+     * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
+     */
+    public BsonDateTime getDateTime(final Object key, final BsonDateTime defaultValue) {
+        if (!containsKey(key)) {
+            return defaultValue;
+        }
+        return get(key).asDateTime();
+    }
+
+    /**
+     * If the document does not contain the given key, return the given default value.  Otherwise, gets the value of the key as a
+     * Timestamp.
+     *
+     * @param key the key
+     * @return the value of the key as a Timestamp
+     * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
+     */
+    public Timestamp getTimestamp(final Object key, final Timestamp defaultValue) {
+        if (!containsKey(key)) {
+            return defaultValue;
+        }
+        return get(key).asTimestamp();
+    }
+
+    /**
+     * If the document does not contain the given key, return the given default value.  Otherwise, gets the value of the key as a
+     * ObjectId.
+     *
+     * @param key the key
+     * @return the value of the key as a ObjectId
+     * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
+     */
+    public ObjectId getObjectId(final Object key, final ObjectId defaultValue) {
+        if (!containsKey(key)) {
+            return defaultValue;
+        }
+        return get(key).asObjectId();
+    }
+
+    /**
+     * If the document does not contain the given key, return the given default value.  Otherwise, gets the value of the key as a
+     * Binary.
+     *
+     * @param key the key
+     * @return the value of the key as a ObjectId
+     * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
+     */
+    public Binary getBinary(final Object key, final Binary defaultValue) {
+        if (!containsKey(key)) {
+            return defaultValue;
+        }
+        return get(key).asBinary();
+    }
+
+    /**
+     * If the document does not contain the given key, return the given default value.  Otherwise, gets the value of the key as a
+     * ObjectId.
+     *
+     * @param key the key
+     * @return the value of the key as a ObjectId
+     * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
+     */
+    public RegularExpression getRegularExpression(final Object key, final RegularExpression defaultValue) {
+        if (!containsKey(key)) {
+            return defaultValue;
+        }
+        return get(key).asRegularExpression();
     }
 
     private void throwIfKeyAbsent(final Object key) {
