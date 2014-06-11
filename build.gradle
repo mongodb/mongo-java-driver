@@ -38,6 +38,8 @@ configure(subprojects.findAll { it.name != 'util' }) {
     apply plugin: 'findbugs'
     apply plugin: 'jacoco'
     apply plugin: 'eclipse'
+    apply plugin: 'groovy'
+    apply plugin: 'codenarc'
     apply plugin: 'idea'
 
     evaluationDependsOn(':util')
@@ -52,16 +54,24 @@ configure(subprojects.findAll { it.name != 'util' }) {
         mavenLocal()
     }
 
-    dependencies {
-        testCompile 'junit:junit:4.11'
-        testCompile 'org.hamcrest:hamcrest-all:1.3'
-        testCompile 'ch.qos.logback:logback-classic:1.1.1'
-        testCompile project(':util') //Adding categories to classpath
-    }
-
     configurations {
         provided
         provided.extendsFrom(compile)
+    }
+
+    dependencies {
+        provided 'org.slf4j:slf4j-api:1.7.6'
+
+        testCompile 'junit:junit:4.11'
+        testCompile 'org.codehaus.groovy:groovy-all:2.0.8'
+        testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
+            exclude group: 'junit', module: 'junit-dep'
+        }
+        testCompile 'cglib:cglib-nodep:2.2.2'
+        testCompile 'org.objenesis:objenesis:1.3'
+        testCompile 'org.hamcrest:hamcrest-all:1.3'
+        testCompile 'ch.qos.logback:logback-classic:1.1.1'
+        testCompile project(':util') //Adding categories to classpath
     }
 
     idea {
@@ -192,9 +202,6 @@ def nettyVersion = '4.0.19.Final'
 project(':bson') {}
 
 project(':driver') {
-    apply plugin: 'groovy'
-    apply plugin: 'codenarc'
-
     sourceSets {
         test {
             groovy { srcDirs = ['src/test/unit', 'src/test/functional'] }
@@ -208,15 +215,8 @@ project(':driver') {
         compile project(':bson')
 
         provided "io.netty:netty-all:$nettyVersion"
-        provided 'org.slf4j:slf4j-api:1.7.6'
 
         testCompile "io.netty:netty-all:$nettyVersion"
-        testCompile 'org.codehaus.groovy:groovy-all:2.0.8'
-        testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
-            exclude group: 'junit', module: 'junit-dep'
-        }
-        testCompile 'cglib:cglib-nodep:2.2.2'
-        testCompile 'org.objenesis:objenesis:1.3'
     }
 
     sourceSets.main.compileClasspath += configurations.provided
@@ -234,9 +234,6 @@ project(':driver') {
 }
 
 project(':async-driver') {
-    apply plugin: 'groovy'
-    apply plugin: 'codenarc'
-
     sourceSets {
         test {
             groovy { srcDirs = ['src/test/unit', 'src/test/functional'] }
@@ -251,15 +248,8 @@ project(':async-driver') {
         compile project(':driver')
 
         provided "io.netty:netty-all:$nettyVersion"
-        provided 'org.slf4j:slf4j-api:1.7.6'
 
         testCompile "io.netty:netty-all:$nettyVersion"
-        testCompile 'org.codehaus.groovy:groovy-all:2.0.8'
-        testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
-            exclude group: 'junit', module: 'junit-dep'
-        }
-        testCompile 'cglib:cglib-nodep:2.2.2'
-        testCompile 'org.objenesis:objenesis:1.3'
     }
 
     sourceSets.main.compileClasspath += configurations.provided
@@ -278,9 +268,6 @@ project(':async-driver') {
 }
 
 project(':async-rxjava-driver') {
-    apply plugin: 'groovy'
-    apply plugin: 'codenarc'
-
     sourceSets {
         test {
             groovy { srcDirs = ['src/test/functional'] }
@@ -296,17 +283,10 @@ project(':async-rxjava-driver') {
         compile "com.netflix.rxjava:rxjava-core:0.17.5"
 
         provided "io.netty:netty-all:$nettyVersion"
-        provided 'org.slf4j:slf4j-api:1.7.6'
 
         testCompile project(':async-driver').sourceSets.test.output
 
         testCompile "io.netty:netty-all:$nettyVersion"
-        testCompile 'org.codehaus.groovy:groovy-all:2.0.8'
-        testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
-            exclude group: 'junit', module: 'junit-dep'
-        }
-        testCompile 'cglib:cglib-nodep:2.2.2'
-        testCompile 'org.objenesis:objenesis:1.3'
     }
 
     sourceSets.main.compileClasspath += configurations.provided
@@ -327,8 +307,6 @@ project(':async-rxjava-driver') {
 
 project(':driver-compat') {
     apply plugin: 'clirr'
-    apply plugin: 'groovy'
-    apply plugin: 'codenarc'
 
     sourceSets {
         test {
@@ -346,15 +324,6 @@ project(':driver-compat') {
         compile project(':driver')
 
         testCompile project(':driver').sourceSets.test.output
-
-        testCompile "io.netty:netty-all:$nettyVersion"
-        testCompile 'org.codehaus.groovy:groovy-all:2.0.8'
-        testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
-            exclude group: 'junit', module: 'junit-dep'
-        }
-        testCompile 'cglib:cglib-nodep:2.2.2'
-        testCompile 'org.objenesis:objenesis:1.3'
-        testCompile 'org.hamcrest:hamcrest-all:1.3'
     }
 
     clirr {
