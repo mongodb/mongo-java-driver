@@ -443,7 +443,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
         buffer.backpatchSize(size);
     }
 
-    public class Context extends AbstractBsonWriter.Context {
+    protected class Context extends AbstractBsonWriter.Context {
         private final int startPosition;
         private int index; // used when contextType is an array
 
