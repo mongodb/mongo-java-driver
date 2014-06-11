@@ -34,7 +34,7 @@ import java.util.TimeZone;
 import static javax.xml.bind.DatatypeConverter.printBase64Binary;
 
 /**
- * A {@code BSONWriter} implementation that outputs a JSON representation of BSON.
+ * A {@code BsonWriter} implementation that outputs a JSON representation of BSON.
  *
  * @since 3.0
  */

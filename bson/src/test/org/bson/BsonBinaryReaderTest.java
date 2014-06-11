@@ -35,7 +35,7 @@ public class BsonBinaryReaderTest {
         });
 
         reader.readStartDocument();
-        assertThat(reader.readBSONType(), is(BsonType.DB_POINTER));
+        assertThat(reader.readBsonType(), is(BsonType.DB_POINTER));
         DBPointer dbPointer = reader.readDBPointer();
         assertThat(dbPointer.getNamespace(), is("b"));
         assertThat(dbPointer.getId(), is(new ObjectId("5209296cd6c4e38cf96fffdc")));

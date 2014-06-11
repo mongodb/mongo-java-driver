@@ -104,14 +104,14 @@ public class LazyBSONList extends LazyBSONObject implements List {
         private BsonType cachedBsonType;
 
         public LazyBSONListIterator() {
-            reader = getBSONReader();
+            reader = getBsonReader();
             reader.readStartDocument();
         }
 
         @Override
         public boolean hasNext() {
             if (cachedBsonType == null) {
-                cachedBsonType = reader.readBSONType();
+                cachedBsonType = reader.readBsonType();
             }
             return cachedBsonType != BsonType.END_OF_DOCUMENT;
         }

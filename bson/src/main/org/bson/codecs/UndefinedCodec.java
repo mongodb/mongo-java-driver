@@ -21,8 +21,8 @@ import org.bson.BsonWriter;
 import org.bson.types.Undefined;
 
 /**
- * Allows reading and writing of the BSON Undefined type.  On encoding, it will write the correct type to the BSONWriter, but ignore the
- * value, and on decoding it will read the type off the BSONReader and return an Undefined type, which simply represents a placeholder for
+ * Allows reading and writing of the BSON Undefined type.  On encoding, it will write the correct type to the BsonWriter, but ignore the
+ * value, and on decoding it will read the type off the BsonReader and return an Undefined type, which simply represents a placeholder for
  * the undefined value.
  * <p/>
  * The undefined type is deprecated (see the spec).

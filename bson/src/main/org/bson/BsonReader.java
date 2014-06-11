@@ -29,7 +29,7 @@ import org.bson.types.Timestamp;
  */
 public interface BsonReader {
     /**
-     * @return The current BSONType.
+     * @return The current BsonType.
      */
     BsonType getCurrentBsonType();
 
@@ -75,7 +75,7 @@ public interface BsonReader {
      *
      * @return A BSONType.
      */
-    BsonType readBSONType();
+    BsonType readBsonType();
 
     /**
      * Reads a BSON DateTime from the reader.

@@ -31,7 +31,7 @@ class UndefinedCodecSpecification extends Specification {
         codec.encoderClass == Undefined
     }
 
-    def 'should decode undefined type from BSONReader'() {
+    def 'should decode undefined type from BsonReader'() {
         given:
         BsonReader reader = Mock()
 
@@ -44,7 +44,7 @@ class UndefinedCodecSpecification extends Specification {
         result.class == Undefined
     }
 
-    def 'should encode undefined type to BSONWriter'() {
+    def 'should encode undefined type to BsonWriter'() {
         given:
         BsonWriter writer = Mock()
 

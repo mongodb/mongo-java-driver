@@ -40,7 +40,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     private boolean closed;
 
     /**
-     * Initializes a new instance of the BSONReader class.
+     * Initializes a new instance of the BsonReader class.
      *
      */
     protected AbstractBsonReader() {
@@ -154,7 +154,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     }
 
     @Override
-    public abstract BsonType readBSONType();
+    public abstract BsonType readBsonType();
 
     @Override
     public long readDateTime() {
@@ -179,7 +179,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
             throwInvalidContextType("readEndArray", getContext().getContextType(), BsonContextType.ARRAY);
         }
         if (getState() == State.TYPE) {
-            readBSONType(); // will set state to EndOfArray if at end of array
+            readBsonType(); // will set state to EndOfArray if at end of array
         }
         if (getState() != State.END_OF_ARRAY) {
             throwInvalidState("ReadEndArray", State.END_OF_ARRAY);
@@ -200,7 +200,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
                                     getContext().getContextType(), BsonContextType.DOCUMENT, BsonContextType.SCOPE_DOCUMENT);
         }
         if (getState() == State.TYPE) {
-            readBSONType(); // will set state to EndOfDocument if at end of document
+            readBsonType(); // will set state to EndOfDocument if at end of document
         }
         if (getState() != State.END_OF_DOCUMENT) {
             throwInvalidState("readEndDocument", State.END_OF_DOCUMENT);
@@ -413,7 +413,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     @Override
     public String readName() {
         if (state == State.TYPE) {
-            readBSONType();
+            readBsonType();
         }
         if (state != State.NAME) {
             throwInvalidState("readName", State.NAME);
@@ -515,7 +515,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
      */
     protected void verifyBSONType(final String methodName, final BsonType requiredBsonType) {
         if (state == State.INITIAL || state == State.SCOPE_DOCUMENT || state == State.TYPE) {
-            readBSONType();
+            readBsonType();
         }
         if (state == State.NAME) {
             // ignore name
@@ -538,7 +538,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
      * @throws BsonSerializationException
      */
     protected void verifyName(final String expectedName) {
-        readBSONType();
+        readBsonType();
         String actualName = readName();
         if (!actualName.equals(expectedName)) {
             String message = format("Expected element name to be '%s', not '%s'.",
@@ -549,7 +549,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
 
     protected void checkPreconditions(final String methodName, final BsonType type) {
         if (isClosed()) {
-            throw new IllegalStateException("BSONWriter is closed");
+            throw new IllegalStateException("BsonWriter is closed");
         }
 
         verifyBSONType(methodName, type);

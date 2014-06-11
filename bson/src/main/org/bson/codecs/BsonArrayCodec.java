@@ -43,7 +43,7 @@ public class BsonArrayCodec implements Codec<BsonArray> {
         reader.readStartArray();
 
         List<BsonValue> list = new ArrayList<BsonValue>();
-        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             list.add(readValue(reader));
         }
 

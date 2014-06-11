@@ -29,7 +29,7 @@ class BsonCallbackAdapter extends AbstractBsonWriter {
     private BSONCallback bsonCallback;
 
     /**
-     * Initializes a new instance of the BSONWriter class.
+     * Initializes a new instance of the BsonWriter class.
      *
      * @param settings     The writer settings.
      * @param bsonCallback The callback to inform of operations on this writer

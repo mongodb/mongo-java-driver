@@ -88,7 +88,7 @@ public class JsonReader extends AbstractBsonReader {
 
     //CHECKSTYLE:OFF
     @Override
-    public BsonType readBSONType() {
+    public BsonType readBsonType() {
         if (isClosed()) {
             throw new IllegalStateException("This instance has been closed");
         }
@@ -385,7 +385,7 @@ public class JsonReader extends AbstractBsonReader {
         switch (getCurrentBsonType()) {
             case ARRAY:
                 readStartArray();
-                while (readBSONType() != BsonType.END_OF_DOCUMENT) {
+                while (readBsonType() != BsonType.END_OF_DOCUMENT) {
                     skipValue();
                 }
                 readEndArray();
@@ -401,7 +401,7 @@ public class JsonReader extends AbstractBsonReader {
                 break;
             case DOCUMENT:
                 readStartDocument();
-                while (readBSONType() != BsonType.END_OF_DOCUMENT) {
+                while (readBsonType() != BsonType.END_OF_DOCUMENT) {
                     skipName();
                     skipValue();
                 }
@@ -422,7 +422,7 @@ public class JsonReader extends AbstractBsonReader {
             case JAVASCRIPT_WITH_SCOPE:
                 readJavaScriptWithScope();
                 readStartDocument();
-                while (readBSONType() != BsonType.END_OF_DOCUMENT) {
+                while (readBsonType() != BsonType.END_OF_DOCUMENT) {
                     skipName();
                     skipValue();
                 }

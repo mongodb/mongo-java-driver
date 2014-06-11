@@ -132,7 +132,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
         Document document = new Document();
 
         reader.readStartDocument();
-        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             String fieldName = reader.readName();
             document.put(fieldName, readValue(reader));
         }
