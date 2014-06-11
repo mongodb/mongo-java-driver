@@ -86,7 +86,12 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
         closed = true;
     }
 
-    public boolean isClosed() {
+    /**
+     * Return true if the reader has been closed.
+     *
+     * @return true if closed
+     */
+    protected boolean isClosed() {
         return closed;
     }
 
