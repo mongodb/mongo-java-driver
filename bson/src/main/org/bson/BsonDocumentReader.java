@@ -154,7 +154,7 @@ public class BsonDocumentReader extends AbstractBsonReader {
     }
 
     @Override
-    public BsonType readBSONType() {
+    public BsonType readBsonType() {
         if (getState() == State.INITIAL || getState() == State.SCOPE_DOCUMENT) {
             // there is an implied type of Document for the top level and for scope documents
             setCurrentBsonType(BsonType.DOCUMENT);

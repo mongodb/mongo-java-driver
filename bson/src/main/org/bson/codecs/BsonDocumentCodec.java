@@ -66,7 +66,7 @@ public class BsonDocumentCodec implements Codec<BsonDocument> {
         List<BsonElement> keyValuePairs = new ArrayList<BsonElement>();
 
         reader.readStartDocument();
-        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             String fieldName = reader.readName();
             keyValuePairs.add(new BsonElement(fieldName, readValue(reader)));
         }

@@ -63,7 +63,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
     }
 
     @Override
-    public BsonType readBSONType() {
+    public BsonType readBsonType() {
         if (isClosed()) {
             throw new IllegalStateException("BSONBinaryWriter");
         }

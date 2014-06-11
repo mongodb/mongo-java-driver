@@ -180,7 +180,7 @@ class TopCodec implements Codec<Top> {
         def other = null
         def nested = null
 
-        def type = reader.readBSONType()
+        def type = reader.readBsonType()
 
         reader.readName()
         if (type == BsonType.NULL) {
@@ -231,7 +231,7 @@ class NestedCodec implements Codec<Nested> {
         reader.readStartDocument()
         reader.readName()
         def name = reader.readString()
-        def type = reader.readBSONType()
+        def type = reader.readBsonType()
         reader.readName()
         def top = null
         if (type == BsonType.NULL) {

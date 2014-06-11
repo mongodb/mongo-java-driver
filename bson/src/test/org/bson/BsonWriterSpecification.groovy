@@ -23,7 +23,7 @@ import org.junit.Test
 import spock.lang.Specification
 
 
-class BSONWriterSpecification extends Specification {
+class BsonWriterSpecification extends Specification {
 
     def shouldThrowExceptionForBooleanWhenWritingBeforeStartingDocument() {
         when:

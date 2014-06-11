@@ -285,7 +285,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     private List readArray(final BsonReader reader, final List<String> path) {
         reader.readStartArray();
         BasicDBList list = new BasicDBList();
-        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             list.add(readValue(reader, null, path));   // TODO: why is this a warning?
         }
         reader.readEndArray();
@@ -296,7 +296,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         DBObject document = objectFactory.getInstance(path);
 
         reader.readStartDocument();
-        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             String fieldName = reader.readName();
             document.put(fieldName, readValue(reader, fieldName, path));
         }

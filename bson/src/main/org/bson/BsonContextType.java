@@ -17,7 +17,7 @@
 package org.bson;
 
 /**
- * Used by BSONReader and BSONWriter implementations to represent the current context.
+ * Used by BsonReader and BsonWriter implementations to represent the current context.
  *
  * @since 3.0.0
  */

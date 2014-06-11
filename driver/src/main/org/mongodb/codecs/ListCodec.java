@@ -39,7 +39,7 @@ public class ListCodec implements Codec<List> {
     public List decode(final BsonReader reader) {
         reader.readStartArray();
         List list = new ArrayList();
-        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             Object value;
             if (reader.getCurrentBsonType() == BsonType.NULL) {
                 reader.readNull();

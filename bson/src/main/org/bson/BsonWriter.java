@@ -335,7 +335,7 @@ public interface BsonWriter {
     void writeUndefined(String name);
 
     /**
-     * Reads a single document from a BSONReader and writes it to this.
+     * Reads a single document from a BsonReader and writes it to this.
      *
      * @param reader The source.
      */

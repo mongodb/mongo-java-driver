@@ -42,7 +42,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     private boolean closed;
 
     /**
-     * Initializes a new instance of the BSONWriter class.
+     * Initializes a new instance of the BsonWriter class.
      *
      * @param settings The writer settings.
      */
@@ -51,7 +51,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     /**
-     * Initializes a new instance of the BSONWriter class.
+     * Initializes a new instance of the BsonWriter class.
      *
      * @param settings  The writer settings.
      * @param validator the field name validator
@@ -283,7 +283,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     protected void checkPreconditions(final String methodName, final State... validStates) {
         if (isClosed()) {
-            throw new IllegalStateException("BSONWriter");
+            throw new IllegalStateException("BsonWriter");
         }
 
         if (!checkState(validStates)) {
@@ -353,7 +353,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     private void pipeDocument(final BsonReader reader) {
         reader.readStartDocument();
         writeStartDocument();
-        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             writeName(reader.readName());
             pipeValue(reader);
         }
@@ -364,7 +364,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     private void pipeArray(final BsonReader reader) {
         reader.readStartArray();
         writeStartArray();
-        while (reader.readBSONType() != BsonType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             pipeValue(reader);
         }
         reader.readEndArray();

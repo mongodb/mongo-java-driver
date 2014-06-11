@@ -91,10 +91,10 @@ public class BsonBinaryWriterTest {
 
         BsonReader reader = createReaderForBytes(expectedValues);
         reader.readStartDocument();
-        assertThat(reader.readBSONType(), is(BsonType.BOOLEAN));
+        assertThat(reader.readBsonType(), is(BsonType.BOOLEAN));
         assertEquals("b1", reader.readName());
         assertEquals(true, reader.readBoolean());
-        assertThat(reader.readBSONType(), is(BsonType.BOOLEAN));
+        assertThat(reader.readBsonType(), is(BsonType.BOOLEAN));
         assertEquals("b2", reader.readName());
         assertEquals(false, reader.readBoolean());
         reader.readEndDocument();
@@ -122,19 +122,19 @@ public class BsonBinaryWriterTest {
         BsonReader reader = createReaderForBytes(expectedValues);
         reader.readStartDocument();
 
-        assertThat(reader.readBSONType(), is(BsonType.STRING));
+        assertThat(reader.readBsonType(), is(BsonType.STRING));
         assertEquals("s1", reader.readName());
         assertEquals("", reader.readString());
 
-        assertThat(reader.readBSONType(), is(BsonType.STRING));
+        assertThat(reader.readBsonType(), is(BsonType.STRING));
         assertEquals("s2", reader.readName());
         assertEquals("danke", reader.readString());
 
-        assertThat(reader.readBSONType(), is(BsonType.STRING));
+        assertThat(reader.readBsonType(), is(BsonType.STRING));
         assertEquals("s3", reader.readName());
         assertEquals(",+\\\"<>;[]{}@#$%^&*()+_", reader.readString());
 
-        assertThat(reader.readBSONType(), is(BsonType.STRING));
+        assertThat(reader.readBsonType(), is(BsonType.STRING));
         assertEquals("s4", reader.readName());
         assertEquals("a\u00e9\u3042\u0430\u0432\u0431\u0434", reader.readString());
 
@@ -344,7 +344,7 @@ public class BsonBinaryWriterTest {
 
         BsonReader reader = createReaderForBytes(expectedValues);
         reader.readStartDocument();
-        assertThat(reader.readBSONType(), is(BsonType.DB_POINTER));
+        assertThat(reader.readBsonType(), is(BsonType.DB_POINTER));
         assertEquals("pt", reader.readName());
         assertEquals(dbPointer, reader.readDBPointer());
         reader.readEndDocument();
@@ -392,65 +392,65 @@ public class BsonBinaryWriterTest {
         BsonBinaryReader reader = new BsonBinaryReader(basicInputBuffer, false);
 
         try {
-            assertEquals(BsonType.DOCUMENT, reader.readBSONType());
+            assertEquals(BsonType.DOCUMENT, reader.readBsonType());
             reader.readStartDocument();
             {
-                assertEquals(BsonType.BOOLEAN, reader.readBSONType());
+                assertEquals(BsonType.BOOLEAN, reader.readBsonType());
                 assertEquals("b1", reader.readName());
                 assertEquals(true, reader.readBoolean());
 
-                assertEquals(BsonType.BOOLEAN, reader.readBSONType());
+                assertEquals(BsonType.BOOLEAN, reader.readBsonType());
                 assertEquals("b2", reader.readName());
                 assertEquals(false, reader.readBoolean());
 
-                assertEquals(BsonType.ARRAY, reader.readBSONType());
+                assertEquals(BsonType.ARRAY, reader.readBsonType());
                 assertEquals("a1", reader.readName());
                 reader.readStartArray();
                 {
-                    assertEquals(BsonType.STRING, reader.readBSONType());
+                    assertEquals(BsonType.STRING, reader.readBsonType());
                     assertEquals("danke", reader.readString());
 
-                    assertEquals(BsonType.STRING, reader.readBSONType());
+                    assertEquals(BsonType.STRING, reader.readBsonType());
                     assertEquals("", reader.readString());
                 }
-                assertEquals(BsonType.END_OF_DOCUMENT, reader.readBSONType());
+                assertEquals(BsonType.END_OF_DOCUMENT, reader.readBsonType());
                 reader.readEndArray();
                 assertEquals("d1", reader.readName());
                 reader.readStartDocument();
                 {
-                    assertEquals(BsonType.DOUBLE, reader.readBSONType());
+                    assertEquals(BsonType.DOUBLE, reader.readBsonType());
                     assertEquals("do", reader.readName());
                     assertEquals(60, reader.readDouble(), 0);
 
-                    assertEquals(BsonType.INT32, reader.readBSONType());
+                    assertEquals(BsonType.INT32, reader.readBsonType());
                     assertEquals("i32", reader.readName());
                     assertEquals(40, reader.readInt32());
 
-                    assertEquals(BsonType.INT64, reader.readBSONType());
+                    assertEquals(BsonType.INT64, reader.readBsonType());
                     assertEquals("i64", reader.readName());
                     assertEquals(Long.MAX_VALUE, reader.readInt64());
                 }
-                assertEquals(BsonType.END_OF_DOCUMENT, reader.readBSONType());
+                assertEquals(BsonType.END_OF_DOCUMENT, reader.readBsonType());
                 reader.readEndDocument();
 
-                assertEquals(BsonType.JAVASCRIPT_WITH_SCOPE, reader.readBSONType());
+                assertEquals(BsonType.JAVASCRIPT_WITH_SCOPE, reader.readBsonType());
                 assertEquals("js1", reader.readName());
                 assertEquals("print x", reader.readJavaScriptWithScope());
 
                 reader.readStartDocument();
                 {
-                    assertEquals(BsonType.INT32, reader.readBSONType());
+                    assertEquals(BsonType.INT32, reader.readBsonType());
                     assertEquals("x", reader.readName());
                     assertEquals(1, reader.readInt32());
                 }
-                assertEquals(BsonType.END_OF_DOCUMENT, reader.readBSONType());
+                assertEquals(BsonType.END_OF_DOCUMENT, reader.readBsonType());
                 reader.readEndDocument();
 
-                assertEquals(BsonType.OBJECT_ID, reader.readBSONType());
+                assertEquals(BsonType.OBJECT_ID, reader.readBsonType());
                 assertEquals("oid1", reader.readName());
                 assertEquals(oid1, reader.readObjectId());
 
-                assertEquals(BsonType.END_OF_DOCUMENT, reader.readBSONType());
+                assertEquals(BsonType.END_OF_DOCUMENT, reader.readBsonType());
                 reader.readEndDocument();
 
             }
@@ -504,7 +504,7 @@ public class BsonBinaryWriterTest {
 
         newWriter.pipe(reader1); //pipe {'a':true} to writer
 
-        assertEquals(BsonType.INT32, reader1.readBSONType()); //continue reading from the same reader
+        assertEquals(BsonType.INT32, reader1.readBsonType()); //continue reading from the same reader
         assertEquals("b", reader1.readName());
         assertEquals(2, reader1.readInt32());
 
@@ -513,7 +513,7 @@ public class BsonBinaryWriterTest {
                                                         true);
 
         reader2.readStartDocument(); //checking what writer piped
-        assertEquals(BsonType.BOOLEAN, reader2.readBSONType());
+        assertEquals(BsonType.BOOLEAN, reader2.readBsonType());
         assertEquals("a", reader2.readName());
         assertEquals(true, reader2.readBoolean());
         reader2.readEndDocument();
