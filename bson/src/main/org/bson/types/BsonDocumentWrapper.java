@@ -57,14 +57,29 @@ public class BsonDocumentWrapper<T> extends BsonDocument {
         this.encoder = encoder;
     }
 
+    /**
+     * Get the wrapped document.
+     *
+     * @return the wrapped document
+     */
     public T getWrappedDocument() {
         return wrappedDocument;
     }
 
+    /**
+     * Get the encoder to use for the wrapped document.
+     *
+     * @return the encoder
+     */
     public Encoder<T> getEncoder() {
         return encoder;
     }
 
+    /**
+     * Determine whether the document has been unwrapped already.
+     *
+     * @return true if the wrapped document has been unwrapped already
+     */
     public boolean isUnwrapped() {
         return unwrapped != null;
     }

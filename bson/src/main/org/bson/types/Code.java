@@ -31,6 +31,11 @@ public class Code extends BsonValue implements Serializable {
 
     private static final long serialVersionUID = 475535263314046697L;
 
+    /**
+     * Construct a new instance with the given code.
+     *
+     * @param code the Javascript code
+     */
     public Code(final String code) {
         this.code = code;
     }
@@ -40,6 +45,11 @@ public class Code extends BsonValue implements Serializable {
         return BsonType.JAVASCRIPT;
     }
 
+    /**
+     * Get the Javascript code.
+     *
+     * @return the code
+     */
     public String getCode() {
         return code;
     }
