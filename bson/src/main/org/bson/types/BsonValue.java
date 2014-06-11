@@ -230,6 +230,15 @@ public abstract class BsonValue {
 
 
     /**
+     * Returns true if this is a BsonNull, false otherwise.
+     *
+     * @return true if this is a BsonNull, false otherwise
+     */
+    public boolean isNull() {
+        return this instanceof BsonNull;
+    }
+
+    /**
      * Returns true if this is a BsonDocument, false otherwise.
      *
      * @return true if this is a BsonDocument, false otherwise
