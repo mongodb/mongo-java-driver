@@ -34,17 +34,17 @@ import static java.lang.String.format;
 public class RootCodecRegistry implements CodecRegistry {
 
     private final ConcurrentMap<Class<?>, Codec<?>> codecs = new ConcurrentHashMap<Class<?>, Codec<?>>();
-    private final List<CodecSource> sources;
+    private final List<CodecProvider> sources;
 
     /**
-     * Construct a new {@code CodecRegistry} from the given list if {@code CodecSource} instances.  The registry will use the codec sources
-     * to find Codec instances, consulting each source in order, and return the first Codec found.  Therefore,
-     * care should be taken to order the codec sources to achieve the desired behavior.
+     * Construct a new {@code CodecRegistry} from the given list if {@code CodecProvider} instances.  The registry will use the codec
+     * providers to find Codec instances, consulting each provider in order, and return the first Codec found.  Therefore,
+     * care should be taken to order the codec providers to achieve the desired behavior.
      *
-     * @param codecSources the list of codec sources
+     * @param codecProviders the list of codec providers
      */
-    public RootCodecRegistry(final List<CodecSource> codecSources) {
-        this.sources = new ArrayList<CodecSource>(codecSources);
+    public RootCodecRegistry(final List<CodecProvider> codecProviders) {
+        this.sources = new ArrayList<CodecProvider>(codecProviders);
     }
 
     /**
@@ -80,7 +80,7 @@ public class RootCodecRegistry implements CodecRegistry {
     }
 
     private <T> Codec<T> getCodecFromSources(final ChildCodecRegistry<T> context) {
-        for (CodecSource source : sources) {
+        for (CodecProvider source : sources) {
             Codec<T> result = source.get(context.getCodecClass(), context);
             if (result != null) {
                 return result;

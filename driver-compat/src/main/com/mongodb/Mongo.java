@@ -17,8 +17,8 @@
 package com.mongodb;
 
 import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.CodecSource;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.mongodb.Document;
 import org.mongodb.ServerCursor;
@@ -140,7 +140,7 @@ public class Mongo {
     private final ConcurrentLinkedQueue<ServerCursor> orphanedCursors = new ConcurrentLinkedQueue<ServerCursor>();
     private final ExecutorService cursorCleaningService;
 
-    private final CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.<CodecSource>asList(new DBObjectCodecSource()));
+    private final CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider()));
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)

@@ -18,7 +18,7 @@ package com.mongodb;
 
 import org.bson.BSON;
 import org.bson.Transformer;
-import org.bson.codecs.configuration.CodecSource;
+import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.BsonInt32;
 import org.bson.types.ObjectId;
@@ -76,8 +76,8 @@ public class DBObjectCodecTest extends DatabaseTestCase {
     @Test
     public void shouldNotGenerateIdIfPresent() {
         DBObjectCodec dbObjectCodec = new DBObjectCodec(null, new BasicDBObjectFactory(),
-                                                        new RootCodecRegistry(Arrays.<CodecSource>asList(new DBObjectCodecSource())),
-                                                        DBObjectCodecSource.createDefaultBsonTypeClassMap());
+                                                        new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider())),
+                                                        DBObjectCodecProvider.createDefaultBsonTypeClassMap());
         BasicDBObject document = new BasicDBObject("_id", 1);
         assertTrue(dbObjectCodec.documentHasId(document));
         dbObjectCodec.generateIdIfAbsentFromDocument(document);
@@ -88,8 +88,8 @@ public class DBObjectCodecTest extends DatabaseTestCase {
     @Test
     public void shouldGenerateIdIfAbsent() {
         DBObjectCodec dbObjectCodec = new DBObjectCodec(null, new BasicDBObjectFactory(),
-                                                        new RootCodecRegistry(Arrays.<CodecSource>asList(new DBObjectCodecSource())),
-                                                        DBObjectCodecSource.createDefaultBsonTypeClassMap());
+                                                        new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider())),
+                                                        DBObjectCodecProvider.createDefaultBsonTypeClassMap());
         BasicDBObject document = new BasicDBObject();
         assertFalse(dbObjectCodec.documentHasId(document));
         dbObjectCodec.generateIdIfAbsentFromDocument(document);

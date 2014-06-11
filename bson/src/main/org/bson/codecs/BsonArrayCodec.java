@@ -58,7 +58,7 @@ public class BsonArrayCodec implements Codec<BsonArray> {
         writer.writeStartArray();
 
         for (BsonValue value : array) {
-            Codec codec = registry.get(BsonValueCodecSource.getClassForBsonType(value.getBsonType()));
+            Codec codec = registry.get(BsonValueCodecProvider.getClassForBsonType(value.getBsonType()));
             codec.encode(writer, value);
         }
 
@@ -78,7 +78,7 @@ public class BsonArrayCodec implements Codec<BsonArray> {
      * @return the non-null value read from the reader
      */
     protected BsonValue readValue(final BsonReader reader) {
-        return registry.get(BsonValueCodecSource.getClassForBsonType(reader.getCurrentBsonType())).decode(reader);
+        return registry.get(BsonValueCodecProvider.getClassForBsonType(reader.getCurrentBsonType())).decode(reader);
     }
 
 }

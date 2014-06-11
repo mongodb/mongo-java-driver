@@ -19,12 +19,12 @@ package org.bson.codecs.configuration;
 import org.bson.codecs.Codec;
 
 /**
- * A source for {@code Codec} instances.  Typically, an instance of a class implementing this interface would be used to construct a
+ * A provider of {@code Codec} instances.  Typically, an instance of a class implementing this interface would be used to construct a
  * {@code CodecRegistry}.
  *
  * @since 3.0
  */
-public interface CodecSource {
+public interface CodecProvider {
 
     /**
      * Get a {@code Codec} using the given context, which includes, most importantly, the Class for which a {@code Codec} is required.

@@ -21,8 +21,8 @@ import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.CodecSource;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonValue;
@@ -43,7 +43,7 @@ import static org.mongodb.assertions.Assertions.notNull;
 public class DocumentCodec implements CollectibleCodec<Document> {
 
     private static final String ID_FIELD_NAME = "_id";
-    private static final CodecRegistry DEFAULT_REGISTRY = new RootCodecRegistry(Arrays.<CodecSource>asList(new DocumentCodecSource()));
+    private static final CodecRegistry DEFAULT_REGISTRY = new RootCodecRegistry(Arrays.<CodecProvider>asList(new DocumentCodecProvider()));
     private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
 
     private final BsonTypeClassMap bsonTypeClassMap;

@@ -46,7 +46,7 @@ class CodecRegistrySpecification extends Specification {
     def 'get should return registered codec'() {
         given:
         def minKeyCodec = new MinKeyCodec()
-        def registry = new RootCodecRegistry([new SimpleCodecSource(minKeyCodec)])
+        def registry = new RootCodecRegistry([new SimpleCodecProvider(minKeyCodec)])
 
         expect:
         registry.get(MinKey) is minKeyCodec
@@ -56,7 +56,7 @@ class CodecRegistrySpecification extends Specification {
         given:
         def minKeyCodec1 = new MinKeyCodec()
         def minKeyCodec2 = new MinKeyCodec()
-        def registry = new RootCodecRegistry([new SimpleCodecSource(minKeyCodec1), new SimpleCodecSource(minKeyCodec2)])
+        def registry = new RootCodecRegistry([new SimpleCodecProvider(minKeyCodec1), new SimpleCodecProvider(minKeyCodec2)])
 
         expect:
         registry.get(MinKey) is minKeyCodec1
@@ -64,7 +64,7 @@ class CodecRegistrySpecification extends Specification {
 
     def 'should handle cycles'() {
         given:
-        def registry = new RootCodecRegistry([new ClassModelCodecSource()])
+        def registry = new RootCodecRegistry([new ClassModelCodecProvider()])
 
         when:
         Codec<Top> topCodec = registry.get(Top)
@@ -88,7 +88,7 @@ class CodecRegistrySpecification extends Specification {
 
     def 'should throw CodecConfigurationException when a codec requires another codec that can not be found'() {
         given:
-        def registry = new RootCodecRegistry([new ClassModelCodecSource([Top])]);
+        def registry = new RootCodecRegistry([new ClassModelCodecProvider([Top])]);
 
         when:
         registry.get(Top)
@@ -98,11 +98,11 @@ class CodecRegistrySpecification extends Specification {
     }
 }
 
-class SimpleCodecSource implements CodecSource {
+class SimpleCodecProvider implements CodecProvider {
 
     private final Codec<?> codec
 
-    SimpleCodecSource(final Codec<?> codec) {
+    SimpleCodecProvider(final Codec<?> codec) {
         this.codec = codec
     }
 
@@ -116,15 +116,15 @@ class SimpleCodecSource implements CodecSource {
     }
 }
 
-class ClassModelCodecSource implements CodecSource {
+class ClassModelCodecProvider implements CodecProvider {
 
     private final List<Class<?>> supportedClasses
 
-    ClassModelCodecSource() {
+    ClassModelCodecProvider() {
         this(asList(Top.class, Nested.class))
     }
 
-    ClassModelCodecSource(List<Class<?>> supportedClasses) {
+    ClassModelCodecProvider(List<Class<?>> supportedClasses) {
         this.supportedClasses = supportedClasses
     }
 
