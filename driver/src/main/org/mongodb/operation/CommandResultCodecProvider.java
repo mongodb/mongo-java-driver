@@ -38,15 +38,15 @@ import org.bson.codecs.RegularExpressionCodec;
 import org.bson.codecs.SymbolCodec;
 import org.bson.codecs.TimestampCodec;
 import org.bson.codecs.UndefinedCodec;
+import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.CodecSource;
 import org.bson.types.BsonArray;
 import org.bson.types.BsonDocument;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class CommandResultCodecSource<P> implements CodecSource {
+class CommandResultCodecProvider<P> implements CodecProvider {
     private final Map<Class<?>, Codec<?>> codecs = new HashMap<Class<?>, Codec<?>>();
     private final Decoder<P> payloadDecoder;
     private final String fieldContainingPayload;
@@ -54,7 +54,7 @@ public class CommandResultCodecSource<P> implements CodecSource {
     /**
      * Construct a new instance with the default codec for each BSON type.
      */
-    public CommandResultCodecSource(final Decoder<P> payloadDecoder, final String fieldContainingPayload) {
+    public CommandResultCodecProvider(final Decoder<P> payloadDecoder, final String fieldContainingPayload) {
         this.payloadDecoder = payloadDecoder;
         this.fieldContainingPayload = fieldContainingPayload;
         addCodecs();

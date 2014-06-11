@@ -83,7 +83,8 @@ public class DB {
         this.documentCodec = documentCodec;
         this.collectionCache = new ConcurrentHashMap<String, DBCollection>();
         this.optionHolder = new Bytes.OptionHolder(mongo.getOptionHolder());
-        this.commandCodec = new DBObjectCodec(this, null, getMongo().getCodecRegistry(), DBObjectCodecSource.getDefaultBsonTypeClassMap());
+        this.commandCodec = new DBObjectCodec(this, null, getMongo().getCodecRegistry(),
+                                              DBObjectCodecProvider.getDefaultBsonTypeClassMap());
     }
 
     /**

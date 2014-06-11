@@ -19,8 +19,8 @@ package org.bson.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonWriter;
+import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.CodecSource;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonElement;
@@ -37,7 +37,7 @@ import java.util.Map;
  * @since 3.0
  */
 public class BsonDocumentCodec implements Codec<BsonDocument> {
-    private static final CodecRegistry DEFAULT_REGISTRY = new RootCodecRegistry(Arrays.<CodecSource>asList(new BsonValueCodecSource()));
+    private static final CodecRegistry DEFAULT_REGISTRY = new RootCodecRegistry(Arrays.<CodecProvider>asList(new BsonValueCodecProvider()));
 
     private final CodecRegistry codecRegistry;
 
@@ -84,7 +84,7 @@ public class BsonDocumentCodec implements Codec<BsonDocument> {
      * @return the non-null value read from the reader
      */
     protected BsonValue readValue(final BsonReader reader) {
-        return codecRegistry.get(BsonValueCodecSource.getClassForBsonType(reader.getCurrentBsonType())).decode(reader);
+        return codecRegistry.get(BsonValueCodecProvider.getClassForBsonType(reader.getCurrentBsonType())).decode(reader);
     }
 
     @Override
@@ -101,7 +101,7 @@ public class BsonDocumentCodec implements Codec<BsonDocument> {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void writeValue(final BsonWriter writer, final BsonValue value) {
-        Codec codec = codecRegistry.get(BsonValueCodecSource.getClassForBsonType(value.getBsonType()));
+        Codec codec = codecRegistry.get(BsonValueCodecProvider.getClassForBsonType(value.getBsonType()));
         codec.encode(writer, value);
     }
 

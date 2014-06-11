@@ -17,8 +17,8 @@
 package org.bson.codecs;
 
 import org.bson.BsonType;
+import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.CodecSource;
 import org.bson.types.Binary;
 import org.bson.types.BsonArray;
 import org.bson.types.BsonBoolean;
@@ -47,11 +47,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A CodecSource for all subclass of BsonValue.
+ * A {@code CodecProvider} for all subclass of BsonValue.
  *
  * @since 3.0
  */
-public class BsonValueCodecSource implements CodecSource {
+public class BsonValueCodecProvider implements CodecProvider {
     private static final Map<BsonType, Class<? extends BsonValue>> DEFAULT_BSON_TYPE_CLASS_MAP;
 
     private final Map<Class<?>, Codec<?>> codecs = new HashMap<Class<?>, Codec<?>>();
@@ -59,7 +59,7 @@ public class BsonValueCodecSource implements CodecSource {
     /**
      * Construct a new instance with the default codec for each BSON type.
      */
-    public BsonValueCodecSource() {
+    public BsonValueCodecProvider() {
         addCodecs();
     }
 

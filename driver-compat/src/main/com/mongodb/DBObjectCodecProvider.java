@@ -26,8 +26,8 @@ import org.bson.codecs.MinKeyCodec;
 import org.bson.codecs.ObjectIdCodec;
 import org.bson.codecs.RegularExpressionCodec;
 import org.bson.codecs.UndefinedCodec;
+import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.CodecSource;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -54,7 +54,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-class DBObjectCodecSource implements CodecSource {
+class DBObjectCodecProvider implements CodecProvider {
     private static final Map<BsonType, Class<?>> bsonTypeClassMap = createDefaultBsonTypeClassMap();
 
     private final Map<Class<?>, Codec<?>> codecs = new HashMap<Class<?>, Codec<?>>();
@@ -63,7 +63,7 @@ class DBObjectCodecSource implements CodecSource {
         return bsonTypeClassMap;
     }
 
-    public DBObjectCodecSource() {
+    public DBObjectCodecProvider() {
         addCodecs();
     }
 

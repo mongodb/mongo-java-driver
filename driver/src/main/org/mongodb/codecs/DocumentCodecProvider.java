@@ -27,8 +27,8 @@ import org.bson.codecs.RegularExpressionCodec;
 import org.bson.codecs.SymbolCodec;
 import org.bson.codecs.TimestampCodec;
 import org.bson.codecs.UndefinedCodec;
+import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.CodecSource;
 import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
 
@@ -37,18 +37,18 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A Codec source for the Document class and all the default Codec implementations on which it depends.
+ * A {@code CodecProvider} for the Document class and all the default Codec implementations on which it depends.
  *
  * @since 3.0
  */
-public class DocumentCodecSource implements CodecSource {
+public class DocumentCodecProvider implements CodecProvider {
     private final Map<Class<?>, Codec<?>> codecs = new HashMap<Class<?>, Codec<?>>();
     private final BsonTypeClassMap bsonTypeClassMap;
 
     /**
      *  Construct a new instance with a default {@code BsonTypeClassMap}.
      */
-    public DocumentCodecSource() {
+    public DocumentCodecProvider() {
         this(new BsonTypeClassMap());
     }
 
@@ -57,7 +57,7 @@ public class DocumentCodecSource implements CodecSource {
      *
      * @param bsonTypeClassMap the {@code BsonTypeClassMap} with which to construct instances of {@code DocumentCodec} and {@code ListCodec}
      */
-    public DocumentCodecSource(final BsonTypeClassMap bsonTypeClassMap) {
+    public DocumentCodecProvider(final BsonTypeClassMap bsonTypeClassMap) {
         this.bsonTypeClassMap = bsonTypeClassMap;
         addCodecs();
     }

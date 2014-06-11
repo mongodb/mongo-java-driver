@@ -1828,7 +1828,7 @@ public class DBCollection {
 
     DBObjectCodec getDefaultDBObjectCodec() {
         return new DBObjectCodec(getDB(), getObjectFactory(), getDB().getMongo().getCodecRegistry(),
-                                 DBObjectCodecSource.getDefaultBsonTypeClassMap());
+                                 DBObjectCodecProvider.getDefaultBsonTypeClassMap());
     }
 
     private Index toIndex(final DBObject keys, final DBObject options) {
