@@ -15,7 +15,6 @@
  */
 
 package org.mongodb.async.rxjava
-
 import org.mongodb.Document
 
 import static org.mongodb.async.rxjava.Fixture.get
@@ -45,4 +44,5 @@ class ForEachSpecification extends FunctionalSpecification {
         expect:
         getAsList(collection.find(new Document()).forEach()) == documents
     }
+
 }

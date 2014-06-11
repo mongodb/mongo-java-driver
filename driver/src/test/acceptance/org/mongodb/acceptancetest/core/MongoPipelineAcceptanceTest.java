@@ -19,6 +19,7 @@ package org.mongodb.acceptancetest.core;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Block;
+import org.mongodb.CancellableBlock;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.Function;
@@ -79,6 +80,21 @@ public class MongoPipelineAcceptanceTest extends DatabaseTestCase {
         assertEquals(3, iteratedDocuments.size());
     }
 
+    @Test
+    public void shouldAcceptACancellableBlockInForEach() {
+        final List<Document> iteratedDocuments = new ArrayList<Document>();
+        collection.pipe().forEach(new CancellableBlock<Document>() {
+            @Override
+            public void apply(final Document document) {
+                if (iteratedDocuments.size() == 2) {
+                    cancel();
+                } else {
+                    iteratedDocuments.add(document);
+                }
+            }
+        });
+        assertEquals(2, iteratedDocuments.size());
+    }
 
     @Test
     public void shouldAddAllDocumentsIntoList() {

@@ -15,12 +15,14 @@
  */
 
 package org.mongodb.async
-
 import org.mongodb.Block
+import org.mongodb.CancellableBlock
 import org.mongodb.Document
+import org.mongodb.MongoFuture
 import org.mongodb.MongoInternalException
 
 class ForEachSpecification extends FunctionalSpecification {
+
     def 'should complete with no results'() {
         expect:
         collection.find(new Document()).forEach( { } as Block).get() == null
@@ -63,5 +65,45 @@ class ForEachSpecification extends FunctionalSpecification {
 
         then:
         thrown(MongoInternalException)
+    }
+
+    def 'forEach should support future cancelled state'() {
+        given:
+        collection.insert((1..1000).collect { new Document('_id', it) })
+        Block<Document> cancelBlock = new Block<Document>() {
+            private int iterations = 0
+            @Override
+            void apply(final Document document) {
+                iterations++
+            }
+        }
+
+        when:
+        MongoFuture<Void> future = collection.find(new Document()).forEach(cancelBlock)
+        future.cancel(true)
+
+        then:
+        cancelBlock.iterations < 1000
+    }
+
+    def 'forEach should should support CancellableBlock for early termination'() {
+        given:
+        collection.insert((1..1000).collect { new Document('_id', it) })
+        Block<Document> cancelBlock = new CancellableBlock<Document>() {
+            private int iterations = 0
+            @Override
+            void apply(final Document document) {
+                iterations++
+                if (iterations == 2) {
+                    cancel()
+                }
+            }
+        }
+
+        when:
+        collection.find(new Document()).forEach(cancelBlock).get()
+
+        then:
+        cancelBlock.iterations == 2
     }
 }

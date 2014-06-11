@@ -16,20 +16,15 @@
 
 package org.mongodb;
 
-/**
- * An asynchronous cursor of documents.
- *
- * @param <T> the document type
- *
- * @since 3.0
- */
-public interface MongoAsyncCursor<T> {
-    /**
-     * Asynchronously iterate through the cursor results.
-     *
-     * @param block the block to execute for each document
-     * @return A future that indicates when iteration is complete
-     */
-    MongoFuture<Void> forEach(Block<? super T> block);
+public abstract class CancellableBlock<T> implements Block<T> {
+    private volatile Boolean cancelled = false;
+
+    public synchronized void cancel() {
+        cancelled = true;
+    }
+
+    public synchronized boolean isCancelled() {
+        return cancelled;
+    }
 
 }
