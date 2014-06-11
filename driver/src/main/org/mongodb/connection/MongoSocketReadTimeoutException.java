@@ -16,22 +16,17 @@
 
 package org.mongodb.connection;
 
-import java.net.SocketTimeoutException;
-
 /**
  * This exception is thrown when there is a timeout reading a response from the socket.
  */
-public class MongoSocketReadTimeoutException extends MongoSocketInterruptedReadException {
+public class MongoSocketReadTimeoutException extends MongoSocketException {
+
     private static final long serialVersionUID = -7237059971254608960L;
 
     public MongoSocketReadTimeoutException(final String message, final ServerAddress address,
-                                           final SocketTimeoutException e) {
-        super(message, address, e);
-    }
+                                           final Throwable e) {
 
-    @Override
-    public SocketTimeoutException getCause() {
-        return (SocketTimeoutException) super.getCause();
+        super(message, address, e);
     }
 
 }

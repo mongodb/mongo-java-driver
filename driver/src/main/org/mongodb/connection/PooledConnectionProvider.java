@@ -188,7 +188,7 @@ class PooledConnectionProvider implements ConnectionProvider {
      * @param e          the exception
      */
     private void incrementGenerationOnSocketException(final InternalConnection connection, final MongoException e) {
-        if (e instanceof MongoSocketException && !(e instanceof MongoSocketInterruptedReadException)) {
+        if (e instanceof MongoSocketException && !(e instanceof MongoSocketReadTimeoutException)) {
             LOGGER.warn(format("Got socket exception on connection [%s] to %s. All connections to %s will be closed.",
                                connection.getId(), serverAddress, serverAddress));
             generation.incrementAndGet();

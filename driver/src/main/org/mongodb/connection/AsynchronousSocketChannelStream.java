@@ -20,21 +20,28 @@ import org.bson.ByteBuf;
 import org.mongodb.operation.SingleResultFuture;
 
 import java.io.IOException;
+import java.net.ConnectException;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.nio.channels.InterruptedByTimeoutException;
 import java.util.Iterator;
 import java.util.List;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 final class AsynchronousSocketChannelStream implements Stream {
     private final ServerAddress serverAddress;
+    private final SocketSettings settings;
     private final BufferProvider bufferProvider;
     private volatile AsynchronousSocketChannel channel;
     private volatile boolean isClosed;
 
-    AsynchronousSocketChannelStream(final ServerAddress serverAddress, final BufferProvider bufferProvider) {
+    AsynchronousSocketChannelStream(final ServerAddress serverAddress, final SocketSettings settings,
+                                    final BufferProvider bufferProvider) {
         this.serverAddress = serverAddress;
+        this.settings = settings;
         this.bufferProvider = bufferProvider;
     }
 
@@ -81,7 +88,8 @@ final class AsynchronousSocketChannelStream implements Stream {
     @Override
     public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
         ByteBuf buffer = bufferProvider.getBuffer(numBytes);
-        channel.read(buffer.asNIO(), null, new BasicCompletionHandler(buffer, handler));
+        channel.read(buffer.asNIO(), settings.getReadTimeout(MILLISECONDS), MILLISECONDS, null,
+                     new BasicCompletionHandler(buffer, handler));
     }
 
     @Override
@@ -118,6 +126,14 @@ final class AsynchronousSocketChannelStream implements Stream {
             } else {
                 channel = AsynchronousSocketChannel.open();
                 channel.setOption(StandardSocketOptions.TCP_NODELAY, true);
+                channel.setOption(StandardSocketOptions.SO_KEEPALIVE, settings.isKeepAlive());
+                if (settings.getSendBufferSize() > 0) {
+                    channel.setOption(StandardSocketOptions.SO_RCVBUF, settings.getReceiveBufferSize());
+                }
+                if (settings.getSendBufferSize() > 0) {
+                    channel.setOption(StandardSocketOptions.SO_SNDBUF, settings.getReceiveBufferSize());
+                }
+
                 channel.connect(serverAddress.getSocketAddress(), null, new CompletionHandler<Void, Object>() {
                     @Override
                     public void completed(final Void result, final Object attachment) {
@@ -126,7 +142,11 @@ final class AsynchronousSocketChannelStream implements Stream {
 
                     @Override
                     public void failed(final Throwable exc, final Object attachment) {
-                        handler.failed(exc);
+                        if (exc instanceof ConnectException) {
+                            handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), exc));
+                        } else {
+                            handler.failed(exc);
+                        }
                     }
                 });
             }
@@ -196,13 +216,18 @@ final class AsynchronousSocketChannelStream implements Stream {
                 dst.flip();
                 handler.completed(dst);
             } else {
-                channel.read(dst.asNIO(), null, new BasicCompletionHandler(dst, handler));
+                channel.read(dst.asNIO(), settings.getReadTimeout(MILLISECONDS), MILLISECONDS, null,
+                             new BasicCompletionHandler(dst, handler));
             }
         }
 
         @Override
         public void failed(final Throwable t, final Void attachment) {
-            handler.failed(t);
+            if (t instanceof InterruptedByTimeoutException) {
+                handler.failed(new MongoSocketReadTimeoutException("Timeout while receiving message", serverAddress, t));
+            } else {
+                handler.failed(t);
+            }
         }
     }
 }

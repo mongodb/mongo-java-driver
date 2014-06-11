@@ -179,7 +179,7 @@ class InternalStreamConnection implements InternalConnection {
     private MongoException translateReadException(final IOException e) {
         close();
         if (e instanceof SocketTimeoutException) {
-            throw new MongoSocketReadTimeoutException("Timeout while receiving message", getServerAddress(), (SocketTimeoutException) e);
+            throw new MongoSocketReadTimeoutException("Timeout while receiving message", getServerAddress(), e);
         } else if (e instanceof InterruptedIOException || e instanceof ClosedByInterruptException) {
             throw new MongoInterruptedException("Interrupted while receiving message", e);
         } else {
