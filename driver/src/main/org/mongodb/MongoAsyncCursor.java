@@ -31,4 +31,14 @@ public interface MongoAsyncCursor<T> {
      * @return A future that indicates when iteration is complete
      */
     MongoFuture<Void> forEach(Block<? super T> block);
+
+    /**
+     * Asynchronously iterate through the cursor results.
+     *
+     * @param block the block to execute for each document
+     * @param cancellationToken a token controlling early cancellation
+     * @return A future that indicates when iteration is complete
+     */
+    MongoFuture<Void> forEach(Block<? super T> block, CancellationToken cancellationToken);
+
 }

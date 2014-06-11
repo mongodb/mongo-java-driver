@@ -19,6 +19,7 @@ package org.mongodb.acceptancetest.core;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Block;
+import org.mongodb.CancellationToken;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.Function;
@@ -79,6 +80,22 @@ public class MongoPipelineAcceptanceTest extends DatabaseTestCase {
         assertEquals(3, iteratedDocuments.size());
     }
 
+    @Test
+    public void shouldStopWhenCancellationTokenIsCancelledInForEach() {
+        final List<Document> iteratedDocuments = new ArrayList<Document>();
+        final CancellationToken cancellationToken = new CancellationToken();
+        collection.pipe().forEach(new Block<Document>() {
+            @Override
+            public void apply(final Document document) {
+                if (iteratedDocuments.size() == 2) {
+                    cancellationToken.cancel();
+                } else {
+                    iteratedDocuments.add(document);
+                }
+            }
+        });
+        assertEquals(2, iteratedDocuments.size());
+    }
 
     @Test
     public void shouldAddAllDocumentsIntoList() {

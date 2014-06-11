@@ -288,7 +288,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             }
         }
 
-
         @Override
         public <A extends Collection<? super T>> A into(final A target) {
             forEach(new Block<T>() {

@@ -17,6 +17,7 @@
 package org.mongodb.async;
 
 import org.mongodb.Block;
+import org.mongodb.CancellationToken;
 import org.mongodb.Function;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
@@ -36,13 +37,18 @@ class MappingIterable<T, U> implements MongoIterable<U> {
 
     @Override
     public MongoFuture<Void> forEach(final Block<? super U> block) {
+        return forEach(block, new CancellationToken());
+    }
+
+    @Override
+    public MongoFuture<Void> forEach(final Block<? super U> block, final CancellationToken cancellationToken) {
         final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
         iterable.forEach(new Block<T>() {
             @Override
             public void apply(final T t) {
                 block.apply(mapper.apply(t));
             }
-        }).register(new SingleResultCallback<Void>() {
+        }, cancellationToken).register(new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final MongoException e) {
                 if (e != null) {

@@ -17,6 +17,7 @@
 package org.mongodb.async;
 
 import org.mongodb.Block;
+import org.mongodb.CancellationToken;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 
@@ -38,6 +39,16 @@ public interface MongoIterable<T> {
      * @return a future indicating when iteration is complete
      */
     MongoFuture<Void> forEach(Block<? super T> block);
+
+    /**
+     * Iterates over all documents in the view, applying the given block to each, and completing the returned future after all documents
+     * have been iterated, or an exception has occurred.
+     *
+     * @param block the block to apply to each document
+     * @param cancellationToken a token controlling early cancellation
+     * @return a future indicating when iteration is complete
+     */
+    MongoFuture<Void> forEach(Block<? super T> block, CancellationToken cancellationToken);
 
     /**
      * Iterates over all the documents, adding each to the given target.

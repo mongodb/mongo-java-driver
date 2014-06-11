@@ -15,11 +15,11 @@
  */
 
 package org.mongodb.operation
-
 import category.Async
 import org.bson.types.Code
 import org.junit.experimental.categories.Category
 import org.mongodb.Block
+import org.mongodb.CancellationToken
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MapReduceCursor
@@ -74,6 +74,32 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Functio
 
         then:
         docList.iterator().toList() == expectedResults
+    }
+
+    @Category(Async)
+    def 'forEach async should terminate early in the CancellationToken has been cancelled'() {
+        given:
+        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec)
+        CancellationToken cancellationToken  = new CancellationToken();
+        List<Document> docList = []
+        Block<Document> cancelBlock = new Block<Document>() {
+            private int iterations = 0
+            @Override
+            void apply(final Document value) {
+                iterations++
+                docList += value
+                if (iterations == 1) {
+                    cancellationToken.cancel()
+                }
+            }
+        }
+
+        when:
+        operation.executeAsync(getAsyncBinding()).get().forEach(cancelBlock, cancellationToken).get()
+
+        then:
+        docList.iterator().toList() == [expectedResults.get(0)]
+        cancelBlock.iterations == 1
     }
 
 }

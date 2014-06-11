@@ -17,6 +17,7 @@
 package org.mongodb.async;
 
 import org.mongodb.Block;
+import org.mongodb.CancellationToken;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
@@ -231,33 +232,39 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoFuture<Void> forEach(final Block<? super T> block) {
-            final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
+            return forEach(block, new CancellationToken());
+        }
+
+        @Override
+        public MongoFuture<Void> forEach(final Block<? super T> block, final CancellationToken cancellationToken) {
+            final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>(){
+                @Override
+                public synchronized boolean cancel(final boolean mayInterruptIfRunning) {
+                    cancellationToken.cancel();
+                    return super.cancel(mayInterruptIfRunning);
+                }
+            };
             execute(new QueryOperation<T>(getNamespace(), find, new DocumentCodec(), getCodec()), readPreference)
-            .register(new
-                      SingleResultCallback<MongoAsyncCursor<T>>() {
-                          @Override
-                          public void onResult(final MongoAsyncCursor<T> cursor, final MongoException e) {
-                              if (e != null) {
-                                  retVal.init(null, e);
-                              } else {
-                                  cursor.forEach(new Block<T>() {
-                                      @Override
-                                      public void apply(final T t) {
-                                          block.apply(t);
+                .register(new
+                              SingleResultCallback<MongoAsyncCursor<T>>() {
+                                  @Override
+                                  public void onResult(final MongoAsyncCursor<T> cursor, final MongoException e) {
+                                      if (e != null) {
+                                          retVal.init(null, e);
+                                      } else {
+                                          cursor.forEach(block, cancellationToken).register(new SingleResultCallback<Void>() {
+                                              @Override
+                                              public void onResult(final Void result, final MongoException e) {
+                                                  if (e != null) {
+                                                      retVal.init(null, e);
+                                                  } else {
+                                                      retVal.init(null, null);
+                                                  }
+                                              }
+                                          });
                                       }
-                                  }).register(new SingleResultCallback<Void>() {
-                                      @Override
-                                      public void onResult(final Void result, final MongoException e) {
-                                          if (e != null) {
-                                              retVal.init(null, e);
-                                          } else {
-                                              retVal.init(null, null);
-                                          }
-                                      }
-                                  });
-                              }
-                          }
-                      });
+                                  }
+                              });
             return retVal;
         }
 

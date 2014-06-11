@@ -15,12 +15,12 @@
  */
 
 package org.mongodb.operation
-
 import category.Async
 import category.Slow
 import org.bson.types.BSONTimestamp
 import org.junit.experimental.categories.Category
 import org.mongodb.Block
+import org.mongodb.CancellationToken
 import org.mongodb.CreateCollectionOptions
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
@@ -163,7 +163,64 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         readConnectionSource.release()
     }
 
-    def 'Cursor should support early termination'() {
+    def 'Cursor should support future cancelled state'() {
+        assumeFalse(isSharded())
+
+        setup:
+        AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
+        Connection connection = source.getConnection().get()
+        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection)
+        TestBlock block = new TestBlock()
+
+        when:
+        SingleResultFuture<Void> future = new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+                                            firstBatch, 5, 2, new DocumentCodec(),
+                                            connection).forEach(block)
+        future.cancel(true)
+
+        then:
+        block.getIterations() < 1000
+
+        cleanup:
+        connection.release()
+        source.release()
+    }
+
+    def 'Cursor should terminate early in the CancellationToken has been cancelled'() {
+        assumeFalse(isSharded())
+
+        setup:
+        AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
+        Connection connection = source.getConnection().get()
+        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection)
+        CancellationToken cancellationToken = new CancellationToken();
+        Block<Document> cancelBlock = new Block<Document>() {
+            private int iterations = 0
+
+            @Override
+            void apply(final Document document) {
+                iterations++
+                if (iterations == 2) {
+                    cancellationToken.cancel();
+                }
+            }
+        }
+
+        when:
+        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+                                            firstBatch, 5, 2, new DocumentCodec(),
+                                            connection)
+                .forEach(cancelBlock, cancellationToken).get()
+
+        then:
+        cancelBlock.iterations == 2
+
+        cleanup:
+        connection.release()
+        source.release()
+    }
+
+    def 'Cursor should terminate if a block throws an exception'() {
         assumeFalse(isSharded())
 
         setup:
@@ -252,7 +309,7 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         private int iterations
 
         private TestBlock() {
-            this(Integer.MAX_VALUE)
+            this.count = Integer.MAX_VALUE
         }
 
         private TestBlock(final int count) {

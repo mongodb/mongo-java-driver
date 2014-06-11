@@ -17,6 +17,7 @@
 package org.mongodb.async.rxjava;
 
 import org.mongodb.Block;
+import org.mongodb.CancellationToken;
 import org.mongodb.CollectibleCodec;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
@@ -195,10 +196,15 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return Observable.create(new OnSubscribe<T>() {
                 @Override
                 public void call(final Subscriber<? super T> subscriber) {
+                    final CancellationToken cancellationToken = new CancellationToken();
                     wrappedView.forEach(new Block<T>() {
                         @Override
                         public void apply(final T t) {
-                            subscriber.onNext(t);
+                            if (subscriber.isUnsubscribed()) {
+                                cancellationToken.cancel();
+                            } else {
+                                subscriber.onNext(t);
+                            }
                         }
                     }).register(new SingleResultCallback<Void>() {
                         @Override
