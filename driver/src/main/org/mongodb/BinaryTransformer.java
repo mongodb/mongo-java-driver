@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 
 /**
  * An interface to define transformers from a Binary instance to an instance of T
@@ -24,5 +24,5 @@ import org.bson.types.Binary;
  * @param <T> the type to transform to
  */
 public interface BinaryTransformer<T> {
-    T transform(Binary binary);
+    T transform(BsonBinary binary);
 }

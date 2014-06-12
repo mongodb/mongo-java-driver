@@ -169,9 +169,9 @@ public abstract class BsonValue {
      * @return an Binary
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
-    public Binary asBinary() {
+    public BsonBinary asBinary() {
         throwIfInvalidType(BsonType.BINARY);
-        return (Binary) this;
+        return (BsonBinary) this;
     }
 
     /**
@@ -346,7 +346,7 @@ public abstract class BsonValue {
      * @return true if this is a Binary, false otherwise
      */
     public boolean isBinary() {
-        return this instanceof Binary;
+        return this instanceof BsonBinary;
     }
 
     /**

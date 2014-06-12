@@ -42,7 +42,7 @@ class BsonDocumentSpecification extends Specification {
         def symbol = new BsonSymbol('ruby stuff')
         def timestamp = new BsonTimestamp(0x12345678, 5)
         def undefined = new BsonUndefined()
-        def binary = new Binary((byte) 80, [5, 4, 3, 2, 1] as byte[])
+        def binary = new BsonBinary((byte) 80, [5, 4, 3, 2, 1] as byte[])
         def bsonArray = new BsonArray([new BsonInt32(1), new BsonInt64(2L), new BsonBoolean(true),
                                        new BsonArray([new BsonInt32(1), new BsonInt32(2), new BsonInt32(3)]),
                                        new BsonDocument('a', new BsonInt64(2L))])
@@ -97,7 +97,7 @@ class BsonDocumentSpecification extends Specification {
         root.getString('string', new BsonString('df')) is bsonString
         root.getObjectId('objectId', new BsonObjectId(new ObjectId())) is objectId
         root.getRegularExpression('regex', new BsonRegularExpression('^foo', 'i')) is regularExpression
-        root.getBinary('binary', new Binary(new byte[5])) is binary
+        root.getBinary('binary', new BsonBinary(new byte[5])) is binary
         root.getTimestamp('timestamp', new BsonTimestamp(343, 23)) is timestamp
         root.getArray('array', new BsonArray()) is bsonArray
         root.getDocument('document', new BsonDocument()) is bsonDocument
@@ -165,7 +165,7 @@ class BsonDocumentSpecification extends Specification {
         def objectId = new BsonObjectId(new ObjectId())
         def regularExpression = new BsonRegularExpression('^test.*regex.*xyz$', 'i')
         def timestamp = new BsonTimestamp(0x12345678, 5)
-        def binary = new Binary((byte) 80, [5, 4, 3, 2, 1] as byte[])
+        def binary = new BsonBinary((byte) 80, [5, 4, 3, 2, 1] as byte[])
         def bsonArray = new BsonArray([new BsonInt32(1), new BsonInt64(2L), new BsonBoolean(true),
                                        new BsonArray([new BsonInt32(1), new BsonInt32(2), new BsonInt32(3)]),
                                        new BsonDocument('a', new BsonInt64(2L))])

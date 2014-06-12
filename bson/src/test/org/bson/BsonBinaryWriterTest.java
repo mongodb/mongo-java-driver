@@ -18,7 +18,7 @@ package org.bson;
 
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonDbPointer;
 import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
@@ -54,7 +54,7 @@ public class BsonBinaryWriterTest {
     @Test(expected = BsonSerializationException.class)
     public void shouldThrowWhenMaxDocumentSizeIsExceeded() {
         writer.writeStartDocument();
-        writer.writeBinaryData("b", new Binary(new byte[1024]));
+        writer.writeBinaryData("b", new BsonBinary(new byte[1024]));
         writer.writeEndDocument();
     }
 
@@ -74,7 +74,7 @@ public class BsonBinaryWriterTest {
         writer.writeStartDocument("doc");
         writer.writeEndDocument();
         writer.popMaxDocumentSize();
-        writer.writeBinaryData("bin", new Binary(new byte[256]));
+        writer.writeBinaryData("bin", new BsonBinary(new byte[256]));
         writer.writeEndDocument();
     }
 
@@ -288,9 +288,9 @@ public class BsonBinaryWriterTest {
 
         writer.writeStartDocument();
 
-        writer.writeBinaryData("b1", new Binary(new byte[]{0, 0, 0, 0, 0, 0, 0, 0}));
-        writer.writeBinaryData("b2", new Binary(BsonBinarySubType.OLD_BINARY, new byte[]{1, 1, 1, 1, 1}));
-        writer.writeBinaryData("b3", new Binary(BsonBinarySubType.FUNCTION, new byte[]{}));
+        writer.writeBinaryData("b1", new BsonBinary(new byte[]{0, 0, 0, 0, 0, 0, 0, 0}));
+        writer.writeBinaryData("b2", new BsonBinary(BsonBinarySubType.OLD_BINARY, new byte[]{1, 1, 1, 1, 1}));
+        writer.writeBinaryData("b3", new BsonBinary(BsonBinarySubType.FUNCTION, new byte[]{}));
 
         writer.writeEndDocument();
 

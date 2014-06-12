@@ -16,7 +16,7 @@
 
 package org.bson;
 
-import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonDbPointer;
 import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
@@ -37,7 +37,7 @@ public interface BsonWriter {
      *
      * @param binary The Binary data.
      */
-    void writeBinaryData(Binary binary);
+    void writeBinaryData(BsonBinary binary);
 
     /**
      * Writes a BSON Binary data element to the writer.
@@ -45,7 +45,7 @@ public interface BsonWriter {
      * @param name   The name of the element.
      * @param binary The Binary data value.
      */
-    void writeBinaryData(String name, Binary binary);
+    void writeBinaryData(String name, BsonBinary binary);
 
     /**
      * Writes a BSON Boolean to the writer.

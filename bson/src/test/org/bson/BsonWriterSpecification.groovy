@@ -15,13 +15,11 @@
  */
 
 package org.bson
-
 import org.bson.io.BasicOutputBuffer
-import org.bson.types.Binary
+import org.bson.types.BsonBinary
 import org.bson.types.BsonDocument
 import org.junit.Test
 import spock.lang.Specification
-
 
 class BsonWriterSpecification extends Specification {
 
@@ -254,7 +252,7 @@ class BsonWriterSpecification extends Specification {
         writer.writeStartDocument();
         writer.writeJavaScriptWithScope("js1", "var i = 1");
 
-        writer.writeBinaryData(new Binary([0, 0, 1, 0] as byte[]));
+        writer.writeBinaryData(new BsonBinary([0, 0, 1, 0] as byte[]));
 
         then:
         thrown(BsonInvalidOperationException)

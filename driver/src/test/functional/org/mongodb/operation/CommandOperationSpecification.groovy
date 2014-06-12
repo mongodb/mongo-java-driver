@@ -16,9 +16,10 @@
 
 
 package org.mongodb.operation
+
 import category.Async
 import org.bson.codecs.BsonDocumentCodec
-import org.bson.types.Binary
+import org.bson.types.BsonBinary
 import org.bson.types.BsonDocument
 import org.bson.types.BsonInt32
 import org.bson.types.BsonString
@@ -57,7 +58,7 @@ class CommandOperationSpecification extends FunctionalSpecification {
                                                       .append('query', new BsonDocument('_id', new BsonInt32(42)))
                                                       .append('update',
                                                               new BsonDocument('_id', new BsonInt32(42))
-                                                                      .append('b', new Binary(new byte[16 * 1024 * 1024 - 30]))),
+                                                                      .append('b', new BsonBinary(new byte[16 * 1024 * 1024 - 30]))),
                                               new BsonDocumentCodec())
                 .execute(getBinding())
 

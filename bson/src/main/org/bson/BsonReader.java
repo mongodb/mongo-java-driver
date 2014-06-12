@@ -16,7 +16,7 @@
 
 package org.bson;
 
-import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonDbPointer;
 import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
@@ -44,7 +44,7 @@ public interface BsonReader {
      *
      * @return A Binary.
      */
-    Binary readBinaryData();
+    BsonBinary readBinaryData();
 
     /**
      * Reads a BSON Binary data element from the reader.
@@ -52,7 +52,7 @@ public interface BsonReader {
      * @param name The name of the element.
      * @return A Binary.
      */
-    Binary readBinaryData(String name);
+    BsonBinary readBinaryData(String name);
 
     /**
      * Reads a BSON Boolean from the reader.

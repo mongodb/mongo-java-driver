@@ -16,8 +16,8 @@
 
 package org.bson;
 
-import org.bson.types.Binary;
 import org.bson.types.BsonArray;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonBoolean;
 import org.bson.types.BsonDateTime;
 import org.bson.types.BsonDbPointer;
@@ -66,7 +66,7 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeBinaryData(final Binary binary) {
+    public void writeBinaryData(final BsonBinary binary) {
         checkPreconditions("writeBinaryData", State.VALUE);
         write(binary);
         setState(getNextState());

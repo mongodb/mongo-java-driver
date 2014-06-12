@@ -16,7 +16,7 @@
 
 package org.bson;
 
-import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonDbPointer;
 import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
@@ -94,7 +94,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
         return closed;
     }
 
-    protected abstract Binary doReadBinaryData();
+    protected abstract BsonBinary doReadBinaryData();
 
     protected abstract boolean doReadBoolean();
 
@@ -143,7 +143,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     protected abstract void doSkipValue();
 
     @Override
-    public Binary readBinaryData() {
+    public BsonBinary readBinaryData() {
         checkPreconditions("readBinaryData", BsonType.BINARY);
         setState(getNextState());
 
@@ -355,7 +355,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     }
 
     @Override
-    public Binary readBinaryData(final String name) {
+    public BsonBinary readBinaryData(final String name) {
         verifyName(name);
         return readBinaryData();
     }

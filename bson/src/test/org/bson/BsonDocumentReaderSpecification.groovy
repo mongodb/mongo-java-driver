@@ -15,9 +15,10 @@
  */
 
 package org.bson
+
 import org.bson.codecs.BsonDocumentCodec
-import org.bson.types.Binary
 import org.bson.types.BsonArray
+import org.bson.types.BsonBinary
 import org.bson.types.BsonBoolean
 import org.bson.types.BsonDateTime
 import org.bson.types.BsonDbPointer
@@ -61,7 +62,7 @@ class BsonDocumentReaderSpecification extends Specification {
                         new BsonElement('symbol', new BsonSymbol('ruby stuff')),
                         new BsonElement('timestamp', new BsonTimestamp(0x12345678, 5)),
                         new BsonElement('undefined', new BsonUndefined()),
-                        new BsonElement('binary', new Binary((byte) 80, [5, 4, 3, 2, 1] as byte[])),
+                        new BsonElement('binary', new BsonBinary((byte) 80, [5, 4, 3, 2, 1] as byte[])),
                         new BsonElement('array', new BsonArray([new BsonInt32(1), new BsonInt64(2L), new BsonBoolean(true),
                                                                 new BsonArray([new BsonInt32(1), new BsonInt32(2), new BsonInt32(3)]),
                                                                 new BsonDocument('a', new BsonInt64(2L))])),

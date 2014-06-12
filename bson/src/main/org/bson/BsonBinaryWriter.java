@@ -18,7 +18,7 @@ package org.bson;
 
 import org.bson.io.InputBuffer;
 import org.bson.io.OutputBuffer;
-import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonDbPointer;
 import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
@@ -92,13 +92,13 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeBinaryData(final Binary binary) {
+    public void writeBinaryData(final BsonBinary binary) {
         checkPreconditions("writeBinaryData", State.VALUE);
 
         buffer.write(BsonType.BINARY.getValue());
         writeCurrentName();
 
-        int totalLen = binary.length();
+        int totalLen = binary.getData().length;
 
         if (binary.getType() == BsonBinarySubType.OLD_BINARY.getValue()) {
             totalLen += 4;

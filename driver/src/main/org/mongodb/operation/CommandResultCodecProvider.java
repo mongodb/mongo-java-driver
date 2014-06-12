@@ -16,8 +16,8 @@
 
 package org.mongodb.operation;
 
-import org.bson.codecs.BinaryCodec;
 import org.bson.codecs.BsonArrayCodec;
+import org.bson.codecs.BsonBinaryCodec;
 import org.bson.codecs.BsonBooleanCodec;
 import org.bson.codecs.BsonDBPointerCodec;
 import org.bson.codecs.BsonDateTimeCodec;
@@ -81,7 +81,7 @@ class CommandResultCodecProvider<P> implements CodecProvider {
 
     private void addCodecs() {
         addCodec(new BsonNullCodec());
-        addCodec(new BinaryCodec());
+        addCodec(new BsonBinaryCodec());
         addCodec(new BsonBooleanCodec());
         addCodec(new BsonDateTimeCodec());
         addCodec(new BsonDBPointerCodec());

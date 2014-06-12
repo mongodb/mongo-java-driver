@@ -26,6 +26,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonDbPointer;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonSymbol;
@@ -185,7 +186,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     }
 
     private void encodeByteArray(final BsonWriter bsonWriter, final byte[] value) {
-        bsonWriter.writeBinaryData(new Binary(value));
+        bsonWriter.writeBinaryData(new BsonBinary(value));
     }
 
     private void encodeArray(final BsonWriter bsonWriter, final Object value) {
@@ -270,7 +271,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     }
 
     private Object readBinary(final BsonReader reader) {
-        Binary binary = reader.readBinaryData();
+        BsonBinary binary = reader.readBinaryData();
         if (binary.getType() == BsonBinarySubType.BINARY.getValue()) {
             return new BinaryToByteArrayTransformer().transform(binary);
         } else if (binary.getType() == BsonBinarySubType.OLD_BINARY.getValue()) {
@@ -278,7 +279,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         } else if (binary.getType() == BsonBinarySubType.UUID_LEGACY.getValue()) {
             return new BinaryToUUIDTransformer().transform(binary);
         } else {
-            return binary;
+            return new Binary(binary.getType(), binary.getData());
         }
     }
 

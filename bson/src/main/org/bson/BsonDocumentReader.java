@@ -1,7 +1,7 @@
 package org.bson;
 
-import org.bson.types.Binary;
 import org.bson.types.BsonArray;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonDbPointer;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonRegularExpression;
@@ -35,7 +35,7 @@ public class BsonDocumentReader extends AbstractBsonReader {
     }
 
     @Override
-    protected Binary doReadBinaryData() {
+    protected BsonBinary doReadBinaryData() {
         return currentValue.asBinary();
     }
 

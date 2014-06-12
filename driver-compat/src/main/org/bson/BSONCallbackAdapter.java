@@ -16,7 +16,7 @@
 
 package org.bson;
 
-import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonDbPointer;
 import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
@@ -98,7 +98,7 @@ class BsonCallbackAdapter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeBinaryData(final Binary binary) {
+    public void writeBinaryData(final BsonBinary binary) {
         if (binary.getType() == BsonBinarySubType.UUID_LEGACY.getValue()) {
             bsonCallback.gotUUID(getName(),
                                  readLong(binary.getData(), 0),

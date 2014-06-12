@@ -16,12 +16,12 @@
 
 package org.mongodb.codecs;
 
-import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 import org.mongodb.BinaryTransformer;
 
 public class BinaryToByteArrayTransformer implements BinaryTransformer<byte[]> {
     @Override
-    public byte[] transform(final Binary binary) {
+    public byte[] transform(final BsonBinary binary) {
         return binary.getData();
     }
 }

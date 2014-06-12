@@ -17,7 +17,7 @@
 package org.bson;
 
 import org.bson.io.InputBuffer;
-import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonDbPointer;
 import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
@@ -113,7 +113,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
     }
 
     @Override
-    protected Binary doReadBinaryData() {
+    protected BsonBinary doReadBinaryData() {
         int numBytes = buffer.readInt32();
         byte type = buffer.readByte();
 
@@ -122,7 +122,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
             numBytes -= 4;
         }
 
-        return new Binary(type, buffer.readBytes(numBytes));
+        return new BsonBinary(type, buffer.readBytes(numBytes));
     }
 
     @Override
