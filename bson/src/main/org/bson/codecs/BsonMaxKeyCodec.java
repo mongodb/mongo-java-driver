@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonMaxKey;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonMaxKey;
 
 /**
  * A codec for {@code BsonMaxKey} instances.

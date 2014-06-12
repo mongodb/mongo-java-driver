@@ -16,7 +16,7 @@
 
 package org.bson.json;
 
-import org.bson.types.BsonRegularExpression;
+import org.bson.BsonRegularExpression;
 
 /**
  * Parses the string representation of a JSON object into a set of {@link JsonToken}-derived objects.

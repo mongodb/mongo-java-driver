@@ -16,8 +16,8 @@
 
 package org.mongodb.operation;
 
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonJavaScript;
+import org.bson.BsonDocument;
+import org.bson.BsonJavaScript;
 
 public class Group {
 

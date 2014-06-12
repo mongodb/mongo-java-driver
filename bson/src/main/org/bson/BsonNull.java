@@ -14,27 +14,34 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 
 /**
- * Represent the minimum key value regardless of the key's type
+ * A representation of the BSON Null type.
+ *
+ * @since 3.0
  */
-public final class BsonMinKey extends BsonValue implements Serializable {
+public final class BsonNull extends BsonValue implements Serializable {
+    private static final long serialVersionUID = -1197299174370690779L;
 
-    private static final long serialVersionUID = 4075901136671855684L;
+    public static final BsonNull VALUE = new BsonNull();
 
     @Override
     public BsonType getBsonType() {
-        return BsonType.MIN_KEY;
+        return BsonType.NULL;
     }
 
     @Override
     public boolean equals(final Object o) {
-        return o instanceof BsonMinKey;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -44,7 +51,6 @@ public final class BsonMinKey extends BsonValue implements Serializable {
 
     @Override
     public String toString() {
-        return "BsonMinKey";
+        return "BsonNull";
     }
-
 }

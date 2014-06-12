@@ -16,8 +16,8 @@
 
 package com.mongodb;
 
-import org.bson.types.BsonDocumentWrapper;
-import org.bson.types.BsonJavaScript;
+import org.bson.BsonDocumentWrapper;
+import org.bson.BsonJavaScript;
 import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceOutputOptions;
 

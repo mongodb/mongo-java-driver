@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonDateTime;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonDateTime;
 
 /**
  * A Codec for BsonDateTime instances.

@@ -16,6 +16,9 @@
 
 package org.mongodb.operation;
 
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonValue;
 import org.bson.codecs.BsonArrayCodec;
 import org.bson.codecs.BsonBinaryCodec;
 import org.bson.codecs.BsonBooleanCodec;
@@ -40,9 +43,6 @@ import org.bson.codecs.TimestampCodec;
 import org.bson.codecs.BsonJavaScriptCodec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.types.BsonArray;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonValue;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonDouble;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonDouble;
 
 /**
  * A Codec for BsonDouble instances.

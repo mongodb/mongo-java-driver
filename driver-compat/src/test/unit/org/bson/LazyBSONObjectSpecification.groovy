@@ -19,7 +19,6 @@ package org.bson
 import com.mongodb.BasicDBObject
 import org.bson.types.BSONTimestamp
 import org.bson.types.Binary
-import org.bson.types.BsonSymbol
 import org.bson.types.Code
 import org.bson.types.CodeWScope
 import org.bson.types.MaxKey

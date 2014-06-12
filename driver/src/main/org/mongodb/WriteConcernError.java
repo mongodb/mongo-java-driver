@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.bson.types.BsonDocument;
+import org.bson.BsonDocument;
 
 import static org.mongodb.assertions.Assertions.notNull;
 

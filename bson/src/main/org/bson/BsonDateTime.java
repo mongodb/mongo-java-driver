@@ -14,50 +14,45 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 
 /**
- * A representation of the BSON String type.
+ * A representation of the BSON DateTime type.
  *
  * @since 3.0
  */
-public class BsonString extends BsonValue implements Comparable<BsonString>, Serializable {
+public class BsonDateTime extends BsonValue implements Comparable<BsonDateTime>, Serializable {
     private static final long serialVersionUID = 2215506922933899945L;
 
-    private final String value;
+    private final long value;
 
     /**
      * Construct a new instance with the given value.
      *
-     * @param value the non-null value
+     * @param value the value, which may not be null
      */
-    public BsonString(final String value) {
-        if (value == null) {
-            throw new IllegalArgumentException("Value can not be null");
-        }
+    public BsonDateTime(final long value) {
         this.value = value;
     }
 
     @Override
-    public int compareTo(final BsonString o) {
-        return value.compareTo(o.value);
+    public int compareTo(final BsonDateTime o) {
+        return Long.compare(value, o.value);
     }
 
     @Override
     public BsonType getBsonType() {
-        return BsonType.STRING;
+        return BsonType.DATE_TIME;
     }
 
     /**
-     * Gets the String value.
+     * Gets the DateTime value as a long
      *
      * @return the value
      */
-    public String getValue() {
+    public long getValue() {
         return value;
     }
 
@@ -70,9 +65,9 @@ public class BsonString extends BsonValue implements Comparable<BsonString>, Ser
             return false;
         }
 
-        BsonString that = (BsonString) o;
+        BsonDateTime that = (BsonDateTime) o;
 
-        if (!value.equals(that.value)) {
+        if (value != that.value) {
             return false;
         }
 
@@ -81,13 +76,13 @@ public class BsonString extends BsonValue implements Comparable<BsonString>, Ser
 
     @Override
     public int hashCode() {
-        return value.hashCode();
+        return (int) (value ^ (value >>> 32));
     }
 
     @Override
     public String toString() {
-        return "BsonString{"
-               + "value='" + value + '\''
+        return "BsonDateTime{"
+               + "value=" + value
                + '}';
     }
 }

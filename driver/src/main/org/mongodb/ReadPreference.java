@@ -16,8 +16,8 @@
 
 package org.mongodb;
 
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonString;
+import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.mongodb.annotations.Immutable;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;

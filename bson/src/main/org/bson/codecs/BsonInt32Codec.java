@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonInt32;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonInt32;
 
 /**
  * A Codec for BsonInt32 instances.

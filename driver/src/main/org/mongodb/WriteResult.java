@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.bson.types.BsonValue;
+import org.bson.BsonValue;
 
 /**
  * The result of a successful write operation.  If the write was unacknowledged, then {@code wasAcknowledged} will return false and all

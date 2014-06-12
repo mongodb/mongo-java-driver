@@ -16,12 +16,12 @@
 
 package org.mongodb.protocol
 
-import org.bson.types.BsonArray
-import org.bson.types.BsonBoolean
-import org.bson.types.BsonDocument
-import org.bson.types.BsonInt32
-import org.bson.types.BsonObjectId
-import org.bson.types.BsonString
+import org.bson.BsonArray
+import org.bson.BsonBoolean
+import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonObjectId
+import org.bson.BsonString
 import org.bson.types.ObjectId
 import org.mongodb.CommandResult
 import org.mongodb.MongoCommandFailureException

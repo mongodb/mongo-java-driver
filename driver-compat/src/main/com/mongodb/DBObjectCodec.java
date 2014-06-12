@@ -17,20 +17,20 @@
 package com.mongodb;
 
 import org.bson.BSON;
+import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
+import org.bson.BsonDbPointer;
+import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonReader;
+import org.bson.BsonSymbol;
 import org.bson.BsonType;
+import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
-import org.bson.types.BsonBinary;
-import org.bson.types.BsonDbPointer;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonSymbol;
-import org.bson.types.BsonValue;
 import org.bson.types.CodeWScope;
 import org.mongodb.IdGenerator;
 import org.mongodb.MongoException;

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.bson.types;
+package org.bson;
 
-import org.bson.BsonType;
+import org.bson.types.ObjectId;
 
 import java.io.Serializable;
 

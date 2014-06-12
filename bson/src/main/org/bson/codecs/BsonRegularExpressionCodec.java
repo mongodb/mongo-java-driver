@@ -17,8 +17,8 @@
 package org.bson.codecs;
 
 import org.bson.BsonReader;
+import org.bson.BsonRegularExpression;
 import org.bson.BsonWriter;
-import org.bson.types.BsonRegularExpression;
 
 /**
  * A codec for BSON regular expressions.

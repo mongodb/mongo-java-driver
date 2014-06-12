@@ -16,11 +16,11 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonReader;
 import org.bson.codecs.Decoder;
 import org.bson.types.Binary;
-import org.bson.types.BsonBinary;
 import org.mongodb.BinaryTransformer;
 
 import java.util.HashMap;

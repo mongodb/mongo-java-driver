@@ -15,11 +15,12 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
+import org.bson.BsonBinary
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
-import org.bson.types.BsonBinary
-import org.bson.types.BsonDocument
-import org.bson.types.BsonInt32
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification

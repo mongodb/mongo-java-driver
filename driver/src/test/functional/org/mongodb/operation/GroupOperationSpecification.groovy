@@ -16,9 +16,9 @@
 
 package org.mongodb.operation
 import category.Async
-import org.bson.types.BsonDocument
-import org.bson.types.BsonInt32
-import org.bson.types.BsonJavaScript
+import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonJavaScript
 import org.junit.experimental.categories.Category
 import org.mongodb.Block
 import org.mongodb.Document

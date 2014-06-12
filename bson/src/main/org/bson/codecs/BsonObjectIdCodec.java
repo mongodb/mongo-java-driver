@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonObjectId;
 
 /**
  * A Codec for {@code BsonObjectId} instances.

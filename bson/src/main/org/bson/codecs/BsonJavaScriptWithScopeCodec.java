@@ -16,10 +16,10 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonDocument;
+import org.bson.BsonJavaScriptWithScope;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonJavaScriptWithScope;
 
 /**
  * A Codec for {@code BsonJavaScriptWithScope} instances.

@@ -16,13 +16,13 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BsonDbPointer;
+import org.bson.BsonRegularExpression;
+import org.bson.BsonSymbol;
 import org.bson.BsonTimestamp;
 import org.bson.BsonType;
+import org.bson.BsonUndefined;
 import org.bson.types.Binary;
-import org.bson.types.BsonDbPointer;
-import org.bson.types.BsonRegularExpression;
-import org.bson.types.BsonSymbol;
-import org.bson.types.BsonUndefined;
 import org.bson.types.Code;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;

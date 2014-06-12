@@ -17,9 +17,9 @@
 
 package org.mongodb.protocol
 
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.bson.types.Binary
-import org.bson.types.BsonDocument
-import org.bson.types.BsonInt32
 import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document

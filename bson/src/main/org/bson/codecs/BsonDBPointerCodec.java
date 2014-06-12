@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonDbPointer;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonDbPointer;
 
 /**
  * Converts BSON type DBPointer(0x0c) to database references as DBPointer is deprecated.

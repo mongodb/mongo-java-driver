@@ -17,11 +17,11 @@
 package com.mongodb;
 
 import org.bson.BSON;
+import org.bson.BsonInt32;
+import org.bson.BsonObjectId;
 import org.bson.Transformer;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
-import org.bson.types.BsonInt32;
-import org.bson.types.BsonObjectId;
 import org.junit.Test;
 
 import java.util.Arrays;

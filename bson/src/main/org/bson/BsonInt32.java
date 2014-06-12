@@ -14,55 +14,60 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 
 /**
- * A representation of the BSON Boolean type.
+ * A representation of the BSON Int32 type.
  *
  * @since 3.0
  */
-public final class BsonBoolean extends BsonValue implements Comparable<BsonBoolean>, Serializable {
+public final class BsonInt32 extends BsonNumber implements Comparable<BsonInt32>, Serializable {
     private static final long serialVersionUID = 2215506922933899945L;
 
-    private final boolean value;
-
-    public static final BsonBoolean TRUE = new BsonBoolean(true);
-
-    public static final BsonBoolean FALSE = new BsonBoolean(false);
-
-    public static BsonBoolean valueOf(final boolean value) {
-        return value ? TRUE : FALSE;
-    }
+    private final int value;
 
     /**
      * Construct a new instance with the given value.
      *
      * @param value the value
      */
-    public BsonBoolean(final boolean value) {
+    public BsonInt32(final int value) {
         this.value = value;
     }
 
     @Override
-    public int compareTo(final BsonBoolean o) {
-        return Boolean.compare(value, o.value);
+    public int compareTo(final BsonInt32 o) {
+        return Integer.compare(value, o.value);
     }
 
     @Override
     public BsonType getBsonType() {
-        return BsonType.BOOLEAN;
+        return BsonType.INT32;
     }
 
     /**
-     * Gets the boolean value.
+     * Gets the integer value.
      *
      * @return the value
      */
-    public boolean getValue() {
+    public int getValue() {
+        return value;
+    }
+
+    @Override
+    public int intValue() {
+        return value;
+    }
+
+    @Override
+    public long longValue() {
+        return value;
+    }
+
+    @Override
+    public double doubleValue() {
         return value;
     }
 
@@ -75,9 +80,9 @@ public final class BsonBoolean extends BsonValue implements Comparable<BsonBoole
             return false;
         }
 
-        BsonBoolean that = (BsonBoolean) o;
+        BsonInt32 bsonInt32 = (BsonInt32) o;
 
-        if (value != that.value) {
+        if (value != bsonInt32.value) {
             return false;
         }
 
@@ -86,12 +91,12 @@ public final class BsonBoolean extends BsonValue implements Comparable<BsonBoole
 
     @Override
     public int hashCode() {
-        return (value ? 1 : 0);
+        return value;
     }
 
     @Override
     public String toString() {
-        return "BsonBoolean{"
+        return "BsonInt32{"
                + "value=" + value
                + '}';
     }

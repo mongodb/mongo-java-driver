@@ -17,26 +17,6 @@
 package org.bson
 
 import org.bson.codecs.BsonDocumentCodec
-import org.bson.types.BsonArray
-import org.bson.types.BsonBinary
-import org.bson.types.BsonBoolean
-import org.bson.types.BsonDateTime
-import org.bson.types.BsonDbPointer
-import org.bson.types.BsonDocument
-import org.bson.types.BsonDouble
-import org.bson.types.BsonElement
-import org.bson.types.BsonInt32
-import org.bson.types.BsonInt64
-import org.bson.types.BsonJavaScript
-import org.bson.types.BsonJavaScriptWithScope
-import org.bson.types.BsonMaxKey
-import org.bson.types.BsonMinKey
-import org.bson.types.BsonNull
-import org.bson.types.BsonObjectId
-import org.bson.types.BsonRegularExpression
-import org.bson.types.BsonString
-import org.bson.types.BsonSymbol
-import org.bson.types.BsonUndefined
 import org.bson.types.ObjectId
 import spock.lang.Specification
 

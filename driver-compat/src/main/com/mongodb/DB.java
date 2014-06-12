@@ -16,11 +16,11 @@
 
 package com.mongodb;
 
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
+import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonDocumentWrapper;
-import org.bson.types.BsonInt32;
 import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;

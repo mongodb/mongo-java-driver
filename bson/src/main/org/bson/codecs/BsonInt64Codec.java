@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonInt64;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonInt64;
 
 /**
  * A Codec for BsonInt64 instances.

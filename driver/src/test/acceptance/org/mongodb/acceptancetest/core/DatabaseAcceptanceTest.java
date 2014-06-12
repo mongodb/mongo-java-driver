@@ -16,7 +16,7 @@
 
 package org.mongodb.acceptancetest.core;
 
-import org.bson.types.BsonDocument;
+import org.bson.BsonDocument;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.CreateCollectionOptions;

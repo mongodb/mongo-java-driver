@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.bson.types.BsonValue;
+import org.bson.BsonValue;
 
 /**
  * Represents an item in the bulk write that was upserted.

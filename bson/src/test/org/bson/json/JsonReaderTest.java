@@ -17,12 +17,12 @@
 package org.bson.json;
 
 import org.bson.AbstractBsonReader;
+import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
+import org.bson.BsonDbPointer;
+import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.BsonType;
-import org.bson.types.BsonBinary;
-import org.bson.types.BsonDbPointer;
-import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 

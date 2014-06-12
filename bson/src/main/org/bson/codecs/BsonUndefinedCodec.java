@@ -17,8 +17,8 @@
 package org.bson.codecs;
 
 import org.bson.BsonReader;
+import org.bson.BsonUndefined;
 import org.bson.BsonWriter;
-import org.bson.types.BsonUndefined;
 
 /**
  * Allows reading and writing of the BSON Undefined type.  On encoding, it will write the correct type to the BsonWriter, but ignore the

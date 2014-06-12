@@ -17,8 +17,8 @@
 
 package com.mongodb
 
-import org.bson.types.BsonDocument
-import org.bson.types.BsonInt32
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.mongodb.MongoCommandFailureException
 import org.mongodb.MongoDuplicateKeyException
 import org.mongodb.MongoWriteException

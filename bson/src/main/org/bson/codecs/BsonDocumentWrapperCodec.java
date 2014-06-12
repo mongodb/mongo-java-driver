@@ -16,10 +16,10 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonDocumentWrapper;
 
 /**
  * A Codec

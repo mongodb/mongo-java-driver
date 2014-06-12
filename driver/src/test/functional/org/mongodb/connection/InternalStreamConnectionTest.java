@@ -17,9 +17,9 @@
 package org.mongodb.connection;
 
 import category.Async;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.io.OutputBuffer;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonInt32;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

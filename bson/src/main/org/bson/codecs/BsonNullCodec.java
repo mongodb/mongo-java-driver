@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonNull;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonNull;
 
 /**
  * A Codec for BsonNull instances.

@@ -14,47 +14,44 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 
 /**
- * A representation of the BSON Double type.
- *
- * @since 3.0
+ * A representation of the BSON Int64 type.
  */
-public class BsonDouble extends BsonNumber implements Comparable<BsonDouble>, Serializable {
+public final class BsonInt64 extends BsonNumber implements Comparable<BsonInt64>, Serializable {
     private static final long serialVersionUID = 2215506922933899945L;
 
-    private final double value;
+    private final long value;
 
     /**
      * Construct a new instance with the given value.
      *
      * @param value the value
      */
-    public BsonDouble(final double value) {
+    public BsonInt64(final long value) {
         this.value = value;
     }
 
     @Override
-    public int compareTo(final BsonDouble o) {
-        return Double.compare(value, o.value);
+    public int compareTo(final BsonInt64 o) {
+        return Long.compare(value, o.value);
     }
 
     @Override
     public BsonType getBsonType() {
-        return BsonType.DOUBLE;
+        return BsonType.INT64;
     }
 
+
     /**
-     * Gets the double value.
+     * Gets the long value.
      *
      * @return the value
      */
-    public double getValue() {
+    public long getValue() {
         return value;
     }
 
@@ -65,7 +62,7 @@ public class BsonDouble extends BsonNumber implements Comparable<BsonDouble>, Se
 
     @Override
     public long longValue() {
-        return (long) value;
+        return value;
     }
 
     @Override
@@ -82,9 +79,9 @@ public class BsonDouble extends BsonNumber implements Comparable<BsonDouble>, Se
             return false;
         }
 
-        BsonDouble that = (BsonDouble) o;
+        BsonInt64 bsonInt64 = (BsonInt64) o;
 
-        if (Double.compare(that.value, value) != 0) {
+        if (value != bsonInt64.value) {
             return false;
         }
 
@@ -93,13 +90,12 @@ public class BsonDouble extends BsonNumber implements Comparable<BsonDouble>, Se
 
     @Override
     public int hashCode() {
-        long temp = Double.doubleToLongBits(value);
-        return (int) (temp ^ (temp >>> 32));
+        return (int) (value ^ (value >>> 32));
     }
 
     @Override
     public String toString() {
-        return "BsonDouble{"
+        return "BsonInt64{"
                + "value=" + value
                + '}';
     }

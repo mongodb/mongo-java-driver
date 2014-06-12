@@ -16,9 +16,9 @@
 
 package org.mongodb.test;
 
+import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonObjectId;
 import org.bson.types.ObjectId;
 import org.mongodb.codecs.CollectibleCodec;
 

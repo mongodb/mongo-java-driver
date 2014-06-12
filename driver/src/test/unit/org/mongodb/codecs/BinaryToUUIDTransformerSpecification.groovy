@@ -16,10 +16,10 @@
 
 package org.mongodb.codecs
 
+import org.bson.BsonBinary
 import org.bson.BsonBinaryReader
 import org.bson.ByteBufNIO
 import org.bson.io.BasicInputBuffer
-import org.bson.types.BsonBinary
 import spock.lang.Specification
 import spock.lang.Subject
 

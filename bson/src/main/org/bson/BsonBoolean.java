@@ -14,44 +14,54 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 
 /**
- * For using the JavaScript Code type.
+ * A representation of the BSON Boolean type.
  *
  * @since 3.0
  */
-public class BsonJavaScript extends BsonValue implements Serializable {
+public final class BsonBoolean extends BsonValue implements Comparable<BsonBoolean>, Serializable {
+    private static final long serialVersionUID = 2215506922933899945L;
 
-    private final String code;
+    private final boolean value;
 
-    private static final long serialVersionUID = 475535263314046697L;
+    public static final BsonBoolean TRUE = new BsonBoolean(true);
+
+    public static final BsonBoolean FALSE = new BsonBoolean(false);
+
+    public static BsonBoolean valueOf(final boolean value) {
+        return value ? TRUE : FALSE;
+    }
 
     /**
-     * Construct a new instance with the given JavaScript code.
+     * Construct a new instance with the given value.
      *
-     * @param code the Javascript code
+     * @param value the value
      */
-    public BsonJavaScript(final String code) {
-        this.code = code;
+    public BsonBoolean(final boolean value) {
+        this.value = value;
+    }
+
+    @Override
+    public int compareTo(final BsonBoolean o) {
+        return Boolean.compare(value, o.value);
     }
 
     @Override
     public BsonType getBsonType() {
-        return BsonType.JAVASCRIPT;
+        return BsonType.BOOLEAN;
     }
 
     /**
-     * Get the Javascript code.
+     * Gets the boolean value.
      *
-     * @return the code
+     * @return the value
      */
-    public String getCode() {
-        return code;
+    public boolean getValue() {
+        return value;
     }
 
     @Override
@@ -63,9 +73,9 @@ public class BsonJavaScript extends BsonValue implements Serializable {
             return false;
         }
 
-        BsonJavaScript code1 = (BsonJavaScript) o;
+        BsonBoolean that = (BsonBoolean) o;
 
-        if (!code.equals(code1.code)) {
+        if (value != that.value) {
             return false;
         }
 
@@ -74,14 +84,13 @@ public class BsonJavaScript extends BsonValue implements Serializable {
 
     @Override
     public int hashCode() {
-        return code.hashCode();
+        return (value ? 1 : 0);
     }
 
     @Override
     public String toString() {
-        return "BsonJavaScript{"
-               + "code='" + code + '\''
+        return "BsonBoolean{"
+               + "value=" + value
                + '}';
     }
 }
-

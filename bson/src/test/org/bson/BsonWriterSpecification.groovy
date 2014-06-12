@@ -16,8 +16,6 @@
 
 package org.bson
 import org.bson.io.BasicOutputBuffer
-import org.bson.types.BsonBinary
-import org.bson.types.BsonDocument
 import org.junit.Test
 import spock.lang.Specification
 
