@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonMinKey;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonMinKey;
 
 /**
  * A codec for {@code BsonMinKey} instances.

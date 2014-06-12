@@ -16,10 +16,10 @@
 
 package com.mongodb;
 
+import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
-import org.bson.types.BsonDocument;
 
 import java.util.Arrays;
 

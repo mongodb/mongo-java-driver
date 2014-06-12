@@ -16,9 +16,6 @@
 
 package org.bson;
 
-import org.bson.types.BsonBinary;
-import org.bson.types.BsonDbPointer;
-import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
 
 /**

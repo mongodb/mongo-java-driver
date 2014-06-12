@@ -16,11 +16,11 @@
 
 package org.mongodb.operation;
 
-import org.bson.types.BsonArray;
-import org.bson.types.BsonBoolean;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonString;
-import org.bson.types.BsonValue;
+import org.bson.BsonArray;
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 
 import java.util.Arrays;
 

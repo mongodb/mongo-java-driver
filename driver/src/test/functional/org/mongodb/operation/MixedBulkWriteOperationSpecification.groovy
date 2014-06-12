@@ -16,12 +16,13 @@
 
 
 package org.mongodb.operation
+
 import category.Slow
+import org.bson.BsonBoolean
+import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonObjectId
 import org.bson.types.Binary
-import org.bson.types.BsonBoolean
-import org.bson.types.BsonDocument
-import org.bson.types.BsonInt32
-import org.bson.types.BsonObjectId
 import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import org.mongodb.BulkWriteException

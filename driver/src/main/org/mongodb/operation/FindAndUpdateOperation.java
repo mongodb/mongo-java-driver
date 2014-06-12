@@ -16,10 +16,10 @@
 
 package org.mongodb.operation;
 
+import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonString;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncWriteBinding;

@@ -16,7 +16,7 @@
 
 package org.mongodb.operation;
 
-import org.bson.types.BsonDocument;
+import org.bson.BsonDocument;
 
 import java.util.concurrent.TimeUnit;
 

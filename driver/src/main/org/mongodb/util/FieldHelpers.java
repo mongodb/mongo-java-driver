@@ -16,10 +16,10 @@
 
 package org.mongodb.util;
 
-import org.bson.types.BsonBoolean;
-import org.bson.types.BsonNull;
-import org.bson.types.BsonNumber;
-import org.bson.types.BsonValue;
+import org.bson.BsonBoolean;
+import org.bson.BsonNull;
+import org.bson.BsonNumber;
+import org.bson.BsonValue;
 
 // TODO: Not sure about this class.  Is it generally applicable enough to be public?
 public final class FieldHelpers {

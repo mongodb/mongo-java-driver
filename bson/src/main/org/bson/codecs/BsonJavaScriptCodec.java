@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonJavaScript;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonJavaScript;
 
 /**
  * A Codec for the {@code BsonJavaScript} type.

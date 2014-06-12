@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonInvalidOperationException;
-import org.bson.BsonTimestamp;
-import org.bson.BsonType;
+package org.bson;
 
 /**
  * Base class for any BSON type.

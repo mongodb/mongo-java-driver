@@ -16,10 +16,10 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BsonBinary;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
-import org.bson.types.BsonBinary;
 
 public class ByteArrayCodec implements Codec<byte[]> {
     @Override

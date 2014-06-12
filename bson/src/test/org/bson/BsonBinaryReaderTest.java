@@ -17,7 +17,6 @@
 package org.bson;
 
 import org.bson.io.BasicInputBuffer;
-import org.bson.types.BsonDbPointer;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 

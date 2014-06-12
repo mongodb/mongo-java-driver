@@ -14,44 +14,61 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 
 /**
- * For using the JavaScript Code type.
+ * A representation of the BSON Double type.
  *
  * @since 3.0
  */
-public class BsonJavaScript extends BsonValue implements Serializable {
+public class BsonDouble extends BsonNumber implements Comparable<BsonDouble>, Serializable {
+    private static final long serialVersionUID = 2215506922933899945L;
 
-    private final String code;
-
-    private static final long serialVersionUID = 475535263314046697L;
+    private final double value;
 
     /**
-     * Construct a new instance with the given JavaScript code.
+     * Construct a new instance with the given value.
      *
-     * @param code the Javascript code
+     * @param value the value
      */
-    public BsonJavaScript(final String code) {
-        this.code = code;
+    public BsonDouble(final double value) {
+        this.value = value;
+    }
+
+    @Override
+    public int compareTo(final BsonDouble o) {
+        return Double.compare(value, o.value);
     }
 
     @Override
     public BsonType getBsonType() {
-        return BsonType.JAVASCRIPT;
+        return BsonType.DOUBLE;
     }
 
     /**
-     * Get the Javascript code.
+     * Gets the double value.
      *
-     * @return the code
+     * @return the value
      */
-    public String getCode() {
-        return code;
+    public double getValue() {
+        return value;
+    }
+
+    @Override
+    public int intValue() {
+        return (int) value;
+    }
+
+    @Override
+    public long longValue() {
+        return (long) value;
+    }
+
+    @Override
+    public double doubleValue() {
+        return value;
     }
 
     @Override
@@ -63,9 +80,9 @@ public class BsonJavaScript extends BsonValue implements Serializable {
             return false;
         }
 
-        BsonJavaScript code1 = (BsonJavaScript) o;
+        BsonDouble that = (BsonDouble) o;
 
-        if (!code.equals(code1.code)) {
+        if (Double.compare(that.value, value) != 0) {
             return false;
         }
 
@@ -74,14 +91,14 @@ public class BsonJavaScript extends BsonValue implements Serializable {
 
     @Override
     public int hashCode() {
-        return code.hashCode();
+        long temp = Double.doubleToLongBits(value);
+        return (int) (temp ^ (temp >>> 32));
     }
 
     @Override
     public String toString() {
-        return "BsonJavaScript{"
-               + "code='" + code + '\''
+        return "BsonDouble{"
+               + "value=" + value
                + '}';
     }
 }
-

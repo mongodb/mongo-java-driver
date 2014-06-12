@@ -18,8 +18,8 @@
 package org.mongodb.operation
 
 import category.Slow
+import org.bson.BsonDocument
 import org.bson.BsonTimestamp
-import org.bson.types.BsonDocument
 import org.junit.experimental.categories.Category
 import org.mongodb.CreateCollectionOptions
 import org.mongodb.Document

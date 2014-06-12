@@ -16,8 +16,8 @@
 
 package org.mongodb.operation;
 
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonString;
+import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;

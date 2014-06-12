@@ -17,8 +17,8 @@
 package org.bson.codecs
 
 import org.bson.BsonReader
+import org.bson.BsonUndefined
 import org.bson.BsonWriter
-import org.bson.types.BsonUndefined
 import spock.lang.Specification
 import spock.lang.Subject
 

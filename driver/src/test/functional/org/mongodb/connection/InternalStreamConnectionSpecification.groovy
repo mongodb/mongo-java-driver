@@ -17,8 +17,8 @@
 
 package org.mongodb.connection
 
-import org.bson.types.BsonDocument
-import org.bson.types.BsonInt32
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.mongodb.MongoNamespace
 import org.mongodb.ServerCursor
 import org.mongodb.event.ConnectionListener

@@ -16,10 +16,10 @@
 
 package org.mongodb.operation;
 
+import org.bson.BsonDocument;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.Encoder;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonString;
-import org.bson.types.BsonValue;
 import org.mongodb.BulkWriteError;
 import org.mongodb.BulkWriteException;
 import org.mongodb.BulkWriteResult;

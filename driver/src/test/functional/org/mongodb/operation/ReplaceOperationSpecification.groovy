@@ -18,8 +18,8 @@ package org.mongodb.operation
 import category.Async
 import org.bson.BsonSerializationException
 import org.bson.types.Binary
-import org.bson.types.BsonDocument
-import org.bson.types.BsonInt32
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec

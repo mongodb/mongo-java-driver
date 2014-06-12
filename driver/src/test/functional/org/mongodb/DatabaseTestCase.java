@@ -16,8 +16,8 @@
 
 package org.mongodb;
 
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonDocumentWrapper;
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
 import org.junit.After;
 import org.junit.Before;
 import org.mongodb.codecs.DocumentCodec;

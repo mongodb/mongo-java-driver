@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonBinary;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonBinary;
 
 /**
  * A Codec for the BSON Binary type.

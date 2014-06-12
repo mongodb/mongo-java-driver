@@ -17,8 +17,8 @@
 package com.mongodb;
 
 import category.ReplicaSet;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonInt32;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

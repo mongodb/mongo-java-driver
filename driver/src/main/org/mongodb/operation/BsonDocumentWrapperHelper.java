@@ -16,10 +16,10 @@
 
 package org.mongodb.operation;
 
-import org.bson.types.BsonArray;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonDocumentWrapper;
-import org.bson.types.BsonValue;
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
+import org.bson.BsonValue;
 
 import java.util.ArrayList;
 import java.util.List;

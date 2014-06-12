@@ -16,9 +16,9 @@
 
 package com.mongodb;
 
+import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.codecs.Decoder;
-import org.bson.types.BsonDocument;
 
 import java.util.ArrayList;
 import java.util.List;

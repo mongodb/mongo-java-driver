@@ -16,8 +16,8 @@
 
 package org.mongodb.connection;
 
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonString;
+import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.mongodb.ConvertibleToBsonDocument;
 
 import java.util.Collection;

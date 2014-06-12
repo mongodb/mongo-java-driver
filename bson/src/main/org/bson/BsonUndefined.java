@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 10gen, Inc. <http://10gen.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,37 +14,42 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 
 /**
- * Represent the maximum key value regardless of the key's type
+ * Represents the value associated with the BSON Undefined type.  All values of this type are identical.  Note that this type has been
+ * deprecated in the BSON specification.
+ * <p/>
+ *
+ * @see <a href="http://bsonspec.org/spec.html">BSON Spec</a>
+ * @see org.bson.BsonType#UNDEFINED
+ * @since 3.0
  */
-public final class BsonMaxKey extends BsonValue implements Serializable {
-
-    private static final long serialVersionUID = 5123414776151687185L;
+public final class BsonUndefined extends BsonValue implements Serializable {
+    private static final long serialVersionUID = -6947231726163165009L;
 
     @Override
     public BsonType getBsonType() {
-        return BsonType.MAX_KEY;
+        return BsonType.UNDEFINED;
     }
 
     @Override
     public boolean equals(final Object o) {
-        return o instanceof BsonMaxKey;
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        return true;
     }
 
     @Override
     public int hashCode() {
         return 0;
     }
-
-    @Override
-    public String toString() {
-        return "BsonMaxKey";
-    }
-
 }

@@ -16,11 +16,11 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 import org.bson.types.Binary;
-import org.bson.types.BsonBinary;
 import org.junit.Test;
 
 import java.io.StringWriter;

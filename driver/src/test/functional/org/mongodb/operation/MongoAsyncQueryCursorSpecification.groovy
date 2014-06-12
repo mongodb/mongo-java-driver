@@ -17,8 +17,8 @@
 package org.mongodb.operation
 import category.Async
 import category.Slow
+import org.bson.BsonDocumentWrapper
 import org.bson.BsonTimestamp
-import org.bson.types.BsonDocumentWrapper
 import org.junit.experimental.categories.Category
 import org.mongodb.Block
 import org.mongodb.CreateCollectionOptions

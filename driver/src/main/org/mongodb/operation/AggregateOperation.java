@@ -16,10 +16,10 @@
 
 package org.mongodb.operation;
 
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonInt64;
 import org.bson.codecs.Decoder;
-import org.bson.types.BsonArray;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonInt64;
 import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
 import org.mongodb.Function;

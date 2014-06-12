@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.types;
+package org.bson;
 
 public abstract class BsonNumber extends BsonValue {
     /**

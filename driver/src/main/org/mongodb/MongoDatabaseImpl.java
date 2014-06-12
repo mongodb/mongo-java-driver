@@ -16,10 +16,10 @@
 
 package org.mongodb;
 
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonDocumentWrapper;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.CommandReadOperation;
 import org.mongodb.operation.CommandWriteOperation;

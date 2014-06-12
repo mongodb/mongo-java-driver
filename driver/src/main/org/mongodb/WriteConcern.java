@@ -16,10 +16,10 @@
 
 package org.mongodb;
 
-import org.bson.types.BsonBoolean;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonInt32;
-import org.bson.types.BsonString;
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.mongodb.annotations.Immutable;
 
 import java.io.Serializable;

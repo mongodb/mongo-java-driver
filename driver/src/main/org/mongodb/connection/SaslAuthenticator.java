@@ -16,11 +16,11 @@
 
 package org.mongodb.connection;
 
-import org.bson.types.BsonBinary;
-import org.bson.types.BsonBoolean;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonInt32;
-import org.bson.types.BsonString;
+import org.bson.BsonBinary;
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoCredential;
 

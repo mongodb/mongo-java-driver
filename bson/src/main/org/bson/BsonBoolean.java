@@ -14,62 +14,53 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 
 /**
- * A representation of the BSON Double type.
+ * A representation of the BSON Boolean type.
  *
  * @since 3.0
  */
-public class BsonDouble extends BsonNumber implements Comparable<BsonDouble>, Serializable {
+public final class BsonBoolean extends BsonValue implements Comparable<BsonBoolean>, Serializable {
     private static final long serialVersionUID = 2215506922933899945L;
 
-    private final double value;
+    private final boolean value;
+
+    public static final BsonBoolean TRUE = new BsonBoolean(true);
+
+    public static final BsonBoolean FALSE = new BsonBoolean(false);
+
+    public static BsonBoolean valueOf(final boolean value) {
+        return value ? TRUE : FALSE;
+    }
 
     /**
      * Construct a new instance with the given value.
      *
      * @param value the value
      */
-    public BsonDouble(final double value) {
+    public BsonBoolean(final boolean value) {
         this.value = value;
     }
 
     @Override
-    public int compareTo(final BsonDouble o) {
-        return Double.compare(value, o.value);
+    public int compareTo(final BsonBoolean o) {
+        return Boolean.compare(value, o.value);
     }
 
     @Override
     public BsonType getBsonType() {
-        return BsonType.DOUBLE;
+        return BsonType.BOOLEAN;
     }
 
     /**
-     * Gets the double value.
+     * Gets the boolean value.
      *
      * @return the value
      */
-    public double getValue() {
-        return value;
-    }
-
-    @Override
-    public int intValue() {
-        return (int) value;
-    }
-
-    @Override
-    public long longValue() {
-        return (long) value;
-    }
-
-    @Override
-    public double doubleValue() {
+    public boolean getValue() {
         return value;
     }
 
@@ -82,9 +73,9 @@ public class BsonDouble extends BsonNumber implements Comparable<BsonDouble>, Se
             return false;
         }
 
-        BsonDouble that = (BsonDouble) o;
+        BsonBoolean that = (BsonBoolean) o;
 
-        if (Double.compare(that.value, value) != 0) {
+        if (value != that.value) {
             return false;
         }
 
@@ -93,13 +84,12 @@ public class BsonDouble extends BsonNumber implements Comparable<BsonDouble>, Se
 
     @Override
     public int hashCode() {
-        long temp = Double.doubleToLongBits(value);
-        return (int) (temp ^ (temp >>> 32));
+        return (value ? 1 : 0);
     }
 
     @Override
     public String toString() {
-        return "BsonDouble{"
+        return "BsonBoolean{"
                + "value=" + value
                + '}';
     }

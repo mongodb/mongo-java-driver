@@ -16,9 +16,9 @@
 
 package org.mongodb.acceptancetest.core;
 
+import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.types.Binary;
-import org.bson.types.BsonRegularExpression;
 import org.bson.types.Code;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;

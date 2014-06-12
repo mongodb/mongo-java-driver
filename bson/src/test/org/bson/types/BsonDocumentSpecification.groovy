@@ -16,8 +16,27 @@
 
 package org.bson.types
 
+import org.bson.BsonArray
+import org.bson.BsonBinary
+import org.bson.BsonBoolean
+import org.bson.BsonDateTime
+import org.bson.BsonDocument
+import org.bson.BsonDouble
+import org.bson.BsonElement
+import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.BsonInvalidOperationException
+import org.bson.BsonJavaScript
+import org.bson.BsonJavaScriptWithScope
+import org.bson.BsonMaxKey
+import org.bson.BsonMinKey
+import org.bson.BsonNull
+import org.bson.BsonObjectId
+import org.bson.BsonRegularExpression
+import org.bson.BsonString
+import org.bson.BsonSymbol
 import org.bson.BsonTimestamp
+import org.bson.BsonUndefined
 import spock.lang.Specification
 
 

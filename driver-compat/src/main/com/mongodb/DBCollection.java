@@ -16,15 +16,15 @@
 
 package com.mongodb;
 
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
+import org.bson.BsonDocumentWrapper;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.Encoder;
-import org.bson.types.BsonArray;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonDocumentWrapper;
-import org.bson.types.BsonString;
-import org.bson.types.BsonValue;
 import org.bson.types.ObjectId;
 import org.mongodb.Document;
 import org.mongodb.Index;

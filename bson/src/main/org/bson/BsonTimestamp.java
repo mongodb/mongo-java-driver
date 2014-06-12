@@ -16,8 +16,6 @@
 
 package org.bson;
 
-import org.bson.types.BsonValue;
-
 import java.io.Serializable;
 import java.util.Date;
 

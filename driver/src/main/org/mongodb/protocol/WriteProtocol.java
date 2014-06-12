@@ -16,9 +16,9 @@
 
 package org.mongodb.protocol;
 
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonInt32;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;

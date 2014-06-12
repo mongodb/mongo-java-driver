@@ -16,9 +16,9 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonBoolean;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonBoolean;
 
 /**
  * A Codec for BsonBoolean instances.

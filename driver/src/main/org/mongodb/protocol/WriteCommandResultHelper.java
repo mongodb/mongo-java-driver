@@ -16,11 +16,11 @@
 
 package org.mongodb.protocol;
 
-import org.bson.types.BsonArray;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonInt32;
-import org.bson.types.BsonNumber;
-import org.bson.types.BsonValue;
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonNumber;
+import org.bson.BsonValue;
 import org.mongodb.BulkWriteError;
 import org.mongodb.BulkWriteException;
 import org.mongodb.BulkWriteResult;

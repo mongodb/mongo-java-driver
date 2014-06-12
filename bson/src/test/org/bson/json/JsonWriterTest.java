@@ -16,11 +16,11 @@
 
 package org.bson.json;
 
+import org.bson.BsonBinary;
+import org.bson.BsonDbPointer;
 import org.bson.BsonInvalidOperationException;
+import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
-import org.bson.types.BsonBinary;
-import org.bson.types.BsonDbPointer;
-import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;

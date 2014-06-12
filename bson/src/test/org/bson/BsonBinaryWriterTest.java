@@ -18,9 +18,6 @@ package org.bson;
 
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.types.BsonBinary;
-import org.bson.types.BsonDbPointer;
-import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;

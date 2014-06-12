@@ -17,9 +17,6 @@
 package org.bson;
 
 import org.bson.io.InputBuffer;
-import org.bson.types.BsonBinary;
-import org.bson.types.BsonDbPointer;
-import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
 
 import static java.lang.String.format;

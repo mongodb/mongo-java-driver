@@ -14,50 +14,60 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 
 /**
- * A representation of the BSON String type.
+ * A representation of the BSON Int32 type.
  *
  * @since 3.0
  */
-public class BsonString extends BsonValue implements Comparable<BsonString>, Serializable {
+public final class BsonInt32 extends BsonNumber implements Comparable<BsonInt32>, Serializable {
     private static final long serialVersionUID = 2215506922933899945L;
 
-    private final String value;
+    private final int value;
 
     /**
      * Construct a new instance with the given value.
      *
-     * @param value the non-null value
+     * @param value the value
      */
-    public BsonString(final String value) {
-        if (value == null) {
-            throw new IllegalArgumentException("Value can not be null");
-        }
+    public BsonInt32(final int value) {
         this.value = value;
     }
 
     @Override
-    public int compareTo(final BsonString o) {
-        return value.compareTo(o.value);
+    public int compareTo(final BsonInt32 o) {
+        return (value < o.value) ? -1 : ((value == o.value) ? 0 : 1);
     }
 
     @Override
     public BsonType getBsonType() {
-        return BsonType.STRING;
+        return BsonType.INT32;
     }
 
     /**
-     * Gets the String value.
+     * Gets the integer value.
      *
      * @return the value
      */
-    public String getValue() {
+    public int getValue() {
+        return value;
+    }
+
+    @Override
+    public int intValue() {
+        return value;
+    }
+
+    @Override
+    public long longValue() {
+        return value;
+    }
+
+    @Override
+    public double doubleValue() {
         return value;
     }
 
@@ -70,9 +80,9 @@ public class BsonString extends BsonValue implements Comparable<BsonString>, Ser
             return false;
         }
 
-        BsonString that = (BsonString) o;
+        BsonInt32 bsonInt32 = (BsonInt32) o;
 
-        if (!value.equals(that.value)) {
+        if (value != bsonInt32.value) {
             return false;
         }
 
@@ -81,13 +91,13 @@ public class BsonString extends BsonValue implements Comparable<BsonString>, Ser
 
     @Override
     public int hashCode() {
-        return value.hashCode();
+        return value;
     }
 
     @Override
     public String toString() {
-        return "BsonString{"
-               + "value='" + value + '\''
+        return "BsonInt32{"
+               + "value=" + value
                + '}';
     }
 }

@@ -18,8 +18,8 @@
 
 package org.mongodb
 
+import org.bson.BsonRegularExpression
 import org.bson.json.JsonParseException
-import org.bson.types.BsonRegularExpression
 import org.bson.types.ObjectId
 import spock.lang.Specification
 

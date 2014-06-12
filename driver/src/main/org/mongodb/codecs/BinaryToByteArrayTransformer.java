@@ -16,7 +16,7 @@
 
 package org.mongodb.codecs;
 
-import org.bson.types.BsonBinary;
+import org.bson.BsonBinary;
 import org.mongodb.BinaryTransformer;
 
 public class BinaryToByteArrayTransformer implements BinaryTransformer<byte[]> {

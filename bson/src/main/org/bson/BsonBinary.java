@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonBinarySubType;
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 import java.util.Arrays;

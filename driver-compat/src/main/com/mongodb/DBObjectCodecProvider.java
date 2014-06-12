@@ -16,7 +16,9 @@
 
 package com.mongodb;
 
+import org.bson.BsonDbPointer;
 import org.bson.BsonType;
+import org.bson.BsonUndefined;
 import org.bson.codecs.BinaryCodec;
 import org.bson.codecs.BsonDBPointerCodec;
 import org.bson.codecs.BsonRegularExpressionCodec;
@@ -30,8 +32,6 @@ import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
-import org.bson.types.BsonDbPointer;
-import org.bson.types.BsonUndefined;
 import org.bson.types.Code;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;

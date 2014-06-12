@@ -16,9 +16,7 @@
 
 // Symbol.java
 
-package org.bson.types;
-
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 

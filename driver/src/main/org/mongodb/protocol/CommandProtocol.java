@@ -16,9 +16,9 @@
 
 package org.mongodb.protocol;
 
+import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
-import org.bson.types.BsonDocument;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;

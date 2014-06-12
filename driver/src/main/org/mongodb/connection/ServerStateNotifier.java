@@ -16,12 +16,12 @@
 
 package org.mongodb.connection;
 
-import org.bson.types.BsonArray;
-import org.bson.types.BsonBoolean;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonInt32;
-import org.bson.types.BsonString;
-import org.bson.types.BsonValue;
+import org.bson.BsonArray;
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.mongodb.CommandResult;
 import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.diagnostics.Loggers;

@@ -16,12 +16,12 @@
 
 package org.mongodb.operation;
 
+import org.bson.BsonDocumentWrapper;
 import org.bson.BsonReader;
+import org.bson.BsonValue;
 import org.bson.codecs.BsonArrayCodec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.types.BsonDocumentWrapper;
-import org.bson.types.BsonValue;
 
 import static org.bson.BsonType.DOCUMENT;
 

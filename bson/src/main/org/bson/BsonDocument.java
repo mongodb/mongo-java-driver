@@ -14,12 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BSONException;
-import org.bson.BsonInvalidOperationException;
-import org.bson.BsonTimestamp;
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 import java.util.Collection;

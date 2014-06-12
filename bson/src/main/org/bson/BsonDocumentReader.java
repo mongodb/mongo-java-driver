@@ -1,11 +1,5 @@
 package org.bson;
 
-import org.bson.types.BsonArray;
-import org.bson.types.BsonBinary;
-import org.bson.types.BsonDbPointer;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonRegularExpression;
-import org.bson.types.BsonValue;
 import org.bson.types.ObjectId;
 
 import java.util.Iterator;
@@ -15,7 +9,7 @@ import java.util.Map;
  * A {@code BsonReader} implementation that reads from an instance of {@code BsonDocument}.  This can be used to decode a {@code
  * BsonDocument} using a {@code Decoder}.
  *
- * @see org.bson.types.BsonDocument
+ * @see BsonDocument
  * @see org.bson.codecs.Decoder
  *
  * @since 3.0

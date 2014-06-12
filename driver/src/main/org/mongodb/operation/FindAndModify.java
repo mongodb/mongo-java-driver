@@ -16,7 +16,7 @@
 
 package org.mongodb.operation;
 
-import org.bson.types.BsonDocument;
+import org.bson.BsonDocument;
 
 public abstract class FindAndModify extends Query {
     private BsonDocument filter;

@@ -18,15 +18,15 @@ package org.bson.json;
 
 
 import org.bson.AbstractBsonReader;
+import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonContextType;
+import org.bson.BsonDbPointer;
 import org.bson.BsonInvalidOperationException;
+import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.BsonType;
-import org.bson.types.BsonBinary;
-import org.bson.types.BsonDbPointer;
-import org.bson.types.BsonRegularExpression;
-import org.bson.types.BsonUndefined;
+import org.bson.BsonUndefined;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;

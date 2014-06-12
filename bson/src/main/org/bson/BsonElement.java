@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.types;
+package org.bson;
 
 /**
  * A mapping from a name to a BsonValue.

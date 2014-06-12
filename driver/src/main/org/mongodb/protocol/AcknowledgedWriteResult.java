@@ -16,7 +16,7 @@
 
 package org.mongodb.protocol;
 
-import org.bson.types.BsonValue;
+import org.bson.BsonValue;
 import org.mongodb.WriteResult;
 
 /**

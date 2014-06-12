@@ -17,8 +17,8 @@
 package org.bson.codecs;
 
 import org.bson.BsonReader;
+import org.bson.BsonSymbol;
 import org.bson.BsonWriter;
-import org.bson.types.BsonSymbol;
 
 /**
  * A codec for BSON symbol type.

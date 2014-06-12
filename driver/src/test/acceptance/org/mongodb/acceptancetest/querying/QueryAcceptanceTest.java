@@ -16,9 +16,9 @@
 
 package org.mongodb.acceptancetest.querying;
 
+import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonObjectId;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
