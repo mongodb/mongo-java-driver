@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 import org.bson.types.BsonDocument;
 import org.mongodb.Block;
@@ -39,7 +40,6 @@ import java.util.List;
 import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static org.mongodb.operation.OperationHelper.IdentityTransformer;
 import static org.mongodb.operation.OperationHelper.executeProtocol;
-import static org.mongodb.operation.OperationHelper.getBsonDocumentCodec;
 import static org.mongodb.operation.OperationHelper.withConnection;
 
 final class QueryOperationHelper {
@@ -55,7 +55,7 @@ final class QueryOperationHelper {
 
     static <V> List<V> queryResultToList(final MongoNamespace namespace, final QueryProtocol<BsonDocument> queryProtocol,
                                          final ReadBinding binding, final Function<BsonDocument, V> block) {
-        return queryResultToList(namespace, queryProtocol, getBsonDocumentCodec(), binding, block);
+        return queryResultToList(namespace, queryProtocol, new BsonDocumentCodec(), binding, block);
     }
 
     static <T, V> List<V> queryResultToList(final MongoNamespace namespace, final QueryProtocol<T> queryProtocol, final Decoder<T> decoder,
@@ -99,7 +99,7 @@ final class QueryOperationHelper {
 
     static <T> MongoFuture<List<T>> queryResultToListAsync(final MongoNamespace namespace, final QueryProtocol<BsonDocument> queryProtocol,
                                                            final AsyncReadBinding binding, final Function<BsonDocument, T> transformer) {
-        return queryResultToListAsync(namespace, queryProtocol, getBsonDocumentCodec(), binding, transformer);
+        return queryResultToListAsync(namespace, queryProtocol, new BsonDocumentCodec(), binding, transformer);
     }
 
     static <T> MongoFuture<List<T>> queryResultToListAsync(final MongoNamespace namespace, final QueryProtocol<T> queryProtocol,

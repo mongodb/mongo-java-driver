@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.types.BsonDocument;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
@@ -36,7 +37,6 @@ import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.VoidTransformer;
 import static org.mongodb.operation.OperationHelper.executeProtocolAsync;
-import static org.mongodb.operation.OperationHelper.getBsonDocumentCodec;
 import static org.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static org.mongodb.operation.OperationHelper.withConnection;
 import static org.mongodb.operation.UserOperationHelper.asCollectionDocument;
@@ -89,7 +89,7 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
         MongoNamespace namespace = new MongoNamespace(user.getCredential().getSource(), "system.users");
         return new InsertProtocol<BsonDocument>(namespace, true, WriteConcern.ACKNOWLEDGED,
                                                 asList(new InsertRequest<BsonDocument>(asCollectionDocument(user))),
-                                                getBsonDocumentCodec());
+                                                new BsonDocumentCodec());
     }
 
     private BsonDocument getCommand() {

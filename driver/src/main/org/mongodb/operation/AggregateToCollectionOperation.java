@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.types.BsonDocument;
 import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
@@ -32,7 +33,6 @@ import static org.mongodb.operation.AggregateHelper.asCommandDocument;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.VoidTransformer;
-import static org.mongodb.operation.OperationHelper.getBsonDocumentCodec;
 
 /**
  * An operation that executes an aggregation that writes its results to a collection (which is what makes this a write operation rather than
@@ -67,7 +67,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     @Override
     public Void execute(final WriteBinding binding) {
         executeWrappedCommandProtocol(namespace, asCommandDocument(namespace, pipeline, options),
-                                      getBsonDocumentCodec(), binding, new VoidTransformer<CommandResult>());
+                                      new BsonDocumentCodec(), binding, new VoidTransformer<CommandResult>());
 
         return null;
     }
@@ -75,7 +75,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
         return executeWrappedCommandProtocolAsync(namespace, asCommandDocument(namespace, pipeline, options),
-                                                  getBsonDocumentCodec(), binding,
+                                                  new BsonDocumentCodec(), binding,
                                                   new VoidTransformer<CommandResult>());
     }
 }

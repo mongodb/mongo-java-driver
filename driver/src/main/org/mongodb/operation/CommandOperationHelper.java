@@ -17,6 +17,7 @@
 package org.mongodb.operation;
 
 import org.bson.FieldNameValidator;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 import org.bson.types.BsonDocument;
 import org.mongodb.CommandResult;
@@ -44,13 +45,12 @@ import java.util.EnumSet;
 import static org.mongodb.ReadPreference.primary;
 import static org.mongodb.connection.ServerType.SHARD_ROUTER;
 import static org.mongodb.operation.OperationHelper.IdentityTransformer;
-import static org.mongodb.operation.OperationHelper.getBsonDocumentCodec;
 
 final class CommandOperationHelper {
 
     static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final BsonDocument command,
                                                        final ConnectionSource source, final ReadPreference readPreference) {
-        return executeWrappedCommandProtocol(namespace, command, getBsonDocumentCodec(), source, readPreference);
+        return executeWrappedCommandProtocol(namespace, command, new BsonDocumentCodec(), source, readPreference);
     }
 
     static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final BsonDocument command,
@@ -70,12 +70,12 @@ final class CommandOperationHelper {
     }
 
     static CommandResult executeWrappedCommandProtocol(final String database, final BsonDocument command, final ReadBinding binding) {
-        return executeWrappedCommandProtocol(database, command, getBsonDocumentCodec(), binding);
+        return executeWrappedCommandProtocol(database, command, new BsonDocumentCodec(), binding);
     }
 
     static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command, final ReadBinding binding,
                                                final Function<CommandResult, T> transformer) {
-        return executeWrappedCommandProtocol(database, command, getBsonDocumentCodec(), binding, transformer);
+        return executeWrappedCommandProtocol(database, command, new BsonDocumentCodec(), binding, transformer);
     }
 
     static CommandResult executeWrappedCommandProtocol(final String database, final BsonDocument command, final WriteBinding binding) {
@@ -84,7 +84,7 @@ final class CommandOperationHelper {
 
     static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command, final WriteBinding binding,
                                                final Function<CommandResult, T> transformer) {
-        return executeWrappedCommandProtocol(database, command, getBsonDocumentCodec(), binding, transformer);
+        return executeWrappedCommandProtocol(database, command, new BsonDocumentCodec(), binding, transformer);
     }
 
     static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final BsonDocument command,
@@ -174,18 +174,18 @@ final class CommandOperationHelper {
     }
 
     static CommandResult executeWrappedCommandProtocol(final String database, final BsonDocument command, final Connection connection) {
-        return executeWrappedCommandProtocol(database, command, getBsonDocumentCodec(), connection, primary());
+        return executeWrappedCommandProtocol(database, command, new BsonDocumentCodec(), connection, primary());
     }
 
     static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command, final Connection connection,
                                                final ReadPreference readPreference, final Function<CommandResult, T> transformer) {
-        return executeWrappedCommandProtocol(database, command, getBsonDocumentCodec(), connection, readPreference,
+        return executeWrappedCommandProtocol(database, command, new BsonDocumentCodec(), connection, readPreference,
                                              transformer);
     }
 
     static CommandResult executeWrappedCommandProtocol(final String database, final BsonDocument command,
                                                        final Connection connection, final ReadPreference readPreference) {
-        return executeWrappedCommandProtocol(database, command, getBsonDocumentCodec(), connection, readPreference);
+        return executeWrappedCommandProtocol(database, command, new BsonDocumentCodec(), connection, readPreference);
     }
 
     static CommandResult executeWrappedCommandProtocol(final MongoNamespace namespace, final BsonDocument command,
@@ -240,13 +240,13 @@ final class CommandOperationHelper {
 
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
                                                                          final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(database, command, getBsonDocumentCodec(), binding);
+        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding);
     }
 
     static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
                                                                  final AsyncWriteBinding binding,
                                                                  final Function<CommandResult, T> transformer) {
-        return executeWrappedCommandProtocolAsync(database, command, getBsonDocumentCodec(), binding, transformer);
+        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding, transformer);
     }
 
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final BsonDocument command,
@@ -263,7 +263,7 @@ final class CommandOperationHelper {
     static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
                                                                  final AsyncReadBinding binding,
                                                                  final Function<CommandResult, T> transformer) {
-        return executeWrappedCommandProtocolAsync(database, command, getBsonDocumentCodec(), binding, transformer);
+        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding, transformer);
     }
 
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final BsonDocument command,
@@ -351,18 +351,18 @@ final class CommandOperationHelper {
 
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
                                                                          final Connection connection) {
-        return executeWrappedCommandProtocolAsync(database, command, getBsonDocumentCodec(), connection);
+        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), connection);
     }
 
     static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
                                                                  final Connection connection,
                                                                  final Function<CommandResult, T> transformer) {
-        return executeWrappedCommandProtocolAsync(database, command, getBsonDocumentCodec(), primary(), connection, transformer);
+        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), primary(), connection, transformer);
     }
 
     static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
                                                                          final ReadPreference readPreference, final Connection connection) {
-        return executeWrappedCommandProtocolAsync(database, command, getBsonDocumentCodec(), readPreference, connection,
+        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), readPreference, connection,
                                                   new IdentityTransformer<CommandResult>());
     }
 
