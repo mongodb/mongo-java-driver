@@ -72,6 +72,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
      *
      * @param registry         the registry
      * @param bsonTypeClassMap the BSON type class map
+     * @param idGenerator the idGenerator to use when generating a value for _id
      */
     public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final IdGenerator idGenerator) {
         this.registry = notNull("registry", registry);
