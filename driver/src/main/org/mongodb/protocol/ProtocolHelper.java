@@ -16,7 +16,6 @@
 
 package org.mongodb.protocol;
 
-import org.bson.types.BsonArray;
 import org.bson.types.BsonBoolean;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonInt32;
@@ -55,11 +54,10 @@ final class ProtocolHelper {
             throwWriteException(commandResult);
         }
 
-        BsonBoolean updatedExisting = (BsonBoolean) commandResult.getResponse().get("updatedExisting");
+        BsonBoolean updatedExisting = commandResult.getResponse().getBoolean("updatedExisting", BsonBoolean.FALSE);
 
-        return new AcknowledgedWriteResult(((BsonInt32) commandResult.getResponse().get("n")).getValue(),
-                                           updatedExisting != null && updatedExisting.getValue(),
-                                           commandResult.getResponse().get("upserted"));
+        return new AcknowledgedWriteResult(commandResult.getResponse().getNumber("n").intValue(),
+                                           updatedExisting.getValue(), commandResult.getResponse().get("upserted"));
     }
 
     static MongoException getCommandFailureException(final CommandResult commandResult) {
@@ -130,20 +128,17 @@ final class ProtocolHelper {
 
     @SuppressWarnings("unchecked")
     private static int getCode(final BsonDocument response) {
-        BsonInt32 code = (BsonInt32) response.get("code");
-
         // mongos may return a list of documents representing getlasterror responses from each shard.  Return the one with a matching
         // "err" field, so that it can be used to get the error code
-        if (code == null && response.get("errObjects") != null) {
-            for (BsonValue curErrorDocument : (BsonArray) response.get("errObjects")) {
-                if (getWriteErrorMessage(response).equals(getWriteErrorMessage((BsonDocument) curErrorDocument))) {
-                    code = (BsonInt32) ((BsonDocument) curErrorDocument).get("code");
-                    break;
+        if (!response.containsKey("code") && response.containsKey("errObjects")) {
+            for (BsonValue curErrorDocument : response.getArray("errObjects")) {
+                if (getWriteErrorMessage(response).equals(getWriteErrorMessage(curErrorDocument.asDocument()))) {
+                    return curErrorDocument.asDocument().getNumber("code").intValue();
                 }
             }
         }
 
-        return code == null ? -1 : code.getValue();
+        return response.getNumber("code", new BsonInt32(-1)).intValue();
     }
 
     private ProtocolHelper() {
