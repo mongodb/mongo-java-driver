@@ -28,7 +28,6 @@ public abstract class FindAndModify extends Query {
     public FindAndModify() {
     }
 
-    //CHECKSTYLE:OFF
     public FindAndModify where(final BsonDocument filter) {
         this.filter = filter;
         return this;
@@ -54,7 +53,6 @@ public abstract class FindAndModify extends Query {
         this.upsert = upsert;
         return this;
     }
-    //CHECKSTYLE:ON
 
     public BsonDocument getFilter() {
         return filter;

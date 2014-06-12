@@ -35,12 +35,10 @@ public abstract class BaseUpdateRequest extends WriteRequest {
         return isUpsert;
     }
 
-    //CHECKSTYLE:OFF
     public BaseUpdateRequest upsert(final boolean isUpsert) {
         this.isUpsert = isUpsert;
         return this;
     }
-    //CHECKSTYLE:ON
 
     public abstract boolean isMulti();
 }
