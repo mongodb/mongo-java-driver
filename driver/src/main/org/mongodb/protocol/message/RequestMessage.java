@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Abstract base class for all MongoDB Wire Protocol request messages.
  */
 public abstract class RequestMessage {
-    private static BsonDocumentCodec bsonDocumentCodec = new BsonDocumentCodec();
 
     // TODO: is rollover a problem
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
@@ -40,7 +39,7 @@ public abstract class RequestMessage {
     private final OpCode opCode;
 
     protected BsonDocumentCodec getBsonDocumentCodec() {
-        return bsonDocumentCodec;
+        return new BsonDocumentCodec();
     }
 
     public RequestMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
