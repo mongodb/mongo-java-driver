@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.types.BsonArray;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonInt32;
@@ -45,7 +46,6 @@ import static org.mongodb.operation.DocumentHelper.putIfTrue;
 import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
-import static org.mongodb.operation.OperationHelper.getBsonDocumentCodec;
 import static org.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static org.mongodb.operation.OperationHelper.withConnection;
 
@@ -142,7 +142,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     private InsertProtocol<BsonDocument> asInsertProtocol(final Index index) {
         return new InsertProtocol<BsonDocument>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
                                                 asList(new InsertRequest<BsonDocument>(toDocument(index))),
-                                                getBsonDocumentCodec());
+                                                new BsonDocumentCodec());
     }
 
     private BsonDocument toDocument(final Index index) {

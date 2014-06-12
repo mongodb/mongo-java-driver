@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonString;
 import org.mongodb.CommandResult;
@@ -30,7 +31,6 @@ import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.DocumentHelper.putIfNotNull;
 import static org.mongodb.operation.DocumentHelper.putIfNotZero;
-import static org.mongodb.operation.OperationHelper.getBsonDocumentCodec;
 
 /**
  * An operation that executes a count.
@@ -48,13 +48,13 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
 
     public Long execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, asCommandDocument(), getBsonDocumentCodec(), binding,
+        return executeWrappedCommandProtocol(namespace, asCommandDocument(), new BsonDocumentCodec(), binding,
                                              transformer());
     }
 
     @Override
     public MongoFuture<Long> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, asCommandDocument(), getBsonDocumentCodec(),
+        return executeWrappedCommandProtocolAsync(namespace, asCommandDocument(), new BsonDocumentCodec(),
                                                   binding, transformer());
     }
 
