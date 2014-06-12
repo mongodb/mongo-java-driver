@@ -92,6 +92,7 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
      * @param namespace     the namespace to write to
      * @param writeRequests the list of runWrites to execute
      * @param ordered       whether the runWrites must be executed in order.
+     * @param writeConcern  the write concern to apply
      * @param encoder       the encoder
      */
     public MixedBulkWriteOperation(final MongoNamespace namespace, final List<WriteRequest> writeRequests, final boolean ordered,

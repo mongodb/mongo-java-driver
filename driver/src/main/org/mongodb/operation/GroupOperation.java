@@ -35,6 +35,8 @@ import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  * Groups documents in a collection by the specified key and performs simple aggregation functions, such as computing counts and sums. The
  * command is analogous to a SELECT <...> GROUP BY statement in SQL.
  *
+ * @param <T> the type for each document
+ *
  * @mongodb.driver.manual reference/command/group Group Command
  * @since 3.0
  */

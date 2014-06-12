@@ -31,12 +31,10 @@ public class RemoveRequest extends WriteRequest {
         return filter;
     }
 
-    //CHECKSTYLE:OFF
     public RemoveRequest multi(final boolean isMulti) {
         this.isMulti = isMulti;
         return this;
     }
-    //CHECKSTYLE:ON
 
     public boolean isMulti() {
         return isMulti;
