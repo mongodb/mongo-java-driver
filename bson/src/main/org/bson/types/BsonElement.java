@@ -19,7 +19,7 @@ package org.bson.types;
 /**
  * A mapping from a name to a BsonValue.
  *
- * @see org.bson.types.BsonDocument
+ * @see BsonDocument
  *
  * @since 3.0
  */

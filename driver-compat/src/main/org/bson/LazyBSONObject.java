@@ -20,6 +20,7 @@ import org.bson.io.BSONByteBuffer;
 import org.bson.io.BasicInputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonDbPointer;
 import org.bson.types.BsonRegularExpression;
 import org.bson.types.BsonSymbol;
@@ -152,7 +153,7 @@ public class LazyBSONObject implements BSONObject {
             case STRING:
                 return reader.readString();
             case BINARY:
-                Binary binary = reader.readBinaryData();
+                BsonBinary binary = reader.readBinaryData();
                 byte binaryType = binary.getType();
                 if (binaryType == BsonBinarySubType.BINARY.getValue()
                     || binaryType == BsonBinarySubType.BINARY.getValue()) {
@@ -160,7 +161,7 @@ public class LazyBSONObject implements BSONObject {
                 } else if (binaryType == BsonBinarySubType.UUID_LEGACY.getValue()) {
                     return new UUID(readLong(binary.getData(), 0), readLong(binary.getData(), 8));
                 } else {
-                    return binary;
+                    return new Binary(binary.getType(), binary.getData());
                 }
             case UNDEFINED:
             case NULL:

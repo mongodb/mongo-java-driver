@@ -16,7 +16,7 @@
 
 package org.bson;
 
-import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonDbPointer;
 import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
@@ -89,7 +89,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
-    public void writeBinaryData(final String name, final Binary binary) {
+    public void writeBinaryData(final String name, final BsonBinary binary) {
         writeName(name);
         writeBinaryData(binary);
     }

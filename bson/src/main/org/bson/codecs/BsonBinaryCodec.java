@@ -14,26 +14,30 @@
  * limitations under the License.
  */
 
-package org.mongodb.codecs;
+package org.bson.codecs;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.codecs.Codec;
 import org.bson.types.BsonBinary;
 
-public class ByteArrayCodec implements Codec<byte[]> {
+/**
+ * A Codec for the BSON Binary type.
+ *
+ * @since 3.0
+ */
+public class BsonBinaryCodec implements Codec<BsonBinary> {
     @Override
-    public void encode(final BsonWriter writer, final byte[] value) {
-        writer.writeBinaryData(new BsonBinary(value));
+    public void encode(final BsonWriter writer, final BsonBinary value) {
+        writer.writeBinaryData(value);
     }
 
     @Override
-    public byte[] decode(final BsonReader reader) {
-        return reader.readBinaryData().getData();
+    public BsonBinary decode(final BsonReader reader) {
+        return reader.readBinaryData();
     }
 
     @Override
-    public Class<byte[]> getEncoderClass() {
-        return byte[].class;
+    public Class<BsonBinary> getEncoderClass() {
+        return BsonBinary.class;
     }
 }

@@ -16,14 +16,19 @@
 
 package org.mongodb.codecs;
 
-import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 import org.mongodb.BinaryTransformer;
 
 import java.util.UUID;
 
+/**
+ * A transformer from Binary to UUID.
+ *
+ * @since 3.0
+ */
 public class BinaryToUUIDTransformer implements BinaryTransformer<UUID> {
     @Override
-    public UUID transform(final Binary binary) {
+    public UUID transform(final BsonBinary binary) {
         return new UUID(readLongFromArrayLittleEndian(binary.getData(), 0), readLongFromArrayLittleEndian(binary.getData(), 8));
     }
 

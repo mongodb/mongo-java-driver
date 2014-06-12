@@ -18,7 +18,7 @@ package org.bson.json;
 
 import org.bson.BsonInvalidOperationException;
 import org.bson.BsonTimestamp;
-import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonDbPointer;
 import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
@@ -153,7 +153,7 @@ public class JsonWriterTest {
         writer.writeStartDocument();
         writer.writeJavaScriptWithScope("js1", "var i = 1");
 
-        writer.writeBinaryData(new Binary(new byte[]{0, 0, 1, 0}));
+        writer.writeBinaryData(new BsonBinary(new byte[]{0, 0, 1, 0}));
     }
 
     @Test(expected = BsonInvalidOperationException.class)
@@ -334,22 +334,22 @@ public class JsonWriterTest {
 
     @Test
     public void testBinaryStrict() {
-        List<TestData<Binary>> tests = asList(new TestData<Binary>(new Binary(new byte[0]),
+        List<TestData<BsonBinary>> tests = asList(new TestData<BsonBinary>(new BsonBinary(new byte[0]),
                                                                    "{ \"$binary\" : \"\", "
                                                                    + "\"$type\" : \"0\" }"),
-                                              new TestData<Binary>(new Binary(new byte[]{1}),
+                                              new TestData<BsonBinary>(new BsonBinary(new byte[]{1}),
                                                                    "{ \"$binary\" : \"AQ==\", "
                                                                    + "\"$type\" : \"0\" }"),
-                                              new TestData<Binary>(new Binary(new byte[]{1, 2}),
+                                              new TestData<BsonBinary>(new BsonBinary(new byte[]{1, 2}),
                                                                    "{ \"$binary\" : \"AQI=\", "
                                                                    + "\"$type\" : \"0\" }"),
-                                              new TestData<Binary>(new Binary(new byte[]{1, 2, 3}),
+                                              new TestData<BsonBinary>(new BsonBinary(new byte[]{1, 2, 3}),
                                                                    "{ \"$binary\" : \"AQID\", "
                                                                    + "\"$type\" : \"0\" }"),
-                                              new TestData<Binary>(new Binary((byte) 0x80, new byte[]{1, 2, 3}),
+                                              new TestData<BsonBinary>(new BsonBinary((byte) 0x80, new byte[]{1, 2, 3}),
                                                                    "{ \"$binary\" : \"AQID\", "
                                                                    + "\"$type\" : \"80\" }"));
-        for (final TestData<Binary> cur : tests) {
+        for (final TestData<BsonBinary> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.STRICT));
             writer.writeStartDocument();
@@ -362,13 +362,13 @@ public class JsonWriterTest {
 
     @Test
     public void testBinaryShell() {
-        List<TestData<Binary>> tests = asList(new TestData<Binary>(new Binary(new byte[0]), "new BinData(0, \"\")"),
-                                              new TestData<Binary>(new Binary(new byte[]{1}), "new BinData(0, \"AQ==\")"),
-                                              new TestData<Binary>(new Binary(new byte[]{1, 2}), "new BinData(0, \"AQI=\")"),
-                                              new TestData<Binary>(new Binary(new byte[]{1, 2, 3}), "new BinData(0, \"AQID\")"),
-                                              new TestData<Binary>(new Binary((byte) 0x80, new byte[]{1, 2, 3}),
+        List<TestData<BsonBinary>> tests = asList(new TestData<BsonBinary>(new BsonBinary(new byte[0]), "new BinData(0, \"\")"),
+                                              new TestData<BsonBinary>(new BsonBinary(new byte[]{1}), "new BinData(0, \"AQ==\")"),
+                                              new TestData<BsonBinary>(new BsonBinary(new byte[]{1, 2}), "new BinData(0, \"AQI=\")"),
+                                              new TestData<BsonBinary>(new BsonBinary(new byte[]{1, 2, 3}), "new BinData(0, \"AQID\")"),
+                                              new TestData<BsonBinary>(new BsonBinary((byte) 0x80, new byte[]{1, 2, 3}),
                                                                    "new BinData(128, \"AQID\")"));
-        for (final TestData<Binary> cur : tests) {
+        for (final TestData<BsonBinary> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.SHELL));
             writer.writeStartDocument();

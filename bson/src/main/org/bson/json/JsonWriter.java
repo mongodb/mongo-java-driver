@@ -20,7 +20,7 @@ import org.bson.AbstractBsonWriter;
 import org.bson.BSONException;
 import org.bson.BsonContextType;
 import org.bson.BsonTimestamp;
-import org.bson.types.Binary;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonDbPointer;
 import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
@@ -152,7 +152,7 @@ public class JsonWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeBinaryData(final Binary binary) {
+    public void writeBinaryData(final BsonBinary binary) {
         checkPreconditions("writeBinaryData", State.VALUE, State.INITIAL);
 
         try {

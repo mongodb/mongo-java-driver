@@ -249,7 +249,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      * @return the value of the key as a Binary
      * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
      */
-    public Binary getBinary(final Object key) {
+    public BsonBinary getBinary(final Object key) {
         throwIfKeyAbsent(key);
         return get(key).asBinary();
     }
@@ -618,7 +618,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      * @return the value of the key as a ObjectId
      * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
      */
-    public Binary getBinary(final Object key, final Binary defaultValue) {
+    public BsonBinary getBinary(final Object key, final BsonBinary defaultValue) {
         if (!containsKey(key)) {
             return defaultValue;
         }

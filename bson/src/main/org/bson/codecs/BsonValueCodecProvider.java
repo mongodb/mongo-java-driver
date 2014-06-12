@@ -20,8 +20,8 @@ import org.bson.BsonTimestamp;
 import org.bson.BsonType;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.types.Binary;
 import org.bson.types.BsonArray;
+import org.bson.types.BsonBinary;
 import org.bson.types.BsonBoolean;
 import org.bson.types.BsonDateTime;
 import org.bson.types.BsonDbPointer;
@@ -95,7 +95,7 @@ public class BsonValueCodecProvider implements CodecProvider {
 
     private void addCodecs() {
         addCodec(new BsonNullCodec());
-        addCodec(new BinaryCodec());
+        addCodec(new BsonBinaryCodec());
         addCodec(new BsonBooleanCodec());
         addCodec(new BsonDateTimeCodec());
         addCodec(new BsonDBPointerCodec());
@@ -122,7 +122,7 @@ public class BsonValueCodecProvider implements CodecProvider {
 
         map.put(BsonType.NULL, BsonNull.class);
         map.put(BsonType.ARRAY, BsonArray.class);
-        map.put(BsonType.BINARY, Binary.class);
+        map.put(BsonType.BINARY, BsonBinary.class);
         map.put(BsonType.BOOLEAN, BsonBoolean.class);
         map.put(BsonType.DATE_TIME, BsonDateTime.class);
         map.put(BsonType.DB_POINTER, BsonDbPointer.class);

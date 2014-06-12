@@ -39,7 +39,7 @@ class BsonValueSpecification extends Specification {
         new BsonRegularExpression('^test.*regex.*xyz$', 'i').isRegularExpression()
         new BsonSymbol('ruby stuff').isSymbol()
         new BsonTimestamp(0x12345678, 5).isTimestamp()
-        new Binary((byte) 80, [5, 4, 3, 2, 1] as byte[]).isBinary()
+        new BsonBinary((byte) 80, [5, 4, 3, 2, 1] as byte[]).isBinary()
         new BsonDbPointer("ns", new ObjectId()).isDBPointer()
         new BsonArray().isArray()
         new BsonDocument().isDocument()
