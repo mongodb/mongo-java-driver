@@ -27,7 +27,7 @@ import java.util.List;
  *
  * @since 3.0
  */
-public class StorageDocumentFieldNameValidator implements FieldNameValidator {
+public class CollectibleDocumentFieldNameValidator implements FieldNameValidator {
     // Have to support DBRef fields
     private static final List<String> EXCEPTIONS = Arrays.asList("$db", "$ref", "$id");
 

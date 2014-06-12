@@ -49,7 +49,7 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
     @Override
     protected FieldNameValidator getFieldNameValidator() {
         Map<String, FieldNameValidator> map = new HashMap<String, FieldNameValidator>();
-        map.put("documents", new StorageDocumentFieldNameValidator());
+        map.put("documents", new CollectibleDocumentFieldNameValidator());
         return new MappedFieldNameValidator(new NoOpFieldNameValidator(), map);
     }
 

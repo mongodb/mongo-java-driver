@@ -60,7 +60,7 @@ public class InsertMessage<T> extends RequestMessage {
         if (getCollectionName().endsWith(".system.indexes")) {
             return new NoOpFieldNameValidator();
         } else {
-            return new StorageDocumentFieldNameValidator();
+            return new CollectibleDocumentFieldNameValidator();
         }
     }
 
