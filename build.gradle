@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
 def configDir = new File(rootDir, 'config')
 
 buildscript {
@@ -42,6 +38,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
     apply plugin: 'findbugs'
     apply plugin: 'jacoco'
     apply plugin: 'eclipse'
+    apply plugin: 'idea'
 
     evaluationDependsOn(':util')
 
@@ -65,6 +62,13 @@ configure(subprojects.findAll { it.name != 'util' }) {
     configurations {
         provided
         provided.extendsFrom(compile)
+    }
+
+    idea {
+        module {
+            // include 'provided' dependencies on the classpath
+            scopes.PROVIDED.plus += configurations.provided
+        }
     }
 
     javadoc {
@@ -389,6 +393,7 @@ gradle.buildFinished { BuildResult result ->
                                         "You have ${JavaVersion.current()}.")
     }
 }
+
 
 apply from: 'gradle/maven-deployment.gradle'
 apply from: 'gradle/osgi-compatibility.gradle'
