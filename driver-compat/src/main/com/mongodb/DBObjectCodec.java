@@ -26,11 +26,11 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
+import org.bson.types.BsonDbPointer;
 import org.bson.types.BsonDocument;
+import org.bson.types.BsonSymbol;
 import org.bson.types.BsonValue;
 import org.bson.types.CodeWScope;
-import org.bson.types.DBPointer;
-import org.bson.types.Symbol;
 import org.mongodb.IdGenerator;
 import org.mongodb.MongoException;
 import org.mongodb.codecs.BinaryToByteArrayTransformer;
@@ -163,8 +163,8 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
                 encodeByteArray(bsonWriter, (byte[]) value);
             } else if (value.getClass().isArray()) {
                 encodeArray(bsonWriter, value);
-            } else if (value instanceof Symbol) {
-                bsonWriter.writeSymbol(((Symbol) value).getSymbol());
+            } else if (value instanceof BsonSymbol) {
+                bsonWriter.writeSymbol(((BsonSymbol) value).getSymbol());
             } else {
                 Codec codec = codecRegistry.get(value.getClass());
                 codec.encode(bsonWriter, value);
@@ -244,7 +244,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
                     initialRetVal = readCodeWScope(reader, path);
                     break;
                 case DB_POINTER: //custom for driver-compat types
-                    DBPointer dbPointer = reader.readDBPointer();
+                    BsonDbPointer dbPointer = reader.readDBPointer();
                     initialRetVal = new DBRef(db, dbPointer.getNamespace(), dbPointer.getId());
                     break;
                 case BINARY:

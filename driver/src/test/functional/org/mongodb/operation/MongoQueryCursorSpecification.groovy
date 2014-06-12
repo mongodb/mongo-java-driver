@@ -18,8 +18,8 @@
 package org.mongodb.operation
 
 import category.Slow
+import org.bson.BsonTimestamp
 import org.bson.types.BsonDocument
-import org.bson.types.Timestamp
 import org.junit.experimental.categories.Category
 import org.mongodb.CreateCollectionOptions
 import org.mongodb.Document
@@ -225,8 +225,8 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         collection.tools().drop()
         database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000))
 
-        collection.insert(new Document('_id', 1).append('ts', new Timestamp(5, 0)))
-        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new Timestamp(5, 0))), 2,
+        collection.insert(new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2,
                                       EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData))
 
         when:
@@ -245,7 +245,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
             void run() {
                 try {
                     Thread.sleep(500)
-                    collection.insert(new Document('_id', 2).append('ts', new Timestamp(6, 0)))
+                    collection.insert(new Document('_id', 2).append('ts', new BsonTimestamp(6, 0)))
                 } catch (ignored) {
                     // all good
                 }
@@ -270,7 +270,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
         collection.insert(new Document('_id', 1))
 
-        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new Timestamp(5, 0))), 2,
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2,
                                       EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData))
 
         when:

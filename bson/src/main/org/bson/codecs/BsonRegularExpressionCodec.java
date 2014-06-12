@@ -18,21 +18,26 @@ package org.bson.codecs;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
+import org.bson.types.BsonRegularExpression;
 
-public class NullCodec implements Codec<Object> {
+/**
+ * A codec for BSON regular expressions.
+ *
+ * @since 3.0
+ */
+public class BsonRegularExpressionCodec implements Codec<BsonRegularExpression> {
     @Override
-    public void encode(final BsonWriter writer, final Object value) {
-        writer.writeNull();
+    public BsonRegularExpression decode(final BsonReader reader) {
+        return reader.readRegularExpression();
     }
 
     @Override
-    public Object decode(final BsonReader reader) {
-        reader.readNull();
-        return null;
+    public void encode(final BsonWriter writer, final BsonRegularExpression value) {
+        writer.writeRegularExpression(value);
     }
 
     @Override
-    public Class<Object> getEncoderClass() {
-        return null;
+    public Class<BsonRegularExpression> getEncoderClass() {
+        return BsonRegularExpression.class;
     }
 }

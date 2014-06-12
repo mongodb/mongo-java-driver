@@ -17,6 +17,7 @@
 package org.bson.types
 
 import org.bson.BsonInvalidOperationException
+import org.bson.BsonTimestamp
 import spock.lang.Specification
 
 
@@ -32,15 +33,15 @@ class BsonDocumentSpecification extends Specification {
         def bsonDateTime = new BsonDateTime(new Date().getTime())
         def bsonDouble = new BsonDouble(62.0)
         def bsonString = new BsonString('the fox ...')
-        def minKey = new MinKey()
-        def maxKey = new MaxKey()
-        def code = new Code('int i = 0;')
-        def objectId = new ObjectId()
-        def scope = new CodeWithScope('int x = y', new BsonDocument('y', new BsonInt32(1)))
-        def regularExpression = new RegularExpression('^test.*regex.*xyz$', 'i')
-        def symbol = new Symbol('ruby stuff')
-        def timestamp = new Timestamp(0x12345678, 5)
-        def undefined = new Undefined()
+        def minKey = new BsonMinKey()
+        def maxKey = new BsonMaxKey()
+        def javaScript = new BsonJavaScript('int i = 0;')
+        def objectId = new BsonObjectId(new ObjectId())
+        def scope = new BsonJavaScriptWithScope('int x = y', new BsonDocument('y', new BsonInt32(1)))
+        def regularExpression = new BsonRegularExpression('^test.*regex.*xyz$', 'i')
+        def symbol = new BsonSymbol('ruby stuff')
+        def timestamp = new BsonTimestamp(0x12345678, 5)
+        def undefined = new BsonUndefined()
         def binary = new Binary((byte) 80, [5, 4, 3, 2, 1] as byte[])
         def bsonArray = new BsonArray([new BsonInt32(1), new BsonInt64(2L), new BsonBoolean(true),
                                        new BsonArray([new BsonInt32(1), new BsonInt32(2), new BsonInt32(3)]),
@@ -58,7 +59,7 @@ class BsonDocumentSpecification extends Specification {
                         new BsonElement('string', bsonString),
                         new BsonElement('minKey', minKey),
                         new BsonElement('maxKey', maxKey),
-                        new BsonElement('code', code),
+                        new BsonElement('javaScript', javaScript),
                         new BsonElement('objectId', objectId),
                         new BsonElement('codeWithScope', scope),
                         new BsonElement('regex', regularExpression),
@@ -94,10 +95,10 @@ class BsonDocumentSpecification extends Specification {
         root.getBoolean('boolean', new BsonBoolean(false)) is bsonBoolean
         root.getDateTime('date', new BsonDateTime(3453)) is bsonDateTime
         root.getString('string', new BsonString('df')) is bsonString
-        root.getObjectId('objectId', new ObjectId()) is objectId
-        root.getRegularExpression('regex', new RegularExpression('^foo', 'i')) is regularExpression
+        root.getObjectId('objectId', new BsonObjectId(new ObjectId())) is objectId
+        root.getRegularExpression('regex', new BsonRegularExpression('^foo', 'i')) is regularExpression
         root.getBinary('binary', new Binary(new byte[5])) is binary
-        root.getTimestamp('timestamp', new Timestamp(343, 23)) is timestamp
+        root.getTimestamp('timestamp', new BsonTimestamp(343, 23)) is timestamp
         root.getArray('array', new BsonArray()) is bsonArray
         root.getDocument('document', new BsonDocument()) is bsonDocument
         root.getNumber('int32', new BsonInt32(2)) is bsonInt32
@@ -161,9 +162,9 @@ class BsonDocumentSpecification extends Specification {
         def bsonDateTime = new BsonDateTime(new Date().getTime())
         def bsonDouble = new BsonDouble(62.0)
         def bsonString = new BsonString('the fox ...')
-        def objectId = new ObjectId()
-        def regularExpression = new RegularExpression('^test.*regex.*xyz$', 'i')
-        def timestamp = new Timestamp(0x12345678, 5)
+        def objectId = new BsonObjectId(new ObjectId())
+        def regularExpression = new BsonRegularExpression('^test.*regex.*xyz$', 'i')
+        def timestamp = new BsonTimestamp(0x12345678, 5)
         def binary = new Binary((byte) 80, [5, 4, 3, 2, 1] as byte[])
         def bsonArray = new BsonArray([new BsonInt32(1), new BsonInt64(2L), new BsonBoolean(true),
                                        new BsonArray([new BsonInt32(1), new BsonInt32(2), new BsonInt32(3)]),

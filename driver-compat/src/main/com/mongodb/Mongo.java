@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import org.bson.codecs.Codec;
+import org.bson.codecs.Decoder;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
@@ -808,7 +809,7 @@ public class Mongo {
         orphanedCursors.add(serverCursor);
     }
 
-    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
+    <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
         ReadBinding binding = getReadBinding(readPreference);
         try {
             return operation.execute(binding);
@@ -819,12 +820,17 @@ public class Mongo {
         }
     }
 
-    public <T> T execute(final WriteOperation<T> operation) {
+
+    <T> T execute(final WriteOperation<T> operation) {
+        return execute(operation, DBObjects.codec);
+    }
+
+    <T> T execute(final WriteOperation<T> operation, final Decoder<DBObject> decoder) {
         WriteBinding binding = getWriteBinding();
         try {
             return operation.execute(binding);
         } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
+            throw mapException(e, decoder);
         } finally {
             binding.release();
         }

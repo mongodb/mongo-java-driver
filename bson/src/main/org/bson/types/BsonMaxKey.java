@@ -14,30 +14,37 @@
  * limitations under the License.
  */
 
-package org.bson.codecs;
+package org.bson.types;
 
-import org.bson.BsonReader;
-import org.bson.BsonWriter;
-import org.bson.types.RegularExpression;
+import org.bson.BsonType;
+
+import java.io.Serializable;
 
 /**
- * A codec for BSON regular expressions.
- *
- * @since 3.0
+ * Represent the maximum key value regardless of the key's type
  */
-public class RegularExpressionCodec implements Codec<RegularExpression> {
+public final class BsonMaxKey extends BsonValue implements Serializable {
+
+    private static final long serialVersionUID = 5123414776151687185L;
+
     @Override
-    public RegularExpression decode(final BsonReader reader) {
-        return reader.readRegularExpression();
+    public BsonType getBsonType() {
+        return BsonType.MAX_KEY;
     }
 
     @Override
-    public void encode(final BsonWriter writer, final RegularExpression value) {
-        writer.writeRegularExpression(value);
+    public boolean equals(final Object o) {
+        return o instanceof BsonMaxKey;
     }
 
     @Override
-    public Class<RegularExpression> getEncoderClass() {
-        return RegularExpression.class;
+    public int hashCode() {
+        return 0;
     }
+
+    @Override
+    public String toString() {
+        return "BsonMaxKey";
+    }
+
 }

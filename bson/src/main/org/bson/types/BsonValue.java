@@ -17,6 +17,7 @@
 package org.bson.types;
 
 import org.bson.BsonInvalidOperationException;
+import org.bson.BsonTimestamp;
 import org.bson.BsonType;
 
 /**
@@ -28,7 +29,7 @@ public abstract class BsonValue {
     /**
      * Construct a new instance.  This is package-protected so that the BSON type system is closed.
      */
-    BsonValue() {
+    protected BsonValue() {
     }
 
     /**
@@ -130,14 +131,14 @@ public abstract class BsonValue {
     }
 
     /**
-     * Gets this value as an ObjectId if it is one, otherwise throws exception
+     * Gets this value as an BsonObjectId if it is one, otherwise throws exception
      *
-     * @return an ObjectId
+     * @return an BsonObjectId
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
-    public ObjectId asObjectId() {
+    public BsonObjectId asObjectId() {
         throwIfInvalidType(BsonType.OBJECT_ID);
-        return (ObjectId) this;
+        return (BsonObjectId) this;
     }
 
     /**
@@ -146,9 +147,9 @@ public abstract class BsonValue {
      * @return an DBPointer
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
-    public DBPointer asDBPointer() {
+    public BsonDbPointer asDBPointer() {
         throwIfInvalidType(BsonType.DB_POINTER);
-        return (DBPointer) this;
+        return (BsonDbPointer) this;
     }
 
     /**
@@ -157,9 +158,9 @@ public abstract class BsonValue {
      * @return an Timestamp
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
-    public Timestamp asTimestamp() {
+    public BsonTimestamp asTimestamp() {
         throwIfInvalidType(BsonType.TIMESTAMP);
-        return (Timestamp) this;
+        return (BsonTimestamp) this;
     }
 
     /**
@@ -190,9 +191,9 @@ public abstract class BsonValue {
      * @return an Symbol
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
-    public Symbol asSymbol() {
+    public BsonSymbol asSymbol() {
         throwIfInvalidType(BsonType.SYMBOL);
-        return (Symbol) this;
+        return (BsonSymbol) this;
     }
 
     /**
@@ -201,20 +202,20 @@ public abstract class BsonValue {
      * @return an ObjectId
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
-    public RegularExpression asRegularExpression() {
+    public BsonRegularExpression asRegularExpression() {
         throwIfInvalidType(BsonType.REGULAR_EXPRESSION);
-        return (RegularExpression) this;
+        return (BsonRegularExpression) this;
     }
 
     /**
-     * Gets this value as a Code if it is one, otherwise throws exception
+     * Gets this value as a {@code BsonJavaScript} if it is one, otherwise throws exception
      *
      * @return a Code
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
-    public Code asJavaScript() {
+    public BsonJavaScript asJavaScript() {
         throwIfInvalidType(BsonType.JAVASCRIPT);
-        return (Code) this;
+        return (BsonJavaScript) this;
     }
 
     /**
@@ -223,9 +224,9 @@ public abstract class BsonValue {
      * @return a CodeWithScope
      * @throws org.bson.BsonInvalidOperationException if this value is not of the expected type
      */
-    public CodeWithScope asJavaScriptWithScope() {
+    public BsonJavaScriptWithScope asJavaScriptWithScope() {
         throwIfInvalidType(BsonType.JAVASCRIPT_WITH_SCOPE);
-        return (CodeWithScope) this;
+        return (BsonJavaScriptWithScope) this;
     }
 
 
@@ -318,7 +319,7 @@ public abstract class BsonValue {
      * @return true if this is an ObjectId, false otherwise
      */
     public boolean isObjectId() {
-        return this instanceof ObjectId;
+        return this instanceof BsonObjectId;
     }
 
     /**
@@ -327,7 +328,7 @@ public abstract class BsonValue {
      * @return true if this is a DBPointer, false otherwise
      */
     public boolean isDBPointer() {
-        return this instanceof DBPointer;
+        return this instanceof BsonDbPointer;
     }
 
     /**
@@ -336,7 +337,7 @@ public abstract class BsonValue {
      * @return true if this is a Timestamp, false otherwise
      */
     public boolean isTimestamp() {
-        return this instanceof Timestamp;
+        return this instanceof BsonTimestamp;
     }
 
     /**
@@ -363,7 +364,7 @@ public abstract class BsonValue {
      * @return true if this is a Symbol, false otherwise
      */
     public boolean isSymbol() {
-        return this instanceof Symbol;
+        return this instanceof BsonSymbol;
     }
 
     /**
@@ -372,7 +373,7 @@ public abstract class BsonValue {
      * @return true if this is a RegularExpression, false otherwise
      */
     public boolean isRegularExpression() {
-        return this instanceof RegularExpression;
+        return this instanceof BsonRegularExpression;
     }
 
     /**
@@ -381,7 +382,7 @@ public abstract class BsonValue {
      * @return true if this is a Code, false otherwise
      */
     public boolean isJavaScript() {
-        return this instanceof Code;
+        return this instanceof BsonJavaScript;
     }
 
     /**
@@ -390,7 +391,7 @@ public abstract class BsonValue {
      * @return true if this is a CodeWithScope, false otherwise
      */
     public boolean isJavaScriptWithScope() {
-        return this instanceof CodeWithScope;
+        return this instanceof BsonJavaScriptWithScope;
     }
 
     private void throwIfInvalidType(final BsonType expectedType) {

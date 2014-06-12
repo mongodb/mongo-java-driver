@@ -14,39 +14,45 @@
  * limitations under the License.
  */
 
-// Code.java
+// Symbol.java
 
 package org.bson.types;
+
+import org.bson.BsonType;
 
 import java.io.Serializable;
 
 /**
- * for using the Code type
+ * Class to hold a BSON symbol object, which is an interned string in Ruby
  */
-public class Code implements Serializable {
+public class BsonSymbol extends BsonValue implements Serializable {
 
-    private static final long serialVersionUID = 475535263314046697L;
+    private final String symbol;
 
-    private final String code;
+    private static final long serialVersionUID = 1326269319883146072L;
 
-    /**
-     * Construct a new instance with the given code.
-     *
-     * @param code the Javascript code
-     */
-    public Code(final String code) {
-        this.code = code;
+    public BsonSymbol(final String s) {
+        if (s == null) {
+            throw new IllegalArgumentException("Value can not be null");
+        }
+        symbol = s;
+    }
+
+    @Override
+    public BsonType getBsonType() {
+        return BsonType.SYMBOL;
+    }
+
+    public String getSymbol() {
+        return symbol;
     }
 
     /**
-     * Get the Javascript code.
+     * Will compare equal to a String that is equal to the String that this holds
      *
-     * @return the code
+     * @param o the Symbol to compare this to
+     * @return true if parameter o is the same as this Symbol
      */
-    public String getCode() {
-        return code;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -56,9 +62,9 @@ public class Code implements Serializable {
             return false;
         }
 
-        Code code1 = (Code) o;
+        BsonSymbol symbol1 = (BsonSymbol) o;
 
-        if (!code.equals(code1.code)) {
+        if (!symbol.equals(symbol1.symbol)) {
             return false;
         }
 
@@ -67,14 +73,11 @@ public class Code implements Serializable {
 
     @Override
     public int hashCode() {
-        return code.hashCode();
+        return symbol.hashCode();
     }
 
     @Override
     public String toString() {
-        return "Code{"
-               + "code='" + code + '\''
-               + '}';
+        return symbol;
     }
 }
-

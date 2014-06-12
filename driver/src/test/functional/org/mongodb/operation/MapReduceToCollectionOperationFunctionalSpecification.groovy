@@ -15,9 +15,8 @@
  */
 
 package org.mongodb.operation
-
 import category.Async
-import org.bson.types.Code
+import org.bson.types.BsonJavaScript
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
@@ -32,8 +31,8 @@ import static org.mongodb.Fixture.getBinding
 
 class MapReduceToCollectionOperationFunctionalSpecification extends FunctionalSpecification {
     private final documentCodec = new DocumentCodec()
-    def mapReduce = new MapReduce(new Code('function(){ emit( this.name , 1 ); }'),
-                                  new Code('function(key, values){ return values.length; }'),
+    def mapReduce = new MapReduce(new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
+                                  new BsonJavaScript('function(key, values){ return values.length; }'),
                                   new MapReduceOutputOptions('mapReduceOutput'))
     def expectedResults = [['_id': 'Pete', 'value': 2.0] as Document,
                            ['_id': 'Sam', 'value': 1.0] as Document]

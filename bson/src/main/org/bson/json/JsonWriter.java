@@ -19,11 +19,11 @@ package org.bson.json;
 import org.bson.AbstractBsonWriter;
 import org.bson.BSONException;
 import org.bson.BsonContextType;
+import org.bson.BsonTimestamp;
 import org.bson.types.Binary;
-import org.bson.types.DBPointer;
+import org.bson.types.BsonDbPointer;
+import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Timestamp;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -366,7 +366,7 @@ public class JsonWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeRegularExpression(final RegularExpression regularExpression) {
+    public void writeRegularExpression(final BsonRegularExpression regularExpression) {
         checkPreconditions("writeRegularExpression", State.VALUE, State.INITIAL);
 
         try {
@@ -423,7 +423,7 @@ public class JsonWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeTimestamp(final Timestamp value) {
+    public void writeTimestamp(final BsonTimestamp value) {
         checkPreconditions("writeTimestamp", State.VALUE, State.INITIAL);
 
         try {
@@ -469,7 +469,7 @@ public class JsonWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeDBPointer(final DBPointer value) {
+    public void writeDBPointer(final BsonDbPointer value) {
         checkPreconditions("writeDBPointer", State.VALUE, State.INITIAL);
 
         writeStartDocument();

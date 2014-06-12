@@ -20,14 +20,13 @@ import org.bson.io.BSONByteBuffer;
 import org.bson.io.BasicInputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
+import org.bson.types.BsonDbPointer;
+import org.bson.types.BsonRegularExpression;
+import org.bson.types.BsonSymbol;
 import org.bson.types.Code;
 import org.bson.types.CodeWScope;
-import org.bson.types.DBPointer;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
-import org.bson.types.RegularExpression;
-import org.bson.types.Symbol;
-import org.bson.types.Timestamp;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -173,24 +172,24 @@ public class LazyBSONObject implements BSONObject {
             case DATE_TIME:
                 return new Date(reader.readDateTime());
             case REGULAR_EXPRESSION:
-                RegularExpression regularExpression = reader.readRegularExpression();
+                BsonRegularExpression regularExpression = reader.readRegularExpression();
                 return Pattern.compile(
                                       regularExpression.getPattern(),
                                       BSON.regexFlags(regularExpression.getOptions())
                                       );
             case DB_POINTER:
-                DBPointer dbPointer = reader.readDBPointer();
+                BsonDbPointer dbPointer = reader.readDBPointer();
                 return callback.createDBRef(dbPointer.getNamespace(), dbPointer.getId());
             case JAVASCRIPT:
                 return new Code(reader.readJavaScript());
             case SYMBOL:
-                return new Symbol(reader.readSymbol());
+                return new BsonSymbol(reader.readSymbol());
             case JAVASCRIPT_WITH_SCOPE:
                 return new CodeWScope(reader.readJavaScriptWithScope(), (BSONObject) readDocument(reader));
             case INT32:
                 return reader.readInt32();
             case TIMESTAMP:
-                Timestamp timestamp = reader.readTimestamp();
+                BsonTimestamp timestamp = reader.readTimestamp();
                 return new BSONTimestamp(timestamp.getTime(), timestamp.getInc());
             case INT64:
                 return reader.readInt64();

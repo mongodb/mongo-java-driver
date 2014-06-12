@@ -21,55 +21,37 @@ import org.bson.BsonType;
 import java.io.Serializable;
 
 /**
- * A representation of the JavaScript Code with Scope BSON type.
+ * For using the JavaScript Code type.
  *
  * @since 3.0
  */
-public class CodeWithScope extends BsonValue implements Serializable {
-
-    private static final long serialVersionUID = -6284832275113680002L;
+public class BsonJavaScript extends BsonValue implements Serializable {
 
     private final String code;
-    private final BsonDocument scope;
+
+    private static final long serialVersionUID = 475535263314046697L;
 
     /**
-     * Construct a new instance with the given code and scope.
+     * Construct a new instance with the given JavaScript code.
      *
-     * @param code the code
-     * @param scope the scope
+     * @param code the Javascript code
      */
-    public CodeWithScope(final String code, final BsonDocument scope) {
-        if (code == null) {
-            throw new IllegalArgumentException("code can not be null");
-        }
-        if (scope == null) {
-            throw new IllegalArgumentException("scope can not be null");
-        }
+    public BsonJavaScript(final String code) {
         this.code = code;
-        this.scope = scope;
     }
 
     @Override
     public BsonType getBsonType() {
-        return BsonType.JAVASCRIPT_WITH_SCOPE;
+        return BsonType.JAVASCRIPT;
     }
 
     /**
-     * Get the code.
+     * Get the Javascript code.
      *
      * @return the code
      */
     public String getCode() {
         return code;
-    }
-
-    /**
-     * Get the scope.
-     *
-     * @return the scope
-     */
-    public BsonDocument getScope() {
-        return scope;
     }
 
     @Override
@@ -81,12 +63,9 @@ public class CodeWithScope extends BsonValue implements Serializable {
             return false;
         }
 
-        CodeWithScope that = (CodeWithScope) o;
+        BsonJavaScript code1 = (BsonJavaScript) o;
 
-        if (!code.equals(that.code)) {
-            return false;
-        }
-        if (!scope.equals(that.scope)) {
+        if (!code.equals(code1.code)) {
             return false;
         }
 
@@ -95,16 +74,13 @@ public class CodeWithScope extends BsonValue implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = code.hashCode();
-        result = 31 * result + scope.hashCode();
-        return result;
+        return code.hashCode();
     }
 
     @Override
     public String toString() {
-        return "CodeWithScope{"
-               + "code=" + getCode()
-               + "scope=" + scope
+        return "BsonJavaScript{"
+               + "code='" + code + '\''
                + '}';
     }
 }

@@ -39,7 +39,7 @@ class UpdateSpecification extends FunctionalSpecification {
 
         then:
         collection.find(new Document()).into([]).get() ==
-        [new Document('_id', result.upsertedId).append('x', true).append('y', false)]
+        [new Document('_id', result.upsertedId.asObjectId().getValue()).append('x', true).append('y', false)]
     }
 
     def 'updateOne should update one matching document'() {
@@ -75,6 +75,6 @@ class UpdateSpecification extends FunctionalSpecification {
 
         then:
         collection.find(new Document('y', false)).into([]).get() ==
-        [document.append('_id', result.getUpsertedId()).append('y', false)]
+        [document.append('_id', result.getUpsertedId().asObjectId().getValue()).append('y', false)]
     }
 }

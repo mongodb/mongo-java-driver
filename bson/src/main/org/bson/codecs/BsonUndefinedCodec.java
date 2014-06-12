@@ -18,7 +18,7 @@ package org.bson.codecs;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.Undefined;
+import org.bson.types.BsonUndefined;
 
 /**
  * Allows reading and writing of the BSON Undefined type.  On encoding, it will write the correct type to the BsonWriter, but ignore the
@@ -31,20 +31,20 @@ import org.bson.types.Undefined;
  * @see org.bson.BsonType#UNDEFINED
  * @since 3.0
  */
-public class UndefinedCodec implements Codec<Undefined> {
+public class BsonUndefinedCodec implements Codec<BsonUndefined> {
     @Override
-    public Undefined decode(final BsonReader reader) {
+    public BsonUndefined decode(final BsonReader reader) {
         reader.readUndefined();
-        return new Undefined();
+        return new BsonUndefined();
     }
 
     @Override
-    public void encode(final BsonWriter writer, final Undefined value) {
+    public void encode(final BsonWriter writer, final BsonUndefined value) {
         writer.writeUndefined();
     }
 
     @Override
-    public Class<Undefined> getEncoderClass() {
-        return Undefined.class;
+    public Class<BsonUndefined> getEncoderClass() {
+        return BsonUndefined.class;
     }
 }

@@ -21,7 +21,7 @@ import org.bson.Transformer;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.BsonInt32;
-import org.bson.types.ObjectId;
+import org.bson.types.BsonObjectId;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -94,6 +94,6 @@ public class DBObjectCodecTest extends DatabaseTestCase {
         assertFalse(dbObjectCodec.documentHasId(document));
         dbObjectCodec.generateIdIfAbsentFromDocument(document);
         assertTrue(dbObjectCodec.documentHasId(document));
-        assertEquals(ObjectId.class, dbObjectCodec.getDocumentId(document).getClass());
+        assertEquals(BsonObjectId.class, dbObjectCodec.getDocumentId(document).getClass());
     }
 }

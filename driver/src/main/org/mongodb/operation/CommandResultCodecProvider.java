@@ -19,29 +19,30 @@ package org.mongodb.operation;
 import org.bson.codecs.BinaryCodec;
 import org.bson.codecs.BsonArrayCodec;
 import org.bson.codecs.BsonBooleanCodec;
+import org.bson.codecs.BsonDBPointerCodec;
 import org.bson.codecs.BsonDateTimeCodec;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.BsonDoubleCodec;
 import org.bson.codecs.BsonInt32Codec;
 import org.bson.codecs.BsonInt64Codec;
+import org.bson.codecs.BsonJavaScriptWithScopeCodec;
+import org.bson.codecs.BsonMaxKeyCodec;
+import org.bson.codecs.BsonMinKeyCodec;
 import org.bson.codecs.BsonNullCodec;
+import org.bson.codecs.BsonObjectIdCodec;
+import org.bson.codecs.BsonRegularExpressionCodec;
 import org.bson.codecs.BsonStringCodec;
-import org.bson.codecs.CodeCodec;
-import org.bson.codecs.CodeWithScopeCodec;
+import org.bson.codecs.BsonSymbolCodec;
+import org.bson.codecs.BsonUndefinedCodec;
 import org.bson.codecs.Codec;
-import org.bson.codecs.DBPointerCodec;
 import org.bson.codecs.Decoder;
-import org.bson.codecs.MaxKeyCodec;
-import org.bson.codecs.MinKeyCodec;
-import org.bson.codecs.ObjectIdCodec;
-import org.bson.codecs.RegularExpressionCodec;
-import org.bson.codecs.SymbolCodec;
 import org.bson.codecs.TimestampCodec;
-import org.bson.codecs.UndefinedCodec;
+import org.bson.codecs.BsonJavaScriptCodec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BsonArray;
 import org.bson.types.BsonDocument;
+import org.bson.types.BsonValue;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -83,23 +84,23 @@ class CommandResultCodecProvider<P> implements CodecProvider {
         addCodec(new BinaryCodec());
         addCodec(new BsonBooleanCodec());
         addCodec(new BsonDateTimeCodec());
-        addCodec(new DBPointerCodec());
+        addCodec(new BsonDBPointerCodec());
         addCodec(new BsonDoubleCodec());
         addCodec(new BsonInt32Codec());
         addCodec(new BsonInt64Codec());
-        addCodec(new MinKeyCodec());
-        addCodec(new MaxKeyCodec());
-        addCodec(new CodeCodec());
-        addCodec(new ObjectIdCodec());
-        addCodec(new RegularExpressionCodec());
+        addCodec(new BsonMinKeyCodec());
+        addCodec(new BsonMaxKeyCodec());
+        addCodec(new BsonJavaScriptCodec());
+        addCodec(new BsonObjectIdCodec());
+        addCodec(new BsonRegularExpressionCodec());
         addCodec(new BsonStringCodec());
-        addCodec(new SymbolCodec());
+        addCodec(new BsonSymbolCodec());
         addCodec(new TimestampCodec());
-        addCodec(new UndefinedCodec());
-        addCodec(new CodeWithScopeCodec(new BsonDocumentCodec()));
+        addCodec(new BsonUndefinedCodec());
+        addCodec(new BsonJavaScriptWithScopeCodec(new BsonDocumentCodec()));
     }
 
-    private <T> void addCodec(final Codec<T> codec) {
+    private <T extends BsonValue> void addCodec(final Codec<T> codec) {
         codecs.put(codec.getEncoderClass(), codec);
     }
 }

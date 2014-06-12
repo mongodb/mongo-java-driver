@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import org.bson.codecs.Decoder;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoDuplicateKeyException;
 import org.mongodb.MongoWriteException;
@@ -23,8 +24,12 @@ import org.mongodb.MongoWriteException;
 import java.io.IOException;
 
 final class MongoExceptions {
-    @SuppressWarnings("deprecation")
     public static com.mongodb.MongoException mapException(final org.mongodb.MongoException e) {
+        return mapException(e, DBObjects.codec);
+    }
+
+    @SuppressWarnings("deprecation")
+    public static com.mongodb.MongoException mapException(final org.mongodb.MongoException e, final Decoder<DBObject> decoder) {
         Throwable cause = e.getCause();
         if (e instanceof org.mongodb.MongoDuplicateKeyException) {
             return new MongoException.DuplicateKey((MongoDuplicateKeyException) e);
@@ -49,7 +54,7 @@ final class MongoExceptions {
         } else if (e instanceof org.mongodb.connection.MongoSocketException && cause instanceof IOException) {
             return new MongoSocketException(e.getMessage(), (IOException) cause);
         } else if (e instanceof org.mongodb.BulkWriteException) {
-            return BulkWriteHelper.translateBulkWriteException((org.mongodb.BulkWriteException) e);
+            return BulkWriteHelper.translateBulkWriteException((org.mongodb.BulkWriteException) e, decoder);
         } else if (e instanceof org.mongodb.connection.MongoServerSelectionException) {
             return new MongoServerSelectionException(e.getMessage());
         } else {

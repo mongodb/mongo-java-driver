@@ -17,26 +17,26 @@
 package org.bson.codecs;
 
 import org.bson.BsonReader;
+import org.bson.BsonTimestamp;
 import org.bson.BsonWriter;
-import org.bson.types.Timestamp;
 
 /**
  * A Codec for Timestamp instances.
  *
  * @since 3.0
  */
-public class TimestampCodec implements Codec<Timestamp> {
+public class TimestampCodec implements Codec<BsonTimestamp> {
     @Override
-    public void encode(final BsonWriter writer, final Timestamp value) {
+    public void encode(final BsonWriter writer, final BsonTimestamp value) {
         writer.writeTimestamp(value);
     }
 
     @Override
-    public Timestamp decode(final BsonReader reader) {
+    public BsonTimestamp decode(final BsonReader reader) {
         return reader.readTimestamp();
     }
 
     @Override
-    public Class<Timestamp> getEncoderClass() {
-        return Timestamp.class;
+    public Class<BsonTimestamp> getEncoderClass() {
+        return BsonTimestamp.class;
     }}

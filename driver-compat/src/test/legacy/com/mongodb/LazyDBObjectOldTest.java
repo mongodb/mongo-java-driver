@@ -22,11 +22,11 @@ import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
+import org.bson.types.BsonSymbol;
 import org.bson.types.Code;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
-import org.bson.types.Symbol;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -253,7 +253,7 @@ public class LazyDBObjectOldTest extends DatabaseTestCase {
         b.append("double245_6289", 245.6289);
         b.append("oid", objectId);
         // Symbol wonky
-        b.append("symbol", new Symbol("foobar"));
+        b.append("symbol", new BsonSymbol("foobar"));
         // Code wonky
         b.append("code", new Code("var x = 12345;"));
         // TODO - Shell doesn't work with Code W/ Scope, return to this test later

@@ -18,8 +18,8 @@ package org.mongodb.operation
 
 import category.Async
 import category.Slow
+import org.bson.BsonTimestamp
 import org.bson.types.BsonDocumentWrapper
-import org.bson.types.Timestamp
 import org.junit.experimental.categories.Category
 import org.mongodb.Block
 import org.mongodb.CreateCollectionOptions
@@ -195,7 +195,7 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         Connection connection = source.getConnection().get()
         new DropCollectionOperation(getNamespace()).execute(getBinding())
         new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName(), true, 1000)).execute(getBinding())
-        def ts = new Timestamp(5, 0)
+        def ts = new BsonTimestamp(5, 0)
         getCollectionHelper().insertDocuments([_id: 1, ts: ts] as Document)
 
         QueryResult<Document> firstBatch = executeQuery([ts: ['$gte': ts] as Document ] as Document, 2,
@@ -210,9 +210,9 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         block.getIterations() == 1
 
         when:
-        getCollectionHelper().insertDocuments([_id: 2, ts: new Timestamp(1, 0)] as Document)
-        getCollectionHelper().insertDocuments([_id: 3, ts: new Timestamp(6, 0)] as Document)
-        getCollectionHelper().insertDocuments([_id: 4, ts: new Timestamp(8, 0)] as Document)
+        getCollectionHelper().insertDocuments([_id: 2, ts: new BsonTimestamp(1, 0)] as Document)
+        getCollectionHelper().insertDocuments([_id: 3, ts: new BsonTimestamp(6, 0)] as Document)
+        getCollectionHelper().insertDocuments([_id: 4, ts: new BsonTimestamp(8, 0)] as Document)
         future.get()
 
         then:

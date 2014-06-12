@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// Symbol.java
-
 package org.bson.types;
 
 import org.bson.BsonType;
@@ -23,36 +21,38 @@ import org.bson.BsonType;
 import java.io.Serializable;
 
 /**
- * Class to hold a BSON symbol object, which is an interned string in Ruby
+ * A holder class for a BSON regular expression, so that we can delay compiling into a Pattern until necessary.
+ *
+ * @since 3.0
  */
-public class Symbol extends BsonValue implements Serializable {
+public final class BsonRegularExpression extends BsonValue implements Serializable {
+    private static final long serialVersionUID = 198506456131942797L;
 
-    private final String symbol;
+    private final String pattern;
+    private final String options;
 
-    private static final long serialVersionUID = 1326269319883146072L;
+    public BsonRegularExpression(final String pattern, final String options) {
+        this.pattern = pattern;
+        this.options = options;
+    }
 
-    public Symbol(final String s) {
-        if (s == null) {
-            throw new IllegalArgumentException("Value can not be null");
-        }
-        symbol = s;
+    public BsonRegularExpression(final String pattern) {
+        this(pattern, "");
     }
 
     @Override
     public BsonType getBsonType() {
-        return BsonType.SYMBOL;
+        return BsonType.REGULAR_EXPRESSION;
     }
 
-    public String getSymbol() {
-        return symbol;
+    public String getPattern() {
+        return pattern;
     }
 
-    /**
-     * Will compare equal to a String that is equal to the String that this holds
-     *
-     * @param o the Symbol to compare this to
-     * @return true if parameter o is the same as this Symbol
-     */
+    public String getOptions() {
+        return options;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -62,9 +62,12 @@ public class Symbol extends BsonValue implements Serializable {
             return false;
         }
 
-        Symbol symbol1 = (Symbol) o;
+        BsonRegularExpression that = (BsonRegularExpression) o;
 
-        if (!symbol.equals(symbol1.symbol)) {
+        if (!options.equals(that.options)) {
+            return false;
+        }
+        if (!pattern.equals(that.pattern)) {
             return false;
         }
 
@@ -73,11 +76,8 @@ public class Symbol extends BsonValue implements Serializable {
 
     @Override
     public int hashCode() {
-        return symbol.hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return symbol;
+        int result = pattern.hashCode();
+        result = 31 * result + options.hashCode();
+        return result;
     }
 }

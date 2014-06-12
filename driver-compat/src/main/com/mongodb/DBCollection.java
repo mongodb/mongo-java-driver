@@ -302,8 +302,11 @@ public class DBCollection {
             return null;
         }
 
-        return new WriteResult(writeResult.getCount(), writeResult.isUpdateOfExisting(),
-                               writeResult.getUpsertedId(), writeConcern);
+        Object upsertedId = writeResult.getUpsertedId() == null
+                            ? null
+                            : getObjectCodec().decode(new BsonDocumentReader(new BsonDocument("_id", writeResult.getUpsertedId())))
+                                              .get("_id");
+        return new WriteResult(writeResult.getCount(), writeResult.isUpdateOfExisting(), upsertedId, writeConcern);
     }
 
     /**
@@ -1814,12 +1817,12 @@ public class DBCollection {
         return translateBulkWriteResult(execute(new MixedBulkWriteOperation<DBObject>(getNamespace(),
                                                                                       translateWriteRequestsToNew(writeRequests),
                                                                                       ordered, writeConcern.toNew(),
-                                                                                      getObjectCodec()
-        )));
+                                                                                      getObjectCodec())),
+                                        getObjectCodec());
     }
 
     <T> T execute(final WriteOperation<T> operation) {
-        return getDB().getMongo().execute(operation);
+        return getDB().getMongo().execute(operation, getObjectCodec());
     }
 
     <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
