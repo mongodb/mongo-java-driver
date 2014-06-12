@@ -19,10 +19,9 @@ package org.bson;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.types.Binary;
-import org.bson.types.DBPointer;
+import org.bson.types.BsonDbPointer;
+import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Timestamp;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -306,8 +305,8 @@ public class BsonBinaryWriterTest {
 
         writer.writeStartDocument();
 
-        writer.writeRegularExpression("r1", new RegularExpression("([01]?[0-9][0-9]?)"));
-        writer.writeRegularExpression("r2", new RegularExpression("[ \\t]+$", "i"));
+        writer.writeRegularExpression("r1", new BsonRegularExpression("([01]?[0-9][0-9]?)"));
+        writer.writeRegularExpression("r2", new BsonRegularExpression("[ \\t]+$", "i"));
 
         writer.writeEndDocument();
 
@@ -321,7 +320,7 @@ public class BsonBinaryWriterTest {
     public void testWriteTimestamp() {
         writer.writeStartDocument();
 
-        writer.writeTimestamp("t1", new Timestamp(123999401, 44332));
+        writer.writeTimestamp("t1", new BsonTimestamp(123999401, 44332));
 
         writer.writeEndDocument();
 
@@ -333,7 +332,7 @@ public class BsonBinaryWriterTest {
     public void testWriteDBPointer() {
         writer.writeStartDocument();
 
-        DBPointer dbPointer = new DBPointer("my.test", new ObjectId("50d3332018c6a1d8d1662b61"));
+        BsonDbPointer dbPointer = new BsonDbPointer("my.test", new ObjectId("50d3332018c6a1d8d1662b61"));
         writer.writeDBPointer("pt", dbPointer);
 
         writer.writeEndDocument();

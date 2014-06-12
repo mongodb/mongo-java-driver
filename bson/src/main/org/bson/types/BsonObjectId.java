@@ -21,36 +21,43 @@ import org.bson.BsonType;
 import java.io.Serializable;
 
 /**
- * A holder class for a BSON regular expression, so that we can delay compiling into a Pattern until necessary.
+ * A representation of the BSON ObjectId type.
  *
  * @since 3.0
  */
-public final class RegularExpression extends BsonValue implements Serializable {
-    private static final long serialVersionUID = 198506456131942797L;
+public class BsonObjectId extends BsonValue implements Comparable<BsonObjectId>, Serializable {
 
-    private final String pattern;
-    private final String options;
+    private static final long serialVersionUID = -8584037677369278059L;
+    private final ObjectId value;
 
-    public RegularExpression(final String pattern, final String options) {
-        this.pattern = pattern;
-        this.options = options;
+    /**
+     * Construct a new instance with the given {@code ObjectId} instance.
+     * @param value the ObjectId
+     */
+    public BsonObjectId(final ObjectId value) {
+        if (value == null) {
+            throw new IllegalArgumentException("value may not be null");
+        }
+        this.value = value;
     }
 
-    public RegularExpression(final String pattern) {
-        this(pattern, "");
+    /**
+     * Get the {@code ObjectId} value.
+     *
+     * @return the {@code ObjectId} value
+     */
+    public ObjectId getValue() {
+       return value;
     }
 
     @Override
     public BsonType getBsonType() {
-        return BsonType.REGULAR_EXPRESSION;
+        return BsonType.OBJECT_ID;
     }
 
-    public String getPattern() {
-        return pattern;
-    }
-
-    public String getOptions() {
-        return options;
+    @Override
+    public int compareTo(final BsonObjectId o) {
+        return value.compareTo(o.value);
     }
 
     @Override
@@ -62,12 +69,9 @@ public final class RegularExpression extends BsonValue implements Serializable {
             return false;
         }
 
-        RegularExpression that = (RegularExpression) o;
+        BsonObjectId that = (BsonObjectId) o;
 
-        if (!options.equals(that.options)) {
-            return false;
-        }
-        if (!pattern.equals(that.pattern)) {
+        if (!value.equals(that.value)) {
             return false;
         }
 
@@ -76,8 +80,6 @@ public final class RegularExpression extends BsonValue implements Serializable {
 
     @Override
     public int hashCode() {
-        int result = pattern.hashCode();
-        result = 31 * result + options.hashCode();
-        return result;
+        return value.hashCode();
     }
 }

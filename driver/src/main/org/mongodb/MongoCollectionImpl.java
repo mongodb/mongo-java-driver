@@ -19,7 +19,7 @@ package org.mongodb;
 import org.bson.codecs.Codec;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonDocumentWrapper;
-import org.bson.types.Code;
+import org.bson.types.BsonJavaScript;
 import org.mongodb.codecs.CollectibleCodec;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.AggregateOperation;
@@ -275,7 +275,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoIterable<Document> mapReduce(final String map, final String reduce) {
             //TODO: support supplied read preferences?
-            MapReduce mapReduce = new MapReduce(new Code(map), new Code(reduce)).filter(findOp.getFilter())
+            MapReduce mapReduce = new MapReduce(new BsonJavaScript(map), new BsonJavaScript(reduce)).filter(findOp.getFilter())
                                                                                 .limit(findOp.getLimit());
 
             if (mapReduce.isInline()) {

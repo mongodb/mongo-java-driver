@@ -16,17 +16,17 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BsonTimestamp;
 import org.bson.BsonType;
 import org.bson.types.Binary;
+import org.bson.types.BsonDbPointer;
+import org.bson.types.BsonRegularExpression;
+import org.bson.types.BsonSymbol;
+import org.bson.types.BsonUndefined;
 import org.bson.types.Code;
-import org.bson.types.DBPointer;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Symbol;
-import org.bson.types.Timestamp;
-import org.bson.types.Undefined;
 import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
 
@@ -158,7 +158,7 @@ public class BsonTypeClassMap {
         map.put(BsonType.BINARY, Binary.class);
         map.put(BsonType.BOOLEAN, Boolean.class);
         map.put(BsonType.DATE_TIME, Date.class);
-        map.put(BsonType.DB_POINTER, DBPointer.class);
+        map.put(BsonType.DB_POINTER, BsonDbPointer.class);
         map.put(BsonType.DOCUMENT, Document.class);
         map.put(BsonType.DOUBLE, Double.class);
         map.put(BsonType.INT32, Integer.class);
@@ -168,10 +168,10 @@ public class BsonTypeClassMap {
         map.put(BsonType.JAVASCRIPT, Code.class);
         map.put(BsonType.JAVASCRIPT_WITH_SCOPE, CodeWithScope.class);
         map.put(BsonType.OBJECT_ID, ObjectId.class);
-        map.put(BsonType.REGULAR_EXPRESSION, RegularExpression.class);
+        map.put(BsonType.REGULAR_EXPRESSION, BsonRegularExpression.class);
         map.put(BsonType.STRING, String.class);
-        map.put(BsonType.SYMBOL, Symbol.class);
-        map.put(BsonType.TIMESTAMP, Timestamp.class);
-        map.put(BsonType.UNDEFINED, Undefined.class);
+        map.put(BsonType.SYMBOL, BsonSymbol.class);
+        map.put(BsonType.TIMESTAMP, BsonTimestamp.class);
+        map.put(BsonType.UNDEFINED, BsonUndefined.class);
     }
 }

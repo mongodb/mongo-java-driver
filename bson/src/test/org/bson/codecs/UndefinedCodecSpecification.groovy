@@ -18,17 +18,17 @@ package org.bson.codecs
 
 import org.bson.BsonReader
 import org.bson.BsonWriter
-import org.bson.types.Undefined
+import org.bson.types.BsonUndefined
 import spock.lang.Specification
 import spock.lang.Subject
 
 class UndefinedCodecSpecification extends Specification {
     @Subject
-    UndefinedCodec codec = new UndefinedCodec();
+    BsonUndefinedCodec codec = new BsonUndefinedCodec();
 
     def 'should return Undefined class'() {
         expect:
-        codec.encoderClass == Undefined
+        codec.encoderClass == BsonUndefined
     }
 
     def 'should decode undefined type from BsonReader'() {
@@ -41,7 +41,7 @@ class UndefinedCodecSpecification extends Specification {
         then:
         1 * reader.readUndefined()
         result != null
-        result.class == Undefined
+        result.class == BsonUndefined
     }
 
     def 'should encode undefined type to BsonWriter'() {
@@ -49,7 +49,7 @@ class UndefinedCodecSpecification extends Specification {
         BsonWriter writer = Mock()
 
         when:
-        codec.encode(writer, new Undefined())
+        codec.encode(writer, new BsonUndefined())
 
         then:
         1 * writer.writeUndefined()

@@ -17,11 +17,11 @@
 package org.bson.json;
 
 import org.bson.BsonInvalidOperationException;
+import org.bson.BsonTimestamp;
 import org.bson.types.Binary;
-import org.bson.types.DBPointer;
+import org.bson.types.BsonDbPointer;
+import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Timestamp;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -506,17 +506,17 @@ public class JsonWriterTest {
 
     @Test
     public void testRegularExpressionShell() {
-        List<TestData<RegularExpression>> tests;
-        tests = asList(new TestData<RegularExpression>(new RegularExpression(""), "/(?:)/"),
-                       new TestData<RegularExpression>(new RegularExpression("a"), "/a/"),
-                       new TestData<RegularExpression>(new RegularExpression("a/b"), "/a\\/b/"),
-                       new TestData<RegularExpression>(new RegularExpression("a\\b"), "/a\\b/"),
-                       new TestData<RegularExpression>(new RegularExpression("a", "i"), "/a/i"),
-                       new TestData<RegularExpression>(new RegularExpression("a", "m"), "/a/m"),
-                       new TestData<RegularExpression>(new RegularExpression("a", "x"), "/a/x"),
-                       new TestData<RegularExpression>(new RegularExpression("a", "s"), "/a/s"),
-                       new TestData<RegularExpression>(new RegularExpression("a", "imxs"), "/a/imxs"));
-        for (final TestData<RegularExpression> cur : tests) {
+        List<TestData<BsonRegularExpression>> tests;
+        tests = asList(new TestData<BsonRegularExpression>(new BsonRegularExpression(""), "/(?:)/"),
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a"), "/a/"),
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a/b"), "/a\\/b/"),
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a\\b"), "/a\\b/"),
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "i"), "/a/i"),
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "m"), "/a/m"),
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "x"), "/a/x"),
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "s"), "/a/s"),
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "imxs"), "/a/imxs"));
+        for (final TestData<BsonRegularExpression> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.SHELL));
             writer.writeStartDocument();
@@ -529,36 +529,36 @@ public class JsonWriterTest {
 
     @Test
     public void testRegularExpressionStrict() {
-        List<TestData<RegularExpression>> tests;
-        tests = asList(new TestData<RegularExpression>(new RegularExpression(""), "{ \"$regex\" : \"\", "
+        List<TestData<BsonRegularExpression>> tests;
+        tests = asList(new TestData<BsonRegularExpression>(new BsonRegularExpression(""), "{ \"$regex\" : \"\", "
                                                                                   + "\"$options\" : \"\" "
                                                                                   + "}"),
-                       new TestData<RegularExpression>(new RegularExpression("a"), "{ \"$regex\" : \"a\","
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a"), "{ \"$regex\" : \"a\","
                                                                                    + " \"$options\" : \"\" "
                                                                                    + "}"),
-                       new TestData<RegularExpression>(new RegularExpression("a/b"), "{ \"$regex\" : "
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a/b"), "{ \"$regex\" : "
                                                                                      + "\"a/b\", "
                                                                                      + "\"$options\" : \"\" "
                                                                                      + "}"),
-                       new TestData<RegularExpression>(new RegularExpression("a\\b"), "{ \"$regex\" : "
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a\\b"), "{ \"$regex\" : "
                                                                                       + "\"a\\\\b\", "
                                                                                       + "\"$options\" : \"\" "
                                                                                       + "}"),
-                       new TestData<RegularExpression>(new RegularExpression("a", "i"), "{ \"$regex\" : \"a\","
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "i"), "{ \"$regex\" : \"a\","
                                                                                         + " \"$options\" : \"i\""
                                                                                         + " }"),
-                       new TestData<RegularExpression>(new RegularExpression("a", "m"), "{ \"$regex\" : \"a\","
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "m"), "{ \"$regex\" : \"a\","
                                                                                         + " \"$options\" : \"m\""
                                                                                         + " }"),
-                       new TestData<RegularExpression>(new RegularExpression("a", "x"), "{ \"$regex\" : \"a\","
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "x"), "{ \"$regex\" : \"a\","
                                                                                         + " \"$options\" : \"x\""
                                                                                         + " }"),
-                       new TestData<RegularExpression>(new RegularExpression("a", "s"), "{ \"$regex\" : \"a\","
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "s"), "{ \"$regex\" : \"a\","
                                                                                         + " \"$options\" : \"s\""
                                                                                         + " }"),
-                       new TestData<RegularExpression>(new RegularExpression("a", "imxs"),
+                       new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "imxs"),
                                                        "{ \"$regex\" : \"a\"," + " \"$options\" : \"imxs\" }"));
-        for (final TestData<RegularExpression> cur : tests) {
+        for (final TestData<BsonRegularExpression> cur : tests) {
             stringWriter = new StringWriter();
             writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.STRICT));
             writer.writeStartDocument();
@@ -607,7 +607,7 @@ public class JsonWriterTest {
     @Test
     public void testTimestampStrict() {
         writer.writeStartDocument();
-        writer.writeTimestamp("timestamp", new Timestamp(1000, 1));
+        writer.writeTimestamp("timestamp", new BsonTimestamp(1000, 1));
         writer.writeEndDocument();
         String expected = "{ \"timestamp\" : { \"$timestamp\" : { \"t\" : 1000, \"i\" : 1 } } }";
         assertEquals(expected, stringWriter.toString());
@@ -617,7 +617,7 @@ public class JsonWriterTest {
     public void testTimestampShell() {
         writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.SHELL));
         writer.writeStartDocument();
-        writer.writeTimestamp("timestamp", new Timestamp(1000, 1));
+        writer.writeTimestamp("timestamp", new BsonTimestamp(1000, 1));
         writer.writeEndDocument();
         String expected = "{ \"timestamp\" : Timestamp(1000, 1) }";
         assertEquals(expected, stringWriter.toString());
@@ -646,7 +646,7 @@ public class JsonWriterTest {
     @Test
     public void testDBPointer() {
         writer.writeStartDocument();
-        writer.writeDBPointer("dbPointer", new DBPointer("my.test", new ObjectId("4d0ce088e447ad08b4721a37")));
+        writer.writeDBPointer("dbPointer", new BsonDbPointer("my.test", new ObjectId("4d0ce088e447ad08b4721a37")));
         writer.writeEndDocument();
         String expected = "{ \"dbPointer\" : { \"$ref\" : \"my.test\", \"$id\" : { \"$oid\" : \"4d0ce088e447ad08b4721a37\" } } }";
         assertEquals(expected, stringWriter.toString());

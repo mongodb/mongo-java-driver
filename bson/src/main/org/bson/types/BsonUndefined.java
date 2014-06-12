@@ -29,7 +29,7 @@ import java.io.Serializable;
  * @see org.bson.BsonType#UNDEFINED
  * @since 3.0
  */
-public final class Undefined extends BsonValue implements Serializable {
+public final class BsonUndefined extends BsonValue implements Serializable {
     private static final long serialVersionUID = -6947231726163165009L;
 
     @Override

@@ -17,7 +17,7 @@
 package org.bson;
 
 import org.bson.io.BasicInputBuffer;
-import org.bson.types.DBPointer;
+import org.bson.types.BsonDbPointer;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -36,7 +36,7 @@ public class BsonBinaryReaderTest {
 
         reader.readStartDocument();
         assertThat(reader.readBsonType(), is(BsonType.DB_POINTER));
-        DBPointer dbPointer = reader.readDBPointer();
+        BsonDbPointer dbPointer = reader.readDBPointer();
         assertThat(dbPointer.getNamespace(), is("b"));
         assertThat(dbPointer.getId(), is(new ObjectId("5209296cd6c4e38cf96fffdc")));
         reader.readEndDocument();

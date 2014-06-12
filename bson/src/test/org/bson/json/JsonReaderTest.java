@@ -18,12 +18,12 @@ package org.bson.json;
 
 import org.bson.AbstractBsonReader;
 import org.bson.BsonBinarySubType;
+import org.bson.BsonTimestamp;
 import org.bson.BsonType;
 import org.bson.types.Binary;
-import org.bson.types.DBPointer;
+import org.bson.types.BsonDbPointer;
+import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Timestamp;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -404,7 +404,7 @@ public class JsonReaderTest {
         String json = "/pattern/imxs";
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.REGULAR_EXPRESSION, bsonReader.readBsonType());
-        RegularExpression regex = bsonReader.readRegularExpression();
+        BsonRegularExpression regex = bsonReader.readRegularExpression();
         assertEquals("pattern", regex.getPattern());
         assertEquals("imxs", regex.getOptions());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
@@ -416,7 +416,7 @@ public class JsonReaderTest {
         String json = "{ \"$regex\" : \"pattern\", \"$options\" : \"imxs\" }";
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.REGULAR_EXPRESSION, bsonReader.readBsonType());
-        RegularExpression regex = bsonReader.readRegularExpression();
+        BsonRegularExpression regex = bsonReader.readRegularExpression();
         assertEquals("pattern", regex.getPattern());
         assertEquals("imxs", regex.getOptions());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
@@ -456,7 +456,7 @@ public class JsonReaderTest {
         String json = "{ \"$timestamp\" : NumberLong(1234) }";
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.TIMESTAMP, bsonReader.readBsonType());
-        assertEquals(new Timestamp(1234, 1), bsonReader.readTimestamp());
+        assertEquals(new BsonTimestamp(1234, 1), bsonReader.readTimestamp());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
     }
 
@@ -634,7 +634,7 @@ public class JsonReaderTest {
         String json = "RegExp(\"abc\",\"im\")";
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.REGULAR_EXPRESSION, bsonReader.readBsonType());
-        RegularExpression regularExpression = bsonReader.readRegularExpression();
+        BsonRegularExpression regularExpression = bsonReader.readRegularExpression();
         assertEquals("abc", regularExpression.getPattern());
         assertEquals("im", regularExpression.getOptions());
     }
@@ -644,7 +644,7 @@ public class JsonReaderTest {
         String json = "new RegExp(\"abc\",\"im\")";
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.REGULAR_EXPRESSION, bsonReader.readBsonType());
-        RegularExpression regularExpression = bsonReader.readRegularExpression();
+        BsonRegularExpression regularExpression = bsonReader.readRegularExpression();
         assertEquals("abc", regularExpression.getPattern());
         assertEquals("im", regularExpression.getOptions());
     }
@@ -667,7 +667,7 @@ public class JsonReaderTest {
         String json = "DBPointer(\"b\",\"5209296cd6c4e38cf96fffdc\")";
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.DB_POINTER, bsonReader.readBsonType());
-        DBPointer dbPointer = bsonReader.readDBPointer();
+        BsonDbPointer dbPointer = bsonReader.readDBPointer();
         assertEquals("b", dbPointer.getNamespace());
         assertEquals(new ObjectId("5209296cd6c4e38cf96fffdc"), dbPointer.getId());
     }
@@ -677,7 +677,7 @@ public class JsonReaderTest {
         String json = "new DBPointer(\"b\",\"5209296cd6c4e38cf96fffdc\")";
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.DB_POINTER, bsonReader.readBsonType());
-        DBPointer dbPointer = bsonReader.readDBPointer();
+        BsonDbPointer dbPointer = bsonReader.readDBPointer();
         assertEquals("b", dbPointer.getNamespace());
         assertEquals(new ObjectId("5209296cd6c4e38cf96fffdc"), dbPointer.getId());
     }

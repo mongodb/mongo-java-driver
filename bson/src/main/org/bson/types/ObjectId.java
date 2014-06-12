@@ -16,7 +16,6 @@
 
 package org.bson.types;
 
-import org.bson.BsonType;
 import org.bson.diagnostics.Loggers;
 
 import java.io.Serializable;
@@ -39,7 +38,7 @@ import java.util.logging.Logger;
  *
  * @mongodb.driver.manual core/object-id ObjectId
  */
-public final class ObjectId extends BsonValue implements Comparable<ObjectId>, Serializable {
+public final class ObjectId implements Comparable<ObjectId>, Serializable {
 
     private static final long serialVersionUID = 3670079982654483072L;
 
@@ -267,11 +266,6 @@ public final class ObjectId extends BsonValue implements Comparable<ObjectId>, S
         bytes[10] = int1(counter);
         bytes[11] = int0(counter);
         return bytes;
-    }
-
-    @Override
-    public BsonType getBsonType() {
-        return BsonType.OBJECT_ID;
     }
 
     /**

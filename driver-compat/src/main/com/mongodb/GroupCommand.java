@@ -17,7 +17,7 @@
 package com.mongodb;
 
 import org.bson.types.BsonDocumentWrapper;
-import org.bson.types.Code;
+import org.bson.types.BsonJavaScript;
 import org.mongodb.operation.Group;
 
 /**
@@ -56,10 +56,10 @@ public class GroupCommand {
 
     Group toNew(final DBObjectCodec codec) {
         Group group = new Group(keys == null ? null : new BsonDocumentWrapper<DBObject>(keys, codec),
-                                reduce == null ? null : new Code(reduce),
+                                reduce == null ? null : new BsonJavaScript(reduce),
                                 initial == null ? null : new BsonDocumentWrapper<DBObject>(initial, codec));
 
-        group.finalizeFunction(finalize == null ? null : new Code(finalize));
+        group.finalizeFunction(finalize == null ? null : new BsonJavaScript(finalize));
         group.filter(condition == null ? null : new BsonDocumentWrapper<DBObject>(condition, codec));
 
         return group;

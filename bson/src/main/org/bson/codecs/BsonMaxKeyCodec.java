@@ -18,27 +18,27 @@ package org.bson.codecs;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.DBPointer;
+import org.bson.types.BsonMaxKey;
 
 /**
- * Converts BSON type DBPointer(0x0c) to database references as DBPointer is deprecated.
+ * A codec for {@code BsonMaxKey} instances.
  *
  * @since 3.0
  */
-public class DBPointerCodec implements Codec<DBPointer> {
-
+public class BsonMaxKeyCodec implements Codec<BsonMaxKey> {
     @Override
-    public DBPointer decode(final BsonReader reader) {
-        return reader.readDBPointer();
+    public void encode(final BsonWriter writer, final BsonMaxKey value) {
+        writer.writeMaxKey();
     }
 
     @Override
-    public void encode(final BsonWriter writer, final DBPointer value) {
-        writer.writeDBPointer(value);
+    public BsonMaxKey decode(final BsonReader reader) {
+        reader.readMaxKey();
+        return new BsonMaxKey();
     }
 
     @Override
-    public Class<DBPointer> getEncoderClass() {
-        return DBPointer.class;
+    public Class<BsonMaxKey> getEncoderClass() {
+        return BsonMaxKey.class;
     }
 }

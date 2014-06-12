@@ -16,7 +16,7 @@
 
 package org.bson.json;
 
-import org.bson.types.RegularExpression;
+import org.bson.types.BsonRegularExpression;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -454,7 +454,7 @@ public class JsonScannerTest {
         JsonToken token = scanner.nextToken();
         assertEquals(JsonTokenType.REGULAR_EXPRESSION, token.getType());
 
-        RegularExpression regularExpression = token.getValue(RegularExpression.class);
+        BsonRegularExpression regularExpression = token.getValue(BsonRegularExpression.class);
 
         assertEquals("", regularExpression.getPattern());
         assertEquals("", regularExpression.getOptions());
@@ -469,7 +469,7 @@ public class JsonScannerTest {
         JsonScanner scanner = new JsonScanner(buffer);
         JsonToken token = scanner.nextToken();
         assertEquals(JsonTokenType.REGULAR_EXPRESSION, token.getType());
-        assertEquals("pattern", token.getValue(RegularExpression.class).getPattern());
+        assertEquals("pattern", token.getValue(BsonRegularExpression.class).getPattern());
         assertEquals(',', buffer.read());
     }
 
@@ -481,7 +481,7 @@ public class JsonScannerTest {
         JsonToken token = scanner.nextToken();
         assertEquals(JsonTokenType.REGULAR_EXPRESSION, token.getType());
 
-        RegularExpression regularExpression = token.getValue(RegularExpression.class);
+        BsonRegularExpression regularExpression = token.getValue(BsonRegularExpression.class);
         assertEquals("pattern", regularExpression.getPattern());
         assertEquals("im", regularExpression.getOptions());
         assertEquals(',', buffer.read());
@@ -494,7 +494,7 @@ public class JsonScannerTest {
         JsonScanner scanner = new JsonScanner(buffer);
         JsonToken token = scanner.nextToken();
         assertEquals(JsonTokenType.REGULAR_EXPRESSION, token.getType());
-        assertEquals("patte\\.n", token.getValue(RegularExpression.class).getPattern());
+        assertEquals("patte\\.n", token.getValue(BsonRegularExpression.class).getPattern());
         assertEquals(',', buffer.read());
     }
 

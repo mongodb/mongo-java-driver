@@ -18,26 +18,26 @@ package org.bson.codecs;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.Symbol;
+import org.bson.types.BsonJavaScript;
 
 /**
- * A codec for BSON symbol type.
+ * A Codec for the {@code BsonJavaScript} type.
  *
  * @since 3.0
  */
-public class SymbolCodec implements Codec<Symbol> {
+public class BsonJavaScriptCodec implements Codec<BsonJavaScript> {
     @Override
-    public Symbol decode(final BsonReader reader) {
-        return new Symbol(reader.readSymbol());
+    public BsonJavaScript decode(final BsonReader reader) {
+        return new BsonJavaScript(reader.readJavaScript());
     }
 
     @Override
-    public void encode(final BsonWriter writer, final Symbol value) {
-        writer.writeSymbol(value.getSymbol());
+    public void encode(final BsonWriter writer, final BsonJavaScript value) {
+        writer.writeJavaScript(value.getCode());
     }
 
     @Override
-    public Class<Symbol> getEncoderClass() {
-        return Symbol.class;
+    public Class<BsonJavaScript> getEncoderClass() {
+        return BsonJavaScript.class;
     }
 }

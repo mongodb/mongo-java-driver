@@ -16,18 +16,25 @@
 
 package org.bson.types;
 
+import org.bson.BsonType;
+
 import java.io.Serializable;
 
 /**
- * Represent the maximum key value regardless of the key's type
+ * Represent the minimum key value regardless of the key's type
  */
-public final class MaxKey implements Serializable {
+public final class BsonMinKey extends BsonValue implements Serializable {
 
-    private static final long serialVersionUID = 5123414776151687185L;
+    private static final long serialVersionUID = 4075901136671855684L;
+
+    @Override
+    public BsonType getBsonType() {
+        return BsonType.MIN_KEY;
+    }
 
     @Override
     public boolean equals(final Object o) {
-        return o instanceof MaxKey;
+        return o instanceof BsonMinKey;
     }
 
     @Override
@@ -37,7 +44,7 @@ public final class MaxKey implements Serializable {
 
     @Override
     public String toString() {
-        return "MaxKey";
+        return "BsonMinKey";
     }
 
 }

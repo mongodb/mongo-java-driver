@@ -17,10 +17,9 @@
 package org.bson;
 
 import org.bson.types.Binary;
-import org.bson.types.DBPointer;
+import org.bson.types.BsonDbPointer;
+import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Timestamp;
 
 /**
  * An interface for reading a logical BSON document using a pull-oriented API.
@@ -245,7 +244,7 @@ public interface BsonReader {
      *
      * @return A regular expression.
      */
-    RegularExpression readRegularExpression();
+    BsonRegularExpression readRegularExpression();
 
     /**
      * Reads a BSON regular expression element from the reader.
@@ -253,14 +252,14 @@ public interface BsonReader {
      * @param name The name of the element.
      * @return A regular expression.
      */
-    RegularExpression readRegularExpression(String name);
+    BsonRegularExpression readRegularExpression(String name);
 
     /**
      * Reads a BSON DBPointer from the reader.
      *
      * @return A DBPointer.
      */
-    DBPointer readDBPointer();
+    BsonDbPointer readDBPointer();
 
     /**
      * Reads a BSON DBPointer element from the reader.
@@ -268,7 +267,7 @@ public interface BsonReader {
      * @param name The name of the element.
      * @return A DBPointer.
      */
-    DBPointer readDBPointer(String name);
+    BsonDbPointer readDBPointer(String name);
 
     /**
      * Reads the start of a BSON array.
@@ -315,7 +314,7 @@ public interface BsonReader {
      *
      * @return The combined timestamp/increment.
      */
-    Timestamp readTimestamp();
+    BsonTimestamp readTimestamp();
 
     /**
      * Reads a BSON timestamp element from the reader.
@@ -323,7 +322,7 @@ public interface BsonReader {
      * @param name The name of the element.
      * @return The combined timestamp/increment.
      */
-    Timestamp readTimestamp(String name);
+    BsonTimestamp readTimestamp(String name);
 
     /**
      * Reads a BSON undefined from the reader.

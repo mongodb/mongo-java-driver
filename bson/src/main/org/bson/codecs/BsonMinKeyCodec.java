@@ -14,30 +14,31 @@
  * limitations under the License.
  */
 
-package org.bson.types;
+package org.bson.codecs;
 
-import java.io.Serializable;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
+import org.bson.types.BsonMinKey;
 
 /**
- * Represent the maximum key value regardless of the key's type
+ * A codec for {@code BsonMinKey} instances.
+ *
+ * @since 3.0
  */
-public final class MaxKey implements Serializable {
-
-    private static final long serialVersionUID = 5123414776151687185L;
-
+public class BsonMinKeyCodec implements Codec<BsonMinKey> {
     @Override
-    public boolean equals(final Object o) {
-        return o instanceof MaxKey;
+    public void encode(final BsonWriter writer, final BsonMinKey value) {
+        writer.writeMinKey();
     }
 
     @Override
-    public int hashCode() {
-        return 0;
+    public BsonMinKey decode(final BsonReader reader) {
+        reader.readMinKey();
+        return new BsonMinKey();
     }
 
     @Override
-    public String toString() {
-        return "MaxKey";
+    public Class<BsonMinKey> getEncoderClass() {
+        return BsonMinKey.class;
     }
-
 }

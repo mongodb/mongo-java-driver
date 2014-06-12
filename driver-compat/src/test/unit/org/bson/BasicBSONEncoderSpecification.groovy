@@ -22,12 +22,12 @@ import org.bson.io.OutputBuffer
 import org.bson.types.BSONTimestamp
 import org.bson.types.BasicBSONList
 import org.bson.types.Binary
+import org.bson.types.BsonSymbol
 import org.bson.types.Code
 import org.bson.types.CodeWScope
 import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import org.bson.types.ObjectId
-import org.bson.types.Symbol
 import spock.lang.Specification
 import spock.lang.Subject
 import spock.lang.Unroll
@@ -79,7 +79,7 @@ class BasicBSONEncoderSpecification extends Specification {
         ['r': Pattern.compile('[a]*', Pattern.CASE_INSENSITIVE)] | [15, 0, 0, 0, 11, 114, 0, 91, 97, 93, 42, 0, 105, 0, 0]
         ['js': new Code('var i = 0')]                            | [23, 0, 0, 0, 13, 106, 115, 0, 10, 0, 0, 0, 118, 97, 114, 32, 105, 32, 61, 32, 48, 0, 0]
         ['s': 'c' as char]                                       | [14, 0, 0, 0, 2, 115, 0, 2, 0, 0, 0, 99, 0, 0]
-        ['s': new Symbol('c')]                                   | [14, 0, 0, 0, 14, 115, 0, 2, 0, 0, 0, 99, 0, 0]
+        ['s': new BsonSymbol('c')]                                   | [14, 0, 0, 0, 14, 115, 0, 2, 0, 0, 0, 99, 0, 0]
         ['js': new CodeWScope('i++', ~['x': 1])]                 | [33, 0, 0, 0, 15, 106, 115, 0, 24, 0, 0, 0, 4, 0, 0, 0, 105, 43, 43, 0, 12, 0, 0, 0, 16, 120, 0, 1, 0, 0, 0, 0, 0]
         ['i': -12]                                               | [12, 0, 0, 0, 16, 105, 0, -12, -1, -1, -1, 0]
         ['i': Integer.MIN_VALUE]                                 | [12, 0, 0, 0, 16, 105, 0, 0, 0, 0, -128, 0]

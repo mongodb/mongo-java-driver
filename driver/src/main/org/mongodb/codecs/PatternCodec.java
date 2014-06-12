@@ -19,7 +19,7 @@ package org.mongodb.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
-import org.bson.types.RegularExpression;
+import org.bson.types.BsonRegularExpression;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -33,12 +33,12 @@ import java.util.regex.Pattern;
 public class PatternCodec implements Codec<Pattern> {
     @Override
     public void encode(final BsonWriter writer, final Pattern value) {
-        writer.writeRegularExpression(new RegularExpression(value.pattern(), getOptionsAsString(value)));
+        writer.writeRegularExpression(new BsonRegularExpression(value.pattern(), getOptionsAsString(value)));
     }
 
     @Override
     public Pattern decode(final BsonReader reader) {
-        RegularExpression regularExpression = reader.readRegularExpression();
+        BsonRegularExpression regularExpression = reader.readRegularExpression();
         return Pattern.compile(regularExpression.getPattern(), getOptionsAsInt(regularExpression));
     }
 
@@ -65,7 +65,7 @@ public class PatternCodec implements Codec<Pattern> {
         return buf.toString();
     }
 
-    public static int getOptionsAsInt(final RegularExpression regularExpression) {
+    public static int getOptionsAsInt(final BsonRegularExpression regularExpression) {
         int optionsInt = 0;
 
         String optionsString = regularExpression.getOptions();

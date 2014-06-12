@@ -17,10 +17,9 @@
 package org.bson;
 
 import org.bson.types.Binary;
-import org.bson.types.DBPointer;
+import org.bson.types.BsonDbPointer;
+import org.bson.types.BsonRegularExpression;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Timestamp;
 
 /**
  * An interface for writing a logical BSON document using a push-oriented API.
@@ -83,7 +82,7 @@ public interface BsonWriter {
      *
      * @param value The DBPointer to write
      */
-    void writeDBPointer(DBPointer value);
+    void writeDBPointer(BsonDbPointer value);
 
     /**
      * Writes a BSON DBPointer element to the writer.
@@ -91,7 +90,7 @@ public interface BsonWriter {
      * @param name  The name of the element.
      * @param value The DBPointer to write
      */
-    void writeDBPointer(String name, DBPointer value);
+    void writeDBPointer(String name, BsonDbPointer value);
 
     /**
      * Writes a BSON Double to the writer.
@@ -239,7 +238,7 @@ public interface BsonWriter {
     /**
      * Writes a BSON regular expression to the writer.
      */
-    void writeRegularExpression(RegularExpression regularExpression);
+    void writeRegularExpression(BsonRegularExpression regularExpression);
 
     /**
      * Writes a BSON regular expression element to the writer.
@@ -247,7 +246,7 @@ public interface BsonWriter {
      * @param name              The name of the element.
      * @param regularExpression The RegularExpression value.
      */
-    void writeRegularExpression(String name, RegularExpression regularExpression);
+    void writeRegularExpression(String name, BsonRegularExpression regularExpression);
 
     /**
      * Writes the start of a BSON array to the writer.
@@ -312,7 +311,7 @@ public interface BsonWriter {
      *
      * @param value The combined timestamp/increment value.
      */
-    void writeTimestamp(Timestamp value);
+    void writeTimestamp(BsonTimestamp value);
 
     /**
      * Writes a BSON Timestamp element to the writer.
@@ -320,7 +319,7 @@ public interface BsonWriter {
      * @param name  The name of the element.
      * @param value The combined timestamp/increment value.
      */
-    void writeTimestamp(String name, Timestamp value);
+    void writeTimestamp(String name, BsonTimestamp value);
 
     /**
      * Writes a BSON undefined to the writer.
