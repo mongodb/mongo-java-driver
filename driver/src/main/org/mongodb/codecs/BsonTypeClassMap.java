@@ -30,6 +30,7 @@ import org.bson.types.Undefined;
 import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -136,7 +137,7 @@ public class BsonTypeClassMap {
      * @param replacementsForDefaults the replacement mappings
      */
     public BsonTypeClassMap(final Map<BsonType, Class<?>> replacementsForDefaults) {
-        this();
+        addDefaults();
         map.putAll(replacementsForDefaults);
     }
 
@@ -144,7 +145,7 @@ public class BsonTypeClassMap {
      * Construct an instance with the default mappings.
      */
     public BsonTypeClassMap() {
-        addDefaults();
+        this(Collections.<BsonType, Class<?>>emptyMap());
     }
 
 
