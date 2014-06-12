@@ -20,6 +20,7 @@ import org.mongodb.Document;
 import org.mongodb.Index;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.CreateIndexesOperation;
 import org.mongodb.operation.DropCollectionOperation;
 import org.mongodb.operation.DropIndexOperation;
@@ -54,7 +55,7 @@ public class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public MongoFuture<List<Document>> getIndexes() {
-        return client.execute(new GetIndexesOperation(collectionNamespace), primary());
+        return client.execute(new GetIndexesOperation<Document>(collectionNamespace, new DocumentCodec()), primary());
     }
 
     @Override

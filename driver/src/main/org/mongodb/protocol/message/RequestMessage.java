@@ -16,9 +16,11 @@
 
 package org.mongodb.protocol.message;
 
-import org.bson.BSONBinaryWriter;
+import org.bson.BsonBinaryWriter;
+import org.bson.FieldNameValidator;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.Encoder;
 import org.bson.io.OutputBuffer;
-import org.mongodb.Encoder;
 import org.mongodb.MongoInvalidDocumentException;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,6 +29,8 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Abstract base class for all MongoDB Wire Protocol request messages.
  */
 public abstract class RequestMessage {
+    private static BsonDocumentCodec bsonDocumentCodec = new BsonDocumentCodec();
+
     // TODO: is rollover a problem
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
 
@@ -34,6 +38,10 @@ public abstract class RequestMessage {
     private final MessageSettings settings;
     private final int id;
     private final OpCode opCode;
+
+    protected BsonDocumentCodec getBsonDocumentCodec() {
+        return bsonDocumentCodec;
+    }
 
     public RequestMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
         this.collectionName = collectionName;
@@ -80,8 +88,8 @@ public abstract class RequestMessage {
 
     protected abstract RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition);
 
-    protected <T> void addDocument(final T obj, final Encoder<T> encoder, final OutputBuffer buffer) {
-        BSONBinaryWriter writer = new BSONBinaryWriter(buffer, false);
+    protected <T> void addDocument(final T obj, final Encoder<T> encoder, final OutputBuffer buffer, final FieldNameValidator validator) {
+        BsonBinaryWriter writer = new BsonBinaryWriter(buffer, validator);
         try {
             int startPosition = buffer.getPosition();
             encoder.encode(writer, obj);

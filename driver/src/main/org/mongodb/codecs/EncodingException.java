@@ -21,10 +21,6 @@ import org.mongodb.MongoClientException;
 class EncodingException extends MongoClientException {
     private static final long serialVersionUID = -8147079320437509154L;
 
-    public EncodingException(final String message, final Exception e) {
-        super(message, e);
-    }
-
     public EncodingException(final String message) {
         super(message);
     }

@@ -18,9 +18,15 @@
 package org.mongodb;
 
 
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonString;
+import org.bson.types.BsonValue;
+
 import java.util.List;
 
 import static org.mongodb.OrderBy.ASC;
+import static org.mongodb.assertions.Assertions.notNull;
 
 
 /**
@@ -53,12 +59,12 @@ public final class Index {
      */
     private final int expireAfterSeconds;
 
-    private final Document keys;
+    private final BsonDocument keys;
 
-    private final Document extra;
+    private final BsonDocument extra;
 
     private Index(final String name, final boolean unique, final boolean dropDups, final boolean sparse, final boolean background,
-                  final int expireAfterSeconds, final Document keys, final Document extra) {
+                  final int expireAfterSeconds, final BsonDocument keys, final BsonDocument extra) {
         this.name = name;
         this.unique = unique;
         this.dropDups = dropDups;
@@ -98,18 +104,18 @@ public final class Index {
         return expireAfterSeconds;
     }
 
-    public Document getKeys() {
+    public BsonDocument getKeys() {
         return keys;
     }
 
-    public Document getExtra() {
+    public BsonDocument getExtra() {
         return extra;
     }
 
     /**
      * Contains the pair that is the field name and the ordering value for each key of an index
      */
-    public static class OrderedKey implements Key<Integer> {
+    public static class OrderedKey implements Key<BsonInt32> {
         private final String fieldName;
         private final OrderBy orderBy;
 
@@ -124,12 +130,12 @@ public final class Index {
         }
 
         @Override
-        public Integer getValue() {
-            return orderBy.getIntRepresentation();
+        public BsonInt32 getValue() {
+            return new BsonInt32(orderBy.getIntRepresentation());
         }
     }
 
-    public static class GeoKey implements Key<String> {
+    public static class GeoKey implements Key<BsonString> {
         private final String fieldName;
 
         public GeoKey(final String fieldName) {
@@ -142,12 +148,12 @@ public final class Index {
         }
 
         @Override
-        public String getValue() {
-            return "2d";
+        public BsonString getValue() {
+            return new BsonString("2d");
         }
     }
 
-    public static class Text implements Key<String> {
+    public static class Text implements Key<BsonString> {
         private final String fieldName;
 
         public Text(final String fieldName) {
@@ -160,12 +166,12 @@ public final class Index {
         }
 
         @Override
-        public String getValue() {
-            return "text";
+        public BsonString getValue() {
+            return new BsonString("text");
         }
     }
 
-    public interface Key<T> {
+    public interface Key<T extends BsonValue> {
         String getFieldName();
 
         T getValue();
@@ -178,8 +184,8 @@ public final class Index {
         private boolean background = false;
         private boolean sparse = false;
         private int expireAfterSeconds = -1;
-        private final Document keys = new Document();
-        private final Document extra = new Document();
+        private final BsonDocument keys = new BsonDocument();
+        private BsonDocument extra = new BsonDocument();
 
         private Builder() {
         }
@@ -264,7 +270,7 @@ public final class Index {
         }
 
         public Builder addKey(final String key, final OrderBy orderBy) {
-            keys.put(key, orderBy.getIntRepresentation());
+            keys.put(key, new BsonInt32(orderBy.getIntRepresentation()));
             return this;
         }
 
@@ -287,8 +293,8 @@ public final class Index {
             return this;
         }
 
-        public Builder extra(final String key, final Object value) {
-            extra.put(key, value);
+        public Builder extra(final BsonDocument extra) {
+            this.extra = notNull("extra", extra);
             return this;
         }
 
@@ -305,9 +311,11 @@ public final class Index {
                 }
                 indexName.append(keyNames).append('_');
                 //is this ever anything other than an int?
-                Object ascOrDescValue = this.keys.get(keyNames);
-                if (ascOrDescValue instanceof Number || ascOrDescValue instanceof String) {
-                    indexName.append(ascOrDescValue.toString().replace(' ', '_'));
+                BsonValue ascOrDescValue = this.keys.get(keyNames);
+                if (ascOrDescValue instanceof BsonInt32) {
+                    indexName.append(((BsonInt32) ascOrDescValue).getValue());
+                } else if (ascOrDescValue instanceof BsonString) {
+                    indexName.append(((BsonString) ascOrDescValue).getValue().replace(' ', '_'));
                 }
             }
             return indexName.toString();

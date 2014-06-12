@@ -18,7 +18,6 @@ package org.mongodb;
 
 import org.junit.Test;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.PrimitiveCodecs;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -28,7 +27,7 @@ public class BSONDocumentBufferTest {
     public void testRoundTrip() {
         Document document = new Document("a", 1).append("b", 2);
 
-        DocumentCodec documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
+        DocumentCodec documentCodec = new DocumentCodec();
 
         BSONDocumentBuffer buffer = new BSONDocumentBuffer(document, documentCodec);
 

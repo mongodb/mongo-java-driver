@@ -16,8 +16,11 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.BsonArray;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonString;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.Index;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoDuplicateKeyException;
@@ -29,20 +32,20 @@ import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.InsertProtocol;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static org.mongodb.operation.DocumentHelper.putIfTrue;
 import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
+import static org.mongodb.operation.OperationHelper.getBsonDocumentCodec;
 import static org.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static org.mongodb.operation.OperationHelper.withConnection;
 
@@ -109,60 +112,52 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
                                             final SingleResultFuture<Void> future) {
         Index index = indexesRemaining.remove(0);
         asInsertProtocol(index).executeAsync(connection)
-        .register(new SingleResultCallback<WriteResult>() {
-            @Override
-            public void onResult(final WriteResult result, final MongoException e) {
-                MongoException translatedException = translateException(e);
-                if (translatedException != null) {
-                    future.init(null, translatedException);
-                } else if (indexesRemaining.isEmpty()) {
-                    future.init(null, null);
-                } else {
-                    executeInsertProtocolAsync(indexesRemaining, connection, future);
-                }
-            }
-        });
+                               .register(new SingleResultCallback<WriteResult>() {
+                                   @Override
+                                   public void onResult(final WriteResult result, final MongoException e) {
+                                       MongoException translatedException = translateException(e);
+                                       if (translatedException != null) {
+                                           future.init(null, translatedException);
+                                       } else if (indexesRemaining.isEmpty()) {
+                                           future.init(null, null);
+                                       } else {
+                                           executeInsertProtocolAsync(indexesRemaining, connection, future);
+                                       }
+                                   }
+                               });
     }
 
-    private Document getCommand() {
-        Document command = new Document("createIndexes", namespace.getCollectionName());
-        List<Document> list = new ArrayList<Document>();
+    private BsonDocument getCommand() {
+        BsonDocument command = new BsonDocument("createIndexes", new BsonString(namespace.getCollectionName()));
+        BsonArray array = new BsonArray();
         for (Index index : indexes) {
-            list.add(toDocument(index));
+            array.add(toDocument(index));
         }
-        command.append("indexes", list);
+        command.put("indexes", array);
 
         return command;
     }
 
     @SuppressWarnings("unchecked")
-    private InsertProtocol<Document> asInsertProtocol(final Index index) {
-        return new InsertProtocol<Document>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
-                                            asList(new InsertRequest<Document>(toDocument(index))),
-                                            new DocumentCodec());
+    private InsertProtocol<BsonDocument> asInsertProtocol(final Index index) {
+        return new InsertProtocol<BsonDocument>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
+                                                asList(new InsertRequest<BsonDocument>(toDocument(index))),
+                                                getBsonDocumentCodec());
     }
 
-    private Document toDocument(final Index index) {
-        Document indexDetails = new Document();
-        indexDetails.append("name", index.getName());
+    private BsonDocument toDocument(final Index index) {
+        BsonDocument indexDetails = new BsonDocument();
+        indexDetails.append("name", new BsonString(index.getName()));
         indexDetails.append("key", index.getKeys());
-        if (index.isUnique()) {
-            indexDetails.append("unique", index.isUnique());
-        }
-        if (index.isSparse()) {
-            indexDetails.append("sparse", index.isSparse());
-        }
-        if (index.isDropDups()) {
-            indexDetails.append("dropDups", index.isDropDups());
-        }
-        if (index.isBackground()) {
-            indexDetails.append("background", index.isBackground());
-        }
+        putIfTrue(indexDetails, "unique", index.isUnique());
+        putIfTrue(indexDetails, "sparse", index.isSparse());
+        putIfTrue(indexDetails, "dropDups", index.isDropDups());
+        putIfTrue(indexDetails, "background", index.isBackground());
         if (index.getExpireAfterSeconds() != -1) {
-            indexDetails.append("expireAfterSeconds", index.getExpireAfterSeconds());
+            indexDetails.append("expireAfterSeconds", new BsonInt32(index.getExpireAfterSeconds()));
         }
         indexDetails.putAll(index.getExtra());
-        indexDetails.put("ns", namespace.toString());
+        indexDetails.put("ns", new BsonString(namespace.getFullName()));
 
         return indexDetails;
     }

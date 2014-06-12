@@ -16,21 +16,20 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Document;
+import org.bson.types.BsonDocument;
 
 import static org.mongodb.assertions.Assertions.notNull;
 
 public class UpdateRequest extends BaseUpdateRequest {
-    private final Document updateOperations;
+    private final BsonDocument updateOperations;
     private boolean isMulti = false;
 
-    public UpdateRequest(final Document filter, final Document updateOperations) {
+    public UpdateRequest(final BsonDocument filter, final BsonDocument updateOperations) {
         super(filter);
         this.updateOperations = notNull("updateOperations", updateOperations);
-        isValidUpdateOperation("updateOperations", updateOperations);
     }
 
-    public Document getUpdateOperations() {
+    public BsonDocument getUpdateOperations() {
         return updateOperations;
     }
 
@@ -56,14 +55,5 @@ public class UpdateRequest extends BaseUpdateRequest {
         return Type.UPDATE;
     }
 
-    private void isValidUpdateOperation(final String name, final Document updateOperations) {
-        if (updateOperations.keySet().iterator().next().startsWith("$")) {
-            for (String key : updateOperations.keySet()) {
-                if (!key.startsWith("$")) {
-                    throw new IllegalArgumentException("Update document invalid" + name + " keys must start with $" + key);
-                }
-            }
-        }
-    }
 }
 

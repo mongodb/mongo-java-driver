@@ -16,25 +16,24 @@
 
 package org.mongodb.acceptancetest.querying;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mongodb.CollectibleCodec;
-import org.mongodb.ConvertibleToDocument;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.QueryBuilder;
+import org.mongodb.codecs.CollectibleCodec;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static java.util.Arrays.asList;
-import static org.bson.BSONType.INT32;
-import static org.bson.BSONType.INT64;
+import static org.bson.BsonType.INT32;
+import static org.bson.BsonType.INT64;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mongodb.QueryBuilder.query;
@@ -69,17 +68,6 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         personCollection.insert(new Person("Bob"));
 
         MongoCursor<Person> results = personCollection.find(new Document("name", "Bob")).get();
-
-        assertThat(results.next().name, is("Bob"));
-    }
-
-    @Test
-    public void shouldBeAbleToQueryWithType() {
-        MongoCollection<Person> personCollection = database.getCollection(getCollectionName(), new PersonCodec());
-        Person bob = new Person("Bob");
-        personCollection.insert(bob);
-
-        MongoCursor<Person> results = personCollection.find(bob).get();
 
         assertThat(results.next().name, is("Bob"));
     }
@@ -170,20 +158,30 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
     private class PersonCodec implements CollectibleCodec<Person> {
         @Override
-        public Object getId(final Person person) {
-            return person.id;
+        public boolean documentHasId(final Person document) {
+            return true;
         }
 
         @Override
-        public void encode(final BSONWriter bsonWriter, final Person value) {
-            bsonWriter.writeStartDocument();
-            bsonWriter.writeObjectId("_id", value.id);
-            bsonWriter.writeString("name", value.name);
-            bsonWriter.writeEndDocument();
+        public ObjectId getDocumentId(final Person document) {
+            return document.id;
         }
 
         @Override
-        public Person decode(final BSONReader reader) {
+        public void generateIdIfAbsentFromDocument(final Person person) {
+
+        }
+
+        @Override
+        public void encode(final BsonWriter writer, final Person value) {
+            writer.writeStartDocument();
+            writer.writeObjectId("_id", value.id);
+            writer.writeString("name", value.name);
+            writer.writeEndDocument();
+        }
+
+        @Override
+        public Person decode(final BsonReader reader) {
             reader.readStartDocument();
             ObjectId id = reader.readObjectId("_id");
             String name = reader.readString("name");
@@ -197,7 +195,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         }
     }
 
-    private class Person implements ConvertibleToDocument {
+    private class Person {
         private ObjectId id = new ObjectId();
         private final String name;
 
@@ -208,11 +206,6 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         public Person(final ObjectId id, final String name) {
             this.id = id;
             this.name = name;
-        }
-
-        @Override
-        public Document toDocument() {
-            return new Document("name", name);
         }
     }
 

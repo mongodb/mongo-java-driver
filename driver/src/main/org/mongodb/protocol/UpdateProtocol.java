@@ -16,8 +16,6 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
@@ -41,13 +39,11 @@ public class UpdateProtocol extends WriteProtocol {
     private static final org.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.update");
 
     private final List<UpdateRequest> updates;
-    private final Encoder<Document> queryEncoder;
 
     public UpdateProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                          final List<UpdateRequest> updates, final Encoder<Document> queryEncoder) {
+                          final List<UpdateRequest> updates) {
         super(namespace, ordered, writeConcern);
         this.updates = updates;
-        this.queryEncoder = queryEncoder;
     }
 
     @Override
@@ -78,7 +74,7 @@ public class UpdateProtocol extends WriteProtocol {
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new UpdateMessage(getNamespace().getFullName(), updates, queryEncoder, settings);
+        return new UpdateMessage(getNamespace().getFullName(), updates, settings);
     }
 
     @Override

@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import org.bson.types.ObjectId;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,6 +27,7 @@ import java.util.List;
  * @since 2.12
  */
 public class BulkWriteOperation {
+    private static final String ID_FIELD_NAME = "_id";
     private final boolean ordered;
     private final DBCollection collection;
     private final List<WriteRequest> requests = new ArrayList<WriteRequest>();
@@ -38,7 +41,6 @@ public class BulkWriteOperation {
      * Returns true if this is building an ordered bulk write request.
      *
      * @return whether this is building an ordered bulk write operation
-     *
      * @see DBCollection#initializeOrderedBulkOperation()
      * @see DBCollection#initializeUnorderedBulkOperation()
      */
@@ -52,6 +54,9 @@ public class BulkWriteOperation {
      * @param document the document to insert
      */
     public void insert(final DBObject document) {
+        if (document.get(ID_FIELD_NAME) == null) {
+            document.put(ID_FIELD_NAME, new ObjectId());
+        }
         addRequest(new InsertRequest(document));
     }
 
@@ -62,7 +67,7 @@ public class BulkWriteOperation {
      * @return a builder for a single write request
      */
     public BulkWriteRequestBuilder find(final DBObject query) {
-        return new BulkWriteRequestBuilder(this, query);
+        return new BulkWriteRequestBuilder(this, query, collection.getDefaultDBObjectCodec());
     }
 
     /**
@@ -80,7 +85,6 @@ public class BulkWriteOperation {
      * Execute the bulk write operation with the given write concern.
      *
      * @param writeConcern the write concern to apply to the bulk operation
-     *
      * @return the result of the bulk write operation.
      * @throws com.mongodb.BulkWriteException
      * @throws com.mongodb.MongoException

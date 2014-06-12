@@ -114,16 +114,4 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
         assertThat("Document retrieved from updateOneAndGet and upsert true should have the new values",
                    document.get(KEY).toString(), equalTo(newValueThatDoesNotMatchAnythingInDatabase));
     }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldThrowAnExceptionIfReplacementContainsUpdateOperators() {
-        Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        collection.insert(documentInserted);
-
-        collection.find()
-                  .getOneAndUpdate(new Document("someNumber", 1));
-    }
-
-    //TODO: should not be able to change the ID of a document
-
 }

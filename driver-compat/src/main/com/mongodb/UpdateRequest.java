@@ -16,24 +16,22 @@
 
 package com.mongodb;
 
-import static com.mongodb.DBObjects.toDBObject;
+import org.bson.types.BsonDocumentWrapper;
 
 class UpdateRequest extends WriteRequest {
     private final DBObject query;
     private final DBObject update;
     private final boolean multi;
     private final boolean upsert;
+    private final DBObjectCodec codec;
 
-    public UpdateRequest(final DBObject query, final DBObject update, final boolean multi, final boolean upsert) {
+    public UpdateRequest(final DBObject query, final DBObject update, final boolean multi, final boolean upsert,
+                         final DBObjectCodec codec) {
         this.query = query;
         this.update = update;
         this.multi = multi;
         this.upsert = upsert;
-    }
-
-    UpdateRequest(final org.mongodb.operation.UpdateRequest updateRequest) {
-        this(toDBObject(updateRequest.getFilter()), toDBObject(updateRequest.getUpdateOperations()), updateRequest.isMulti(),
-             updateRequest.isUpsert());
+        this.codec = codec;
     }
 
     public DBObject getQuery() {
@@ -54,7 +52,8 @@ class UpdateRequest extends WriteRequest {
 
     @Override
     org.mongodb.operation.WriteRequest toNew() {
-        return new org.mongodb.operation.UpdateRequest(DBObjects.toDocument(query), DBObjects.toDocument(update))
+        return new org.mongodb.operation.UpdateRequest(new BsonDocumentWrapper<DBObject>(query, codec),
+                                                       new BsonDocumentWrapper<DBObject>(update, codec))
                .upsert(isUpsert())
                .multi(isMulti());
     }

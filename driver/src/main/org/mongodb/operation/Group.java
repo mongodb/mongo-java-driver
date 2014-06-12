@@ -16,34 +16,42 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.BsonDocument;
 import org.bson.types.Code;
-import org.mongodb.Document;
 
 public class Group {
 
-    private final Document key;
+    private final BsonDocument key;
     private final Code keyFunction;
     private final Code reduceFunction;
-    private final Document initial;
-    private Document filter;
+    private final BsonDocument initial;
+    private BsonDocument filter;
     private Code finalizeFunction;
 
-    private Group(final Document key, final Code keyFunction, final Code reduceFunction, final Document initial) {
+    private Group(final BsonDocument key, final Code keyFunction, final Code reduceFunction, final BsonDocument initial) {
+        if (initial == null) {
+            throw new IllegalArgumentException("Group command requires an initial document for the aggregate result");
+        }
+
+        if (reduceFunction == null) {
+            throw new IllegalArgumentException("Group command requires a reduce function for the aggregate result");
+        }
+
         this.keyFunction = keyFunction;
         this.key = key;
         this.reduceFunction = reduceFunction;
         this.initial = initial;
     }
 
-    public Group(final Document key, final Code reduceFunction, final Document initial) {
+    public Group(final BsonDocument key, final Code reduceFunction, final BsonDocument initial) {
         this(key, null, reduceFunction, initial);
     }
 
-    public Group(final Code keyFunction, final Code reduceFunction, final Document initial) {
+    public Group(final Code keyFunction, final Code reduceFunction, final BsonDocument initial) {
         this(null, keyFunction, reduceFunction, initial);
     }
 
-    public Group filter(final Document aCond) {
+    public Group filter(final BsonDocument aCond) {
         this.filter = aCond;
         return this;
     }
@@ -53,15 +61,15 @@ public class Group {
         return this;
     }
 
-    public Document getKey() {
+    public BsonDocument getKey() {
         return key;
     }
 
-    public Document getFilter() {
+    public BsonDocument getFilter() {
         return filter;
     }
 
-    public Document getInitial() {
+    public BsonDocument getInitial() {
         return initial;
     }
 

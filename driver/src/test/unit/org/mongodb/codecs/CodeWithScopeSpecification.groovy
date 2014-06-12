@@ -16,9 +16,9 @@
 
 package org.mongodb.codecs
 
-import org.bson.BSONBinaryReader
-import org.bson.BSONWriter
-import org.bson.types.CodeWithScope
+import org.bson.BsonBinaryReader
+import org.bson.BsonWriter
+import org.mongodb.CodeWithScope
 import org.mongodb.Document
 import spock.lang.Specification
 import spock.lang.Subject
@@ -26,10 +26,10 @@ import spock.lang.Subject
 import static org.mongodb.codecs.CodecTestUtil.prepareReaderWithObjectToBeDecoded
 
 class CodeWithScopeSpecification extends Specification {
-    private final BSONWriter bsonWriter = Mock();
+    private final BsonWriter bsonWriter = Mock();
 
     @Subject
-    private final CodeWithScopeCodec codeWithScopeCodec = new CodeWithScopeCodec(Codecs.createDefault());
+    private final CodeWithScopeCodec codeWithScopeCodec = new CodeWithScopeCodec(new DocumentCodec());
 
     def 'should encode code with scope as java script followed by document of scope'() {
         given:
@@ -54,7 +54,7 @@ class CodeWithScopeSpecification extends Specification {
     def 'should decode code with scope'() {
         given:
         CodeWithScope codeWithScope = new CodeWithScope('{javascript code}', new Document('the', 'scope'));
-        BSONBinaryReader reader = prepareReaderWithObjectToBeDecoded(codeWithScope);
+        BsonBinaryReader reader = prepareReaderWithObjectToBeDecoded(codeWithScope);
 
         when:
         CodeWithScope actualCodeWithScope = codeWithScopeCodec.decode(reader);

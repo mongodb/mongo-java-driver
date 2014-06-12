@@ -16,9 +16,12 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Decoder;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.codecs.Decoder;
+import org.bson.types.BsonBoolean;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonInt64;
+import org.bson.types.BsonString;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoException;
@@ -49,15 +52,12 @@ import static org.mongodb.operation.OperationHelper.withConnection;
  */
 public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoCursor<T>> {
     private final Find find;
-    private final Encoder<Document> queryEncoder;
     private final Decoder<T> resultDecoder;
     private final MongoNamespace namespace;
 
-    public QueryOperation(final MongoNamespace namespace, final Find find, final Encoder<Document> queryEncoder,
-                          final Decoder<T> resultDecoder) {
+    public QueryOperation(final MongoNamespace namespace, final Find find, final Decoder<T> resultDecoder) {
         this.namespace = notNull("namespace", namespace);
         this.find = notNull("find", find);
-        this.queryEncoder = notNull("queryEncoder", queryEncoder);
         this.resultDecoder = notNull("resultDecoder", resultDecoder);
     }
 
@@ -111,31 +111,31 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     private QueryProtocol<T> asQueryProtocol(final ServerDescription serverDescription, final ReadPreference readPreference) {
         return new QueryProtocol<T>(namespace, find.getFlags(readPreference), find.getSkip(),
                                     find.getNumberToReturn(), asDocument(serverDescription, readPreference),
-                                    find.getFields(), queryEncoder, resultDecoder);
+                                    find.getFields(), resultDecoder);
     }
 
-    private Document asDocument(final ServerDescription serverDescription, final ReadPreference readPreference) {
-        Document document = new Document();
-        document.put("$query", find.getFilter());
-        if (find.getOrder() != null && !find.getOrder().isEmpty()) {
+    private BsonDocument asDocument(final ServerDescription serverDescription, final ReadPreference readPreference) {
+        BsonDocument document = new BsonDocument();
+        document.put("$query", find.getFilter() == null ? new BsonDocument() : find.getFilter());
+        if (find.getOrder() != null) {
             document.put("$orderby", find.getOrder());
         }
         if (find.isSnapshotMode()) {
-            document.put("$snapshot", true);
+            document.put("$snapshot", BsonBoolean.TRUE);
         }
         if (find.isExplain()) {
-            document.put("$explain", true);
+            document.put("$explain", BsonBoolean.TRUE);
         }
         if (serverDescription.getType() == SHARD_ROUTER && !readPreference.equals(primary())) {
             document.put("$readPreference", readPreference.toDocument());
         }
 
         if (find.getHint() != null) {
-            document.put("$hint", find.getHint().getValue());
+            document.put("$hint", find.getHint());
         }
 
         if (find.getOptions().getComment() != null) {
-            document.put("$comment", find.getOptions().getComment());
+            document.put("$comment", new BsonString(find.getOptions().getComment()));
         }
 
         if (find.getOptions().getMax() != null) {
@@ -147,25 +147,25 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
         }
 
         if (find.getOptions().isReturnKey()) {
-            document.put("$returnKey", true);
+            document.put("$returnKey", BsonBoolean.TRUE);
         }
 
         if (find.getOptions().isShowDiskLoc()) {
-            document.put("$showDiskLoc", true);
+            document.put("$showDiskLoc", BsonBoolean.TRUE);
         }
 
         if (find.getOptions().isSnapshot()) {
-            document.put("$snapshot", true);
+            document.put("$snapshot", BsonBoolean.TRUE);
         }
 
         long maxTime = find.getOptions().getMaxTime(MILLISECONDS);
         if (maxTime != 0) {
-            document.put("$maxTimeMS", maxTime);
+            document.put("$maxTimeMS", new BsonInt64(maxTime));
         }
 
         int maxScan = find.getOptions().getMaxScan();
         if (maxScan > 0) {
-            document.put("$maxScan", maxScan);
+            document.put("$maxScan", new BsonInt32(maxScan));
         }
 
         // TODO: special

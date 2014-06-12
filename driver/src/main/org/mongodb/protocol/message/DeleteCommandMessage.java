@@ -16,10 +16,9 @@
 
 package org.mongodb.protocol.message;
 
-import org.bson.BSONBinaryWriter;
+import org.bson.BsonBinaryWriter;
+import org.bson.FieldNameValidator;
 import org.bson.io.OutputBuffer;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.RemoveRequest;
@@ -31,15 +30,19 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
     private final List<RemoveRequest> deletes;
 
     public DeleteCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                final List<RemoveRequest> deletes, final Encoder<Document> commandEncoder,
-                                final MessageSettings settings) {
-        super(namespace, ordered, writeConcern, commandEncoder, settings);
+                                final List<RemoveRequest> deletes, final MessageSettings settings) {
+        super(namespace, ordered, writeConcern, settings);
         this.deletes = deletes;
     }
 
     @Override
     public int getItemCount() {
         return deletes.size();
+    }
+
+    @Override
+    protected FieldNameValidator getFieldNameValidator() {
+        return new NoOpFieldNameValidator();
     }
 
     public List<RemoveRequest> getRequests() {
@@ -53,7 +56,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
 
     @Override
     protected BaseWriteCommandMessage writeTheWrites(final OutputBuffer buffer, final int commandStartPosition,
-                                                     final BSONBinaryWriter writer) {
+                                                     final BsonBinaryWriter writer) {
         DeleteCommandMessage nextMessage = null;
         writer.writeStartArray("deletes");
         for (int i = 0; i < deletes.size(); i++) {
@@ -62,7 +65,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
             writer.writeName("q");
-            getCommandEncoder().encode(writer, removeRequest.getFilter());
+            getBsonDocumentCodec().encode(writer, removeRequest.getFilter());
             writer.writeInt32("limit", removeRequest.isMulti() ? 0 : 1);
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
@@ -70,7 +73,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
                 writer.reset();
                 nextMessage = new DeleteCommandMessage(getWriteNamespace(),
                                                        isOrdered(), getWriteConcern(), deletes.subList(i, deletes.size()),
-                                                       getCommandEncoder(), getSettings());
+                                                       getSettings());
                 break;
             }
         }

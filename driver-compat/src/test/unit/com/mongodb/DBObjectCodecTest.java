@@ -18,9 +18,17 @@ package com.mongodb;
 
 import org.bson.BSON;
 import org.bson.Transformer;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.RootCodecRegistry;
+import org.bson.types.BsonInt32;
+import org.bson.types.ObjectId;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class DBObjectCodecTest extends DatabaseTestCase {
 
@@ -63,5 +71,29 @@ public class DBObjectCodecTest extends DatabaseTestCase {
         list.add(new BasicDBObject("c", "string").append("d", 0.1));
         collection.save(new BasicDBObject("l", list));
         assertEquals(list, collection.findOne().get("l"));
+    }
+
+    @Test
+    public void shouldNotGenerateIdIfPresent() {
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(null, new BasicDBObjectFactory(),
+                                                        new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider())),
+                                                        DBObjectCodecProvider.createDefaultBsonTypeClassMap());
+        BasicDBObject document = new BasicDBObject("_id", 1);
+        assertTrue(dbObjectCodec.documentHasId(document));
+        dbObjectCodec.generateIdIfAbsentFromDocument(document);
+        assertTrue(dbObjectCodec.documentHasId(document));
+        assertEquals(new BsonInt32(1), dbObjectCodec.getDocumentId(document));
+    }
+
+    @Test
+    public void shouldGenerateIdIfAbsent() {
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(null, new BasicDBObjectFactory(),
+                                                        new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider())),
+                                                        DBObjectCodecProvider.createDefaultBsonTypeClassMap());
+        BasicDBObject document = new BasicDBObject();
+        assertFalse(dbObjectCodec.documentHasId(document));
+        dbObjectCodec.generateIdIfAbsentFromDocument(document);
+        assertTrue(dbObjectCodec.documentHasId(document));
+        assertEquals(ObjectId.class, dbObjectCodec.getDocumentId(document).getClass());
     }
 }

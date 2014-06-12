@@ -16,25 +16,27 @@
 
 package org.mongodb.protocol.message;
 
-import org.bson.BSONBinaryWriter;
+import org.bson.BsonBinaryWriter;
+import org.bson.FieldNameValidator;
+import org.bson.codecs.Encoder;
 import org.bson.io.OutputBuffer;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.InsertRequest;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
     private final List<InsertRequest<T>> insertRequestList;
     private final Encoder<T> encoder;
 
     public InsertCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                final List<InsertRequest<T>> insertRequestList, final Encoder<Document> commandEncoder,
+                                final List<InsertRequest<T>> insertRequestList,
                                 final Encoder<T> encoder, final MessageSettings settings) {
-        super(namespace, ordered, writeConcern, commandEncoder, settings);
+        super(namespace, ordered, writeConcern, settings);
         this.insertRequestList = insertRequestList;
         this.encoder = encoder;
     }
@@ -42,6 +44,13 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
     @Override
     public int getItemCount() {
         return insertRequestList.size();
+    }
+
+    @Override
+    protected FieldNameValidator getFieldNameValidator() {
+        Map<String, FieldNameValidator> map = new HashMap<String, FieldNameValidator>();
+        map.put("documents", new StorageDocumentFieldNameValidator());
+        return new MappedFieldNameValidator(new NoOpFieldNameValidator(), map);
     }
 
     public List<InsertRequest<T>> getRequests() {
@@ -53,7 +62,7 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
     }
 
     protected InsertCommandMessage<T> writeTheWrites(final OutputBuffer buffer, final int commandStartPosition,
-                                                     final BSONBinaryWriter writer) {
+                                                     final BsonBinaryWriter writer) {
         InsertCommandMessage<T> nextMessage = null;
         writer.writeStartArray("documents");
         writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
@@ -63,8 +72,8 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
             if (exceedsLimits(buffer.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
                 nextMessage = new InsertCommandMessage<T>(getWriteNamespace(), isOrdered(), getWriteConcern(),
-                                                          insertRequestList.subList(i, insertRequestList .size()),
-                                                          getCommandEncoder(), encoder, getSettings());
+                                                          insertRequestList.subList(i, insertRequestList.size()),
+                                                          encoder, getSettings());
                 break;
             }
         }

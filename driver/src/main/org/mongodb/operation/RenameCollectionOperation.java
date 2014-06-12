@@ -16,8 +16,10 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.BsonBoolean;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MongoFuture;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
@@ -28,9 +30,9 @@ import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static org.mongodb.operation.OperationHelper.VoidTransformer;
 
 /**
- * An operation that renames the given collection to the new name.  If the new name is the same as an existing collection and
- * dropTarget is true, this existing collection will be dropped. If dropTarget is false and the newCollectionName is the same as an existing
- * collection, a MongoServerException will be thrown.
+ * An operation that renames the given collection to the new name.  If the new name is the same as an existing collection and dropTarget is
+ * true, this existing collection will be dropped. If dropTarget is false and the newCollectionName is the same as an existing collection, a
+ * MongoServerException will be thrown.
  *
  * @since 3.0
  */
@@ -58,10 +60,9 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
     /**
      * Rename the collection with {@code oldCollectionName} in database {@code databaseName} to the {@code newCollectionName}.
      *
-     * @throws org.mongodb.MongoServerException
-     *          if you provide a newCollectionName that is the name of an existing collection and dropTarget is false,
-     *          or if the oldCollectionName is the name of a collection that doesn't exist
      * @param binding the binding
+     * @throws org.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection and dropTarget
+     *                                          is false, or if the oldCollectionName is the name of a collection that doesn't exist
      */
     @Override
     public Void execute(final WriteBinding binding) {
@@ -71,20 +72,19 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
     /**
      * Rename the collection with {@code oldCollectionName} in database {@code databaseName} to the {@code newCollectionName}.
      *
-     * @throws org.mongodb.MongoServerException
-     *          if you provide a newCollectionName that is the name of an existing collection and dropTarget is false,
-     *          or if the oldCollectionName is the name of a collection that doesn't exist
      * @param binding the binding
+     * @throws org.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection and dropTarget
+     *                                          is false, or if the oldCollectionName is the name of a collection that doesn't exist
      */
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
         return executeWrappedCommandProtocolAsync("admin", getCommand(), binding, new VoidTransformer<CommandResult>());
     }
 
-    private Document getCommand() {
-        return new Document("renameCollection", asNamespaceString(databaseName, originalCollectionName))
-                   .append("to", asNamespaceString(databaseName, newCollectionName))
-                   .append("dropTarget", dropTarget);
+    private BsonDocument getCommand() {
+        return new BsonDocument("renameCollection", new BsonString(asNamespaceString(databaseName, originalCollectionName)))
+               .append("to", new BsonString(asNamespaceString(databaseName, newCollectionName)))
+               .append("dropTarget", BsonBoolean.valueOf(dropTarget));
     }
 
 }

@@ -16,18 +16,18 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
-import org.mongodb.Codec;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
+import org.bson.codecs.Codec;
 
 public class BooleanCodec implements Codec<Boolean> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final Boolean value) {
-        bsonWriter.writeBoolean(value);
+    public void encode(final BsonWriter writer, final Boolean value) {
+        writer.writeBoolean(value);
     }
 
     @Override
-    public Boolean decode(final BSONReader reader) {
+    public Boolean decode(final BsonReader reader) {
         return reader.readBoolean();
     }
 

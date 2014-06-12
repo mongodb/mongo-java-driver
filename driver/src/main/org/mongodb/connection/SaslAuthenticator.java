@@ -16,10 +16,13 @@
 
 package org.mongodb.connection;
 
+import org.bson.types.Binary;
+import org.bson.types.BsonBoolean;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonString;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MongoCredential;
-import org.mongodb.codecs.DocumentCodec;
 
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
@@ -38,15 +41,16 @@ abstract class SaslAuthenticator extends Authenticator {
             byte[] response = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
             CommandResult res = sendSaslStart(response);
 
-            int conversationId = (Integer) res.getResponse().get("conversationId");
+            BsonInt32 conversationId = (BsonInt32) res.getResponse().get("conversationId");
 
-            while (!(Boolean) res.getResponse().get("done")) {
-                response = saslClient.evaluateChallenge(((byte[]) res.getResponse().get("payload")));
+            while (!((BsonBoolean) res.getResponse().get("done")).getValue()) {
+                response = saslClient.evaluateChallenge(((Binary) res.getResponse().get("payload")).getData());
 
                 if (response == null) {
                     throw new MongoSecurityException(getCredential(),
                                                      "SASL protocol error: no client response to challenge for credential "
-                                                     + getCredential());
+                                                     + getCredential()
+                    );
                 }
 
                 res = sendSaslContinue(conversationId, response);
@@ -63,23 +67,21 @@ abstract class SaslAuthenticator extends Authenticator {
     protected abstract SaslClient createSaslClient();
 
     private CommandResult sendSaslStart(final byte[] outToken) {
-        return executeCommand(getCredential().getSource(), createSaslStartCommandDocument(outToken), new DocumentCodec(),
-                              getInternalConnection());
+        return executeCommand(getCredential().getSource(), createSaslStartCommandDocument(outToken), getInternalConnection());
     }
 
-    private CommandResult sendSaslContinue(final int conversationId, final byte[] outToken) {
-        return executeCommand(getCredential().getSource(), createSaslContinueDocument(conversationId, outToken), new DocumentCodec(),
-                              getInternalConnection());
+    private CommandResult sendSaslContinue(final BsonInt32 conversationId, final byte[] outToken) {
+        return executeCommand(getCredential().getSource(), createSaslContinueDocument(conversationId, outToken), getInternalConnection());
     }
 
-    private Document createSaslStartCommandDocument(final byte[] outToken) {
-        return new Document("saslStart", 1).append("mechanism", getMechanismName())
-                                           .append("payload", outToken != null ? outToken : new byte[0]);
+    private BsonDocument createSaslStartCommandDocument(final byte[] outToken) {
+        return new BsonDocument("saslStart", new BsonInt32(1)).append("mechanism", new BsonString(getMechanismName()))
+                                                              .append("payload", new Binary(outToken != null ? outToken : new byte[0]));
     }
 
-    private Document createSaslContinueDocument(final int conversationId, final byte[] outToken) {
-        return new Document("saslContinue", 1).append("conversationId", conversationId)
-                                              .append("payload", outToken);
+    private BsonDocument createSaslContinueDocument(final BsonInt32 conversationId, final byte[] outToken) {
+        return new BsonDocument("saslContinue", new BsonInt32(1)).append("conversationId", conversationId)
+                                                                 .append("payload", new Binary(outToken));
     }
 
     private void disposeOfSaslClient(final SaslClient saslClient) {

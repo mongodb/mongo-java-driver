@@ -16,84 +16,125 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONType;
-import org.bson.BSONWriter;
-import org.mongodb.Codec;
+import org.bson.BsonDocumentWriter;
+import org.bson.BsonReader;
+import org.bson.BsonType;
+import org.bson.BsonWriter;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.RootCodecRegistry;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonValue;
 import org.mongodb.Document;
-import org.mongodb.codecs.validators.QueryFieldNameValidator;
-import org.mongodb.codecs.validators.Validator;
+import org.mongodb.IdGenerator;
 
+import java.util.Arrays;
 import java.util.Map;
 
-// TODO: decode into DBRef?
-public class DocumentCodec implements Codec<Document> {
-    private final Validator<String> fieldNameValidator;
-    private final Codecs codecs;
+import static org.mongodb.assertions.Assertions.notNull;
 
+/**
+ * A Codec for Document instances.
+ *
+ * @see org.mongodb.Document
+ * @since 3.0
+ */
+public class DocumentCodec implements CollectibleCodec<Document> {
+
+    private static final String ID_FIELD_NAME = "_id";
+    private static final CodecRegistry DEFAULT_REGISTRY = new RootCodecRegistry(Arrays.<CodecProvider>asList(new DocumentCodecProvider()));
+    private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = new BsonTypeClassMap();
+
+    private final BsonTypeClassMap bsonTypeClassMap;
+    private final CodecRegistry registry;
+    private final IdGenerator idGenerator;
+
+    /**
+     * Construct a new instance with a default {@code CodecRegistry} and
+     */
     public DocumentCodec() {
-        this(PrimitiveCodecs.createDefault());
+        this(DEFAULT_REGISTRY, DEFAULT_BSON_TYPE_CLASS_MAP, new ObjectIdGenerator());
     }
 
-    public DocumentCodec(final PrimitiveCodecs primitiveCodecs) {
-        this(primitiveCodecs, new QueryFieldNameValidator());
+    /**
+     * Construct a new instance with the given registry and BSON type class map.
+     *
+     * @param registry         the registry
+     * @param bsonTypeClassMap the BSON type class map
+     */
+    public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap) {
+        this(registry, bsonTypeClassMap, new ObjectIdGenerator());
     }
 
-    protected DocumentCodec(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator) {
-        this(fieldNameValidator, new Codecs(primitiveCodecs, fieldNameValidator, new EncoderRegistry()));
-    }
-
-    protected DocumentCodec(final PrimitiveCodecs primitiveCodecs, final Validator<String> fieldNameValidator,
-                            final EncoderRegistry encoderRegistry) {
-        this(fieldNameValidator, new Codecs(primitiveCodecs, fieldNameValidator, encoderRegistry));
-    }
-
-    protected DocumentCodec(final Validator<String> fieldNameValidator, final Codecs codecs) {
-        if (codecs == null) {
-            throw new IllegalArgumentException("codecs is null");
-        }
-        this.fieldNameValidator = fieldNameValidator;
-        this.codecs = codecs;
+    /**
+     * Construct a new instance with the given registry and BSON type class map.
+     *
+     * @param registry         the registry
+     * @param bsonTypeClassMap the BSON type class map
+     */
+    public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final IdGenerator idGenerator) {
+        this.registry = notNull("registry", registry);
+        this.bsonTypeClassMap = notNull("bsonTypeClassMap", bsonTypeClassMap);
+        this.idGenerator = notNull("idGenerator", idGenerator);
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final Document document) {
-        bsonWriter.writeStartDocument();
+    public boolean documentHasId(final Document document) {
+        return document.containsKey(ID_FIELD_NAME);
+    }
 
-        beforeFields(bsonWriter, document);
+    @Override
+    public BsonValue getDocumentId(final Document document) {
+        if (!documentHasId(document)) {
+            throw new IllegalStateException("The document does not contain an _id");
+        }
+
+        Object id = document.get(ID_FIELD_NAME);
+        if (id instanceof BsonValue) {
+            return (BsonValue) id;
+        }
+
+        BsonDocument idHoldingDocument = new BsonDocument();
+        BsonWriter writer = new BsonDocumentWriter(idHoldingDocument);
+        writer.writeStartDocument();
+        writer.writeName(ID_FIELD_NAME);
+        writeValue(writer, id);
+        writer.writeEndDocument();
+        return idHoldingDocument.get(ID_FIELD_NAME);
+    }
+
+    @Override
+    public void generateIdIfAbsentFromDocument(final Document document) {
+        if (!documentHasId(document)) {
+            document.put(ID_FIELD_NAME, idGenerator.generate());
+        }
+    }
+
+    @Override
+    public void encode(final BsonWriter writer, final Document document) {
+        writer.writeStartDocument();
+
+        beforeFields(writer, document);
 
         for (final Map.Entry<String, Object> entry : document.entrySet()) {
-            fieldNameValidator.validate(entry.getKey());
-
             if (skipField(entry.getKey())) {
                 continue;
             }
-            bsonWriter.writeName(entry.getKey());
-            writeValue(bsonWriter, entry.getValue());
+            writer.writeName(entry.getKey());
+            writeValue(writer, entry.getValue());
         }
-        bsonWriter.writeEndDocument();
-    }
-
-    protected void beforeFields(final BSONWriter bsonWriter, final Document document) {
-    }
-
-    protected boolean skipField(final String key) {
-        return false;
-    }
-
-    @SuppressWarnings("unchecked")
-    protected void writeValue(final BSONWriter bsonWriter, final Object value) {
-        codecs.encode(bsonWriter, value);
+        writer.writeEndDocument();
     }
 
     @Override
-    public Document decode(final BSONReader reader) {
+    public Document decode(final BsonReader reader) {
         Document document = new Document();
 
         reader.readStartDocument();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             String fieldName = reader.readName();
-            document.put(fieldName, readValue(reader, fieldName));
+            document.put(fieldName, readValue(reader));
         }
 
         reader.readEndDocument();
@@ -101,18 +142,39 @@ public class DocumentCodec implements Codec<Document> {
         return document;
     }
 
-    protected Object readValue(final BSONReader reader, final String fieldName) {
-        BSONType bsonType = reader.getCurrentBSONType();
-        if (bsonType.equals(BSONType.DOCUMENT)) {
-            return this.decode(reader);
-        } else {
-            return codecs.decode(reader);
-        }
-    }
-
     @Override
     public Class<Document> getEncoderClass() {
         return Document.class;
     }
 
+    private void beforeFields(final BsonWriter bsonWriter, final Document document) {
+        if (document.containsKey(ID_FIELD_NAME)) {
+            bsonWriter.writeName(ID_FIELD_NAME);
+            writeValue(bsonWriter, document.get(ID_FIELD_NAME));
+        }
+    }
+
+    private boolean skipField(final String key) {
+        return key.equals(ID_FIELD_NAME);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void writeValue(final BsonWriter writer, final Object value) {
+        if (value == null) {
+            writer.writeNull();
+        } else {
+            Codec codec = registry.get(value.getClass());
+            codec.encode(writer, value);
+        }
+    }
+
+    private Object readValue(final BsonReader reader) {
+        BsonType bsonType = reader.getCurrentBsonType();
+        if (bsonType == BsonType.NULL) {
+            reader.readNull();
+            return null;
+        } else {
+            return registry.get(bsonTypeClassMap.get(bsonType)).decode(reader);
+        }
+    }
 }

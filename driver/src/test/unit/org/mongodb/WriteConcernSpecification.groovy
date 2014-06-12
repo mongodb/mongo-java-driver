@@ -15,9 +15,12 @@
  */
 
 
-
 package org.mongodb
 
+import org.bson.types.BsonBoolean
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
+import org.bson.types.BsonString
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -32,13 +35,13 @@ class WriteConcernSpecification extends Specification {
         wc.getJ() == j;
 
         where:
-        wc                                         | w | wTimeout | fsync | j
-        new WriteConcern()                         | 0 | 0        | false | false
-        new WriteConcern(1)                        | 1 | 0        | false | false
-        new WriteConcern(1, 10)                    | 1 | 10       | false | false
-        new WriteConcern(true)                     | 1 | 0        | true  | false
-        new WriteConcern(1, 10, true)              | 1 | 10       | true  | false
-        new WriteConcern(1, 10, false, true)       | 1 | 10       | false | true
+        wc                                   | w | wTimeout | fsync | j
+        new WriteConcern()                   | 0 | 0        | false | false
+        new WriteConcern(1)                  | 1 | 0        | false | false
+        new WriteConcern(1, 10)              | 1 | 10       | false | false
+        new WriteConcern(true)               | 1 | 0        | true  | false
+        new WriteConcern(1, 10, true)        | 1 | 10       | true  | false
+        new WriteConcern(1, 10, false, true) | 1 | 10       | false | true
         new WriteConcern(1, 10, false, true) | 1 | 10       | false | true
     }
 
@@ -51,9 +54,9 @@ class WriteConcernSpecification extends Specification {
         wc.getJ() == j;
 
         where:
-        wc                                             | wString    | wTimeout | fsync | j
-        new WriteConcern('majority')                   | 'majority' | 0        | false | false
-        new WriteConcern('dc1', 10, false, true)       | 'dc1'      | 10       | false | true
+        wc                                       | wString    | wTimeout | fsync | j
+        new WriteConcern('majority')             | 'majority' | 0        | false | false
+        new WriteConcern('dc1', 10, false, true) | 'dc1'      | 10       | false | true
         new WriteConcern('dc1', 10, false, true) | 'dc1'      | 10       | false | true
     }
 
@@ -63,9 +66,9 @@ class WriteConcernSpecification extends Specification {
         wc.getWObject() == wObject;
 
         where:
-        wc                                      | getLastError  | wObject
-        new WriteConcern('dc1', 10, true, true) | true          | 'dc1'
-        new WriteConcern(0, 10, false, true)    | false         | 0
+        wc                                      | getLastError | wObject
+        new WriteConcern('dc1', 10, true, true) | true         | 'dc1'
+        new WriteConcern(0, 10, false, true)    | false        | 0
     }
 
     def 'test with methods'() {
@@ -86,12 +89,12 @@ class WriteConcernSpecification extends Specification {
 
         where:
         wc                                | commandDocument
-        WriteConcern.ACKNOWLEDGED         | ['w' : 1]
-        WriteConcern.REPLICA_ACKNOWLEDGED | ['w': 2]
-        WriteConcern.JOURNALED            | ['w' : 1, 'j': true]
-        WriteConcern.FSYNCED              | ['w' : 1, 'fsync': true]
-        new WriteConcern('majority')      | ['w': 'majority']
-        new WriteConcern(2, 100)          | ['w' : 2, 'wtimeout': 100]
+        WriteConcern.ACKNOWLEDGED         | new BsonDocument('w', new BsonInt32(1))
+        WriteConcern.REPLICA_ACKNOWLEDGED | new BsonDocument('w', new BsonInt32(2))
+        WriteConcern.JOURNALED            | new BsonDocument('w', new BsonInt32(1)).append('j', BsonBoolean.TRUE)
+        WriteConcern.FSYNCED              | new BsonDocument('w', new BsonInt32(1)).append('fsync', BsonBoolean.TRUE)
+        new WriteConcern('majority')      | new BsonDocument('w', new BsonString('majority'))
+        new WriteConcern(2, 100)          | new BsonDocument('w', new BsonInt32(2)).append('wtimeout', new BsonInt32(100))
     }
 
     @SuppressWarnings('ExplicitCallToEqualsMethod')
@@ -100,13 +103,13 @@ class WriteConcernSpecification extends Specification {
         wc.equals(compareTo) == expectedResult
 
         where:
-        wc                                         | compareTo                                   | expectedResult
-        WriteConcern.ACKNOWLEDGED                  | WriteConcern.ACKNOWLEDGED                   | true
-        WriteConcern.ACKNOWLEDGED                  | null                                        | false
-        WriteConcern.ACKNOWLEDGED                  | WriteConcern.UNACKNOWLEDGED                 | false
-        new WriteConcern(1, 0, false, false)       | new WriteConcern(1, 0, false, true)         | false
-        new WriteConcern(1, 0, false, false)       | new WriteConcern(1, 0, true, false)         | false
-        new WriteConcern(1, 0)                     | new WriteConcern(1, 1)                      | false
+        wc                                   | compareTo                           | expectedResult
+        WriteConcern.ACKNOWLEDGED            | WriteConcern.ACKNOWLEDGED           | true
+        WriteConcern.ACKNOWLEDGED            | null                                | false
+        WriteConcern.ACKNOWLEDGED            | WriteConcern.UNACKNOWLEDGED         | false
+        new WriteConcern(1, 0, false, false) | new WriteConcern(1, 0, false, true) | false
+        new WriteConcern(1, 0, false, false) | new WriteConcern(1, 0, true, false) | false
+        new WriteConcern(1, 0)               | new WriteConcern(1, 1)              | false
     }
 
     def 'test constants'() {

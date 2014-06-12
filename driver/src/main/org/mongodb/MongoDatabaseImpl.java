@@ -16,9 +16,11 @@
 
 package org.mongodb;
 
-import org.mongodb.codecs.CollectibleDocumentCodec;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.Codec;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonDocumentWrapper;
 import org.mongodb.codecs.DocumentCodec;
-import org.mongodb.codecs.ObjectIdGenerator;
 import org.mongodb.operation.CommandReadOperation;
 import org.mongodb.operation.CommandWriteOperation;
 
@@ -29,7 +31,6 @@ class MongoDatabaseImpl implements MongoDatabase {
     private final String name;
     private final MongoClientImpl client;
     private final DatabaseAdministration admin;
-    private final Codec<Document> commandCodec = new DocumentCodec();
 
     public MongoDatabaseImpl(final String name, final MongoClientImpl client, final MongoDatabaseOptions options) {
         this.name = name;
@@ -50,22 +51,18 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public MongoCollectionImpl<Document> getCollection(final String collectionName,
                                                        final MongoCollectionOptions operationOptions) {
-        return getCollection(collectionName,
-                             new CollectibleDocumentCodec(operationOptions.withDefaults(options)
-                                                                          .getPrimitiveCodecs(),
-                                                          new ObjectIdGenerator()),
-                             operationOptions);
+        return getCollection(collectionName, new DocumentCodec(), operationOptions);
     }
 
     @Override
     public <T> MongoCollectionImpl<T> getCollection(final String collectionName,
-                                                    final CollectibleCodec<T> codec) {
+                                                    final Codec<T> codec) {
         return getCollection(collectionName, codec, MongoCollectionOptions.builder().build());
     }
 
     @Override
     public <T> MongoCollectionImpl<T> getCollection(final String collectionName,
-                                                    final CollectibleCodec<T> codec,
+                                                    final Codec<T> codec,
                                                     final MongoCollectionOptions operationOptions) {
         return new MongoCollectionImpl<T>(collectionName, this, codec, operationOptions.withDefaults(options), client);
     }
@@ -77,18 +74,22 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public CommandResult executeCommand(final Document command) {
-        return client.execute(new CommandWriteOperation(getName(), command, commandCodec, commandCodec));
+        return client.execute(new CommandWriteOperation(getName(), wrap(command), new BsonDocumentCodec()));
     }
 
     @Override
     public CommandResult executeCommand(final Document command, final ReadPreference readPreference) {
         notNull("readPreference", readPreference);
-        return client.execute(new CommandReadOperation(getName(), command, commandCodec, commandCodec),
+        return client.execute(new CommandReadOperation(getName(), wrap(command), new BsonDocumentCodec()),
                               readPreference);
     }
 
     @Override
     public MongoDatabaseOptions getOptions() {
         return options;
+    }
+
+    private BsonDocument wrap(final Document command) {
+        return new BsonDocumentWrapper<Document>(command, options.getDocumentCodec());
     }
 }

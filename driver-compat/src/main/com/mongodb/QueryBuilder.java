@@ -17,10 +17,11 @@
 package com.mongodb;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import static java.util.Arrays.asList;
 
 /**
  * Utility for creating DBObject queries
@@ -71,8 +72,8 @@ public class QueryBuilder {
     }
 
     /**
-     * Equivalent to {@code QueryBuilder.put(key)}. Intended for compound query chains to be more readable, e.g. {@code
-     * QueryBuilder.start("a").greaterThan(1).and("b").lessThan(3) }
+     * Equivalent to {@code QueryBuilder.put(key)}. Intended for compound query chains to be more readable, e.g.
+     * {@code QueryBuilder.start("a").greaterThan(1).and("b").lessThan(3) }
      *
      * @param key MongoDB document key
      * @return {@code this}
@@ -246,7 +247,7 @@ public class QueryBuilder {
      */
     public QueryBuilder withinCenter(final double x, final double y, final double radius) {
         addOperand(QueryOperators.WITHIN,
-                   new BasicDBObject(QueryOperators.CENTER, new Object[]{new Double[]{x, y}, radius}));
+                   new BasicDBObject(QueryOperators.CENTER, asList(asList(x, y), radius)));
         return this;
     }
 
@@ -258,7 +259,7 @@ public class QueryBuilder {
      */
     public QueryBuilder near(final double x, final double y){
         addOperand(QueryOperators.NEAR,
-                   Arrays.asList(x, y));
+                   asList(x, y));
         return this;
     }
 
@@ -271,7 +272,7 @@ public class QueryBuilder {
      */
     public QueryBuilder near(final double x, final double y, final double maxDistance){
         addOperand(QueryOperators.NEAR,
-                   Arrays.asList(x, y));
+                   asList(x, y));
         addOperand(QueryOperators.MAX_DISTANCE,
                    maxDistance);
         return this;
@@ -285,7 +286,7 @@ public class QueryBuilder {
      */
     public QueryBuilder nearSphere(final double longitude, final double latitude){
         addOperand(QueryOperators.NEAR_SPHERE,
-                   Arrays.asList(longitude, latitude));
+                   asList(longitude, latitude));
         return this;
     }
 
@@ -298,7 +299,7 @@ public class QueryBuilder {
      */
     public QueryBuilder nearSphere(final double longitude, final double latitude, final double maxDistance){
         addOperand(QueryOperators.NEAR_SPHERE,
-                   Arrays.asList(longitude, latitude));
+                   asList(longitude, latitude));
         addOperand(QueryOperators.MAX_DISTANCE,
                    maxDistance);
         return this;
@@ -315,7 +316,7 @@ public class QueryBuilder {
     public QueryBuilder withinCenterSphere(final double longitude, final double latitude, final double maxDistance) {
         addOperand(QueryOperators.WITHIN,
                    new BasicDBObject(QueryOperators.CENTER_SPHERE,
-                                     new Object[]{new Double[]{longitude, latitude}, maxDistance}));
+                                     asList(asList(longitude, latitude), maxDistance)));
         return this;
     }
 
@@ -328,9 +329,10 @@ public class QueryBuilder {
      * @param y2 the y coordinate of the second box corner.
      * @return {@code this}
      */
+    @SuppressWarnings("unchecked")
     public QueryBuilder withinBox(final double x, final double y, final double x2, final double y2) {
         addOperand(QueryOperators.WITHIN,
-                   new BasicDBObject(QueryOperators.BOX, new Object[]{new Double[]{x, y}, new Double[]{x2, y2}}));
+                   new BasicDBObject(QueryOperators.BOX, asList(asList(x, y), asList(x2, y2))));
         return this;
     }
 
@@ -345,8 +347,18 @@ public class QueryBuilder {
             throw new IllegalArgumentException("Polygon insufficient number of vertices defined");
         }
         addOperand(QueryOperators.WITHIN,
-                   new BasicDBObject(QueryOperators.POLYGON, points));
+                   new BasicDBObject(QueryOperators.POLYGON, convertToListOfLists(points)));
         return this;
+    }
+
+    private List<List<Double>> convertToListOfLists(final List<Double[]> points) {
+        List<List<Double>> listOfLists = new ArrayList<List<Double>>(points.size());
+        for (Double[] cur : points) {
+            List<Double> list = new ArrayList<Double>(cur.length);
+            Collections.addAll(list, cur);
+            listOfLists.add(list);
+        }
+        return listOfLists;
     }
 
     /**

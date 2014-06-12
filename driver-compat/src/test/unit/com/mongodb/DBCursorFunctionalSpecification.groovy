@@ -42,30 +42,16 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         1 * decoder.decode(_ as byte[], collection)
     }
 
-    def 'should use provided in collection decoder factory'() {
-        given:
-        DBDecoder decoder = Mock()
-        DBDecoderFactory factory = Mock()
-        factory.create() >> decoder
-
-        when:
-        collection.setDBDecoderFactory(factory)
-        dbCursor = collection.find()
-        dbCursor.next()
-
-        then:
-        1 * decoder.decode(_ as byte[], collection)
-    }
-
     def 'should use provided hints for queries'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
 
         when:
         dbCursor = collection.find().hint(new BasicDBObject('a', 1))
+        def explainDocument = dbCursor.explain()
 
         then:
-        dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
+        explainDocument.get('cursor') == 'BtreeCursor a_1'
     }
 
 }

@@ -16,6 +16,8 @@
 
 package org.mongodb
 
+import org.bson.types.BsonDocument
+import org.bson.types.BsonString
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -26,20 +28,20 @@ class IndexSpecification extends Specification {
         index.getName() == indexName;
 
         where:
-        index                                                   | indexName
-        Index.builder().addKey('x').build()                     | 'x_1'
-        Index.builder().addKey('x', OrderBy.ASC).build()        | 'x_1'
-        Index.builder().addKey('x', OrderBy.DESC).build()       | 'x_-1'
-        Index.builder().addKey(new Index.GeoKey('x')).build()   | 'x_2d'
+        index                                                    | indexName
+        Index.builder().addKey('x').build()                      | 'x_1'
+        Index.builder().addKey('x', OrderBy.ASC).build()         | 'x_1'
+        Index.builder().addKey('x', OrderBy.DESC).build()        | 'x_-1'
+        Index.builder().addKey(new Index.GeoKey('x')).build()    | 'x_2d'
 
         Index.builder().addKeys(
-            new Index.OrderedKey('x', OrderBy.ASC),
-            new Index.OrderedKey('y', OrderBy.ASC),
-            new Index.OrderedKey('a', OrderBy.ASC)).build()     | 'x_1_y_1_a_1'
+                new Index.OrderedKey('x', OrderBy.ASC),
+                new Index.OrderedKey('y', OrderBy.ASC),
+                new Index.OrderedKey('a', OrderBy.ASC)).build()  | 'x_1_y_1_a_1'
 
         Index.builder().addKeys(
-            new Index.GeoKey('x'),
-            new Index.OrderedKey('y', OrderBy.DESC)).build()    | 'x_2d_y_-1'
+                new Index.GeoKey('x'),
+                new Index.OrderedKey('y', OrderBy.DESC)).build() | 'x_2d_y_-1'
 
     }
 
@@ -49,10 +51,10 @@ class IndexSpecification extends Specification {
         index.isUnique() == isUnique
 
         where:
-        index                                                       | isUnique
-        Index.builder().addKey('x').build()                         | false
-        Index.builder().addKey('x').unique().build()                | true
-        Index.builder().addKey('x').unique().unique(false).build()  | false
+        index                                                      | isUnique
+        Index.builder().addKey('x').build()                        | false
+        Index.builder().addKey('x').unique().build()               | true
+        Index.builder().addKey('x').unique().unique(false).build() | false
     }
 
     @Unroll
@@ -61,34 +63,35 @@ class IndexSpecification extends Specification {
         index.getExpireAfterSeconds() == seconds
 
         where:
-        index                                                           | seconds
-        Index.builder().addKey('x').build()                             | -1
-        Index.builder().addKey('x').expireAfterSeconds(1000).build()    | 1000
+        index                                                        | seconds
+        Index.builder().addKey('x').build()                          | -1
+        Index.builder().addKey('x').expireAfterSeconds(1000).build() | 1000
         Index.builder().addKey('x').expireAfterSeconds(1000)
-            .expireAfterSeconds(-1).build()                             | -1
+             .expireAfterSeconds(-1).build()                         | -1
     }
-    
+
     @Unroll
     def 'should support dropping duplicates'() {
         expect:
         index.isDropDups() == dropDups
 
         where:
-        index                                                           | dropDups
-        Index.builder().addKey('x').build()                             | false
-        Index.builder().addKey('x').dropDups().build()                  | true
-        Index.builder().addKey('x').dropDups(false).build()             | false
-        Index.builder().addKey('x').dropDups().dropDups(false).build()  | false
+        index                                                          | dropDups
+        Index.builder().addKey('x').build()                            | false
+        Index.builder().addKey('x').dropDups().build()                 | true
+        Index.builder().addKey('x').dropDups(false).build()            | false
+        Index.builder().addKey('x').dropDups().dropDups(false).build() | false
     }
-    
+
     @Unroll
     def 'should support unknown attributes'() {
         expect:
         index.getExtra() == extra
 
         where:
-        index                                                           | extra
-        Index.builder().addKey('x').build()                             | [:]
-        Index.builder().addKey('x').extra('extra', 'special').build()   | ['extra':'special']
+        index                                                                     | extra
+        Index.builder().addKey('x').build()                                       | new BsonDocument()
+        Index.builder().addKey('x')
+             .extra(new BsonDocument('extra', new BsonString('special'))).build() | new BsonDocument('extra': new BsonString('special'))
     }
 }

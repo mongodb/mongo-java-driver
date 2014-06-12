@@ -100,20 +100,20 @@ public class LazyBSONList extends LazyBSONObject implements List {
     }
 
     public class LazyBSONListIterator implements Iterator {
-        private final BSONBinaryReader reader;
-        private BSONType cachedBsonType;
+        private final BsonBinaryReader reader;
+        private BsonType cachedBsonType;
 
         public LazyBSONListIterator() {
-            reader = getBSONReader();
+            reader = getBsonReader();
             reader.readStartDocument();
         }
 
         @Override
         public boolean hasNext() {
             if (cachedBsonType == null) {
-                cachedBsonType = reader.readBSONType();
+                cachedBsonType = reader.readBsonType();
             }
-            return cachedBsonType != BSONType.END_OF_DOCUMENT;
+            return cachedBsonType != BsonType.END_OF_DOCUMENT;
         }
 
         @Override

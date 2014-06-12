@@ -17,21 +17,17 @@
 package org.mongodb.protocol.message;
 
 import org.bson.io.OutputBuffer;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.operation.RemoveRequest;
 
 import java.util.List;
 
 public class DeleteMessage extends RequestMessage {
     private final List<RemoveRequest> removeRequests;
-    private final Encoder<Document> encoder;
 
-    public DeleteMessage(final String collectionName, final List<RemoveRequest> removeRequests, final Encoder<Document> encoder,
+    public DeleteMessage(final String collectionName, final List<RemoveRequest> removeRequests,
                          final MessageSettings settings) {
         super(collectionName, OpCode.OP_DELETE, settings);
         this.removeRequests = removeRequests;
-        this.encoder = encoder;
     }
 
     @Override
@@ -40,7 +36,7 @@ public class DeleteMessage extends RequestMessage {
         if (removeRequests.size() == 1) {
             return null;
         } else {
-            return new DeleteMessage(getCollectionName(), removeRequests.subList(1, removeRequests.size()), encoder, getSettings());
+            return new DeleteMessage(getCollectionName(), removeRequests.subList(1, removeRequests.size()), getSettings());
         }
     }
 
@@ -54,7 +50,7 @@ public class DeleteMessage extends RequestMessage {
             buffer.writeInt(1);
         }
 
-        addDocument(removeRequest.getFilter(), encoder, buffer);
+        addDocument(removeRequest.getFilter(), getBsonDocumentCodec(), buffer, new NoOpFieldNameValidator());
     }
 }
 

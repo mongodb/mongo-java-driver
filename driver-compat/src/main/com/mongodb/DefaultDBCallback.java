@@ -38,7 +38,7 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
             this.objectFactory = collection.getObjectFactory();
         } else {
             this.db = null;
-            this.objectFactory = new DBObjectFactory();
+            this.objectFactory = new DBCollectionObjectFactory();
         }
     }
 

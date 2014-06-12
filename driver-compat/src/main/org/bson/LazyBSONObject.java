@@ -18,6 +18,7 @@ package org.bson;
 
 import org.bson.io.BSONByteBuffer;
 import org.bson.io.BasicInputBuffer;
+import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
 import org.bson.types.CodeWScope;
@@ -26,6 +27,7 @@ import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.RegularExpression;
 import org.bson.types.Symbol;
+import org.bson.types.Timestamp;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -80,12 +82,12 @@ public class LazyBSONObject implements BSONObject {
 
     @Override
     public Object get(final String key) {
-        BSONBinaryReader reader = getBSONReader();
+        BsonBinaryReader reader = getBsonReader();
         Object value;
         try {
             reader.readStartDocument();
             value = null;
-            while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+            while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 if (key.equals(reader.readName())) {
                     value = readValue(reader);
                     break;
@@ -107,10 +109,10 @@ public class LazyBSONObject implements BSONObject {
 
     @Override
     public boolean containsField(final String s) {
-        BSONReader reader = getBSONReader();
+        BsonBinaryReader reader = getBsonReader();
         try {
             reader.readStartDocument();
-            while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+            while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 if (reader.readName().equals(s)) {
                     return true;
                 } else {
@@ -126,10 +128,10 @@ public class LazyBSONObject implements BSONObject {
     @Override
     public Set<String> keySet() {
         Set<String> keys = new LinkedHashSet<String>();
-        BSONReader reader = getBSONReader();
+        BsonBinaryReader reader = getBsonReader();
         try {
             reader.readStartDocument();
-            while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+            while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 keys.add(reader.readName());
                 reader.skipValue();
             }
@@ -140,8 +142,8 @@ public class LazyBSONObject implements BSONObject {
         return Collections.unmodifiableSet(keys);
     }
 
-    Object readValue(final BSONBinaryReader reader) {
-        switch (reader.getCurrentBSONType()) {
+    Object readValue(final BsonBinaryReader reader) {
+        switch (reader.getCurrentBsonType()) {
             case DOCUMENT:
                 return readDocument(reader);
             case ARRAY:
@@ -153,10 +155,10 @@ public class LazyBSONObject implements BSONObject {
             case BINARY:
                 Binary binary = reader.readBinaryData();
                 byte binaryType = binary.getType();
-                if (binaryType == BSONBinarySubType.BINARY.getValue()
-                    || binaryType == BSONBinarySubType.BINARY.getValue()) {
+                if (binaryType == BsonBinarySubType.BINARY.getValue()
+                    || binaryType == BsonBinarySubType.BINARY.getValue()) {
                     return binary.getData();
-                } else if (binaryType == BSONBinarySubType.UUID_LEGACY.getValue()) {
+                } else if (binaryType == BsonBinarySubType.UUID_LEGACY.getValue()) {
                     return new UUID(readLong(binary.getData(), 0), readLong(binary.getData(), 8));
                 } else {
                     return binary;
@@ -173,8 +175,8 @@ public class LazyBSONObject implements BSONObject {
             case REGULAR_EXPRESSION:
                 RegularExpression regularExpression = reader.readRegularExpression();
                 return Pattern.compile(
-                                          regularExpression.getPattern(),
-                                          BSON.regexFlags(regularExpression.getOptions())
+                                      regularExpression.getPattern(),
+                                      BSON.regexFlags(regularExpression.getOptions())
                                       );
             case DB_POINTER:
                 DBPointer dbPointer = reader.readDBPointer();
@@ -188,7 +190,8 @@ public class LazyBSONObject implements BSONObject {
             case INT32:
                 return reader.readInt32();
             case TIMESTAMP:
-                return reader.readTimestamp();
+                Timestamp timestamp = reader.readTimestamp();
+                return new BSONTimestamp(timestamp.getTime(), timestamp.getInc());
             case INT64:
                 return reader.readInt64();
             case MIN_KEY:
@@ -198,20 +201,20 @@ public class LazyBSONObject implements BSONObject {
                 reader.readMaxKey();
                 return new MaxKey();
             default:
-                throw new IllegalArgumentException("unhandled BSON type: " + reader.getCurrentBSONType());
+                throw new IllegalArgumentException("unhandled BSON type: " + reader.getCurrentBsonType());
         }
     }
 
-    private Object readArray(final BSONBinaryReader reader) {
+    private Object readArray(final BsonBinaryReader reader) {
         int position = reader.getBuffer().getPosition();
         reader.skipValue();
         return callback.createArray(bytes, offset + position);
     }
 
-    private Object readDocument(final BSONBinaryReader reader) {
+    private Object readDocument(final BsonBinaryReader reader) {
         int position = reader.getBuffer().getPosition();
         reader.readStartDocument();
-        while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             reader.skipName();
             reader.skipValue();
         }
@@ -219,9 +222,9 @@ public class LazyBSONObject implements BSONObject {
         return callback.createObject(bytes, offset + position);
     }
 
-    BSONBinaryReader getBSONReader() {
+    BsonBinaryReader getBsonReader() {
         ByteBuffer buffer = getBufferForInternalBytes();
-        return new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(buffer)), true);
+        return new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(buffer)), true);
     }
 
     private ByteBuffer getBufferForInternalBytes() {
@@ -247,10 +250,10 @@ public class LazyBSONObject implements BSONObject {
 
     public Set<Map.Entry<String, Object>> entrySet() {
         Set<Map.Entry<String, Object>> entries = new LinkedHashSet<Map.Entry<String, Object>>();
-        BSONBinaryReader reader = getBSONReader();
+        BsonBinaryReader reader = getBsonReader();
         try {
             reader.readStartDocument();
-            while (reader.readBSONType() != BSONType.END_OF_DOCUMENT) {
+            while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
                 entries.add(new AbstractMap.SimpleImmutableEntry<String, Object>(reader.readName(), readValue(reader)));
             }
             reader.readEndDocument();

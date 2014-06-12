@@ -53,13 +53,13 @@ class CountOperationSpecification extends FunctionalSpecification {
 
     def 'should get the count'() {
         expect:
-        new CountOperation(getNamespace(), new Find(), new DocumentCodec()).execute(getBinding()) == insertDocumentList.size()
+        new CountOperation(getNamespace(), new Find()).execute(getBinding()) == insertDocumentList.size()
     }
 
     @Category(Async)
     def 'should get the count asynchronously'() {
         expect:
-        new CountOperation(getNamespace(), new Find(), new DocumentCodec()).executeAsync(getAsyncBinding()).get() ==
+        new CountOperation(getNamespace(), new Find()).executeAsync(getAsyncBinding()).get() ==
         insertDocumentList.size()
     }
 
@@ -69,7 +69,7 @@ class CountOperationSpecification extends FunctionalSpecification {
 
         given:
         def find = new Find().maxTime(1, SECONDS)
-        def countOperation = new CountOperation(getNamespace(), find, new DocumentCodec())
+        def countOperation = new CountOperation(getNamespace(), find)
         enableMaxTimeFailPoint()
 
         when:
@@ -88,7 +88,7 @@ class CountOperationSpecification extends FunctionalSpecification {
 
         given:
         def find = new Find().maxTime(1, SECONDS)
-        def countOperation = new CountOperation(getNamespace(), find, new DocumentCodec())
+        def countOperation = new CountOperation(getNamespace(), find)
         enableMaxTimeFailPoint()
 
         when:

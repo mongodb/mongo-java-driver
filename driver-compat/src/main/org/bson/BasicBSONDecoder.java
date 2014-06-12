@@ -42,10 +42,10 @@ public class BasicBSONDecoder implements BSONDecoder {
 
     @Override
     public int decode(final byte[] bytes, final BSONCallback callback) {
-        BSONBinaryReader reader = new BSONBinaryReader(new BSONReaderSettings(),
-                                                       new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+        BsonBinaryReader reader = new BsonBinaryReader(
+                                                      new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
         try {
-            BSONWriter writer = new BSONCallbackAdapter(new BSONWriterSettings(), callback);
+            BsonWriter writer = new BsonCallbackAdapter(new BsonWriterSettings(), callback);
             writer.pipe(reader);
             return reader.getBuffer().getPosition(); //TODO check this.
         } finally {

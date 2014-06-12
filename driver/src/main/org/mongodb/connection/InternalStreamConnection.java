@@ -18,14 +18,14 @@ package org.mongodb.connection;
 
 import org.bson.ByteBuf;
 import org.bson.io.BasicInputBuffer;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoInterruptedException;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.event.ConnectionEvent;
 import org.mongodb.event.ConnectionListener;
 import org.mongodb.event.ConnectionMessageReceivedEvent;
@@ -218,13 +218,13 @@ class InternalStreamConnection implements InternalConnection {
     private void initializeConnectionId() {
         CommandResult result;
         try {
-            result = CommandHelper.executeCommand("admin", new Document("getlasterror", 1), new DocumentCodec(), this);
+            result = CommandHelper.executeCommand("admin", new BsonDocument("getlasterror", new BsonInt32(1)), this);
 
         } catch (MongoCommandFailureException e) {
             result = e.getCommandResult();
         }
-        Integer connectionIdFromServer = result.getResponse().getInteger("connectionId");
-        id = "conn" + (connectionIdFromServer != null ? connectionIdFromServer : "*" + incrementingId.incrementAndGet() + "*");
+        BsonInt32 connectionIdFromServer = (BsonInt32) result.getResponse().get("connectionId");
+        id = "conn" + (connectionIdFromServer != null ? connectionIdFromServer.getValue() : "*" + incrementingId.incrementAndGet() + "*");
     }
 
     private void authenticateAll() {

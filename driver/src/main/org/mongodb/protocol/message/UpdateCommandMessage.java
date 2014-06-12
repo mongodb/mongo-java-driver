@@ -16,9 +16,8 @@
 
 package org.mongodb.protocol.message;
 
-import org.bson.BSONBinaryWriter;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
+import org.bson.BsonBinaryWriter;
+import org.bson.FieldNameValidator;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.UpdateRequest;
@@ -27,17 +26,21 @@ import java.util.List;
 
 public class UpdateCommandMessage extends BaseUpdateCommandMessage<UpdateRequest> {
     public UpdateCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                final List<UpdateRequest> updates, final Encoder<Document> commandEncoder,
+                                final List<UpdateRequest> updates,
                                 final MessageSettings messageSettings) {
-        super(namespace, ordered, writeConcern, updates, commandEncoder, messageSettings);
+        super(namespace, ordered, writeConcern, updates, messageSettings);
     }
 
-    protected void writeUpdate(final BSONBinaryWriter writer, final UpdateRequest update) {
-        getCommandEncoder().encode(writer, update.getUpdateOperations());
+    protected void writeUpdate(final BsonBinaryWriter writer, final UpdateRequest update) {
+        getBsonDocumentCodec().encode(writer, update.getUpdateOperations());
     }
 
     protected UpdateCommandMessage createNextMessage(final List<UpdateRequest> remainingUpdates) {
-        return new UpdateCommandMessage(getWriteNamespace(), isOrdered(), getWriteConcern(), remainingUpdates, getCommandEncoder(),
-                                        getSettings());
+        return new UpdateCommandMessage(getWriteNamespace(), isOrdered(), getWriteConcern(), remainingUpdates, getSettings());
+    }
+
+    @Override
+    protected FieldNameValidator getUpdateFieldNameValidator() {
+        return new UpdateFieldNameValidator();
     }
 }

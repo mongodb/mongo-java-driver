@@ -16,12 +16,12 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Document;
+import org.bson.types.BsonDocument;
 
 public class ReplaceRequest<T> extends BaseUpdateRequest {
     private final T replacement;
 
-    public ReplaceRequest(final Document filter, final T replacement) {
+    public ReplaceRequest(final BsonDocument filter, final T replacement) {
         super(filter);
         this.replacement = replacement;
     }

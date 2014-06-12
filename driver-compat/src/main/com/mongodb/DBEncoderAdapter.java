@@ -16,42 +16,34 @@
 
 package com.mongodb;
 
-import org.bson.BSONBinaryReader;
-import org.bson.BSONWriter;
+import org.bson.BsonBinaryReader;
+import org.bson.BsonWriter;
 import org.bson.ByteBufNIO;
+import org.bson.codecs.Encoder;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
-import org.mongodb.Encoder;
-import org.mongodb.IdGenerator;
 
 import static java.nio.ByteBuffer.wrap;
+import static org.mongodb.assertions.Assertions.notNull;
 
 class DBEncoderAdapter implements Encoder<DBObject> {
 
-    private static final String ID_FIELD_NAME = "_id";
-
     private final DBEncoder encoder;
-    private final IdGenerator idGenerator;
 
-    public DBEncoderAdapter(final DBEncoder encoder, final IdGenerator idGenerator) {
-        this.encoder = encoder;
-        this.idGenerator = idGenerator;
+    public DBEncoderAdapter(final DBEncoder encoder) {
+        this.encoder = notNull("encoder", encoder);
     }
 
     // TODO: this can be optimized to reduce copying of buffers.  For that we'd need an InputBuffer that could iterate
     //       over an array of ByteBuffer instances from a PooledByteBufferOutputBuffer
     @Override
-    public void encode(final BSONWriter bsonWriter, final DBObject document) {
-        if (document.get(ID_FIELD_NAME) == null) {
-            document.put(ID_FIELD_NAME, idGenerator.generate());
-        }
-
+    public void encode(final BsonWriter writer, final DBObject document) {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
         try {
             encoder.writeObject(buffer, document);
-            BSONBinaryReader reader = new BSONBinaryReader(new BasicInputBuffer(new ByteBufNIO(wrap(buffer.toByteArray()))), true);
+            BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(wrap(buffer.toByteArray()))), true);
             try {
-                bsonWriter.pipe(reader);
+                writer.pipe(reader);
             } finally {
                 reader.close();
             }

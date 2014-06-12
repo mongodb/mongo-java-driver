@@ -16,6 +16,11 @@
 
 package org.mongodb.protocol;
 
+import org.bson.types.BsonArray;
+import org.bson.types.BsonBoolean;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonInt32;
+import org.bson.types.BsonValue;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
@@ -50,10 +55,11 @@ final class ProtocolHelper {
             throwWriteException(commandResult);
         }
 
-        Boolean updatedExisting = commandResult.getResponse().getBoolean("updatedExisting");
+        BsonBoolean updatedExisting = (BsonBoolean) commandResult.getResponse().get("updatedExisting");
 
-        return new AcknowledgedWriteResult(((Number) commandResult.getResponse().get("n")).intValue(),
-                               updatedExisting != null ? updatedExisting : false, commandResult.getResponse().get("upserted"));
+        return new AcknowledgedWriteResult(((BsonInt32) commandResult.getResponse().get("n")).getValue(),
+                                           updatedExisting != null && updatedExisting.getValue(),
+                                           commandResult.getResponse().get("upserted"));
     }
 
     static MongoException getCommandFailureException(final CommandResult commandResult) {
@@ -100,13 +106,17 @@ final class ProtocolHelper {
         }
     }
 
-    private static boolean hasWriteError(final Document response) {
+    private static boolean hasWriteError(final BsonDocument response) {
         String err = getWriteErrorMessage(response);
         return err != null && err.length() > 0;
     }
 
-    private static String getWriteErrorMessage(final Document response) {
-        return response.getString("err");
+    private static String getWriteErrorMessage(final BsonDocument response) {
+        if (response.isString("err")) {
+            return response.getString("err").getValue();
+        } else {
+            return null;
+        }
     }
 
     private static void throwWriteException(final CommandResult commandResult) {
@@ -119,21 +129,21 @@ final class ProtocolHelper {
     }
 
     @SuppressWarnings("unchecked")
-    private static int getCode(final Document response) {
-        int code = response.getInteger("code", -1);
+    private static int getCode(final BsonDocument response) {
+        BsonInt32 code = (BsonInt32) response.get("code");
 
         // mongos may return a list of documents representing getlasterror responses from each shard.  Return the one with a matching
         // "err" field, so that it can be used to get the error code
-        if (code == -1 && response.get("errObjects") != null) {
-            for (Document curErrorDocument : (List<Document>) response.get("errObjects")) {
-                if (getWriteErrorMessage(response).equals(getWriteErrorMessage(curErrorDocument))) {
-                    code = curErrorDocument.getInteger("code", -1);
+        if (code == null && response.get("errObjects") != null) {
+            for (BsonValue curErrorDocument : (BsonArray) response.get("errObjects")) {
+                if (getWriteErrorMessage(response).equals(getWriteErrorMessage((BsonDocument) curErrorDocument))) {
+                    code = (BsonInt32) ((BsonDocument) curErrorDocument).get("code");
                     break;
                 }
             }
         }
 
-        return code;
+        return code == null ? -1 : code.getValue();
     }
 
     private ProtocolHelper() {

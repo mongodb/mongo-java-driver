@@ -16,25 +16,86 @@
 
 package org.bson.types;
 
+import org.bson.BsonType;
+
+import java.io.Serializable;
+
 /**
  * Holder for a BSON type DBPointer(0x0c). It's deprecated in BSON Specification and present here because of compatibility reasons.
  *
  * @since 3.0
  */
-public class DBPointer {
+public class DBPointer extends BsonValue implements Serializable {
+    private static final long serialVersionUID = -5105961452917374359L;
+
     private final String namespace;
     private final ObjectId id;
 
+    /**
+     * Construct a new instance with the given namespace and id.
+     *
+     * @param namespace the namespace
+     * @param id the id
+     */
     public DBPointer(final String namespace, final ObjectId id) {
+        if (namespace == null) {
+            throw new IllegalArgumentException("namespace can not be null");
+        }
+        if (id == null) {
+            throw new IllegalArgumentException("id can not be null");
+        }
         this.namespace = namespace;
         this.id = id;
     }
 
+    @Override
+    public BsonType getBsonType() {
+        return BsonType.DB_POINTER;
+    }
+
+    /**
+     * Gets the namespace.
+     *
+     * @return the namespace
+     */
     public String getNamespace() {
         return namespace;
     }
 
+    /**
+     * Gets the id.
+     *
+     * @return the id
+     */
     public ObjectId getId() {
         return id;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        DBPointer dbPointer = (DBPointer) o;
+
+        if (!id.equals(dbPointer.id)) {
+            return false;
+        }
+        if (!namespace.equals(dbPointer.namespace)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = namespace.hashCode();
+        result = 31 * result + id.hashCode();
+        return result;
     }
 }

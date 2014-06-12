@@ -16,6 +16,8 @@
 
 package org.mongodb.operation
 import category.Async
+import org.bson.types.BsonDocument
+import org.bson.types.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
@@ -26,7 +28,6 @@ import org.mongodb.test.WorkerCodec
 
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
-
 //TODO: what about custom Date formats?
 //TODO: test null returns
 class FindAndReplaceOperationSpecification extends FunctionalSpecification {
@@ -44,10 +45,10 @@ class FindAndReplaceOperationSpecification extends FunctionalSpecification {
         helper.insertDocuments(pete, sam)
 
         when:
-        FindAndReplace<Document> findAndReplace = new FindAndReplace<Document>(jordan).where(new Document('name', 'Pete'));
+        FindAndReplace<Document> findAndReplace = new FindAndReplace<Document>(jordan)
+                .where(new BsonDocument('name', new BsonString('Pete')));
 
-        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace,
-                documentCodec, documentCodec)
+        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace, documentCodec)
         Document returnedDocument = operation.execute(getBinding())
 
         then:
@@ -67,10 +68,10 @@ class FindAndReplaceOperationSpecification extends FunctionalSpecification {
         helper.insertDocuments(pete, sam)
 
         when:
-        FindAndReplace<Document> findAndReplace = new FindAndReplace<Document>(jordan).where(new Document('name', 'Pete'));
+        FindAndReplace<Document> findAndReplace = new FindAndReplace<Document>(jordan)
+                .where(new BsonDocument('name', new BsonString('Pete')));
 
-        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace,
-                documentCodec, documentCodec)
+        FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace, documentCodec)
         Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:
@@ -89,10 +90,9 @@ class FindAndReplaceOperationSpecification extends FunctionalSpecification {
         helper.insertDocuments(pete, sam)
 
         when:
-        FindAndReplace<Worker> findAndReplace = new FindAndReplace<Worker>(jordan).where(new Document('name', 'Pete'));
+        FindAndReplace<Worker> findAndReplace = new FindAndReplace<Worker>(jordan).where(new BsonDocument('name', new BsonString('Pete')));
 
-        FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(getNamespace(), findAndReplace,
-                workerCodec, workerCodec)
+        FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(getNamespace(), findAndReplace, workerCodec)
         Worker returnedDocument = operation.execute(getBinding())
 
         then:
@@ -111,14 +111,36 @@ class FindAndReplaceOperationSpecification extends FunctionalSpecification {
         helper.insertDocuments(pete, sam)
 
         when:
-        FindAndReplace<Worker> findAndReplace = new FindAndReplace<Worker>(jordan).where(new Document('name', 'Pete'));
+        FindAndReplace<Worker> findAndReplace = new FindAndReplace<Worker>(jordan).where(new BsonDocument('name', new BsonString('Pete')));
 
-        FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(getNamespace(), findAndReplace,
-                workerCodec, workerCodec)
+        FindAndReplaceOperation<Worker> operation = new FindAndReplaceOperation<Worker>(getNamespace(), findAndReplace, workerCodec)
         Worker returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:
         returnedDocument == pete
         helper.find().get(0) == jordan
+    }
+
+    def 'should throw an exception if replacement contains update operators'() {
+        when:
+        def findAndReplace = new FindAndReplace<Document>(new Document('$inc', 1))
+                .where(new BsonDocument('name', new BsonString('Pete')));
+
+        new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace, documentCodec).execute(getBinding())
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    @Category(Async)
+    def 'should throw an exception if replacement contains update operators asynchronously'() {
+        when:
+        def findAndReplace = new FindAndReplace<Document>(new Document('$inc', 1))
+                .where(new BsonDocument('name', new BsonString('Pete')));
+
+        new FindAndReplaceOperation<Document>(getNamespace(), findAndReplace, documentCodec).executeAsync(getAsyncBinding()).get()
+
+        then:
+        thrown(IllegalArgumentException)
     }
 }

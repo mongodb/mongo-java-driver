@@ -15,7 +15,10 @@
  */
 
 package org.mongodb.operation
-import org.mongodb.Document
+
+import org.bson.types.BsonDocument
+import org.bson.types.BsonInt32
+import org.bson.types.BsonString
 import spock.lang.Specification
 
 import static org.mongodb.ReadPreference.primary
@@ -47,13 +50,13 @@ class QuerySpecification extends Specification {
         query.getFlags(primary()) == flags
 
         where:
-        query                                                                             | flags
-        new Find()                                                                        | EnumSet.noneOf(QueryFlag)
-        new Find().addFlags(EnumSet.of(Tailable))                                         | EnumSet.of(Tailable, AwaitData)
-        new Find().addFlags(EnumSet.of(SlaveOk))                                          | EnumSet.of(SlaveOk)
-        new Find().addFlags(EnumSet.of(Tailable, SlaveOk))                                | EnumSet.of(Tailable, AwaitData, SlaveOk)
-        new Find().flags(EnumSet.of(Exhaust))                                             | EnumSet.of(Exhaust)
-        new Find().addFlags(EnumSet.of(Tailable, SlaveOk)).flags(EnumSet.of(Exhaust))     | EnumSet.of(Exhaust)
+        query                                                                         | flags
+        new Find()                                                                    | EnumSet.noneOf(QueryFlag)
+        new Find().addFlags(EnumSet.of(Tailable))                                     | EnumSet.of(Tailable, AwaitData)
+        new Find().addFlags(EnumSet.of(SlaveOk))                                      | EnumSet.of(SlaveOk)
+        new Find().addFlags(EnumSet.of(Tailable, SlaveOk))                            | EnumSet.of(Tailable, AwaitData, SlaveOk)
+        new Find().flags(EnumSet.of(Exhaust))                                         | EnumSet.of(Exhaust)
+        new Find().addFlags(EnumSet.of(Tailable, SlaveOk)).flags(EnumSet.of(Exhaust)) | EnumSet.of(Exhaust)
     }
 
     def 'test flags with secondary'() {
@@ -61,10 +64,10 @@ class QuerySpecification extends Specification {
         query.getFlags(secondary()) == flags
 
         where:
-        query                                                                             | flags
-        new Find()                                                                        | EnumSet.of(SlaveOk)
-        new Find().addFlags(EnumSet.of(SlaveOk))                                          | EnumSet.of(SlaveOk)
-        new Find().flags(EnumSet.of(Exhaust))                                             | EnumSet.of(Exhaust, SlaveOk)
+        query                                    | flags
+        new Find()                               | EnumSet.of(SlaveOk)
+        new Find().addFlags(EnumSet.of(SlaveOk)) | EnumSet.of(SlaveOk)
+        new Find().flags(EnumSet.of(Exhaust))    | EnumSet.of(Exhaust, SlaveOk)
     }
 
     def 'should throw an exception if options given are null'() {
@@ -82,7 +85,7 @@ class QuerySpecification extends Specification {
     def 'testCopyConstructor'() {
         given:
         EnumSet<QueryFlag> flags = EnumSet.allOf(QueryFlag)
-        Document hint = new Document('a', 1)
+        BsonDocument hint = new BsonDocument('a', new BsonInt32(1))
         int batchSize = 2
         int limit = 5
         int skip = 1
@@ -102,17 +105,17 @@ class QuerySpecification extends Specification {
         copy.getBatchSize() == batchSize
         copy.getLimit() == limit
         copy.getSkip() == skip
-        copy.getHint().getValue() == hint
+        copy.getHint() == hint
     }
 
     def 'should support index hints'() {
         expect:
-        query.getHint()?.getValue() == value
+        query.getHint() == value
 
         where:
-        query                                      | value
-        new Find()                                 | null
-        new Find().hintIndex('i_1')                | 'i_1'
-        new Find().hintIndex(new Document('i', 1)) | new Document('i', 1)
+        query                                                         | value
+        new Find()                                                    | null
+        new Find().hintIndex('i_1')                                   | new BsonString('i_1')
+        new Find().hintIndex(new BsonDocument('i', new BsonInt32(1))) | new BsonDocument('i', new BsonInt32(1))
     }
 }

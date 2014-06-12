@@ -16,7 +16,7 @@
 
 package org.bson.io;
 
-import org.bson.BSONType;
+import org.bson.BsonType;
 import org.bson.types.ObjectId;
 
 import java.io.Closeable;
@@ -47,7 +47,7 @@ public interface InputBuffer extends Closeable {
 
     ObjectId readObjectId();
 
-    BSONType readBSONType();
+    BsonType readBSONType();
 
     String readCString();
 

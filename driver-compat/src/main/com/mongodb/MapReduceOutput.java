@@ -42,7 +42,7 @@ public class MapReduceOutput {
                     final org.mongodb.connection.ServerAddress serverAddress) {
 
         this.command = command;
-        this.mapReduceStatistics = results;
+        this.mapReduceStatistics = results.getStatistics();
 
         this.serverAddress = new ServerAddress(serverAddress);
         this.collection = null;

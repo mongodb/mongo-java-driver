@@ -25,11 +25,14 @@ public class BulkUpdateRequestBuilder {
     private final BulkWriteOperation bulkWriteOperation;
     private final DBObject query;
     private final boolean upsert;
+    private final DBObjectCodec codec;
 
-    BulkUpdateRequestBuilder(final BulkWriteOperation bulkWriteOperation, final DBObject query, final boolean upsert) {
+    BulkUpdateRequestBuilder(final BulkWriteOperation bulkWriteOperation, final DBObject query, final boolean upsert,
+                             final DBObjectCodec codec) {
         this.bulkWriteOperation = bulkWriteOperation;
         this.query = query;
         this.upsert = upsert;
+        this.codec = codec;
     }
 
     /**
@@ -38,7 +41,7 @@ public class BulkUpdateRequestBuilder {
      * @param document the replacement document
      */
     public void replaceOne(final DBObject document) {
-        bulkWriteOperation.addRequest(new ReplaceRequest(query, document, upsert));
+        bulkWriteOperation.addRequest(new ReplaceRequest(query, document, upsert, codec));
     }
 
     /**
@@ -47,7 +50,7 @@ public class BulkUpdateRequestBuilder {
      * @param update the update criteria
      */
     public void update(final DBObject update) {
-        bulkWriteOperation.addRequest(new UpdateRequest(query, update, true, upsert));
+        bulkWriteOperation.addRequest(new UpdateRequest(query, update, true, upsert, codec));
     }
 
     /**
@@ -56,6 +59,6 @@ public class BulkUpdateRequestBuilder {
      * @param update the update criteria
      */
     public void updateOne(final DBObject update) {
-        bulkWriteOperation.addRequest(new UpdateRequest(query, update, false, upsert));
+        bulkWriteOperation.addRequest(new UpdateRequest(query, update, false, upsert, codec));
     }
 }

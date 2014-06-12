@@ -15,7 +15,10 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
+import org.bson.types.BsonDocument
+import org.bson.types.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.AggregationOptions
 import org.mongodb.Document
@@ -70,9 +73,9 @@ class AggregateExplainOperationSpecification extends FunctionalSpecification {
         assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
 
         given:
-        def match = new Document('job', 'plumber')
+        def match = new BsonDocument('job', new BsonString('plumber'))
         AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(),
-                                                                     [new Document('$match', match)],
+                                                                     [new BsonDocument('$match', match)],
                                                                      aggregateOptions)
 
         when:
@@ -94,9 +97,9 @@ class AggregateExplainOperationSpecification extends FunctionalSpecification {
         assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
 
         given:
-        def match = new Document('job', 'plumber')
+        def match = new BsonDocument('job', new BsonString('plumber'))
         AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(),
-                                                                     [new Document('$match', match)],
+                                                                     [new BsonDocument('$match', match)],
                                                                      aggregateOptions)
         when:
         def result = op.executeAsync(getAsyncBinding()).get();

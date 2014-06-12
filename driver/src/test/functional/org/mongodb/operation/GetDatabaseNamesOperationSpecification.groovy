@@ -21,6 +21,7 @@ import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 
+import static java.util.concurrent.TimeUnit.SECONDS
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
 
@@ -45,7 +46,7 @@ class GetDatabaseNamesOperationSpecification extends FunctionalSpecification {
         def operation = new GetDatabaseNamesOperation()
 
         when:
-        List<String> names = operation.executeAsync(getAsyncBinding()).get()
+        List<String> names = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
 
         then:
         names.contains(getDatabaseName())

@@ -16,12 +16,10 @@
 
 package org.mongodb.protocol.message;
 
-import org.bson.BSONBinaryReader;
-import org.bson.BSONReader;
-import org.bson.BSONReaderSettings;
+import org.bson.BsonBinaryReader;
+import org.bson.codecs.Decoder;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
-import org.mongodb.Decoder;
 import org.mongodb.MongoInternalException;
 import org.mongodb.connection.ReplyHeader;
 import org.mongodb.connection.ResponseBuffers;
@@ -55,7 +53,7 @@ public class ReplyMessage<T> {
         if (replyHeader.getNumberReturned() > 0) {
             InputBuffer inputBuffer = new BasicInputBuffer(responseBuffers.getBodyByteBuffer());
             while (documents.size() < replyHeader.getNumberReturned()) {
-                BSONReader reader = new BSONBinaryReader(new BSONReaderSettings(), inputBuffer, false);
+                BsonBinaryReader reader = new BsonBinaryReader(inputBuffer, false);
                 try {
                     documents.add(decoder.decode(reader));
                 } finally {

@@ -17,8 +17,6 @@
 package org.mongodb.protocol.message;
 
 import org.bson.io.OutputBuffer;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.operation.BaseUpdateRequest;
 import org.mongodb.operation.UpdateRequest;
 
@@ -27,20 +25,19 @@ import java.util.List;
 public class UpdateMessage extends BaseUpdateMessage {
     private final List<UpdateRequest> updates;
 
-    public UpdateMessage(final String collectionName, final List<UpdateRequest> updates, final Encoder<Document> encoder,
-                         final MessageSettings settings) {
-        super(collectionName, OpCode.OP_UPDATE, encoder, settings);
+    public UpdateMessage(final String collectionName, final List<UpdateRequest> updates, final MessageSettings settings) {
+        super(collectionName, OpCode.OP_UPDATE, settings);
         this.updates = updates;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeBaseUpdate(buffer);
-        addDocument(updates.get(0).getUpdateOperations(), getBaseEncoder(), buffer);
+        addDocument(updates.get(0).getUpdateOperations(), getBsonDocumentCodec(), buffer, new UpdateFieldNameValidator());
         if (updates.size() == 1) {
             return null;
         } else {
-            return new UpdateMessage(getCollectionName(), updates.subList(1, updates.size()), getBaseEncoder(), getSettings());
+            return new UpdateMessage(getCollectionName(), updates.subList(1, updates.size()), getSettings());
         }
     }
 

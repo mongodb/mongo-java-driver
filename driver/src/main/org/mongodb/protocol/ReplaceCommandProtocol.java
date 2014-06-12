@@ -16,9 +16,8 @@
 
 package org.mongodb.protocol;
 
+import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
-import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
@@ -44,15 +43,12 @@ public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
     private static final Logger LOGGER = Loggers.getLogger("protocol.replace");
 
     private final List<ReplaceRequest<T>> replaceRequests;
-    private final Encoder<Document> queryEncoder;
     private final Encoder<T> encoder;
 
     public ReplaceCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                  final List<ReplaceRequest<T>> replaceRequests, final Encoder<Document> queryEncoder,
-                                  final Encoder<T> encoder) {
+                                  final List<ReplaceRequest<T>> replaceRequests, final Encoder<T> encoder) {
         super(namespace, ordered, writeConcern);
         this.replaceRequests = notNull("replaces", replaceRequests);
-        this.queryEncoder = notNull("queryEncoder", queryEncoder);
         this.encoder = notNull("encoder", encoder);
     }
 
@@ -89,7 +85,7 @@ public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
 
     @Override
     protected ReplaceCommandMessage<T> createRequestMessage(final ServerDescription serverDescription) {
-        return new ReplaceCommandMessage<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, queryEncoder, encoder,
+        return new ReplaceCommandMessage<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, encoder,
                                             getMessageSettings(serverDescription));
     }
 

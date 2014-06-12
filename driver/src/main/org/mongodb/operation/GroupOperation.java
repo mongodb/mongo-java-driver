@@ -16,8 +16,10 @@
 
 package org.mongodb.operation;
 
+import org.bson.codecs.Decoder;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
@@ -25,8 +27,6 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
-
-import java.util.List;
 
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
@@ -38,72 +38,78 @@ import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  * @mongodb.driver.manual reference/command/group Group Command
  * @since 3.0
  */
-public class GroupOperation implements AsyncReadOperation<MongoAsyncCursor<Document>>, ReadOperation<MongoCursor<Document>> {
+public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoCursor<T>> {
     private final MongoNamespace namespace;
     private final Group group;
+    private final Decoder<T> decoder;
 
     /**
      * Create an operation that will perform a Group on a given collection.
-     * @param namespace      the database and collection to run the operation against
-     * @param group          contains all the arguments for this group command
+     *
+     * @param namespace the database and collection to run the operation against
+     * @param group     contains all the arguments for this group command
      */
-    public GroupOperation(final MongoNamespace namespace, final Group group) {
+    public GroupOperation(final MongoNamespace namespace, final Group group, final Decoder<T> decoder) {
         this.namespace = namespace;
         this.group = group;
+        this.decoder = decoder;
     }
 
     /**
      * Will return a cursor of Documents containing the results of the group operation.
      *
+     * @param binding the binding
      * @return a MongoCursor of T, the results of the group operation in a form to be iterated over
-     * @param binding the binding
      */
     @Override
     @SuppressWarnings("unchecked")
-    public MongoCursor<Document> execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getCommand(), binding, transformer());
+    public MongoCursor<T> execute(final ReadBinding binding) {
+        return executeWrappedCommandProtocol(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "retval"), binding,
+                                             transformer());
     }
 
     /**
      * Will return a cursor of Documents containing the results of the group operation.
      *
-     * @return a Future MongoCursor of T, the results of the group operation in a form to be iterated over
      * @param binding the binding
+     * @return a Future MongoCursor of T, the results of the group operation in a form to be iterated over
      */
     @Override
     @SuppressWarnings("unchecked")
-    public MongoFuture<MongoAsyncCursor<Document>> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), binding, asyncTransformer());
+    public MongoFuture<MongoAsyncCursor<T>> executeAsync(final AsyncReadBinding binding) {
+        return executeWrappedCommandProtocolAsync(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "retval"), binding,
+                                                  asyncTransformer());
     }
 
-    private Function<CommandResult, MongoCursor<Document>> transformer() {
-        return new Function<CommandResult, MongoCursor<Document>>() {
+    private Function<CommandResult, MongoCursor<T>> transformer() {
+        return new Function<CommandResult, MongoCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MongoCursor<Document> apply(final CommandResult result) {
-                return new InlineMongoCursor<Document>(result.getAddress(), (List<Document>) result.getResponse().get("retval"));
+            public MongoCursor<T> apply(final CommandResult result) {
+                return new InlineMongoCursor<T>(result.getAddress(),
+                                                BsonDocumentWrapperHelper.<T>toList(result.getResponse().getArray("retval")));
             }
         };
     }
 
-    private Function<CommandResult, MongoAsyncCursor<Document>> asyncTransformer() {
-        return new Function<CommandResult, MongoAsyncCursor<Document>>() {
+    private Function<CommandResult, MongoAsyncCursor<T>> asyncTransformer() {
+        return new Function<CommandResult, MongoAsyncCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MongoAsyncCursor<Document> apply(final CommandResult result) {
-                return new InlineMongoAsyncCursor<Document>((List<Document>) result.getResponse().get("retval"));
+            public MongoAsyncCursor<T> apply(final CommandResult result) {
+                return new InlineMongoAsyncCursor<T>(BsonDocumentWrapperHelper.<T>toList(result.getResponse().getArray("retval")));
             }
         };
     }
 
 
-    private Document getCommand() {
+    private BsonDocument getCommand() {
 
-        Document document = new Document("ns", namespace.getCollectionName());
+        BsonDocument document = new BsonDocument("ns", new BsonString(namespace.getCollectionName()));
 
         if (group.getKey() != null) {
             document.put("key", group.getKey());
-        } else {
+        } else if (group.getKeyFunction() != null) {
             document.put("keyf", group.getKeyFunction());
         }
 
@@ -118,6 +124,6 @@ public class GroupOperation implements AsyncReadOperation<MongoAsyncCursor<Docum
             document.put("cond", group.getFilter());
         }
 
-        return new Document("group", document);
+        return new BsonDocument("group", document);
     }
 }

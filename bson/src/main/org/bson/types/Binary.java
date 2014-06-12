@@ -16,7 +16,8 @@
 
 package org.bson.types;
 
-import org.bson.BSONBinarySubType;
+import org.bson.BsonBinarySubType;
+import org.bson.BsonType;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -24,7 +25,7 @@ import java.util.Arrays;
 /**
  * Generic binary holder.
  */
-public class Binary implements Serializable {
+public class Binary extends BsonValue implements Serializable {
     private static final long serialVersionUID = 7902997490338209467L;
 
     private final byte type;
@@ -36,7 +37,7 @@ public class Binary implements Serializable {
      * @param data raw data
      */
     public Binary(final byte[] data) {
-        this(BSONBinarySubType.BINARY, data);
+        this(BsonBinarySubType.BINARY, data);
     }
 
     /**
@@ -45,7 +46,7 @@ public class Binary implements Serializable {
      * @param type the binary type
      * @param data the binary data
      */
-    public Binary(final BSONBinarySubType type, final byte[] data) {
+    public Binary(final BsonBinarySubType type, final byte[] data) {
         this(type.getValue(), data);
     }
 
@@ -99,5 +100,10 @@ public class Binary implements Serializable {
         int result = (int) type;
         result = 31 * result + Arrays.hashCode(data);
         return result;
+    }
+
+    @Override
+    public BsonType getBsonType() {
+        return BsonType.BINARY;
     }
 }

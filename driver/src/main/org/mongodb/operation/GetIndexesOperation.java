@@ -16,12 +16,13 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Document;
+import org.bson.codecs.Decoder;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.protocol.QueryProtocol;
 
 import java.util.EnumSet;
@@ -32,38 +33,48 @@ import static org.mongodb.operation.QueryOperationHelper.queryResultToList;
 import static org.mongodb.operation.QueryOperationHelper.queryResultToListAsync;
 
 /**
- * An operation that gets the indexes that have been created on a collection.
+ * An operation that gets the indexes that have been created on a collection.  For flexibility,
+ * the type of each document returned is generic.
+ *
+ * @param <T> the document type for each index
  *
  * @since 3.0
  */
-public class GetIndexesOperation implements AsyncReadOperation<List<Document>>, ReadOperation<List<Document>> {
+public class GetIndexesOperation<T> implements AsyncReadOperation<List<T>>, ReadOperation<List<T>> {
     private final MongoNamespace collectionNamespace;
+    private final Decoder<T> decoder;
 
-    public GetIndexesOperation(final MongoNamespace collectionNamespace) {
+    /**
+     * Construct a new instance
+     *
+     * @param collectionNamespace the namespace of the collection to get the indexes for
+     * @param decoder the decoder for the indexes
+     */
+    public GetIndexesOperation(final MongoNamespace collectionNamespace, final Decoder<T> decoder) {
         this.collectionNamespace = notNull("collectionNamespace", collectionNamespace);
+        this.decoder = decoder;
     }
 
     @Override
-    public List<Document> execute(final ReadBinding binding) {
-        return queryResultToList(getIndexNamespace(), getProtocol(), new DocumentCodec(), binding);
+    public List<T> execute(final ReadBinding binding) {
+        return queryResultToList(getIndexNamespace(), getProtocol(), decoder, binding);
     }
 
     @Override
-    public MongoFuture<List<Document>> executeAsync(final AsyncReadBinding binding) {
-        return queryResultToListAsync(getIndexNamespace(), getProtocol(), binding);
+    public MongoFuture<List<T>> executeAsync(final AsyncReadBinding binding) {
+        return queryResultToListAsync(getIndexNamespace(), getProtocol(), decoder, binding);
     }
 
-    private Document asQueryDocument() {
-        return new Document("ns", collectionNamespace.getFullName());
+    private BsonDocument asQueryDocument() {
+        return new BsonDocument("ns", new BsonString(collectionNamespace.getFullName()));
     }
 
     private MongoNamespace getIndexNamespace() {
         return new MongoNamespace(collectionNamespace.getDatabaseName(), "system.indexes");
     }
 
-    private QueryProtocol<Document> getProtocol() {
-        return new QueryProtocol<Document>(getIndexNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, asQueryDocument(),
-                null, new DocumentCodec(), new DocumentCodec());
+    private QueryProtocol<T> getProtocol() {
+        return new QueryProtocol<T>(getIndexNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, asQueryDocument(), null, decoder);
     }
 
 }

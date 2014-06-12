@@ -16,21 +16,21 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
-import org.mongodb.Codec;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
+import org.bson.codecs.Codec;
 
 /**
  * Float codec
  */
 public class FloatCodec implements Codec<Float> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final Float value) {
-        bsonWriter.writeDouble(value);
+    public void encode(final BsonWriter writer, final Float value) {
+        writer.writeDouble(value);
     }
 
     @Override
-    public Float decode(final BSONReader reader) {
+    public Float decode(final BsonReader reader) {
         throw new UnsupportedOperationException();
     }
 

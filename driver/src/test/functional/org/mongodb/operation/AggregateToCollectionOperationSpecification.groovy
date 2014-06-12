@@ -15,12 +15,14 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
+import org.bson.types.BsonDocument
+import org.bson.types.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.AggregationOptions
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.codecs.DocumentCodec
 import spock.lang.Shared
 
 import static java.util.Arrays.asList
@@ -33,7 +35,8 @@ import static org.mongodb.Fixture.serverVersionAtLeast
 
 class AggregateToCollectionOperationSpecification extends FunctionalSpecification {
 
-    @Shared outCollection
+    @Shared
+            outCollection
 
     def setup() {
         outCollection = initialiseCollection(getDefaultDatabase(), 'aggregateCollection')
@@ -45,7 +48,7 @@ class AggregateToCollectionOperationSpecification extends FunctionalSpecificatio
 
     def 'should not accept an empty pipeline'() {
         when:
-        new AggregateToCollectionOperation(getNamespace(), [], new DocumentCodec(), AggregationOptions.builder().build())
+        new AggregateToCollectionOperation(getNamespace(), [], AggregationOptions.builder().build())
 
 
         then:
@@ -54,7 +57,8 @@ class AggregateToCollectionOperationSpecification extends FunctionalSpecificatio
 
     def 'should not accept a pipeline without the last stage specifying an output-collection'() {
         when:
-        new AggregateToCollectionOperation(getNamespace(), [new Document('$match', new Document('job', 'plumber'))], new DocumentCodec(),
+        new AggregateToCollectionOperation(getNamespace(), [new BsonDocument('$match',
+                                                                             new BsonDocument('job', new BsonString('plumber')))],
                                            AggregationOptions.builder().build())
 
 
@@ -66,9 +70,10 @@ class AggregateToCollectionOperationSpecification extends FunctionalSpecificatio
         assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
 
         when:
-        AggregateToCollectionOperation op = new AggregateToCollectionOperation(getNamespace(),
-                                                                               [new Document('$out', outCollection.name)],
-                                                                                new DocumentCodec(), AggregationOptions.builder().build())
+        AggregateToCollectionOperation op =
+                new AggregateToCollectionOperation(getNamespace(),
+                                                   [new BsonDocument('$out', new BsonString(outCollection.name))],
+                                                   AggregationOptions.builder().build())
         op.execute(getBinding());
 
         then:
@@ -80,9 +85,10 @@ class AggregateToCollectionOperationSpecification extends FunctionalSpecificatio
         assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
 
         when:
-        AggregateToCollectionOperation op = new AggregateToCollectionOperation(getNamespace(),
-                                                                               [new Document('$out', outCollection.name)],
-                                                                               new DocumentCodec(), AggregationOptions.builder().build())
+        AggregateToCollectionOperation op =
+                new AggregateToCollectionOperation(getNamespace(),
+                                                   [new BsonDocument('$out', new BsonString(outCollection.name))],
+                                                   AggregationOptions.builder().build())
         op.executeAsync(getAsyncBinding()).get();
 
         then:
@@ -93,10 +99,11 @@ class AggregateToCollectionOperationSpecification extends FunctionalSpecificatio
         assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
 
         when:
-        AggregateToCollectionOperation op = new AggregateToCollectionOperation(getNamespace(),
-                                                                               [new Document('$match', new Document('job', 'plumber')),
-                                                                                new Document('$out', outCollection.name)],
-                                                                               new DocumentCodec(), AggregationOptions.builder().build())
+        AggregateToCollectionOperation op =
+                new AggregateToCollectionOperation(getNamespace(),
+                                                   [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
+                                                    new BsonDocument('$out', new BsonString(outCollection.name))],
+                                                   AggregationOptions.builder().build())
         op.execute(getBinding());
 
         then:
@@ -108,10 +115,11 @@ class AggregateToCollectionOperationSpecification extends FunctionalSpecificatio
         assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
 
         when:
-        AggregateToCollectionOperation op = new AggregateToCollectionOperation(getNamespace(),
-                                                                               [new Document('$match', new Document('job', 'plumber')),
-                                                                                new Document('$out', outCollection.name)],
-                                                                               new DocumentCodec(), AggregationOptions.builder().build())
+        AggregateToCollectionOperation op =
+                new AggregateToCollectionOperation(getNamespace(),
+                                                   [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
+                                                    new BsonDocument('$out', new BsonString(outCollection.name))],
+                                                   AggregationOptions.builder().build())
         op.executeAsync(getAsyncBinding()).get();
 
         then:

@@ -16,18 +16,18 @@
 
 package org.mongodb.codecs;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
-import org.mongodb.Codec;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
+import org.bson.codecs.Codec;
 
 public class ByteCodec implements Codec<Byte> {
     @Override
-    public void encode(final BSONWriter bsonWriter, final Byte value) {
-        bsonWriter.writeInt32(value);
+    public void encode(final BsonWriter writer, final Byte value) {
+        writer.writeInt32(value);
     }
 
     @Override
-    public Byte decode(final BSONReader reader) {
+    public Byte decode(final BsonReader reader) {
         throw new UnsupportedOperationException();
     }
 

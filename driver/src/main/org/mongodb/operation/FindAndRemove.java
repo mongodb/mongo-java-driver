@@ -16,26 +16,26 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.Document;
+import org.bson.types.BsonDocument;
 
 import java.util.concurrent.TimeUnit;
 
 public class FindAndRemove<T> extends FindAndModify {
 
     @Override
-    public FindAndRemove<T> where(final Document filter) {
+    public FindAndRemove<T> where(final BsonDocument filter) {
         super.where(filter);
         return this;
     }
 
     @Override
-    public FindAndRemove<T> select(final Document selector) {
+    public FindAndRemove<T> select(final BsonDocument selector) {
         super.select(selector);
         return this;
     }
 
     @Override
-    public FindAndRemove<T> sortBy(final Document sortCriteria) {
+    public FindAndRemove<T> sortBy(final BsonDocument sortCriteria) {
         super.sortBy(sortCriteria);
         return this;
     }

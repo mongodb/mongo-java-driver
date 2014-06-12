@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import org.bson.codecs.Codec;
 import org.mongodb.annotations.ThreadSafe;
 
 import java.util.List;
@@ -45,7 +46,7 @@ public interface MongoCollection<T> {
 
     MongoCollectionOptions getOptions();
 
-    CollectibleCodec<T> getCodec();
+    Codec<T> getCodec();
 
     CollectionAdministration tools();
 

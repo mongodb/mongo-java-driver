@@ -16,6 +16,9 @@
 
 package org.mongodb;
 
+import org.bson.types.BsonArray;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.annotations.Immutable;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
@@ -51,11 +54,11 @@ public abstract class TaggableReadPreference extends ReadPreference {
     }
 
     @Override
-    public Document toDocument() {
-        Document readPrefObject = new Document("mode", getName());
+    public BsonDocument toDocument() {
+        BsonDocument readPrefObject = new BsonDocument("mode", new BsonString(getName()));
 
         if (!tagsList.isEmpty()) {
-            readPrefObject.put("tags", tagsList);
+            readPrefObject.put("tags", tagsListToBsonArray());
         }
 
         return readPrefObject;
@@ -222,5 +225,13 @@ public abstract class TaggableReadPreference extends ReadPreference {
             List<ServerDescription> servers = clusterDescription.getPrimaries();
             return (!servers.isEmpty()) ? servers : super.choose(clusterDescription);
         }
+    }
+
+    private BsonArray tagsListToBsonArray() {
+        BsonArray bsonArray = new BsonArray();
+        for (Tags tags : tagsList) {
+            bsonArray.add(tags.toDocument());
+        }
+        return bsonArray;
     }
 }

@@ -16,7 +16,10 @@
 
 package com.mongodb;
 
-import org.mongodb.Codec;
+import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.RootCodecRegistry;
 import org.mongodb.Document;
 import org.mongodb.ServerCursor;
 import org.mongodb.annotations.ThreadSafe;
@@ -27,7 +30,7 @@ import org.mongodb.binding.ReadBinding;
 import org.mongodb.binding.ReadWriteBinding;
 import org.mongodb.binding.SingleServerBinding;
 import org.mongodb.binding.WriteBinding;
-import org.mongodb.codecs.PrimitiveCodecs;
+import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterConnectionMode;
@@ -51,6 +54,7 @@ import org.mongodb.selector.ServerSelector;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -74,9 +78,8 @@ import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
 
 /**
- * A database connection with internal connection pooling. For most applications, you should have one Mongo instance
- * for the entire JVM.
- * <p>
+ * A database connection with internal connection pooling. For most applications, you should have one Mongo instance for the entire JVM.
+ * <p/>
  * The following are equivalent, and all connect to the local database running on the default port:
  * <pre>
  * Mongo mongo1 = new Mongo();
@@ -84,31 +87,30 @@ import static org.mongodb.connection.ClusterType.REPLICA_SET;
  * Mongo mongo2 = new Mongo("localhost", 27017);
  * Mongo mongo4 = new Mongo(new ServerAddress("localhost"));
  * </pre>
- * <p>
- * You can connect to a
- * <a href="http://www.mongodb.org/display/DOCS/Replica+Sets">replica set</a> using the Java driver by passing
- * a ServerAddress list to the Mongo constructor. For example:
+ * <p/>
+ * You can connect to a <a href="http://www.mongodb.org/display/DOCS/Replica+Sets">replica set</a> using the Java driver by passing a
+ * ServerAddress list to the Mongo constructor. For example:
  * <pre>
  * Mongo mongo = new Mongo(Arrays.asList(
  *   new ServerAddress("localhost", 27017),
  *   new ServerAddress("localhost", 27018),
  *   new ServerAddress("localhost", 27019)));
  * </pre>
- * You can connect to a sharded cluster using the same constructor.  Mongo will auto-detect whether the servers are
- * a list of replica set members or a list of mongos servers.
- * <p>
- * By default, all read and write operations will be made on the primary,
- * but it's possible to read from secondaries by changing the read preference:
- * <p>
+ * You can connect to a sharded cluster using the same constructor.  Mongo will auto-detect whether the servers are a list of replica set
+ * members or a list of mongos servers.
+ * <p/>
+ * By default, all read and write operations will be made on the primary, but it's possible to read from secondaries by changing the read
+ * preference:
+ * <p/>
  * <pre>
  * mongo.setReadPreference(ReadPreference.secondary());
  * </pre>
  * By default, write operations will not throw exceptions on failure, but that is easily changed too:
- * <p>
+ * <p/>
  * <pre>
  * mongo.setWriteConcern(WriteConcern.SAFE);
  * </pre>
- *
+ * <p/>
  * Note: This class has been superseded by {@code MongoClient}, and may be deprecated in a future release.
  *
  * @see MongoClient
@@ -137,6 +139,8 @@ public class Mongo {
     private final ThreadLocal<BindingHolder> pinnedBinding = new ThreadLocal<BindingHolder>();
     private final ConcurrentLinkedQueue<ServerCursor> orphanedCursors = new ConcurrentLinkedQueue<ServerCursor>();
     private final ExecutorService cursorCleaningService;
+
+    private final CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider()));
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
@@ -177,7 +181,7 @@ public class Mongo {
     public Mongo(final String host,
                  @SuppressWarnings("deprecation")
                  final MongoOptions options)
-        throws UnknownHostException {
+    throws UnknownHostException {
         this(new ServerAddress(host), options.toClientOptions());
     }
 
@@ -310,7 +314,9 @@ public class Mongo {
      * @deprecated Replaced by {@link MongoClient#MongoClient(MongoClientURI)}
      */
     @Deprecated
-    public Mongo(@SuppressWarnings("deprecation") final MongoURI uri) throws UnknownHostException {
+    public Mongo(
+                @SuppressWarnings("deprecation")
+                final MongoURI uri) throws UnknownHostException {
         this(uri.toClientURI());
     }
 
@@ -338,7 +344,7 @@ public class Mongo {
 
     Mongo(final Cluster cluster, final MongoClientOptions options, final List<MongoCredential> credentialsList) {
         this.cluster = cluster;
-        this.documentCodec = new DocumentCodec(PrimitiveCodecs.createDefault());
+        this.documentCodec = new DocumentCodec();
         this.options = options;
         this.readPreference = options.getReadPreference() != null ? options.getReadPreference() : primary();
         this.writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : WriteConcern.UNACKNOWLEDGED;
@@ -448,7 +454,7 @@ public class Mongo {
      *
      * @return the mongo options
      * @deprecated Please use {@link MongoClient} class to connect to server and corresponding {@link
-     *             com.mongodb.MongoClient#getMongoClientOptions()}
+     * com.mongodb.MongoClient#getMongoClientOptions()}
      */
     @Deprecated
     public MongoOptions getMongoOptions() {
@@ -822,6 +828,10 @@ public class Mongo {
         } finally {
             binding.release();
         }
+    }
+
+    CodecRegistry getCodecRegistry() {
+        return codecRegistry;
     }
 
     private ExecutorService createCursorCleaningService() {

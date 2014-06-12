@@ -16,7 +16,11 @@
 
 package org.mongodb;
 
+import org.bson.codecs.Codec;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonDocumentWrapper;
 import org.bson.types.Code;
+import org.mongodb.codecs.CollectibleCodec;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.AggregateOperation;
 import org.mongodb.operation.CountOperation;
@@ -57,10 +61,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final String name;
     private final MongoDatabase database;
     private final MongoCollectionOptions options;
-    private final CollectibleCodec<T> codec;
+    private final Codec<T> codec;
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
-                               final CollectibleCodec<T> codec, final MongoCollectionOptions options,
+                               final Codec<T> codec, final MongoCollectionOptions options,
                                final MongoClientImpl client) {
 
         this.codec = codec;
@@ -131,7 +135,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public CollectibleCodec<T> getCodec() {
+    public Codec<T> getCodec() {
         return codec;
     }
 
@@ -151,6 +155,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     <V> V execute(final WriteOperation<V> operation) {
         return client.execute(operation);
+    }
+
+    private BsonDocument wrap(final Document command) {
+        return new BsonDocumentWrapper<Document>(command, options.getDocumentCodec());
     }
 
     private final class MongoCollectionView implements MongoView<T> {
@@ -179,6 +187,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoView<T> find(final Document filter) {
+            findOp.filter(new BsonDocumentWrapper<Document>(filter, getDocumentCodec()));
+            return this;
+        }
+
+        MongoView<T> find(final BsonDocument filter) {
             findOp.filter(filter);
             return this;
         }
@@ -195,13 +208,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoView<T> sort(final Document sortCriteria) {
-            findOp.order(sortCriteria);
+            findOp.order(wrap(sortCriteria));
             return this;
         }
 
         @Override
         public MongoView<T> fields(final Document selector) {
-            findOp.select(selector);
+            findOp.select(wrap(selector));
             return this;
         }
 
@@ -243,12 +256,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoCursor<T> get() {
-            return execute(new QueryOperation<T>(getNamespace(), findOp, getDocumentCodec(), getCodec()), readPreference);
+            return execute(new QueryOperation<T>(getNamespace(), findOp, getCodec()), readPreference);
         }
 
         @Override
         public T getOne() {
-            MongoCursor<T> cursor = execute(new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getDocumentCodec(), getCodec()),
+            MongoCursor<T> cursor = execute(new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getCodec()),
                                             readPreference);
 
             return cursor.hasNext() ? cursor.next() : null;
@@ -256,7 +269,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public long count() {
-            return execute(new CountOperation(getNamespace(), findOp, getDocumentCodec()), readPreference);
+            return execute(new CountOperation(getNamespace(), findOp), readPreference);
         }
 
         @Override
@@ -328,11 +341,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult save(final T document) {
-            Object id = getCodec().getId(document);
-            if (id == null) {
+            if (!(codec instanceof CollectibleCodec)) {
+                throw new UnsupportedOperationException();  // TODO: support this
+            }
+            CollectibleCodec<T> collectibleCodec = (CollectibleCodec<T>) codec;
+            if (!collectibleCodec.documentHasId(document)) {
                 return insert(document);
             } else {
-                return upsert().find(new Document("_id", id)).replace(document);
+                return find(new BsonDocument("_id", collectibleCodec.getDocumentId(document))).upsert().replace(document);
             }
         }
 
@@ -352,8 +368,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult update(final Document updateOperations) {
-            UpdateRequest update = new UpdateRequest(findOp.getFilter(), updateOperations).upsert(upsert)
-                                                                                          .multi(getMultiFromLimit());
+            UpdateRequest update = new UpdateRequest(findOp.getFilter(), wrap(updateOperations)).upsert(upsert)
+                                                                                                .multi(getMultiFromLimit());
             return execute(new UpdateOperation(getNamespace(), true, writeConcern, asList(update),
                                                getDocumentCodec()));
         }
@@ -365,7 +381,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult updateOne(final Document updateOperations) {
-            UpdateRequest update = new UpdateRequest(findOp.getFilter(), updateOperations).upsert(upsert).multi(false);
+            UpdateRequest update = new UpdateRequest(findOp.getFilter(), wrap(updateOperations)).upsert(upsert).multi(false);
             return execute(new UpdateOperation(getNamespace(), true, writeConcern, asList(update), getDocumentCodec()));
         }
 
@@ -378,7 +394,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @SuppressWarnings("unchecked")
         public WriteResult replace(final T replacement) {
             ReplaceRequest<T> replaceRequest = new ReplaceRequest<T>(findOp.getFilter(), replacement).upsert(upsert);
-            return execute(new ReplaceOperation<T>(getNamespace(), true, writeConcern, asList(replaceRequest), getDocumentCodec(),
+            return execute(new ReplaceOperation<T>(getNamespace(), true, writeConcern, asList(replaceRequest),
                                                    getCodec()));
         }
 
@@ -414,7 +430,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         public T updateOneAndGet(final Document updateOperations, final Get beforeOrAfter) {
             FindAndUpdate findAndUpdate = new FindAndUpdate().where(findOp.getFilter())
-                                                             .updateWith(updateOperations)
+                                                             .updateWith(wrap(updateOperations))
                                                              .returnNew(asBoolean(beforeOrAfter))
                                                              .select(findOp.getFields())
                                                              .sortBy(findOp.getOrder())
@@ -429,7 +445,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                                                  .select(findOp.getFields())
                                                                                  .sortBy(findOp.getOrder())
                                                                                  .upsert(upsert);
-            return execute(new FindAndReplaceOperation<T>(getNamespace(), findAndReplace, getCodec(), getCodec()));
+            return execute(new FindAndReplaceOperation<T>(getNamespace(), findAndReplace, getCodec()));
         }
 
         @Override
@@ -438,7 +454,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                                    .select(findOp.getFields())
                                                                    .sortBy(findOp.getOrder());
 
-            return execute(new FindAndRemoveOperation<T>(getNamespace(), findAndRemove, getCodec())); }
+            return execute(new FindAndRemoveOperation<T>(getNamespace(), findAndRemove, getCodec()));
+        }
 
         boolean asBoolean(final Get get) {
             return get == Get.AfterChangeApplied;
@@ -457,66 +474,65 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 return true;
             }
         }
-
     }
 
     private class MongoCollectionPipeline implements MongoPipeline<T> {
-        private final List<Document> pipeline;
+        private final List<BsonDocument> pipeline;
 
         private MongoCollectionPipeline() {
-            pipeline = new ArrayList<Document>();
+            pipeline = new ArrayList<BsonDocument>();
         }
 
         public MongoCollectionPipeline(final MongoCollectionPipeline from) {
-            pipeline = new ArrayList<Document>(from.pipeline);
+            pipeline = new ArrayList<BsonDocument>(from.pipeline);
         }
 
         @Override
         public MongoPipeline<T> find(final Document criteria) {
             MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(new Document("$match", criteria));
+            newPipeline.pipeline.add(wrap(new Document("$match", criteria)));
             return newPipeline;
         }
 
         @Override
         public MongoPipeline<T> sort(final Document sortCriteria) {
             MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(new Document("$sort", sortCriteria));
+            newPipeline.pipeline.add(wrap(new Document("$sort", sortCriteria)));
             return newPipeline;
         }
 
         @Override
         public MongoPipeline<T> skip(final long skip) {
             MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(new Document("$skip", skip));
+            newPipeline.pipeline.add(wrap(new Document("$skip", skip)));
             return newPipeline;
         }
 
         @Override
         public MongoPipeline<T> limit(final long limit) {
             MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(new Document("$limit", limit));
+            newPipeline.pipeline.add(wrap(new Document("$limit", limit)));
             return newPipeline;
         }
 
         @Override
         public MongoPipeline<T> project(final Document projection) {
             MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(new Document("$project", projection));
+            newPipeline.pipeline.add(wrap(new Document("$project", projection)));
             return newPipeline;
         }
 
         @Override
         public MongoPipeline<T> group(final Document group) {
             MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(new Document("$group", group));
+            newPipeline.pipeline.add(wrap(new Document("$group", group)));
             return newPipeline;
         }
 
         @Override
         public MongoPipeline<T> unwind(final String field) {
             MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(new Document("$unwind", field));
+            newPipeline.pipeline.add(wrap(new Document("$unwind", field)));
             return newPipeline;
         }
 
@@ -528,8 +544,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         @SuppressWarnings("unchecked")
         public MongoCursor<T> iterator() {
-            return execute(new AggregateOperation<T>(getNamespace(), pipeline, getDocumentCodec(), getCodec(),
-                                                     AggregationOptions.builder().build()),
+            return execute(new AggregateOperation<T>(getNamespace(), pipeline, getCodec(), AggregationOptions.builder().build()),
                            options.getReadPreference());
         }
 

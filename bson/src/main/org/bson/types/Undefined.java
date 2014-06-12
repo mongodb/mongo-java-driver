@@ -16,14 +16,42 @@
 
 package org.bson.types;
 
+import org.bson.BsonType;
+
+import java.io.Serializable;
+
 /**
  * Represents the value associated with the BSON Undefined type.  All values of this type are identical.  Note that this type has been
  * deprecated in the BSON specification.
  * <p/>
  *
  * @see <a href="http://bsonspec.org/spec.html">BSON Spec</a>
- * @see org.bson.BSONType#UNDEFINED
+ * @see org.bson.BsonType#UNDEFINED
  * @since 3.0
  */
-public class Undefined {
+public final class Undefined extends BsonValue implements Serializable {
+    private static final long serialVersionUID = -6947231726163165009L;
+
+    @Override
+    public BsonType getBsonType() {
+        return BsonType.UNDEFINED;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
 }

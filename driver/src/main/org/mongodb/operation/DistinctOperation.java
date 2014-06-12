@@ -16,17 +16,15 @@
 
 package org.mongodb.operation;
 
+import org.bson.types.BsonArray;
+import org.bson.types.BsonDocument;
+import org.bson.types.BsonString;
 import org.mongodb.CommandResult;
-import org.mongodb.Document;
 import org.mongodb.Function;
-import org.mongodb.MongoAsyncCursor;
-import org.mongodb.MongoCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ReadBinding;
-
-import java.util.List;
 
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
@@ -40,7 +38,7 @@ import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  * @mongodb.driver.manual reference/command/distinct Distinct Command
  * @since 3.0
  */
-public class DistinctOperation implements AsyncReadOperation<MongoAsyncCursor<String>>, ReadOperation<MongoCursor<String>> {
+public class DistinctOperation implements AsyncReadOperation<BsonArray>, ReadOperation<BsonArray> {
     private final MongoNamespace namespace;
     private final String fieldName;
     private final Find find;
@@ -59,39 +57,38 @@ public class DistinctOperation implements AsyncReadOperation<MongoAsyncCursor<St
     }
 
     @Override
-    public MongoCursor<String> execute(final ReadBinding binding) {
+    public BsonArray execute(final ReadBinding binding) {
         return executeWrappedCommandProtocol(namespace, getCommand(), binding, transformer());
-
     }
 
     @Override
-    public MongoFuture<MongoAsyncCursor<String>> executeAsync(final AsyncReadBinding binding) {
+    public MongoFuture<BsonArray> executeAsync(final AsyncReadBinding binding) {
         return executeWrappedCommandProtocolAsync(namespace, getCommand(), binding, asyncTransformer());
     }
 
     @SuppressWarnings("unchecked")
-    private Function<CommandResult, MongoCursor<String>> transformer() {
-        return new Function<CommandResult, MongoCursor<String>>() {
+    private Function<CommandResult, BsonArray> transformer() {
+        return new Function<CommandResult, BsonArray>() {
             @Override
-            public MongoCursor<String> apply(final CommandResult result) {
-                return new InlineMongoCursor<String>(result.getAddress(), (List<String>) result.getResponse().get("values"));
+            public BsonArray apply(final CommandResult result) {
+                return result.getResponse().getArray("values");
             }
         };
     }
 
-    private Function<CommandResult, MongoAsyncCursor<String>> asyncTransformer() {
-        return new Function<CommandResult, MongoAsyncCursor<String>>() {
+    private Function<CommandResult, BsonArray> asyncTransformer() {
+        return new Function<CommandResult, BsonArray>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MongoAsyncCursor<String> apply(final CommandResult result) {
-                return new InlineMongoAsyncCursor<String>((List<String>) result.getResponse().get("values"));
+            public BsonArray apply(final CommandResult result) {
+                return result.getResponse().getArray("values");
             }
         };
     }
 
-    private Document getCommand() {
-        Document cmd = new Document("distinct", namespace.getCollectionName());
-        cmd.put("key", fieldName);
+    private BsonDocument getCommand() {
+        BsonDocument cmd = new BsonDocument("distinct", new BsonString(namespace.getCollectionName()));
+        cmd.put("key", new BsonString(fieldName));
         if (find.getFilter() != null) {
             cmd.put("query", find.getFilter());
         }

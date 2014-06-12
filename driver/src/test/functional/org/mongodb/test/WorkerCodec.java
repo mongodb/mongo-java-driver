@@ -16,32 +16,41 @@
 
 package org.mongodb.test;
 
-import org.bson.BSONReader;
-import org.bson.BSONWriter;
+import org.bson.BsonReader;
+import org.bson.BsonWriter;
 import org.bson.types.ObjectId;
-import org.mongodb.CollectibleCodec;
+import org.mongodb.codecs.CollectibleCodec;
 
 import java.util.Date;
 
 public final class WorkerCodec implements CollectibleCodec<Worker> {
     @Override
-    public Object getId(final Worker worker) {
-        return worker.getId();
+    public boolean documentHasId(final Worker document) {
+        return true;
     }
 
     @Override
-    public void encode(final BSONWriter bsonWriter, final Worker value) {
-        bsonWriter.writeStartDocument();
-        bsonWriter.writeObjectId("_id", value.getId());
-        bsonWriter.writeString("name", value.getName());
-        bsonWriter.writeString("jobTitle", value.getJobTitle());
-        bsonWriter.writeDateTime("dateStarted", value.getDateStarted().getTime());
-        bsonWriter.writeInt32("numberOfJobs", value.getNumberOfJobs());
-        bsonWriter.writeEndDocument();
+    public ObjectId getDocumentId(final Worker document) {
+        return document.getId();
     }
 
     @Override
-    public Worker decode(final BSONReader reader) {
+    public void generateIdIfAbsentFromDocument(final Worker worker) {
+    }
+
+    @Override
+    public void encode(final BsonWriter writer, final Worker value) {
+        writer.writeStartDocument();
+        writer.writeObjectId("_id", value.getId());
+        writer.writeString("name", value.getName());
+        writer.writeString("jobTitle", value.getJobTitle());
+        writer.writeDateTime("dateStarted", value.getDateStarted().getTime());
+        writer.writeInt32("numberOfJobs", value.getNumberOfJobs());
+        writer.writeEndDocument();
+    }
+
+    @Override
+    public Worker decode(final BsonReader reader) {
         reader.readStartDocument();
         ObjectId id = reader.readObjectId("_id");
         String name = reader.readString("name");

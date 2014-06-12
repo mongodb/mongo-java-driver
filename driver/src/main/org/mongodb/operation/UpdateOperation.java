@@ -16,9 +16,9 @@
 
 package org.mongodb.operation;
 
+import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
-import org.mongodb.Encoder;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.protocol.UpdateCommandProtocol;
@@ -48,7 +48,7 @@ public class UpdateOperation extends BaseWriteOperation {
 
     @Override
     protected WriteProtocol getWriteProtocol() {
-        return new UpdateProtocol(getNamespace(), isOrdered(), getWriteConcern(), updates, queryEncoder);
+        return new UpdateProtocol(getNamespace(), isOrdered(), getWriteConcern(), updates);
     }
 
     @Override

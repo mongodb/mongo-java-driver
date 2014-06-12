@@ -28,6 +28,7 @@ import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Symbol;
+import org.bson.types.Timestamp;
 
 import java.lang.reflect.Array;
 import java.util.Date;
@@ -45,7 +46,7 @@ import static org.bson.BSON.regexFlags;
  */
 public class BasicBSONEncoder implements BSONEncoder {
 
-    private BSONBinaryWriter bsonWriter;
+    private BsonBinaryWriter bsonWriter;
 
     @Override
     public byte[] encode(final BSONObject document) {
@@ -67,14 +68,14 @@ public class BasicBSONEncoder implements BSONEncoder {
         if (this.bsonWriter != null) {
             throw new IllegalStateException("Performing another operation at this moment");
         }
-        this.bsonWriter = new BSONBinaryWriter(buffer, false);
+        this.bsonWriter = new BsonBinaryWriter(buffer, false);
     }
 
     protected OutputBuffer getOutputBuffer() {
         return bsonWriter.getBuffer();
     }
 
-    protected BSONBinaryWriter getBsonWriter() {
+    protected BsonBinaryWriter getBsonWriter() {
         return bsonWriter;
     }
 
@@ -108,7 +109,7 @@ public class BasicBSONEncoder implements BSONEncoder {
     }
 
     protected void putName(final String name) {
-        if (bsonWriter.getState() == BSONWriter.State.NAME) {
+        if (bsonWriter.getState() == AbstractBsonWriter.State.NAME) {
             bsonWriter.writeName(name);
         }
     }
@@ -194,7 +195,7 @@ public class BasicBSONEncoder implements BSONEncoder {
 
     protected void putTimestamp(final String name, final BSONTimestamp timestamp) {
         putName(name);
-        bsonWriter.writeTimestamp(timestamp);
+        bsonWriter.writeTimestamp(new Timestamp(timestamp.getTime(), timestamp.getInc()));
     }
 
     protected void putCode(final String name, final Code code) {
@@ -246,7 +247,7 @@ public class BasicBSONEncoder implements BSONEncoder {
         byte[] bytes = new byte[16];
         writeLongToArrayLittleEndian(bytes, 0, uuid.getMostSignificantBits());
         writeLongToArrayLittleEndian(bytes, 8, uuid.getLeastSignificantBits());
-        bsonWriter.writeBinaryData(new Binary(BSONBinarySubType.UUID_LEGACY, bytes));
+        bsonWriter.writeBinaryData(new Binary(BsonBinarySubType.UUID_LEGACY, bytes));
     }
 
     protected void putSymbol(final String name, final Symbol symbol) {

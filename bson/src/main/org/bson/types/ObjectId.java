@@ -16,8 +16,10 @@
 
 package org.bson.types;
 
+import org.bson.BsonType;
 import org.bson.diagnostics.Loggers;
 
+import java.io.Serializable;
 import java.net.NetworkInterface;
 import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
@@ -37,7 +39,7 @@ import java.util.logging.Logger;
  *
  * @mongodb.driver.manual core/object-id ObjectId
  */
-public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
+public final class ObjectId extends BsonValue implements Comparable<ObjectId>, Serializable {
 
     private static final long serialVersionUID = 3670079982654483072L;
 
@@ -267,6 +269,10 @@ public class ObjectId implements Comparable<ObjectId>, java.io.Serializable {
         return bytes;
     }
 
+    @Override
+    public BsonType getBsonType() {
+        return BsonType.OBJECT_ID;
+    }
 
     /**
      * Convert to a byte array.  Note that the numbers are stored in big-endian order.
