@@ -17,10 +17,10 @@
 package org.mongodb.operation;
 
 import org.mongodb.Block;
+import org.mongodb.CancellableBlock;
 import org.mongodb.Decoder;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoException;
-import org.mongodb.MongoFuture;
 import org.mongodb.MongoInternalException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
@@ -80,10 +80,10 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     }
 
     @Override
-    public MongoFuture<Void> forEach(final Block<? super T> block) {
-        SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
-        new QueryResultSingleResultCallback(block, retVal).onResult(firstBatch, null);
-        return retVal;
+    public SingleResultFuture<Void> forEach(final Block<? super T> block) {
+        SingleResultFuture<Void> future = new SingleResultFuture<Void>();
+        new QueryResultSingleResultCallback(block, future).onResult(firstBatch, null);
+        return future;
     }
 
     private void close(final int responseTo, final SingleResultFuture<Void> future, final MongoException e) {
@@ -123,12 +123,14 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
         private final SingleResultFuture<Void> future;
         private final Connection connection;
         private final Block<? super T> block;
+        private volatile Boolean breakEarly;
 
         public QueryResultSingleResultCallback(final Block<? super T> block, final SingleResultFuture<Void> future,
                                                final Connection connection) {
             this.block = block;
             this.future = future;
             this.connection = connection;
+            this.breakEarly = false;
         }
 
         public QueryResultSingleResultCallback(final Block<? super T> block, final SingleResultFuture<Void> future) {
@@ -147,7 +149,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
 
             cursor = result.getCursor();
 
-            boolean breakEarly = false;
+            breakEarly = future.isCancelled();
             MongoException exceptionFromApply = null;
             try {
                 for (final T cur : result.getResults()) {
@@ -156,9 +158,12 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                         breakEarly = true;
                         break;
                     }
-                    LOGGER.trace("Applying block to " + cur);
-                    block.apply(cur);
-
+                    if (hasNext()) {
+                        LOGGER.trace("Applying block to " + cur);
+                        block.apply(cur);
+                    } else {
+                        break;
+                    }
                 }
             } catch (Throwable e1) {
                 LOGGER.trace("Applied block threw exception: " + e1);
@@ -166,7 +171,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                 exceptionFromApply = new MongoInternalException("Exception thrown by client while iterating over cursor", e1);
             }
 
-            if (result.getCursor() == null || breakEarly) {
+            if (cursor == null || breakEarly) {
                 close(result.getRequestId(), future, exceptionFromApply);
             } else {
                 // get more results
@@ -191,5 +196,15 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                 }
             }
         }
+
+        private synchronized boolean hasNext() {
+            if (future.isCancelled()) {
+                breakEarly = true;
+            } else if (block instanceof CancellableBlock) {
+                breakEarly = ((CancellableBlock) block).isCancelled();
+            }
+            return !breakEarly;
+        }
+
     }
 }
