@@ -23,6 +23,7 @@ import org.bson.io.BasicInputBuffer
 import org.bson.io.BasicOutputBuffer
 import org.bson.types.Binary
 import org.bson.types.Code
+import org.bson.types.DBPointer
 import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import org.bson.types.ObjectId
@@ -49,7 +50,7 @@ class DocumentCodecSpecification extends Specification {
             put('booleanTrue', true)
             put('booleanFalse', false)
             put('date', new Date())
-//        put('dbPointer', new DBPointer('foo.bar', new ObjectId()))
+            put('dbPointer', new DBPointer('foo.bar', new ObjectId()))
             put('double', 62.0 as double)
             put('minKey', new MinKey())
             put('maxKey', new MaxKey())
@@ -79,7 +80,7 @@ class DocumentCodecSpecification extends Specification {
         decodedDoc.get('booleanTrue') == doc.get('booleanTrue')
         decodedDoc.get('booleanFalse') == doc.get('booleanFalse')
         decodedDoc.get('date') == doc.get('date')
-//        decodedDoc.get('dbPointer') == doc.get('dbPointer')
+        decodedDoc.get('dbPointer') == doc.get('dbPointer')
         decodedDoc.get('double') == doc.get('double')
         decodedDoc.get('minKey') == doc.get('minKey')
         decodedDoc.get('maxKey') == doc.get('maxKey')
