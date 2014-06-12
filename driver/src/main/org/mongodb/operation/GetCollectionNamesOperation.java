@@ -18,7 +18,6 @@ package org.mongodb.operation;
 
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.types.BsonDocument;
-import org.bson.types.BsonString;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
@@ -59,7 +58,7 @@ public class GetCollectionNamesOperation implements AsyncReadOperation<List<Stri
         return new Function<BsonDocument, String>() {
             @Override
             public String apply(final BsonDocument document) {
-                String collectionName = ((BsonString) document.get("name")).getValue();
+                String collectionName = document.getString("name").getValue();
                 if (!collectionName.contains("$")) {
                     return collectionName.substring(databaseName.length() + 1);
                 }
