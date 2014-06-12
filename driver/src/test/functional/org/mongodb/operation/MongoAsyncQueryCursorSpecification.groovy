@@ -15,7 +15,6 @@
  */
 
 package org.mongodb.operation
-
 import category.Async
 import category.Slow
 import org.bson.types.BSONTimestamp
@@ -24,6 +23,7 @@ import org.mongodb.Block
 import org.mongodb.CreateCollectionOptions
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
+import org.mongodb.MongoCursorNotFoundException
 import org.mongodb.MongoFuture
 import org.mongodb.MongoInternalException
 import org.mongodb.binding.AsyncClusterBinding
@@ -224,6 +224,30 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         source.release()
     }
 
+    def 'should kill cursor once completed'() throws InterruptedException {
+        assumeFalse(isSharded())
+
+        setup:
+        AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
+        Connection connection = source.getConnection().get()
+        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection)
+
+        when:
+        MongoAsyncQueryCursor<Document> asynCursor = new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+                                                                                         firstBatch, 5, 2, new DocumentCodec(),
+                                                                                         connection);
+
+        asynCursor.forEach(new TestBlock()).get()
+        asynCursor.forEach(new TestBlock()).get()
+
+        then:
+        thrown(MongoCursorNotFoundException)
+
+        cleanup:
+        connection.release()
+        source.release()
+    }
+
     private static Document getOrderedByIdQuery() {
         new Document('$query', new Document()).append('$orderby', new Document('_id', 1))
     }
@@ -273,4 +297,5 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
             iterations
         }
     }
+
 }
