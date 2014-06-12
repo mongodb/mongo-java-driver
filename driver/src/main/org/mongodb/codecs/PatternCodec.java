@@ -25,6 +25,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+/**
+ * A codec for {@code Pattern} instances.
+ *
+ * @since 3.0
+ */
 public class PatternCodec implements Codec<Pattern> {
     @Override
     public void encode(final BsonWriter writer, final Pattern value) {

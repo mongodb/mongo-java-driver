@@ -59,6 +59,14 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
     private final Decoder<T> decoder;
     private final AggregationOptions options;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the namespace of the collection to aggregate
+     * @param pipeline the pipeline of operators
+     * @param decoder the decoder to decode the result documents
+     * @param options the options
+     */
     public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
                               final Decoder<T> decoder, final AggregationOptions options) {
         this.namespace = namespace;
