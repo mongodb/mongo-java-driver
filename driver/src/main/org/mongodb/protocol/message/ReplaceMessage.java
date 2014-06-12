@@ -37,7 +37,7 @@ public class ReplaceMessage<T> extends BaseUpdateMessage {
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeBaseUpdate(buffer);
-        addDocument(replaceRequests.get(0).getReplacement(), encoder, buffer, new StorageDocumentFieldNameValidator());
+        addDocument(replaceRequests.get(0).getReplacement(), encoder, buffer, new CollectibleDocumentFieldNameValidator());
         if (replaceRequests.size() == 1) {
             return null;
         } else {

@@ -25,9 +25,9 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
+import org.mongodb.protocol.message.CollectibleDocumentFieldNameValidator;
 import org.mongodb.protocol.message.MappedFieldNameValidator;
 import org.mongodb.protocol.message.NoOpFieldNameValidator;
-import org.mongodb.protocol.message.StorageDocumentFieldNameValidator;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -84,7 +84,7 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
 
     private FieldNameValidator getValidator() {
         Map<String, FieldNameValidator> map = new HashMap<String, FieldNameValidator>();
-        map.put("update", new StorageDocumentFieldNameValidator());
+        map.put("update", new CollectibleDocumentFieldNameValidator());
 
         return new MappedFieldNameValidator(new NoOpFieldNameValidator(), map);
     }

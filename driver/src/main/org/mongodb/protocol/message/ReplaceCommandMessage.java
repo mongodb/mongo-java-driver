@@ -48,6 +48,6 @@ public class ReplaceCommandMessage<T> extends BaseUpdateCommandMessage<ReplaceRe
 
     @Override
     protected FieldNameValidator getUpdateFieldNameValidator() {
-        return new StorageDocumentFieldNameValidator();
+        return new CollectibleDocumentFieldNameValidator();
     }
 }
