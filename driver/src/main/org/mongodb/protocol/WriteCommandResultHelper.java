@@ -19,7 +19,7 @@ package org.mongodb.protocol;
 import org.bson.types.BsonArray;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonInt32;
-import org.bson.types.BsonString;
+import org.bson.types.BsonNumber;
 import org.bson.types.BsonValue;
 import org.mongodb.BulkWriteError;
 import org.mongodb.BulkWriteException;
@@ -64,10 +64,10 @@ final class WriteCommandResultHelper {
         if (writeErrorsDocuments != null) {
             for (BsonValue cur : writeErrorsDocuments) {
                 BsonDocument curDocument = (BsonDocument) cur;
-                writeErrors.add(new BulkWriteError(((BsonInt32) curDocument.get("code")).getValue(),
-                                                   ((BsonString) curDocument.get("errmsg")).getValue(),
-                                                   getErrInfo(curDocument),
-                                                   ((BsonInt32) curDocument.get("index")).getValue()));
+                writeErrors.add(new BulkWriteError(curDocument.getNumber("code").intValue(),
+                                                   curDocument.getString("errmsg").getValue(),
+                                                   curDocument.getDocument("errInfo", new BsonDocument()),
+                                                   curDocument.getNumber("index").intValue()));
             }
         }
         return writeErrors;
@@ -78,9 +78,9 @@ final class WriteCommandResultHelper {
         if (writeConcernErrorDocument == null) {
             return null;
         } else {
-            return new WriteConcernError(((BsonInt32) writeConcernErrorDocument.get("code")).getValue(),
-                                         ((BsonString) writeConcernErrorDocument.get("errmsg")).getValue(),
-                                         getErrInfo(writeConcernErrorDocument));
+            return new WriteConcernError(writeConcernErrorDocument.getNumber("code").intValue(),
+                                         writeConcernErrorDocument.getString("errmsg").getValue(),
+                                         writeConcernErrorDocument.getDocument("errInfo", new BsonDocument()));
         }
     }
 
@@ -93,7 +93,7 @@ final class WriteCommandResultHelper {
             List<BulkWriteUpsert> bulkWriteUpsertList = new ArrayList<BulkWriteUpsert>();
             for (BsonValue upsertedItem : (BsonArray) upsertedValue) {
                 BsonDocument upsertedItemDocument = (BsonDocument) upsertedItem;
-                bulkWriteUpsertList.add(new BulkWriteUpsert(((BsonInt32) upsertedItemDocument.get("index")).getValue(),
+                bulkWriteUpsertList.add(new BulkWriteUpsert(upsertedItemDocument.getNumber("index").intValue(),
                                                             upsertedItemDocument.get("_id")));
             }
             return bulkWriteUpsertList;
@@ -101,20 +101,14 @@ final class WriteCommandResultHelper {
     }
 
     private static int getCount(final CommandResult commandResult) {
-        return ((BsonInt32) commandResult.getResponse().get("n")).getValue();
+        return commandResult.getResponse().getNumber("n").intValue();
     }
 
     private static Integer getModifiedCount(final WriteRequest.Type type, final CommandResult commandResult) {
-        BsonInt32 modifiedCount = (BsonInt32) commandResult.getResponse().get("nModified");
-        if (modifiedCount == null && !(type == UPDATE || type == REPLACE)) {
-            modifiedCount = new BsonInt32(0);
-        }
-        return modifiedCount == null ? null : modifiedCount.getValue();
-    }
+        BsonNumber modifiedCount = commandResult.getResponse().getNumber("nModified",
+                                                     (type == UPDATE || type == REPLACE) ? null : new BsonInt32(0));
+        return modifiedCount == null ? null : modifiedCount.intValue();
 
-    private static BsonDocument getErrInfo(final BsonDocument response) {
-        BsonDocument errInfo = (BsonDocument) response.get("errInfo");
-        return errInfo != null ? errInfo : new BsonDocument();
     }
 
     private WriteCommandResultHelper() {
