@@ -17,7 +17,6 @@
 package org.mongodb.operation;
 
 import org.bson.codecs.BsonDocumentCodec;
-import org.bson.types.BsonArray;
 import org.bson.types.BsonDocument;
 import org.bson.types.BsonString;
 import org.mongodb.CommandResult;
@@ -90,8 +89,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
         return new Function<CommandResult, Boolean>() {
             @Override
             public Boolean apply(final CommandResult result) {
-                BsonArray usersArray = (BsonArray) result.getResponse().get("users");
-                return usersArray != null && !usersArray.isEmpty();
+                return result.getResponse().get("users").isArray() && !result.getResponse().getArray("users").isEmpty();
             }
         };
     }
