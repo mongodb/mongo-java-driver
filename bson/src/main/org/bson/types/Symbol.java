@@ -18,31 +18,31 @@
 
 package org.bson.types;
 
-import org.bson.BsonType;
-
 import java.io.Serializable;
 
 /**
- * Class to hold a BSON symbol object, which is an interned string in Ruby
+ * Class to hold an instance of the BSON symbol type.
  */
-public class Symbol extends BsonValue implements Serializable {
-
-    private final String symbol;
+public class Symbol implements Serializable {
 
     private static final long serialVersionUID = 1326269319883146072L;
 
-    public Symbol(final String s) {
-        if (s == null) {
-            throw new IllegalArgumentException("Value can not be null");
-        }
-        symbol = s;
+    private final String symbol;
+
+    /**
+     * Construct a new instance with the given symbol.
+     *
+     * @param symbol the symbol
+     */
+    public Symbol(final String symbol) {
+        this.symbol = symbol;
     }
 
-    @Override
-    public BsonType getBsonType() {
-        return BsonType.SYMBOL;
-    }
-
+    /**
+     * Gets the symbol.
+     *
+     * @return the symbol
+     */
     public String getSymbol() {
         return symbol;
     }

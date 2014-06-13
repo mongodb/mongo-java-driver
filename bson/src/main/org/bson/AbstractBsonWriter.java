@@ -16,11 +16,7 @@
 
 package org.bson;
 
-import org.bson.types.Binary;
-import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Timestamp;
 
 import java.io.Closeable;
 import java.util.Arrays;
@@ -90,7 +86,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
-    public void writeBinaryData(final String name, final Binary binary) {
+    public void writeBinaryData(final String name, final BsonBinary binary) {
         writeName(name);
         writeBinaryData(binary);
     }
@@ -108,7 +104,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
-    public void writeDBPointer(final String name, final DBPointer value) {
+    public void writeDBPointer(final String name, final BsonDbPointer value) {
         writeName(name);
         writeDBPointer(value);
     }
@@ -199,7 +195,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
-    public void writeRegularExpression(final String name, final RegularExpression regularExpression) {
+    public void writeRegularExpression(final String name, final BsonRegularExpression regularExpression) {
         writeName(name);
         writeRegularExpression(regularExpression);
     }
@@ -253,7 +249,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
-    public void writeTimestamp(final String name, final Timestamp value) {
+    public void writeTimestamp(final String name, final BsonTimestamp value) {
         writeName(name);
         writeTimestamp(value);
     }

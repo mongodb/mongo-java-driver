@@ -18,10 +18,10 @@
 package org.mongodb.operation
 
 import category.Async
+import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
-import org.bson.types.BsonDocument
-import org.bson.types.BsonInt32
-import org.bson.types.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoExecutionTimeoutException

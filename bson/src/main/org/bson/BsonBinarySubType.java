@@ -17,7 +17,7 @@
 package org.bson;
 
 /**
- *
+ * The Binary subtype
  * @since 3.0
  */
 public enum BsonBinarySubType {

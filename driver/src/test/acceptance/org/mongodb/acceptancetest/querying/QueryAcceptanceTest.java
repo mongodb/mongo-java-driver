@@ -16,6 +16,7 @@
 
 package org.mongodb.acceptancetest.querying;
 
+import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.types.ObjectId;
@@ -163,8 +164,8 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         }
 
         @Override
-        public ObjectId getDocumentId(final Person document) {
-            return document.id;
+        public BsonObjectId getDocumentId(final Person document) {
+            return new BsonObjectId(document.id);
         }
 
         @Override

@@ -16,26 +16,26 @@
 
 package com.mongodb;
 
+import org.bson.BsonDbPointer;
 import org.bson.BsonType;
+import org.bson.BsonUndefined;
 import org.bson.codecs.BinaryCodec;
+import org.bson.codecs.BsonDBPointerCodec;
+import org.bson.codecs.BsonRegularExpressionCodec;
+import org.bson.codecs.BsonUndefinedCodec;
 import org.bson.codecs.CodeCodec;
 import org.bson.codecs.Codec;
-import org.bson.codecs.DBPointerCodec;
 import org.bson.codecs.MaxKeyCodec;
 import org.bson.codecs.MinKeyCodec;
 import org.bson.codecs.ObjectIdCodec;
-import org.bson.codecs.RegularExpressionCodec;
-import org.bson.codecs.UndefinedCodec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
-import org.bson.types.DBPointer;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
-import org.bson.types.Undefined;
 import org.mongodb.codecs.BooleanCodec;
 import org.mongodb.codecs.ByteArrayCodec;
 import org.mongodb.codecs.ByteCodec;
@@ -82,7 +82,7 @@ class DBObjectCodecProvider implements CodecProvider {
         map.put(BsonType.BINARY, Binary.class);
         map.put(BsonType.BOOLEAN, Boolean.class);
         map.put(BsonType.DATE_TIME, Date.class);
-        map.put(BsonType.DB_POINTER, DBPointer.class);
+        map.put(BsonType.DB_POINTER, BsonDbPointer.class);
         map.put(BsonType.DOUBLE, Double.class);
         map.put(BsonType.INT32, Integer.class);
         map.put(BsonType.INT64, Long.class);
@@ -94,7 +94,7 @@ class DBObjectCodecProvider implements CodecProvider {
         map.put(BsonType.STRING, String.class);
         map.put(BsonType.SYMBOL, String.class);
         map.put(BsonType.TIMESTAMP, BSONTimestamp.class);
-        map.put(BsonType.UNDEFINED, Undefined.class);
+        map.put(BsonType.UNDEFINED, BsonUndefined.class);
 
         return map;
     }
@@ -104,7 +104,7 @@ class DBObjectCodecProvider implements CodecProvider {
         addCodec(new BinaryCodec());
         addCodec(new BooleanCodec());
         addCodec(new DateCodec());
-        addCodec(new DBPointerCodec());
+        addCodec(new BsonDBPointerCodec());
         addCodec(new DoubleCodec());
         addCodec(new IntegerCodec());
         addCodec(new LongCodec());
@@ -112,11 +112,11 @@ class DBObjectCodecProvider implements CodecProvider {
         addCodec(new MaxKeyCodec());
         addCodec(new CodeCodec());
         addCodec(new ObjectIdCodec());
-        addCodec(new RegularExpressionCodec());
+        addCodec(new BsonRegularExpressionCodec());
         addCodec(new StringCodec());
         addCodec(new PatternCodec());
         addCodec(new BSONTimestampCodec());
-        addCodec(new UndefinedCodec());
+        addCodec(new BsonUndefinedCodec());
         addCodec(new ShortCodec());
         addCodec(new ByteArrayCodec());
         addCodec(new FloatCodec());

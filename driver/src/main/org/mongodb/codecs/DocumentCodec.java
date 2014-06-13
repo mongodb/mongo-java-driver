@@ -16,16 +16,16 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonReader;
 import org.bson.BsonType;
+import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonValue;
 import org.mongodb.Document;
 import org.mongodb.IdGenerator;
 

@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.types.ObjectId;
@@ -63,8 +64,8 @@ class ConcreteCodec implements CollectibleCodec<Concrete> {
     }
 
     @Override
-    public ObjectId getDocumentId(final Concrete document) {
-        return document.getId();
+    public BsonObjectId getDocumentId(final Concrete document) {
+        return new BsonObjectId(document.getId());
     }
 
     @Override

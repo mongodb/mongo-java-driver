@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-package org.bson.types;
+package org.bson;
 
+/**
+ * Base class for the three numeric BSON types.  This class mirrors the functionality provided by {@code java.lang.Number}.
+ *
+ * @since 3.0
+ */
 public abstract class BsonNumber extends BsonValue {
     /**
      * Returns the value of the specified number as an {@code int}, which may involve rounding or truncation.

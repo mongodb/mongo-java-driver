@@ -16,7 +16,7 @@
 
 package org.bson.json;
 
-import org.bson.types.RegularExpression;
+import org.bson.BsonRegularExpression;
 
 /**
  * Parses the string representation of a JSON object into a set of {@link JsonToken}-derived objects.
@@ -168,8 +168,8 @@ class JsonScanner {
                 case DONE:
                     buffer.unread(c);
                     int end = buffer.getPosition();
-                    RegularExpression regex
-                        = new RegularExpression(buffer.substring(start + 1, options - 1), buffer.substring(options, end));
+                    BsonRegularExpression regex
+                        = new BsonRegularExpression(buffer.substring(start + 1, options - 1), buffer.substring(options, end));
                     return new JsonToken(JsonTokenType.REGULAR_EXPRESSION, regex);
                 case INVALID:
                     throw new JsonParseException("Invalid JSON regular expression. Position: %d.", buffer.getPosition());

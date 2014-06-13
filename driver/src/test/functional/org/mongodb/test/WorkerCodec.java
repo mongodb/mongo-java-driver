@@ -16,6 +16,7 @@
 
 package org.mongodb.test;
 
+import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.types.ObjectId;
@@ -30,8 +31,8 @@ public final class WorkerCodec implements CollectibleCodec<Worker> {
     }
 
     @Override
-    public ObjectId getDocumentId(final Worker document) {
-        return document.getId();
+    public BsonObjectId getDocumentId(final Worker document) {
+        return new BsonObjectId(document.getId());
     }
 
     @Override

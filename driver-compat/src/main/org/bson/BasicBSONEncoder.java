@@ -26,9 +26,7 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
 import org.bson.types.Symbol;
-import org.bson.types.Timestamp;
 
 import java.lang.reflect.Array;
 import java.util.Date;
@@ -195,7 +193,7 @@ public class BasicBSONEncoder implements BSONEncoder {
 
     protected void putTimestamp(final String name, final BSONTimestamp timestamp) {
         putName(name);
-        bsonWriter.writeTimestamp(new Timestamp(timestamp.getTime(), timestamp.getInc()));
+        bsonWriter.writeTimestamp(new BsonTimestamp(timestamp.getTime(), timestamp.getInc()));
     }
 
     protected void putCode(final String name, final Code code) {
@@ -234,12 +232,12 @@ public class BasicBSONEncoder implements BSONEncoder {
 
     protected void putBinary(final String name, final byte[] bytes) {
         putName(name);
-        bsonWriter.writeBinaryData(new Binary(bytes));
+        bsonWriter.writeBinaryData(new BsonBinary(bytes));
     }
 
     protected void putBinary(final String name, final Binary binary) {
         putName(name);
-        bsonWriter.writeBinaryData(binary);
+        bsonWriter.writeBinaryData(new BsonBinary(binary.getType(), binary.getData()));
     }
 
     protected void putUUID(final String name, final UUID uuid) {
@@ -247,7 +245,7 @@ public class BasicBSONEncoder implements BSONEncoder {
         byte[] bytes = new byte[16];
         writeLongToArrayLittleEndian(bytes, 0, uuid.getMostSignificantBits());
         writeLongToArrayLittleEndian(bytes, 8, uuid.getLeastSignificantBits());
-        bsonWriter.writeBinaryData(new Binary(BsonBinarySubType.UUID_LEGACY, bytes));
+        bsonWriter.writeBinaryData(new BsonBinary(BsonBinarySubType.UUID_LEGACY, bytes));
     }
 
     protected void putSymbol(final String name, final Symbol symbol) {
@@ -262,7 +260,7 @@ public class BasicBSONEncoder implements BSONEncoder {
 
     protected void putPattern(final String name, final Pattern value) {
         putName(name);
-        bsonWriter.writeRegularExpression(new RegularExpression(value.pattern(), regexFlags(value.flags())));
+        bsonWriter.writeRegularExpression(new BsonRegularExpression(value.pattern(), regexFlags(value.flags())));
     }
 
     protected void putObjectId(final String name, final ObjectId objectId) {

@@ -18,11 +18,7 @@ package org.bson;
 
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.types.Binary;
-import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Timestamp;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -55,7 +51,7 @@ public class BsonBinaryWriterTest {
     @Test(expected = BsonSerializationException.class)
     public void shouldThrowWhenMaxDocumentSizeIsExceeded() {
         writer.writeStartDocument();
-        writer.writeBinaryData("b", new Binary(new byte[1024]));
+        writer.writeBinaryData("b", new BsonBinary(new byte[1024]));
         writer.writeEndDocument();
     }
 
@@ -75,7 +71,7 @@ public class BsonBinaryWriterTest {
         writer.writeStartDocument("doc");
         writer.writeEndDocument();
         writer.popMaxDocumentSize();
-        writer.writeBinaryData("bin", new Binary(new byte[256]));
+        writer.writeBinaryData("bin", new BsonBinary(new byte[256]));
         writer.writeEndDocument();
     }
 
@@ -289,9 +285,9 @@ public class BsonBinaryWriterTest {
 
         writer.writeStartDocument();
 
-        writer.writeBinaryData("b1", new Binary(new byte[]{0, 0, 0, 0, 0, 0, 0, 0}));
-        writer.writeBinaryData("b2", new Binary(BsonBinarySubType.OLD_BINARY, new byte[]{1, 1, 1, 1, 1}));
-        writer.writeBinaryData("b3", new Binary(BsonBinarySubType.FUNCTION, new byte[]{}));
+        writer.writeBinaryData("b1", new BsonBinary(new byte[]{0, 0, 0, 0, 0, 0, 0, 0}));
+        writer.writeBinaryData("b2", new BsonBinary(BsonBinarySubType.OLD_BINARY, new byte[]{1, 1, 1, 1, 1}));
+        writer.writeBinaryData("b3", new BsonBinary(BsonBinarySubType.FUNCTION, new byte[]{}));
 
         writer.writeEndDocument();
 
@@ -306,8 +302,8 @@ public class BsonBinaryWriterTest {
 
         writer.writeStartDocument();
 
-        writer.writeRegularExpression("r1", new RegularExpression("([01]?[0-9][0-9]?)"));
-        writer.writeRegularExpression("r2", new RegularExpression("[ \\t]+$", "i"));
+        writer.writeRegularExpression("r1", new BsonRegularExpression("([01]?[0-9][0-9]?)"));
+        writer.writeRegularExpression("r2", new BsonRegularExpression("[ \\t]+$", "i"));
 
         writer.writeEndDocument();
 
@@ -321,7 +317,7 @@ public class BsonBinaryWriterTest {
     public void testWriteTimestamp() {
         writer.writeStartDocument();
 
-        writer.writeTimestamp("t1", new Timestamp(123999401, 44332));
+        writer.writeTimestamp("t1", new BsonTimestamp(123999401, 44332));
 
         writer.writeEndDocument();
 
@@ -333,7 +329,7 @@ public class BsonBinaryWriterTest {
     public void testWriteDBPointer() {
         writer.writeStartDocument();
 
-        DBPointer dbPointer = new DBPointer("my.test", new ObjectId("50d3332018c6a1d8d1662b61"));
+        BsonDbPointer dbPointer = new BsonDbPointer("my.test", new ObjectId("50d3332018c6a1d8d1662b61"));
         writer.writeDBPointer("pt", dbPointer);
 
         writer.writeEndDocument();

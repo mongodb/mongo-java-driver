@@ -16,15 +16,15 @@
 
 package com.mongodb;
 
+import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
-import org.bson.types.BsonDocument;
 
 import java.util.Arrays;
 
 final class DBObjects {
-    private static final DBObjectCodec codec =
+    static final DBObjectCodec codec =
     new DBObjectCodec(null, new BasicDBObjectFactory(), new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider())),
                       DBObjectCodecProvider.createDefaultBsonTypeClassMap());
 

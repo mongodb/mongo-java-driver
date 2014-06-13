@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 
@@ -25,7 +23,7 @@ import java.io.Serializable;
  *
  * @since 3.0
  */
-public class CodeWithScope extends BsonValue implements Serializable {
+public class BsonJavaScriptWithScope extends BsonValue implements Serializable {
 
     private static final long serialVersionUID = -6284832275113680002L;
 
@@ -38,7 +36,7 @@ public class CodeWithScope extends BsonValue implements Serializable {
      * @param code the code
      * @param scope the scope
      */
-    public CodeWithScope(final String code, final BsonDocument scope) {
+    public BsonJavaScriptWithScope(final String code, final BsonDocument scope) {
         if (code == null) {
             throw new IllegalArgumentException("code can not be null");
         }
@@ -81,7 +79,7 @@ public class CodeWithScope extends BsonValue implements Serializable {
             return false;
         }
 
-        CodeWithScope that = (CodeWithScope) o;
+        BsonJavaScriptWithScope that = (BsonJavaScriptWithScope) o;
 
         if (!code.equals(that.code)) {
             return false;
@@ -102,7 +100,7 @@ public class CodeWithScope extends BsonValue implements Serializable {
 
     @Override
     public String toString() {
-        return "CodeWithScope{"
+        return "BsonJavaScriptWithScope{"
                + "code=" + getCode()
                + "scope=" + scope
                + '}';

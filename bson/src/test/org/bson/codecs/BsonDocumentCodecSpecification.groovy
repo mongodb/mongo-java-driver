@@ -16,31 +16,32 @@
 
 package org.bson.codecs
 
+import org.bson.BsonArray
+import org.bson.BsonBinary
 import org.bson.BsonBinaryReader
 import org.bson.BsonBinaryWriter
+import org.bson.BsonBoolean
+import org.bson.BsonDateTime
+import org.bson.BsonDocument
+import org.bson.BsonDouble
+import org.bson.BsonElement
+import org.bson.BsonInt32
+import org.bson.BsonInt64
+import org.bson.BsonJavaScript
+import org.bson.BsonJavaScriptWithScope
+import org.bson.BsonMaxKey
+import org.bson.BsonMinKey
+import org.bson.BsonNull
+import org.bson.BsonObjectId
+import org.bson.BsonRegularExpression
+import org.bson.BsonString
+import org.bson.BsonSymbol
+import org.bson.BsonTimestamp
+import org.bson.BsonUndefined
 import org.bson.ByteBufNIO
 import org.bson.io.BasicInputBuffer
 import org.bson.io.BasicOutputBuffer
-import org.bson.types.Binary
-import org.bson.types.BsonArray
-import org.bson.types.BsonBoolean
-import org.bson.types.BsonDateTime
-import org.bson.types.BsonDocument
-import org.bson.types.BsonDouble
-import org.bson.types.BsonElement
-import org.bson.types.BsonInt32
-import org.bson.types.BsonInt64
-import org.bson.types.BsonNull
-import org.bson.types.BsonString
-import org.bson.types.Code
-import org.bson.types.CodeWithScope
-import org.bson.types.MaxKey
-import org.bson.types.MinKey
 import org.bson.types.ObjectId
-import org.bson.types.RegularExpression
-import org.bson.types.Symbol
-import org.bson.types.Timestamp
-import org.bson.types.Undefined
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -57,16 +58,16 @@ class BsonDocumentCodecSpecification extends Specification {
                         new BsonElement('date', new BsonDateTime(new Date().getTime())),
                         new BsonElement('double', new BsonDouble(62.0)),
                         new BsonElement('string', new BsonString('the fox ...')),
-                        new BsonElement('minKey', new MinKey()),
-                        new BsonElement('maxKey', new MaxKey()),
-                        new BsonElement('code', new Code('int i = 0;')),
-                        new BsonElement('objectId', new ObjectId()),
-                        new BsonElement('codeWithScope', new CodeWithScope('int x = y', new BsonDocument('y', new BsonInt32(1)))),
-                        new BsonElement('regex', new RegularExpression('^test.*regex.*xyz$', 'i')),
-                        new BsonElement('symbol', new Symbol('ruby stuff')),
-                        new BsonElement('timestamp', new Timestamp(0x12345678, 5)),
-                        new BsonElement('undefined', new Undefined()),
-                        new BsonElement('binary', new Binary((byte) 80, [5, 4, 3, 2, 1] as byte[])),
+                        new BsonElement('minKey', new BsonMinKey()),
+                        new BsonElement('maxKey', new BsonMaxKey()),
+                        new BsonElement('javaScript', new BsonJavaScript('int i = 0;')),
+                        new BsonElement('objectId', new BsonObjectId(new ObjectId())),
+                        new BsonElement('codeWithScope', new BsonJavaScriptWithScope('int x = y', new BsonDocument('y', new BsonInt32(1)))),
+                        new BsonElement('regex', new BsonRegularExpression('^test.*regex.*xyz$', 'i')),
+                        new BsonElement('symbol', new BsonSymbol('ruby stuff')),
+                        new BsonElement('timestamp', new BsonTimestamp(0x12345678, 5)),
+                        new BsonElement('undefined', new BsonUndefined()),
+                        new BsonElement('binary', new BsonBinary((byte) 80, [5, 4, 3, 2, 1] as byte[])),
                         new BsonElement('array', new BsonArray([new BsonInt32(1), new BsonInt64(2L), new BsonBoolean(true),
                                                                     new BsonArray([new BsonInt32(1), new BsonInt32(2), new BsonInt32(3)]),
                                                                     new BsonDocument('a', new BsonInt64(2L))])),
@@ -94,7 +95,7 @@ class BsonDocumentCodecSpecification extends Specification {
         decodedDoc.get('double') == doc.get('double')
         decodedDoc.get('minKey') == doc.get('minKey')
         decodedDoc.get('maxKey') == doc.get('maxKey')
-        decodedDoc.get('code') == doc.get('code')
+        decodedDoc.get('javaScript') == doc.get('javaScript')
         decodedDoc.get('codeWithScope') == doc.get('codeWithScope')
         decodedDoc.get('objectId') == doc.get('objectId')
         decodedDoc.get('regex') == doc.get('regex')

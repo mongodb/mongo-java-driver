@@ -16,27 +16,29 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonDbPointer;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.Timestamp;
 
 /**
- * A Codec for Timestamp instances.
+ * Converts BSON type DBPointer(0x0c) to database references as DBPointer is deprecated.
  *
  * @since 3.0
  */
-public class TimestampCodec implements Codec<Timestamp> {
+public class BsonDBPointerCodec implements Codec<BsonDbPointer> {
+
     @Override
-    public void encode(final BsonWriter writer, final Timestamp value) {
-        writer.writeTimestamp(value);
+    public BsonDbPointer decode(final BsonReader reader) {
+        return reader.readDBPointer();
     }
 
     @Override
-    public Timestamp decode(final BsonReader reader) {
-        return reader.readTimestamp();
+    public void encode(final BsonWriter writer, final BsonDbPointer value) {
+        writer.writeDBPointer(value);
     }
 
     @Override
-    public Class<Timestamp> getEncoderClass() {
-        return Timestamp.class;
-    }}
+    public Class<BsonDbPointer> getEncoderClass() {
+        return BsonDbPointer.class;
+    }
+}

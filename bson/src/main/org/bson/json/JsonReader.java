@@ -18,17 +18,17 @@ package org.bson.json;
 
 
 import org.bson.AbstractBsonReader;
+import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonContextType;
+import org.bson.BsonDbPointer;
 import org.bson.BsonInvalidOperationException;
+import org.bson.BsonRegularExpression;
+import org.bson.BsonTimestamp;
 import org.bson.BsonType;
-import org.bson.types.Binary;
-import org.bson.types.DBPointer;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Timestamp;
 
 import javax.xml.bind.DatatypeConverter;
 import java.text.DateFormat;
@@ -77,8 +77,8 @@ public class JsonReader extends AbstractBsonReader {
     }
 
     @Override
-    protected Binary doReadBinaryData() {
-        return (Binary) currentValue;
+    protected BsonBinary doReadBinaryData() {
+        return (BsonBinary) currentValue;
     }
 
     @Override
@@ -338,13 +338,13 @@ public class JsonReader extends AbstractBsonReader {
     }
 
     @Override
-    protected RegularExpression doReadRegularExpression() {
-        return (RegularExpression) currentValue;
+    protected BsonRegularExpression doReadRegularExpression() {
+        return (BsonRegularExpression) currentValue;
     }
 
     @Override
-    protected DBPointer doReadDBPointer() {
-        return (DBPointer) currentValue;
+    protected BsonDbPointer doReadDBPointer() {
+        return (BsonDbPointer) currentValue;
     }
 
     @Override
@@ -368,8 +368,8 @@ public class JsonReader extends AbstractBsonReader {
     }
 
     @Override
-    protected Timestamp doReadTimestamp() {
-        return (Timestamp) currentValue;
+    protected BsonTimestamp doReadTimestamp() {
+        return (BsonTimestamp) currentValue;
     }
 
     @Override
@@ -594,7 +594,7 @@ public class JsonReader extends AbstractBsonReader {
         setCurrentBsonType(BsonType.DOCUMENT);
     }
 
-    private Binary visitBinDataConstructor() {
+    private BsonBinary visitBinDataConstructor() {
         verifyToken("(");
         JsonToken subTypeToken = popToken();
         if (subTypeToken.getType() != JsonTokenType.INT32) {
@@ -608,10 +608,10 @@ public class JsonReader extends AbstractBsonReader {
         verifyToken(")");
 
         byte[] bytes = DatatypeConverter.parseBase64Binary(bytesToken.getValue(String.class));
-        return new Binary(subTypeToken.getValue(Integer.class).byteValue(), bytes);
+        return new BsonBinary(subTypeToken.getValue(Integer.class).byteValue(), bytes);
     }
 
-    private Binary visitUUIDConstructor(final String uuidConstructorName) {
+    private BsonBinary visitUUIDConstructor(final String uuidConstructorName) {
         //TODO verify information related to https://jira.mongodb.org/browse/SERVER-3168
         verifyToken("(");
         JsonToken bytesToken = popToken();
@@ -625,10 +625,10 @@ public class JsonReader extends AbstractBsonReader {
         if (!"UUID".equals(uuidConstructorName) || !"GUID".equals(uuidConstructorName)) {
             subType = BsonBinarySubType.UUID_LEGACY;
         }
-        return new Binary(subType, bytes);
+        return new BsonBinary(subType, bytes);
     }
 
-    private RegularExpression visitRegularExpressionConstructor() {
+    private BsonRegularExpression visitRegularExpressionConstructor() {
         verifyToken("(");
         JsonToken patternToken = popToken();
         if (patternToken.getType() != JsonTokenType.STRING) {
@@ -646,7 +646,7 @@ public class JsonReader extends AbstractBsonReader {
             pushToken(commaToken);
         }
         verifyToken(")");
-        return new RegularExpression(patternToken.getValue(String.class), options);
+        return new BsonRegularExpression(patternToken.getValue(String.class), options);
     }
 
     private ObjectId visitObjectIdConstructor() {
@@ -659,7 +659,7 @@ public class JsonReader extends AbstractBsonReader {
         return new ObjectId(valueToken.getValue(String.class));
     }
 
-    private DBPointer visitDBPointerConstructor() {
+    private BsonDbPointer visitDBPointerConstructor() {
         verifyToken("(");
         JsonToken namespaceToken = popToken();
         if (namespaceToken.getType() != JsonTokenType.STRING) {
@@ -671,7 +671,7 @@ public class JsonReader extends AbstractBsonReader {
             throw new JsonParseException("JSON reader expected a string but found '%s'.", idToken.getValue());
         }
         verifyToken(")");
-        return new DBPointer(namespaceToken.getValue(String.class), new ObjectId(idToken.getValue(String.class)));
+        return new BsonDbPointer(namespaceToken.getValue(String.class), new ObjectId(idToken.getValue(String.class)));
     }
 
     private long visitNumberLongConstructor() {
@@ -720,7 +720,7 @@ public class JsonReader extends AbstractBsonReader {
         throw new JsonParseException("Invalid date format.");
     }
 
-    private Binary visitHexDataConstructor() {
+    private BsonBinary visitHexDataConstructor() {
         verifyToken("(");
         JsonToken subTypeToken = popToken();
         if (subTypeToken.getType() != JsonTokenType.INT32) {
@@ -740,10 +740,10 @@ public class JsonReader extends AbstractBsonReader {
 
         for (final BsonBinarySubType subType : BsonBinarySubType.values()) {
             if (subType.getValue() == subTypeToken.getValue(Integer.class)) {
-                return new Binary(subType, DatatypeConverter.parseHexBinary(hex));
+                return new BsonBinary(subType, DatatypeConverter.parseHexBinary(hex));
             }
         }
-        return new Binary(DatatypeConverter.parseHexBinary(hex));
+        return new BsonBinary(DatatypeConverter.parseHexBinary(hex));
     }
 
     private long visitDateTimeConstructor() {
@@ -804,7 +804,7 @@ public class JsonReader extends AbstractBsonReader {
         }
     }
 
-    private Binary visitBinDataExtendedJson() {
+    private BsonBinary visitBinDataExtendedJson() {
         verifyToken(":");
         JsonToken bytesToken = popToken();
         if (bytesToken.getType() != JsonTokenType.STRING) {
@@ -823,11 +823,11 @@ public class JsonReader extends AbstractBsonReader {
 
         for (final BsonBinarySubType st : BsonBinarySubType.values()) {
             if (st.getValue() == subType) {
-                return new Binary(st, DatatypeConverter.parseBase64Binary(bytesToken.getValue(String.class)));
+                return new BsonBinary(st, DatatypeConverter.parseBase64Binary(bytesToken.getValue(String.class)));
             }
         }
 
-        return new Binary(DatatypeConverter.parseBase64Binary(bytesToken.getValue(String.class)));
+        return new BsonBinary(DatatypeConverter.parseBase64Binary(bytesToken.getValue(String.class)));
     }
 
     private long visitDateTimeExtendedJson() {
@@ -864,7 +864,7 @@ public class JsonReader extends AbstractBsonReader {
         return new ObjectId(valueToken.getValue(String.class));
     }
 
-    private RegularExpression visitRegularExpressionExtendedJson() {
+    private BsonRegularExpression visitRegularExpressionExtendedJson() {
         verifyToken(":");
         JsonToken patternToken = popToken();
         if (patternToken.getType() != JsonTokenType.STRING) {
@@ -884,7 +884,7 @@ public class JsonReader extends AbstractBsonReader {
             pushToken(commaToken);
         }
         verifyToken("}");
-        return new RegularExpression(patternToken.getValue(String.class), options);
+        return new BsonRegularExpression(patternToken.getValue(String.class), options);
     }
 
     private String visitSymbolExtendedJson() {
@@ -897,7 +897,7 @@ public class JsonReader extends AbstractBsonReader {
         return nameToken.getValue(String.class);
     }
 
-    private Timestamp visitTimestampExtendedJson() {
+    private BsonTimestamp visitTimestampExtendedJson() {
         verifyToken(":");
         JsonToken valueToken = popToken();
         JsonTokenType type = valueToken.getType();
@@ -910,7 +910,7 @@ public class JsonReader extends AbstractBsonReader {
             throw new JsonParseException("JSON reader expected an integer but found '%s'.", valueToken.getValue());
         }
         verifyToken("}");
-        return new Timestamp(value, 1);
+        return new BsonTimestamp(value, 1);
     }
 
     private void visitJavaScriptExtendedJson() {

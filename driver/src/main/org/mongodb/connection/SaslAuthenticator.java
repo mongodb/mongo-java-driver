@@ -16,11 +16,11 @@
 
 package org.mongodb.connection;
 
-import org.bson.types.Binary;
-import org.bson.types.BsonBoolean;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonInt32;
-import org.bson.types.BsonString;
+import org.bson.BsonBinary;
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoCredential;
 
@@ -44,7 +44,7 @@ abstract class SaslAuthenticator extends Authenticator {
             BsonInt32 conversationId = (BsonInt32) res.getResponse().get("conversationId");
 
             while (!((BsonBoolean) res.getResponse().get("done")).getValue()) {
-                response = saslClient.evaluateChallenge(((Binary) res.getResponse().get("payload")).getData());
+                response = saslClient.evaluateChallenge(((BsonBinary) res.getResponse().get("payload")).getData());
 
                 if (response == null) {
                     throw new MongoSecurityException(getCredential(),
@@ -76,12 +76,12 @@ abstract class SaslAuthenticator extends Authenticator {
 
     private BsonDocument createSaslStartCommandDocument(final byte[] outToken) {
         return new BsonDocument("saslStart", new BsonInt32(1)).append("mechanism", new BsonString(getMechanismName()))
-                                                              .append("payload", new Binary(outToken != null ? outToken : new byte[0]));
+                                                              .append("payload", new BsonBinary(outToken != null ? outToken : new byte[0]));
     }
 
     private BsonDocument createSaslContinueDocument(final BsonInt32 conversationId, final byte[] outToken) {
         return new BsonDocument("saslContinue", new BsonInt32(1)).append("conversationId", conversationId)
-                                                                 .append("payload", new Binary(outToken));
+                                                                 .append("payload", new BsonBinary(outToken));
     }
 
     private void disposeOfSaslClient(final SaslClient saslClient) {

@@ -16,28 +16,28 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.RegularExpression;
 
 /**
- * A codec for BSON regular expressions.
+ * A Codec for {@code BsonObjectId} instances.
  *
  * @since 3.0
  */
-public class RegularExpressionCodec implements Codec<RegularExpression> {
+public class BsonObjectIdCodec implements Codec<BsonObjectId> {
     @Override
-    public RegularExpression decode(final BsonReader reader) {
-        return reader.readRegularExpression();
+    public void encode(final BsonWriter writer, final BsonObjectId value) {
+        writer.writeObjectId(value.getValue());
     }
 
     @Override
-    public void encode(final BsonWriter writer, final RegularExpression value) {
-        writer.writeRegularExpression(value);
+    public BsonObjectId decode(final BsonReader reader) {
+        return new BsonObjectId(reader.readObjectId());
     }
 
     @Override
-    public Class<RegularExpression> getEncoderClass() {
-        return RegularExpression.class;
+    public Class<BsonObjectId> getEncoderClass() {
+        return BsonObjectId.class;
     }
 }

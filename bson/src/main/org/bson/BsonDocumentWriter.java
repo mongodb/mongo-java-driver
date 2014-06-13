@@ -16,27 +16,7 @@
 
 package org.bson;
 
-import org.bson.types.Binary;
-import org.bson.types.BsonArray;
-import org.bson.types.BsonBoolean;
-import org.bson.types.BsonDateTime;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonDouble;
-import org.bson.types.BsonInt32;
-import org.bson.types.BsonInt64;
-import org.bson.types.BsonNull;
-import org.bson.types.BsonString;
-import org.bson.types.BsonValue;
-import org.bson.types.Code;
-import org.bson.types.CodeWithScope;
-import org.bson.types.DBPointer;
-import org.bson.types.MaxKey;
-import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Symbol;
-import org.bson.types.Timestamp;
-import org.bson.types.Undefined;
 
 import static org.bson.BsonContextType.DOCUMENT;
 import static org.bson.BsonContextType.SCOPE_DOCUMENT;
@@ -45,7 +25,7 @@ import static org.bson.BsonContextType.SCOPE_DOCUMENT;
  * A {@code BsonWriter} implementation that writes to an instance of {@code BsonDocument}.  This can be used to encode an object into a
  * {@code BsonDocument} using an {@code Encoder}.
  *
- * @see org.bson.types.BsonDocument
+ * @see BsonDocument
  * @see org.bson.codecs.Encoder
  *
  * @since 3.0
@@ -66,7 +46,7 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeBinaryData(final Binary binary) {
+    public void writeBinaryData(final BsonBinary binary) {
         checkPreconditions("writeBinaryData", State.VALUE);
         write(binary);
         setState(getNextState());
@@ -110,7 +90,7 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
     @Override
     public void writeJavaScript(final String code) {
         checkPreconditions("writeInt64", State.VALUE);
-        write(new Code(code));
+        write(new BsonJavaScript(code));
         setState(getNextState());
     }
 
@@ -126,14 +106,14 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
     @Override
     public void writeMaxKey() {
         checkPreconditions("writeMaxKey", State.VALUE);
-        write(new MaxKey());
+        write(new BsonMaxKey());
         setState(getNextState());
     }
 
     @Override
     public void writeMinKey() {
         checkPreconditions("writeMinKey", State.VALUE);
-        write(new MinKey());
+        write(new BsonMinKey());
         setState(getNextState());
     }
 
@@ -147,12 +127,12 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
     @Override
     public void writeObjectId(final ObjectId objectId) {
         checkPreconditions("writeObjectId", State.VALUE);
-        write(objectId);
+        write(new BsonObjectId(objectId));
         setState(getNextState());
     }
 
     @Override
-    public void writeRegularExpression(final RegularExpression regularExpression) {
+    public void writeRegularExpression(final BsonRegularExpression regularExpression) {
         checkPreconditions("writeRegularExpression", State.VALUE);
         write(regularExpression);
         setState(getNextState());
@@ -168,12 +148,12 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
     @Override
     public void writeSymbol(final String value) {
         checkPreconditions("writeSymbol", State.VALUE);
-        write(new Symbol(value));
+        write(new BsonSymbol(value));
         setState(getNextState());
     }
 
     @Override
-    public void writeTimestamp(final Timestamp value) {
+    public void writeTimestamp(final BsonTimestamp value) {
         checkPreconditions("writeTimestamp", State.VALUE);
         write(value);
         setState(getNextState());
@@ -182,12 +162,12 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
     @Override
     public void writeUndefined() {
         checkPreconditions("writeUndefined", State.VALUE);
-        write(new Undefined());
+        write(new BsonUndefined());
         setState(getNextState());
     }
 
     @Override
-    public void writeDBPointer(final DBPointer value) {
+    public void writeDBPointer(final BsonDbPointer value) {
         checkPreconditions("writeDBPointer", State.VALUE);
         write(value);
         setState(getNextState());
@@ -228,7 +208,7 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
             BsonDocument scope = (BsonDocument) value;
             BsonString code = (BsonString) getContext().container;
             setContext(getContext().getParentContext());
-            write(new CodeWithScope(code.getValue(), scope));
+            write(new BsonJavaScriptWithScope(code.getValue(), scope));
         } else {
             if (getContext().getContextType() == BsonContextType.TOP_LEVEL) {
                 setState(State.DONE);

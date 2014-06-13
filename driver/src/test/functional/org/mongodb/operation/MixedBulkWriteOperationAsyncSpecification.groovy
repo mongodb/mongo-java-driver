@@ -16,12 +16,14 @@
 
 
 package org.mongodb.operation
+
 import category.Async
 import category.Slow
+import org.bson.BsonBoolean
+import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonObjectId
 import org.bson.types.Binary
-import org.bson.types.BsonBoolean
-import org.bson.types.BsonDocument
-import org.bson.types.BsonInt32
 import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import org.mongodb.BulkWriteException
@@ -177,7 +179,7 @@ class MixedBulkWriteOperationAsyncSpecification extends FunctionalSpecification 
 
     def 'when no document matches the query, an update of one with upsert should insert a document'() {
         def id = new ObjectId()
-        def query = new BsonDocument('_id', id)
+        def query = new BsonDocument('_id', new BsonObjectId(id))
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(query, new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))))
@@ -188,8 +190,8 @@ class MixedBulkWriteOperationAsyncSpecification extends FunctionalSpecification 
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, id)])
-        getCollectionHelper().find().first() == new Document('_id', query.get('_id')).append('x', 2)
+        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
+        getCollectionHelper().find().first() == new Document('_id', query.getObjectId('_id').getValue()).append('x', 2)
 
         where:
         ordered << [true, false]
@@ -197,7 +199,7 @@ class MixedBulkWriteOperationAsyncSpecification extends FunctionalSpecification 
 
     def 'when no document matches the query, an update multi with upsert should insert a document'() {
         def id = new ObjectId()
-        def query = new BsonDocument('_id', id)
+        def query = new BsonDocument('_id', new BsonObjectId(id))
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(query, new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))))
@@ -208,8 +210,8 @@ class MixedBulkWriteOperationAsyncSpecification extends FunctionalSpecification 
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, id)])
-        getCollectionHelper().find().first() == new Document('_id', query.get('_id')).append('x', 2)
+        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
+        getCollectionHelper().find().first() == new Document('_id', query.getObjectId('_id').getValue()).append('x', 2)
 
         where:
         ordered << [true, false]
@@ -260,7 +262,8 @@ class MixedBulkWriteOperationAsyncSpecification extends FunctionalSpecification 
         def id = new ObjectId()
         def encoder = new DocumentCodec();
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new ReplaceRequest(new BsonDocument('_id', id), new Document('$set', new Document('x', 1)))
+                                             [new ReplaceRequest(new BsonDocument('_id', new BsonObjectId(id)),
+                                                                 new Document('$set', new Document('x', 1)))
                                                       .upsert(true)],
                                              true, ACKNOWLEDGED, encoder)
 
@@ -278,7 +281,8 @@ class MixedBulkWriteOperationAsyncSpecification extends FunctionalSpecification 
         given:
         def id = new ObjectId()
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new ReplaceRequest(new BsonDocument('_id', id), new Document('_id', id).append('x', 2))
+                                             [new ReplaceRequest(new BsonDocument('_id', new BsonObjectId(id)),
+                                                                 new Document('_id', id).append('x', 2))
                                                       .upsert(true)],
                                              ordered, ACKNOWLEDGED, new DocumentCodec())
 
@@ -286,7 +290,7 @@ class MixedBulkWriteOperationAsyncSpecification extends FunctionalSpecification 
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, id)])
+        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonObjectId(id))])
         getCollectionHelper().find().first() == new Document('_id', id).append('x', 2)
 
         where:

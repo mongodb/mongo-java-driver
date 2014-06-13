@@ -16,17 +16,17 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonDocument;
+import org.bson.BsonJavaScriptWithScope;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.types.BsonDocument;
-import org.bson.types.CodeWithScope;
 
 /**
- * A Codec for CodeWithScope instances.
+ * A Codec for {@code BsonJavaScriptWithScope} instances.
  *
  * @since 3.0
  */
-public class CodeWithScopeCodec implements Codec<CodeWithScope> {
+public class BsonJavaScriptWithScopeCodec implements Codec<BsonJavaScriptWithScope> {
     private final Codec<BsonDocument> documentCodec;
 
     /**
@@ -34,25 +34,25 @@ public class CodeWithScopeCodec implements Codec<CodeWithScope> {
      *
      * @param documentCodec the non-null codec for the nested document
      */
-    public CodeWithScopeCodec(final Codec<BsonDocument> documentCodec) {
+    public BsonJavaScriptWithScopeCodec(final Codec<BsonDocument> documentCodec) {
         this.documentCodec = documentCodec;
     }
 
     @Override
-    public CodeWithScope decode(final BsonReader bsonReader) {
+    public BsonJavaScriptWithScope decode(final BsonReader bsonReader) {
         String code = bsonReader.readJavaScriptWithScope();
         BsonDocument scope = documentCodec.decode(bsonReader);
-        return new CodeWithScope(code, scope);
+        return new BsonJavaScriptWithScope(code, scope);
     }
 
     @Override
-    public void encode(final BsonWriter writer, final CodeWithScope codeWithScope) {
+    public void encode(final BsonWriter writer, final BsonJavaScriptWithScope codeWithScope) {
         writer.writeJavaScriptWithScope(codeWithScope.getCode());
         documentCodec.encode(writer, codeWithScope.getScope());
     }
 
     @Override
-    public Class<CodeWithScope> getEncoderClass() {
-        return CodeWithScope.class;
+    public Class<BsonJavaScriptWithScope> getEncoderClass() {
+        return BsonJavaScriptWithScope.class;
     }
 }

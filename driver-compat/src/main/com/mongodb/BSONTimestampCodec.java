@@ -17,10 +17,10 @@
 package com.mongodb;
 
 import org.bson.BsonReader;
+import org.bson.BsonTimestamp;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.types.BSONTimestamp;
-import org.bson.types.Timestamp;
 
 /**
  * Knows how to encode and decode BSON timestamps.
@@ -30,12 +30,12 @@ import org.bson.types.Timestamp;
 public class BSONTimestampCodec implements Codec<BSONTimestamp> {
     @Override
     public void encode(final BsonWriter writer, final BSONTimestamp value) {
-        writer.writeTimestamp(new Timestamp(value.getTime(), value.getInc()));
+        writer.writeTimestamp(new BsonTimestamp(value.getTime(), value.getInc()));
     }
 
     @Override
     public BSONTimestamp decode(final BsonReader reader) {
-        Timestamp timestamp = reader.readTimestamp();
+        BsonTimestamp timestamp = reader.readTimestamp();
         return new BSONTimestamp(timestamp.getTime(), timestamp.getInc());
     }
 

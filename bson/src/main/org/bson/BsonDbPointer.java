@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.bson.types;
+package org.bson;
 
-import org.bson.BsonType;
+import org.bson.types.ObjectId;
 
 import java.io.Serializable;
 
@@ -25,7 +25,7 @@ import java.io.Serializable;
  *
  * @since 3.0
  */
-public class DBPointer extends BsonValue implements Serializable {
+public class BsonDbPointer extends BsonValue implements Serializable {
     private static final long serialVersionUID = -5105961452917374359L;
 
     private final String namespace;
@@ -37,7 +37,7 @@ public class DBPointer extends BsonValue implements Serializable {
      * @param namespace the namespace
      * @param id the id
      */
-    public DBPointer(final String namespace, final ObjectId id) {
+    public BsonDbPointer(final String namespace, final ObjectId id) {
         if (namespace == null) {
             throw new IllegalArgumentException("namespace can not be null");
         }
@@ -80,7 +80,7 @@ public class DBPointer extends BsonValue implements Serializable {
             return false;
         }
 
-        DBPointer dbPointer = (DBPointer) o;
+        BsonDbPointer dbPointer = (BsonDbPointer) o;
 
         if (!id.equals(dbPointer.id)) {
             return false;

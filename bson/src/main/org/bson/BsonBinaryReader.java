@@ -17,11 +17,7 @@
 package org.bson;
 
 import org.bson.io.InputBuffer;
-import org.bson.types.Binary;
-import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Timestamp;
 
 import static java.lang.String.format;
 
@@ -114,7 +110,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
     }
 
     @Override
-    protected Binary doReadBinaryData() {
+    protected BsonBinary doReadBinaryData() {
         int numBytes = buffer.readInt32();
         byte type = buffer.readByte();
 
@@ -123,7 +119,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
             numBytes -= 4;
         }
 
-        return new Binary(type, buffer.readBytes(numBytes));
+        return new BsonBinary(type, buffer.readBytes(numBytes));
     }
 
     @Override
@@ -182,13 +178,13 @@ public class BsonBinaryReader extends AbstractBsonReader {
     }
 
     @Override
-    protected RegularExpression doReadRegularExpression() {
-        return new RegularExpression(buffer.readCString(), buffer.readCString());
+    protected BsonRegularExpression doReadRegularExpression() {
+        return new BsonRegularExpression(buffer.readCString(), buffer.readCString());
     }
 
     @Override
-    protected DBPointer doReadDBPointer() {
-        return new DBPointer(buffer.readString(), buffer.readObjectId());
+    protected BsonDbPointer doReadDBPointer() {
+        return new BsonDbPointer(buffer.readString(), buffer.readObjectId());
     }
 
     @Override
@@ -202,10 +198,10 @@ public class BsonBinaryReader extends AbstractBsonReader {
     }
 
     @Override
-    protected Timestamp doReadTimestamp() {
+    protected BsonTimestamp doReadTimestamp() {
         int increment = buffer.readInt32();
         int time = buffer.readInt32();
-        return new Timestamp(time, increment);
+        return new BsonTimestamp(time, increment);
     }
 
     @Override

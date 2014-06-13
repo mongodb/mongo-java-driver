@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.bson.types.BsonDocumentWrapper;
+import org.bson.BsonDocumentWrapper;
 
 class ReplaceRequest extends WriteRequest {
     private final DBObject query;

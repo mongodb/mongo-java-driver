@@ -16,8 +16,8 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BsonValue;
 import org.bson.codecs.Codec;
-import org.bson.types.BsonValue;
 
 /**
  * A Codec that generates complete BSON documents for storage in a MongoDB collection.

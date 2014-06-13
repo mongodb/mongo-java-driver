@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-package org.bson.types;
+package org.bson;
 
-import org.bson.BsonDocumentWriter;
-import org.bson.BsonInvalidOperationException;
-import org.bson.BsonWriter;
 import org.bson.codecs.Encoder;
 
 import java.util.Collection;

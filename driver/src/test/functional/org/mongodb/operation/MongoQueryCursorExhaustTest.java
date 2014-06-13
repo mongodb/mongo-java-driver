@@ -16,8 +16,8 @@
 
 package org.mongodb.operation;
 
+import org.bson.BsonDocument;
 import org.bson.types.Binary;
-import org.bson.types.BsonDocument;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -19,12 +19,13 @@ package org.mongodb.codecs;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonBinaryWriter;
+import org.bson.BsonInt32;
+import org.bson.BsonObjectId;
 import org.bson.ByteBufNIO;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.InputBuffer;
 import org.bson.types.Binary;
-import org.bson.types.BsonInt32;
 import org.bson.types.Code;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
@@ -170,7 +171,7 @@ public class DocumentCodecTest {
         assertFalse(documentCodec.documentHasId(document));
         documentCodec.generateIdIfAbsentFromDocument(document);
         assertTrue(documentCodec.documentHasId(document));
-        assertEquals(ObjectId.class, documentCodec.getDocumentId(document).getClass());
+        assertEquals(BsonObjectId.class, documentCodec.getDocumentId(document).getClass());
     }
 
     // TODO: factor into common base class;

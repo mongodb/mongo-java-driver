@@ -14,63 +14,42 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 
 /**
- * A representation of the BSON Int32 type.
+ * For using the JavaScript Code type.
  *
  * @since 3.0
  */
-public final class BsonInt32 extends BsonNumber implements Comparable<BsonInt32>, Serializable {
-    private static final long serialVersionUID = 2215506922933899945L;
+public class BsonJavaScript extends BsonValue implements Serializable {
 
-    private final int value;
+    private final String code;
+
+    private static final long serialVersionUID = 475535263314046697L;
 
     /**
-     * Construct a new instance with the given value.
+     * Construct a new instance with the given JavaScript code.
      *
-     * @param value the value
+     * @param code the Javascript code
      */
-    public BsonInt32(final int value) {
-        this.value = value;
-    }
-
-    @Override
-    public int compareTo(final BsonInt32 o) {
-        return Integer.compare(value, o.value);
+    public BsonJavaScript(final String code) {
+        this.code = code;
     }
 
     @Override
     public BsonType getBsonType() {
-        return BsonType.INT32;
+        return BsonType.JAVASCRIPT;
     }
 
     /**
-     * Gets the integer value.
+     * Get the Javascript code.
      *
-     * @return the value
+     * @return the code
      */
-    public int getValue() {
-        return value;
-    }
-
-    @Override
-    public int intValue() {
-        return value;
-    }
-
-    @Override
-    public long longValue() {
-        return value;
-    }
-
-    @Override
-    public double doubleValue() {
-        return value;
+    public String getCode() {
+        return code;
     }
 
     @Override
@@ -82,9 +61,9 @@ public final class BsonInt32 extends BsonNumber implements Comparable<BsonInt32>
             return false;
         }
 
-        BsonInt32 bsonInt32 = (BsonInt32) o;
+        BsonJavaScript code1 = (BsonJavaScript) o;
 
-        if (value != bsonInt32.value) {
+        if (!code.equals(code1.code)) {
             return false;
         }
 
@@ -93,13 +72,14 @@ public final class BsonInt32 extends BsonNumber implements Comparable<BsonInt32>
 
     @Override
     public int hashCode() {
-        return value;
+        return code.hashCode();
     }
 
     @Override
     public String toString() {
-        return "BsonInt32{"
-               + "value=" + value
+        return "BsonJavaScript{"
+               + "code='" + code + '\''
                + '}';
     }
 }
+

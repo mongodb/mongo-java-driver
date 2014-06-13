@@ -16,7 +16,24 @@
 
 package org.bson.types
 
+import org.bson.BsonArray
+import org.bson.BsonBinary
+import org.bson.BsonBoolean
+import org.bson.BsonDateTime
+import org.bson.BsonDbPointer
+import org.bson.BsonDocument
+import org.bson.BsonDouble
+import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.BsonInvalidOperationException
+import org.bson.BsonJavaScript
+import org.bson.BsonJavaScriptWithScope
+import org.bson.BsonNull
+import org.bson.BsonObjectId
+import org.bson.BsonRegularExpression
+import org.bson.BsonString
+import org.bson.BsonSymbol
+import org.bson.BsonTimestamp
 import spock.lang.Specification
 
 class BsonValueSpecification extends Specification {
@@ -32,14 +49,14 @@ class BsonValueSpecification extends Specification {
         new BsonBoolean(true).isBoolean()
         new BsonDateTime(new Date().getTime()).isDateTime()
         new BsonString('the fox ...').isString()
-        new Code('int i = 0;').isJavaScript()
-        new ObjectId().isObjectId()
-        new CodeWithScope('int x = y', new BsonDocument('y', new BsonInt32(1))).isJavaScriptWithScope()
-        new RegularExpression('^test.*regex.*xyz$', 'i').isRegularExpression()
-        new Symbol('ruby stuff').isSymbol()
-        new Timestamp(0x12345678, 5).isTimestamp()
-        new Binary((byte) 80, [5, 4, 3, 2, 1] as byte[]).isBinary()
-        new DBPointer("ns", new ObjectId()).isDBPointer()
+        new BsonJavaScript('int i = 0;').isJavaScript()
+        new BsonObjectId(new ObjectId()).isObjectId()
+        new BsonJavaScriptWithScope('int x = y', new BsonDocument('y', new BsonInt32(1))).isJavaScriptWithScope()
+        new BsonRegularExpression('^test.*regex.*xyz$', 'i').isRegularExpression()
+        new BsonSymbol('ruby stuff').isSymbol()
+        new BsonTimestamp(0x12345678, 5).isTimestamp()
+        new BsonBinary((byte) 80, [5, 4, 3, 2, 1] as byte[]).isBinary()
+        new BsonDbPointer("ns", new ObjectId()).isDBPointer()
         new BsonArray().isArray()
         new BsonDocument().isDocument()
     }

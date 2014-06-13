@@ -16,11 +16,7 @@
 
 package org.bson;
 
-import org.bson.types.Binary;
-import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Timestamp;
 
 import static org.bson.io.Bits.readLong;
 
@@ -99,7 +95,7 @@ class BsonCallbackAdapter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeBinaryData(final Binary binary) {
+    public void writeBinaryData(final BsonBinary binary) {
         if (binary.getType() == BsonBinarySubType.UUID_LEGACY.getValue()) {
             bsonCallback.gotUUID(getName(),
                                  readLong(binary.getData(), 0),
@@ -181,7 +177,7 @@ class BsonCallbackAdapter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeRegularExpression(final RegularExpression regularExpression) {
+    public void writeRegularExpression(final BsonRegularExpression regularExpression) {
         bsonCallback.gotRegex(getName(), regularExpression.getPattern(), regularExpression.getOptions());
         setState(getNextState());
     }
@@ -199,7 +195,7 @@ class BsonCallbackAdapter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeTimestamp(final Timestamp value) {
+    public void writeTimestamp(final BsonTimestamp value) {
         bsonCallback.gotTimestamp(getName(), value.getTime(), value.getInc());
         setState(getNextState());
     }
@@ -211,7 +207,7 @@ class BsonCallbackAdapter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeDBPointer(final DBPointer value) {
+    public void writeDBPointer(final BsonDbPointer value) {
         bsonCallback.gotDBRef(getName(), value.getNamespace(), value.getId());
     }
 

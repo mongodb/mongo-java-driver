@@ -17,8 +17,8 @@
 package org.bson.codecs;
 
 import org.bson.BsonReader;
+import org.bson.BsonString;
 import org.bson.BsonWriter;
-import org.bson.types.BsonString;
 
 /**
  * A Codec for BsonString instances.

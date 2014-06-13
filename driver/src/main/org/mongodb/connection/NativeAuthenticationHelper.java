@@ -16,9 +16,9 @@
 
 package org.mongodb.connection;
 
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonInt32;
-import org.bson.types.BsonString;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.mongodb.MongoInternalException;
 
 import java.io.ByteArrayOutputStream;

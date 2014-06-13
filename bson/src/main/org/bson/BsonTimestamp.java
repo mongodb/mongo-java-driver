@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -26,7 +24,7 @@ import java.util.Date;
  *
  * @since 3.0
  */
-public final class Timestamp extends BsonValue implements Comparable<Timestamp>, Serializable {
+public final class BsonTimestamp extends BsonValue implements Comparable<BsonTimestamp>, Serializable {
     private static final long serialVersionUID = 2318841189917887752L;
 
     private final int inc;
@@ -35,7 +33,7 @@ public final class Timestamp extends BsonValue implements Comparable<Timestamp>,
     /**
      * Construct a new instance with a null time and a 0 increment.
      */
-    public Timestamp() {
+    public BsonTimestamp() {
         inc = 0;
         time = null;
     }
@@ -46,7 +44,7 @@ public final class Timestamp extends BsonValue implements Comparable<Timestamp>,
      * @param time the number of seconds since the epoch
      * @param inc the increment.
      */
-    public Timestamp(final int time, final int inc) {
+    public BsonTimestamp(final int time, final int inc) {
         this.time = new Date(time * 1000L);
         this.inc = inc;
     }
@@ -81,7 +79,7 @@ public final class Timestamp extends BsonValue implements Comparable<Timestamp>,
     }
 
     @Override
-    public int compareTo(final Timestamp ts) {
+    public int compareTo(final BsonTimestamp ts) {
         if (getTime() != ts.getTime()) {
             return getTime() - ts.getTime();
         } else {
@@ -98,7 +96,7 @@ public final class Timestamp extends BsonValue implements Comparable<Timestamp>,
             return false;
         }
 
-        Timestamp timestamp = (Timestamp) o;
+        BsonTimestamp timestamp = (BsonTimestamp) o;
 
         if (inc != timestamp.inc) {
             return false;

@@ -16,9 +16,9 @@
 
 package org.mongodb.test;
 
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonDocumentWrapper;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;

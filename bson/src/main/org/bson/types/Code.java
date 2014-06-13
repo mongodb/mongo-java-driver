@@ -18,18 +18,16 @@
 
 package org.bson.types;
 
-import org.bson.BsonType;
-
 import java.io.Serializable;
 
 /**
  * for using the Code type
  */
-public class Code extends BsonValue implements Serializable {
-
-    private final String code;
+public class Code implements Serializable {
 
     private static final long serialVersionUID = 475535263314046697L;
+
+    private final String code;
 
     /**
      * Construct a new instance with the given code.
@@ -38,11 +36,6 @@ public class Code extends BsonValue implements Serializable {
      */
     public Code(final String code) {
         this.code = code;
-    }
-
-    @Override
-    public BsonType getBsonType() {
-        return BsonType.JAVASCRIPT;
     }
 
     /**

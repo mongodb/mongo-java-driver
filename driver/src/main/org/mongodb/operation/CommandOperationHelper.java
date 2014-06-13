@@ -16,10 +16,10 @@
 
 package org.mongodb.operation;
 
+import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
-import org.bson.types.BsonDocument;
 import org.mongodb.CommandResult;
 import org.mongodb.Function;
 import org.mongodb.MongoCommandFailureException;

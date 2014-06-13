@@ -16,10 +16,10 @@
 
 package org.mongodb.protocol
 
-import org.bson.types.BsonArray
-import org.bson.types.BsonDocument
-import org.bson.types.BsonInt32
-import org.bson.types.BsonString
+import org.bson.BsonArray
+import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonString
 import org.mongodb.BulkWriteError
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.CommandResult

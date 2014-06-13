@@ -16,8 +16,8 @@
 
 package com.mongodb;
 
-import org.bson.types.BsonDocumentWrapper;
-import org.bson.types.Code;
+import org.bson.BsonDocumentWrapper;
+import org.bson.BsonJavaScript;
 import org.mongodb.operation.MapReduce;
 import org.mongodb.operation.MapReduceOutputOptions;
 
@@ -371,7 +371,7 @@ public class MapReduceCommand {
     MapReduce getMapReduce(final DBObjectCodec codec) {
         MapReduce mapReduce;
         if (outputType == OutputType.INLINE) {
-            mapReduce = new MapReduce(new Code(map), new Code(reduce));
+            mapReduce = new MapReduce(new BsonJavaScript(map), new BsonJavaScript(reduce));
         } else {
             MapReduceOutputOptions output = new MapReduceOutputOptions(outputCollection).database(outputDB);
             switch (outputType) {
@@ -389,7 +389,7 @@ public class MapReduceCommand {
             }
             //TODO: sharded?
             //TODO: non-atomic?
-            mapReduce = new MapReduce(new Code(map), new Code(reduce), output);
+            mapReduce = new MapReduce(new BsonJavaScript(map), new BsonJavaScript(reduce), output);
         }
 
         if (query != null) {
@@ -397,7 +397,7 @@ public class MapReduceCommand {
         }
 
         if (finalize != null) {
-            mapReduce.finalize(new Code(finalize));
+            mapReduce.finalize(new BsonJavaScript(finalize));
         }
 
         if (sort != null) {

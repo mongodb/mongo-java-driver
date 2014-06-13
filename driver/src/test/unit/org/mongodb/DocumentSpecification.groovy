@@ -18,9 +18,9 @@
 
 package org.mongodb
 
+import org.bson.BsonRegularExpression
 import org.bson.json.JsonParseException
 import org.bson.types.ObjectId
-import org.bson.types.RegularExpression
 import spock.lang.Specification
 
 class DocumentSpecification extends Specification {
@@ -65,7 +65,7 @@ class DocumentSpecification extends Specification {
         document != null;
         document.keySet().size() == 1;
 
-        RegularExpression regularExpression = (RegularExpression) document.get('regex');
+        BsonRegularExpression regularExpression = (BsonRegularExpression) document.get('regex');
         regularExpression.options == 'im'
         regularExpression.pattern == 'abc'
     }

@@ -14,31 +14,35 @@
  * limitations under the License.
  */
 
-package org.bson.codecs;
+package org.bson;
 
-import org.bson.BsonReader;
-import org.bson.BsonWriter;
-import org.bson.types.DBPointer;
+import java.io.Serializable;
 
 /**
- * Converts BSON type DBPointer(0x0c) to database references as DBPointer is deprecated.
- *
- * @since 3.0
+ * Represent the maximum key value regardless of the key's type
  */
-public class DBPointerCodec implements Codec<DBPointer> {
+public final class BsonMaxKey extends BsonValue implements Serializable {
+
+    private static final long serialVersionUID = 5123414776151687185L;
 
     @Override
-    public DBPointer decode(final BsonReader reader) {
-        return reader.readDBPointer();
+    public BsonType getBsonType() {
+        return BsonType.MAX_KEY;
     }
 
     @Override
-    public void encode(final BsonWriter writer, final DBPointer value) {
-        writer.writeDBPointer(value);
+    public boolean equals(final Object o) {
+        return o instanceof BsonMaxKey;
     }
 
     @Override
-    public Class<DBPointer> getEncoderClass() {
-        return DBPointer.class;
+    public int hashCode() {
+        return 0;
     }
+
+    @Override
+    public String toString() {
+        return "BsonMaxKey";
+    }
+
 }

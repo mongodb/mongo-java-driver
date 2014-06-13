@@ -17,8 +17,9 @@
 package org.mongodb.operation
 
 import category.Async
-import org.bson.types.BsonDocument
-import org.bson.types.BsonInt32
+import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonObjectId
 import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
@@ -88,7 +89,7 @@ class UpdateOperationSpecification extends FunctionalSpecification {
         given:
         def id = new ObjectId()
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     asList(new UpdateRequest(new BsonDocument('_id', id),
+                                     asList(new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
                                                               new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))).
                                                     upsert(true)),
                                      new DocumentCodec())
@@ -99,7 +100,7 @@ class UpdateOperationSpecification extends FunctionalSpecification {
         then:
         result.wasAcknowledged()
         result.count == 1
-        result.upsertedId == id
+        result.upsertedId == new BsonObjectId(id)
         !result.isUpdateOfExisting()
     }
 
@@ -108,7 +109,7 @@ class UpdateOperationSpecification extends FunctionalSpecification {
         given:
         def id = new ObjectId()
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     asList(new UpdateRequest(new BsonDocument('_id', id),
+                                     asList(new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
                                                               new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))).
                                                     upsert(true)),
                                      new DocumentCodec())
@@ -119,7 +120,7 @@ class UpdateOperationSpecification extends FunctionalSpecification {
         then:
         result.wasAcknowledged()
         result.count == 1
-        result.upsertedId == id
+        result.upsertedId == new BsonObjectId(id)
         !result.isUpdateOfExisting()
     }
 

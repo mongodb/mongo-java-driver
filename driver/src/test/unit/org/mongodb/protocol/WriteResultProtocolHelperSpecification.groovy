@@ -16,11 +16,12 @@
 
 package org.mongodb.protocol
 
-import org.bson.types.BsonArray
-import org.bson.types.BsonBoolean
-import org.bson.types.BsonDocument
-import org.bson.types.BsonInt32
-import org.bson.types.BsonString
+import org.bson.BsonArray
+import org.bson.BsonBoolean
+import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonObjectId
+import org.bson.BsonString
 import org.bson.types.ObjectId
 import org.mongodb.CommandResult
 import org.mongodb.MongoCommandFailureException
@@ -51,13 +52,13 @@ class WriteResultProtocolHelperSpecification extends Specification {
         def commandResult = new CommandResult(new ServerAddress(),
                                               new BsonDocument('ok', new BsonInt32(1)).append('n', new BsonInt32(1))
                                                                                       .append('updatedExisting', BsonBoolean.FALSE).
-                                                      append('upserted', id),
+                                                      append('upserted', new BsonObjectId(id)),
                                               1);
         when:
         def writeResult = ProtocolHelper.getWriteResult(commandResult)
 
         then:
-        writeResult == new AcknowledgedWriteResult(1, false, id)
+        writeResult == new AcknowledgedWriteResult(1, false, new BsonObjectId(id))
 
     }
 

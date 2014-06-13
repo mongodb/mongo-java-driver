@@ -16,9 +16,9 @@
 
 package org.mongodb.protocol.message;
 
+import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.io.OutputBuffer;
-import org.bson.types.BsonDocument;
 import org.mongodb.operation.QueryFlag;
 
 import java.util.EnumSet;

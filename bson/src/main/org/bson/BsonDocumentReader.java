@@ -1,13 +1,6 @@
 package org.bson;
 
-import org.bson.types.Binary;
-import org.bson.types.BsonArray;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonValue;
-import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Timestamp;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -16,7 +9,7 @@ import java.util.Map;
  * A {@code BsonReader} implementation that reads from an instance of {@code BsonDocument}.  This can be used to decode a {@code
  * BsonDocument} using a {@code Decoder}.
  *
- * @see org.bson.types.BsonDocument
+ * @see BsonDocument
  * @see org.bson.codecs.Decoder
  *
  * @since 3.0
@@ -36,7 +29,7 @@ public class BsonDocumentReader extends AbstractBsonReader {
     }
 
     @Override
-    protected Binary doReadBinaryData() {
+    protected BsonBinary doReadBinaryData() {
         return currentValue.asBinary();
     }
 
@@ -110,16 +103,16 @@ public class BsonDocumentReader extends AbstractBsonReader {
 
     @Override
     protected ObjectId doReadObjectId() {
-        return currentValue.asObjectId();
+        return currentValue.asObjectId().getValue();
     }
 
     @Override
-    protected RegularExpression doReadRegularExpression() {
+    protected BsonRegularExpression doReadRegularExpression() {
         return currentValue.asRegularExpression();
     }
 
     @Override
-    protected DBPointer doReadDBPointer() {
+    protected BsonDbPointer doReadDBPointer() {
         return currentValue.asDBPointer();
     }
 
@@ -151,7 +144,7 @@ public class BsonDocumentReader extends AbstractBsonReader {
     }
 
     @Override
-    protected Timestamp doReadTimestamp() {
+    protected BsonTimestamp doReadTimestamp() {
         return currentValue.asTimestamp();
     }
 

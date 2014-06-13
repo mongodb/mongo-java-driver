@@ -18,11 +18,7 @@ package org.bson;
 
 import org.bson.io.InputBuffer;
 import org.bson.io.OutputBuffer;
-import org.bson.types.Binary;
-import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Timestamp;
 
 import java.util.Stack;
 
@@ -93,13 +89,13 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeBinaryData(final Binary binary) {
+    public void writeBinaryData(final BsonBinary binary) {
         checkPreconditions("writeBinaryData", State.VALUE);
 
         buffer.write(BsonType.BINARY.getValue());
         writeCurrentName();
 
-        int totalLen = binary.length();
+        int totalLen = binary.getData().length;
 
         if (binary.getType() == BsonBinarySubType.OLD_BINARY.getValue()) {
             totalLen += 4;
@@ -236,7 +232,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeRegularExpression(final RegularExpression regularExpression) {
+    public void writeRegularExpression(final BsonRegularExpression regularExpression) {
         checkPreconditions("writeRegularExpression", State.VALUE);
 
         buffer.write(BsonType.REGULAR_EXPRESSION.getValue());
@@ -271,7 +267,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeTimestamp(final Timestamp value) {
+    public void writeTimestamp(final BsonTimestamp value) {
         checkPreconditions("writeTimestamp", State.VALUE);
 
         buffer.write(BsonType.TIMESTAMP.getValue());
@@ -293,7 +289,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public  void writeDBPointer(final DBPointer dbPointer) {
+    public  void writeDBPointer(final BsonDbPointer dbPointer) {
         checkPreconditions("writeDBPointer", State.VALUE);
 
         buffer.write(BsonType.DB_POINTER.getValue());

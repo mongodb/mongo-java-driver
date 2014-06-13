@@ -18,10 +18,10 @@
 package org.mongodb;
 
 
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonInt32;
-import org.bson.types.BsonString;
-import org.bson.types.BsonValue;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 
 import java.util.List;
 

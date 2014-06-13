@@ -14,47 +14,53 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 
 /**
- * A representation of the BSON DateTime type.
+ * A representation of the BSON Boolean type.
  *
  * @since 3.0
  */
-public class BsonDateTime extends BsonValue implements Comparable<BsonDateTime>, Serializable {
+public final class BsonBoolean extends BsonValue implements Comparable<BsonBoolean>, Serializable {
     private static final long serialVersionUID = 2215506922933899945L;
 
-    private final long value;
+    private final boolean value;
+
+    public static final BsonBoolean TRUE = new BsonBoolean(true);
+
+    public static final BsonBoolean FALSE = new BsonBoolean(false);
+
+    public static BsonBoolean valueOf(final boolean value) {
+        return value ? TRUE : FALSE;
+    }
 
     /**
      * Construct a new instance with the given value.
      *
-     * @param value the value, which may not be null
+     * @param value the value
      */
-    public BsonDateTime(final long value) {
+    public BsonBoolean(final boolean value) {
         this.value = value;
     }
 
     @Override
-    public int compareTo(final BsonDateTime o) {
-        return Long.compare(value, o.value);
+    public int compareTo(final BsonBoolean o) {
+        return Boolean.compare(value, o.value);
     }
 
     @Override
     public BsonType getBsonType() {
-        return BsonType.DATE_TIME;
+        return BsonType.BOOLEAN;
     }
 
     /**
-     * Gets the DateTime value as a long
+     * Gets the boolean value.
      *
      * @return the value
      */
-    public long getValue() {
+    public boolean getValue() {
         return value;
     }
 
@@ -67,7 +73,7 @@ public class BsonDateTime extends BsonValue implements Comparable<BsonDateTime>,
             return false;
         }
 
-        BsonDateTime that = (BsonDateTime) o;
+        BsonBoolean that = (BsonBoolean) o;
 
         if (value != that.value) {
             return false;
@@ -78,12 +84,12 @@ public class BsonDateTime extends BsonValue implements Comparable<BsonDateTime>,
 
     @Override
     public int hashCode() {
-        return (int) (value ^ (value >>> 32));
+        return (value ? 1 : 0);
     }
 
     @Override
     public String toString() {
-        return "BsonDateTime{"
+        return "BsonBoolean{"
                + "value=" + value
                + '}';
     }

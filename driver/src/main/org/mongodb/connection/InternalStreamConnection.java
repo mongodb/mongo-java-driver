@@ -16,10 +16,10 @@
 
 package org.mongodb.connection;
 
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.ByteBuf;
 import org.bson.io.BasicInputBuffer;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonInt32;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoCredential;

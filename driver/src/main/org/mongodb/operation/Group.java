@@ -16,19 +16,20 @@
 
 package org.mongodb.operation;
 
-import org.bson.types.BsonDocument;
-import org.bson.types.Code;
+import org.bson.BsonDocument;
+import org.bson.BsonJavaScript;
 
 public class Group {
 
     private final BsonDocument key;
-    private final Code keyFunction;
-    private final Code reduceFunction;
+    private final BsonJavaScript keyFunction;
+    private final BsonJavaScript reduceFunction;
     private final BsonDocument initial;
     private BsonDocument filter;
-    private Code finalizeFunction;
+    private BsonJavaScript finalizeFunction;
 
-    private Group(final BsonDocument key, final Code keyFunction, final Code reduceFunction, final BsonDocument initial) {
+    private Group(final BsonDocument key, final BsonJavaScript keyFunction, final BsonJavaScript reduceFunction,
+                  final BsonDocument initial) {
         if (initial == null) {
             throw new IllegalArgumentException("Group command requires an initial document for the aggregate result");
         }
@@ -43,11 +44,11 @@ public class Group {
         this.initial = initial;
     }
 
-    public Group(final BsonDocument key, final Code reduceFunction, final BsonDocument initial) {
+    public Group(final BsonDocument key, final BsonJavaScript reduceFunction, final BsonDocument initial) {
         this(key, null, reduceFunction, initial);
     }
 
-    public Group(final Code keyFunction, final Code reduceFunction, final BsonDocument initial) {
+    public Group(final BsonJavaScript keyFunction, final BsonJavaScript reduceFunction, final BsonDocument initial) {
         this(null, keyFunction, reduceFunction, initial);
     }
 
@@ -56,7 +57,7 @@ public class Group {
         return this;
     }
 
-    public Group finalizeFunction(final Code finalize) {
+    public Group finalizeFunction(final BsonJavaScript finalize) {
         this.finalizeFunction = finalize;
         return this;
     }
@@ -73,15 +74,15 @@ public class Group {
         return initial;
     }
 
-    public Code getReduceFunction() {
+    public BsonJavaScript getReduceFunction() {
         return reduceFunction;
     }
 
-    public Code getFinalizeFunction() {
+    public BsonJavaScript getFinalizeFunction() {
         return finalizeFunction;
     }
 
-    public Code getKeyFunction() {
+    public BsonJavaScript getKeyFunction() {
         return keyFunction;
     }
 }

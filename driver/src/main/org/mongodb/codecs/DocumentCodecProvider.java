@@ -17,16 +17,16 @@
 package org.mongodb.codecs;
 
 import org.bson.codecs.BinaryCodec;
+import org.bson.codecs.BsonDBPointerCodec;
+import org.bson.codecs.BsonRegularExpressionCodec;
+import org.bson.codecs.BsonTimestampCodec;
+import org.bson.codecs.BsonUndefinedCodec;
 import org.bson.codecs.CodeCodec;
 import org.bson.codecs.Codec;
-import org.bson.codecs.DBPointerCodec;
 import org.bson.codecs.MaxKeyCodec;
 import org.bson.codecs.MinKeyCodec;
 import org.bson.codecs.ObjectIdCodec;
-import org.bson.codecs.RegularExpressionCodec;
 import org.bson.codecs.SymbolCodec;
-import org.bson.codecs.TimestampCodec;
-import org.bson.codecs.UndefinedCodec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.mongodb.CodeWithScope;
@@ -88,7 +88,7 @@ public class DocumentCodecProvider implements CodecProvider {
         addCodec(new BinaryCodec());
         addCodec(new BooleanCodec());
         addCodec(new DateCodec());
-        addCodec(new DBPointerCodec());
+        addCodec(new BsonDBPointerCodec());
         addCodec(new DoubleCodec());
         addCodec(new IntegerCodec());
         addCodec(new LongCodec());
@@ -96,11 +96,11 @@ public class DocumentCodecProvider implements CodecProvider {
         addCodec(new MaxKeyCodec());
         addCodec(new CodeCodec());
         addCodec(new ObjectIdCodec());
-        addCodec(new RegularExpressionCodec());
+        addCodec(new BsonRegularExpressionCodec());
         addCodec(new StringCodec());
         addCodec(new SymbolCodec());
-        addCodec(new TimestampCodec());
-        addCodec(new UndefinedCodec());
+        addCodec(new BsonTimestampCodec());
+        addCodec(new BsonUndefinedCodec());
     }
 
     private <T> void addCodec(final Codec<T> codec) {

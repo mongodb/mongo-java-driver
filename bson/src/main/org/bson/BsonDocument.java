@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.types;
-
-import org.bson.BSONException;
-import org.bson.BsonInvalidOperationException;
-import org.bson.BsonType;
+package org.bson;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -212,19 +208,19 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      * @return the value of the key as a Timestamp
      * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
      */
-    public Timestamp getTimestamp(final Object key) {
+    public BsonTimestamp getTimestamp(final Object key) {
         throwIfKeyAbsent(key);
         return get(key).asTimestamp();
     }
 
     /**
-     * Gets the value of the key if it is a ObjectId, or throws if not.
+     * Gets the value of the key if it is a BsonObjectId, or throws if not.
      *
      * @param key the key
-     * @return the value of the key as a ObjectId
+     * @return the value of the key as a BsonObjectId
      * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
      */
-    public ObjectId getObjectId(final Object key) {
+    public BsonObjectId getObjectId(final Object key) {
         throwIfKeyAbsent(key);
         return get(key).asObjectId();
     }
@@ -236,7 +232,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      * @return the value of the key as a RegularExpression
      * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
      */
-    public RegularExpression getRegularExpression(final Object key) {
+    public BsonRegularExpression getRegularExpression(final Object key) {
         throwIfKeyAbsent(key);
         return get(key).asRegularExpression();
     }
@@ -248,7 +244,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      * @return the value of the key as a Binary
      * @throws org.bson.BsonInvalidOperationException if the document does not contain the key or the value is not of the expected type
      */
-    public Binary getBinary(final Object key) {
+    public BsonBinary getBinary(final Object key) {
         throwIfKeyAbsent(key);
         return get(key).asBinary();
     }
@@ -585,7 +581,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      * @return the value of the key as a Timestamp
      * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
      */
-    public Timestamp getTimestamp(final Object key, final Timestamp defaultValue) {
+    public BsonTimestamp getTimestamp(final Object key, final BsonTimestamp defaultValue) {
         if (!containsKey(key)) {
             return defaultValue;
         }
@@ -601,7 +597,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      * @return the value of the key as a ObjectId
      * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
      */
-    public ObjectId getObjectId(final Object key, final ObjectId defaultValue) {
+    public BsonObjectId getObjectId(final Object key, final BsonObjectId defaultValue) {
         if (!containsKey(key)) {
             return defaultValue;
         }
@@ -617,7 +613,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      * @return the value of the key as a ObjectId
      * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
      */
-    public Binary getBinary(final Object key, final Binary defaultValue) {
+    public BsonBinary getBinary(final Object key, final BsonBinary defaultValue) {
         if (!containsKey(key)) {
             return defaultValue;
         }
@@ -633,7 +629,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      * @return the value of the key as a ObjectId
      * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
      */
-    public RegularExpression getRegularExpression(final Object key, final RegularExpression defaultValue) {
+    public BsonRegularExpression getRegularExpression(final Object key, final BsonRegularExpression defaultValue) {
         if (!containsKey(key)) {
             return defaultValue;
         }

@@ -16,11 +16,11 @@
 
 package org.mongodb.operation;
 
-import org.bson.types.BsonBoolean;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonInt32;
-import org.bson.types.BsonInt64;
-import org.bson.types.BsonValue;
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonInt64;
+import org.bson.BsonValue;
 
 final class DocumentHelper {
 

@@ -16,8 +16,8 @@
 
 package org.mongodb.operation;
 
-import org.bson.types.BsonDocument;
-import org.bson.types.Code;
+import org.bson.BsonDocument;
+import org.bson.BsonJavaScript;
 
 import java.util.concurrent.TimeUnit;
 
@@ -31,11 +31,11 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  */
 public class MapReduce {
-    private final Code mapFunction;
-    private final Code reduceFunction;
+    private final BsonJavaScript mapFunction;
+    private final BsonJavaScript reduceFunction;
     private final MapReduceOutputOptions output;
     private final boolean inline;
-    private Code finalizeFunction;
+    private BsonJavaScript finalizeFunction;
     private BsonDocument scope;
     private BsonDocument filter;
     private BsonDocument sortCriteria;
@@ -51,7 +51,7 @@ public class MapReduce {
      * @param reduceFunction a JavaScript function that “reduces” to a single object all the values associated with a particular key.
      * @param output         specifies the location of the result of the map-reduce operation.
      */
-    public MapReduce(final Code mapFunction, final Code reduceFunction, final MapReduceOutputOptions output) {
+    public MapReduce(final BsonJavaScript mapFunction, final BsonJavaScript reduceFunction, final MapReduceOutputOptions output) {
         this.mapFunction = mapFunction;
         this.reduceFunction = reduceFunction;
         this.output = output;
@@ -65,7 +65,7 @@ public class MapReduce {
      * @param mapFunction    a JavaScript function that associates or “maps” a value with a key and emits the key and value pair.
      * @param reduceFunction a JavaScript function that “reduces” to a single object all the values associated with a particular key.
      */
-    public MapReduce(final Code mapFunction, final Code reduceFunction) {
+    public MapReduce(final BsonJavaScript mapFunction, final BsonJavaScript reduceFunction) {
         this.mapFunction = mapFunction;
         this.reduceFunction = reduceFunction;
         this.inline = true;
@@ -84,7 +84,7 @@ public class MapReduce {
      * @param finalize a JavaScript function
      * @return the same {@code MapReduce} instance as used for the method invocation for chaining
      */
-    public MapReduce finalize(final Code finalize) {
+    public MapReduce finalize(final BsonJavaScript finalize) {
         this.finalizeFunction = finalize;
         return this;
     }
@@ -165,15 +165,15 @@ public class MapReduce {
     }
 
 
-    public Code getMapFunction() {
+    public BsonJavaScript getMapFunction() {
         return mapFunction;
     }
 
-    public Code getReduceFunction() {
+    public BsonJavaScript getReduceFunction() {
         return reduceFunction;
     }
 
-    public Code getFinalizeFunction() {
+    public BsonJavaScript getFinalizeFunction() {
         return finalizeFunction;
     }
 

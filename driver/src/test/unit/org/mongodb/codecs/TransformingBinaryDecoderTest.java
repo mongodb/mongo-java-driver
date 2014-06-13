@@ -16,6 +16,7 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
@@ -34,16 +35,16 @@ public class TransformingBinaryDecoderTest {
         StringWriter stringWriter = new StringWriter();
         JsonWriter writer = new JsonWriter(stringWriter);
         writer.writeStartDocument();
-        writer.writeBinaryData("subtype0", new Binary(BsonBinarySubType.BINARY, new byte[]{0}));
-        writer.writeBinaryData("subtype1", new Binary(BsonBinarySubType.FUNCTION, new byte[]{1}));
-        writer.writeBinaryData("subtype2", new Binary(BsonBinarySubType.OLD_BINARY, new byte[]{2}));
+        writer.writeBinaryData("subtype0", new BsonBinary(BsonBinarySubType.BINARY, new byte[]{0}));
+        writer.writeBinaryData("subtype1", new BsonBinary(BsonBinarySubType.FUNCTION, new byte[]{1}));
+        writer.writeBinaryData("subtype2", new BsonBinary(BsonBinarySubType.OLD_BINARY, new byte[]{2}));
 
         writer.writeName("subtype3");
         new UUIDCodec().encode(writer, UUID.randomUUID());
 
-        writer.writeBinaryData("subtype4", new Binary(BsonBinarySubType.UUID_STANDARD, new byte[]{4}));
-        writer.writeBinaryData("subtype5", new Binary(BsonBinarySubType.MD5, new byte[]{5}));
-        writer.writeBinaryData("subtype80", new Binary(BsonBinarySubType.USER_DEFINED, new byte[]{(byte) 0x80}));
+        writer.writeBinaryData("subtype4", new BsonBinary(BsonBinarySubType.UUID_STANDARD, new byte[]{4}));
+        writer.writeBinaryData("subtype5", new BsonBinary(BsonBinarySubType.MD5, new byte[]{5}));
+        writer.writeBinaryData("subtype80", new BsonBinary(BsonBinarySubType.USER_DEFINED, new byte[]{(byte) 0x80}));
         writer.writeEndDocument();
 
         JsonReader reader = new JsonReader(stringWriter.toString());

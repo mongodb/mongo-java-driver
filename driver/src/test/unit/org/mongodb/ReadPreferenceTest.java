@@ -16,8 +16,8 @@
 
 package org.mongodb;
 
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonString;
+import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.connection.ClusterDescription;

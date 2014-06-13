@@ -16,31 +16,31 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonArray;
+import org.bson.BsonBinary;
+import org.bson.BsonBoolean;
+import org.bson.BsonDateTime;
+import org.bson.BsonDbPointer;
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
+import org.bson.BsonDouble;
+import org.bson.BsonInt32;
+import org.bson.BsonInt64;
+import org.bson.BsonJavaScript;
+import org.bson.BsonJavaScriptWithScope;
+import org.bson.BsonMaxKey;
+import org.bson.BsonMinKey;
+import org.bson.BsonNull;
+import org.bson.BsonObjectId;
+import org.bson.BsonRegularExpression;
+import org.bson.BsonString;
+import org.bson.BsonSymbol;
+import org.bson.BsonTimestamp;
 import org.bson.BsonType;
+import org.bson.BsonUndefined;
+import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.types.Binary;
-import org.bson.types.BsonArray;
-import org.bson.types.BsonBoolean;
-import org.bson.types.BsonDateTime;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonDocumentWrapper;
-import org.bson.types.BsonDouble;
-import org.bson.types.BsonInt32;
-import org.bson.types.BsonInt64;
-import org.bson.types.BsonNull;
-import org.bson.types.BsonString;
-import org.bson.types.BsonValue;
-import org.bson.types.Code;
-import org.bson.types.CodeWithScope;
-import org.bson.types.DBPointer;
-import org.bson.types.MaxKey;
-import org.bson.types.MinKey;
-import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Symbol;
-import org.bson.types.Timestamp;
-import org.bson.types.Undefined;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -86,8 +86,8 @@ public class BsonValueCodecProvider implements CodecProvider {
             return (Codec<T>) new BsonDocumentWrapperCodec(registry.get(BsonDocument.class));
         }
 
-        if (clazz == CodeWithScope.class) {
-            return (Codec<T>) new CodeWithScopeCodec(registry.get(BsonDocument.class));
+        if (clazz == BsonJavaScriptWithScope.class) {
+            return (Codec<T>) new BsonJavaScriptWithScopeCodec(registry.get(BsonDocument.class));
         }
 
         return null;
@@ -95,25 +95,25 @@ public class BsonValueCodecProvider implements CodecProvider {
 
     private void addCodecs() {
         addCodec(new BsonNullCodec());
-        addCodec(new BinaryCodec());
+        addCodec(new BsonBinaryCodec());
         addCodec(new BsonBooleanCodec());
         addCodec(new BsonDateTimeCodec());
-        addCodec(new DBPointerCodec());
+        addCodec(new BsonDBPointerCodec());
         addCodec(new BsonDoubleCodec());
         addCodec(new BsonInt32Codec());
         addCodec(new BsonInt64Codec());
-        addCodec(new MinKeyCodec());
-        addCodec(new MaxKeyCodec());
-        addCodec(new CodeCodec());
-        addCodec(new ObjectIdCodec());
-        addCodec(new RegularExpressionCodec());
+        addCodec(new BsonMinKeyCodec());
+        addCodec(new BsonMaxKeyCodec());
+        addCodec(new BsonJavaScriptCodec());
+        addCodec(new BsonObjectIdCodec());
+        addCodec(new BsonRegularExpressionCodec());
         addCodec(new BsonStringCodec());
-        addCodec(new SymbolCodec());
-        addCodec(new TimestampCodec());
-        addCodec(new UndefinedCodec());
+        addCodec(new BsonSymbolCodec());
+        addCodec(new BsonTimestampCodec());
+        addCodec(new BsonUndefinedCodec());
     }
 
-    private <T> void addCodec(final Codec<T> codec) {
+    private <T extends BsonValue> void addCodec(final Codec<T> codec) {
         codecs.put(codec.getEncoderClass(), codec);
     }
 
@@ -122,24 +122,24 @@ public class BsonValueCodecProvider implements CodecProvider {
 
         map.put(BsonType.NULL, BsonNull.class);
         map.put(BsonType.ARRAY, BsonArray.class);
-        map.put(BsonType.BINARY, Binary.class);
+        map.put(BsonType.BINARY, BsonBinary.class);
         map.put(BsonType.BOOLEAN, BsonBoolean.class);
         map.put(BsonType.DATE_TIME, BsonDateTime.class);
-        map.put(BsonType.DB_POINTER, DBPointer.class);
+        map.put(BsonType.DB_POINTER, BsonDbPointer.class);
         map.put(BsonType.DOCUMENT, BsonDocument.class);
         map.put(BsonType.DOUBLE, BsonDouble.class);
         map.put(BsonType.INT32, BsonInt32.class);
         map.put(BsonType.INT64, BsonInt64.class);
-        map.put(BsonType.MAX_KEY, MaxKey.class);
-        map.put(BsonType.MIN_KEY, MinKey.class);
-        map.put(BsonType.JAVASCRIPT, Code.class);
-        map.put(BsonType.JAVASCRIPT_WITH_SCOPE, CodeWithScope.class);
-        map.put(BsonType.OBJECT_ID, ObjectId.class);
-        map.put(BsonType.REGULAR_EXPRESSION, RegularExpression.class);
+        map.put(BsonType.MAX_KEY, BsonMaxKey.class);
+        map.put(BsonType.MIN_KEY, BsonMinKey.class);
+        map.put(BsonType.JAVASCRIPT, BsonJavaScript.class);
+        map.put(BsonType.JAVASCRIPT_WITH_SCOPE, BsonJavaScriptWithScope.class);
+        map.put(BsonType.OBJECT_ID, BsonObjectId.class);
+        map.put(BsonType.REGULAR_EXPRESSION, BsonRegularExpression.class);
         map.put(BsonType.STRING, BsonString.class);
-        map.put(BsonType.SYMBOL, Symbol.class);
-        map.put(BsonType.TIMESTAMP, Timestamp.class);
-        map.put(BsonType.UNDEFINED, Undefined.class);
+        map.put(BsonType.SYMBOL, BsonSymbol.class);
+        map.put(BsonType.TIMESTAMP, BsonTimestamp.class);
+        map.put(BsonType.UNDEFINED, BsonUndefined.class);
 
         DEFAULT_BSON_TYPE_CLASS_MAP = Collections.unmodifiableMap(map);
     }

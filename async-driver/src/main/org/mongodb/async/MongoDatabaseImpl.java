@@ -17,9 +17,9 @@
 package org.mongodb.async;
 
 
+import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
-import org.bson.types.BsonDocumentWrapper;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCollectionOptions;

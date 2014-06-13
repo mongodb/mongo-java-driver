@@ -16,11 +16,7 @@
 
 package org.bson;
 
-import org.bson.types.Binary;
-import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
-import org.bson.types.RegularExpression;
-import org.bson.types.Timestamp;
 
 import java.io.Closeable;
 
@@ -95,7 +91,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
         return closed;
     }
 
-    protected abstract Binary doReadBinaryData();
+    protected abstract BsonBinary doReadBinaryData();
 
     protected abstract boolean doReadBoolean();
 
@@ -123,9 +119,9 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
 
     protected abstract ObjectId doReadObjectId();
 
-    protected abstract RegularExpression doReadRegularExpression();
+    protected abstract BsonRegularExpression doReadRegularExpression();
 
-    protected abstract DBPointer doReadDBPointer();
+    protected abstract BsonDbPointer doReadDBPointer();
 
     protected abstract void doReadStartArray();
 
@@ -135,7 +131,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
 
     protected abstract String doReadSymbol();
 
-    protected abstract Timestamp doReadTimestamp();
+    protected abstract BsonTimestamp doReadTimestamp();
 
     protected abstract void doReadUndefined();
 
@@ -144,7 +140,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     protected abstract void doSkipValue();
 
     @Override
-    public Binary readBinaryData() {
+    public BsonBinary readBinaryData() {
         checkPreconditions("readBinaryData", BsonType.BINARY);
         setState(getNextState());
 
@@ -274,14 +270,14 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     }
 
     @Override
-    public RegularExpression readRegularExpression() {
+    public BsonRegularExpression readRegularExpression() {
         checkPreconditions("readRegularExpression", BsonType.REGULAR_EXPRESSION);
         setState(getNextState());
         return doReadRegularExpression();
     }
 
     @Override
-    public DBPointer readDBPointer() {
+    public BsonDbPointer readDBPointer() {
         checkPreconditions("readDBPointer", BsonType.DB_POINTER);
         setState(getNextState());
         return doReadDBPointer();
@@ -316,7 +312,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     }
 
     @Override
-    public Timestamp readTimestamp() {
+    public BsonTimestamp readTimestamp() {
         checkPreconditions("readTimestamp", BsonType.TIMESTAMP);
         setState(getNextState());
         return doReadTimestamp();
@@ -356,7 +352,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     }
 
     @Override
-    public Binary readBinaryData(final String name) {
+    public BsonBinary readBinaryData(final String name) {
         verifyName(name);
         return readBinaryData();
     }
@@ -446,13 +442,13 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     }
 
     @Override
-    public RegularExpression readRegularExpression(final String name) {
+    public BsonRegularExpression readRegularExpression(final String name) {
         verifyName(name);
         return readRegularExpression();
     }
 
     @Override
-    public DBPointer readDBPointer(final String name) {
+    public BsonDbPointer readDBPointer(final String name) {
         verifyName(name);
         return readDBPointer();
     }
@@ -471,7 +467,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     }
 
     @Override
-    public Timestamp readTimestamp(final String name) {
+    public BsonTimestamp readTimestamp(final String name) {
         verifyName(name);
         return readTimestamp();
     }

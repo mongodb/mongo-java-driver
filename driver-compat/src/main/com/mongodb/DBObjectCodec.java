@@ -17,19 +17,20 @@
 package com.mongodb;
 
 import org.bson.BSON;
+import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
+import org.bson.BsonDbPointer;
+import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonReader;
 import org.bson.BsonType;
+import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonValue;
 import org.bson.types.CodeWScope;
-import org.bson.types.DBPointer;
 import org.bson.types.Symbol;
 import org.mongodb.IdGenerator;
 import org.mongodb.MongoException;
@@ -185,7 +186,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     }
 
     private void encodeByteArray(final BsonWriter bsonWriter, final byte[] value) {
-        bsonWriter.writeBinaryData(new Binary(value));
+        bsonWriter.writeBinaryData(new BsonBinary(value));
     }
 
     private void encodeArray(final BsonWriter bsonWriter, final Object value) {
@@ -244,7 +245,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
                     initialRetVal = readCodeWScope(reader, path);
                     break;
                 case DB_POINTER: //custom for driver-compat types
-                    DBPointer dbPointer = reader.readDBPointer();
+                    BsonDbPointer dbPointer = reader.readDBPointer();
                     initialRetVal = new DBRef(db, dbPointer.getNamespace(), dbPointer.getId());
                     break;
                 case BINARY:
@@ -270,7 +271,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     }
 
     private Object readBinary(final BsonReader reader) {
-        Binary binary = reader.readBinaryData();
+        BsonBinary binary = reader.readBinaryData();
         if (binary.getType() == BsonBinarySubType.BINARY.getValue()) {
             return new BinaryToByteArrayTransformer().transform(binary);
         } else if (binary.getType() == BsonBinarySubType.OLD_BINARY.getValue()) {
@@ -278,7 +279,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         } else if (binary.getType() == BsonBinarySubType.UUID_LEGACY.getValue()) {
             return new BinaryToUUIDTransformer().transform(binary);
         } else {
-            return binary;
+            return new Binary(binary.getType(), binary.getData());
         }
     }
 

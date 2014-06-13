@@ -14,34 +14,30 @@
  * limitations under the License.
  */
 
-package org.bson.types;
+package org.bson.codecs;
+
+import org.bson.BsonReader;
+import org.bson.BsonRegularExpression;
+import org.bson.BsonWriter;
 
 /**
- * A mapping from a name to a BsonValue.
- *
- * @see org.bson.types.BsonDocument
+ * A codec for BSON regular expressions.
  *
  * @since 3.0
  */
-public class BsonElement {
-    private final String name;
-    private final BsonValue value;
-
-    /**
-     * Construct a new instance with the given key and value
-     * @param name the non-null key
-     * @param value the non-null value
-     */
-    public BsonElement(final String name, final BsonValue value) {
-        this.name = name;
-        this.value = value;
+public class BsonRegularExpressionCodec implements Codec<BsonRegularExpression> {
+    @Override
+    public BsonRegularExpression decode(final BsonReader reader) {
+        return reader.readRegularExpression();
     }
 
-    public String getName() {
-        return name;
+    @Override
+    public void encode(final BsonWriter writer, final BsonRegularExpression value) {
+        writer.writeRegularExpression(value);
     }
 
-    public BsonValue getValue() {
-        return value;
+    @Override
+    public Class<BsonRegularExpression> getEncoderClass() {
+        return BsonRegularExpression.class;
     }
 }

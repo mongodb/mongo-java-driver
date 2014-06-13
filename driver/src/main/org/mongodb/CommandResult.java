@@ -16,13 +16,13 @@
 
 package org.mongodb;
 
-import org.bson.types.BsonBoolean;
-import org.bson.types.BsonDocument;
-import org.bson.types.BsonDouble;
-import org.bson.types.BsonInt32;
-import org.bson.types.BsonInt64;
-import org.bson.types.BsonString;
-import org.bson.types.BsonValue;
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
+import org.bson.BsonDouble;
+import org.bson.BsonInt32;
+import org.bson.BsonInt64;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.mongodb.connection.ServerAddress;
 
 public class CommandResult {

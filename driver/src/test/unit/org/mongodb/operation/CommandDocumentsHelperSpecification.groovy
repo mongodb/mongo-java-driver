@@ -15,13 +15,12 @@
  */
 
 package org.mongodb.operation
-
-import org.bson.types.BsonBoolean
-import org.bson.types.BsonDocument
-import org.bson.types.BsonInt32
-import org.bson.types.BsonNull
-import org.bson.types.BsonString
-import org.bson.types.Code
+import org.bson.BsonBoolean
+import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonJavaScript
+import org.bson.BsonNull
+import org.bson.BsonString
 import org.mongodb.operation.MapReduce as MR
 import spock.lang.Specification
 
@@ -45,20 +44,20 @@ class CommandDocumentsHelperSpecification extends Specification {
         document.getBoolean('verbose').getValue() == verbose
 
         where:
-        mapReduce                            | query  | sort | limit | finalize      | scope | jsMode | verbose
-        new MR(new Code('a'), new Code('b')) | NULL   | NULL | 0     | NULL          | NULL  | false  | false
-        new MR(new Code('a'), new Code('b'))
-                .filter(FILTER)              | FILTER | NULL | 0     | NULL          | NULL  | false  | false
-        new MR(new Code('a'), new Code('b'))
-                .finalize(new Code('c'))     | NULL   | NULL | 0     | new Code('c') | NULL  | false  | false
-        new MR(new Code('a'), new Code('b'))
-                .jsMode()                    | NULL   | NULL | 0     | NULL          | NULL  | true   | false
-        new MR(new Code('a'), new Code('b'))
-                .verbose()                   | NULL   | NULL | 0     | NULL          | NULL  | false  | true
-        new MR(new Code('a'), new Code('b'))
-                .scope(SCOPE)                | NULL   | NULL | 0     | NULL          | SCOPE | false  | false
-        new MR(new Code('a'), new Code('b'))
-                .limit(10)                   | NULL   | NULL | 10    | NULL          | NULL  | false  | false
+        mapReduce                                                | query  | sort | limit | finalize      | scope | jsMode | verbose
+        new MR(new BsonJavaScript('a'), new BsonJavaScript('b')) | NULL   | NULL | 0     | NULL          | NULL  | false  | false
+        new MR(new BsonJavaScript('a'), new BsonJavaScript('b'))
+                .filter(FILTER)                                  | FILTER | NULL | 0     | NULL          | NULL  | false  | false
+        new MR(new BsonJavaScript('a'), new BsonJavaScript('b'))
+                .finalize(new BsonJavaScript('c'))               | NULL   | NULL | 0     | new BsonJavaScript('c') | NULL  | false  | false
+        new MR(new BsonJavaScript('a'), new BsonJavaScript('b'))
+                .jsMode()                                        | NULL   | NULL | 0     | NULL          | NULL  | true   | false
+        new MR(new BsonJavaScript('a'), new BsonJavaScript('b'))
+                .verbose()                                       | NULL   | NULL | 0     | NULL          | NULL  | false  | true
+        new MR(new BsonJavaScript('a'), new BsonJavaScript('b'))
+                .scope(SCOPE)                                    | NULL   | NULL | 0     | NULL          | SCOPE | false  | false
+        new MR(new BsonJavaScript('a'), new BsonJavaScript('b'))
+                .limit(10)                                       | NULL   | NULL | 10    | NULL          | NULL  | false  | false
     }
 
     @SuppressWarnings('DuplicateMapLiteral')
@@ -77,7 +76,7 @@ class CommandDocumentsHelperSpecification extends Specification {
                 new MapReduceOutputOptions('foo').nonAtomic(),
                 new MapReduceOutputOptions('foo').database('bar').sharded()
         ]
-        mapReduce = new MR(new Code('a'), new Code('b'), output)
+        mapReduce = new MR(new BsonJavaScript('a'), new BsonJavaScript('b'), output)
         document << [
                 new BsonDocument('replace', new BsonString('foo'))
                         .append('sharded', BsonBoolean.FALSE)

@@ -16,12 +16,12 @@
 
 package org.bson.codecs;
 
+import org.bson.BsonArray;
 import org.bson.BsonReader;
 import org.bson.BsonType;
+import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.types.BsonArray;
-import org.bson.types.BsonValue;
 
 import java.util.ArrayList;
 import java.util.List;

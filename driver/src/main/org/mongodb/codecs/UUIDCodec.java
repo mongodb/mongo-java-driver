@@ -16,11 +16,11 @@
 
 package org.mongodb.codecs;
 
+import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
-import org.bson.types.Binary;
 
 import java.util.UUID;
 
@@ -32,7 +32,7 @@ public class UUIDCodec implements Codec<UUID> {
         writeLongToArrayLittleEndian(bytes, 0, value.getMostSignificantBits());
         writeLongToArrayLittleEndian(bytes, 8, value.getLeastSignificantBits());
 
-        writer.writeBinaryData(new Binary(BsonBinarySubType.UUID_LEGACY, bytes));
+        writer.writeBinaryData(new BsonBinary(BsonBinarySubType.UUID_LEGACY, bytes));
     }
 
     @Override
