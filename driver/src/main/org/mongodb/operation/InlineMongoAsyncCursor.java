@@ -17,6 +17,7 @@
 package org.mongodb.operation;
 
 import org.mongodb.Block;
+import org.mongodb.CancellationToken;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoInternalException;
@@ -33,9 +34,14 @@ class InlineMongoAsyncCursor<T> implements MongoAsyncCursor<T> {
 
     @Override
     public MongoFuture<Void> forEach(final Block<? super T> block) {
+        return forEach(block, new CancellationToken());
+    }
+
+    @Override
+    public MongoFuture<Void> forEach(final Block<? super T> block, final CancellationToken cancellationToken) {
         SingleResultFuture<Void> future = new SingleResultFuture<Void>();
         try {
-            while (hasNext()) {
+            while (hasNext(future, cancellationToken)) {
                 block.apply(next());
             }
             future.init(null, null);
@@ -45,8 +51,12 @@ class InlineMongoAsyncCursor<T> implements MongoAsyncCursor<T> {
         return future;
     }
 
-    private boolean hasNext() {
-        return iterator.hasNext();
+    private boolean hasNext(final SingleResultFuture<Void> future, final CancellationToken cancellationToken) {
+        if (future.isCancelled() || cancellationToken.cancellationRequested()) {
+            return false;
+        } else {
+            return iterator.hasNext();
+        }
     }
 
     private T next() {

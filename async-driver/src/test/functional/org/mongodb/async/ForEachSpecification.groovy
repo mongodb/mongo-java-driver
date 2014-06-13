@@ -15,12 +15,17 @@
  */
 
 package org.mongodb.async
-
 import org.mongodb.Block
+import org.mongodb.CancellationToken
 import org.mongodb.Document
+import org.mongodb.MongoFuture
 import org.mongodb.MongoInternalException
 
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicInteger
+
 class ForEachSpecification extends FunctionalSpecification {
+
     def 'should complete with no results'() {
         expect:
         collection.find(new Document()).forEach( { } as Block).get() == null
@@ -63,5 +68,56 @@ class ForEachSpecification extends FunctionalSpecification {
 
         then:
         thrown(MongoInternalException)
+    }
+
+    def 'forEach should support future cancelled state'() {
+        given:
+        collection.insert((1..1000).collect { new Document('_id', it) }).get()
+
+        AtomicInteger counter = new AtomicInteger()
+        CountDownLatch latch = new CountDownLatch(5)
+        Block<Document> cancelBlock = new Block<Document>() {
+            @Override
+            void apply(final Document document) {
+                int it = counter.incrementAndGet()
+                if (it == 5) {
+                    latch.await()
+                } else {
+                    latch.countDown()
+                }
+            }
+        }
+
+        when:
+        MongoFuture<Void> future = collection.find(new Document()).forEach(cancelBlock)
+        sleep(1000)
+        future.cancel(true)
+        latch.countDown()
+
+        then:
+        latch.getCount() == 0
+        counter.get() == 5
+    }
+
+    def 'forEach should terminate early in the CancellationToken has been cancelled'() {
+        given:
+        collection.insert((1..1000).collect { new Document('_id', it) })
+        CancellationToken cancellationToken  = new CancellationToken();
+        Block<Document> cancelBlock = new Block<Document>() {
+            private int iterations = 0
+            @Override
+            void apply(final Document document) {
+                iterations++
+                if (iterations == 2) {
+                    cancellationToken.cancel()
+                }
+            }
+        }
+
+        when:
+        collection.find(new Document()).forEach(cancelBlock, cancellationToken).get()
+
+        then:
+        cancelBlock.iterations == 2
     }
 }
