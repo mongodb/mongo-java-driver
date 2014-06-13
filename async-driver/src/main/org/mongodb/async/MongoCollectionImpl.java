@@ -245,8 +245,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 }
             };
             execute(new QueryOperation<T>(getNamespace(), find, new DocumentCodec(), getCodec()), readPreference)
-                .register(new
-                              SingleResultCallback<MongoAsyncCursor<T>>() {
+                .register(new SingleResultCallback<MongoAsyncCursor<T>>() {
                                   @Override
                                   public void onResult(final MongoAsyncCursor<T> cursor, final MongoException e) {
                                       if (e != null) {

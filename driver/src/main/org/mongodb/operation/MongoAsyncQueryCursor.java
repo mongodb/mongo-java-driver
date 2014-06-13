@@ -129,7 +129,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
         private final Connection connection;
         private final Block<? super T> block;
         private final CancellationToken cancellationToken;
-        private volatile Boolean breakEarly;
+        private volatile Boolean limitReached;
 
         public QueryResultSingleResultCallback(final Block<? super T> block, final SingleResultFuture<Void> future,
                                                final Connection connection, final CancellationToken cancellationToken) {
@@ -137,7 +137,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             this.future = future;
             this.cancellationToken = cancellationToken;
             this.connection = connection;
-            this.breakEarly = false;
+            this.limitReached = false;
         }
 
         public QueryResultSingleResultCallback(final Block<? super T> block, final SingleResultFuture<Void> future,
@@ -157,16 +157,13 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
 
             cursor = result.getCursor();
 
-            breakEarly = future.isCancelled();
+            limitReached = false;
             MongoException exceptionFromApply = null;
             try {
                 for (final T cur : result.getResults()) {
                     numFetchedSoFar++;
-                    if (limit > 0 && numFetchedSoFar > limit) {
-                        breakEarly = true;
-                        break;
-                    }
-                    if (checkIfBreakEarly()) {
+                    limitReached = limit > 0 && numFetchedSoFar > limit;
+                    if (limitReached || isCancelled()) {
                         break;
                     } else {
                         LOGGER.trace("Applying block to " + cur);
@@ -175,11 +172,10 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                 }
             } catch (Throwable e1) {
                 LOGGER.trace("Applied block threw exception: " + e1);
-                breakEarly = true;
                 exceptionFromApply = new MongoInternalException("Exception thrown by client while iterating over cursor", e1);
             }
 
-            if (cursor == null || breakEarly) {
+            if (cursor == null || limitReached || isCancelled() || exceptionFromApply != null) {
                 close(result.getRequestId(), future, exceptionFromApply);
             } else {
                 // get more results
@@ -205,9 +201,15 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             }
         }
 
-        private synchronized boolean checkIfBreakEarly() {
-            breakEarly = future.isCancelled() || cancellationToken.cancellationRequested();
-            return breakEarly;
+        /**
+         * Checks if the cancellationToken has been cancelled or if the future has been cancelled.
+         *
+         * If either has been cancelled then don't fetch or apply any more results.
+         *
+         * @return if either has been cancelled.
+         */
+        private boolean isCancelled() {
+            return future.isCancelled() || cancellationToken.cancellationRequested();
         }
 
     }
