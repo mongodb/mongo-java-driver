@@ -34,7 +34,7 @@ class InlineMongoAsyncCursor<T> implements MongoAsyncCursor<T> {
 
     @Override
     public MongoFuture<Void> forEach(final Block<? super T> block) {
-        return forEach(block, CancellationToken.notCancellable());
+        return forEach(block, new CancellationToken());
     }
 
     @Override

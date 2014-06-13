@@ -16,12 +16,12 @@
 
 package org.mongodb;
 
+/**
+ * A token that can be canceled
+ *
+ * Used alongside an asynchronous loop so that the loop can be stopped.
+ */
 public class CancellationToken {
-
-    /**
-     * Can this Token be cancelled
-     */
-    private final boolean canBeCanceled;
 
     /**
      * Has cancellation has been requested.
@@ -29,23 +29,10 @@ public class CancellationToken {
     private volatile boolean cancelled;
 
     /**
-     * Create a cancellable CancellationToken
+     * Create a CancellationToken
      */
     public CancellationToken() {
-        this(true);
-    }
-
-    /**
-     * Create a CancellationToken
-     * @param canBeCanceled indicates if it can be cancelled
-     */
-    public CancellationToken(final boolean canBeCanceled) {
-        this.canBeCanceled = canBeCanceled;
         this.cancelled = false;
-    }
-
-    public static CancellationToken notCancellable() {
-        return new CancellationToken(false);
     }
 
     /**
@@ -59,9 +46,7 @@ public class CancellationToken {
      * Request cancellation
      */
     public void cancel() {
-        if (canBeCanceled) {
-            cancelled = true;
-        }
+        cancelled = true;
     }
 
 }

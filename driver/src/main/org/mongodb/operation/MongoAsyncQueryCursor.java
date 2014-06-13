@@ -81,7 +81,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
 
     @Override
     public SingleResultFuture<Void> forEach(final Block<? super T> block) {
-        return forEach(block, CancellationToken.notCancellable());
+        return forEach(block, new CancellationToken());
     }
 
     @Override
@@ -201,13 +201,6 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             }
         }
 
-        /**
-         * Checks if the cancellationToken has been cancelled or if the future has been cancelled.
-         *
-         * If either has been cancelled then don't fetch or apply any more results.
-         *
-         * @return if either has been cancelled.
-         */
         private boolean isCancelled() {
             return future.isCancelled() || cancellationToken.cancellationRequested();
         }

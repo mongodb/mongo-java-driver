@@ -35,14 +35,17 @@ public interface MongoIterable<T> {
      * Iterates over all documents in the view, applying the given block to each, and completing the returned future after all documents
      * have been iterated, or an exception has occurred.
      *
+     * Completes when there are no more results or if the future has been canceled.
+     *
      * @param block the block to apply to each document
      * @return a future indicating when iteration is complete
      */
     MongoFuture<Void> forEach(Block<? super T> block);
 
     /**
-     * Iterates over all documents in the view, applying the given block to each, and completing the returned future after all documents
-     * have been iterated, or an exception has occurred.
+     * Iterates over all documents in the view, applying the given block to each item.
+     *
+     * Completes when there are no more results or if the future / CancellationToken has been canceled.
      *
      * @param block the block to apply to each document
      * @param cancellationToken a token controlling early cancellation

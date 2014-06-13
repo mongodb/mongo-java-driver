@@ -27,6 +27,8 @@ public interface MongoAsyncCursor<T> {
     /**
      * Asynchronously iterate through the cursor results.
      *
+     * Completes when there are no more results or if the future has been canceled.
+     *
      * @param block the block to execute for each document
      * @return A future that indicates when iteration is complete
      */
@@ -34,6 +36,8 @@ public interface MongoAsyncCursor<T> {
 
     /**
      * Asynchronously iterate through the cursor results.
+     *
+     * Completes when there are no more results or if the future / CancellationToken has been canceled.
      *
      * @param block the block to execute for each document
      * @param cancellationToken a token controlling early cancellation
