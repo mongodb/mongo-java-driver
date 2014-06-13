@@ -23,7 +23,6 @@ import org.mongodb.Block
 import org.mongodb.CreateCollectionOptions
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoCursorNotFoundException
 import org.mongodb.MongoFuture
 import org.mongodb.MongoInternalException
 import org.mongodb.binding.AsyncClusterBinding
@@ -224,24 +223,22 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         source.release()
     }
 
-    def 'should kill cursor once completed'() throws InterruptedException {
-        assumeFalse(isSharded())
-
+    def 'should get Exceptions for operations on the cursor after closing'() throws InterruptedException {
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = source.getConnection().get()
         QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection)
 
         when:
-        MongoAsyncQueryCursor<Document> asynCursor = new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+        MongoAsyncQueryCursor<Document> asyncCursor = new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
                                                                                          firstBatch, 5, 2, new DocumentCodec(),
                                                                                          connection);
 
-        asynCursor.forEach(new TestBlock()).get()
-        asynCursor.forEach(new TestBlock()).get()
+        asyncCursor.forEach(new TestBlock()).get()
+        asyncCursor.forEach(new TestBlock()).get()
 
         then:
-        thrown(MongoCursorNotFoundException)
+        thrown(IllegalStateException)
 
         cleanup:
         connection.release()

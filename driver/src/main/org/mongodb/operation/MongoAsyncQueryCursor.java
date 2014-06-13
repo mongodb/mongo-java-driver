@@ -19,7 +19,6 @@ package org.mongodb.operation;
 import org.mongodb.Block;
 import org.mongodb.Decoder;
 import org.mongodb.MongoAsyncCursor;
-import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoInternalException;
@@ -130,38 +129,40 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                 closed = true;
                 future.init(null, e);
             }
-        } else if (connectionSource != null) {
-            connectionSource.getConnection().register(new SingleResultCallback<Connection>() {
-                @Override
-                public void onResult(final Connection connection, final MongoException connectionException) {
-                    if (cursor != null) {
-                        new KillCursorProtocol(new KillCursor(cursor)).executeAsync(connection).register(new SingleResultCallback<Void>() {
-                            @Override
-                            public void onResult(final Void result, final MongoException killException) {
-                                connection.release();
-                                releaseConnectionSource();
-                                closed = true;
+        } else {
+            if (cursor != null) {
+                connectionSource.getConnection().register(new SingleResultCallback<Connection>() {
+                    @Override
+                    public void onResult(final Connection connection, final MongoException connectionException) {
+                            new KillCursorProtocol(new KillCursor(cursor))
+                                .executeAsync(connection)
+                                .register(new SingleResultCallback<Void>() {
+                                    @Override
+                                    public void onResult(final Void result, final MongoException killException) {
+                                        connection.release();
+                                        releaseConnectionSource();
+                                        closed = true;
 
-                                MongoException exception = e;
-                                if (exception == null && connectionException != null) {
-                                    exception = connectionException;
-                                }
-                                if (exception == null && killException != null) {
-                                    exception = killException;
-                                }
+                                        MongoException exception = e;
+                                        if (exception == null) {
+                                            exception = connectionException;
+                                        }
+                                        if (exception == null) {
+                                            exception = killException;
+                                        }
 
-                                LOGGER.trace("Initializing forEach future " + (exception == null ? "" : " with exception " + exception));
-                                future.init(null, exception);
-                            }
-                        });
-                    } else {
-                        closed = true;
-                        MongoException exception = e == null ? connectionException : e;
-                        LOGGER.trace("Initializing forEach future " + (exception == null ? "" : " with exception " + exception));
-                        future.init(null, exception);
+                                        LOGGER.trace("Initializing forEach future "
+                                                     + (exception == null ? "" : " with  exception " + exception));
+                                        future.init(null, exception);
+                                    }
+                                });
                     }
-                }
-            });
+                });
+            } else {
+                closed = true;
+                LOGGER.trace("Initializing forEach future " + (e == null ? "" : " with exception " + e));
+                future.init(null, e);
+            }
         }
     }
 
@@ -190,8 +191,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
         @Override
         public void onResult(final QueryResult<T> result, final MongoException e) {
             if (closed) {
-                future.init(null, new MongoCursorNotFoundException(result.getCursor()));
-                return;
+                throw new IllegalStateException("Cursor has been closed");
             }
             if (!isExhaust() & connection != null) {
                 connection.release();
