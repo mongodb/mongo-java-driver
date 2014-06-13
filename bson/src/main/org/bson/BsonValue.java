@@ -25,7 +25,7 @@ public abstract class BsonValue {
     /**
      * Construct a new instance.  This is package-protected so that the BSON type system is closed.
      */
-    protected BsonValue() {
+    BsonValue() {
     }
 
     /**
