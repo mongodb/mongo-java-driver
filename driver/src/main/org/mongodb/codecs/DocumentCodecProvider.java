@@ -19,7 +19,6 @@ package org.mongodb.codecs;
 import org.bson.codecs.BinaryCodec;
 import org.bson.codecs.BsonDBPointerCodec;
 import org.bson.codecs.BsonRegularExpressionCodec;
-import org.bson.codecs.BsonSymbolCodec;
 import org.bson.codecs.BsonTimestampCodec;
 import org.bson.codecs.BsonUndefinedCodec;
 import org.bson.codecs.CodeCodec;
@@ -27,6 +26,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.MaxKeyCodec;
 import org.bson.codecs.MinKeyCodec;
 import org.bson.codecs.ObjectIdCodec;
+import org.bson.codecs.SymbolCodec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.mongodb.CodeWithScope;
@@ -98,7 +98,7 @@ public class DocumentCodecProvider implements CodecProvider {
         addCodec(new ObjectIdCodec());
         addCodec(new BsonRegularExpressionCodec());
         addCodec(new StringCodec());
-        addCodec(new BsonSymbolCodec());
+        addCodec(new SymbolCodec());
         addCodec(new BsonTimestampCodec());
         addCodec(new BsonUndefinedCodec());
     }

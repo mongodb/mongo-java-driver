@@ -20,7 +20,6 @@ import org.bson.BsonBinaryReader
 import org.bson.BsonBinaryWriter
 import org.bson.BsonDbPointer
 import org.bson.BsonRegularExpression
-import org.bson.BsonSymbol
 import org.bson.BsonTimestamp
 import org.bson.BsonUndefined
 import org.bson.ByteBufNIO
@@ -31,6 +30,7 @@ import org.bson.types.Code
 import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import org.bson.types.ObjectId
+import org.bson.types.Symbol
 import org.mongodb.CodeWithScope
 import org.mongodb.Document
 import spock.lang.Specification
@@ -59,7 +59,7 @@ class DocumentCodecSpecification extends Specification {
             put('objectId', new ObjectId())
             put('regex', new BsonRegularExpression('^test.*regex.*xyz$', 'i'))
             put('string', 'the fox ...')
-            put('symbol', new BsonSymbol('ruby stuff'))
+            put('symbol', new Symbol('ruby stuff'))
             put('timestamp', new BsonTimestamp(0x12345678, 5))
             put('undefined', new BsonUndefined())
             put('binary', new Binary((byte) 80, [5, 4, 3, 2, 1] as byte[]))

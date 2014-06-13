@@ -26,6 +26,7 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
+import org.bson.types.Symbol;
 
 import java.lang.reflect.Array;
 import java.util.Date;
@@ -155,8 +156,8 @@ public class BasicBSONEncoder implements BSONEncoder {
             putUUID(name, (UUID) value);
         } else if (value.getClass().isArray()) {
             putArray(name, value);
-        } else if (value instanceof BsonSymbol) {
-            putSymbol(name, (BsonSymbol) value);
+        } else if (value instanceof Symbol) {
+            putSymbol(name, (Symbol) value);
         } else if (value instanceof BSONTimestamp) {
             putTimestamp(name, (BSONTimestamp) value);
         } else if (value instanceof CodeWScope) {
@@ -247,7 +248,7 @@ public class BasicBSONEncoder implements BSONEncoder {
         bsonWriter.writeBinaryData(new BsonBinary(BsonBinarySubType.UUID_LEGACY, bytes));
     }
 
-    protected void putSymbol(final String name, final BsonSymbol symbol) {
+    protected void putSymbol(final String name, final Symbol symbol) {
         putName(name);
         bsonWriter.writeSymbol(symbol.getSymbol());
     }

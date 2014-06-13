@@ -24,6 +24,7 @@ import org.bson.types.Code;
 import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
+import org.bson.types.Symbol;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -180,7 +181,7 @@ public class LazyBSONObject implements BSONObject {
             case JAVASCRIPT:
                 return new Code(reader.readJavaScript());
             case SYMBOL:
-                return new BsonSymbol(reader.readSymbol());
+                return new Symbol(reader.readSymbol());
             case JAVASCRIPT_WITH_SCOPE:
                 return new CodeWScope(reader.readJavaScriptWithScope(), (BSONObject) readDocument(reader));
             case INT32:

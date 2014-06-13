@@ -24,6 +24,7 @@ import org.bson.types.CodeWScope
 import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import org.bson.types.ObjectId
+import org.bson.types.Symbol
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -68,7 +69,7 @@ class LazyBSONObjectSpecification extends Specification {
         null                                                                  | [8, 0, 0, 0, 10, 102, 0, 0]
         Pattern.compile('[a]*', Pattern.CASE_INSENSITIVE)                     | [15, 0, 0, 0, 11, 102, 0, 91, 97, 93, 42, 0, 105, 0, 0]
         new Code('var i = 0')                                                 | [22, 0, 0, 0, 13, 102, 0, 10, 0, 0, 0, 118, 97, 114, 32, 105, 32, 61, 32, 48, 0, 0]
-        new BsonSymbol('c')                                                       | [14, 0, 0, 0, 14, 102, 0, 2, 0, 0, 0, 99, 0, 0]
+        new Symbol('c')                                                       | [14, 0, 0, 0, 14, 102, 0, 2, 0, 0, 0, 99, 0, 0]
         new CodeWScope('i++', ~['x': 1])                                      | [32, 0, 0, 0, 15, 102, 0, 24, 0, 0, 0, 4, 0, 0, 0, 105, 43, 43, 0, 12, 0, 0, 0, 16, 120, 0, 1, 0, 0, 0, 0, 0]
         -12                                                                   | [12, 0, 0, 0, 16, 102, 0, -12, -1, -1, -1, 0]
         Integer.MIN_VALUE                                                     | [12, 0, 0, 0, 16, 102, 0, 0, 0, 0, -128, 0]

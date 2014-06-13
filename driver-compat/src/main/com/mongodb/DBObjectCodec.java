@@ -23,7 +23,6 @@ import org.bson.BsonDbPointer;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonReader;
-import org.bson.BsonSymbol;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
@@ -32,6 +31,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
 import org.bson.types.CodeWScope;
+import org.bson.types.Symbol;
 import org.mongodb.IdGenerator;
 import org.mongodb.MongoException;
 import org.mongodb.codecs.BinaryToByteArrayTransformer;
@@ -164,8 +164,8 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
                 encodeByteArray(bsonWriter, (byte[]) value);
             } else if (value.getClass().isArray()) {
                 encodeArray(bsonWriter, value);
-            } else if (value instanceof BsonSymbol) {
-                bsonWriter.writeSymbol(((BsonSymbol) value).getSymbol());
+            } else if (value instanceof Symbol) {
+                bsonWriter.writeSymbol(((Symbol) value).getSymbol());
             } else {
                 Codec codec = codecRegistry.get(value.getClass());
                 codec.encode(bsonWriter, value);
