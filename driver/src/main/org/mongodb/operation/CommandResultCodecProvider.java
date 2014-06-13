@@ -28,6 +28,7 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.BsonDoubleCodec;
 import org.bson.codecs.BsonInt32Codec;
 import org.bson.codecs.BsonInt64Codec;
+import org.bson.codecs.BsonJavaScriptCodec;
 import org.bson.codecs.BsonJavaScriptWithScopeCodec;
 import org.bson.codecs.BsonMaxKeyCodec;
 import org.bson.codecs.BsonMinKeyCodec;
@@ -36,11 +37,10 @@ import org.bson.codecs.BsonObjectIdCodec;
 import org.bson.codecs.BsonRegularExpressionCodec;
 import org.bson.codecs.BsonStringCodec;
 import org.bson.codecs.BsonSymbolCodec;
+import org.bson.codecs.BsonTimestampCodec;
 import org.bson.codecs.BsonUndefinedCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
-import org.bson.codecs.TimestampCodec;
-import org.bson.codecs.BsonJavaScriptCodec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -95,7 +95,7 @@ class CommandResultCodecProvider<P> implements CodecProvider {
         addCodec(new BsonRegularExpressionCodec());
         addCodec(new BsonStringCodec());
         addCodec(new BsonSymbolCodec());
-        addCodec(new TimestampCodec());
+        addCodec(new BsonTimestampCodec());
         addCodec(new BsonUndefinedCodec());
         addCodec(new BsonJavaScriptWithScopeCodec(new BsonDocumentCodec()));
     }

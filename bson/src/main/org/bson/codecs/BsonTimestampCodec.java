@@ -21,11 +21,11 @@ import org.bson.BsonTimestamp;
 import org.bson.BsonWriter;
 
 /**
- * A Codec for Timestamp instances.
+ * A Codec for BSON Timestamp instances.
  *
  * @since 3.0
  */
-public class TimestampCodec implements Codec<BsonTimestamp> {
+public class BsonTimestampCodec implements Codec<BsonTimestamp> {
     @Override
     public void encode(final BsonWriter writer, final BsonTimestamp value) {
         writer.writeTimestamp(value);

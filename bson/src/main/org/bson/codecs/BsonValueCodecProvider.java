@@ -109,7 +109,7 @@ public class BsonValueCodecProvider implements CodecProvider {
         addCodec(new BsonRegularExpressionCodec());
         addCodec(new BsonStringCodec());
         addCodec(new BsonSymbolCodec());
-        addCodec(new TimestampCodec());
+        addCodec(new BsonTimestampCodec());
         addCodec(new BsonUndefinedCodec());
     }
 
