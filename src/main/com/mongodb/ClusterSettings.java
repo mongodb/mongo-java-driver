@@ -18,7 +18,9 @@ package com.mongodb;
 
 import org.bson.util.annotations.Immutable;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import static org.bson.util.Assertions.isTrueArgument;
@@ -53,14 +55,17 @@ final class ClusterSettings {
         // CHECKSTYLE:OFF
 
         /**
-         * Sets the hosts for the cluster.
+         * Sets the hosts for the cluster. And duplicate server addresses are removed from the list.
          *
          * @param hosts the seed list of hosts
          * @return this
          */
         public Builder hosts(final List<ServerAddress> hosts) {
             notNull("hosts", hosts);
-            this.hosts = Collections.unmodifiableList(hosts);
+            if (hosts.isEmpty()) {
+                throw new IllegalArgumentException("hosts list may not be empty");
+            }
+            this.hosts = Collections.unmodifiableList(new ArrayList<ServerAddress>(new LinkedHashSet<ServerAddress>(hosts)));
             return this;
         }
 
