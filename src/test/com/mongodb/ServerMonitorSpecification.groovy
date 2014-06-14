@@ -13,6 +13,9 @@ class ServerMonitorSpecification extends FunctionalSpecification {
     CountDownLatch latch = new CountDownLatch(1)
 
     def setup() {
+        def connectionProvider = new PooledConnectionProvider('cluster-1', new ServerAddress(), new DBPortFactory(new MongoOptions()),
+                                                              ConnectionPoolSettings.builder().maxSize(1).build(),
+                                                              new JMXConnectionPoolListener());
         serverStateNotifier = new ServerMonitor(new ServerAddress(),
                                                 new ChangeListener<ServerDescription>() {
                                                     @Override
@@ -22,7 +25,7 @@ class ServerMonitorSpecification extends FunctionalSpecification {
                                                     }
                                                 },
                                                 SocketSettings.builder().build(), ServerSettings.builder().build(),
-                                                'cluster-1', getMongoClient())
+                                                'cluster-1', getMongoClient(), connectionProvider)
         serverStateNotifier.start()
     }
 

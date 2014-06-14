@@ -45,6 +45,7 @@ class ServerMonitor {
     private final SocketSettings socketSettings;
     private final ServerSettings settings;
     private final Mongo mongo;
+    private final PooledConnectionProvider connectionProvider;
     private int count;
     private long elapsedNanosSum;
     private volatile ServerDescription serverDescription;
@@ -56,12 +57,14 @@ class ServerMonitor {
 
 
     ServerMonitor(final ServerAddress serverAddress, final ChangeListener<ServerDescription> serverStateListener,
-                  final SocketSettings socketSettings, final ServerSettings settings, final String clusterId, Mongo mongo) {
+                  final SocketSettings socketSettings, final ServerSettings settings, final String clusterId, Mongo mongo,
+                  final PooledConnectionProvider connectionProvider) {
         this.serverAddress = serverAddress;
         this.serverStateListener = serverStateListener;
         this.socketSettings = socketSettings;
         this.settings = settings;
         this.mongo = mongo;
+        this.connectionProvider = connectionProvider;
         serverDescription = getConnectingServerDescription();
         monitorThread = new Thread(new ServerMonitorRunnable(), "cluster-" + clusterId + "-" + serverAddress);
         monitorThread.setDaemon(true);
@@ -93,6 +96,7 @@ class ServerMonitor {
                             if (connection != null) {
                                 connection.close();
                                 connection = null;
+                                connectionProvider.invalidate();
                             }
                             connection = new DBPort(serverAddress, null, getOptions(), 0);
                             try {

@@ -41,10 +41,11 @@ class DefaultServer implements ClusterableServer {
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.description = ServerDescription.builder().state(Connecting).address(serverAddress).build();
         serverStateListener = new DefaultServerStateListener();
-        this.serverMonitor = new ServerMonitor(serverAddress, serverStateListener,
-                                               settings.getHeartbeatSocketSettings(), settings, clusterId, mongo);
-        this.serverMonitor.start();
         this.connectionProvider = connectionProvider;
+        this.serverMonitor = new ServerMonitor(serverAddress, serverStateListener,
+                                               settings.getHeartbeatSocketSettings(), settings, clusterId, mongo,
+                                               connectionProvider);
+        this.serverMonitor.start();
     }
 
 
