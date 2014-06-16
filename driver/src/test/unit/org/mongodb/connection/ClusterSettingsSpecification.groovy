@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
 package org.mongodb.connection
 
 import org.mongodb.selector.PrimaryServerSelector
@@ -90,5 +86,32 @@ class ClusterSettingsSpecification extends Specification {
                        .requiredClusterType(ClusterType.SHARDED).build();
         then:
         thrown(IllegalArgumentException)
+    }
+
+
+    def 'should throws if hosts list is null'() {
+        when:
+        ClusterSettings.builder().hosts(null).build();
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'should throws if hosts list is empty'() {
+        when:
+        ClusterSettings.builder().hosts([]).build();
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'should remove duplicate hosts'() {
+        when:
+        def settings = ClusterSettings.builder().hosts([new ServerAddress('server1'),
+                                                        new ServerAddress('server2'),
+                                                        new ServerAddress('server1')]).build();
+
+        then:
+        settings.getHosts() == [new ServerAddress('server1'), new ServerAddress('server2')]
     }
 }
