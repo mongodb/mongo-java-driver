@@ -351,6 +351,27 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         ordered << [true, false]
     }
 
+    def 'when a custom _id is upserted it should be in the write result'() {
+        given:
+        def operation = initializeBulkOperation(ordered)
+        operation.find(new BasicDBObject('_id', 0)).upsert()
+                .updateOne(new BasicDBObject('$set', new BasicDBObject('a', 0)))
+        operation.find(new BasicDBObject('a', 1)).upsert().replaceOne(new BasicDBObject('_id', 1))
+        operation.find(new BasicDBObject('_id', 2)).upsert().replaceOne(new BasicDBObject('_id', 2))
+
+        when:
+        def result = operation.execute()
+
+        then:
+        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, 0),
+                                                                                        new BulkWriteUpsert(1, 1),
+                                                                                        new BulkWriteUpsert(2, 2)])
+        collection.count() == 3
+
+        where:
+        ordered << [true, false]
+    }
+
     def 'when a replacement document is 16MB, the document is still replaced'() {
         given:
         collection.insert(new BasicDBObject('_id', 1))
