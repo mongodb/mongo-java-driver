@@ -118,6 +118,8 @@ public class JSONCallback extends BasicBSONCallback {
             o = new Binary((byte) type, bytes);
         } else if (b.containsField("$undefined") && b.get("$undefined").equals(true)) {
             o = new BsonUndefined();
+        } else if (b.containsField("$numberLong")) {
+            o = Long.valueOf((String) b.get("$numberLong"));
         }
 
         if (!isStackEmpty()) {

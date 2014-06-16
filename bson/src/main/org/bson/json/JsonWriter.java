@@ -156,7 +156,8 @@ public class JsonWriter extends AbstractBsonWriter {
             switch (settings.getOutputMode()) {
                 case STRICT:
                     writeStartDocument();
-                    writeInt64("$date", value);
+                    writeNameHelper("$date");
+                    writer.write(Long.toString(value));
                     writeEndDocument();
                     break;
                 case SHELL:
@@ -210,12 +211,15 @@ public class JsonWriter extends AbstractBsonWriter {
     @Override
     protected void doWriteInt64(final long value) {
         try {
-            writeNameHelper(getName());
             switch (settings.getOutputMode()) {
                 case STRICT:
+                    writeStartDocument();
+                    writeNameHelper("$numberLong");
                     writer.write(Long.toString(value));
+                    writeEndDocument();
                     break;
                 case SHELL:
+                    writeNameHelper(getName());
                     if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
                         writer.write(String.format("NumberLong(%d)", value));
                     } else {
@@ -223,6 +227,7 @@ public class JsonWriter extends AbstractBsonWriter {
                     }
                     break;
                 default:
+                    writeNameHelper(getName());
                     writer.write(Long.toString(value));
                     break;
             }

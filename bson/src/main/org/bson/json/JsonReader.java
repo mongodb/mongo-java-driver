@@ -593,6 +593,10 @@ public class JsonReader extends AbstractBsonReader {
                 currentValue = visitUndefinedExtendedJson();
                 setCurrentBsonType(BsonType.UNDEFINED);
                 return;
+            } else if ("$numberLong".equals(value)) {
+                currentValue = visitNumberLongExtendedJson();
+                setCurrentBsonType(BsonType.INT64);
+                return;
             }
         }
         pushToken(nameToken);
@@ -945,12 +949,22 @@ public class JsonReader extends AbstractBsonReader {
     private BsonUndefined visitUndefinedExtendedJson() {
         verifyToken(":");
         JsonToken nameToken = popToken();
-        if (!nameToken.getValue(String.class).equals("true")){
+        if (!nameToken.getValue(String.class).equals("true")) {
             throw new JsonParseException("JSON reader requires $undefined to have the value of true but found '%s'.",
                                          nameToken.getValue());
         }
         verifyToken("}");
         return new BsonUndefined();
+    }
+
+    private Long visitNumberLongExtendedJson() {
+        verifyToken(":");
+        JsonToken nameToken = popToken();
+        if (nameToken.getType() != JsonTokenType.STRING) {
+            throw new JsonParseException("JSON reader expected a string but found '%s'.", nameToken.getValue());
+        }
+        verifyToken("}");
+        return nameToken.getValue(Long.class);
     }
 
     @Override

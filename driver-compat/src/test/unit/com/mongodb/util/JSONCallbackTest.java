@@ -126,4 +126,11 @@ public class JSONCallbackTest {
         assertEquals(new BsonUndefined(), undefined);
     }
 
+    @Test
+    public void numberLongParsing() {
+        Long number = (Long) JSON.parse(("{ \"$numberLong\" : \"123456\" }"));
+        assertEquals(number, Long.valueOf("123456"));
+
+    }
+
 }
