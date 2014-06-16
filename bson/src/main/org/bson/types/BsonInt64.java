@@ -39,7 +39,7 @@ public final class BsonInt64 extends BsonNumber implements Comparable<BsonInt64>
 
     @Override
     public int compareTo(final BsonInt64 o) {
-        return Long.compare(value, o.value);
+        return (value < o.value) ? -1 : ((value == o.value) ? 0 : 1);
     }
 
     @Override

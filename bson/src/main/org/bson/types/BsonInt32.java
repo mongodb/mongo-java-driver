@@ -41,7 +41,7 @@ public final class BsonInt32 extends BsonNumber implements Comparable<BsonInt32>
 
     @Override
     public int compareTo(final BsonInt32 o) {
-        return Integer.compare(value, o.value);
+        return (value < o.value) ? -1 : ((value == o.value) ? 0 : 1);
     }
 
     @Override
