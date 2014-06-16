@@ -121,6 +121,12 @@ public class JSONCallbackTest extends com.mongodb.util.TestCase {
         assertEquals(ref.getId(), new ObjectId("01234567890123456789abcd").toHexString());
     }
 
+    @Test
+    public void numberLongParsing() {
+        Long number = (Long) JSON.parse(("{ \"$numberLong\" : \"123456\" }"));
+        assertEquals(number, Long.valueOf("123456"));
+    }
+
 // No such concept in Java
 //    @Test
 //    public void undefinedParsing() {
