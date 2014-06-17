@@ -38,7 +38,7 @@ public class MongoClientOptionsTest {
         assertEquals(5, options.getThreadsAllowedToBlockForConnectionMultiplier());
         assertFalse(options.isSocketKeepAlive());
         assertFalse(options.isSSLEnabled());
-        assertEquals(5000, options.getHeartbeatFrequency());
+        assertEquals(10000, options.getHeartbeatFrequency());
         assertEquals(10, options.getHeartbeatConnectRetryFrequency());
         assertEquals(20000, options.getHeartbeatConnectTimeout());
         assertEquals(20000, options.getHeartbeatSocketTimeout());
