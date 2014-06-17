@@ -372,6 +372,25 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         ordered << [true, false]
     }
 
+    def 'unacknowledged upserts with custom _id should not error'() {
+        given:
+        def operation = initializeBulkOperation(ordered)
+        operation.find(new BasicDBObject('_id', 0)).upsert()
+                .updateOne(new BasicDBObject('$set', new BasicDBObject('a', 0)))
+        operation.find(new BasicDBObject('a', 1)).upsert().replaceOne(new BasicDBObject('_id', 1))
+        operation.find(new BasicDBObject('_id', 2)).upsert().replaceOne(new BasicDBObject('_id', 2))
+
+        when:
+        def result = operation.execute(WriteConcern.UNACKNOWLEDGED)
+
+        then:
+        result == new UnacknowledgedBulkWriteResult();
+        collection.count() == 3
+
+        where:
+        ordered << [true, false]
+    }
+
     def 'when a replacement document is 16MB, the document is still replaced'() {
         given:
         collection.insert(new BasicDBObject('_id', 1))
