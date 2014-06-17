@@ -459,8 +459,21 @@ public class JsonWriter extends AbstractBsonWriter {
         checkPreconditions("writeUndefined", State.VALUE, State.INITIAL);
 
         try {
-            writeNameHelper(getName());
-            writer.write("undefined");
+            switch (settings.getOutputMode()) {
+                case STRICT:
+                    writeStartDocument();
+                    writeBoolean("$undefined", true);
+                    writeEndDocument();
+                    break;
+                case JAVASCRIPT:
+                case TEN_GEN:
+                case SHELL:
+                    writeNameHelper(getName());
+                    writer.write("undefined");
+                    break;
+                default:
+                    throw new BSONException("Unknown output mode" + settings.getOutputMode());
+            }
 
             setState(getNextState());
         } catch (IOException e) {

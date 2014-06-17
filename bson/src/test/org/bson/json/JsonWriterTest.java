@@ -624,7 +624,18 @@ public class JsonWriterTest {
     }
 
     @Test
-    public void testUndefined() {
+    public void testUndefinedStrict() {
+        writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.STRICT));
+        writer.writeStartDocument();
+        writer.writeUndefined("undefined");
+        writer.writeEndDocument();
+        String expected = "{ \"undefined\" : { \"$undefined\" : true } }";
+        assertEquals(expected, stringWriter.toString());
+    }
+
+    @Test
+    public void testUndefinedShell() {
+        writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.SHELL));
         writer.writeStartDocument();
         writer.writeUndefined("undefined");
         writer.writeEndDocument();

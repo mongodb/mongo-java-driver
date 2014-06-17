@@ -24,6 +24,7 @@ import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Timestamp;
+import org.bson.types.Undefined;
 import org.junit.Test;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -469,6 +470,14 @@ public class JsonReaderTest {
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
     }
 
+    @Test
+    public void testUndefinedExtended() {
+        String json = "{ \"$undefined\" : true }";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.UNDEFINED, bsonReader.readBsonType());
+        assertEquals(new Undefined(), bsonReader.readUndefined());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
 
     @Test(expected = IllegalStateException.class)
     public void testClosedState() {

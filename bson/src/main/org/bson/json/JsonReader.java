@@ -29,6 +29,7 @@ import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Timestamp;
+import org.bson.types.Undefined;
 
 import javax.xml.bind.DatatypeConverter;
 import java.text.DateFormat;
@@ -373,7 +374,8 @@ public class JsonReader extends AbstractBsonReader {
     }
 
     @Override
-    protected void doReadUndefined() {
+    protected Undefined doReadUndefined() {
+        return new Undefined();
     }
 
     @Override
@@ -587,6 +589,10 @@ public class JsonReader extends AbstractBsonReader {
             } else if ("$timestamp".equals(value)) {
                 currentValue = visitTimestampExtendedJson();
                 setCurrentBsonType(BsonType.TIMESTAMP);
+                return;
+            } else if ("$undefined".equals(value)) {
+                currentValue = visitUndefinedExtendedJson();
+                setCurrentBsonType(BsonType.UNDEFINED);
                 return;
             }
         }
@@ -935,6 +941,16 @@ public class JsonReader extends AbstractBsonReader {
             default:
                 throw new JsonParseException("JSON reader expected ',' or '}' but found '%s'.", codeToken.getValue());
         }
+    }
+
+    private Undefined visitUndefinedExtendedJson() {
+        verifyToken(":");
+        JsonToken nameToken = popToken();
+        if (nameToken.getType() != JsonTokenType.UNQUOTED_STRING) {
+            throw new JsonParseException("JSON reader expected a string but found '%s'.", nameToken.getValue());
+        }
+        verifyToken("}");
+        return new Undefined();
     }
 
     @Override

@@ -22,6 +22,7 @@ import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Timestamp;
+import org.bson.types.Undefined;
 
 import static java.lang.String.format;
 
@@ -209,7 +210,8 @@ public class BsonBinaryReader extends AbstractBsonReader {
     }
 
     @Override
-    protected void doReadUndefined() {
+    protected Undefined doReadUndefined() {
+        return new Undefined();
     }
 
     @Override

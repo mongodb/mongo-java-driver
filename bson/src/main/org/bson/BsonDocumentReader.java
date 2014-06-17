@@ -8,6 +8,7 @@ import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Timestamp;
+import org.bson.types.Undefined;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -156,7 +157,8 @@ public class BsonDocumentReader extends AbstractBsonReader {
     }
 
     @Override
-    protected void doReadUndefined() {
+    protected Undefined doReadUndefined() {
+        return new Undefined();
     }
 
     @Override
