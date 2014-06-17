@@ -945,10 +945,9 @@ public class JsonReader extends AbstractBsonReader {
     private Undefined visitUndefinedExtendedJson() {
         verifyToken(":");
         JsonToken nameToken = popToken();
-        if (nameToken.getType() != JsonTokenType.UNQUOTED_STRING) {
-            throw new JsonParseException("JSON reader expected a string but found '%s'.", nameToken.getValue());
-        } else if (!nameToken.getValue().equals("true")){
-            throw new JsonParseException("JSON reader expected a true value for $undefined but found '%s'.", nameToken.getValue());
+        if (!nameToken.getValue(String.class).equals("true")){
+            throw new JsonParseException("JSON reader requires $undefined to have the value of true but found '%s'.",
+                                         nameToken.getValue());
         }
         verifyToken("}");
         return new Undefined();
