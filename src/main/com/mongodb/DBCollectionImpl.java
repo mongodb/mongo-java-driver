@@ -927,8 +927,8 @@ class DBCollectionImpl extends DBCollection {
             WriteResult addMissingUpserted(final ModifyRequest update, final WriteResult writeResult) {
                 // On pre 2.6 servers upserts with custom _id's would be not be reported so we  check if _id
                 // was in the update query or the find query then massage the writeResult.
-                if (update.isUpsert() && writeConcern != WriteConcern.UNACKNOWLEDGED
-                        && !writeResult.isUpdateOfExisting() && writeResult.getUpsertedId() == null) {
+                if (update.isUpsert() && writeConcern.callGetLastError() && !writeResult.isUpdateOfExisting()
+                        && writeResult.getUpsertedId() == null) {
                     DBObject updateDocument = update.getUpdateDocument();
                     DBObject query = update.getQuery();
                     if (updateDocument.containsField("_id")) {
