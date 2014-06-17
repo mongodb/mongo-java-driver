@@ -21,7 +21,6 @@ import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Timestamp;
-import org.bson.types.Undefined;
 
 import java.io.Closeable;
 
@@ -138,7 +137,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
 
     protected abstract Timestamp doReadTimestamp();
 
-    protected abstract Undefined doReadUndefined();
+    protected abstract void doReadUndefined();
 
     protected abstract void doSkipName();
 
@@ -324,10 +323,10 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     }
 
     @Override
-    public Undefined readUndefined() {
+    public void readUndefined() {
         checkPreconditions("readUndefined", BsonType.UNDEFINED);
         setState(getNextState());
-        return doReadUndefined();
+        doReadUndefined();
     }
 
     @Override
@@ -478,9 +477,9 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
     }
 
     @Override
-    public Undefined readUndefined(final String name) {
+    public void readUndefined(final String name) {
         verifyName(name);
-        return readUndefined();
+        readUndefined();
     }
 
     /**

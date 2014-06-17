@@ -21,7 +21,6 @@ import org.bson.types.DBPointer;
 import org.bson.types.ObjectId;
 import org.bson.types.RegularExpression;
 import org.bson.types.Timestamp;
-import org.bson.types.Undefined;
 
 /**
  * An interface for reading a logical BSON document using a pull-oriented API.
@@ -329,14 +328,14 @@ public interface BsonReader {
     /**
      * Reads a BSON undefined from the reader.
      */
-    Undefined readUndefined();
+    void readUndefined();
 
     /**
      * Reads a BSON undefined element from the reader.
      *
      * @param name The name of the element.
      */
-    Undefined readUndefined(String name);
+    void readUndefined(String name);
 
     /**
      * Skips the name (reader must be positioned on a name).
