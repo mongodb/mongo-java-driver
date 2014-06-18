@@ -98,7 +98,7 @@ public final class MongoClientOptions {
         //CHECKSTYLE:ON
         private boolean alwaysUseMBeans = false;
 
-        private int heartbeatFrequency = 5000;
+        private int heartbeatFrequency = 10000;
         private int heartbeatConnectRetryFrequency = 10;
         private int heartbeatConnectTimeout = 20000;
         private int heartbeatSocketTimeout = 20000;
@@ -590,7 +590,7 @@ public final class MongoClientOptions {
 
     /**
      * Gets the heartbeat frequency. This is the frequency that the driver will attempt to determine the current state of each server in the
-     * cluster. The default value is 5000 milliseconds.
+     * cluster. The default value is 10000 milliseconds.
      *
      * @return the heartbeat frequency, in milliseconds
      */
