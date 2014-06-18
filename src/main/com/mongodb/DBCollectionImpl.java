@@ -734,8 +734,9 @@ class DBCollectionImpl extends DBCollection {
                 @Override
                 WriteResult executeWriteProtocol(final int i) {
                     ModifyRequest update = updateRequests.get(i);
-                    return update(update.getQuery(), update.getUpdateDocument(), update.isUpsert(), update.isMulti(), writeConcern,
-                                  encoder);
+                    WriteResult writeResult = update(update.getQuery(), update.getUpdateDocument(), update.isUpsert(),
+                            update.isMulti(), writeConcern, encoder);
+                    return addMissingUpserted(update, writeResult);
                 }
 
                 @Override
@@ -759,8 +760,9 @@ class DBCollectionImpl extends DBCollection {
                 @Override
                 WriteResult executeWriteProtocol(final int i) {
                     ModifyRequest update = replaceRequests.get(i);
-                    return update(update.getQuery(), update.getUpdateDocument(), update.isUpsert(), update.isMulti(), writeConcern,
-                                  encoder);
+                    WriteResult writeResult = update(update.getQuery(), update.getUpdateDocument(), update.isUpsert(),
+                            update.isMulti(), writeConcern, encoder);
+                    return addMissingUpserted(update, writeResult);
                 }
 
                 @Override
@@ -920,6 +922,26 @@ class DBCollectionImpl extends DBCollection {
                     }
                 }
                 return details;
+            }
+
+            WriteResult addMissingUpserted(final ModifyRequest update, final WriteResult writeResult) {
+                // On pre 2.6 servers upserts with custom _id's would be not be reported so we  check if _id
+                // was in the update query or the find query then massage the writeResult.
+                if (update.isUpsert() && writeConcern.callGetLastError() && !writeResult.isUpdateOfExisting()
+                        && writeResult.getUpsertedId() == null) {
+                    DBObject updateDocument = update.getUpdateDocument();
+                    DBObject query = update.getQuery();
+                    if (updateDocument.containsField("_id")) {
+                        CommandResult commandResult = writeResult.getLastError();
+                        commandResult.put("upserted", updateDocument.get("_id"));
+                        return new WriteResult(commandResult, writeResult.getLastConcern());
+                    } else  if (query.containsField("_id")) {
+                        CommandResult commandResult = writeResult.getLastError();
+                        commandResult.put("upserted", query.get("_id"));
+                        return new WriteResult(commandResult, writeResult.getLastConcern());
+                    }
+                }
+                return writeResult;
             }
         }
     }
