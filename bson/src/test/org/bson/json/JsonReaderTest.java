@@ -469,6 +469,21 @@ public class JsonReaderTest {
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
     }
 
+    @Test
+    public void testUndefinedExtended() {
+        String json = "{ \"$undefined\" : true }";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.UNDEFINED, bsonReader.readBsonType());
+        bsonReader.readUndefined();
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test(expected = JsonParseException.class)
+    public void testUndefinedExtendedInvalid() {
+        String json = "{ \"$undefined\" : false }";
+        bsonReader = new JsonReader(json);
+        bsonReader.readUndefined();
+    }
 
     @Test(expected = IllegalStateException.class)
     public void testClosedState() {
@@ -666,4 +681,5 @@ public class JsonReaderTest {
         assertEquals("b", dbPointer.getNamespace());
         assertEquals(new ObjectId("5209296cd6c4e38cf96fffdc"), dbPointer.getId());
     }
+
 }
