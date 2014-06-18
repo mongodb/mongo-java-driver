@@ -27,6 +27,7 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
+import org.bson.types.Undefined;
 
 import javax.xml.bind.DatatypeConverter;
 import java.lang.reflect.Array;
@@ -102,6 +103,7 @@ public class JSONSerializers {
         serializer.addObjectSerializer(Pattern.class, new PatternSerializer(serializer));
         serializer.addObjectSerializer(String.class, new StringSerializer());
         serializer.addObjectSerializer(UUID.class, new UUIDSerializer(serializer));
+        serializer.addObjectSerializer(Undefined.class, new UndefinedSerializer(serializer));
         return serializer;
     }
 
@@ -467,6 +469,21 @@ public class JSONSerializers {
         @Override
         public void serialize(final Object obj, final StringBuilder buf) {
             serialize((byte[]) obj, (byte) 0, buf);
+        }
+
+    }
+
+    private static class UndefinedSerializer extends CompoundObjectSerializer {
+
+        UndefinedSerializer(final ObjectSerializer serializer) {
+            super(serializer);
+        }
+
+        @Override
+        public void serialize(final Object obj, final StringBuilder buf) {
+            BasicDBObject temp = new BasicDBObject();
+            temp.put("$undefined", true);
+            serializer.serialize(temp, buf);
         }
 
     }

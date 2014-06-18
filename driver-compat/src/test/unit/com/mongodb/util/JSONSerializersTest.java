@@ -26,6 +26,7 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
+import org.bson.types.Undefined;
 import org.junit.Test;
 
 import javax.xml.bind.DatatypeConverter;
@@ -245,5 +246,13 @@ public class JSONSerializersTest {
         buf = new StringBuilder();
         serializer.serialize(code, buf);
         assertEquals("serialized as Object class", buf.toString());
+    }
+
+    @Test
+    public void testUndefinedCodecs() {
+        ObjectSerializer serializer = JSONSerializers.getStrict();
+        StringBuilder buf = new StringBuilder();
+        serializer.serialize(new Undefined(), buf);
+        assertEquals(buf.toString(), "{ \"$undefined\" : true}");
     }
 }
