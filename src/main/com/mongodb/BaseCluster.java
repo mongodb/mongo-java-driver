@@ -85,7 +85,7 @@ abstract class BaseCluster implements Cluster {
 
                 if (!currentPhase.await(timeout, NANOSECONDS)) {
                     throw new MongoTimeoutException(format("Timed out while waiting for a server that matches %s after %d ms",
-                                                           serverSelector, MILLISECONDS.convert(timeout, NANOSECONDS)));
+                                                           serverSelector, MILLISECONDS.convert(maxWaitTime, timeUnit)));
                 }
                 currentPhase = phase.get();
                 curDescription = description;
@@ -112,7 +112,7 @@ abstract class BaseCluster implements Cluster {
 
                 if (!currentPhase.await(timeout, NANOSECONDS)) {
                     throw new MongoTimeoutException(format("Timed out while waiting to connect after %d ms",
-                                                           MILLISECONDS.convert(timeout, NANOSECONDS)));
+                                                           MILLISECONDS.convert(maxWaitTime, timeUnit)));
                 }
                 currentPhase = phase.get();
                 curDescription = description;
