@@ -382,10 +382,11 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
 
         when:
         def result = operation.execute(WriteConcern.UNACKNOWLEDGED)
+        collection.insert(new BasicDBObject('_id', 4))
 
         then:
-        result == new UnacknowledgedBulkWriteResult();
-        collection.count() == 3
+        result == new UnacknowledgedBulkWriteResult()
+        collection.count() == 4
 
         where:
         ordered << [true, false]
