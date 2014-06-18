@@ -191,7 +191,7 @@ public class JsonWriterTest {
 
     @Test
     public void testIndentedEmptyDocument() {
-        writer = new JsonWriter(stringWriter, new JsonWriterSettings(true));
+        writer = new JsonWriter(stringWriter, JsonWriterSettings.indented());
         writer.writeStartDocument();
         writer.writeEndDocument();
         String expected = "{ }";
@@ -200,7 +200,7 @@ public class JsonWriterTest {
 
     @Test
     public void testIndentedOneElement() {
-        writer = new JsonWriter(stringWriter, new JsonWriterSettings(true));
+        writer = new JsonWriter(stringWriter, JsonWriterSettings.indented());
         writer.writeStartDocument();
         writer.writeString("name", "value");
         writer.writeEndDocument();
@@ -210,7 +210,7 @@ public class JsonWriterTest {
 
     @Test
     public void testIndentedTwoElements() {
-        writer = new JsonWriter(stringWriter, new JsonWriterSettings(true));
+        writer = new JsonWriter(stringWriter, JsonWriterSettings.indented());
         writer.writeStartDocument();
         writer.writeString("a", "x");
         writer.writeString("b", "y");
@@ -294,6 +294,27 @@ public class JsonWriterTest {
     }
 
     @Test
+    public void testInt64StrictPreserveNumericTypesFalse() {
+        List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE, "-9223372036854775808"),
+                                            new TestData<Long>(Integer.MIN_VALUE - 1L, "-2147483649"),
+                                            new TestData<Long>(Integer.MIN_VALUE - 0L, "-2147483648"),
+                                            new TestData<Long>(0L, "0"),
+                                            new TestData<Long>(Integer.MAX_VALUE + 0L, "2147483647"),
+                                            new TestData<Long>(Integer.MAX_VALUE + 1L, "2147483648"),
+                                            new TestData<Long>(Long.MAX_VALUE, "9223372036854775807"));
+
+        for (final TestData<Long> cur : tests) {
+            stringWriter = new StringWriter();
+            writer = new JsonWriter(stringWriter, JsonWriterSettings.oldNumericTypes());
+            writer.writeStartDocument();
+            writer.writeInt64("l", cur.value);
+            writer.writeEndDocument();
+            String expected = "{ \"l\" : " + cur.expected + " }";
+            assertEquals(expected, stringWriter.toString());
+        }
+    }
+
+    @Test
     public void testEmbeddedDocument() {
         writer.writeStartDocument();
         writer.writeStartDocument("doc");
@@ -308,7 +329,7 @@ public class JsonWriterTest {
 
     @Test
     public void testIndentedEmbeddedDocument() {
-        writer = new JsonWriter(stringWriter, new JsonWriterSettings(true));
+        writer = new JsonWriter(stringWriter, JsonWriterSettings.indented());
         writer.writeStartDocument();
         writer.writeStartDocument("doc");
         writer.writeInt32("a", 1);

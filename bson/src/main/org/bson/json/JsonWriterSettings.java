@@ -29,12 +29,13 @@ public class JsonWriterSettings extends BsonWriterSettings {
     private final String newLineCharacters;
     private final String indentCharacters;
     private final JsonMode outputMode;
+    private final boolean preserveNumericTypes;
 
     /**
      * Creates a new instance with default values for all properties.
      */
     public JsonWriterSettings() {
-        this(JsonMode.STRICT, false, null, null);
+        this(JsonMode.STRICT, false, null, null, true);
     }
 
     /**
@@ -43,26 +44,58 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * @param outputMode the output mode
      */
     public JsonWriterSettings(final JsonMode outputMode) {
-        this(outputMode, false, null, null);
+        this(outputMode, false, null, null, true);
     }
 
     /**
      * Creates a new instance with indent mode enabled, and the default value for all other properties.
-     *
-     * @param indent whether indent mode is enabled
      */
-    public JsonWriterSettings(final boolean indent) {
-        this(JsonMode.STRICT, true, "  ", null);
+    public static JsonWriterSettings indented() {
+        return new JsonWriterSettings(JsonMode.STRICT, true, "  ", null, true);
     }
 
     /**
      * Creates a new instance with the given output mode, indent mode enabled, and the default value for all other properties.
      *
      * @param outputMode the output mode
-     * @param indent     whether indent mode is enabled
      */
-    public JsonWriterSettings(final JsonMode outputMode, final boolean indent) {
-        this(outputMode, true, "  ", null);
+    public static JsonWriterSettings indented(final JsonMode outputMode) {
+        return new JsonWriterSettings(outputMode, true, "  ", null, true);
+    }
+
+    /**
+     * Creates a new instance with indent mode enabled, preserveNumericTypes mode disabled and the default value for all other properties.
+     *
+     */
+    public static JsonWriterSettings indentedOldNumericTypes() {
+        return new JsonWriterSettings(JsonMode.STRICT, true, null, null, false);
+    }
+
+    /**
+     * Creates a new instance with preserveNumericTypes mode disabled, and the default value for all other properties.
+     *
+     */
+    public static JsonWriterSettings oldNumericTypes() {
+        return new JsonWriterSettings(JsonMode.STRICT, false, null, null, false);
+    }
+
+    /**
+     * Creates a new instance with preserveNumericTypes mode disabled and custom indent characters.
+     *
+     * @param indentCharacters  the indent characters
+     */
+    public static JsonWriterSettings oldNumericTypes(final String indentCharacters) {
+        return new JsonWriterSettings(JsonMode.STRICT, false, indentCharacters, null, false);
+    }
+
+    /**
+     * Creates a new instance with preserveNumericTypes mode disabled and custom indent characters and new lines.
+     *
+     * @param indentCharacters  the indent characters
+     * @param newLineCharacters the new line character(s) to use
+     */
+    public static JsonWriterSettings oldNumericTypes(final String indentCharacters, final String newLineCharacters) {
+        return new JsonWriterSettings(JsonMode.STRICT, false, indentCharacters, newLineCharacters, false);
     }
 
     /**
@@ -73,7 +106,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
      * @param indentCharacters the indent characters
      */
     public JsonWriterSettings(final JsonMode outputMode, final String indentCharacters) {
-        this(outputMode, true, indentCharacters, null);
+        this(outputMode, true, indentCharacters, null, true);
     }
 
     /**
@@ -85,11 +118,11 @@ public class JsonWriterSettings extends BsonWriterSettings {
      */
     public JsonWriterSettings(final JsonMode outputMode, final String indentCharacters,
                               final String newLineCharacters) {
-        this(outputMode, true, indentCharacters, newLineCharacters);
+        this(outputMode, true, indentCharacters, newLineCharacters, true);
     }
 
     private JsonWriterSettings(final JsonMode outputMode, final boolean indent, final String indentCharacters,
-                               final String newLineCharacters) {
+                               final String newLineCharacters, final boolean preserveNumericTypes) {
         if (indent) {
             if (indentCharacters == null) {
                 throw new IllegalArgumentException("indent characters can not be null if indent is enabled");
@@ -110,6 +143,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
         this.newLineCharacters = newLineCharacters != null ? newLineCharacters : System.getProperty("line.separator");
         this.indentCharacters = indentCharacters;
         this.outputMode = outputMode;
+        this.preserveNumericTypes = preserveNumericTypes;
     }
 
     /**
@@ -147,5 +181,17 @@ public class JsonWriterSettings extends BsonWriterSettings {
      */
     public JsonMode getOutputMode() {
         return outputMode;
+    }
+
+    /**
+     * The preserveNumericTypes mode to use.  The default value is {@code }true}.
+     *
+     * If true it will ensure that int64 types are stored using the {@code }$numberLong} syntax
+     * (add to extended JSON in MongoDB 2.6).
+     *
+     * @return preserveNumericTypes value.
+     */
+    public boolean getPreserveNumericTypes() {
+        return preserveNumericTypes;
     }
 }

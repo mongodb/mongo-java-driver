@@ -258,10 +258,15 @@ public class JsonWriter extends AbstractBsonWriter {
         try {
             switch (settings.getOutputMode()) {
                 case STRICT:
-                    writeStartDocument();
-                    writeNameHelper("$numberLong");
-                    writer.write(Long.toString(value));
-                    writeEndDocument();
+                    if (settings.getPreserveNumericTypes()) {
+                        writeStartDocument();
+                        writeNameHelper("$numberLong");
+                        writer.write(Long.toString(value));
+                        writeEndDocument();
+                    } else {
+                        writeNameHelper(getName());
+                        writer.write(Long.toString(value));
+                    }
                     break;
                 case JAVASCRIPT:
                     writeNameHelper(getName());
