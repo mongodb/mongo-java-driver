@@ -110,6 +110,8 @@ abstract class BaseCluster implements Cluster {
                 LOGGER.info(format("Cluster description not yet available. Waiting for %d ms before timing out",
                                    MILLISECONDS.convert(timeout, NANOSECONDS)));
 
+                connect();
+
                 if (!currentPhase.await(timeout, NANOSECONDS)) {
                     throw new MongoTimeoutException(format("Timed out while waiting to connect after %d ms",
                                                            MILLISECONDS.convert(maxWaitTime, timeUnit)));
