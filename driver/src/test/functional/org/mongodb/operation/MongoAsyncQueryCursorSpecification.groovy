@@ -15,7 +15,6 @@
  */
 
 package org.mongodb.operation
-
 import category.Async
 import category.Slow
 import org.bson.types.BsonDocumentWrapper
@@ -225,6 +224,28 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         source.release()
     }
 
+    def 'should get Exceptions for operations on the cursor after closing'() throws InterruptedException {
+        setup:
+        AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
+        Connection connection = source.getConnection().get()
+        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection)
+
+        when:
+        MongoAsyncQueryCursor<Document> asyncCursor = new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+                                                                                         firstBatch, 5, 2, new DocumentCodec(),
+                                                                                         connection);
+
+        asyncCursor.forEach(new TestBlock()).get()
+        asyncCursor.forEach(new TestBlock()).get()
+
+        then:
+        thrown(IllegalStateException)
+
+        cleanup:
+        connection.release()
+        source.release()
+    }
+
     private static Document getOrderedByIdQuery() {
         new Document('$query', new Document()).append('$orderby', new Document('_id', 1))
     }
@@ -275,4 +296,5 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
             iterations
         }
     }
+
 }

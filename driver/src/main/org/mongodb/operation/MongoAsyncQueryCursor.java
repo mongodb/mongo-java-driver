@@ -32,9 +32,11 @@ import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.protocol.GetMoreDiscardProtocol;
 import org.mongodb.protocol.GetMoreProtocol;
 import org.mongodb.protocol.GetMoreReceiveProtocol;
+import org.mongodb.protocol.KillCursor;
+import org.mongodb.protocol.KillCursorProtocol;
 import org.mongodb.protocol.QueryResult;
 
-// TODO: kill cursor on early breakout
+
 class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
 
     private static final Logger LOGGER = Loggers.getLogger("operation.query.cursor");
@@ -48,6 +50,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     private final Connection exhaustConnection;
     private long numFetchedSoFar;
     private ServerCursor cursor;
+    private boolean closed;
 
     // For normal queries
     MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
@@ -90,9 +93,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
         if (isExhaust()) {
             handleExhaustCleanup(responseTo, future, e);
         } else {
-            releaseConnectionSource();
-            LOGGER.trace("Initializing forEach future " + (e == null ? "" : " with exception " + e));
-            future.init(null, e);
+            killCursorAndCompleteFuture(future, e);
         }
     }
 
@@ -108,9 +109,45 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             public void onResult(final Void result, final MongoException exhaustException) {
                 exhaustConnection.release();
                 releaseConnectionSource();
-                future.init(null, e);
+                closed = true;
+                future.init(null, e == null ? exhaustException : e);
             }
         });
+    }
+
+    private void killCursorAndCompleteFuture(final SingleResultFuture<Void> future, final MongoException e) {
+        if (cursor != null) {
+            connectionSource.getConnection().register(new SingleResultCallback<Connection>() {
+                @Override
+                public void onResult(final Connection connection, final MongoException connectionException) {
+                    new KillCursorProtocol(new KillCursor(cursor))
+                        .executeAsync(connection)
+                        .register(new SingleResultCallback<Void>() {
+                            @Override
+                            public void onResult(final Void result, final MongoException killException) {
+                                connection.release();
+                                releaseConnectionSource();
+                                closed = true;
+
+                                MongoException exception = e;
+                                if (exception == null) {
+                                    exception = connectionException;
+                                }
+                                if (exception == null) {
+                                    exception = killException;
+                                }
+
+                                LOGGER.trace("Initializing forEach future " + (exception == null ? "" : " with  exception " + exception));
+                                future.init(null, exception);
+                            }
+                        });
+                }
+            });
+        } else {
+            closed = true;
+            LOGGER.trace("Initializing forEach future " + (e == null ? "" : " with exception " + e));
+            future.init(null, e);
+        }
     }
 
     private void releaseConnectionSource() {
@@ -137,6 +174,9 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
 
         @Override
         public void onResult(final QueryResult<T> result, final MongoException e) {
+            if (closed) {
+                throw new IllegalStateException("Cursor has been closed");
+            }
             if (!isExhaust() & connection != null) {
                 connection.release();
             }
