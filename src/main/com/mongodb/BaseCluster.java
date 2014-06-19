@@ -66,8 +66,13 @@ abstract class BaseCluster implements Cluster {
             CountDownLatch currentPhase = phase.get();
             ClusterDescription curDescription = description;
             List<ServerDescription> serverDescriptions = serverSelector.choose(curDescription);
-            final long endTime = System.nanoTime() + NANOSECONDS.convert(maxWaitTime, timeUnit);
+
             boolean selectionFailureLogged = false;
+
+            final long startTimeNanos = System.nanoTime();
+            final long endTimeNanos = startTimeNanos + NANOSECONDS.convert(maxWaitTime, timeUnit);
+            long curTimeNanos = startTimeNanos;
+
             while (true) {
                 throwIfIncompatible(curDescription);
 
@@ -78,7 +83,7 @@ abstract class BaseCluster implements Cluster {
                     }
                 }
 
-                if (System.nanoTime() > endTime) {
+                if (curTimeNanos > endTimeNanos) {
                     throw new MongoTimeoutException(format("Timed out while waiting for a server that matches %s after %d ms",
                                                            serverSelector, MILLISECONDS.convert(maxWaitTime, timeUnit)));
                 }
@@ -91,7 +96,11 @@ abstract class BaseCluster implements Cluster {
 
                 connect();
 
-                currentPhase.await(serverFactory.getSettings().getHeartbeatConnectRetryFrequency(NANOSECONDS), NANOSECONDS);
+                currentPhase.await(Math.min(endTimeNanos - curTimeNanos,
+                                            serverFactory.getSettings().getHeartbeatConnectRetryFrequency(NANOSECONDS)),
+                                            NANOSECONDS);
+
+                curTimeNanos = System.nanoTime();
 
                 currentPhase = phase.get();
                 curDescription = description;
@@ -109,11 +118,16 @@ abstract class BaseCluster implements Cluster {
         try {
             CountDownLatch currentPhase = phase.get();
             ClusterDescription curDescription = description;
-            final long endTime = System.nanoTime() + NANOSECONDS.convert(maxWaitTime, timeUnit);
+
             boolean selectionFailureLogged = false;
+
+            final long startTimeNanos = System.nanoTime();
+            final long endTimeNanos = startTimeNanos + NANOSECONDS.convert(maxWaitTime, timeUnit);
+            long curTimeNanos = startTimeNanos;
+
             while (curDescription.getType() == ClusterType.Unknown) {
 
-                if (System.nanoTime() > endTime) {
+                if (curTimeNanos > endTimeNanos) {
                     throw new MongoTimeoutException(format("Timed out while waiting to connect after %d ms",
                                                            MILLISECONDS.convert(maxWaitTime, timeUnit)));
                 }
@@ -126,7 +140,11 @@ abstract class BaseCluster implements Cluster {
 
                 connect();
 
-                currentPhase.await(serverFactory.getSettings().getHeartbeatConnectRetryFrequency(NANOSECONDS), NANOSECONDS);
+                currentPhase.await(Math.min(endTimeNanos - curTimeNanos,
+                                            serverFactory.getSettings().getHeartbeatConnectRetryFrequency(NANOSECONDS)),
+                                   NANOSECONDS);
+
+                curTimeNanos = System.nanoTime();
 
                 currentPhase = phase.get();
                 curDescription = description;
