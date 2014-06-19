@@ -27,6 +27,11 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
         return addressToServerMap.get(serverAddress);
     }
 
+    @Override
+    public ServerSettings getSettings() {
+        return ServerSettings.builder().build();
+    }
+
     public void close() {
 
     }

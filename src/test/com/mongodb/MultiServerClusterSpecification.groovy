@@ -280,7 +280,7 @@ class MultiServerClusterSpecification extends Specification {
         cluster.close()
 
         when:
-        cluster.getServer(new ReadPreferenceServerSelector(ReadPreference.primary()), 1, SECONDS, 1, SECONDS)
+        cluster.getServer(new ReadPreferenceServerSelector(ReadPreference.primary()), 1, SECONDS)
 
         then:
         thrown(IllegalStateException)
@@ -428,7 +428,7 @@ class MultiServerClusterSpecification extends Specification {
     }
 
     def getClusterDescription(MultiServerCluster cluster) {
-        cluster.getDescription(1, MILLISECONDS, 1, MILLISECONDS)
+        cluster.getDescription(1, MILLISECONDS)
     }
 
     def getServerDescription(ServerAddress server) {

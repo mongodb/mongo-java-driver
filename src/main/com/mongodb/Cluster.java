@@ -20,11 +20,9 @@ import java.util.concurrent.TimeUnit;
 
 interface Cluster {
 
-    ClusterDescription getDescription(final long maxWaitTime, final TimeUnit maxWaitTimeTimeUnit,
-                                      long connectRetryFrequency, TimeUnit connectRetryFrequencyTimeUnit);
+    ClusterDescription getDescription(final long maxWaitTime, final TimeUnit timeUnit);
 
-    Server getServer(ServerSelector serverSelector, final long maxWaitTime, final TimeUnit maxWaitTimeTimeUnit,
-                     long connectRetryFrequency, TimeUnit connectRetryFrequencyTimeUnit);
+    Server getServer(ServerSelector serverSelector, final long maxWaitTime, final TimeUnit timeUnit);
 
     void close();
 

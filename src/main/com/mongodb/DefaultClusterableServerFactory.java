@@ -46,4 +46,9 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                                               new JMXConnectionPoolListener(mongo.getMongoOptions().getDescription())),
                                  mongo);
     }
+
+    @Override
+    public ServerSettings getSettings() {
+        return settings;
+    }
 }
