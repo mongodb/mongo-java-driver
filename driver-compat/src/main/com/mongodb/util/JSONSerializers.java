@@ -57,7 +57,7 @@ public class JSONSerializers {
      */
     public static ObjectSerializer getLegacy() {
 
-        ClassMapBasedObjectSerializer serializer = addCommonSerializers();
+        ClassMapBasedObjectSerializer serializer = addCommonSerializers(JSONMongoDBVersion.MONGO_2_0);
 
         serializer.addObjectSerializer(Date.class, new LegacyDateSerializer(serializer));
         serializer.addObjectSerializer(BSONTimestamp.class, new LegacyBSONTimestampSerializer(serializer));
@@ -68,13 +68,24 @@ public class JSONSerializers {
 
     /**
      * Returns an {@code ObjectSerializer} that conforms to the strict JSON format defined in <a
-     * href="http://www.mongodb.org/display/DOCS/Mongo+Extended+JSON".
+     * href="http://docs.mongodb.org/manual/reference/mongodb-extended-json/.
      *
      * @return object serializer
      */
     public static ObjectSerializer getStrict() {
+        return getStrict(JSONMongoDBVersion.MONGO_2_0);
+    }
 
-        ClassMapBasedObjectSerializer serializer = addCommonSerializers();
+    /**
+     * Returns an {@code ObjectSerializer} that conforms to the strict JSON format defined in <a
+     * href="http://docs.mongodb.org/manual/reference/mongodb-extended-json/" up to and including the specified {@code JSONMongoDBVersion}
+     *
+     * @param mongoDBVersion The MongoDB version to target.
+     * @return object serializer
+     */
+    public static ObjectSerializer getStrict(final JSONMongoDBVersion mongoDBVersion) {
+
+        ClassMapBasedObjectSerializer serializer = addCommonSerializers(mongoDBVersion);
 
         serializer.addObjectSerializer(Date.class, new DateSerializer(serializer));
         serializer.addObjectSerializer(BSONTimestamp.class, new BSONTimestampSerializer(serializer));
@@ -84,7 +95,7 @@ public class JSONSerializers {
         return serializer;
     }
 
-    static ClassMapBasedObjectSerializer addCommonSerializers() {
+    static ClassMapBasedObjectSerializer addCommonSerializers(final JSONMongoDBVersion mongoDBVersion) {
         ClassMapBasedObjectSerializer serializer = new ClassMapBasedObjectSerializer();
 
         serializer.addObjectSerializer(Object[].class, new ObjectArraySerializer(serializer));
@@ -97,11 +108,16 @@ public class JSONSerializers {
         serializer.addObjectSerializer(Map.class, new MapSerializer(serializer));
         serializer.addObjectSerializer(MaxKey.class, new MaxKeySerializer(serializer));
         serializer.addObjectSerializer(MinKey.class, new MinKeySerializer(serializer));
-        serializer.addObjectSerializer(Number.class, new ToStringSerializer());
         serializer.addObjectSerializer(ObjectId.class, new ObjectIdSerializer(serializer));
         serializer.addObjectSerializer(Pattern.class, new PatternSerializer(serializer));
         serializer.addObjectSerializer(String.class, new StringSerializer());
         serializer.addObjectSerializer(UUID.class, new UUIDSerializer(serializer));
+
+        if (mongoDBVersion.compareTo(JSONMongoDBVersion.MONGO_2_6) >= 0) {
+            serializer.addObjectSerializer(Long.class, new NumberLongSerializer(serializer));
+        }
+        serializer.addObjectSerializer(Number.class, new ToStringSerializer());
+
         return serializer;
     }
 
@@ -467,6 +483,19 @@ public class JSONSerializers {
         @Override
         public void serialize(final Object obj, final StringBuilder buf) {
             serialize((byte[]) obj, (byte) 0, buf);
+        }
+
+    }
+
+    private static class NumberLongSerializer extends CompoundObjectSerializer {
+
+        NumberLongSerializer(final ObjectSerializer serializer) {
+            super(serializer);
+        }
+
+        @Override
+        public void serialize(final Object obj, final StringBuilder buf) {
+            serializer.serialize(new BasicDBObject("$numberLong", obj.toString()), buf);
         }
 
     }

@@ -246,4 +246,18 @@ public class JSONSerializersTest {
         serializer.serialize(code, buf);
         assertEquals("serialized as Object class", buf.toString());
     }
+
+    @Test
+    public void testNumberLongSerialization() {
+        Long number = 1L;
+        ObjectSerializer serializer = JSONSerializers.getStrict();
+        StringBuilder buf = new StringBuilder();
+        serializer.serialize(number, buf);
+        assertEquals("1", buf.toString());
+
+        serializer = JSONSerializers.getStrict(JSONMongoDBVersion.MONGO_2_6);
+        buf = new StringBuilder();
+        serializer.serialize(number, buf);
+        assertEquals("{ \"$numberLong\" : \"1\"}", buf.toString());
+    }
 }
