@@ -43,7 +43,7 @@ public class JsonWriter extends AbstractBsonWriter {
     private final JsonWriterSettings settings;
 
     public JsonWriter(final Writer writer) {
-        this(writer, new JsonWriterSettings());
+        this(writer, JsonWriterSettings.builder().build());
     }
 
     public JsonWriter(final Writer writer, final JsonWriterSettings settings) {
@@ -258,7 +258,7 @@ public class JsonWriter extends AbstractBsonWriter {
         try {
             switch (settings.getOutputMode()) {
                 case STRICT:
-                    if (settings.getPreserveNumericTypes()) {
+                    if (settings.getMongoDBVersion().compareTo(JsonMongoDBVersion.MONGO_2_6) >= 0) {
                         writeStartDocument();
                         writeNameHelper("$numberLong");
                         writer.write(Long.toString(value));

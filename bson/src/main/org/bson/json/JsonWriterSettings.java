@@ -24,126 +24,26 @@ import org.bson.BsonWriterSettings;
  * @see JsonWriter
  * @since 3.0
  */
-public class JsonWriterSettings extends BsonWriterSettings {
+public final class JsonWriterSettings extends BsonWriterSettings {
     private final boolean indent;
     private final String newLineCharacters;
     private final String indentCharacters;
     private final JsonMode outputMode;
-    private final boolean preserveNumericTypes;
+    private final JsonMongoDBVersion mongoDBVersion;
 
-    /**
-     * Creates a new instance with default values for all properties.
-     */
-    public JsonWriterSettings() {
-        this(JsonMode.STRICT, false, null, null, true);
+    public static Builder builder() {
+        return new Builder();
     }
 
-    /**
-     * Creates a new instance with the given output mode and default values for all other properties.
-     *
-     * @param outputMode the output mode
-     */
-    public JsonWriterSettings(final JsonMode outputMode) {
-        this(outputMode, false, null, null, true);
-    }
+    private JsonWriterSettings(final JsonMode outputMode, final JsonMongoDBVersion mongoDBVersion, final boolean indent,
+                               final String indentCharacters, final String newLineCharacters) {
 
-    /**
-     * Creates a new instance with indent mode enabled, and the default value for all other properties.
-     */
-    public static JsonWriterSettings indented() {
-        return new JsonWriterSettings(JsonMode.STRICT, true, "  ", null, true);
-    }
-
-    /**
-     * Creates a new instance with the given output mode, indent mode enabled, and the default value for all other properties.
-     *
-     * @param outputMode the output mode
-     */
-    public static JsonWriterSettings indented(final JsonMode outputMode) {
-        return new JsonWriterSettings(outputMode, true, "  ", null, true);
-    }
-
-    /**
-     * Creates a new instance with indent mode enabled, preserveNumericTypes mode disabled and the default value for all other properties.
-     *
-     */
-    public static JsonWriterSettings indentedOldNumericTypes() {
-        return new JsonWriterSettings(JsonMode.STRICT, true, null, null, false);
-    }
-
-    /**
-     * Creates a new instance with preserveNumericTypes mode disabled, and the default value for all other properties.
-     *
-     */
-    public static JsonWriterSettings oldNumericTypes() {
-        return new JsonWriterSettings(JsonMode.STRICT, false, null, null, false);
-    }
-
-    /**
-     * Creates a new instance with preserveNumericTypes mode disabled and custom indent characters.
-     *
-     * @param indentCharacters  the indent characters
-     */
-    public static JsonWriterSettings oldNumericTypes(final String indentCharacters) {
-        return new JsonWriterSettings(JsonMode.STRICT, false, indentCharacters, null, false);
-    }
-
-    /**
-     * Creates a new instance with preserveNumericTypes mode disabled and custom indent characters and new lines.
-     *
-     * @param indentCharacters  the indent characters
-     * @param newLineCharacters the new line character(s) to use
-     */
-    public static JsonWriterSettings oldNumericTypes(final String indentCharacters, final String newLineCharacters) {
-        return new JsonWriterSettings(JsonMode.STRICT, false, indentCharacters, newLineCharacters, false);
-    }
-
-    /**
-     * Creates a new instance with the given values for all properties, indent mode enabled and the default value of {@code
-     * newLineCharacters}.
-     *
-     * @param outputMode       the output mode
-     * @param indentCharacters the indent characters
-     */
-    public JsonWriterSettings(final JsonMode outputMode, final String indentCharacters) {
-        this(outputMode, true, indentCharacters, null, true);
-    }
-
-    /**
-     * Creates a new instance with the given values for all properties and indent mode enabled.
-     *
-     * @param outputMode        the output mode
-     * @param indentCharacters  the indent characters
-     * @param newLineCharacters the new line character(s) to use
-     */
-    public JsonWriterSettings(final JsonMode outputMode, final String indentCharacters,
-                              final String newLineCharacters) {
-        this(outputMode, true, indentCharacters, newLineCharacters, true);
-    }
-
-    private JsonWriterSettings(final JsonMode outputMode, final boolean indent, final String indentCharacters,
-                               final String newLineCharacters, final boolean preserveNumericTypes) {
-        if (indent) {
-            if (indentCharacters == null) {
-                throw new IllegalArgumentException("indent characters can not be null if indent is enabled");
-            }
-        } else {
-            if (newLineCharacters != null) {
-                throw new IllegalArgumentException("new line characters can not be null if indent is disabled.");
-            }
-            if (indentCharacters != null) {
-                throw new IllegalArgumentException("indent characters can not be null if indent is disabled.");
-            }
-        }
-        if (outputMode == null) {
-            throw new IllegalArgumentException("output mode can not be null");
-        }
-
-        this.indent = indent;
-        this.newLineCharacters = newLineCharacters != null ? newLineCharacters : System.getProperty("line.separator");
-        this.indentCharacters = indentCharacters;
         this.outputMode = outputMode;
-        this.preserveNumericTypes = preserveNumericTypes;
+        this.mongoDBVersion = mongoDBVersion;
+        this.indent = indent;
+        this.newLineCharacters = newLineCharacters;
+        this.indentCharacters = indentCharacters;
+
     }
 
     /**
@@ -184,14 +84,88 @@ public class JsonWriterSettings extends BsonWriterSettings {
     }
 
     /**
-     * The preserveNumericTypes mode to use.  The default value is {@code }true}.
+     * The MongoDB version to target.  The default value is {@code }JsonMongoDBVersion.MONGO_2_0}.
      *
-     * If true it will ensure that int64 types are stored using the {@code }$numberLong} syntax
-     * (add to extended JSON in MongoDB 2.6).
-     *
-     * @return preserveNumericTypes value.
+     * @return JsonMongoDBVersion.
      */
-    public boolean getPreserveNumericTypes() {
-        return preserveNumericTypes;
+    public JsonMongoDBVersion getMongoDBVersion() {
+        return mongoDBVersion;
     }
+
+    public static class Builder {
+        //CHECKSTYLE:OFF
+        JsonMode outputMode = JsonMode.STRICT;
+        JsonMongoDBVersion mongoDBVersion = JsonMongoDBVersion.MONGO_2_0;
+        boolean indent = false;
+        String newLineCharacters = System.getProperty("line.separator");
+        String indentCharacters = "  ";
+        //CHECKSTYLE:ON
+
+        /**
+         * Sets the output mode. The default value is {@code }JSONMode.STRICT}
+         *
+         * @param outputMode the output mode
+         * @return this
+         */
+        public Builder outputMode(final JsonMode outputMode) {
+            this.outputMode = outputMode;
+            return this;
+        }
+
+        /**
+         * Sets the MongoDBVersion to target. The default value is {@code }JsonMongoDBVersion.MONGO_2_0}
+         * @param mongoDBVersion The mongoDBVersion to target.
+         * @return this
+         */
+        public Builder mongoDBVersion(final JsonMongoDBVersion mongoDBVersion) {
+            this.mongoDBVersion = mongoDBVersion;
+            return this;
+        }
+
+        /**
+         * Set indent mode to enabled. The default value is two spaces.
+         * @return this
+         */
+        public Builder indent() {
+            this.indent = true;
+            return this;
+        }
+
+        /**
+         * Set the indent characters to use, automatically sets indent mode.
+         * The default value with indent mode is two spaces.
+         *
+         * @param indentCharacters the indent characters
+         * @return this
+         */
+        public Builder indentCharacters(final String indentCharacters) {
+            this.indent = true;
+            this.indentCharacters = indentCharacters;
+            return this;
+        }
+
+        /**
+         * Set the new line character(s) to use, automatically sets indent mode on.
+         * The default value with indent mode on is {@code System.getProperty("line.separator")}.
+         * @param newLineCharacters the newline characters to use
+         * @return this
+         */
+        public Builder newLineCharacters(final String newLineCharacters) {
+            this.newLineCharacters = newLineCharacters;
+            this.indent = true;
+            return this;
+        }
+
+        /**
+         * Build the JsonWriterSettings
+         * @return JsonWriterSettings
+         */
+        public JsonWriterSettings build() {
+            return new JsonWriterSettings(outputMode, mongoDBVersion, indent, indentCharacters, newLineCharacters);
+        }
+
+        Builder() {
+        }
+    }
+
 }
