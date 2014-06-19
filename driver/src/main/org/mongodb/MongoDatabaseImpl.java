@@ -18,7 +18,6 @@ package org.mongodb;
 
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
-import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.CommandReadOperation;
@@ -74,13 +73,13 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public CommandResult executeCommand(final Document command) {
-        return client.execute(new CommandWriteOperation(getName(), wrap(command), new BsonDocumentCodec()));
+        return client.execute(new CommandWriteOperation(getName(), wrap(command)));
     }
 
     @Override
     public CommandResult executeCommand(final Document command, final ReadPreference readPreference) {
         notNull("readPreference", readPreference);
-        return client.execute(new CommandReadOperation(getName(), wrap(command), new BsonDocumentCodec()),
+        return client.execute(new CommandReadOperation(getName(), wrap(command)),
                               readPreference);
     }
 

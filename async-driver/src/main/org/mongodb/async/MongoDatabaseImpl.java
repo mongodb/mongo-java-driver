@@ -18,7 +18,6 @@ package org.mongodb.async;
 
 
 import org.bson.BsonDocumentWrapper;
-import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
@@ -65,8 +64,8 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public MongoFuture<CommandResult> executeCommand(final Document commandDocument) {
         return client.execute(new CommandWriteOperation(name, new BsonDocumentWrapper<Document>(commandDocument,
-                                                                                                options.getDocumentCodec()),
-                                                        new BsonDocumentCodec()));
+                                                                                                options.getDocumentCodec())
+        ));
     }
 
     @Override

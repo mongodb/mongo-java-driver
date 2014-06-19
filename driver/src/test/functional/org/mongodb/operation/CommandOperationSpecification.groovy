@@ -22,7 +22,6 @@ import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
-import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoExecutionTimeoutException
@@ -42,8 +41,8 @@ class CommandOperationSpecification extends FunctionalSpecification {
     def 'should execute command'() {
         given:
         def commandOperation = new CommandReadOperation(getNamespace().databaseName,
-                                                        new BsonDocument('count', new BsonString(getCollectionName())),
-                                                        new BsonDocumentCodec())
+                                                        new BsonDocument('count', new BsonString(getCollectionName()))
+        )
         when:
         def result = commandOperation.execute(getBinding())
 
@@ -58,8 +57,8 @@ class CommandOperationSpecification extends FunctionalSpecification {
                                                       .append('query', new BsonDocument('_id', new BsonInt32(42)))
                                                       .append('update',
                                                               new BsonDocument('_id', new BsonInt32(42))
-                                                                      .append('b', new BsonBinary(new byte[16 * 1024 * 1024 - 30]))),
-                                              new BsonDocumentCodec())
+                                                                      .append('b', new BsonBinary(new byte[16 * 1024 * 1024 - 30])))
+        )
                 .execute(getBinding())
 
         then:
@@ -69,8 +68,8 @@ class CommandOperationSpecification extends FunctionalSpecification {
     def 'should execute command asynchronously'() {
         given:
         def commandOperation = new CommandReadOperation(getNamespace().databaseName,
-                                                        new BsonDocument('count', new BsonString(getCollectionName())),
-                                                        new BsonDocumentCodec())
+                                                        new BsonDocument('count', new BsonString(getCollectionName()))
+        )
         when:
         def result = commandOperation.executeAsync(getAsyncBinding()).get()
 
@@ -86,8 +85,8 @@ class CommandOperationSpecification extends FunctionalSpecification {
         given:
         def commandOperation = new CommandReadOperation(getNamespace().databaseName,
                                                         new BsonDocument('count', new BsonString(getCollectionName()))
-                                                                .append('maxTimeMS', new BsonInt32(1)),
-                                                        new BsonDocumentCodec())
+                                                                .append('maxTimeMS', new BsonInt32(1))
+        )
         enableMaxTimeFailPoint()
 
         when:
@@ -108,8 +107,8 @@ class CommandOperationSpecification extends FunctionalSpecification {
         given:
         def commandOperation = new CommandReadOperation(getNamespace().databaseName,
                                                         new BsonDocument('count', new BsonString(getCollectionName()))
-                                                                .append('maxTimeMS', new BsonInt32(1)),
-                                                        new BsonDocumentCodec())
+                                                                .append('maxTimeMS', new BsonInt32(1))
+        )
         enableMaxTimeFailPoint()
 
         when:

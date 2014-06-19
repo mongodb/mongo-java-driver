@@ -254,6 +254,11 @@ final class CommandOperationHelper {
         return executeWrappedCommandProtocolAsync(namespace, command, binding, new IdentityTransformer<CommandResult>());
     }
 
+    static MongoFuture<CommandResult> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                                         final AsyncReadBinding binding) {
+        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding);
+    }
+
     static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final BsonDocument command,
                                                                  final AsyncReadBinding binding,
                                                                  final Function<CommandResult, T> transformer) {
