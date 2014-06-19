@@ -23,8 +23,8 @@ import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.event.ClusterDescriptionChangedEvent;
 import org.mongodb.event.ClusterEvent;
 import org.mongodb.event.ClusterListener;
-import org.mongodb.selector.ServerSelector;
 import org.mongodb.selector.CompositeServerSelector;
+import org.mongodb.selector.ServerSelector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +40,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-public abstract class BaseCluster implements Cluster {
+abstract class BaseCluster implements Cluster {
 
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
