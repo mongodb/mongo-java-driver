@@ -393,7 +393,8 @@ public class DBTCPConnector implements DBConnector {
     }
 
     private ClusterDescription getClusterDescription() {
-        return cluster.getDescription(getClusterWaitTimeMS(), MILLISECONDS);
+        return cluster.getDescription(getClusterWaitTimeMS(), MILLISECONDS,
+                                      _mongo.getMongoOptions().heartbeatConnectRetryFrequencyMS, MILLISECONDS);
     }
 
     private int getClusterWaitTimeMS() {
@@ -651,6 +652,7 @@ public class DBTCPConnector implements DBConnector {
     }
 
     private Server getServer(final ServerSelector serverSelector) {
-        return cluster.getServer(serverSelector, getClusterWaitTimeMS(), MILLISECONDS);
+        return cluster.getServer(serverSelector, getClusterWaitTimeMS(), MILLISECONDS,
+                                 _mongo.getMongoOptions().heartbeatConnectRetryFrequencyMS, MILLISECONDS);
     }
 }

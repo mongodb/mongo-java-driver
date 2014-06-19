@@ -151,7 +151,7 @@ class SingleServerClusterSpecification extends Specification {
         sendNotification(firstServer, getBuilder(firstServer).minWireVersion(1000).maxWireVersion(1000).build())
 
         when:
-        cluster.getServer(new ReadPreferenceServerSelector(ReadPreference.primary()), 1, SECONDS)
+        cluster.getServer(new ReadPreferenceServerSelector(ReadPreference.primary()), 1, SECONDS, 1, SECONDS)
 
         then:
         thrown(MongoIncompatibleDriverException)
@@ -186,7 +186,7 @@ class SingleServerClusterSpecification extends Specification {
     }
 
     def getClusterDescription(Cluster cluster) {
-        cluster.getDescription(1, MILLISECONDS)
+        cluster.getDescription(1, MILLISECONDS, 1, MILLISECONDS)
     }
 
     def getServerDescriptions() {

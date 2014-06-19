@@ -115,8 +115,7 @@ class ServerMonitor {
                     if (!isClosed) {
                         try {
                             logStateChange(currentServerDescription, throwable);
-                            serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription,
-                                                                                                serverDescription));
+                            sendStateChangedEvent(currentServerDescription);
                         } catch (Throwable t) {
                             LOGGER.log(Level.WARNING, "Exception in monitor thread during notification of server state change", t);
                         }
@@ -127,6 +126,13 @@ class ServerMonitor {
                 if (connection != null) {
                     connection.close();
                 }
+            }
+        }
+
+        private void sendStateChangedEvent(final ServerDescription currentServerDescription) {
+            if (!currentServerDescription.equals(serverDescription) ||
+                currentServerDescription.getAverageLatencyNanos() != serverDescription.getAverageLatencyNanos()) {
+                serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
             }
         }
 
