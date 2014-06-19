@@ -17,22 +17,30 @@
 package org.bson.json;
 
 /**
- * An enumeration of the supported output modes of {@code JSONWriter}.  See
- * <a href="docs.mongodb.org/manual/reference/mongodb-extended-json/">MongoDB extended JSON documentation</a>.
+ * An enumeration of the supported MongoDB version modes for {@code JsonWriter}.
  *
  * @see JsonWriter
  * @since 3.0
  */
-public enum JsonMode {
+enum JsonMongoDBVersion {
 
     /**
-     * This mode produces output conforming to the <a href="http://www.json.org">JSON RFC spec</a>.
+     * Conform to extended JSON and SHELL features present in MongoDB 2.0
      */
-    STRICT,
+    MONGO_2_0,
 
     /**
-     * While not formally documented, this output mode will attempt to produce output that corresponds to what the MongoDB shell actually
-     * produces when showing query results.
+     * Conform to extended JSON and SHELL features present in MongoDB 2.2
      */
-    SHELL
+    MONGO_2_2,
+
+    /**
+     * Conform to extended JSON and SHELL features present in MongoDB 2.4
+     */
+    MONGO_2_4,
+
+    /**
+     * Conform to extended JSON and SHELL features present in MongoDB 2.6
+     */
+    MONGO_2_6
 }

@@ -18,7 +18,6 @@ package org.mongodb;
 
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
-import org.bson.json.JsonMode;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
@@ -247,7 +246,7 @@ public class Document implements Map<String, Object>, Serializable {
         //TODO: WARNING - this toString will not work if the Document contains any non-standard types,
         // i.e. anything that requires a custom codec, like POJOs or custom CollectibleCodecs for generic Collections
         StringWriter writer = new StringWriter();
-        BsonWriter bsonWriter = new JsonWriter(writer, new JsonWriterSettings(JsonMode.STRICT));
+        BsonWriter bsonWriter = new JsonWriter(writer, JsonWriterSettings.builder().build());
         Codec<Document> codec = new DocumentCodec();
         codec.encode(bsonWriter, this);
 

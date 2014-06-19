@@ -215,7 +215,6 @@ public class JsonReaderTest {
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.BINARY, bsonReader.readBsonType());
         Binary binary = bsonReader.readBinaryData();
-        byte[] bytes = binary.getData();
         assertArrayEquals(expectedBytes, binary.getData());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
     }
@@ -227,7 +226,6 @@ public class JsonReaderTest {
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.BINARY, bsonReader.readBsonType());
         Binary binary = bsonReader.readBinaryData();
-        byte[] bytes = binary.getData();
         assertArrayEquals(expectedBytes, binary.getData());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
     }
@@ -270,13 +268,19 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testNumberLongExtended() {
+        String json = "{ \"$numberLong\" : \"1234567\" }";
+        bsonReader = new JsonReader(json);
+        assertEquals(Long.valueOf("1234567").longValue(), bsonReader.readInt64());
+    }
+
+    @Test
     public void testJavaScript() {
         String json = "{ \"$code\" : \"function f() { return 1; }\" }";
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.JAVASCRIPT, bsonReader.readBsonType());
         assertEquals("function f() { return 1; }", bsonReader.readJavaScript());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
-
     }
 
     @Test
@@ -420,8 +424,6 @@ public class JsonReaderTest {
         assertEquals("pattern", regex.getPattern());
         assertEquals("imxs", regex.getOptions());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
-        JsonWriterSettings settings = new JsonWriterSettings(JsonMode.STRICT);
-
     }
 
     @Test
