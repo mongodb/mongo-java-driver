@@ -200,11 +200,6 @@ public class JsonWriter extends AbstractBsonWriter {
                     writer.write(Long.toString(value));
                     writeEndDocument();
                     break;
-                case JAVASCRIPT:
-                case TEN_GEN:
-                    writeNameHelper(getName());
-                    writer.write(String.format("new Date(%d)", value));
-                    break;
                 case SHELL:
                     writeNameHelper(getName());
 
@@ -268,11 +263,6 @@ public class JsonWriter extends AbstractBsonWriter {
                         writer.write(Long.toString(value));
                     }
                     break;
-                case JAVASCRIPT:
-                    writeNameHelper(getName());
-                    writer.write(Long.toString(value));
-                    break;
-                case TEN_GEN:
                 case SHELL:
                     writeNameHelper(getName());
                     if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
@@ -358,12 +348,10 @@ public class JsonWriter extends AbstractBsonWriter {
         try {
             switch (settings.getOutputMode()) {
                 case STRICT:
-                case JAVASCRIPT:
                     writeStartDocument();
                     writeString("$oid", objectId.toString());
                     writeEndDocument();
                     break;
-                case TEN_GEN:
                 case SHELL:
                     writeNameHelper(getName());
                     writer.write(String.format("ObjectId(\"%s\")", objectId.toString()));
@@ -390,8 +378,6 @@ public class JsonWriter extends AbstractBsonWriter {
                     writeString("$options", regularExpression.getOptions());
                     writeEndDocument();
                     break;
-                case JAVASCRIPT:
-                case TEN_GEN:
                 case SHELL:
                     writeNameHelper(getName());
                     writer.write("/");
@@ -442,7 +428,6 @@ public class JsonWriter extends AbstractBsonWriter {
         try {
             switch (settings.getOutputMode()) {
                 case STRICT:
-                case JAVASCRIPT:
                     writeStartDocument();
                     writeStartDocument("$timestamp");
                     writeInt32("t", value.getTime());
@@ -450,7 +435,6 @@ public class JsonWriter extends AbstractBsonWriter {
                     writeEndDocument();
                     writeEndDocument();
                     break;
-                case TEN_GEN:
                 case SHELL:
                     writeNameHelper(getName());
                     writer.write(String.format("Timestamp(%d, %d)", value.getTime(), value.getInc()));
@@ -478,8 +462,6 @@ public class JsonWriter extends AbstractBsonWriter {
                     writeBoolean("$undefined", true);
                     writeEndDocument();
                     break;
-                case JAVASCRIPT:
-                case TEN_GEN:
                 case SHELL:
                     writeNameHelper(getName());
                     writer.write("undefined");
