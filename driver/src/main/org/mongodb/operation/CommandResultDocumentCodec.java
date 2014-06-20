@@ -24,6 +24,7 @@ import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
+import org.bson.codecs.DecoderContext;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
@@ -47,15 +48,15 @@ class CommandResultDocumentCodec<T> extends BsonDocumentCodec {
     }
 
     @Override
-    protected BsonValue readValue(final BsonReader reader) {
+    protected BsonValue readValue(final BsonReader reader, final DecoderContext decoderContext) {
         if (reader.getCurrentName().equals(fieldContainingPayload)) {
             if (reader.getCurrentBsonType() == BsonType.DOCUMENT) {
-                return new BsonDocumentWrapper<T>(payloadDecoder.decode(reader), null);
+                return new BsonDocumentWrapper<T>(payloadDecoder.decode(reader, decoderContext), null);
             } else if (reader.getCurrentBsonType() == BsonType.ARRAY) {
-                return new CommandResultArrayCodec<T>(getCodecRegistry(), payloadDecoder).decode(reader);
+                return new CommandResultArrayCodec<T>(getCodecRegistry(), payloadDecoder).decode(reader, decoderContext);
             }
         }
-        return super.readValue(reader);
+        return super.readValue(reader, decoderContext);
     }
 }
 

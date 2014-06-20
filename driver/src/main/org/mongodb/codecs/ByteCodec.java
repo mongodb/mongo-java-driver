@@ -19,15 +19,17 @@ package org.mongodb.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 
 public class ByteCodec implements Codec<Byte> {
     @Override
-    public void encode(final BsonWriter writer, final Byte value) {
+    public void encode(final BsonWriter writer, final Byte value, final EncoderContext encoderContext) {
         writer.writeInt32(value);
     }
 
     @Override
-    public Byte decode(final BsonReader reader) {
+    public Byte decode(final BsonReader reader, final DecoderContext decoderContext) {
         throw new UnsupportedOperationException();
     }
 

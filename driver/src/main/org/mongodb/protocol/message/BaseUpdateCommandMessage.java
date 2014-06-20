@@ -18,6 +18,7 @@ package org.mongodb.protocol.message;
 
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
+import org.bson.codecs.EncoderContext;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
@@ -52,7 +53,7 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
             writer.writeName("q");
-            getBsonDocumentCodec().encode(writer, update.getFilter());
+            getBsonDocumentCodec().encode(writer, update.getFilter(), EncoderContext.builder().build());
             writer.writeName("u");
             writeUpdate(writer, update);
             if (update.isMulti()) {

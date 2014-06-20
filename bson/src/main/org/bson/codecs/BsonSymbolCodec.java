@@ -27,12 +27,12 @@ import org.bson.BsonWriter;
  */
 public class BsonSymbolCodec implements Codec<BsonSymbol> {
     @Override
-    public BsonSymbol decode(final BsonReader reader) {
+    public BsonSymbol decode(final BsonReader reader, final DecoderContext decoderContext) {
         return new BsonSymbol(reader.readSymbol());
     }
 
     @Override
-    public void encode(final BsonWriter writer, final BsonSymbol value) {
+    public void encode(final BsonWriter writer, final BsonSymbol value, final EncoderContext encoderContext) {
         writer.writeSymbol(value.getSymbol());
     }
 

@@ -20,6 +20,7 @@ import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
 import org.bson.ByteBufNIO;
 import org.bson.codecs.Codec;
+import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.mongodb.Document;
@@ -36,7 +37,7 @@ public final class CodecTestUtil {
         BsonBinaryWriter writer = new BsonBinaryWriter(outputBuffer, true);
         byte[] documentAsByteArrayForReader;
         try {
-            new DocumentCodec().encode(writer, document);
+            new DocumentCodec().encode(writer, document, EncoderContext.builder().build());
             documentAsByteArrayForReader = outputBuffer.toByteArray();
         } finally {
             writer.close();
@@ -57,7 +58,7 @@ public final class CodecTestUtil {
         BsonBinaryWriter writer = new BsonBinaryWriter(outputBuffer, true);
         byte[] documentAsByteArrayForReader;
         try {
-            codec.encode(writer, objectToDecode);
+            codec.encode(writer, objectToDecode, EncoderContext.builder().build());
             documentAsByteArrayForReader = outputBuffer.toByteArray();
         } finally {
             writer.close();

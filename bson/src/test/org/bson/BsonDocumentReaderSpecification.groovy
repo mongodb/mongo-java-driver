@@ -17,6 +17,7 @@
 package org.bson
 
 import org.bson.codecs.BsonDocumentCodec
+import org.bson.codecs.DecoderContext
 import org.bson.types.ObjectId
 import spock.lang.Specification
 
@@ -51,7 +52,7 @@ class BsonDocumentReaderSpecification extends Specification {
 
 
         when:
-        def decodedDoc = new BsonDocumentCodec().decode(new BsonDocumentReader(doc))
+        def decodedDoc = new BsonDocumentCodec().decode(new BsonDocumentReader(doc), DecoderContext.builder().build())
 
         then:
         decodedDoc == doc

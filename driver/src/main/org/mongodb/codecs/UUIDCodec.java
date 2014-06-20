@@ -21,12 +21,14 @@ import org.bson.BsonBinarySubType;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 
 import java.util.UUID;
 
 public class UUIDCodec implements Codec<UUID> {
     @Override
-    public void encode(final BsonWriter writer, final UUID value) {
+    public void encode(final BsonWriter writer, final UUID value, final EncoderContext encoderContext) {
         byte[] bytes = new byte[16];
 
         writeLongToArrayLittleEndian(bytes, 0, value.getMostSignificantBits());
@@ -36,7 +38,7 @@ public class UUIDCodec implements Codec<UUID> {
     }
 
     @Override
-    public UUID decode(final BsonReader reader) {
+    public UUID decode(final BsonReader reader, final DecoderContext decoderContext) {
         return new BinaryToUUIDTransformer().transform(reader.readBinaryData());
     }
 

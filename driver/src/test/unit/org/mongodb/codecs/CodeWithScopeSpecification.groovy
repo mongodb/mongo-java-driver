@@ -18,6 +18,8 @@ package org.mongodb.codecs
 
 import org.bson.BsonBinaryReader
 import org.bson.BsonWriter
+import org.bson.codecs.DecoderContext
+import org.bson.codecs.EncoderContext
 import org.mongodb.CodeWithScope
 import org.mongodb.Document
 import spock.lang.Specification
@@ -37,7 +39,7 @@ class CodeWithScopeSpecification extends Specification {
         CodeWithScope codeWithScope = new CodeWithScope(javascriptCode, new Document('the', 'scope'));
 
         when:
-        codeWithScopeCodec.encode(bsonWriter, codeWithScope);
+        codeWithScopeCodec.encode(bsonWriter, codeWithScope, EncoderContext.builder().build());
 
         then:
         1 * bsonWriter.writeJavaScriptWithScope(javascriptCode);
@@ -57,7 +59,7 @@ class CodeWithScopeSpecification extends Specification {
         BsonBinaryReader reader = prepareReaderWithObjectToBeDecoded(codeWithScope);
 
         when:
-        CodeWithScope actualCodeWithScope = codeWithScopeCodec.decode(reader);
+        CodeWithScope actualCodeWithScope = codeWithScopeCodec.decode(reader, DecoderContext.builder().build());
 
         then:
         actualCodeWithScope == codeWithScope;

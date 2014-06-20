@@ -19,15 +19,17 @@ package org.mongodb.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 
 public class BooleanCodec implements Codec<Boolean> {
     @Override
-    public void encode(final BsonWriter writer, final Boolean value) {
+    public void encode(final BsonWriter writer, final Boolean value, final EncoderContext encoderContext) {
         writer.writeBoolean(value);
     }
 
     @Override
-    public Boolean decode(final BsonReader reader) {
+    public Boolean decode(final BsonReader reader, final DecoderContext decoderContext) {
         return reader.readBoolean();
     }
 

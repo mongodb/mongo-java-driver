@@ -19,6 +19,8 @@ package org.mongodb.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
 
@@ -35,16 +37,16 @@ public class CodeWithScopeCodec implements Codec<CodeWithScope> {
     }
 
     @Override
-    public CodeWithScope decode(final BsonReader bsonReader) {
+    public CodeWithScope decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
         String code = bsonReader.readJavaScriptWithScope();
-        Document scope = documentCodec.decode(bsonReader);
+        Document scope = documentCodec.decode(bsonReader, decoderContext);
         return new CodeWithScope(code, scope);
     }
 
     @Override
-    public void encode(final BsonWriter writer, final CodeWithScope codeWithScope) {
+    public void encode(final BsonWriter writer, final CodeWithScope codeWithScope, final EncoderContext encoderContext) {
         writer.writeJavaScriptWithScope(codeWithScope.getCode());
-        documentCodec.encode(writer, codeWithScope.getScope());
+        documentCodec.encode(writer, codeWithScope.getScope(), encoderContext);
     }
 
     @Override

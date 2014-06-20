@@ -27,12 +27,12 @@ import org.bson.types.ObjectId;
  */
 public class ObjectIdCodec implements Codec<ObjectId> {
     @Override
-    public void encode(final BsonWriter writer, final ObjectId value) {
+    public void encode(final BsonWriter writer, final ObjectId value, final EncoderContext encoderContext) {
         writer.writeObjectId(value);
     }
 
     @Override
-    public ObjectId decode(final BsonReader reader) {
+    public ObjectId decode(final BsonReader reader, final DecoderContext decoderContext) {
         return reader.readObjectId();
     }
 

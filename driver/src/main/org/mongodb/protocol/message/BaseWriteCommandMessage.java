@@ -20,6 +20,7 @@ import org.bson.BsonBinaryWriter;
 import org.bson.BsonBinaryWriterSettings;
 import org.bson.BsonWriterSettings;
 import org.bson.FieldNameValidator;
+import org.bson.codecs.EncoderContext;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
@@ -118,7 +119,7 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         writer.writeBoolean("ordered", ordered);
         if (!getWriteConcern().isServerDefault()) {
             writer.writeName("writeConcern");
-            getBsonDocumentCodec().encode(writer, getWriteConcern().asDocument());
+            getBsonDocumentCodec().encode(writer, getWriteConcern().asDocument(), EncoderContext.builder().build());
         }
     }
 }

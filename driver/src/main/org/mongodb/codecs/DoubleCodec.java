@@ -19,15 +19,17 @@ package org.mongodb.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 
 public class DoubleCodec implements Codec<Double> {
     @Override
-    public void encode(final BsonWriter writer, final Double value) {
+    public void encode(final BsonWriter writer, final Double value, final EncoderContext encoderContext) {
         writer.writeDouble(value);
     }
 
     @Override
-    public Double decode(final BsonReader reader) {
+    public Double decode(final BsonReader reader, final DecoderContext decoderContext) {
         return reader.readDouble();
     }
 

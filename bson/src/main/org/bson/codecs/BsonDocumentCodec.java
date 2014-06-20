@@ -37,6 +37,7 @@ import java.util.Map;
  * @since 3.0
  */
 public class BsonDocumentCodec implements Codec<BsonDocument> {
+    private static final String ID_FIELD_NAME = "_id";
     private static final CodecRegistry DEFAULT_REGISTRY = new RootCodecRegistry(Arrays.<CodecProvider>asList(new BsonValueCodecProvider()));
 
     private final CodecRegistry codecRegistry;
@@ -62,13 +63,13 @@ public class BsonDocumentCodec implements Codec<BsonDocument> {
     }
 
     @Override
-    public BsonDocument decode(final BsonReader reader) {
+    public BsonDocument decode(final BsonReader reader, final DecoderContext decoderContext) {
         List<BsonElement> keyValuePairs = new ArrayList<BsonElement>();
 
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             String fieldName = reader.readName();
-            keyValuePairs.add(new BsonElement(fieldName, readValue(reader)));
+            keyValuePairs.add(new BsonElement(fieldName, readValue(reader, decoderContext)));
         }
 
         reader.readEndDocument();
@@ -81,28 +82,46 @@ public class BsonDocumentCodec implements Codec<BsonDocument> {
      * that the value be fully consumed before returning.
      *
      * @param reader the read to read the value from
+     * @param decoderContext the context
      * @return the non-null value read from the reader
      */
-    protected BsonValue readValue(final BsonReader reader) {
-        return codecRegistry.get(BsonValueCodecProvider.getClassForBsonType(reader.getCurrentBsonType())).decode(reader);
+    protected BsonValue readValue(final BsonReader reader, final DecoderContext decoderContext) {
+        return codecRegistry.get(BsonValueCodecProvider.getClassForBsonType(reader.getCurrentBsonType())).decode(reader, decoderContext);
     }
 
     @Override
-    public void encode(final BsonWriter writer, final BsonDocument value) {
+    public void encode(final BsonWriter writer, final BsonDocument value, final EncoderContext encoderContext) {
         writer.writeStartDocument();
 
+        beforeFields(writer, encoderContext, value);
         for (Map.Entry<String, BsonValue> entry : value.entrySet()) {
+            if (skipField(encoderContext, entry.getKey())) {
+                continue;
+            }
+
             writer.writeName(entry.getKey());
-            writeValue(writer, entry.getValue());
+            writeValue(writer, encoderContext, entry.getValue());
         }
 
         writer.writeEndDocument();
     }
 
+    private void beforeFields(final BsonWriter bsonWriter, final EncoderContext encoderContext, final BsonDocument value) {
+        if (encoderContext.isEncodingCollectibleDocument() && value.containsKey(ID_FIELD_NAME)) {
+            bsonWriter.writeName(ID_FIELD_NAME);
+            writeValue(bsonWriter, encoderContext, value.get(ID_FIELD_NAME));
+        }
+    }
+
+    private boolean skipField(final EncoderContext encoderContext, final String key) {
+        return encoderContext.isEncodingCollectibleDocument() && key.equals(ID_FIELD_NAME);
+    }
+
+
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private void writeValue(final BsonWriter writer, final BsonValue value) {
+    private void writeValue(final BsonWriter writer, final EncoderContext encoderContext, final BsonValue value) {
         Codec codec = codecRegistry.get(BsonValueCodecProvider.getClassForBsonType(value.getBsonType()));
-        codec.encode(writer, value);
+        encoderContext.encodeWithChildContext(codec, writer, value);
     }
 
     @Override

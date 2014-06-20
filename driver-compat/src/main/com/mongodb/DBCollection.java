@@ -24,6 +24,7 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
+import org.bson.codecs.DecoderContext;
 import org.bson.codecs.Encoder;
 import org.bson.types.ObjectId;
 import org.mongodb.Document;
@@ -304,7 +305,8 @@ public class DBCollection {
 
         Object upsertedId = writeResult.getUpsertedId() == null
                             ? null
-                            : getObjectCodec().decode(new BsonDocumentReader(new BsonDocument("_id", writeResult.getUpsertedId())))
+                            : getObjectCodec().decode(new BsonDocumentReader(new BsonDocument("_id", writeResult.getUpsertedId())),
+                                                      DecoderContext.builder().build())
                                               .get("_id");
         return new WriteResult(writeResult.getCount(), writeResult.isUpdateOfExisting(), upsertedId, writeConcern);
     }
@@ -1057,7 +1059,7 @@ public class DBCollection {
         List distinctList = new ArrayList();
         for (BsonValue value : distinctArray) {
             BsonDocument document = new BsonDocument("value", value);
-            DBObject obj = getDefaultDBObjectCodec().decode(new BsonDocumentReader(document));
+            DBObject obj = getDefaultDBObjectCodec().decode(new BsonDocumentReader(document), DecoderContext.builder().build());
             distinctList.add(obj.get("value"));
         }
 

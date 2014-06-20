@@ -19,6 +19,7 @@ package com.mongodb;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.codecs.Decoder;
+import org.bson.codecs.DecoderContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +47,7 @@ final class BulkWriteHelper {
     }
 
     private static Object getUpsertedId(final org.mongodb.BulkWriteUpsert cur, final Decoder<DBObject> decoder) {
-        return decoder.decode(new BsonDocumentReader(new BsonDocument("_id", cur.getId()))).get("_id");
+        return decoder.decode(new BsonDocumentReader(new BsonDocument("_id", cur.getId())), DecoderContext.builder().build()).get("_id");
     }
 
     static BulkWriteException translateBulkWriteException(final org.mongodb.BulkWriteException e, final Decoder<DBObject> decoder) {

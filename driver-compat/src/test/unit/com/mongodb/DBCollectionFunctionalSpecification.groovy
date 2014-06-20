@@ -16,8 +16,6 @@
 
 package com.mongodb
 
-import spock.lang.Ignore
-
 import static org.hamcrest.Matchers.contains
 import static spock.util.matcher.HamcrestSupport.that
 
@@ -219,7 +217,6 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.indexInfo.size() == 1
     }
 
-    @Ignore('there is a bug caused by DBObjectCodec serialising the ID first so any query using ID second will fail')
     def 'should use compound index for min query'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1).append('_id', 1));

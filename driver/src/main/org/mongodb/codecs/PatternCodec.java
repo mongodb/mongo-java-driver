@@ -20,6 +20,8 @@ import org.bson.BsonReader;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,12 +34,12 @@ import java.util.regex.Pattern;
  */
 public class PatternCodec implements Codec<Pattern> {
     @Override
-    public void encode(final BsonWriter writer, final Pattern value) {
+    public void encode(final BsonWriter writer, final Pattern value, final EncoderContext encoderContext) {
         writer.writeRegularExpression(new BsonRegularExpression(value.pattern(), getOptionsAsString(value)));
     }
 
     @Override
-    public Pattern decode(final BsonReader reader) {
+    public Pattern decode(final BsonReader reader, final DecoderContext decoderContext) {
         BsonRegularExpression regularExpression = reader.readRegularExpression();
         return Pattern.compile(regularExpression.getPattern(), getOptionsAsInt(regularExpression));
     }

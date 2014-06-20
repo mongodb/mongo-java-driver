@@ -19,17 +19,19 @@ package org.mongodb.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 
 import java.util.Date;
 
 public class DateCodec implements Codec<Date> {
     @Override
-    public void encode(final BsonWriter writer, final Date value) {
+    public void encode(final BsonWriter writer, final Date value, final EncoderContext encoderContext) {
         writer.writeDateTime(value.getTime());
     }
 
     @Override
-    public Date decode(final BsonReader reader) {
+    public Date decode(final BsonReader reader, final DecoderContext decoderContext) {
         return new Date(reader.readDateTime());
     }
 

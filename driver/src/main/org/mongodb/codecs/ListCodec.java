@@ -20,6 +20,8 @@ import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
@@ -36,7 +38,7 @@ public class ListCodec implements Codec<List> {
     }
 
     @Override
-    public List decode(final BsonReader reader) {
+    public List decode(final BsonReader reader, final DecoderContext decoderContext) {
         reader.readStartArray();
         List list = new ArrayList();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
@@ -45,7 +47,7 @@ public class ListCodec implements Codec<List> {
                 reader.readNull();
                 value = null;
             } else {
-                value = registry.get(bsonTypeClassMap.get(reader.getCurrentBsonType())).decode(reader);
+                value = registry.get(bsonTypeClassMap.get(reader.getCurrentBsonType())).decode(reader, decoderContext);
             }
             list.add(value);
         }
@@ -54,14 +56,14 @@ public class ListCodec implements Codec<List> {
     }
 
     @Override
-    public void encode(final BsonWriter writer, final List list) {
+    public void encode(final BsonWriter writer, final List list, final EncoderContext encoderContext) {
         writer.writeStartArray();
         for (final Object value : list) {
             if (value == null) {
                 writer.writeNull();
             } else {
                 Codec codec = registry.get(value.getClass());
-                codec.encode(writer, value);
+                encoderContext.encodeWithChildContext(codec, writer, value);
             }
         }
         writer.writeEndArray();

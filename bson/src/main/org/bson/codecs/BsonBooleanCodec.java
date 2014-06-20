@@ -27,13 +27,13 @@ import org.bson.BsonWriter;
  */
 public class BsonBooleanCodec implements Codec<BsonBoolean> {
     @Override
-    public BsonBoolean decode(final BsonReader reader) {
+    public BsonBoolean decode(final BsonReader reader, final DecoderContext decoderContext) {
         boolean value = reader.readBoolean();
         return BsonBoolean.valueOf(value);
     }
 
     @Override
-    public void encode(final BsonWriter writer, final BsonBoolean value) {
+    public void encode(final BsonWriter writer, final BsonBoolean value, final EncoderContext encoderContext) {
         writer.writeBoolean(value.getValue());
     }
 

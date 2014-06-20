@@ -17,13 +17,17 @@
 package com.mongodb;
 
 import org.bson.BSON;
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentWriter;
 import org.bson.BsonInt32;
 import org.bson.BsonObjectId;
 import org.bson.Transformer;
+import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
@@ -95,5 +99,32 @@ public class DBObjectCodecTest extends DatabaseTestCase {
         dbObjectCodec.generateIdIfAbsentFromDocument(document);
         assertTrue(dbObjectCodec.documentHasId(document));
         assertEquals(BsonObjectId.class, dbObjectCodec.getDocumentId(document).getClass());
+    }
+
+    @Test
+    public void shouldRespectEncodeIdFirstPropertyInEncoderContext() {
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(null, new BasicDBObjectFactory(),
+                                                        new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider())),
+                                                        DBObjectCodecProvider.createDefaultBsonTypeClassMap());
+        // given
+        DBObject doc = new BasicDBObject("x", 2).append("_id", 2);
+
+        // when
+        BsonDocument encodedDocument = new BsonDocument();
+        dbObjectCodec.encode(new BsonDocumentWriter(encodedDocument),
+                             doc,
+                             EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+
+        // then
+        assertEquals(new ArrayList<String>(encodedDocument.keySet()), Arrays.asList("_id", "x"));
+
+        // when
+        encodedDocument.clear();
+        dbObjectCodec.encode(new BsonDocumentWriter(encodedDocument),
+                             doc,
+                             EncoderContext.builder().isEncodingCollectibleDocument(false).build());
+
+        // then
+        assertEquals(new ArrayList<String>(encodedDocument.keySet()), Arrays.asList("x", "_id"));
     }
 }

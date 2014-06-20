@@ -19,6 +19,8 @@ package org.mongodb.acceptancetest.querying;
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -174,7 +176,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         }
 
         @Override
-        public void encode(final BsonWriter writer, final Person value) {
+        public void encode(final BsonWriter writer, final Person value, final EncoderContext encoderContext) {
             writer.writeStartDocument();
             writer.writeObjectId("_id", value.id);
             writer.writeString("name", value.name);
@@ -182,7 +184,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         }
 
         @Override
-        public Person decode(final BsonReader reader) {
+        public Person decode(final BsonReader reader, final DecoderContext decoderContext) {
             reader.readStartDocument();
             ObjectId id = reader.readObjectId("_id");
             String name = reader.readString("name");

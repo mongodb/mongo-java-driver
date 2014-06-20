@@ -16,5 +16,12 @@
 
 package org.bson.codecs;
 
+/**
+ * A class that can both encode and decode values should implement this interface.
+ *
+ * @param <T> the value type
+ *
+ * @since 3.0
+ */
 public interface Codec<T> extends Encoder<T>, Decoder<T> {
 }

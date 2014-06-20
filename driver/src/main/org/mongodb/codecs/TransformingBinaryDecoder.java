@@ -20,6 +20,7 @@ import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonReader;
 import org.bson.codecs.Decoder;
+import org.bson.codecs.DecoderContext;
 import org.bson.types.Binary;
 import org.mongodb.BinaryTransformer;
 
@@ -38,7 +39,7 @@ public class TransformingBinaryDecoder implements Decoder<Object> {
     }
 
     @Override
-    public Object decode(final BsonReader reader) {
+    public Object decode(final BsonReader reader, final DecoderContext decoderContext) {
         BsonBinary binary = reader.readBinaryData();
         BinaryTransformer transformer = subTypeTransformerMap.get(binary.getType());
         if (transformer == null) {

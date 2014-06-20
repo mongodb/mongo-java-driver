@@ -20,15 +20,17 @@ import org.bson.BsonBinary;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 
 public class ByteArrayCodec implements Codec<byte[]> {
     @Override
-    public void encode(final BsonWriter writer, final byte[] value) {
+    public void encode(final BsonWriter writer, final byte[] value, final EncoderContext encoderContext) {
         writer.writeBinaryData(new BsonBinary(value));
     }
 
     @Override
-    public byte[] decode(final BsonReader reader) {
+    public byte[] decode(final BsonReader reader, final DecoderContext decoderContext) {
         return reader.readBinaryData().getData();
     }
 

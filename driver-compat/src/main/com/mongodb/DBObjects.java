@@ -18,6 +18,7 @@ package com.mongodb;
 
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
+import org.bson.codecs.DecoderContext;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
 
@@ -29,7 +30,7 @@ final class DBObjects {
                       DBObjectCodecProvider.createDefaultBsonTypeClassMap());
 
     public static DBObject toDBObject(final BsonDocument document) {
-        return codec.decode(new BsonDocumentReader(document));
+        return codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
     }
 
     private DBObjects() {

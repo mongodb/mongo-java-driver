@@ -17,6 +17,7 @@
 package org.bson
 
 import org.bson.codecs.BsonDocumentCodec
+import org.bson.codecs.EncoderContext
 import org.bson.types.ObjectId
 import spock.lang.Specification
 
@@ -52,7 +53,7 @@ class BsonDocumentWriterSpecification extends Specification {
 
         when:
         def encodedDoc = new BsonDocument();
-        new BsonDocumentCodec().encode(new BsonDocumentWriter(encodedDoc), doc)
+        new BsonDocumentCodec().encode(new BsonDocumentWriter(encodedDoc), doc, EncoderContext.builder().build())
 
         then:
         encodedDoc == doc

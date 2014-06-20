@@ -28,12 +28,12 @@ import org.bson.types.Binary;
  */
 public class BinaryCodec implements Codec<Binary> {
     @Override
-    public void encode(final BsonWriter writer, final Binary value) {
+    public void encode(final BsonWriter writer, final Binary value, final EncoderContext encoderContext) {
         writer.writeBinaryData(new BsonBinary(value.getType(), value.getData()));
     }
 
     @Override
-    public Binary decode(final BsonReader reader) {
+    public Binary decode(final BsonReader reader, final DecoderContext decoderContext) {
         BsonBinary bsonBinary = reader.readBinaryData();
         return new Binary(bsonBinary.getType(), bsonBinary.getData());
     }

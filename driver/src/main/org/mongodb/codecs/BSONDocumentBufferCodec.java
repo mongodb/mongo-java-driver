@@ -21,6 +21,8 @@ import org.bson.BsonBinaryWriter;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicInputBuffer;
 import org.mongodb.BSONDocumentBuffer;
 import org.mongodb.MongoInternalException;
@@ -43,7 +45,7 @@ public class BSONDocumentBufferCodec implements Codec<BSONDocumentBuffer> {
     }
 
     @Override
-    public void encode(final BsonWriter writer, final BSONDocumentBuffer value) {
+    public void encode(final BsonWriter writer, final BSONDocumentBuffer value, final EncoderContext encoderContext) {
         BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(value.getByteBuffer()), true);
         try {
             writer.pipe(reader);
@@ -53,7 +55,7 @@ public class BSONDocumentBufferCodec implements Codec<BSONDocumentBuffer> {
     }
 
     @Override
-    public BSONDocumentBuffer decode(final BsonReader reader) {
+    public BSONDocumentBuffer decode(final BsonReader reader, final DecoderContext decoderContext) {
         BsonBinaryWriter writer = new BsonBinaryWriter(new ByteBufferOutputBuffer(bufferProvider), true);
         try {
             writer.pipe(reader);

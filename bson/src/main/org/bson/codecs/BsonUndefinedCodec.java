@@ -33,13 +33,13 @@ import org.bson.BsonWriter;
  */
 public class BsonUndefinedCodec implements Codec<BsonUndefined> {
     @Override
-    public BsonUndefined decode(final BsonReader reader) {
+    public BsonUndefined decode(final BsonReader reader, final DecoderContext decoderContext) {
         reader.readUndefined();
         return new BsonUndefined();
     }
 
     @Override
-    public void encode(final BsonWriter writer, final BsonUndefined value) {
+    public void encode(final BsonWriter writer, final BsonUndefined value, final EncoderContext encoderContext) {
         writer.writeUndefined();
     }
 

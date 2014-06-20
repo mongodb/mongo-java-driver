@@ -15,11 +15,12 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
-import org.bson.BsonSerializationException
-import org.bson.types.Binary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonSerializationException
+import org.bson.types.Binary
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
@@ -73,7 +74,7 @@ class ReplaceOperationSpecification extends FunctionalSpecification {
         op.execute(getBinding())
 
         then:
-        asList(replacement.getReplacement()) == getCollectionHelper().find()
+        getCollectionHelper().find().get(0).keySet().iterator().next() == '_id'
     }
 
     @org.junit.experimental.categories.Category(Async)
@@ -143,5 +144,19 @@ class ReplaceOperationSpecification extends FunctionalSpecification {
 
         then:
         thrown(BsonSerializationException)
+    }
+
+    def 'should move _id to the beginning'() {
+        def insert = new InsertRequest<Document>(new Document('_id', 1))
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec()).execute(getBinding())
+
+        def replacement = new ReplaceRequest<Document>(new BsonDocument('_id', new BsonInt32(1)), new Document('x', 1).append('_id', 1))
+        def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        getCollectionHelper().find().get(0).keySet() as List == ['_id', 'x']
     }
 }

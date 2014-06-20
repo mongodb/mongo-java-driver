@@ -45,21 +45,22 @@ public class BsonDocumentWrapperCodec implements Codec<BsonDocumentWrapper> {
      * in all cases.
      *
      * @param reader the BSON reader the reader
+     * @param decoderContext
      * @return the document
      */
     @Override
-    public BsonDocumentWrapper decode(final BsonReader reader) {
+    public BsonDocumentWrapper decode(final BsonReader reader, final DecoderContext decoderContext) {
         throw new UnsupportedOperationException("Decoding into a BsonDocumentWrapper is not allowed");
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public void encode(final BsonWriter writer, final BsonDocumentWrapper value) {
+    public void encode(final BsonWriter writer, final BsonDocumentWrapper value, final EncoderContext encoderContext) {
         if (value.isUnwrapped()) {
-            bsonDocumentCodec.encode(writer, value);
+            bsonDocumentCodec.encode(writer, value, encoderContext);
         } else {
             Encoder encoder = value.getEncoder();
-            encoder.encode(writer, value.getWrappedDocument());
+            encoder.encode(writer, value.getWrappedDocument(), encoderContext);
         }
     }
 

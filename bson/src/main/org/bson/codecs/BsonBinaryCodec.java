@@ -27,12 +27,12 @@ import org.bson.BsonWriter;
  */
 public class BsonBinaryCodec implements Codec<BsonBinary> {
     @Override
-    public void encode(final BsonWriter writer, final BsonBinary value) {
+    public void encode(final BsonWriter writer, final BsonBinary value, final EncoderContext encoderContext) {
         writer.writeBinaryData(value);
     }
 
     @Override
-    public BsonBinary decode(final BsonReader reader) {
+    public BsonBinary decode(final BsonReader reader, final DecoderContext decoderContext) {
         return reader.readBinaryData();
     }
 

@@ -27,12 +27,12 @@ import org.bson.BsonWriter;
  */
 public class BsonJavaScriptCodec implements Codec<BsonJavaScript> {
     @Override
-    public BsonJavaScript decode(final BsonReader reader) {
+    public BsonJavaScript decode(final BsonReader reader, final DecoderContext decoderContext) {
         return new BsonJavaScript(reader.readJavaScript());
     }
 
     @Override
-    public void encode(final BsonWriter writer, final BsonJavaScript value) {
+    public void encode(final BsonWriter writer, final BsonJavaScript value, final EncoderContext encoderContext) {
         writer.writeJavaScript(value.getCode());
     }
 

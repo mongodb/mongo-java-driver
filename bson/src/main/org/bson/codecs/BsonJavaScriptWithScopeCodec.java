@@ -39,16 +39,16 @@ public class BsonJavaScriptWithScopeCodec implements Codec<BsonJavaScriptWithSco
     }
 
     @Override
-    public BsonJavaScriptWithScope decode(final BsonReader bsonReader) {
+    public BsonJavaScriptWithScope decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
         String code = bsonReader.readJavaScriptWithScope();
-        BsonDocument scope = documentCodec.decode(bsonReader);
+        BsonDocument scope = documentCodec.decode(bsonReader, decoderContext);
         return new BsonJavaScriptWithScope(code, scope);
     }
 
     @Override
-    public void encode(final BsonWriter writer, final BsonJavaScriptWithScope codeWithScope) {
+    public void encode(final BsonWriter writer, final BsonJavaScriptWithScope codeWithScope, final EncoderContext encoderContext) {
         writer.writeJavaScriptWithScope(codeWithScope.getCode());
-        documentCodec.encode(writer, codeWithScope.getScope());
+        documentCodec.encode(writer, codeWithScope.getScope(), encoderContext);
     }
 
     @Override

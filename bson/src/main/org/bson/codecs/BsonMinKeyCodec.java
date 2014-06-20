@@ -27,12 +27,12 @@ import org.bson.BsonWriter;
  */
 public class BsonMinKeyCodec implements Codec<BsonMinKey> {
     @Override
-    public void encode(final BsonWriter writer, final BsonMinKey value) {
+    public void encode(final BsonWriter writer, final BsonMinKey value, final EncoderContext encoderContext) {
         writer.writeMinKey();
     }
 
     @Override
-    public BsonMinKey decode(final BsonReader reader) {
+    public BsonMinKey decode(final BsonReader reader, final DecoderContext decoderContext) {
         reader.readMinKey();
         return new BsonMinKey();
     }

@@ -23,6 +23,8 @@ import org.bson.BsonType
 import org.bson.BsonWriter
 import org.bson.ByteBufNIO
 import org.bson.codecs.Codec
+import org.bson.codecs.DecoderContext
+import org.bson.codecs.EncoderContext
 import org.bson.codecs.MinKeyCodec
 import org.bson.io.BasicInputBuffer
 import org.bson.io.BasicOutputBuffer
@@ -77,13 +79,14 @@ class CodecRegistrySpecification extends Specification {
                           new Top('Jim', null, null),
                           new Nested('George', new Top('Joe', null, null)))
         def writer = new BsonBinaryWriter(new BasicOutputBuffer(), false)
-        topCodec.encode(writer, top)
+        topCodec.encode(writer, top, EncoderContext.builder().build())
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         writer.getBuffer().pipe(os);
         writer.close()
 
         then:
-        topCodec.decode(new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(os.toByteArray()))), false)) == top
+        topCodec.decode(new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(os.toByteArray()))), false),
+                        DecoderContext.builder().build()) == top
     }
 
     def 'should throw CodecConfigurationException when a codec requires another codec that can not be found'() {
@@ -152,7 +155,7 @@ class TopCodec implements Codec<Top> {
     }
 
     @Override
-    void encode(final BsonWriter writer, final Top top) {
+    void encode(final BsonWriter writer, final Top top, EncoderContext encoderContext) {
         if (top == null) {
             writer.writeNull()
             return
@@ -161,9 +164,9 @@ class TopCodec implements Codec<Top> {
         writer.writeStartDocument()
         writer.writeString('name', top.getName())
         writer.writeName('other')
-        codecForOther.encode(writer, top.getOther())
+        codecForOther.encode(writer, EncoderContext.builder().build(), top.getOther())
         writer.writeName('nested')
-        codecForNested.encode(writer, top.getNested())
+        codecForNested.encode(writer, top.getNested(), EncoderContext.builder().build())
         writer.writeEndDocument()
     }
 
@@ -173,7 +176,7 @@ class TopCodec implements Codec<Top> {
     }
 
     @Override
-    def Top decode(final BsonReader reader) {
+    def Top decode(final BsonReader reader, DecoderContext decoderContext) {
         reader.readStartDocument()
         reader.readName()
         def name = reader.readString()
@@ -186,14 +189,14 @@ class TopCodec implements Codec<Top> {
         if (type == BsonType.NULL) {
             reader.readNull()
         } else {
-            other = codecForOther.decode(reader)
+            other = codecForOther.decode(reader, decoderContext)
         }
 
         reader.readName('nested')
         if (type == BsonType.NULL) {
             reader.readNull()
         } else {
-            nested = codecForNested.decode(reader)
+            nested = codecForNested.decode(reader, decoderContext)
         }
         reader.readEndDocument()
         return new Top(name, other, nested);
@@ -208,7 +211,7 @@ class NestedCodec implements Codec<Nested> {
     }
 
     @Override
-    void encode(final BsonWriter writer, final Nested nested) {
+    void encode(final BsonWriter writer, final Nested nested, EncoderContext encoderContext) {
         if (nested == null) {
             writer.writeNull()
             return
@@ -217,7 +220,7 @@ class NestedCodec implements Codec<Nested> {
         writer.writeStartDocument()
         writer.writeString('name', nested.getName())
         writer.writeName('top')
-        codecForTop.encode(writer, nested.getTop())
+        codecForTop.encode(writer, EncoderContext.builder().build(), nested.getTop())
         writer.writeEndDocument()
     }
 
@@ -227,7 +230,7 @@ class NestedCodec implements Codec<Nested> {
     }
 
     @Override
-    def Nested decode(final BsonReader reader) {
+    def Nested decode(final BsonReader reader, DecoderContext decoderContext) {
         reader.readStartDocument()
         reader.readName()
         def name = reader.readString()
@@ -237,7 +240,7 @@ class NestedCodec implements Codec<Nested> {
         if (type == BsonType.NULL) {
             reader.readNull()
         } else {
-            top = codecForTop.decode(reader)
+            top = codecForTop.decode(reader, decoderContext)
         }
         reader.readEndDocument()
         return new Nested(name, top);

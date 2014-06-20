@@ -28,12 +28,12 @@ import org.bson.BsonWriter;
 public class BsonDBPointerCodec implements Codec<BsonDbPointer> {
 
     @Override
-    public BsonDbPointer decode(final BsonReader reader) {
+    public BsonDbPointer decode(final BsonReader reader, final DecoderContext decoderContext) {
         return reader.readDBPointer();
     }
 
     @Override
-    public void encode(final BsonWriter writer, final BsonDbPointer value) {
+    public void encode(final BsonWriter writer, final BsonDbPointer value, final EncoderContext encoderContext) {
         writer.writeDBPointer(value);
     }
 

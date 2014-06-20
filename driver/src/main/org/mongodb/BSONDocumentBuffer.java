@@ -21,6 +21,8 @@ import org.bson.BsonBinaryWriter;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 
@@ -57,7 +59,7 @@ public class BSONDocumentBuffer {
     public <T> BSONDocumentBuffer(final T document, final Codec<T> codec) {
         BsonBinaryWriter writer = new BsonBinaryWriter(new BasicOutputBuffer(), true);
         try {
-            codec.encode(writer, document);
+            codec.encode(writer, document, EncoderContext.builder().build());
             this.bytes = writer.getBuffer().toByteArray();
         } finally {
             writer.close();
@@ -85,7 +87,7 @@ public class BSONDocumentBuffer {
     public <T> T decode(final Codec<T> codec) {
         BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(getByteBuffer()), true);
         try {
-            return codec.decode(reader);
+            return codec.decode(reader, DecoderContext.builder().build());
         } finally {
             reader.close();
         }

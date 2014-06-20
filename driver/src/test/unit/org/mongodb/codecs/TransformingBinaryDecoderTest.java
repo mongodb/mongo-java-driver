@@ -18,6 +18,8 @@ package org.mongodb.codecs;
 
 import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 import org.bson.types.Binary;
@@ -40,7 +42,7 @@ public class TransformingBinaryDecoderTest {
         writer.writeBinaryData("subtype2", new BsonBinary(BsonBinarySubType.OLD_BINARY, new byte[]{2}));
 
         writer.writeName("subtype3");
-        new UUIDCodec().encode(writer, UUID.randomUUID());
+        new UUIDCodec().encode(writer, UUID.randomUUID(), EncoderContext.builder().build());
 
         writer.writeBinaryData("subtype4", new BsonBinary(BsonBinarySubType.UUID_STANDARD, new byte[]{4}));
         writer.writeBinaryData("subtype5", new BsonBinary(BsonBinarySubType.MD5, new byte[]{5}));
@@ -52,31 +54,31 @@ public class TransformingBinaryDecoderTest {
         reader.readStartDocument();
 
         reader.readName("subtype0");
-        Object decoded = decoder.decode(reader);
+        Object decoded = decoder.decode(reader, DecoderContext.builder().build());
         assertEquals(byte[].class, decoded.getClass());
 
         reader.readName("subtype1");
-        decoded = decoder.decode(reader);
+        decoded = decoder.decode(reader, DecoderContext.builder().build());
         assertEquals(Binary.class, decoded.getClass());
 
         reader.readName("subtype2");
-        decoded = decoder.decode(reader);
+        decoded = decoder.decode(reader, DecoderContext.builder().build());
         assertEquals(byte[].class, decoded.getClass());
 
         reader.readName("subtype3");
-        decoded = decoder.decode(reader);
+        decoded = decoder.decode(reader, DecoderContext.builder().build());
         assertEquals(UUID.class, decoded.getClass());
 
         reader.readName("subtype4");
-        decoded = decoder.decode(reader);
+        decoded = decoder.decode(reader, DecoderContext.builder().build());
         assertEquals(Binary.class, decoded.getClass());
 
         reader.readName("subtype5");
-        decoded = decoder.decode(reader);
+        decoded = decoder.decode(reader, DecoderContext.builder().build());
         assertEquals(Binary.class, decoded.getClass());
 
         reader.readName("subtype80");
-        decoded = decoder.decode(reader);
+        decoded = decoder.decode(reader, DecoderContext.builder().build());
         assertEquals(Binary.class, decoded.getClass());
 
         reader.readEndDocument();

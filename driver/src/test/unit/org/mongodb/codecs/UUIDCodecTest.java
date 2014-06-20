@@ -17,6 +17,7 @@
 package org.mongodb.codecs;
 
 import org.bson.BsonBinaryWriter;
+import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 import org.junit.Before;
 import org.junit.Test;
@@ -48,7 +49,7 @@ public class UUIDCodecTest {
             bsonWriter.writeName("_id");
 
             // When
-            uuidCodec.encode(bsonWriter, uuid);
+            uuidCodec.encode(bsonWriter, uuid, EncoderContext.builder().build());
         } finally {
             bsonWriter.close();
         }

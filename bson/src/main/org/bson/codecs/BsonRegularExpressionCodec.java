@@ -27,12 +27,12 @@ import org.bson.BsonWriter;
  */
 public class BsonRegularExpressionCodec implements Codec<BsonRegularExpression> {
     @Override
-    public BsonRegularExpression decode(final BsonReader reader) {
+    public BsonRegularExpression decode(final BsonReader reader, final DecoderContext decoderContext) {
         return reader.readRegularExpression();
     }
 
     @Override
-    public void encode(final BsonWriter writer, final BsonRegularExpression value) {
+    public void encode(final BsonWriter writer, final BsonRegularExpression value, final EncoderContext encoderContext) {
         writer.writeRegularExpression(value);
     }
 

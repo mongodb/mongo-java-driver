@@ -19,15 +19,17 @@ package org.mongodb.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 
 public class StringCodec implements Codec<String> {
     @Override
-    public void encode(final BsonWriter writer, final String value) {
+    public void encode(final BsonWriter writer, final String value, final EncoderContext encoderContext) {
         writer.writeString(value);
     }
 
     @Override
-    public String decode(final BsonReader reader) {
+    public String decode(final BsonReader reader, final DecoderContext decoderContext) {
         return reader.readString();
     }
 

@@ -22,6 +22,7 @@ import org.bson.BsonWriterSettings;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Encoder;
+import org.bson.codecs.EncoderContext;
 import org.bson.io.OutputBuffer;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -93,20 +94,22 @@ public abstract class RequestMessage {
     protected abstract RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition);
 
     protected <T> void addDocument(final T obj, final Encoder<T> encoder, final OutputBuffer buffer, final FieldNameValidator validator) {
-        addDocument(obj, encoder, buffer, validator, settings.getMaxDocumentSize() + QUERY_DOCUMENT_HEADROOM);
+        addDocument(obj, encoder, EncoderContext.builder().build(), buffer, validator,
+                    settings.getMaxDocumentSize() + QUERY_DOCUMENT_HEADROOM);
     }
 
     protected <T> void addCollectibleDocument(final T obj, final Encoder<T> encoder, final OutputBuffer buffer,
                                               final FieldNameValidator validator) {
-        addDocument(obj, encoder, buffer, validator, settings.getMaxDocumentSize());
+        addDocument(obj, encoder, EncoderContext.builder().isEncodingCollectibleDocument(true).build(), buffer, validator,
+                    settings.getMaxDocumentSize());
     }
 
-    private <T> void addDocument(final T obj, final Encoder<T> encoder, final OutputBuffer buffer, final FieldNameValidator validator,
-                                   final int maxDocumentSize) {
+    private <T> void addDocument(final T obj, final Encoder<T> encoder, final EncoderContext encoderContext, final OutputBuffer buffer,
+                                 final FieldNameValidator validator, final int maxDocumentSize) {
         BsonBinaryWriter writer = new BsonBinaryWriter(new BsonWriterSettings(),
                                                        new BsonBinaryWriterSettings(maxDocumentSize), buffer, validator);
         try {
-            encoder.encode(writer, obj);
+            encoder.encode(writer, obj, encoderContext);
         } finally {
             writer.close();
         }

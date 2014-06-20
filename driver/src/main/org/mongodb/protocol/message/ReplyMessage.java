@@ -18,6 +18,7 @@ package org.mongodb.protocol.message;
 
 import org.bson.BsonBinaryReader;
 import org.bson.codecs.Decoder;
+import org.bson.codecs.DecoderContext;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
 import org.mongodb.MongoInternalException;
@@ -55,7 +56,7 @@ public class ReplyMessage<T> {
             while (documents.size() < replyHeader.getNumberReturned()) {
                 BsonBinaryReader reader = new BsonBinaryReader(inputBuffer, false);
                 try {
-                    documents.add(decoder.decode(reader));
+                    documents.add(decoder.decode(reader, DecoderContext.builder().build()));
                 } finally {
                     reader.close();
                 }

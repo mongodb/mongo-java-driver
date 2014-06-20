@@ -39,12 +39,12 @@ public class BsonArrayCodec implements Codec<BsonArray> {
     }
 
     @Override
-    public BsonArray decode(final BsonReader reader) {
+    public BsonArray decode(final BsonReader reader, final DecoderContext decoderContext) {
         reader.readStartArray();
 
         List<BsonValue> list = new ArrayList<BsonValue>();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            list.add(readValue(reader));
+            list.add(readValue(reader, decoderContext));
         }
 
         reader.readEndArray();
@@ -54,12 +54,12 @@ public class BsonArrayCodec implements Codec<BsonArray> {
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public void encode(final BsonWriter writer, final BsonArray array) {
+    public void encode(final BsonWriter writer, final BsonArray array, final EncoderContext encoderContext) {
         writer.writeStartArray();
 
         for (BsonValue value : array) {
             Codec codec = registry.get(BsonValueCodecProvider.getClassForBsonType(value.getBsonType()));
-            codec.encode(writer, value);
+            encoderContext.encodeWithChildContext(codec, writer, value);
         }
 
         writer.writeEndArray();
@@ -75,10 +75,11 @@ public class BsonArrayCodec implements Codec<BsonArray> {
      * that the value be fully consumed before returning.
      *
      * @param reader the read to read the value from
+     * @param decoderContext
      * @return the non-null value read from the reader
      */
-    protected BsonValue readValue(final BsonReader reader) {
-        return registry.get(BsonValueCodecProvider.getClassForBsonType(reader.getCurrentBsonType())).decode(reader);
+    protected BsonValue readValue(final BsonReader reader, final DecoderContext decoderContext) {
+        return registry.get(BsonValueCodecProvider.getClassForBsonType(reader.getCurrentBsonType())).decode(reader, decoderContext);
     }
 
 }

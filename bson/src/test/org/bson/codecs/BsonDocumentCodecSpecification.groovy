@@ -23,6 +23,7 @@ import org.bson.BsonBinaryWriter
 import org.bson.BsonBoolean
 import org.bson.BsonDateTime
 import org.bson.BsonDocument
+import org.bson.BsonDocumentWriter
 import org.bson.BsonDouble
 import org.bson.BsonElement
 import org.bson.BsonInt32
@@ -45,6 +46,8 @@ import org.bson.types.ObjectId
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
+
+import static java.util.Arrays.asList
 
 class BsonDocumentCodecSpecification extends Specification {
     def 'should encode and decode all default types'() {
@@ -69,8 +72,8 @@ class BsonDocumentCodecSpecification extends Specification {
                         new BsonElement('undefined', new BsonUndefined()),
                         new BsonElement('binary', new BsonBinary((byte) 80, [5, 4, 3, 2, 1] as byte[])),
                         new BsonElement('array', new BsonArray([new BsonInt32(1), new BsonInt64(2L), new BsonBoolean(true),
-                                                                    new BsonArray([new BsonInt32(1), new BsonInt32(2), new BsonInt32(3)]),
-                                                                    new BsonDocument('a', new BsonInt64(2L))])),
+                                                                new BsonArray([new BsonInt32(1), new BsonInt32(2), new BsonInt32(3)]),
+                                                                new BsonDocument('a', new BsonInt64(2L))])),
                         new BsonElement('document', new BsonDocument('a', new BsonInt32(1)))
                 ])
 
@@ -80,10 +83,10 @@ class BsonDocumentCodecSpecification extends Specification {
         }
         when:
         BsonBinaryWriter writer = new BsonBinaryWriter(new BasicOutputBuffer(), false)
-        new BsonDocumentCodec().encode(writer, doc)
+        new BsonDocumentCodec().encode(writer, doc, EncoderContext.builder().build())
         BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(writer.buffer.toByteArray()))),
                                                        true)
-        def decodedDoc = new BsonDocumentCodec().decode(reader)
+        def decodedDoc = new BsonDocumentCodec().decode(reader, DecoderContext.builder().build())
 
         then:
         decodedDoc.get('null') == doc.get('null')
@@ -108,4 +111,43 @@ class BsonDocumentCodecSpecification extends Specification {
         decodedDoc.get('document') == doc.get('document')
     }
 
+    def 'should respect encodeIdFirst property in encoder context'() {
+        given:
+        def doc = new BsonDocument(
+                [
+                        new BsonElement('x', new BsonInt32(2)),
+                        new BsonElement('_id', new BsonInt32(2)),
+                        new BsonElement('nested', new BsonDocument(
+                                [
+                                        new BsonElement('x', new BsonInt32(2)),
+                                        new BsonElement('_id', new BsonInt32(2))
+                                ])),
+                        new BsonElement('array', new BsonArray(asList(new BsonDocument(
+                                [
+                                        new BsonElement('x', new BsonInt32(2)),
+                                        new BsonElement('_id', new BsonInt32(2))
+                                ]
+                        ))))
+                ])
+
+        when:
+        def encodedDocument = new BsonDocument()
+        new BsonDocumentCodec().encode(new BsonDocumentWriter(encodedDocument), doc,
+                                       EncoderContext.builder().isEncodingCollectibleDocument(true).build())
+
+        then:
+        encodedDocument.keySet() as List == ['_id', 'x', 'nested', 'array']
+        encodedDocument.getDocument('nested').keySet() as List == ['x', '_id']
+        encodedDocument.getArray('array').get(0).asDocument().keySet() as List == ['x', '_id']
+
+        when:
+        encodedDocument.clear()
+        new BsonDocumentCodec().encode(new BsonDocumentWriter(encodedDocument), doc,
+                                       EncoderContext.builder().isEncodingCollectibleDocument(false).build())
+
+        then:
+        encodedDocument.keySet() as List == ['x', '_id', 'nested', 'array']
+        encodedDocument.getDocument('nested').keySet() as List == ['x', '_id']
+        encodedDocument.getArray('array').get(0).asDocument().keySet() as List == ['x', '_id']
+    }
 }

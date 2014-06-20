@@ -18,6 +18,7 @@ package org.mongodb.protocol.message;
 
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
+import org.bson.codecs.EncoderContext;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
@@ -65,7 +66,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
             writer.writeName("q");
-            getBsonDocumentCodec().encode(writer, removeRequest.getFilter());
+            getBsonDocumentCodec().encode(writer, removeRequest.getFilter(), EncoderContext.builder().build());
             writer.writeInt32("limit", removeRequest.isMulti() ? 0 : 1);
             writer.popMaxDocumentSize();
             writer.writeEndDocument();

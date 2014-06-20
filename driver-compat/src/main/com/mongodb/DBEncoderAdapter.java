@@ -20,6 +20,7 @@ import org.bson.BsonBinaryReader;
 import org.bson.BsonWriter;
 import org.bson.ByteBufNIO;
 import org.bson.codecs.Encoder;
+import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 
@@ -37,7 +38,7 @@ class DBEncoderAdapter implements Encoder<DBObject> {
     // TODO: this can be optimized to reduce copying of buffers.  For that we'd need an InputBuffer that could iterate
     //       over an array of ByteBuffer instances from a PooledByteBufferOutputBuffer
     @Override
-    public void encode(final BsonWriter writer, final DBObject document) {
+    public void encode(final BsonWriter writer, final DBObject document, final EncoderContext encoderContext) {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
         try {
             encoder.writeObject(buffer, document);

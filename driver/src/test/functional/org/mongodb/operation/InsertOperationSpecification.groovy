@@ -288,4 +288,16 @@ class InsertOperationSpecification extends FunctionalSpecification {
         then:
         thrown(BsonSerializationException)
     }
+
+    def 'should move _id to the beginning'() {
+        given:
+        def insert = new InsertRequest<Document>(new Document('x', 1).append('_id', 1))
+        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec())
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        getCollectionHelper().find().get(0).keySet() as List == ['_id', 'x']
+    }
 }

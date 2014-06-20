@@ -23,12 +23,12 @@ import org.bson.types.Code;
 public class CodeCodec implements Codec<Code> {
 
     @Override
-    public void encode(final BsonWriter writer, final Code value) {
+    public void encode(final BsonWriter writer, final Code value, final EncoderContext encoderContext) {
         writer.writeJavaScript(value.getCode());
     }
 
     @Override
-    public Code decode(final BsonReader bsonReader) {
+    public Code decode(final BsonReader bsonReader, final DecoderContext decoderContext) {
         return new Code(bsonReader.readJavaScript());
     }
 

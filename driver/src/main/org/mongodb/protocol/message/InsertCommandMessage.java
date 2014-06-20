@@ -19,6 +19,7 @@ package org.mongodb.protocol.message;
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Encoder;
+import org.bson.codecs.EncoderContext;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
@@ -68,7 +69,9 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
         writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
         for (int i = 0; i < insertRequestList.size(); i++) {
             writer.mark();
-            encoder.encode(writer, insertRequestList.get(i).getDocument());
+            encoder.encode(writer,
+                           insertRequestList.get(i).getDocument(),
+                           EncoderContext.builder().isEncodingCollectibleDocument(true).build());
             if (exceedsLimits(buffer.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
                 nextMessage = new InsertCommandMessage<T>(getWriteNamespace(), isOrdered(), getWriteConcern(),

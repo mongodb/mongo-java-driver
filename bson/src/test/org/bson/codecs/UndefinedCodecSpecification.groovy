@@ -36,7 +36,7 @@ class UndefinedCodecSpecification extends Specification {
         BsonReader reader = Mock()
 
         when:
-        def result = codec.decode(reader)
+        def result = codec.decode(reader, DecoderContext.builder().build())
 
         then:
         1 * reader.readUndefined()
@@ -49,7 +49,7 @@ class UndefinedCodecSpecification extends Specification {
         BsonWriter writer = Mock()
 
         when:
-        codec.encode(writer, new BsonUndefined())
+        codec.encode(writer, new BsonUndefined(), EncoderContext.builder().build())
 
         then:
         1 * writer.writeUndefined()

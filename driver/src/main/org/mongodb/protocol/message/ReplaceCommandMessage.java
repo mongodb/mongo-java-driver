@@ -19,6 +19,7 @@ package org.mongodb.protocol.message;
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Encoder;
+import org.bson.codecs.EncoderContext;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.operation.ReplaceRequest;
@@ -37,7 +38,7 @@ public class ReplaceCommandMessage<T> extends BaseUpdateCommandMessage<ReplaceRe
 
     @Override
     protected void writeUpdate(final BsonBinaryWriter writer, final ReplaceRequest<T> update) {
-        encoder.encode(writer, update.getReplacement());
+        encoder.encode(writer, update.getReplacement(), EncoderContext.builder().isEncodingCollectibleDocument(true).build());
     }
 
     @Override

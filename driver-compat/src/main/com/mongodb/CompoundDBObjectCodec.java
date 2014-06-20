@@ -20,7 +20,9 @@ import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
+import org.bson.codecs.DecoderContext;
 import org.bson.codecs.Encoder;
+import org.bson.codecs.EncoderContext;
 
 class CompoundDBObjectCodec implements Codec<DBObject> {
 
@@ -37,13 +39,13 @@ class CompoundDBObjectCodec implements Codec<DBObject> {
     }
 
     @Override
-    public DBObject decode(final BsonReader reader) {
-        return decoder.decode(reader);
+    public DBObject decode(final BsonReader reader, final DecoderContext decoderContext) {
+        return decoder.decode(reader, decoderContext);
     }
 
     @Override
-    public void encode(final BsonWriter writer, final DBObject value) {
-        encoder.encode(writer, value);
+    public void encode(final BsonWriter writer, final DBObject value, final EncoderContext encoderContext) {
+        encoder.encode(writer, value, encoderContext);
     }
 
     @Override

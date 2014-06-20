@@ -17,6 +17,7 @@
 package org.bson;
 
 import org.bson.codecs.Encoder;
+import org.bson.codecs.EncoderContext;
 
 import java.util.Collection;
 import java.util.Map;
@@ -163,7 +164,7 @@ public class BsonDocumentWrapper<T> extends BsonDocument {
         if (unwrapped == null) {
             BsonDocument unwrapped = new BsonDocument();
             BsonWriter writer = new BsonDocumentWriter(unwrapped);
-            encoder.encode(writer, wrappedDocument);
+            encoder.encode(writer, wrappedDocument, EncoderContext.builder().build());
             this.unwrapped = unwrapped;
         }
         return unwrapped;

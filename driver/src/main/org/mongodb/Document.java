@@ -18,6 +18,8 @@ package org.mongodb;
 
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
@@ -82,7 +84,7 @@ public class Document implements Map<String, Object>, Serializable {
      */
     public static Document valueOf(final String s) {
         JsonReader bsonReader = new JsonReader(s);
-        return new DocumentCodec().decode(bsonReader);
+        return new DocumentCodec().decode(bsonReader, DecoderContext.builder().build());
     }
 
     /**
@@ -249,7 +251,7 @@ public class Document implements Map<String, Object>, Serializable {
         StringWriter writer = new StringWriter();
         BsonWriter bsonWriter = new JsonWriter(writer, new JsonWriterSettings(JsonMode.STRICT));
         Codec<Document> codec = new DocumentCodec();
-        codec.encode(bsonWriter, this);
+        codec.encode(bsonWriter, this, EncoderContext.builder().build());
 
         return writer.toString();
     }

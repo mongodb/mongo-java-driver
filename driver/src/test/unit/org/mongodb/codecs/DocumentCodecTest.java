@@ -22,6 +22,8 @@ import org.bson.BsonBinaryWriter;
 import org.bson.BsonInt32;
 import org.bson.BsonObjectId;
 import org.bson.ByteBufNIO;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.InputBuffer;
@@ -80,10 +82,10 @@ public class DocumentCodecTest {
         //        doc.put("pattern", Pattern.compile("^hello"));  // TODO: Pattern doesn't override equals method!
         doc.put("null", null);
 
-        documentCodec.encode(writer, doc);
+        documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
         InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false));
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -93,10 +95,10 @@ public class DocumentCodecTest {
         Document doc = new Document();
         doc.put("array", asList(1, 2, 3, 4, 5));
 
-        documentCodec.encode(writer, doc);
+        documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
         InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false));
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -106,9 +108,9 @@ public class DocumentCodecTest {
         Document doc = new Document();
         doc.put("theCode", new CodeWithScope("javaScript code", new Document("fieldNameOfScope", "valueOfScope")));
 
-        documentCodec.encode(writer, doc);
+        documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(createInputBuffer(), false));
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(createInputBuffer(), false), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -120,10 +122,10 @@ public class DocumentCodecTest {
         List<List<Integer>> listOfLists = asList(asList(1), asList(2));
         doc.put("array", listOfLists);
 
-        documentCodec.encode(writer, doc);
+        documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
         InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false));
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -134,10 +136,10 @@ public class DocumentCodecTest {
         List<Document> listOfDocuments = asList(new Document("intVal", 1), new Document("anotherInt", 2));
         doc.put("array", listOfDocuments);
 
-        documentCodec.encode(writer, doc);
+        documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
         InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false));
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -147,10 +149,10 @@ public class DocumentCodecTest {
         Document doc = new Document();
         doc.put("nested", new Document("x", 1));
 
-        documentCodec.encode(writer, doc);
+        documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
         InputBuffer inputBuffer = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false));
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(inputBuffer, false), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 

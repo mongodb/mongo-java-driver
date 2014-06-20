@@ -19,15 +19,17 @@ package org.mongodb.codecs;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 
 public class ShortCodec implements Codec<Short> {
     @Override
-    public void encode(final BsonWriter writer, final Short value) {
+    public void encode(final BsonWriter writer, final Short value, final EncoderContext encoderContext) {
         writer.writeInt32(value);
     }
 
     @Override
-    public Short decode(final BsonReader reader) {
+    public Short decode(final BsonReader reader, final DecoderContext decoderContext) {
         throw new UnsupportedOperationException();
     }
 

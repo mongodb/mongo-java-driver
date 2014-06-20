@@ -23,7 +23,8 @@ public interface Decoder<T> {
      * Decodes a BSON value from the given reader into an instance of the type parameter {@code T}.
      *
      * @param reader the BSON reader
+     * @param decoderContext the decoder context
      * @return an instance of the type parameter {@code T}.
      */
-    T decode(BsonReader reader);
+    T decode(BsonReader reader, final DecoderContext decoderContext);
 }

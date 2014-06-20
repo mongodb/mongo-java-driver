@@ -16,7 +16,6 @@
 
 package com.mongodb
 
-import spock.lang.Ignore
 import spock.lang.Subject
 
 class DBCursorFunctionalSpecification extends FunctionalSpecification {
@@ -116,7 +115,6 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         cursor.next().get('x') == 80
     }
 
-    @Ignore('Currently the DBObjectCodec encodes ID first, so any sort criteria containing ID not in the first position will be broken')
     def 'should sort on two fields'() {
         given:
         collection.insert(new BasicDBObject('_id', 1).append('name', 'Chris'))
