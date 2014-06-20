@@ -23,7 +23,7 @@ import org.bson.Transformer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
-import org.bson.types.Undefined;
+import org.bson.BsonUndefined;
 import org.junit.Test;
 
 import java.text.ParsePosition;
@@ -123,7 +123,7 @@ public class JSONCallbackTest {
     @Test
     public void undefinedParsing() {
         Object undefined = JSON.parse("{ \"$undefined\" : true }");
-        assertEquals(new Undefined(), undefined);
+        assertEquals(new BsonUndefined(), undefined);
     }
 
 }

@@ -32,7 +32,7 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
-import org.bson.types.Undefined;
+import org.bson.BsonUndefined;
 
 import javax.xml.bind.DatatypeConverter;
 import java.text.ParsePosition;
@@ -117,7 +117,7 @@ public class JSONCallback extends BasicBSONCallback {
             byte[] bytes = DatatypeConverter.parseBase64Binary((String) b.get("$binary"));
             o = new Binary((byte) type, bytes);
         } else if (b.containsField("$undefined") && b.get("$undefined").equals(true)) {
-            o = new Undefined();
+            o = new BsonUndefined();
         }
 
         if (!isStackEmpty()) {
