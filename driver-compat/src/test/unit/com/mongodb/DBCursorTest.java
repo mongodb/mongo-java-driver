@@ -129,47 +129,6 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testSort() {
-        cursor.sort(new BasicDBObject("_id", -1));
-        assertEquals(9, cursor.next().get("_id"));
-    }
-
-
-    @Test
-    public void shouldReturnResultsInTheOrderTheyAreOnDiskWhenNaturalSortApplied() {
-        // Given
-        collection.insert(new BasicDBObject("name", "Chris"));
-        collection.insert(new BasicDBObject("name", "Adam"));
-        collection.insert(new BasicDBObject("name", "Bob"));
-
-        // When
-        DBCursor sortedCollection = collection.find(new BasicDBObject("name", new BasicDBObject("$exists", true)))
-                                              .sort(new BasicDBObject("$natural", 1));
-
-        // Then
-        assertThat(sortedCollection.next().get("name").toString(), is("Chris"));
-        assertThat(sortedCollection.next().get("name").toString(), is("Adam"));
-        assertThat(sortedCollection.next().get("name").toString(), is("Bob"));
-    }
-
-    @Test
-    public void shouldReturnResultsInTheReverseOrderTheyAreOnDiskWhenNaturalSortOfMinusOneApplied() {
-        // Given
-        collection.insert(new BasicDBObject("name", "Chris"));
-        collection.insert(new BasicDBObject("name", "Adam"));
-        collection.insert(new BasicDBObject("name", "Bob"));
-
-        // When
-        DBCursor sortedCollection = collection.find(new BasicDBObject("name", new BasicDBObject("$exists", true)))
-                                              .sort(new BasicDBObject("$natural", -1));
-
-        // Then
-        assertThat(sortedCollection.next().get("name").toString(), is("Bob"));
-        assertThat(sortedCollection.next().get("name").toString(), is("Adam"));
-        assertThat(sortedCollection.next().get("name").toString(), is("Chris"));
-    }
-
-    @Test
     public void testLimit() {
         DBCursor cursor = collection.find().limit(4);
         try {

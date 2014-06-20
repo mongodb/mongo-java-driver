@@ -49,6 +49,9 @@
     <ruleset-ref path='rulesets/security.xml'/>
     <ruleset-ref path='rulesets/serialization.xml'/>
     <ruleset-ref path='rulesets/size.xml'>
+        <rule-config name='MethodCount'>
+            <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
+        </rule-config>
         <exclude name='CrapMetric'/>
         <exclude name="AbcMetric"/>
     </ruleset-ref>
