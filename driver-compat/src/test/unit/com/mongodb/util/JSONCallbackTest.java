@@ -23,6 +23,7 @@ import org.bson.Transformer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
+import org.bson.types.Undefined;
 import org.junit.Test;
 
 import java.text.ParsePosition;
@@ -117,6 +118,12 @@ public class JSONCallbackTest {
         DBRef ref = (DBRef) JSON.parse(("{ \"$ref\" : \"friends\", \"$id\" : { \"$oid\" : \"01234567890123456789abcd\" } }"));
         assertEquals("friends", ref.getRef());
         assertEquals(new ObjectId("01234567890123456789abcd"), ref.getId());
+    }
+
+    @Test
+    public void undefinedParsing() {
+        Object undefined = JSON.parse("{ \"$undefined\" : true }");
+        assertEquals(new Undefined(), undefined);
     }
 
 }
