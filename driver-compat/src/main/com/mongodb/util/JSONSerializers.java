@@ -20,6 +20,7 @@ import com.mongodb.BasicDBObject;
 import com.mongodb.Bytes;
 import com.mongodb.DBObject;
 import com.mongodb.DBRefBase;
+import org.bson.BsonUndefined;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -27,7 +28,6 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
-import org.bson.types.Undefined;
 
 import javax.xml.bind.DatatypeConverter;
 import java.lang.reflect.Array;
@@ -103,7 +103,7 @@ public class JSONSerializers {
         serializer.addObjectSerializer(Pattern.class, new PatternSerializer(serializer));
         serializer.addObjectSerializer(String.class, new StringSerializer());
         serializer.addObjectSerializer(UUID.class, new UUIDSerializer(serializer));
-        serializer.addObjectSerializer(Undefined.class, new UndefinedSerializer(serializer));
+        serializer.addObjectSerializer(BsonUndefined.class, new UndefinedSerializer(serializer));
         return serializer;
     }
 
