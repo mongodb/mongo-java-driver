@@ -944,6 +944,15 @@ public class JavaClientTest extends TestCase {
     }
 
     @Test
+    public void testWriteResultOnUpdateWhenNoDocumentsMatch(){
+        WriteResult res = collection.update(new BasicDBObject("_id", 1), new BasicDBObject("$inc", new BasicDBObject("x", 1)));
+        assertEquals(0, res.getN());
+        assertFalse(res.isUpdateOfExisting());
+        assertNull(res.getUpsertedId());
+        assertFalse(res.isLazy());
+    }
+
+    @Test
     public void testWriteResultOnUpsert(){
         ObjectId id = new ObjectId();
         collection.insert(new BasicDBObject("_id", 1));
