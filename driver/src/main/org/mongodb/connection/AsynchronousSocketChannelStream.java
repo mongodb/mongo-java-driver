@@ -175,22 +175,27 @@ final class AsynchronousSocketChannelStream implements Stream {
     }
 
     private class AsyncWritableByteChannelAdapter implements AsyncWritableByteChannel {
+
         @Override
         public void write(final ByteBuffer src, final AsyncCompletionHandler<Void> handler) {
+
+            // Create the completion handler here to stop IllegalAccessError errors that can happen when setting it in completed.
+            final CompletionHandler<Integer, Object> byteChannelCompletionHandler = new CompletionHandler<Integer, Object>() {
+                @Override
+                public void completed(final Integer result, final Object attachment) {
+                    handler.completed(null);
+                }
+
+                @Override
+                public void failed(final Throwable exc, final Object attachment) {
+                    handler.failed(exc);
+                }
+            };
+
             ensureOpen(new AsyncCompletionHandler<Void>() {
                 @Override
                 public void completed(final Void t) {
-                    channel.write(src, null, new CompletionHandler<Integer, Object>() {
-                        @Override
-                        public void completed(final Integer result, final Object attachment) {
-                            handler.completed(null);
-                        }
-
-                        @Override
-                        public void failed(final Throwable exc, final Object attachment) {
-                            handler.failed(exc);
-                        }
-                    });
+                    channel.write(src, null, byteChannelCompletionHandler);
                 }
 
                 @Override
