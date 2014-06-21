@@ -100,6 +100,11 @@ class DefaultServer implements ClusterableServer {
         return isClosed;
     }
 
+    @Override
+    public void connect() {
+        serverMonitor.connect();
+    }
+
     ConnectionProvider getConnectionProvider() {
         return connectionProvider;
     }

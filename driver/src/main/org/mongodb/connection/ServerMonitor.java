@@ -91,6 +91,23 @@ class ServerMonitor {
         monitorThread.start();
     }
 
+    public void connect() {
+        lock.lock();
+        try {
+            condition.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void close() {
+        isClosed = true;
+        if (connection != null) {
+            connection.close();
+            connection = null;
+        }
+    }
+
     class ServerMonitorRunnable implements Runnable {
         @Override
         @SuppressWarnings("unchecked")
@@ -199,14 +216,6 @@ class ServerMonitor {
 
         CommandResult buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
         return createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
-    }
-
-    public void close() {
-        isClosed = true;
-        if (connection != null) {
-            connection.close();
-            connection = null;
-        }
     }
 
     @SuppressWarnings("unchecked")
