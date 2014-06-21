@@ -66,32 +66,50 @@ public class JMXConnectionPoolListener implements ConnectionPoolListener {
 
     @Override
     public void connectionCheckedOut(final ConnectionEvent event) {
-        getStatistics(event).connectionCheckedOut(event);
+        ConnectionPoolStatistics statistics = getStatistics(event);
+        if (statistics != null) {
+            statistics.connectionCheckedOut(event);
+        }
     }
 
     @Override
     public void connectionCheckedIn(final ConnectionEvent event) {
-        getStatistics(event).connectionCheckedIn(event);
+        ConnectionPoolStatistics statistics = getStatistics(event);
+        if (statistics != null) {
+            statistics.connectionCheckedIn(event);
+        }
     }
 
     @Override
     public void waitQueueEntered(final ConnectionPoolWaitQueueEvent event) {
-        getStatistics(event).waitQueueEntered(event);
+        ConnectionPoolListener statistics = getStatistics(event);
+        if (statistics != null) {
+            statistics.waitQueueEntered(event);
+        }
     }
 
     @Override
     public void waitQueueExited(final ConnectionPoolWaitQueueEvent event) {
-        getStatistics(event).waitQueueExited(event);
+        ConnectionPoolListener statistics = getStatistics(event);
+        if (statistics != null) {
+            statistics.waitQueueExited(event);
+        }
     }
 
     @Override
     public void connectionAdded(final ConnectionEvent event) {
-        getStatistics(event).connectionAdded(event);
+        ConnectionPoolStatistics statistics = getStatistics(event);
+        if (statistics != null) {
+            statistics.connectionAdded(event);
+        }
     }
 
     @Override
     public void connectionRemoved(final ConnectionEvent event) {
-        getStatistics(event).connectionRemoved(event);
+        ConnectionPoolStatistics statistics = getStatistics(event);
+        if (statistics != null) {
+            statistics.connectionRemoved(event);
+        }
     }
 
     private ConnectionPoolStatistics getStatistics(final ConnectionEvent event) {
