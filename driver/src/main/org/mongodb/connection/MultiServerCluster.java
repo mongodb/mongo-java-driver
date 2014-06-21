@@ -30,9 +30,9 @@ import java.util.concurrent.ConcurrentMap;
 import static java.lang.String.format;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
-import static org.mongodb.connection.ClusterType.SHARDED;
 import static org.mongodb.connection.ClusterType.UNKNOWN;
 import static org.mongodb.connection.ServerConnectionState.CONNECTING;
+import static org.mongodb.connection.ServerType.REPLICA_SET_GHOST;
 import static org.mongodb.connection.ServerType.SHARD_ROUTER;
 import static org.mongodb.connection.ServerType.STANDALONE;
 
@@ -44,7 +44,6 @@ final class MultiServerCluster extends BaseCluster {
 
     private ClusterType clusterType;
     private String replicaSetName;
-    private int latestSetVersion = Integer.MIN_VALUE;
     private final ConcurrentMap<ServerAddress, ServerTuple> addressToServerTupleMap =
     new ConcurrentHashMap<ServerAddress, ServerTuple>();
 
@@ -163,7 +162,7 @@ final class MultiServerCluster extends BaseCluster {
             return;
         }
 
-        if (newDescription.getHosts().isEmpty() || newDescription.getSetName() == null) {
+        if (newDescription.getType() == REPLICA_SET_GHOST) {
             LOGGER.info(format("Server %s does not appear to be a member of an initiated replica set.", newDescription.getAddress()));
             return;
         }
@@ -180,13 +179,7 @@ final class MultiServerCluster extends BaseCluster {
             return;
         }
 
-        if (newDescription.getSetVersion() == null || newDescription.getSetVersion() > latestSetVersion) {
-            if (newDescription.getSetVersion() != null) {
-                latestSetVersion = newDescription.getSetVersion();
-            }
-
-            ensureServers(newDescription);
-        }
+        ensureServers(newDescription);
 
         if (newDescription.isPrimary()) {
             if (isNotAlreadyPrimary(newDescription.getAddress())) {
@@ -202,7 +195,7 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     private void handleShardRouterChanged(final ServerDescription newDescription) {
-        if (newDescription.getClusterType() != SHARDED) {
+        if (!newDescription.isShardRouter()) {
             LOGGER.error(format("Expecting a %s, but found a %s.  Removing %s from client view of cluster.",
                                  SHARD_ROUTER, newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
@@ -235,7 +228,6 @@ final class MultiServerCluster extends BaseCluster {
             if (!serverTuple.description.getAddress().equals(newPrimary) && serverTuple.description.isPrimary()) {
                 LOGGER.info(format("Rediscovering type of existing primary %s", serverTuple.description.getAddress()));
                 serverTuple.server.invalidate();
-                serverTuple.description = getConnectingServerDescription(serverTuple.description.getAddress());
             }
         }
     }
@@ -258,9 +250,24 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     private void ensureServers(final ServerDescription description) {
-        addNewHosts(description.getHosts());
-        addNewHosts(description.getPassives());
-        removeExtras(description);
+        if (description.isPrimary() || !hasPrimary()) {
+            addNewHosts(description.getHosts());
+            addNewHosts(description.getPassives());
+            addNewHosts(description.getArbiters());
+        }
+
+        if (description.isPrimary()) {
+            removeExtraHosts(description);
+        }
+    }
+
+    private boolean hasPrimary() {
+        for (ServerTuple serverTuple : addressToServerTupleMap.values()) {
+            if (serverTuple.description.isPrimary()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void addNewHosts(final Set<String> hosts) {
@@ -269,7 +276,7 @@ final class MultiServerCluster extends BaseCluster {
         }
     }
 
-    private void removeExtras(final ServerDescription serverDescription) {
+    private void removeExtraHosts(final ServerDescription serverDescription) {
         Set<ServerAddress> allServerAddresses = getAllServerAddresses(serverDescription);
         for (final ServerTuple cur : addressToServerTupleMap.values()) {
             if (!allServerAddresses.contains(cur.description.getAddress())) {

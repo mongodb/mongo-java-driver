@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -47,18 +48,22 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
-                                 final String setName, final int setVersion) {
-        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, true, setName, setVersion).build());
+                                 final List<ServerAddress> passives) {
+        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, passives, true, "test").build());
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final String setName) {
-        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, true, setName, null).build());
+        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.<ServerAddress>emptyList(),
+                                                             true, setName)
+                                                  .build());
     }
 
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts,
                                  final boolean ok) {
-        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, ok, null, null).build());
+        getServer(serverAddress).sendNotification(getBuilder(serverAddress, serverType, hosts, Collections.<ServerAddress>emptyList(),
+                                                             ok, null)
+                                                  .build());
     }
 
     public ServerDescription getDescription(final ServerAddress server) {
@@ -74,11 +79,16 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
     }
 
     private ServerDescription.Builder getBuilder(final ServerAddress serverAddress, final ServerType serverType,
-                                                 final List<ServerAddress> hosts, final boolean ok,
-                                                 final String setName, final Integer setVersion) {
+                                                 final List<ServerAddress> hosts, final List<ServerAddress> passives, final boolean ok,
+                                                 final String setName) {
         Set<String> hostsSet = new HashSet<String>();
         for (ServerAddress cur : hosts) {
             hostsSet.add(cur.toString());
+        }
+
+        Set<String> passivesSet = new HashSet<String>();
+        for (ServerAddress cur : passives) {
+            passivesSet.add(cur.toString());
         }
         return ServerDescription.builder()
                                 .address(serverAddress)
@@ -86,7 +96,7 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
                                 .ok(ok)
                                 .state(CONNECTED)
                                 .hosts(hostsSet)
-                                .setName(setName)
-                                .setVersion(setVersion);
+                                .passives(passivesSet)
+                                .setName(setName);
     }
 }

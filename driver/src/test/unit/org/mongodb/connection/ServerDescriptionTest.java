@@ -78,7 +78,6 @@ public class ServerDescriptionTest {
         assertEquals(Collections.<String>emptySet(), serverDescription.getHosts());
         assertEquals(Collections.<String>emptySet(), serverDescription.getPassives());
         assertNull(serverDescription.getSetName());
-        assertNull(serverDescription.getSetVersion());
         assertEquals(new ServerVersion(), serverDescription.getVersion());
         assertEquals(0, serverDescription.getMinWireVersion());
         assertEquals(0, serverDescription.getMaxWireVersion());
@@ -91,7 +90,6 @@ public class ServerDescriptionTest {
                                                              .type(ServerType.SHARD_ROUTER)
                                                              .tags(new Tags("dc", "ny"))
                                                              .setName("test")
-                                                             .setVersion(11)
                                                              .maxDocumentSize(100)
                                                              .maxMessageSize(200)
                                                              .maxWriteBatchSize(1024)

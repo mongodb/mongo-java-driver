@@ -73,6 +73,16 @@ public enum ServerType {
     },
 
     /**
+     * A replica set member that does not report a set name or a hosts list
+     */
+    REPLICA_SET_GHOST {
+        @Override
+        public ClusterType getClusterType() {
+            return ClusterType.REPLICA_SET;
+        }
+    },
+
+    /**
      * A router to a sharded cluster, i.e. a mongos server.
      */
     SHARD_ROUTER {
