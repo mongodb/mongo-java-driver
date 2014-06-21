@@ -23,11 +23,6 @@ public enum ServerConnectionState {
     CONNECTING,
 
     /**
-     * The application failed in its last attempt to connect to the remote server
-     */
-    UNCONNECTED,
-
-    /**
      * The application is connected to the remote server.
      */
     CONNECTED

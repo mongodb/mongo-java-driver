@@ -43,14 +43,12 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.mongodb.connection.CommandHelper.executeCommand;
 import static org.mongodb.connection.ServerConnectionState.CONNECTED;
 import static org.mongodb.connection.ServerConnectionState.CONNECTING;
-import static org.mongodb.connection.ServerConnectionState.UNCONNECTED;
 import static org.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
 import static org.mongodb.connection.ServerDescription.getDefaultMaxMessageSize;
 import static org.mongodb.connection.ServerDescription.getDefaultMaxWireVersion;
 import static org.mongodb.connection.ServerDescription.getDefaultMaxWriteBatchSize;
 import static org.mongodb.connection.ServerDescription.getDefaultMinWireVersion;
 import static org.mongodb.connection.ServerType.REPLICA_SET_ARBITER;
-import static org.mongodb.connection.ServerType.REPLICA_SET_OTHER;
 import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
 import static org.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
 import static org.mongodb.connection.ServerType.SHARD_ROUTER;
@@ -134,7 +132,7 @@ class ServerMonitor {
                         }
                     } catch (Throwable t) {
                         throwable = t;
-                        serverDescription = getUnconnectedServerDescription();
+                        serverDescription = getConnectingServerDescription();
                     }
 
                     if (!isClosed) {
@@ -241,7 +239,6 @@ class ServerMonitor {
                                                                 .getValue())
                                 .tags(getTagsFromDocument(commandResult.getResponse().getDocument("tags", new BsonDocument())))
                                 .setName(getString(commandResult.getResponse(), "setName"))
-                                .setVersion(getSetVersion(commandResult))
                                 .minWireVersion(commandResult.getResponse().getInt32("minWireVersion",
                                                                                      new BsonInt32(getDefaultMinWireVersion())).getValue())
                                 .maxWireVersion(commandResult.getResponse().getInt32("maxWireVersion",
@@ -253,14 +250,6 @@ class ServerMonitor {
     private String getString(final BsonDocument response, final String key) {
         if (response.containsKey(key)) {
             return response.getString(key).getValue();
-        } else {
-            return null;
-        }
-    }
-
-    private Integer getSetVersion(final CommandResult commandResult) {
-        if (commandResult.getResponse().containsKey("setVersion")) {
-            return ((BsonInt32) commandResult.getResponse().get("setVersion")).getValue();
         } else {
             return null;
         }
@@ -301,7 +290,11 @@ class ServerMonitor {
                 return REPLICA_SET_ARBITER;
             }
 
-            return REPLICA_SET_OTHER;
+            if (isMasterResult.containsKey("setName") && isMasterResult.containsKey("hosts")) {
+                return ServerType.REPLICA_SET_OTHER;
+            }
+
+            return ServerType.REPLICA_SET_GHOST;
         }
 
         if (isMasterResult.containsKey("msg") && isMasterResult.get("msg").equals(new BsonString("isdbgrid"))) {
@@ -328,9 +321,5 @@ class ServerMonitor {
 
     private ServerDescription getConnectingServerDescription() {
         return ServerDescription.builder().type(UNKNOWN).state(CONNECTING).address(serverAddress).build();
-    }
-
-    private ServerDescription getUnconnectedServerDescription() {
-        return ServerDescription.builder().type(UNKNOWN).state(UNCONNECTED).address(serverAddress).build();
     }
 }

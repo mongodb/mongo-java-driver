@@ -28,8 +28,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerConnectionState.CONNECTED;
-import static org.mongodb.connection.ServerType.REPLICA_SET_ARBITER;
-import static org.mongodb.connection.ServerType.REPLICA_SET_OTHER;
 import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
 import static org.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
 import static org.mongodb.connection.ServerType.SHARD_ROUTER;
@@ -67,7 +65,6 @@ public class ServerDescription {
     private final boolean ok;
     private final ServerConnectionState state;
     private final ServerVersion version;
-    private final Integer setVersion;
 
     private final int minWireVersion;
     private final int maxWireVersion;
@@ -84,7 +81,6 @@ public class ServerDescription {
         private int maxWriteBatchSize = DEFAULT_MAX_WRITE_BATCH_SIZE;
         private Tags tags = Tags.freeze(new Tags());
         private String setName;
-        private Integer setVersion;
         private long averagePingTimeNanos;
         private boolean ok;
         private ServerConnectionState state;
@@ -150,11 +146,6 @@ public class ServerDescription {
 
         public Builder setName(final String setName) {
             this.setName = setName;
-            return this;
-        }
-
-        public Builder setVersion(final Integer setVersion) {
-            this.setVersion = setVersion;
             return this;
         }
 
@@ -241,7 +232,7 @@ public class ServerDescription {
     }
 
     public boolean isReplicaSetMember() {
-        return (type == REPLICA_SET_PRIMARY || type == REPLICA_SET_SECONDARY || type == REPLICA_SET_ARBITER || type == REPLICA_SET_OTHER);
+        return type.getClusterType() == ClusterType.REPLICA_SET;
     }
 
     public boolean isShardRouter() {
@@ -350,10 +341,6 @@ public class ServerDescription {
         return version;
     }
 
-    public Integer getSetVersion() {
-        return setVersion;
-    }
-
     public long getAveragePingTimeNanos() {
         return averagePingTimeNanos;
     }
@@ -405,9 +392,6 @@ public class ServerDescription {
         if (setName != null ? !setName.equals(that.setName) : that.setName != null) {
             return false;
         }
-        if (setVersion != null ? !setVersion.equals(that.setVersion) : that.setVersion != null) {
-            return false;
-        }
         if (state != that.state) {
             return false;
         }
@@ -443,7 +427,6 @@ public class ServerDescription {
         result = 31 * result + maxWriteBatchSize;
         result = 31 * result + tags.hashCode();
         result = 31 * result + (setName != null ? setName.hashCode() : 0);
-        result = 31 * result + (setVersion != null ? setVersion.hashCode() : 0);
         result = 31 * result + (ok ? 1 : 0);
         result = 31 * result + state.hashCode();
         result = 31 * result + version.hashCode();
@@ -477,7 +460,6 @@ public class ServerDescription {
                   + ", arbiters=" + arbiters
                   + ", primary='" + primary + '\''
                   + ", tags=" + tags
-                  + ", setVersion='" + setVersion + '\''
                   : "")
                + '}';
     }
@@ -506,7 +488,6 @@ public class ServerDescription {
         maxWriteBatchSize = builder.maxWriteBatchSize;
         tags = builder.tags;
         setName = builder.setName;
-        setVersion = builder.setVersion;
         averagePingTimeNanos = builder.averagePingTimeNanos;
         ok = builder.ok;
         minWireVersion = builder.minWireVersion;

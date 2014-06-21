@@ -45,7 +45,7 @@ public class TestServer implements ClusterableServer {
 
     @Override
     public void invalidate() {
-        description = ServerDescription.builder().state(CONNECTING).address(serverAddress).build();
+        sendNotification(ServerDescription.builder().state(CONNECTING).address(serverAddress).build());
     }
 
     @Override
