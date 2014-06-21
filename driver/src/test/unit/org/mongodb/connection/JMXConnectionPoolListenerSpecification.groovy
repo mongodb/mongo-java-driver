@@ -36,12 +36,6 @@ class JMXConnectionPoolListenerSpecification extends Specification {
     @Subject
     private final JMXConnectionPoolListener jmxListener = new JMXConnectionPoolListener()
 
-    def cleanup() {
-        if (provider != null) {
-            provider.close()
-        }
-    }
-
     def 'statistics should reflect values from the provider'() {
         given:
         provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,

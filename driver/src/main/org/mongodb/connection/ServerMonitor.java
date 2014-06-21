@@ -32,9 +32,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.mongodb.connection.CommandHelper.executeCommand;
 import static org.mongodb.connection.ServerConnectionState.CONNECTED;
@@ -54,71 +58,125 @@ import static org.mongodb.connection.ServerType.STANDALONE;
 import static org.mongodb.connection.ServerType.UNKNOWN;
 
 @ThreadSafe
-class ServerStateNotifier implements Runnable {
+class ServerMonitor {
 
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
     private final ServerAddress serverAddress;
     private final ChangeListener<ServerDescription> serverStateListener;
     private final InternalConnectionFactory internalConnectionFactory;
-    private InternalConnection internalConnection;
+    private final ServerSettings settings;
+    private final Thread monitorThread;
+    private final Lock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
     private int count;
     private long elapsedNanosSum;
+    private volatile InternalConnection connection;
     private volatile ServerDescription serverDescription;
     private volatile boolean isClosed;
 
-    ServerStateNotifier(final ServerAddress serverAddress, final ChangeListener<ServerDescription> serverStateListener,
-                        final InternalConnectionFactory internalConnectionFactory) {
+    ServerMonitor(final ServerAddress serverAddress, final ServerSettings settings,
+                  final String clusterId, final ChangeListener<ServerDescription> serverStateListener,
+                  final InternalConnectionFactory internalConnectionFactory) {
+        this.settings = settings;
         this.serverAddress = serverAddress;
         this.serverStateListener = serverStateListener;
         this.internalConnectionFactory = internalConnectionFactory;
         serverDescription = getConnectingServerDescription();
+        monitorThread = new Thread(new ServerMonitorRunnable(), "cluster-" + clusterId + "-" + serverAddress);
+        monitorThread.setDaemon(true);
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public synchronized void run() {
-        if (isClosed) {
-            return;
-        }
+    void start() {
+        monitorThread.start();
+    }
 
-        ServerDescription currentServerDescription = serverDescription;
-        Throwable throwable = null;
-        try {
-            if (internalConnection == null) {
-                internalConnection = internalConnectionFactory.create(serverAddress);
-            }
+    class ServerMonitorRunnable implements Runnable {
+        @Override
+        @SuppressWarnings("unchecked")
+        public synchronized void run() {
             try {
-                serverDescription = lookupServerDescription();
-            } catch (MongoSocketException e) {
-                reset();
-                internalConnection = internalConnectionFactory.create(serverAddress);
-                try {
-                    serverDescription = lookupServerDescription();
-                } catch (MongoSocketException e1) {
-                    reset();
-                    throw e1;
+                while (!isClosed) {
+                    ServerDescription currentServerDescription = serverDescription;
+                    Throwable throwable = null;
+                    try {
+                        if (connection == null) {
+                            connection = internalConnectionFactory.create(serverAddress);
+                        }
+                        try {
+                            serverDescription = lookupServerDescription();
+                        } catch (MongoSocketException e) {
+                            reset();
+                            connection = internalConnectionFactory.create(serverAddress);
+                            try {
+                                serverDescription = lookupServerDescription();
+                            } catch (MongoSocketException e1) {
+                                reset();
+                                throw e1;
+                            }
+                        }
+                    } catch (Throwable t) {
+                        throwable = t;
+                        serverDescription = getUnconnectedServerDescription();
+                    }
+
+                    if (!isClosed) {
+                        try {
+                            logStateChange(currentServerDescription, throwable);
+                            sendStateChangedEvent(currentServerDescription);
+                        } catch (Throwable t) {
+                            LOGGER.warn("Exception in monitor thread during notification of server description state change", t);
+                        }
+                    }
+                    waitForNext();
+                }
+            } finally {
+                if (connection != null) {
+                    connection.close();
                 }
             }
-        } catch (Throwable t) {
-            throwable = t;
-            serverDescription = getUnconnectedServerDescription();
         }
 
-        if (!isClosed) {
+        private void sendStateChangedEvent(final ServerDescription currentServerDescription) {
+            serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
+        }
+
+        private void logStateChange(final ServerDescription currentServerDescription, final Throwable throwable) {
+            // Note that the ServerDescription.equals method does not include the average ping time as part of the comparison,
+            // so this will not spam the logs too hard.
+            if (!currentServerDescription.equals(serverDescription)) {
+                if (throwable != null) {
+                    LOGGER.info(format("Exception in monitor thread while connecting to server %s", serverAddress), throwable);
+                } else {
+                    LOGGER.info(format("Monitor thread successfully connected to server with description %s", serverDescription));
+                }
+            }
+        }
+
+        private void waitForNext() {
             try {
-                // Note that the ServerDescription.equals method does not include the average ping time as part of the comparison,
-                // so this will not spam the logs too hard.
-                if (!currentServerDescription.equals(serverDescription)) {
-                    if (throwable != null) {
-                        LOGGER.info(format("Exception in monitor thread while connecting to server %s", serverAddress), throwable);
-                    } else {
-                        LOGGER.info(format("Monitor thread successfully connected to server with description %s", serverDescription));
+                long timeRemaining = waitForSignalOrTimeout();
+                if (timeRemaining > 0) {
+                    long timeWaiting = settings.getHeartbeatFrequency(NANOSECONDS) - timeRemaining;
+                    long minimumNanosToWait = settings.getHeartbeatConnectRetryFrequency(NANOSECONDS);
+                    if (timeWaiting < minimumNanosToWait) {
+                        long millisToSleep = MILLISECONDS.convert(minimumNanosToWait - timeWaiting, NANOSECONDS);
+                        if (millisToSleep > 0) {
+                            Thread.sleep(millisToSleep);
+                        }
                     }
                 }
-                serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
-            } catch (Throwable t) {
-                LOGGER.warn("Exception in monitor thread during notification of server description state change", t);
+            } catch (InterruptedException e) {
+                // fall through
+            }
+        }
+
+        private long waitForSignalOrTimeout() throws InterruptedException {
+            lock.lock();
+            try {
+                return condition.awaitNanos(settings.getHeartbeatFrequency(NANOSECONDS));
+            } finally {
+                lock.unlock();
             }
         }
     }
@@ -126,27 +184,28 @@ class ServerStateNotifier implements Runnable {
     private void reset() {
         count = 0;
         elapsedNanosSum = 0;
-        if (internalConnection != null) {
-            internalConnection.close();
-            internalConnection = null;
+        if (connection != null) {
+            connection.close();
+            connection = null;
+            // TODO: invalidate connection pool
         }
     }
 
     private ServerDescription lookupServerDescription() {
         LOGGER.debug(format("Checking status of %s", serverAddress));
-        CommandResult isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), internalConnection);
+        CommandResult isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
         count++;
         elapsedNanosSum += isMasterResult.getElapsedNanoseconds();
 
-        CommandResult buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), internalConnection);
+        CommandResult buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
         return createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
     }
 
     public void close() {
         isClosed = true;
-        if (internalConnection != null) {
-            internalConnection.close();
-            internalConnection = null;
+        if (connection != null) {
+            connection.close();
+            connection = null;
         }
     }
 

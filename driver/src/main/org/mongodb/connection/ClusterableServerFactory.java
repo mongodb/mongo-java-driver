@@ -18,6 +18,4 @@ package org.mongodb.connection;
 
 interface ClusterableServerFactory {
     ClusterableServer create(ServerAddress serverAddress);
-
-    void close();
 }
