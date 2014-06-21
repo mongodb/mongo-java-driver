@@ -23,6 +23,7 @@ public class TestServer implements ClusterableServer {
     private ServerDescription description;
     private boolean isClosed;
     private final ServerAddress serverAddress;
+    private int connectCount;
 
     public TestServer(final ServerAddress serverAddress) {
         this.serverAddress = serverAddress;
@@ -55,6 +56,15 @@ public class TestServer implements ClusterableServer {
     @Override
     public boolean isClosed() {
         return isClosed;
+    }
+
+    @Override
+    public void connect() {
+        connectCount++;
+    }
+
+    public int getConnectCount() {
+        return connectCount;
     }
 
     @Override

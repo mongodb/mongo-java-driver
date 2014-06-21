@@ -79,6 +79,13 @@ final class MultiServerCluster extends BaseCluster {
     }
 
     @Override
+    protected void connect() {
+        for (ServerTuple cur : addressToServerTupleMap.values()) {
+            cur.server.connect();
+        }
+    }
+
+    @Override
     public void close() {
         if (!isClosed()) {
             synchronized (this) {

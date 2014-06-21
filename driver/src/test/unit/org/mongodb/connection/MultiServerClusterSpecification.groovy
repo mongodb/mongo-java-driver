@@ -51,7 +51,6 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(firstServer, REPLICA_SET_PRIMARY)
 
         then:
-        cluster.getDescription(1, SECONDS).isConnecting()
         cluster.getDescription(1, SECONDS).type == REPLICA_SET
         cluster.getDescription(1, SECONDS).connectionMode == MULTIPLE
     }
@@ -320,6 +319,18 @@ class MultiServerClusterSpecification extends Specification {
 
         cleanup:
         cluster.close()
+    }
+
+    def 'should connect to all servers'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(), factory,
+                                             CLUSTER_LISTENER)
+
+        when:
+        cluster.connect()
+
+        then:
+        [firstServer, secondServer].collect { factory.getServer(it).connectCount  }  == [1, 1]
     }
 
     def sendNotification(ServerAddress serverAddress, ServerType serverType) {

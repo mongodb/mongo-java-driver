@@ -55,4 +55,9 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                  new InternalStreamConnectionFactory(clusterId, heartbeatStreamFactory,
                                                                      Collections.<MongoCredential>emptyList(), connectionListener));
     }
+
+    @Override
+    public ServerSettings getSettings() {
+        return settings;
+    }
 }
