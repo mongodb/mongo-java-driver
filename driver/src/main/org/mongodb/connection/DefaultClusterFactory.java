@@ -49,7 +49,6 @@ public final class DefaultClusterFactory implements ClusterFactory {
                                                                                      connectionPoolSettings,
                                                                                      streamFactory,
                                                                                      heartbeatStreamFactory,
-                                                                                     settings.getHosts().size(),
                                                                                      credentialList,
                                                                                      connectionListener != null ? connectionListener
                                                                                                              : new NoOpConnectionListener(),

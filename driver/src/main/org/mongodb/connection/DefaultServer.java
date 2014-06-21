@@ -24,48 +24,35 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
 
 import static java.lang.String.format;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerConnectionState.CONNECTING;
-import static org.mongodb.connection.ServerConnectionState.UNCONNECTED;
 
 class DefaultServer implements ClusterableServer {
-    private final ScheduledExecutorService scheduledExecutorService;
     private final ServerAddress serverAddress;
     private final ConnectionProvider connectionProvider;
-    private final ServerStateNotifier stateNotifier;
-    private final ScheduledFuture<?> scheduledFuture;
+    private final ServerMonitor serverMonitor;
     private final Set<ChangeListener<ServerDescription>> changeListeners =
         Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
-    private final ServerSettings settings;
     private final ChangeListener<ServerDescription> serverStateListener;
     private volatile ServerDescription description;
     private volatile boolean isClosed;
 
     public DefaultServer(final ServerAddress serverAddress,
                          final ServerSettings settings,
-                         final ConnectionProvider connectionProvider,
-                         final InternalConnectionFactory heartbeatStreamConnectionFactory,
-                         final ScheduledExecutorService scheduledExecutorService) {
-        this.settings = notNull("settings", settings);
+                         final String clusterId, final ConnectionProvider connectionProvider,
+                         final InternalConnectionFactory heartbeatStreamConnectionFactory) {
         notNull("connectionProvider", connectionProvider);
         notNull("heartbeatStreamConnectionFactory", heartbeatStreamConnectionFactory);
 
-        this.scheduledExecutorService = notNull("scheduledExecutorService", scheduledExecutorService);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.connectionProvider = connectionProvider;
         this.description = ServerDescription.builder().state(CONNECTING).address(serverAddress).build();
         serverStateListener = new DefaultServerStateListener();
-        this.stateNotifier = new ServerStateNotifier(serverAddress, serverStateListener, heartbeatStreamConnectionFactory);
-        this.scheduledFuture = scheduledExecutorService.scheduleAtFixedRate(stateNotifier,
-                                                                            0,
-                                                                            settings.getHeartbeatFrequency(MILLISECONDS),
-                                                                            MILLISECONDS);
+        this.serverMonitor = new ServerMonitor(serverAddress, settings, clusterId, serverStateListener, heartbeatStreamConnectionFactory);
+        this.serverMonitor.start();
     }
 
     @Override
@@ -96,15 +83,14 @@ class DefaultServer implements ClusterableServer {
         serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(description, ServerDescription.builder()
                                                                                                           .state(CONNECTING)
                                                                                                           .address(serverAddress).build()));
-        scheduledExecutorService.submit(stateNotifier);
+        // TODO: invalidate the connection pool?
     }
 
     @Override
     public void close() {
         if (!isClosed()) {
             connectionProvider.close();
-            scheduledFuture.cancel(true);
-            stateNotifier.close();
+            serverMonitor.close();
             isClosed = true;
         }
     }
@@ -126,14 +112,10 @@ class DefaultServer implements ClusterableServer {
         @Override
         public void stateChanged(final ChangeEvent<ServerDescription> event) {
             description = event.getNewValue();
-            for (final ChangeListener<ServerDescription> listener : changeListeners) {
+            for (ChangeListener<ServerDescription> listener : changeListeners) {
                 listener.stateChanged(event);
             }
-            if (event.getNewValue().getState() == UNCONNECTED) {
-                scheduledExecutorService.schedule(stateNotifier, settings.getHeartbeatConnectRetryFrequency(MILLISECONDS), MILLISECONDS);
-            }
         }
-
     }
 
     private class DefaultServerConnection extends AbstractReferenceCounted implements Connection {

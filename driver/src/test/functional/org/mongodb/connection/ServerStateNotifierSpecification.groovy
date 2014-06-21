@@ -22,6 +22,8 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.ReadPreference
 
+import java.util.concurrent.CountDownLatch
+
 import static java.util.Arrays.asList
 import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
@@ -32,23 +34,26 @@ import static org.mongodb.Fixture.serverVersionAtLeast
 
 class ServerStateNotifierSpecification extends FunctionalSpecification {
     ServerDescription newDescription
-    ServerStateNotifier serverStateNotifier
+    ServerMonitor serverStateNotifier
+    CountDownLatch latch = new CountDownLatch(1)
 
     def setup() {
-        serverStateNotifier = new ServerStateNotifier(getPrimary(),
-                                                      new ChangeListener<ServerDescription>() {
-                                                          @Override
-                                                          void stateChanged(final ChangeEvent<ServerDescription> event) {
-                                                              newDescription = event.newValue
-                                                          }
-                                                      },
-                                                      new InternalStreamConnectionFactory('1',
-                                                                                          new SocketStreamFactory(SocketSettings.builder()
-                                                                                                                                .build(),
-                                                                                                                  getSSLSettings()),
-                                                                                          getCredentialList(),
-                                                                                          new NoOpConnectionListener())
+        serverStateNotifier = new ServerMonitor(getPrimary(), ServerSettings.builder().build(), 'cluster-1',
+                                                new ChangeListener<ServerDescription>() {
+                                                    @Override
+                                                    void stateChanged(final ChangeEvent<ServerDescription> event) {
+                                                        newDescription = event.newValue
+                                                        latch.countDown()
+                                                    }
+                                                },
+                                                new InternalStreamConnectionFactory('1',
+                                                                                    new SocketStreamFactory(SocketSettings.builder()
+                                                                                                                          .build(),
+                                                                                                            getSSLSettings()),
+                                                                                    getCredentialList(),
+                                                                                    new NoOpConnectionListener())
         )
+        serverStateNotifier.start()
     }
 
     def cleanup() {
@@ -62,7 +67,7 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
                                                              .subList(0, 3)*.getValue() as List<Integer>)
 
         when:
-        serverStateNotifier.run()
+        latch.await()
 
         then:
         newDescription.version == expectedVersion
@@ -79,7 +84,7 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
         def expected = commandResult.response.getInt32('maxWriteBatchSize').getValue()
 
         when:
-        serverStateNotifier.run()
+        latch.await()
 
         then:
         newDescription.maxWriteBatchSize == expected
@@ -89,7 +94,7 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
         assumeFalse(serverVersionAtLeast(asList(2, 5, 5)))
 
         when:
-        serverStateNotifier.run()
+        latch.await()
 
         then:
         newDescription.maxWriteBatchSize == ServerDescription.getDefaultMaxWriteBatchSize()

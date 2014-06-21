@@ -48,7 +48,7 @@ public class SingleServerClusterTest {
                                                                               ConnectionPoolSettings.builder().maxSize(1).build(),
                                                                               streamFactory,
                                                                               streamFactory,
-                                                                              1, getCredentialList(),
+                                                                              getCredentialList(),
                                                                               new NoOpConnectionListener(),
                                                                               new NoOpConnectionPoolListener()),
                                           new NoOpClusterListener());

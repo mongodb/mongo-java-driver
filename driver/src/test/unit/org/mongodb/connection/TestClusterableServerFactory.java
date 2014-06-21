@@ -33,11 +33,6 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
         return addressToServerMap.get(serverAddress);
     }
 
-    @Override
-    public void close() {
-
-    }
-
     public TestServer getServer(final ServerAddress serverAddress) {
         return addressToServerMap.get(serverAddress);
     }
