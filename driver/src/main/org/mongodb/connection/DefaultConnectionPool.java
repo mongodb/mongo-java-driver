@@ -39,7 +39,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.assertions.Assertions.notNull;
 
-class PooledConnectionProvider implements ConnectionProvider {
+class DefaultConnectionPool implements ConnectionPool {
     private static final Logger LOGGER = Loggers.getLogger("connection");
 
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
@@ -53,9 +53,9 @@ class PooledConnectionProvider implements ConnectionProvider {
     private final ConnectionPoolListener connectionPoolListener;
     private volatile boolean closed;
 
-    public PooledConnectionProvider(final String clusterId, final ServerAddress serverAddress,
-                                    final InternalConnectionFactory internalConnectionFactory, final ConnectionPoolSettings settings,
-                                    final ConnectionPoolListener connectionPoolListener) {
+    public DefaultConnectionPool(final String clusterId, final ServerAddress serverAddress,
+                                 final InternalConnectionFactory internalConnectionFactory, final ConnectionPoolSettings settings,
+                                 final ConnectionPoolListener connectionPoolListener) {
         this.clusterId = notNull("clusterId", clusterId);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.settings = notNull("settings", settings);
@@ -94,6 +94,11 @@ class PooledConnectionProvider implements ConnectionProvider {
             waitQueueSize.decrementAndGet();
             connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueEvent(clusterId, serverAddress, currentThread().getId()));
         }
+    }
+
+    @Override
+    public void invalidate() {
+        generation.incrementAndGet();
     }
 
     @Override
@@ -191,7 +196,7 @@ class PooledConnectionProvider implements ConnectionProvider {
         if (e instanceof MongoSocketException && !(e instanceof MongoSocketReadTimeoutException)) {
             LOGGER.warn(format("Got socket exception on connection [%s] to %s. All connections to %s will be closed.",
                                connection.getId(), serverAddress, serverAddress));
-            generation.incrementAndGet();
+            invalidate();
         }
     }
 
@@ -307,7 +312,7 @@ class PooledConnectionProvider implements ConnectionProvider {
 
         @Override
         public boolean shouldPrune(final UsageTrackingInternalConnection usageTrackingConnection) {
-            return PooledConnectionProvider.this.shouldPrune(usageTrackingConnection);
+            return DefaultConnectionPool.this.shouldPrune(usageTrackingConnection);
         }
     }
 }

@@ -30,13 +30,13 @@ import static org.junit.Assert.fail;
 /**
  * These tests are racy, so doing them in Java instead of Groovy to reduce chance of failure.
  */
-public class PooledConnectionProviderTest {
+public class DefaultConnectionPoolTest {
     private static final String CLUSTER_ID = "1";
     private static final ServerAddress SERVER_ADDRESS = new ServerAddress();
 
     private TestInternalConnectionFactory connectionFactory;
 
-    private PooledConnectionProvider provider;
+    private DefaultConnectionPool provider;
 
     @Before
     public void setUp() {
@@ -51,7 +51,7 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldThrowOnTimeout() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+        provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(1)
                                                                       .maxWaitQueueSize(1)
@@ -73,7 +73,7 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldThrowOnWaitQueueFull() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+        provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(1)
                                                                       .maxWaitQueueSize(1)
@@ -99,7 +99,7 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldExpireConnectionAfterMaxLifeTime() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+        provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(1)
                                                                       .maxWaitQueueSize(1)
@@ -121,7 +121,7 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldExpireConnectionAfterLifeTimeOnClose() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
+        provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS,
                                                 connectionFactory,
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(1)
@@ -141,7 +141,7 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldExpireConnectionAfterMaxIdleTime() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
+        provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS,
                                                 connectionFactory,
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(1)
@@ -163,7 +163,7 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldCloseConnectionAfterExpiration() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
+        provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS,
                                                 connectionFactory,
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(1)
@@ -185,7 +185,7 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldCreateNewConnectionAfterExpiration() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
+        provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS,
                                                 connectionFactory,
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(1)
@@ -208,7 +208,7 @@ public class PooledConnectionProviderTest {
     @Test
     public void shouldPruneAfterMaintenanceTaskRuns() throws InterruptedException {
         // given
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS,
+        provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS,
                                                 connectionFactory,
                                                 ConnectionPoolSettings.builder()
                                                                       .maxSize(10)

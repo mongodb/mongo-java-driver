@@ -26,8 +26,11 @@ import java.util.List;
 class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final String clusterId;
     private final ServerSettings settings;
+    private final ConnectionPoolSettings connectionPoolSettings;
+    private final StreamFactory streamFactory;
+    private final List<MongoCredential> credentialList;
+    private final ConnectionPoolListener connectionPoolListener;
     private final ConnectionListener connectionListener;
-    private final ConnectionProviderFactory connectionProviderFactory;
     private final StreamFactory heartbeatStreamFactory;
 
     public DefaultClusterableServerFactory(final String clusterId, final ServerSettings settings,
@@ -39,19 +42,23 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                            final ConnectionPoolListener connectionPoolListener) {
         this.clusterId = clusterId;
         this.settings = settings;
+        this.connectionPoolSettings = connectionPoolSettings;
+        this.streamFactory = streamFactory;
+        this.credentialList = credentialList;
+        this.connectionPoolListener = connectionPoolListener;
         this.connectionListener = connectionListener;
-        this.connectionProviderFactory = new PooledConnectionProviderFactory(clusterId,
-                                                                             connectionPoolSettings,
-                                                                             streamFactory,
-                                                                             credentialList,
-                                                                             connectionListener,
-                                                                             connectionPoolListener);
         this.heartbeatStreamFactory = heartbeatStreamFactory;
     }
 
     @Override
     public ClusterableServer create(final ServerAddress serverAddress) {
-        return new DefaultServer(serverAddress, settings, clusterId, connectionProviderFactory.create(serverAddress),
+        return new DefaultServer(serverAddress, settings, clusterId,
+                                 new DefaultConnectionPool(clusterId, serverAddress,
+                                                           new InternalStreamConnectionFactory(clusterId,
+                                                                                               streamFactory,
+                                                                                               credentialList,
+                                                                                               connectionListener),
+                                                           connectionPoolSettings, connectionPoolListener),
                                  new InternalStreamConnectionFactory(clusterId, heartbeatStreamFactory,
                                                                      Collections.<MongoCredential>emptyList(), connectionListener));
     }

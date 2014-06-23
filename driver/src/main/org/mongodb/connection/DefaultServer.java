@@ -32,7 +32,7 @@ import static org.mongodb.connection.ServerConnectionState.CONNECTING;
 
 class DefaultServer implements ClusterableServer {
     private final ServerAddress serverAddress;
-    private final ConnectionProvider connectionProvider;
+    private final ConnectionPool connectionPool;
     private final ServerMonitor serverMonitor;
     private final Set<ChangeListener<ServerDescription>> changeListeners =
         Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
@@ -42,16 +42,17 @@ class DefaultServer implements ClusterableServer {
 
     public DefaultServer(final ServerAddress serverAddress,
                          final ServerSettings settings,
-                         final String clusterId, final ConnectionProvider connectionProvider,
+                         final String clusterId, final ConnectionPool connectionPool,
                          final InternalConnectionFactory heartbeatStreamConnectionFactory) {
-        notNull("connectionProvider", connectionProvider);
+        notNull("connectionPool", connectionPool);
         notNull("heartbeatStreamConnectionFactory", heartbeatStreamConnectionFactory);
 
         this.serverAddress = notNull("serverAddress", serverAddress);
-        this.connectionProvider = connectionProvider;
+        this.connectionPool = connectionPool;
         this.description = ServerDescription.builder().state(CONNECTING).address(serverAddress).build();
         serverStateListener = new DefaultServerStateListener();
-        this.serverMonitor = new ServerMonitor(serverAddress, settings, clusterId, serverStateListener, heartbeatStreamConnectionFactory);
+        this.serverMonitor = new ServerMonitor(serverAddress, settings, clusterId, serverStateListener, heartbeatStreamConnectionFactory,
+                                               connectionPool);
         this.serverMonitor.start();
     }
 
@@ -59,7 +60,7 @@ class DefaultServer implements ClusterableServer {
     public Connection getConnection() {
         isTrue("open", !isClosed());
 
-        return new DefaultServerConnection(connectionProvider.get());
+        return new DefaultServerConnection(connectionPool.get());
     }
 
     @Override
@@ -83,13 +84,13 @@ class DefaultServer implements ClusterableServer {
         serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(description, ServerDescription.builder()
                                                                                                           .state(CONNECTING)
                                                                                                           .address(serverAddress).build()));
-        // TODO: invalidate the connection pool?
+        connectionPool.invalidate();
     }
 
     @Override
     public void close() {
         if (!isClosed()) {
-            connectionProvider.close();
+            connectionPool.close();
             serverMonitor.close();
             isClosed = true;
         }
@@ -105,8 +106,8 @@ class DefaultServer implements ClusterableServer {
         serverMonitor.connect();
     }
 
-    ConnectionProvider getConnectionProvider() {
-        return connectionProvider;
+    ConnectionPool getConnectionPool() {
+        return connectionPool;
     }
 
     private void handleException() {

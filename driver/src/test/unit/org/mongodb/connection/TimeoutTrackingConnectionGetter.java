@@ -19,13 +19,13 @@ package org.mongodb.connection;
 import java.util.concurrent.CountDownLatch;
 
 class TimeoutTrackingConnectionGetter implements Runnable {
-    private final ConnectionProvider connectionProvider;
+    private final ConnectionPool connectionPool;
     private final CountDownLatch latch = new CountDownLatch(1);
 
     private volatile boolean gotTimeout;
 
-    TimeoutTrackingConnectionGetter(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    TimeoutTrackingConnectionGetter(final ConnectionPool connectionPool) {
+        this.connectionPool = connectionPool;
     }
 
     boolean isGotTimeout() {
@@ -35,7 +35,7 @@ class TimeoutTrackingConnectionGetter implements Runnable {
     @Override
     public void run() {
         try {
-            connectionProvider.get();
+            connectionPool.get();
         } catch (MongoTimeoutException e) {
             gotTimeout = true;
         } finally {
