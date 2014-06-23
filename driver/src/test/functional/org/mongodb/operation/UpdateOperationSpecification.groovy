@@ -48,9 +48,8 @@ class UpdateOperationSpecification extends FunctionalSpecification {
         thrown(IllegalArgumentException)
     }
 
-    def 'should return correct result for update'() {
+    def 'should return correct result for update '() {
         given:
-        getCollectionHelper().insertDocuments(new Document('_id', 1))
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                               new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))))),
@@ -61,15 +60,25 @@ class UpdateOperationSpecification extends FunctionalSpecification {
 
         then:
         result.wasAcknowledged()
+        result.count == 0
+        result.upsertedId == null
+        !result.isUpdateOfExisting()
+
+        when:
+        getCollectionHelper().insertDocuments(new Document('_id', 1))
+        result = op.execute(getBinding())
+
+        then:
+        result.wasAcknowledged()
         result.count == 1
         result.upsertedId == null
         result.isUpdateOfExisting()
+
     }
 
     @Category(Async)
     def 'should return correct result for update asynchronously'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('_id', 1))
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                               new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))))),
@@ -77,6 +86,16 @@ class UpdateOperationSpecification extends FunctionalSpecification {
 
         when:
         def result = op.executeAsync(getAsyncBinding()).get()
+
+        then:
+        result.wasAcknowledged()
+        result.count == 0
+        result.upsertedId == null
+        !result.isUpdateOfExisting()
+
+        when:
+        getCollectionHelper().insertDocuments(new Document('_id', 1))
+        result = op.execute(getBinding())
 
         then:
         result.wasAcknowledged()

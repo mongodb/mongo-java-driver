@@ -71,9 +71,14 @@ class ReplaceOperationSpecification extends FunctionalSpecification {
         def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
 
         when:
-        op.execute(getBinding())
+        def result = op.execute(getBinding())
 
         then:
+        result.wasAcknowledged()
+        result.count == 1
+        result.upsertedId == null
+        result.isUpdateOfExisting()
+        asList(replacement.getReplacement()) == getCollectionHelper().find()
         getCollectionHelper().find().get(0).keySet().iterator().next() == '_id'
     }
 
@@ -88,9 +93,13 @@ class ReplaceOperationSpecification extends FunctionalSpecification {
 
 
         when:
-        op.executeAsync(getAsyncBinding()).get()
+        def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
+        result.wasAcknowledged()
+        result.count == 1
+        result.upsertedId == null
+        result.isUpdateOfExisting()
         asList(replacement.getReplacement()) == getCollectionHelper().find()
     }
 
