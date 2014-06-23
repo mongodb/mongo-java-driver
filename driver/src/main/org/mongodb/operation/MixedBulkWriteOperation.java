@@ -17,6 +17,7 @@
 package org.mongodb.operation;
 
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.Encoder;
@@ -497,9 +498,15 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
                         indexMap = indexMap.add(0, i);
                         WriteProtocol writeProtocol = getWriteProtocol(i);
                         try {
-                            WriteResult writeResult = writeProtocol.execute(connection);
-                            if (writeResult.wasAcknowledged()) {
-                                bulkWriteBatchCombiner.addResult(getResult(writeResult), indexMap);
+                            WriteResult result = writeProtocol.execute(connection);
+                            if (result.wasAcknowledged()) {
+                                BulkWriteResult bulkWriteResult;
+                                if (getType() == UPDATE || getType() == REPLACE) {
+                                    bulkWriteResult = getResult(result, (BaseUpdateRequest) runWrites.get(i));
+                                } else {
+                                    bulkWriteResult = getResult(result);
+                                }
+                                bulkWriteBatchCombiner.addResult(bulkWriteResult, indexMap);
                             }
                         } catch (MongoWriteException writeException) {
                             if (writeException.getCommandResult().getResponse().get("wtimeout") != null) {
@@ -551,7 +558,13 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
                                 return;
                             }
                         } else if (result.wasAcknowledged()) {
-                            bulkWriteBatchCombiner.addResult(getResult(result), indexMap);
+                            BulkWriteResult bulkWriteResult;
+                            if (getType() == UPDATE || getType() == REPLACE) {
+                                bulkWriteResult = getResult(result, (BaseUpdateRequest) runWrites.get(currentPosition));
+                            } else {
+                                bulkWriteResult = getResult(result);
+                            }
+                            bulkWriteBatchCombiner.addResult(bulkWriteResult, indexMap);
                         }
 
                         // Execute next run or complete
@@ -567,16 +580,55 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
             }
 
             BulkWriteResult getResult(final WriteResult writeResult) {
+                return getResult(writeResult, getUpsertedItems(writeResult));
+            }
+
+            BulkWriteResult getResult(final WriteResult writeResult, final BaseUpdateRequest updateRequest) {
+                return getResult(writeResult, getUpsertedItems(writeResult, updateRequest));
+            }
+
+            BulkWriteResult getResult(final WriteResult writeResult, final List<BulkWriteUpsert> upsertedItems) {
                 int count = getCount(writeResult);
-                List<BulkWriteUpsert> upsertedItems = getUpsertedItems(writeResult);
                 Integer modifiedCount = (getType() == UPDATE || getType() == REPLACE) ? null : 0;
                 return new AcknowledgedBulkWriteResult(getType(), count - upsertedItems.size(), modifiedCount, upsertedItems);
             }
 
             List<BulkWriteUpsert> getUpsertedItems(final WriteResult writeResult) {
                 return writeResult.getUpsertedId() == null
-                       ? Collections.<BulkWriteUpsert>emptyList()
-                       : asList(new BulkWriteUpsert(0, writeResult.getUpsertedId()));
+                        ? Collections.<BulkWriteUpsert>emptyList()
+                        : asList(new BulkWriteUpsert(0, writeResult.getUpsertedId()));
+            }
+
+            @SuppressWarnings("unchecked")
+            List<BulkWriteUpsert> getUpsertedItems(final WriteResult writeResult,
+                                                   final BaseUpdateRequest baseUpdateRequest) {
+                if (writeResult.getUpsertedId() == null) {
+                    if (writeResult.isUpdateOfExisting() || !baseUpdateRequest.isUpsert()) {
+                        return Collections.<BulkWriteUpsert>emptyList();
+                    } else {
+                        BsonDocument update;
+                        BsonDocument filter;
+                        if (baseUpdateRequest instanceof ReplaceRequest) {
+                            ReplaceRequest<T> replaceRequest = (ReplaceRequest<T>) baseUpdateRequest;
+                            update = new BsonDocumentWrapper<T>(replaceRequest.getReplacement(), encoder);
+                            filter = replaceRequest.getFilter();
+                        } else {
+                            UpdateRequest updateRequest = (UpdateRequest) baseUpdateRequest;
+                            update = updateRequest.getUpdateOperations();
+                            filter = updateRequest.getFilter();
+                        }
+
+                        if (update.containsKey("_id")) {
+                            return asList(new BulkWriteUpsert(0, update.get("_id")));
+                        } else if (filter.containsKey("_id")) {
+                            return asList(new BulkWriteUpsert(0, filter.get("_id")));
+                        } else {
+                            return Collections.<BulkWriteUpsert>emptyList();
+                        }
+                    }
+                } else {
+                    return asList(new BulkWriteUpsert(0, writeResult.getUpsertedId()));
+                }
             }
 
             private BulkWriteError getBulkWriteError(final MongoWriteException writeException) {

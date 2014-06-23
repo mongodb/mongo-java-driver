@@ -295,6 +295,57 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
         ordered << [true, false]
     }
 
+    def 'when a custom _id is upserted it should be in the write result'() {
+        given:
+        def op = new MixedBulkWriteOperation(getNamespace(),
+                                             [new UpdateRequest(new BsonDocument('_id', new BsonInt32(0)),
+                                                                new BsonDocument('$set', new BsonDocument('a', new BsonInt32(0))))
+                                                      .upsert(true),
+                                             new ReplaceRequest(new BsonDocument('a', new BsonInt32(1)), new Document('_id', 1))
+                                                      .upsert(true),
+                                             new ReplaceRequest(new BsonDocument('_id', new BsonInt32(2)), new Document('_id', 2))
+                                                      .upsert(true)
+                                             ],
+                                             ordered, ACKNOWLEDGED, new DocumentCodec())
+
+        when:
+        def result = op.execute(getBinding())
+
+        then:
+        result == new AcknowledgedBulkWriteResult(UPDATE, 0, expectedModifiedCount(0), [new BulkWriteUpsert(0, new BsonInt32(0)),
+                                                                                        new BulkWriteUpsert(1, new BsonInt32(1)),
+                                                                                        new BulkWriteUpsert(2, new BsonInt32(2))])
+        getCollectionHelper().count() == 3
+
+        where:
+        ordered << [true, false]
+    }
+
+    def 'unacknowledged upserts with custom _id should not error'() {
+        given:
+        def op = new MixedBulkWriteOperation(getNamespace(),
+                                             [new UpdateRequest(new BsonDocument('_id', new BsonInt32(0)),
+                                                                new BsonDocument('$set', new BsonDocument('a', new BsonInt32(0))))
+                                                      .upsert(true),
+                                              new ReplaceRequest(new BsonDocument('a', new BsonInt32(1)), new Document('_id', 1))
+                                                      .upsert(true),
+                                              new ReplaceRequest(new BsonDocument('_id', new BsonInt32(2)), new Document('_id', 2))
+                                                      .upsert(true)
+                                             ],
+                                             ordered, UNACKNOWLEDGED, new DocumentCodec())
+
+        when:
+        def result = op.execute(getBinding())
+        getCollectionHelper().insertDocuments(new Document('_id', 4))
+
+        then:
+        !result.acknowledged
+        getCollectionHelper().count() == 4
+
+        where:
+        ordered << [true, false]
+    }
+
     def 'when multiple documents match the query, replace should replace only one of them'() {
         given:
         getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true))
