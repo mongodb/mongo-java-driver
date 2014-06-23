@@ -20,7 +20,10 @@ import org.junit.Test;
 
 import javax.net.ssl.SSLSocketFactory;
 
+import java.net.UnknownHostException;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * The mongo options test.
@@ -146,6 +149,17 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         options.reset();
         options.j = true;
         assertEquals(new WriteConcern(0, 0, false, true), options.getWriteConcern());
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    public void shouldNotErrorMongoWithDefaultOptions() throws UnknownHostException {
+        Mongo mongo = new Mongo(new ServerAddress("localhost"), new MongoOptions());
+        try {
+            assertNotNull(mongo);
+        } finally {
+            mongo.close();
+        }
     }
 }
 
