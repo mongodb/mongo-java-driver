@@ -18,14 +18,13 @@ package org.mongodb.connection;
 
 import org.mongodb.annotations.Immutable;
 
+import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerConnectionState.CONNECTED;
 import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
@@ -61,7 +60,7 @@ public class ServerDescription {
     private final int maxMessageSize;
     private final Tags tags;
     private final String setName;
-    private final long averagePingTimeNanos;
+    private final long roundTripTimeNanos;
     private final boolean ok;
     private final ServerConnectionState state;
     private final ServerVersion version;
@@ -81,7 +80,7 @@ public class ServerDescription {
         private int maxWriteBatchSize = DEFAULT_MAX_WRITE_BATCH_SIZE;
         private Tags tags = Tags.freeze(new Tags());
         private String setName;
-        private long averagePingTimeNanos;
+        private long roundTripTimeNanos;
         private boolean ok;
         private ServerConnectionState state;
         private ServerVersion version = new ServerVersion();
@@ -139,8 +138,8 @@ public class ServerDescription {
             return this;
         }
 
-        public Builder averagePingTime(final long averagePingTime, final TimeUnit timeUnit) {
-            this.averagePingTimeNanos = timeUnit.toNanos(averagePingTime);
+        public Builder roundTripTime(final long roundTripTime, final TimeUnit timeUnit) {
+            this.roundTripTimeNanos = timeUnit.toNanos(roundTripTime);
             return this;
         }
 
@@ -341,12 +340,12 @@ public class ServerDescription {
         return version;
     }
 
-    public long getAveragePingTimeNanos() {
-        return averagePingTimeNanos;
+    public long getRoundTripTimeNanos() {
+        return roundTripTimeNanos;
     }
 
     /**
-     * Returns true if this instance is equals to @code{o}.  Note that equality is defined to NOT include the average ping time.
+     * Returns true if this instance is equals to @code{o}.  Note that equality is defined to NOT include the round trip time.
      *
      * @param o the object to compare to
      * @return true if this instance is equals to @code{o}
@@ -450,7 +449,7 @@ public class ServerDescription {
                   + ", maxDocumentSize=" + maxDocumentSize
                   + ", maxMessageSize=" + maxMessageSize
                   + ", maxWriteBatchSize=" + maxWriteBatchSize
-                  + ", averagePingTimeNanos=" + averagePingTimeNanos
+                  + ", roundTripTimeNanos=" + roundTripTimeNanos
                   : "")
                + (isReplicaSetMember()
                   ?
@@ -469,9 +468,13 @@ public class ServerDescription {
                + "address=" + address
                + ", type=" + type
                + (tags.isEmpty() ? "" : tags)
-               + (state == CONNECTED ? (", averagePingTime=" + NANOSECONDS.convert(averagePingTimeNanos, MILLISECONDS) + " ms") : "")
+               + (state == CONNECTED ? (", roundTripTime=" + getRoundTripFormattedInMilliseconds() + " ms") : "")
                + ", state=" + state
                + '}';
+    }
+
+    private String getRoundTripFormattedInMilliseconds() {
+        return new DecimalFormat("#0.0").format(roundTripTimeNanos / 1000.0 / 1000.0);
     }
 
     ServerDescription(final Builder builder) {
@@ -488,7 +491,7 @@ public class ServerDescription {
         maxWriteBatchSize = builder.maxWriteBatchSize;
         tags = builder.tags;
         setName = builder.setName;
-        averagePingTimeNanos = builder.averagePingTimeNanos;
+        roundTripTimeNanos = builder.roundTripTimeNanos;
         ok = builder.ok;
         minWireVersion = builder.minWireVersion;
         maxWireVersion = builder.maxWireVersion;

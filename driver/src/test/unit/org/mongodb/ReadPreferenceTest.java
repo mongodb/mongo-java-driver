@@ -55,33 +55,33 @@ public class ReadPreferenceTest {
         Tags tags3 = new Tags("foo", "1").append("bar", "2").append("baz", "3");
 
         long acceptableLatencyMS = 15;
-        long bestPingTime = 50;
-        long acceptablePingTime = bestPingTime + (acceptableLatencyMS / 2);
-        long unacceptablePingTime = bestPingTime + acceptableLatencyMS + 1;
+        long bestRoundTripTime = 50;
+        long acceptableRoundTripTime = bestRoundTripTime + (acceptableLatencyMS / 2);
+        long unacceptableRoundTripTime = bestRoundTripTime + acceptableLatencyMS + 1;
 
         primary = ServerDescription.builder().state(CONNECTED).address(new ServerAddress(HOST, 27017))
-                                   .averagePingTime(acceptablePingTime * 1000000L, NANOSECONDS)
+                                   .roundTripTime(acceptableRoundTripTime * 1000000L, NANOSECONDS)
                                    .ok(true)
                                    .type(ServerType.REPLICA_SET_PRIMARY)
                                    .tags(tags1)
                                    .maxDocumentSize(FOUR_MEG).build();
 
         secondary = ServerDescription.builder().state(CONNECTED).address(new ServerAddress(HOST, 27018))
-                                     .averagePingTime(bestPingTime * 1000000L, NANOSECONDS)
+                                     .roundTripTime(bestRoundTripTime * 1000000L, NANOSECONDS)
                                      .ok(true)
                                      .type(ServerType.REPLICA_SET_SECONDARY)
                                      .tags(tags2)
                                      .maxDocumentSize(FOUR_MEG).build();
 
         otherSecondary = ServerDescription.builder().state(CONNECTED).address(new ServerAddress(HOST, 27019))
-                                          .averagePingTime(unacceptablePingTime * 1000000L, NANOSECONDS)
+                                          .roundTripTime(unacceptableRoundTripTime * 1000000L, NANOSECONDS)
                                           .ok(true)
                                           .type(ServerType.REPLICA_SET_SECONDARY)
                                           .tags(tags3)
                                           .maxDocumentSize(FOUR_MEG)
                                           .build();
         ServerDescription uninitiatedMember = ServerDescription.builder().state(CONNECTED).address(new ServerAddress(HOST, 27020))
-                                                               .averagePingTime(unacceptablePingTime * 1000000L, NANOSECONDS)
+                                                               .roundTripTime(unacceptableRoundTripTime * 1000000L, NANOSECONDS)
                                                                .ok(true)
                                                                .type(REPLICA_SET_OTHER)
                                                                .maxDocumentSize(FOUR_MEG)

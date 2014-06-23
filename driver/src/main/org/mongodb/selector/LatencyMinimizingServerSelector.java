@@ -63,7 +63,7 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
             return clusterDescription.getAny();
         } else {
             return getServersWithAcceptableLatencyDifference(clusterDescription.getAny(),
-                                                             getBestPingTimeNanos(clusterDescription.getAll()));
+                                                             getFastestRoundTripTimeNanos(clusterDescription.getAll()));
         }
     }
 
@@ -74,17 +74,17 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
                + '}';
     }
 
-    private long getBestPingTimeNanos(final Set<ServerDescription> members) {
-        long bestPingTime = Long.MAX_VALUE;
+    private long getFastestRoundTripTimeNanos(final Set<ServerDescription> members) {
+        long fastestRoundTripTime = Long.MAX_VALUE;
         for (final ServerDescription cur : members) {
             if (!cur.isOk()) {
                 continue;
             }
-            if (cur.getAveragePingTimeNanos() < bestPingTime) {
-                bestPingTime = cur.getAveragePingTimeNanos();
+            if (cur.getRoundTripTimeNanos() < fastestRoundTripTime) {
+                fastestRoundTripTime = cur.getRoundTripTimeNanos();
             }
         }
-        return bestPingTime;
+        return fastestRoundTripTime;
     }
 
     private List<ServerDescription> getServersWithAcceptableLatencyDifference(final List<ServerDescription> servers,
@@ -94,7 +94,7 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
             if (!cur.isOk()) {
                 continue;
             }
-            if (cur.getAveragePingTimeNanos() - acceptableLatencyDifferenceNanos <= bestPingTime) {
+            if (cur.getRoundTripTimeNanos() - acceptableLatencyDifferenceNanos <= bestPingTime) {
                 goodSecondaries.add(cur);
             }
         }
