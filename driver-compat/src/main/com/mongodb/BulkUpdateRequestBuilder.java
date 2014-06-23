@@ -36,16 +36,17 @@ public class BulkUpdateRequestBuilder {
     }
 
     /**
-     * Adds an update request to replace one matching document to the bulk operation.
+     * Adds a request to replace one document in the collection that matches the query with which this builder was created.
      *
-     * @param document the replacement document
+     * @param document the replacement document, which must be structured just as a document you would insert.  It can not contain any
+     *                 update operators.
      */
     public void replaceOne(final DBObject document) {
         bulkWriteOperation.addRequest(new ReplaceRequest(query, document, upsert, codec));
     }
 
     /**
-     * Adds an update request to update all matching documents to the bulk operation.
+     * Adds a request to update all documents in the collection that match the query with which this builder was created.
      *
      * @param update the update criteria
      */
@@ -54,7 +55,7 @@ public class BulkUpdateRequestBuilder {
     }
 
     /**
-     * Adds an update request to update one matching document to the bulk operation.
+     * Adds a request to update one document in the collection that matches the query with which this builder was created.
      *
      * @param update the update criteria
      */
