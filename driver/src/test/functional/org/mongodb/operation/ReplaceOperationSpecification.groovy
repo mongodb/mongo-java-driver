@@ -15,11 +15,12 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
-import org.bson.BsonSerializationException
-import org.bson.types.Binary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonSerializationException
+import org.bson.types.Binary
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
@@ -70,9 +71,13 @@ class ReplaceOperationSpecification extends FunctionalSpecification {
         def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
 
         when:
-        op.execute(getBinding())
+        def result = op.execute(getBinding())
 
         then:
+        result.wasAcknowledged()
+        result.count == 1
+        result.upsertedId == null
+        result.isUpdateOfExisting()
         asList(replacement.getReplacement()) == getCollectionHelper().find()
     }
 
@@ -87,9 +92,13 @@ class ReplaceOperationSpecification extends FunctionalSpecification {
 
 
         when:
-        op.executeAsync(getAsyncBinding()).get()
+        def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
+        result.wasAcknowledged()
+        result.count == 1
+        result.upsertedId == null
+        result.isUpdateOfExisting()
         asList(replacement.getReplacement()) == getCollectionHelper().find()
     }
 
