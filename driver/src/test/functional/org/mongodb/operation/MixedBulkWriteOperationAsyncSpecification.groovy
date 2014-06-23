@@ -336,11 +336,12 @@ class MixedBulkWriteOperationAsyncSpecification extends FunctionalSpecification 
                 ordered, UNACKNOWLEDGED, new DocumentCodec())
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
-        getCollectionHelper().insertDocuments(new Document('_id', 4))
+        def binding = getAsyncSingleConnectionBinding()
+        def result = op.executeAsync(binding).get()
 
         then:
         !result.acknowledged
+        acknowledgeWrite(binding)
         getCollectionHelper().count() == 4
 
         where:
