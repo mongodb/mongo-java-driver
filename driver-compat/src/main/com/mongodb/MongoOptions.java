@@ -228,21 +228,25 @@ public class MongoOptions {
     }
 
     MongoClientOptions toClientOptions() {
-        return MongoClientOptions.builder()
-                                 .connectionsPerHost(this.connectionsPerHost)
-                                 .connectTimeout(this.connectTimeout)
-                                 .dbDecoderFactory(this.dbDecoderFactory)
-                                 .dbEncoderFactory(this.dbEncoderFactory)
-                                 .description(this.description)
-                                 .maxWaitTime(this.maxWaitTime)
-                                 .readPreference(this.readPreference)
-                                 .socketFactory(this.socketFactory)
-                                 .socketKeepAlive(this.socketKeepAlive)
-                                 .socketTimeout(this.socketTimeout)
-                                 .threadsAllowedToBlockForConnectionMultiplier(this.threadsAllowedToBlockForConnectionMultiplier)
-                                 .writeConcern(this.writeConcern)
-                                 .alwaysUseMBeans(this.alwaysUseMBeans)
-                                 .build();
+        MongoClientOptions.Builder builder = MongoClientOptions.builder()
+                .connectTimeout(connectTimeout)
+                .dbDecoderFactory(dbDecoderFactory)
+                .dbEncoderFactory(dbEncoderFactory)
+                .description(description)
+                .maxWaitTime(maxWaitTime)
+                .socketFactory(socketFactory)
+                .socketKeepAlive(socketKeepAlive)
+                .socketTimeout(socketTimeout)
+                .threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockForConnectionMultiplier)
+                .alwaysUseMBeans(alwaysUseMBeans);
+
+        if (readPreference != null) {
+            builder.readPreference(readPreference);
+        }
+        if (writeConcern != null) {
+            builder.writeConcern(writeConcern);
+        }
+        return builder.build();
     }
 
     /**

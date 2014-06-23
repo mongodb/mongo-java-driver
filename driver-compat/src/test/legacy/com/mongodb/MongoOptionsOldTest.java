@@ -19,8 +19,11 @@ package com.mongodb;
 import org.junit.Test;
 
 import javax.net.ssl.SSLSocketFactory;
+import java.net.UnknownHostException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 
 /**
  * The mongo options test.
@@ -146,6 +149,25 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         options.reset();
         options.j = true;
         assertEquals(new WriteConcern(0, 0, false, true), options.getWriteConcern());
+    }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testOptionDefaults() throws UnknownHostException {
+        MongoClientOptions options = new MongoOptions().toClientOptions();
+        assertNull(options.getDescription());
+        assertEquals(WriteConcern.ACKNOWLEDGED, options.getWriteConcern());
+        assertEquals(0, options.getMinConnectionsPerHost());
+        assertEquals(100, options.getConnectionsPerHost());
+        assertEquals(10000, options.getConnectTimeout());
+        assertEquals(ReadPreference.primary(), options.getReadPreference());
+        assertEquals(5, options.getThreadsAllowedToBlockForConnectionMultiplier());
+        assertFalse(options.isSocketKeepAlive());
+        assertFalse(options.isSSLEnabled());
+        assertEquals(DefaultDBDecoder.FACTORY, options.getDbDecoderFactory());
+        assertEquals(DefaultDBEncoder.FACTORY, options.getDbEncoderFactory());
+        assertEquals(0, options.getHeartbeatThreadCount());
+        assertEquals(15, options.getAcceptableLatencyDifference());
     }
 }
 
