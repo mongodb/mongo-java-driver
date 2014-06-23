@@ -135,4 +135,16 @@ public class MongoConstructorsTest {
             mongo.close();
         }
     }
+
+    @Test
+    @SuppressWarnings("deprecation")
+    public void shouldNotErrorWithDefaultOptions() throws UnknownHostException {
+        Mongo mongo = new Mongo(new ServerAddress("localhost"), new MongoOptions());
+        try {
+            assertNotNull(mongo);
+        } finally {
+            mongo.close();
+        }
+    }
+
 }
