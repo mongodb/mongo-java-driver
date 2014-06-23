@@ -25,7 +25,7 @@ import static org.mongodb.Fixture.getCluster;
 public final class ServerHelper {
     public static void checkPool(final ServerAddress address) {
         DefaultServer server = (DefaultServer) getCluster().selectServer(new ServerAddressSelector(address), 1, TimeUnit.SECONDS);
-        PooledConnectionProvider connectionProvider = (PooledConnectionProvider) server.getConnectionProvider();
+        DefaultConnectionPool connectionProvider = (DefaultConnectionPool) server.getConnectionPool();
         ConcurrentPool<UsageTrackingInternalConnection> pool = connectionProvider.getPool();
         if (pool.getInUseCount() > 0) {
             throw new IllegalStateException("Connection pool in use count is " + pool.getInUseCount());

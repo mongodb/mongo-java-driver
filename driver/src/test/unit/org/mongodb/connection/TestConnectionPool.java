@@ -21,7 +21,7 @@ import org.bson.ByteBuf;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class TestConnectionProvider implements ConnectionProvider {
+public class TestConnectionPool implements ConnectionPool {
 
     @Override
     public InternalConnection get() {
@@ -77,6 +77,10 @@ public class TestConnectionProvider implements ConnectionProvider {
     @Override
     public InternalConnection get(final long timeout, final TimeUnit timeUnit) {
         return get();
+    }
+
+    @Override
+    public void invalidate() {
     }
 
     @Override

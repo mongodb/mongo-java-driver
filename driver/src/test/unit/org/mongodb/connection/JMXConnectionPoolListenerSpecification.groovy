@@ -38,7 +38,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
 
     def 'statistics should reflect values from the provider'() {
         given:
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+        provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build(),
                 jmxListener)
 
@@ -60,7 +60,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
 
     def 'should add MBean'() {
         when:
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+        provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build(),
                 jmxListener)
 
@@ -71,7 +71,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
 
     def 'should remove MBean'() {
         given:
-        provider = new PooledConnectionProvider(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+        provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build(),
                 jmxListener)
         when:

@@ -63,6 +63,7 @@ class ServerMonitor {
     private final ServerAddress serverAddress;
     private final ChangeListener<ServerDescription> serverStateListener;
     private final InternalConnectionFactory internalConnectionFactory;
+    private final ConnectionPool connectionPool;
     private final ServerSettings settings;
     private final Thread monitorThread;
     private final Lock lock = new ReentrantLock();
@@ -75,11 +76,12 @@ class ServerMonitor {
 
     ServerMonitor(final ServerAddress serverAddress, final ServerSettings settings,
                   final String clusterId, final ChangeListener<ServerDescription> serverStateListener,
-                  final InternalConnectionFactory internalConnectionFactory) {
+                  final InternalConnectionFactory internalConnectionFactory, final ConnectionPool connectionPool) {
         this.settings = settings;
         this.serverAddress = serverAddress;
         this.serverStateListener = serverStateListener;
         this.internalConnectionFactory = internalConnectionFactory;
+        this.connectionPool = connectionPool;
         serverDescription = getConnectingServerDescription();
         monitorThread = new Thread(new ServerMonitorRunnable(), "cluster-" + clusterId + "-" + serverAddress);
         monitorThread.setDaemon(true);
@@ -202,7 +204,7 @@ class ServerMonitor {
         if (connection != null) {
             connection.close();
             connection = null;
-            // TODO: invalidate connection pool
+            connectionPool.invalidate();
         }
     }
 

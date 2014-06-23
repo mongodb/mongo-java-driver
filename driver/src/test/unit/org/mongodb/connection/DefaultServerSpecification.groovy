@@ -41,7 +41,7 @@ class DefaultServerSpecification extends Specification {
     }
 
     def setup() {
-        server = new DefaultServer(new ServerAddress(), ServerSettings.builder().build(), 'cluster-1', new TestConnectionProvider(),
+        server = new DefaultServer(new ServerAddress(), ServerSettings.builder().build(), 'cluster-1', new TestConnectionPool(),
                                    new TestInternalConnectionFactory())
     }
 

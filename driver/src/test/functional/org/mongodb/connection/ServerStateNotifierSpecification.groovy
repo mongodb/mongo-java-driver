@@ -51,8 +51,8 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
                                                                                                                           .build(),
                                                                                                             getSSLSettings()),
                                                                                     getCredentialList(),
-                                                                                    new NoOpConnectionListener())
-        )
+                                                                                    new NoOpConnectionListener()),
+                                                new TestConnectionPool())
         serverStateNotifier.start()
     }
 
