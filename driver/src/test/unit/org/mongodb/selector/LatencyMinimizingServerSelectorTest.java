@@ -40,28 +40,28 @@ public class LatencyMinimizingServerSelectorTest {
                                                      .address(new ServerAddress())
                                                      .ok(true)
                                                      .type(ServerType.REPLICA_SET_PRIMARY)
-                                                     .averagePingTime(10, TimeUnit.MILLISECONDS)
+                                                     .roundTripTime(10, TimeUnit.MILLISECONDS)
                                                      .build();
         ServerDescription secondaryOne = ServerDescription.builder()
                                                           .state(CONNECTED)
                                                           .address(new ServerAddress("localhost:27018"))
                                                           .ok(true)
                                                           .type(ServerType.REPLICA_SET_SECONDARY)
-                                                          .averagePingTime(15, TimeUnit.MILLISECONDS)
+                                                          .roundTripTime(15, TimeUnit.MILLISECONDS)
                                                           .build();
         ServerDescription secondaryTwo = ServerDescription.builder()
                                                           .state(CONNECTED)
                                                           .address(new ServerAddress("localhost:27019"))
                                                           .ok(true)
                                                           .type(ServerType.REPLICA_SET_SECONDARY)
-                                                          .averagePingTime(31, TimeUnit.MILLISECONDS)
+                                                          .roundTripTime(31, TimeUnit.MILLISECONDS)
                                                           .build();
         ServerDescription secondaryThree = ServerDescription.builder()
                                                             .state(CONNECTED)
                                                             .address(new ServerAddress("localhost:27020"))
                                                             .ok(true)
                                                             .type(ServerType.REPLICA_SET_SECONDARY)
-                                                            .averagePingTime(30, TimeUnit.MILLISECONDS)
+                                                            .roundTripTime(30, TimeUnit.MILLISECONDS)
                                                             .build();
         assertEquals(Arrays.asList(primary, secondaryOne, secondaryThree),
                      selector.select(new ClusterDescription(MULTIPLE, REPLICA_SET,
@@ -76,14 +76,14 @@ public class LatencyMinimizingServerSelectorTest {
                                                      .address(new ServerAddress())
                                                      .ok(true)
                                                      .type(ServerType.REPLICA_SET_PRIMARY)
-                                                     .averagePingTime(10, TimeUnit.NANOSECONDS)
+                                                     .roundTripTime(10, TimeUnit.NANOSECONDS)
                                                      .build();
         ServerDescription secondaryOne = ServerDescription.builder()
                                                           .state(CONNECTED)
                                                           .address(new ServerAddress("localhost:27018"))
                                                           .ok(true)
                                                           .type(ServerType.REPLICA_SET_SECONDARY)
-                                                          .averagePingTime(11, TimeUnit.NANOSECONDS)
+                                                          .roundTripTime(11, TimeUnit.NANOSECONDS)
                                                           .build();
         assertEquals(Arrays.asList(primary), selector.select(new ClusterDescription(MULTIPLE, REPLICA_SET,
                                                                                     Arrays.asList(primary, secondaryOne))));

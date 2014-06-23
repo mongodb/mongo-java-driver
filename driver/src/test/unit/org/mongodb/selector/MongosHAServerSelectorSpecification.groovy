@@ -49,7 +49,7 @@ class MongosHAServerSelectorSpecification extends Specification {
                                  .state(CONNECTED)
                                  .address(new ServerAddress())
                                  .ok(true)
-                                 .averagePingTime(10, MILLISECONDS)
+                                 .roundTripTime(10, MILLISECONDS)
                                  .type(SHARD_ROUTER)
                                  .build();
 
@@ -64,14 +64,14 @@ class MongosHAServerSelectorSpecification extends Specification {
                                            .state(CONNECTED)
                                            .address(new ServerAddress('localhost:27018'))
                                            .ok(true)
-                                           .averagePingTime(8, MILLISECONDS)
+                                           .roundTripTime(8, MILLISECONDS)
                                            .type(SHARD_ROUTER)
                                            .build();
         replicaSetMember = ServerDescription.builder()
                                             .state(CONNECTED)
                                             .address(new ServerAddress('localhost:27018'))
                                             .ok(true)
-                                            .averagePingTime(8, MILLISECONDS)
+                                            .roundTripTime(8, MILLISECONDS)
                                             .type(REPLICA_SET_PRIMARY)
                                             .build();
 

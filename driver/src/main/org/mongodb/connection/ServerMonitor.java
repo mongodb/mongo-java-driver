@@ -68,7 +68,7 @@ class ServerMonitor {
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private int count;
-    private long elapsedNanosSum;
+    private long roundTripTimeSum;
     private volatile InternalConnection connection;
     private volatile ServerDescription serverDescription;
     private volatile boolean isClosed;
@@ -157,7 +157,7 @@ class ServerMonitor {
         }
 
         private void logStateChange(final ServerDescription currentServerDescription, final Throwable throwable) {
-            // Note that the ServerDescription.equals method does not include the average ping time as part of the comparison,
+            // Note that the ServerDescription.equals method does not include the round trip time as part of the comparison,
             // so this will not spam the logs too hard.
             if (!currentServerDescription.equals(serverDescription)) {
                 if (throwable != null) {
@@ -198,7 +198,7 @@ class ServerMonitor {
 
     private void reset() {
         count = 0;
-        elapsedNanosSum = 0;
+        roundTripTimeSum = 0;
         if (connection != null) {
             connection.close();
             connection = null;
@@ -210,15 +210,15 @@ class ServerMonitor {
         LOGGER.debug(format("Checking status of %s", serverAddress));
         CommandResult isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
         count++;
-        elapsedNanosSum += isMasterResult.getElapsedNanoseconds();
+        roundTripTimeSum += isMasterResult.getElapsedNanoseconds();
 
         CommandResult buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
-        return createDescription(isMasterResult, buildInfoResult, elapsedNanosSum / count);
+        return createDescription(isMasterResult, buildInfoResult, roundTripTimeSum / count);
     }
 
     @SuppressWarnings("unchecked")
     private ServerDescription createDescription(final CommandResult commandResult, final CommandResult buildInfoResult,
-                                                final long averagePingTimeNanos) {
+                                                final long roundTripTime) {
         return ServerDescription.builder()
                                 .state(CONNECTED)
                                 .version(getVersion(buildInfoResult))
@@ -243,7 +243,7 @@ class ServerMonitor {
                                                                                      new BsonInt32(getDefaultMinWireVersion())).getValue())
                                 .maxWireVersion(commandResult.getResponse().getInt32("maxWireVersion",
                                                                                      new BsonInt32(getDefaultMaxWireVersion())).getValue())
-                                .averagePingTime(averagePingTimeNanos, NANOSECONDS)
+                                .roundTripTime(roundTripTime, NANOSECONDS)
                                 .ok(commandResult.isOk()).build();
     }
 

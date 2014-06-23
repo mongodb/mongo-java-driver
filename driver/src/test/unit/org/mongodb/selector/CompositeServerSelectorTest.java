@@ -47,7 +47,7 @@ public class CompositeServerSelectorTest {
                                  .state(CONNECTED)
                                  .address(new ServerAddress())
                                  .ok(true)
-                                 .averagePingTime(5, MILLISECONDS)
+                                 .roundTripTime(5, MILLISECONDS)
                                  .type(REPLICA_SET_PRIMARY)
                                  .build();
 
@@ -55,7 +55,7 @@ public class CompositeServerSelectorTest {
                                   .state(CONNECTED)
                                   .address(new ServerAddress("localhost:27018"))
                                   .ok(true)
-                                  .averagePingTime(30, MILLISECONDS)
+                                  .roundTripTime(30, MILLISECONDS)
                                   .type(REPLICA_SET_SECONDARY)
                                   .build();
 
@@ -63,7 +63,7 @@ public class CompositeServerSelectorTest {
                                  .state(CONNECTED)
                                  .address(new ServerAddress("localhost:27019"))
                                  .ok(true)
-                                 .averagePingTime(35, MILLISECONDS)
+                                 .roundTripTime(35, MILLISECONDS)
                                  .type(REPLICA_SET_SECONDARY)
                                  .build();
     }
