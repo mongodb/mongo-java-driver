@@ -17,8 +17,8 @@
 package org.bson.json;
 
 /**
- * An enumeration of the supported output modes of {@code JSONWriter}.  The first three correspond to the syntax documented <a
- * href="http://www.mongodb.org/display/DOCS/Mongo+Extended+JSON">here</a>.
+ * An enumeration of the supported output modes of {@code JSONWriter}.  See
+ * <a href="docs.mongodb.org/manual/reference/mongodb-extended-json/">MongoDB extended JSON documentation</a>.
  *
  * @see JsonWriter
  * @since 3.0
@@ -29,16 +29,6 @@ public enum JsonMode {
      * This mode produces output conforming to the <a href="http://www.json.org">JSON RFC spec</a>.
      */
     STRICT,
-
-    /**
-     * This mode produces output that can be processed by most Javascript interpreters.
-     */
-    JAVASCRIPT,
-
-    /**
-     * This mode produces output that the MongoDB shell understands. This is basically an enhanced Javascript format.
-     */
-    TEN_GEN,
 
     /**
      * While not formally documented, this output mode will attempt to produce output that corresponds to what the MongoDB shell actually

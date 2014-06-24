@@ -413,23 +413,6 @@ public class JsonWriterTest {
         }
     }
 
-
-    @Test
-    public void testDateTimeTenGen() {
-        List<TestData<Date>> tests = asList(new TestData<Date>(new Date(0), "new Date(0)"),
-                                            new TestData<Date>(new Date(Long.MAX_VALUE), "new Date(9223372036854775807)"),
-                                            new TestData<Date>(new Date(Long.MIN_VALUE), "new Date(-9223372036854775808)"));
-        for (final TestData<Date> cur : tests) {
-            stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, new JsonWriterSettings(JsonMode.TEN_GEN));
-            writer.writeStartDocument();
-            writer.writeDateTime("date", cur.value.getTime());
-            writer.writeEndDocument();
-            String expected = "{ \"date\" : " + cur.expected + " }";
-            assertEquals(expected, stringWriter.toString());
-        }
-    }
-
     @Test
     public void testJavaScript() {
         writer.writeStartDocument();
