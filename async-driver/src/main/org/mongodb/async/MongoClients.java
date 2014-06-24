@@ -31,7 +31,6 @@ import org.mongodb.connection.StreamFactory;
 import org.mongodb.connection.netty.NettyStreamFactory;
 import org.mongodb.management.JMXConnectionPoolListener;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,10 +47,8 @@ public final class MongoClients {
      * @param mongoURI the URI of the cluster to connect to
      * @param options the options, which override the options from the URI
      * @return the client
-     * @throws UnknownHostException
      */
-    public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options)
-    throws UnknownHostException {
+    public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) {
         if (mongoURI.getHosts().size() == 1) {
             return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
                                                                              .mode(ClusterConnectionMode.SINGLE)

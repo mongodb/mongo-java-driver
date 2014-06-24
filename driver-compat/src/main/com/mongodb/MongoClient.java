@@ -104,10 +104,9 @@ public class MongoClient extends Mongo {
      *
      * @param host the database's host address
      * @param port the port on which the database is running
-     * @throws UnknownHostException if the database host cannot be resolved
      * @throws MongoException
      */
-    public MongoClient(final String host, final int port) throws UnknownHostException {
+    public MongoClient(final String host, final int port) {
         this(new ServerAddress(host, port));
     }
 

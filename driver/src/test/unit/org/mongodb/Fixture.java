@@ -38,7 +38,6 @@ import org.mongodb.connection.StreamFactory;
 import org.mongodb.connection.netty.NettyStreamFactory;
 import org.mongodb.management.JMXConnectionPoolListener;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -69,11 +68,7 @@ public final class Fixture {
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
             MongoClientURI mongoURI = getMongoClientURI();
-            try {
-                mongoClient = (MongoClientImpl) MongoClients.create(mongoURI, mongoURI.getOptions());
-            } catch (UnknownHostException e) {
-                throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURI.getURI(), e);
-            }
+            mongoClient = (MongoClientImpl) MongoClients.create(mongoURI, mongoURI.getOptions());
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
@@ -177,16 +172,12 @@ public final class Fixture {
 
     public static Cluster getAsyncCluster() {
         if (asyncCluster == null) {
-            try {
                 asyncCluster = createCluster(getMongoClientURI());
-            } catch (UnknownHostException e) {
-                throw new IllegalArgumentException("Invalid Mongo URI: " + getMongoClientURI().getURI(), e);
-            }
         }
         return asyncCluster;
     }
 
-    public static Cluster createCluster(final MongoClientURI mongoURI) throws UnknownHostException {
+    public static Cluster createCluster(final MongoClientURI mongoURI) {
         if (mongoURI.getHosts().size() == 1) {
             return createCluster(ClusterSettings.builder()
                                                 .mode(ClusterConnectionMode.SINGLE)

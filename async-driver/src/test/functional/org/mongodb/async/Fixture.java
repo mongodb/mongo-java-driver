@@ -21,8 +21,6 @@ import org.mongodb.MongoClientURI;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoNamespace;
 
-import java.net.UnknownHostException;
-
 /**
  * Helper class for asynchronous tests.
  */
@@ -40,11 +38,7 @@ public final class Fixture {
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
             MongoClientURI mongoURI = getMongoClientURI();
-            try {
-                mongoClient = (MongoClientImpl) MongoClients.create(mongoURI, mongoURI.getOptions());
-            } catch (UnknownHostException e) {
-                throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURI.getURI(), e);
-            }
+            mongoClient = (MongoClientImpl) MongoClients.create(mongoURI, mongoURI.getOptions());
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;

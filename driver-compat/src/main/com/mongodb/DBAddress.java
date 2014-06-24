@@ -19,8 +19,6 @@ package com.mongodb;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import static java.lang.String.format;
-
 /**
  * Represents a database address
  */
@@ -109,9 +107,8 @@ public class DBAddress extends ServerAddress {
      * @param host         host name
      * @param port         database port
      * @param databaseName database name
-     * @throws UnknownHostException
      */
-    public DBAddress(final String host, final int port, final String databaseName) throws UnknownHostException {
+    public DBAddress(final String host, final int port, final String databaseName) {
         super(host, port);
         _db = databaseName.trim();
     }
@@ -164,11 +161,7 @@ public class DBAddress extends ServerAddress {
      * @throws MongoException
      */
     public DBAddress getSister(final String name) {
-        try {
-            return new DBAddress(getHost(), getPort(), name);
-        } catch (UnknownHostException uh) {
-            throw new MongoInternalException(format("UnknownHostException thrown for %s:%s.", getHost(), getPort()), uh);
-        }
+        return new DBAddress(getHost(), getPort(), name);
     }
 
     /**

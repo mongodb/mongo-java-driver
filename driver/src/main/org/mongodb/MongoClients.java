@@ -80,7 +80,7 @@ public final class MongoClients {
         return create(mongoURI, mongoURI.getOptions());
     }
 
-    public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) throws UnknownHostException {
+    public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) {
         if (mongoURI.getHosts().size() == 1) {
             return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
                                                                              .mode(ClusterConnectionMode.SINGLE)
