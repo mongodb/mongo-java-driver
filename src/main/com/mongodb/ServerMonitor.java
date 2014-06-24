@@ -48,9 +48,7 @@ class ServerMonitor {
     private final PooledConnectionProvider connectionProvider;
     private int count;
     private long elapsedNanosSum;
-    private volatile ServerDescription serverDescription;
     private volatile boolean isClosed;
-    private volatile DBPort connection;
     private final Thread monitorThread;
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
@@ -65,7 +63,6 @@ class ServerMonitor {
         this.settings = settings;
         this.mongo = mongo;
         this.connectionProvider = connectionProvider;
-        serverDescription = getConnectingServerDescription();
         monitorThread = new Thread(new ServerMonitorRunnable(), "cluster-" + clusterId + "-" + serverAddress);
         monitorThread.setDaemon(true);
     }
@@ -78,16 +75,19 @@ class ServerMonitor {
         @Override
         @SuppressWarnings("unchecked")
         public void run() {
+            DBPort connection = null;
             try {
+                ServerDescription currentServerDescription = getConnectingServerDescription();
+                Throwable currentException = null;
                 while (!isClosed) {
-                    ServerDescription currentServerDescription = serverDescription;
-                    Throwable throwable = null;
+                    ServerDescription previousServerDescription = currentServerDescription;
+                    Throwable previousException = currentException;
                     try {
                         if (connection == null) {
                             connection = new DBPort(serverAddress, null, getOptions(), 0);
                         }
                         try {
-                            serverDescription = lookupServerDescription();
+                            currentServerDescription = lookupServerDescription(connection);
                         } catch (IOException e) {
                             // in case the connection has been reset since the last run, do one retry immediately before reporting that the
                             // server is down
@@ -100,7 +100,7 @@ class ServerMonitor {
                             }
                             connection = new DBPort(serverAddress, null, getOptions(), 0);
                             try {
-                                serverDescription = lookupServerDescription();
+                                currentServerDescription = lookupServerDescription(connection);
                             } catch (IOException e1) {
                                 connection.close();
                                 connection = null;
@@ -108,14 +108,14 @@ class ServerMonitor {
                             }
                         }
                     } catch (Throwable t) {
-                        throwable = t;
-                        serverDescription = getConnectingServerDescription();
+                        currentException = t;
+                        currentServerDescription = getConnectingServerDescription();
                     }
 
                     if (!isClosed) {
                         try {
-                            logStateChange(currentServerDescription, throwable);
-                            sendStateChangedEvent(currentServerDescription);
+                            logStateChange(previousServerDescription, previousException, currentServerDescription, currentException);
+                            sendStateChangedEvent(previousServerDescription, currentServerDescription);
                         } catch (Throwable t) {
                             LOGGER.log(Level.WARNING, "Exception in monitor thread during notification of server state change", t);
                         }
@@ -129,21 +129,25 @@ class ServerMonitor {
             }
         }
 
-        private void sendStateChangedEvent(final ServerDescription currentServerDescription) {
-            if (!currentServerDescription.equals(serverDescription) ||
-                currentServerDescription.getAverageLatencyNanos() != serverDescription.getAverageLatencyNanos()) {
-                serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
+        private void sendStateChangedEvent(final ServerDescription previousServerDescription,
+                                           final ServerDescription currentServerDescription) {
+            if (stateHasChanged(previousServerDescription, currentServerDescription)) {
+                serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(previousServerDescription,
+                                                                                    currentServerDescription));
             }
         }
 
-        private void logStateChange(final ServerDescription currentServerDescription, final Throwable throwable) {
+        private void logStateChange(final ServerDescription previousServerDescription, final Throwable previousException,
+                                    final ServerDescription currentServerDescription, final Throwable currentException) {
             // Note that the ServerDescription.equals method does not include the average ping time as part of the comparison,
             // so this will not spam the logs too hard.
-            if (!currentServerDescription.equals(serverDescription)) {
-                if (throwable != null) {
-                    LOGGER.log(Level.INFO, format("Exception in monitor thread while connecting to server %s", serverAddress), throwable);
+            if (descriptionHasChanged(previousServerDescription, currentServerDescription)
+                || exceptionHasChanged(previousException, currentException)) {
+                if (currentException != null) {
+                    LOGGER.log(Level.INFO, format("Exception in monitor thread while connecting to server %s", serverAddress),
+                               currentException);
                 } else {
-                    LOGGER.info(format("Monitor thread successfully connected to server with description %s", serverDescription));
+                    LOGGER.info(format("Monitor thread successfully connected to server with description %s", currentServerDescription));
                 }
             }
         }
@@ -198,7 +202,31 @@ class ServerMonitor {
         return options;
     }
 
-    private ServerDescription lookupServerDescription() throws IOException {
+    static boolean descriptionHasChanged(final ServerDescription previousServerDescription,
+                                          final ServerDescription currentServerDescription) {
+        return !previousServerDescription.equals(currentServerDescription);
+    }
+
+    static boolean stateHasChanged(final ServerDescription previousServerDescription, final ServerDescription currentServerDescription) {
+        return descriptionHasChanged(previousServerDescription, currentServerDescription) ||
+               previousServerDescription.getAverageLatencyNanos() != currentServerDescription.getAverageLatencyNanos();
+    }
+
+    static boolean exceptionHasChanged(final Throwable previousException, final Throwable currentException) {
+        if (currentException == null) {
+            return previousException != null;
+        } else if (previousException == null) {
+            return true;
+        } else if (!currentException.getClass().equals(previousException.getClass())) {
+            return true;
+        } else if (currentException.getMessage() == null) {
+            return previousException.getMessage() != null;
+        } else {
+            return !currentException.getMessage().equals(previousException.getMessage());
+        }
+    }
+
+    private ServerDescription lookupServerDescription(final DBPort connection) throws IOException {
         LOGGER.fine(format("Checking status of %s", serverAddress));
         long startNanoTime = System.nanoTime();
         final CommandResult isMasterResult = connection.runCommand(mongo.getDB("admin"), new BasicDBObject("ismaster", 1));
