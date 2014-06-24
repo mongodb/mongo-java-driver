@@ -16,9 +16,7 @@
 
 package org.mongodb.operation;
 
-import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
-import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
 import org.mongodb.protocol.DeleteCommandProtocol;
@@ -37,13 +35,11 @@ import static org.mongodb.assertions.Assertions.notNull;
  */
 public class RemoveOperation extends BaseWriteOperation {
     private final List<RemoveRequest> removeRequests;
-    private final Encoder<Document> queryEncoder;
 
     public RemoveOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<RemoveRequest> removeRequests, final Encoder<Document> queryEncoder) {
+                           final List<RemoveRequest> removeRequests) {
         super(namespace, ordered, writeConcern);
         this.removeRequests = notNull("removes", removeRequests);
-        this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }
 
     @Override

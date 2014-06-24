@@ -355,15 +355,15 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public WriteResult remove() {
             RemoveRequest removeRequest = new RemoveRequest(findOp.getFilter()).multi(getMultiFromLimit());
-            return execute(new RemoveOperation(getNamespace(), true, writeConcern, asList(removeRequest),
-                                               getDocumentCodec()));
+            return execute(new RemoveOperation(getNamespace(), true, writeConcern, asList(removeRequest)
+            ));
         }
 
         @Override
         public WriteResult removeOne() {
             RemoveRequest removeRequest = new RemoveRequest(findOp.getFilter()).multi(false);
-            return execute(new RemoveOperation(getNamespace(), true, writeConcern, asList(removeRequest),
-                                               getDocumentCodec()));
+            return execute(new RemoveOperation(getNamespace(), true, writeConcern, asList(removeRequest)
+            ));
         }
 
         @Override

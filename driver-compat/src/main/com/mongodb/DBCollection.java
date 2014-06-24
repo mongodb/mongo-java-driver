@@ -480,7 +480,7 @@ public class DBCollection {
      */
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
         return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
-                                                         asList(new RemoveRequest(wrap(query))), documentCodec), writeConcern);
+                                                         asList(new RemoveRequest(wrap(query)))), writeConcern);
     }
 
     /**
@@ -497,7 +497,7 @@ public class DBCollection {
         RemoveRequest removeRequest = new RemoveRequest(wrap(query, encoder));
 
         return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
-                                                         asList(removeRequest), getDocumentCodec()), writeConcern);
+                                                         asList(removeRequest)), writeConcern);
     }
 
     /**

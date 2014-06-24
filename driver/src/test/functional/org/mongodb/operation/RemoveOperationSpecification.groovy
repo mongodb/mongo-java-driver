@@ -24,7 +24,6 @@ import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.codecs.DocumentCodec
 
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
@@ -35,8 +34,8 @@ class RemoveOperationSpecification extends FunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document('_id', 1))
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     [new RemoveRequest(new BsonDocument('_id', new BsonInt32(1)))],
-                                     new DocumentCodec())
+                                     [new RemoveRequest(new BsonDocument('_id', new BsonInt32(1)))]
+        )
 
         when:
         op.execute(getBinding())
@@ -50,8 +49,8 @@ class RemoveOperationSpecification extends FunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document('_id', 1))
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     [new RemoveRequest(new BsonDocument('_id', new BsonInt32(1)))],
-                                     new DocumentCodec())
+                                     [new RemoveRequest(new BsonDocument('_id', new BsonInt32(1)))]
+        )
 
         when:
         op.executeAsync(getAsyncBinding()).get()
@@ -67,8 +66,8 @@ class RemoveOperationSpecification extends FunctionalSpecification {
         def simpleDoc = new BsonDocument('_id', new BsonInt32(1))
         getCollectionHelper().insertDocuments(new BsonDocumentCodec(), simpleDoc)
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     [new RemoveRequest(bigDoc), new RemoveRequest(smallerDoc), new RemoveRequest(simpleDoc)],
-                                     new DocumentCodec())
+                                     [new RemoveRequest(bigDoc), new RemoveRequest(smallerDoc), new RemoveRequest(simpleDoc)]
+        )
 
         when:
         op.execute(getBinding())
@@ -85,8 +84,8 @@ class RemoveOperationSpecification extends FunctionalSpecification {
         def simpleDoc = new BsonDocument('_id', new BsonInt32(1))
         getCollectionHelper().insertDocuments(new BsonDocumentCodec(), simpleDoc)
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     [new RemoveRequest(bigDoc), new RemoveRequest(smallerDoc), new RemoveRequest(simpleDoc)],
-                                     new DocumentCodec())
+                                     [new RemoveRequest(bigDoc), new RemoveRequest(smallerDoc), new RemoveRequest(simpleDoc)]
+        )
 
         when:
         op.executeAsync(getAsyncBinding()).get()
