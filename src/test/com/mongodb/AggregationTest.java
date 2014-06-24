@@ -242,6 +242,27 @@ public class AggregationTest extends TestCase {
         }
     }
 
+    @Test
+    public void testInvalidPipelineThrowsError() {
+        assumeFalse(isSharded(getMongoClient()));
+        checkServerVersion(2.5);
+        DBCollection collection = database.getCollection("testInvalidPipeline");
+        List<DBObject> invalidPipeline = asList((DBObject) new BasicDBObject("name", "foo"));
+        try {
+            collection.aggregate(invalidPipeline);
+            fail("Show have thrown");
+        } catch (CommandFailureException e) {
+            assertEquals(16436, e.getCode());
+        }
+
+        try {
+            collection.aggregate(invalidPipeline, AggregationOptions.builder().build());
+            fail("Show have thrown");
+        } catch (CommandFailureException e) {
+            assertEquals(16436, e.getCode());
+        }
+    }
+
     public List<DBObject> prepareData() {
         collection.remove(new BasicDBObject());
 

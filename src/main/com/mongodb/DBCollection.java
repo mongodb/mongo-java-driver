@@ -1552,6 +1552,7 @@ public abstract class DBCollection {
         DBObject command = prepareCommand(pipeline, options);
 
         CommandResult res = _db.command(command, getOptions(), readPreference);
+        res.throwOnError();
         
         return new AggregationOutput(command, res);
     }
