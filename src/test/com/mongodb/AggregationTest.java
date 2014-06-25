@@ -59,7 +59,7 @@ public class AggregationTest extends TestCase {
 
     @Test
     public void testOldAggregationWithOut() {
-        checkServerVersion(2.5);
+        checkServerVersion(2.6);
         List<DBObject> pipeline = new ArrayList<DBObject>(buildPipeline());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         final AggregationOutput out = collection.aggregate(pipeline);
@@ -70,7 +70,7 @@ public class AggregationTest extends TestCase {
 
     @Test
     public void testExplain() {
-        checkServerVersion(2.5);
+        checkServerVersion(2.6);
         List<DBObject> pipeline = new ArrayList<DBObject>(buildPipeline());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         final CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder()
@@ -126,7 +126,7 @@ public class AggregationTest extends TestCase {
 
     @Test
     public void testAggregationCursor() {
-        checkServerVersion(2.5);
+        checkServerVersion(2.6);
         final List<DBObject> pipeline = prepareData();
 
         verify(pipeline, AggregationOptions.builder()
@@ -149,7 +149,7 @@ public class AggregationTest extends TestCase {
 
     @Test
     public void testInlineAndDollarOut() {
-        checkServerVersion(2.5);
+        checkServerVersion(2.6);
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
                 .drop();
@@ -168,7 +168,7 @@ public class AggregationTest extends TestCase {
 
     @Test
     public void testDollarOut() {
-        checkServerVersion(2.5);
+        checkServerVersion(2.6);
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
                 .drop();
@@ -185,7 +185,7 @@ public class AggregationTest extends TestCase {
 
     @Test
     public void testDollarOutOnSecondary() throws UnknownHostException {
-        checkServerVersion(2.5);
+        checkServerVersion(2.6);
         assumeTrue(isReplicaSet(cleanupMongo));
 
         ServerAddress primary = new ServerAddress("localhost");
@@ -207,7 +207,7 @@ public class AggregationTest extends TestCase {
     @Test
     @Ignore
     public void testAggregateOnSecondary() throws UnknownHostException {
-        checkServerVersion(2.5);
+        checkServerVersion(2.6);
         assumeTrue(isReplicaSet(cleanupMongo));
 
         ServerAddress primary = new ServerAddress("localhost");
@@ -229,7 +229,7 @@ public class AggregationTest extends TestCase {
     @Test
     public void testMaxTime() {
         assumeFalse(isSharded(getMongoClient()));
-        checkServerVersion(2.5);
+        checkServerVersion(2.6);
         enableMaxTimeFailPoint();
         DBCollection collection = database.getCollection("testMaxTime");
         try {
@@ -239,6 +239,26 @@ public class AggregationTest extends TestCase {
             assertEquals(50, e.getCode());
         } finally {
             disableMaxTimeFailPoint();
+        }
+    }
+
+    @Test
+    public void testInvalidPipelineThrowsError() {
+        checkServerVersion(2.6);
+        DBCollection collection = database.getCollection("testInvalidPipeline");
+        List<DBObject> invalidPipeline = asList((DBObject) new BasicDBObject("name", "foo"));
+        try {
+            collection.aggregate(invalidPipeline);
+            fail("Show have thrown");
+        } catch (CommandFailureException e) {
+            // continue
+        }
+
+        try {
+            collection.aggregate(invalidPipeline, AggregationOptions.builder().build());
+            fail("Show have thrown");
+        } catch (CommandFailureException e) {
+            // continue
         }
     }
 
