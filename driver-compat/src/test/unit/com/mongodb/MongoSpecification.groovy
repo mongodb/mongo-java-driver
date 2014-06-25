@@ -15,11 +15,6 @@
  */
 
 
-
-
-
-
-
 package com.mongodb
 
 import org.mongodb.connection.Cluster
@@ -76,6 +71,7 @@ class MongoSpecification extends Specification {
 
     def 'should send fsync commands in expected form'() {
         given:
+        CommandResult commandResult = Mock()
         DB db = Mock()
         mongo = Spy(Mongo, constructorArgs: [cluster, MongoClientOptions.builder().build(), []]) {
             getDB('admin') >> db
@@ -85,20 +81,21 @@ class MongoSpecification extends Specification {
         mongo.fsync(false)
 
         then:
-        1 * db.command(~['fsync': 1])
+        1 * db.command(~['fsync': 1]) >> commandResult
 
         when:
         mongo.fsync(true)
 
         then:
-        1 * db.command(~['fsync': 1, 'async': 1])
+        1 * db.command(~['fsync': 1, 'async': 1]) >> commandResult
     }
 
     def 'should lock and unlock as server'() {
         given:
         DBCollection unlockCollection = Mock()
         DBCollection inprogCollection = Mock()
-        DB db = Mock() {
+        CommandResult commandResult = Mock()
+        DB db = Mock(DB) {
             getCollection('$cmd.sys.unlock') >> unlockCollection
             getCollection('$cmd.sys.inprog') >> inprogCollection
         }
@@ -110,7 +107,7 @@ class MongoSpecification extends Specification {
         mongo.fsyncAndLock()
 
         then:
-        1 * db.command(~['fsync': 1, 'lock': 1])
+        1 * db.command(~['fsync': 1, 'lock': 1]) >> commandResult
 
         when:
         mongo.isLocked()

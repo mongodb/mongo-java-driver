@@ -254,7 +254,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testCreateIndexAsText() {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 5)));
+        assumeTrue(serverVersionAtLeast(asList(2, 6)));
         DBObject index = new BasicDBObject("x", "text");
         collection.createIndex(index);
 
@@ -771,8 +771,27 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    public void testInvalidPipelineThrowsError() {
+        assumeTrue(serverVersionAtLeast(asList(2, 6)));
+        List<DBObject> invalidPipeline = asList((DBObject) new BasicDBObject("name", "foo"));
+        try {
+            collection.aggregate(invalidPipeline);
+            fail("Show have thrown");
+        } catch (CommandFailureException e) {
+            // continue
+        }
+
+        try {
+            collection.aggregate(invalidPipeline, AggregationOptions.builder().build());
+            fail("Show have thrown");
+        } catch (CommandFailureException e) {
+            // continue
+        }
+    }
+
+    @Test
     public void testParallelScan() throws UnknownHostException {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 5)));
+        assumeTrue(serverVersionAtLeast(asList(2, 6)));
         assumeFalse(isSharded());
 
         Set<Integer> ids = new HashSet<Integer>();
