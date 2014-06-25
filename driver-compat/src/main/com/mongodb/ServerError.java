@@ -25,28 +25,6 @@ import org.bson.BSONObject;
  */
 public class ServerError {
 
-    ServerError(final DBObject o) {
-        _err = getMsg(o, null);
-        if (_err == null) {
-            throw new IllegalArgumentException("need to have $err");
-        }
-        _code = getCode(o);
-    }
-
-    static String getMsg(final BSONObject o, final String def) {
-        Object e = o.get("$err");
-        if (e == null) {
-            e = o.get("err");
-        }
-        if (e == null) {
-            e = o.get("errmsg");
-        }
-        if (e == null) {
-            return def;
-        }
-        return e.toString();
-    }
-
     static int getCode(final BSONObject o) {
         Object c = o.get("code");
         if (c == null) {
@@ -62,53 +40,4 @@ public class ServerError {
 
         return ((Number) c).intValue();
     }
-
-    /**
-     * Gets the error String.
-     *
-     * @return the error string
-     */
-    public String getError() {
-        return _err;
-    }
-
-    /**
-     * Gets the error code.
-     *
-     * @return the error code
-     */
-    public int getCode() {
-        return _code;
-    }
-
-    /**
-     * Returns true if the error is "not master", which usually happens when doing operation on slave.
-     *
-     * @return {@code true} if the error is "not master", {@code false} otherwise
-     */
-    public boolean isNotMasterError() {
-        switch (_code) {
-            case 10054:
-            case 10056:
-            case 10058:
-            case 10107:
-            case 13435:
-            case 13436:
-                return true;
-            default:
-                return _err.startsWith("not master");
-        }
-    }
-
-    @Override
-    public String toString() {
-        if (_code > 0) {
-            return _code + " " + _err;
-        }
-        return _err;
-    }
-
-    final String _err;
-    final int _code;
-
 }
