@@ -199,8 +199,14 @@ configure(subprojects.findAll { it.name != 'util' }) {
 
 def nettyVersion = '4.0.19.Final'
 
-project(':bson') {}
-
+project(':bson') {
+    sourceSets {
+        test {
+            groovy { srcDirs = ['src/test'] }
+            java { srcDirs = ['src/test'] }
+        }
+    }
+}
 project(':driver') {
     sourceSets {
         test {
