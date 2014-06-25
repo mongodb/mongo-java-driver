@@ -18,7 +18,6 @@
 
 package com.mongodb;
 
-import org.bson.BSONObject;
 import org.mongodb.annotations.Immutable;
 
 import java.io.Serializable;
@@ -298,17 +297,6 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Gets the getlasterror command for this write concern.
-     *
-     * @return getlasterror command, even if {@code w <= 0}
-     */
-    public BasicDBObject getCommand() {
-        BasicDBObject command = new BasicDBObject("getlasterror", 1);
-        command.putAll((BSONObject) DBObjects.toDBObject(proxied.asDocument()));
-        return command;
-    }
-
-    /**
      * Gets the w value (the write strategy)
      *
      * @return w, either an instance of Integer or String
@@ -465,13 +453,6 @@ public class WriteConcern implements Serializable {
 
         public Majority(final int wtimeout, final boolean fsync, final boolean j) {
             super("majority", wtimeout, fsync, j);
-        }
-
-        @Override
-        public String toString() {
-            return "WriteConcern.Majority{"
-                   + "command=" + getCommand()
-                   + "}";
         }
     }
 

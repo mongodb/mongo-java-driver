@@ -120,10 +120,6 @@ public class WriteConcernTest {
         assertEquals(true, wc.fsync());
         assertEquals(true, wc.callGetLastError());
         assertEquals("dc1", wc.getWObject());
-        assertEquals(new BasicDBObject("getlasterror", 1).append("w", "dc1")
-                                                         .append("wtimeout", 10)
-                                                         .append("fsync", true)
-                                                         .append("j", true), wc.getCommand());
 
         wc = new WriteConcern(0, 10, false, true, true);
         assertEquals(false, wc.fsync());
