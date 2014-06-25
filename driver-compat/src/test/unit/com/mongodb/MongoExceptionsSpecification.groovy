@@ -58,7 +58,6 @@ class MongoExceptionsSpecification extends Specification {
 
         where:
         exceptionToBeMapped                                                                   | exceptionForCompatibilityApi     | errorCode
-        new org.mongodb.MongoInterruptedException(MESSAGE, new InterruptedException('cause')) | MongoInterruptedException        | -4
         new MongoSocketReadException(MESSAGE, new ServerAddress(), new IOException('cause'))  | MongoSocketException             | -2
         new MongoCommandFailureException(commandResultWithErrorCode(ERROR_CODE))              | CommandFailureException          |
         ERROR_CODE
@@ -67,7 +66,6 @@ class MongoExceptionsSpecification extends Specification {
         ERROR_CODE
         new org.mongodb.connection.MongoTimeoutException(MESSAGE)                             | MongoTimeoutException            | -3
         new org.mongodb.connection.MongoWaitQueueFullException(MESSAGE)                       | MongoWaitQueueFullException      | -3
-        new org.mongodb.MongoIncompatibleDriverException('', CLUSTER_DESCRIPTION)             | MongoIncompatibleDriverException | -3
         new org.mongodb.connection.MongoServerSelectionException('timeout')                   | MongoServerSelectionException    | -3
     }
 

@@ -30,8 +30,8 @@ final class MongoExceptions {
     @SuppressWarnings("deprecation")
     public static com.mongodb.MongoException mapException(final org.mongodb.MongoException e, final Decoder<DBObject> decoder) {
         Throwable cause = e.getCause();
-        if (e instanceof org.mongodb.MongoIncompatibleDriverException) {
-            return new MongoIncompatibleDriverException(e.getMessage());
+        if (e instanceof MongoIncompatibleDriverException) {
+            return (MongoIncompatibleDriverException) e;
         } else if (e instanceof org.mongodb.MongoExecutionTimeoutException) {
             return new MongoExecutionTimeoutException((org.mongodb.MongoExecutionTimeoutException) e);
         } else if (e instanceof MongoWriteException) {
@@ -46,8 +46,8 @@ final class MongoExceptions {
             return new MongoCursorNotFoundException((org.mongodb.MongoCursorNotFoundException) e);
         } else if (e instanceof MongoCommandFailureException) {
             return new CommandFailureException((MongoCommandFailureException) e);
-        } else if (e instanceof org.mongodb.MongoInterruptedException) {
-            return new MongoInterruptedException((org.mongodb.MongoInterruptedException) e);
+        } else if (e instanceof MongoInterruptedException) {
+            return (MongoInterruptedException) e;
         } else if (e instanceof org.mongodb.connection.MongoSocketException && cause instanceof IOException) {
             return new MongoSocketException(e.getMessage(), (IOException) cause);
         } else if (e instanceof org.mongodb.BulkWriteException) {

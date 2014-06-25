@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import org.mongodb.connection.ClusterDescription;
+
 /**
  * An exception indicating that this version of the driver is not compatible with at least one of the servers that it is currently
  * connected to.
@@ -24,8 +26,26 @@ package com.mongodb;
  */
 public class MongoIncompatibleDriverException extends MongoException {
     private static final long serialVersionUID = -5213381354402601890L;
+    private ClusterDescription clusterDescription;
 
-    MongoIncompatibleDriverException(final String message) {
+    /**
+     * Construct a new instance.
+     *
+     * @param message the error message
+     * @param clusterDescription the cluster description
+     */
+    public MongoIncompatibleDriverException(final String message, final ClusterDescription clusterDescription) {
         super(message);
+        this.clusterDescription = clusterDescription;
     }
+
+    /**
+     * The cluster description which was determined to be incompatible.
+     *
+     * @return the cluster description
+     */
+    public ClusterDescription getClusterDescription() {
+        return clusterDescription;
+    }
+
 }

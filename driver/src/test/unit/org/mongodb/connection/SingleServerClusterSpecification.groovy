@@ -22,7 +22,7 @@
 
 package org.mongodb.connection
 
-import org.mongodb.MongoIncompatibleDriverException
+import com.mongodb.MongoIncompatibleDriverException
 import org.mongodb.event.ClusterListener
 import org.mongodb.selector.PrimaryServerSelector
 import spock.lang.Specification

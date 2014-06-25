@@ -16,8 +16,8 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.MongoIncompatibleDriverException;
-import org.mongodb.MongoInterruptedException;
+import com.mongodb.MongoIncompatibleDriverException;
+import com.mongodb.MongoInterruptedException;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.event.ClusterDescriptionChangedEvent;

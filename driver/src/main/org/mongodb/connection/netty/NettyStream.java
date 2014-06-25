@@ -16,6 +16,7 @@
 
 package org.mongodb.connection.netty;
 
+import com.mongodb.MongoInterruptedException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
@@ -35,7 +36,6 @@ import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.GenericFutureListener;
 import org.bson.ByteBuf;
 import org.mongodb.MongoInternalException;
-import org.mongodb.MongoInterruptedException;
 import org.mongodb.connection.AsyncCompletionHandler;
 import org.mongodb.connection.MongoSocketOpenException;
 import org.mongodb.connection.MongoSocketReadTimeoutException;

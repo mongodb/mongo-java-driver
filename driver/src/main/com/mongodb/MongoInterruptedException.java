@@ -29,11 +29,7 @@ public class MongoInterruptedException extends MongoException {
         super("A driver operation has been interrupted", e);
     }
 
-    public MongoInterruptedException(final String message, final InterruptedException e) {
+    public MongoInterruptedException(final String message, final Exception e) {
         super(message, e);
-    }
-
-    public MongoInterruptedException(final org.mongodb.MongoInterruptedException e) {
-        super(e.getMessage(), e.getCause());
     }
 }
