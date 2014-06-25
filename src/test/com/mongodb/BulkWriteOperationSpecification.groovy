@@ -374,6 +374,7 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
 
     def 'unacknowledged upserts with custom _id should not error'() {
         given:
+        collection.getDB().requestStart()
         def operation = initializeBulkOperation(ordered)
         operation.find(new BasicDBObject('_id', 0)).upsert()
                 .updateOne(new BasicDBObject('$set', new BasicDBObject('a', 0)))
@@ -387,6 +388,9 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         then:
         result == new UnacknowledgedBulkWriteResult()
         collection.count() == 4
+
+        cleanup:
+        collection.getDB().requestDone()
 
         where:
         ordered << [true, false]
