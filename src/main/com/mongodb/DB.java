@@ -470,7 +470,9 @@ public abstract class DB {
      * @throws MongoException
      */
     public CommandResult getStats() {
-        return command("dbstats");
+        CommandResult result = command("dbstats");
+        result.throwOnError();
+        return result;
     }
 
     /**
