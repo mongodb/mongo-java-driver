@@ -40,6 +40,7 @@
     <ruleset-ref path='rulesets/generic.xml'/>
     <ruleset-ref path='rulesets/groovyism.xml'>
         <exclude name="ExplicitCallToCompareToMethod"/>
+        <exclude name='GetterMethodCouldBeProperty'/>
      </ruleset-ref>
     <ruleset-ref path='rulesets/junit.xml'/>
     <ruleset-ref path='rulesets/logging.xml'/>
@@ -53,7 +54,8 @@
             <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
         </rule-config>
         <exclude name='CrapMetric'/>
-        <exclude name="AbcMetric"/>
+        <exclude name='AbcMetric'/>
+        <exclude name='MethodSize'/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/unnecessary.xml'>
         <!-- these should be revisted later when we've developed a Groovy style -->

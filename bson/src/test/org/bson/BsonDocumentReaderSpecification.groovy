@@ -35,7 +35,7 @@ class BsonDocumentReaderSpecification extends Specification {
                         new BsonElement('string', new BsonString('the fox ...')),
                         new BsonElement('minKey', new BsonMinKey()),
                         new BsonElement('maxKey', new BsonMaxKey()),
-                        new BsonElement('dbPointer', new BsonDbPointer("test.test", new ObjectId())),
+                        new BsonElement('dbPointer', new BsonDbPointer('test.test', new ObjectId())),
                         new BsonElement('code', new BsonJavaScript('int i = 0;')),
                         new BsonElement('codeWithScope', new BsonJavaScriptWithScope('x', new BsonDocument('x', new BsonInt32(1)))),
                         new BsonElement('objectId', new BsonObjectId(new ObjectId())),

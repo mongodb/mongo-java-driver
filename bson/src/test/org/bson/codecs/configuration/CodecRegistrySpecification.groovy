@@ -113,9 +113,8 @@ class SimpleCodecProvider implements CodecProvider {
     def <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
         if (clazz == codec.getEncoderClass()) {
             return codec
-        } else {
-            return null
         }
+        null
     }
 }
 
@@ -124,7 +123,7 @@ class ClassModelCodecProvider implements CodecProvider {
     private final List<Class<?>> supportedClasses
 
     ClassModelCodecProvider() {
-        this(asList(Top.class, Nested.class))
+        this(asList(Top, Nested))
     }
 
     ClassModelCodecProvider(List<Class<?>> supportedClasses) {
@@ -139,9 +138,8 @@ class ClassModelCodecProvider implements CodecProvider {
             return new TopCodec(registry)
         } else if (clazz == Nested) {
             return new NestedCodec(registry)
-        } else {
-            return null
         }
+        null
     }
 }
 
@@ -172,11 +170,11 @@ class TopCodec implements Codec<Top> {
 
     @Override
     Class<Top> getEncoderClass() {
-        return Top
+        Top
     }
 
     @Override
-    def Top decode(final BsonReader reader, DecoderContext decoderContext) {
+    Top decode(final BsonReader reader, DecoderContext decoderContext) {
         reader.readStartDocument()
         reader.readName()
         def name = reader.readString()
@@ -199,7 +197,7 @@ class TopCodec implements Codec<Top> {
             nested = codecForNested.decode(reader, decoderContext)
         }
         reader.readEndDocument()
-        return new Top(name, other, nested);
+        new Top(name, other, nested);
     }
 }
 
@@ -226,11 +224,11 @@ class NestedCodec implements Codec<Nested> {
 
     @Override
     Class<Top> getEncoderClass() {
-        return Top
+        Top
     }
 
     @Override
-    def Nested decode(final BsonReader reader, DecoderContext decoderContext) {
+    Nested decode(final BsonReader reader, DecoderContext decoderContext) {
         reader.readStartDocument()
         reader.readName()
         def name = reader.readString()
@@ -243,7 +241,7 @@ class NestedCodec implements Codec<Nested> {
             top = codecForTop.decode(reader, decoderContext)
         }
         reader.readEndDocument()
-        return new Nested(name, top);
+        new Nested(name, top);
     }
 }
 
@@ -259,15 +257,15 @@ class Top {
     }
 
     String getName() {
-        return name
+        name
     }
 
     Top getOther() {
-        return other
+        other
     }
 
     Nested getNested() {
-        return nested
+        nested
     }
 
     boolean equals(final o) {
@@ -290,7 +288,7 @@ class Top {
             return false
         }
 
-        return true
+        true
     }
 
     int hashCode() {
@@ -298,7 +296,7 @@ class Top {
         result = name.hashCode()
         result = 31 * result + (other != null ? other.hashCode() : 0)
         result = 31 * result + (nested != null ? nested.hashCode() : 0)
-        return result
+        result
     }
 }
 
@@ -312,11 +310,11 @@ class Nested {
     }
 
     String getName() {
-        return name
+        name
     }
 
     Top getTop() {
-        return top
+        top
     }
 
     boolean equals(final o) {
@@ -336,14 +334,14 @@ class Nested {
             return false
         }
 
-        return true
+        true
     }
 
     int hashCode() {
         int result
         result = name.hashCode()
         result = 31 * result + (top != null ? top.hashCode() : 0)
-        return result
+        result
     }
 }
 
