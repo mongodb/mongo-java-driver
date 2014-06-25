@@ -35,17 +35,4 @@ public class DuplicateKeyException extends WriteConcernException {
     DuplicateKeyException(final org.mongodb.MongoDuplicateKeyException e) {
         super(e);
     }
-
-    /**
-     * Construct a new instance with the CommandResult from getlasterror command
-     *
-     * @param commandResult the command result
-     */
-    DuplicateKeyException(final CommandResult commandResult) {
-        super(commandResult);
-    }
-
-    DuplicateKeyException(final int errorCode, final String errorMessage, final ServerAddress serverAddress) {
-        super(errorCode, errorMessage, serverAddress);
-    }
 }
