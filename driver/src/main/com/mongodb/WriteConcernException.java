@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import org.bson.BsonBoolean;
+import org.bson.BsonInt32;
 import org.mongodb.MongoWriteException;
 
 /**
@@ -37,10 +38,9 @@ public class WriteConcernException extends MongoException {
     }
 
     private static WriteResult createWriteResult(final MongoWriteException e) {
-        return new WriteResult(e.getCommandResult().getResponse().getNumber("n").intValue(),
+        return new WriteResult(e.getCommandResult().getResponse().getNumber("n", new BsonInt32(0)).intValue(),
                                e.getCommandResult().getResponse().getBoolean("updatedExisting", BsonBoolean.FALSE).getValue(),
-                               e.getCommandResult().getResponse().get("upserted"),
-                               WriteConcern.ACKNOWLEDGED);
+                               e.getCommandResult().getResponse().get("upserted"));
     }
 
     /**

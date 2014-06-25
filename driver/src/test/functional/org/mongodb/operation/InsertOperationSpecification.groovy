@@ -16,12 +16,12 @@
 
 package org.mongodb.operation
 import category.Async
+import com.mongodb.MongoException
 import org.bson.BsonSerializationException
 import org.bson.types.Binary
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoDuplicateKeyException
 import org.mongodb.codecs.DocumentCodec
 
 import static java.util.Arrays.asList
@@ -206,7 +206,7 @@ class InsertOperationSpecification extends FunctionalSpecification {
                 .execute(getBinding())
 
         then:
-        thrown(MongoDuplicateKeyException)
+        thrown(MongoException.DuplicateKey)
         getCollectionHelper().count() == 2
     }
 
@@ -224,7 +224,7 @@ class InsertOperationSpecification extends FunctionalSpecification {
                 .executeAsync(getAsyncBinding()).get()
 
         then:
-        thrown(MongoDuplicateKeyException)
+        thrown(MongoException.DuplicateKey)
         getCollectionHelper().count() == 2
     }
 
@@ -241,7 +241,7 @@ class InsertOperationSpecification extends FunctionalSpecification {
                 .execute(getBinding())
 
         then:
-        thrown(MongoDuplicateKeyException)
+        thrown(MongoException.DuplicateKey)
         getCollectionHelper().count() == 1
     }
 
@@ -259,7 +259,7 @@ class InsertOperationSpecification extends FunctionalSpecification {
                 .executeAsync(getAsyncBinding()).get()
 
         then:
-        thrown(MongoDuplicateKeyException)
+        thrown(MongoException.DuplicateKey)
         getCollectionHelper().count() == 1
     }
 

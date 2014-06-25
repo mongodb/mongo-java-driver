@@ -25,25 +25,21 @@ package com.mongodb;
  */
 public class WriteResult {
 
-    private final WriteConcern writeConcern;
     private final int n;
     private final boolean updateOfExisting;
     private final Object upsertedId;
 
-    WriteResult(final int n, final boolean updateOfExisting, final Object upsertedId, final WriteConcern writeConcern) {
+    /**
+     * Construct a new instance.
+     *
+     * @param n the number of existing documents affected by this operation
+     * @param updateOfExisting true if the operation was an update and an existing document was updated
+     * @param upsertedId the _id of a document that was upserted by this operation
+     */
+    public WriteResult(final int n, final boolean updateOfExisting, final Object upsertedId) {
         this.n = n;
         this.updateOfExisting = updateOfExisting;
         this.upsertedId = upsertedId;
-        this.writeConcern = writeConcern;
-    }
-
-    /**
-     * Gets the last {@code WriteConcern} used for the write operation.
-     *
-     * @return the write concern
-     */
-    public WriteConcern getLastConcern() {
-        return writeConcern;
     }
 
     /**
@@ -82,7 +78,6 @@ public class WriteResult {
     @Override
     public String toString() {
         return "WriteResult{"
-               + "writeConcern=" + writeConcern
                + ", n=" + n
                + ", updateOfExisting=" + updateOfExisting
                + ", upsertedId=" + upsertedId

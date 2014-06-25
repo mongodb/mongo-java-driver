@@ -23,7 +23,6 @@ import org.bson.BsonValue;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
-import org.mongodb.MongoDuplicateKeyException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoExecutionTimeoutException;
 import org.mongodb.MongoQueryFailureException;
@@ -53,9 +52,13 @@ final class ProtocolHelper {
             throwWriteException(commandResult);
         }
 
+        return createWriteResult(commandResult);
+    }
+
+    private static WriteResult createWriteResult(final CommandResult commandResult) {
         BsonBoolean updatedExisting = commandResult.getResponse().getBoolean("updatedExisting", BsonBoolean.FALSE);
 
-        return new AcknowledgedWriteResult(commandResult.getResponse().getNumber("n").intValue(),
+        return new AcknowledgedWriteResult(commandResult.getResponse().getNumber("n", new BsonInt32(0)).intValue(),
                                            updatedExisting.getValue(), commandResult.getResponse().get("upserted"));
     }
 
@@ -116,10 +119,17 @@ final class ProtocolHelper {
         }
     }
 
+    private static com.mongodb.WriteResult getWriteResult2(final CommandResult commandResult) {
+        WriteResult writeResult = createWriteResult(commandResult);
+        // TODO: translate upsertedId
+        return new com.mongodb.WriteResult(writeResult.getCount(), writeResult.isUpdateOfExisting(), writeResult.getUpsertedId());
+    }
+
     private static void throwWriteException(final CommandResult commandResult) {
         int code = getCode(commandResult.getResponse());
         if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
-            throw new MongoDuplicateKeyException(code, getWriteErrorMessage(commandResult.getResponse()), commandResult);
+            throw new com.mongodb.MongoException.DuplicateKey(code, getWriteErrorMessage(commandResult.getResponse()),
+                                                              getWriteResult2(commandResult));
         } else {
             throw new MongoWriteException(code, getWriteErrorMessage(commandResult.getResponse()), commandResult);
         }

@@ -24,7 +24,7 @@ import org.mongodb.MongoServerException;
 /**
  * Top level Exception for all Exceptions, server-side or client-side, that come from the driver.
  */
-public class MongoException extends RuntimeException {
+public class MongoException extends org.mongodb.MongoException {
     private static final long serialVersionUID = -4415279469780082174L;
 
     private final int code;
@@ -93,8 +93,16 @@ public class MongoException extends RuntimeException {
 
         private static final long serialVersionUID = 6557680785576001838L;
 
-        public DuplicateKey(final org.mongodb.MongoDuplicateKeyException e) {
-            super(e);
+        /**
+         * Construct a new instance.
+         *
+         * @param code the error code
+         * @param message the error message
+         * @param writeResult the result of the write operation
+         */
+        public DuplicateKey(final int code, final String message, final WriteResult writeResult) {
+            super(code, message, writeResult);
         }
+
     }
 }

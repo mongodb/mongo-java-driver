@@ -279,8 +279,9 @@ public class WriteConcern implements Serializable {
      * Creates a WriteConcern based on an instance of org.mongodb.WriteConcern.
      *
      * @param proxied the write concern to copy
+     *
      */
-    WriteConcern(final org.mongodb.WriteConcern proxied) {
+    public WriteConcern(final org.mongodb.WriteConcern proxied) {
         this(proxied, false);
     }
 

@@ -24,11 +24,9 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.CommandResult;
 import org.mongodb.Index;
 import org.mongodb.MongoCommandFailureException;
-import org.mongodb.MongoDuplicateKeyException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoServerException;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.binding.AsyncWriteBinding;
@@ -166,9 +164,10 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         return (e instanceof MongoCommandFailureException) ? checkForDuplicateKeyError((MongoCommandFailureException) e) : e;
     }
 
-    private MongoServerException checkForDuplicateKeyError(final MongoCommandFailureException e) {
+    private MongoException checkForDuplicateKeyError(final MongoCommandFailureException e) {
         if (DUPLICATE_KEY_ERROR_CODES.contains(e.getErrorCode())) {
-            return new MongoDuplicateKeyException(e.getErrorCode(), e.getErrorMessage(), e.getCommandResult());
+            return new com.mongodb.MongoException.DuplicateKey(e.getErrorCode(), e.getErrorMessage(),
+                                                               new com.mongodb.WriteResult(0, false, null));
         } else {
             return e;
         }

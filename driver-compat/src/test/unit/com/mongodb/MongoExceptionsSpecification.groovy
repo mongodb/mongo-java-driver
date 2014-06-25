@@ -16,11 +16,9 @@
 
 
 package com.mongodb
-
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.mongodb.MongoCommandFailureException
-import org.mongodb.MongoDuplicateKeyException
 import org.mongodb.MongoWriteException
 import org.mongodb.ServerCursor
 import org.mongodb.connection.ClusterDescription
@@ -62,9 +60,6 @@ class MongoExceptionsSpecification extends Specification {
         exceptionToBeMapped                                                                   | exceptionForCompatibilityApi     | errorCode
         new org.mongodb.MongoInterruptedException(MESSAGE, new InterruptedException('cause')) | MongoInterruptedException        | -4
         new MongoSocketReadException(MESSAGE, new ServerAddress(), new IOException('cause'))  | MongoSocketException             | -2
-        new MongoDuplicateKeyException(ERROR_CODE, MESSAGE,
-                                       commandResultWithErrorCode(ERROR_CODE))                | MongoException.DuplicateKey      |
-        ERROR_CODE
         new MongoCommandFailureException(commandResultWithErrorCode(ERROR_CODE))              | CommandFailureException          |
         ERROR_CODE
         new org.mongodb.MongoInternalException(MESSAGE)                                       | MongoInternalException           | -4

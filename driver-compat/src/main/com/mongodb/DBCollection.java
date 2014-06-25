@@ -308,7 +308,7 @@ public class DBCollection {
                             : getObjectCodec().decode(new BsonDocumentReader(new BsonDocument("_id", writeResult.getUpsertedId())),
                                                       DecoderContext.builder().build())
                                               .get("_id");
-        return new WriteResult(writeResult.getCount(), writeResult.isUpdateOfExisting(), upsertedId, writeConcern);
+        return new WriteResult(writeResult.getCount(), writeResult.isUpdateOfExisting(), upsertedId);
     }
 
     /**

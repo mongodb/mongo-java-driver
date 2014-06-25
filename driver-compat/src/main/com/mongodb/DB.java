@@ -493,11 +493,11 @@ public class DB {
         User user = new User(createMongoCRCredential(userName, getName(), password), readOnly);
         if (execute(new UserExistsOperation(getName(), userName), primary())) {
             execute(new UpdateUserOperation(user));
-            return new WriteResult(1, false, null, getWriteConcern());
+            return new WriteResult(1, false, null);
 
         } else {
             execute(new CreateUserOperation(user));
-            return new WriteResult(1, true, null, getWriteConcern());
+            return new WriteResult(1, true, null);
         }
     }
 
@@ -513,7 +513,7 @@ public class DB {
     @Deprecated
     public WriteResult removeUser(final String userName) {
         execute(new DropUserOperation(getName(), userName));
-        return new WriteResult(1, true, null, getWriteConcern());
+        return new WriteResult(1, true, null);
     }
 
     /**

@@ -15,7 +15,7 @@
  */
 
 package org.mongodb.protocol
-
+import com.mongodb.MongoException
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -25,7 +25,6 @@ import org.bson.BsonString
 import org.bson.types.ObjectId
 import org.mongodb.CommandResult
 import org.mongodb.MongoCommandFailureException
-import org.mongodb.MongoDuplicateKeyException
 import org.mongodb.connection.ServerAddress
 import spock.lang.Specification
 
@@ -89,8 +88,8 @@ class WriteResultProtocolHelperSpecification extends Specification {
         ProtocolHelper.getWriteResult(commandResult)
 
         then:
-        def e = thrown(MongoDuplicateKeyException)
-        e.getErrorCode() == 11000
+        def e = thrown(MongoException.DuplicateKey)
+        e.getCode() == 11000
     }
 
     def 'should throw duplicate key when errObjects has a duplicate key error code'() {
@@ -114,7 +113,7 @@ class WriteResultProtocolHelperSpecification extends Specification {
         ProtocolHelper.getWriteResult(commandResult)
 
         then:
-        def e = thrown(MongoDuplicateKeyException)
-        e.getErrorCode() == 11000
+        def e = thrown(MongoException.DuplicateKey)
+        e.getCode() == 11000
     }
 }

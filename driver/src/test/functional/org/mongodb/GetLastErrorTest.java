@@ -16,10 +16,11 @@
 
 package org.mongodb;
 
+import com.mongodb.MongoException;
 import org.junit.Test;
 
 public class GetLastErrorTest extends DatabaseTestCase {
-    @Test(expected = MongoDuplicateKeyException.class)
+    @Test(expected = MongoException.DuplicateKey.class)
     public void testDuplicateKeyException() {
         Document doc = new Document("_id", 1);
         collection.insert(doc);

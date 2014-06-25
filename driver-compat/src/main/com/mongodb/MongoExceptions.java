@@ -18,7 +18,6 @@ package com.mongodb;
 
 import org.bson.codecs.Decoder;
 import org.mongodb.MongoCommandFailureException;
-import org.mongodb.MongoDuplicateKeyException;
 import org.mongodb.MongoWriteException;
 
 import java.io.IOException;
@@ -31,9 +30,7 @@ final class MongoExceptions {
     @SuppressWarnings("deprecation")
     public static com.mongodb.MongoException mapException(final org.mongodb.MongoException e, final Decoder<DBObject> decoder) {
         Throwable cause = e.getCause();
-        if (e instanceof org.mongodb.MongoDuplicateKeyException) {
-            return new MongoException.DuplicateKey((MongoDuplicateKeyException) e);
-        } else if (e instanceof org.mongodb.MongoIncompatibleDriverException) {
+        if (e instanceof org.mongodb.MongoIncompatibleDriverException) {
             return new MongoIncompatibleDriverException(e.getMessage());
         } else if (e instanceof org.mongodb.MongoExecutionTimeoutException) {
             return new MongoExecutionTimeoutException((org.mongodb.MongoExecutionTimeoutException) e);
@@ -57,6 +54,8 @@ final class MongoExceptions {
             return BulkWriteHelper.translateBulkWriteException((org.mongodb.BulkWriteException) e, decoder);
         } else if (e instanceof org.mongodb.connection.MongoServerSelectionException) {
             return new MongoServerSelectionException(e.getMessage());
+        } else if (e instanceof DuplicateKeyException) {
+            return (DuplicateKeyException) e;
         } else {
             return new MongoException(e.getMessage(), cause);
         }
