@@ -21,7 +21,6 @@ package com.mongodb;
  *
  * @see WriteConcern#UNACKNOWLEDGED
  * @see WriteResult
- * @see BulkWriteResult
  * @since 2.12
  */
 public class UnacknowledgedWriteException extends MongoClientException {
