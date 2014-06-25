@@ -734,8 +734,7 @@ public class DBCollectionTest extends DatabaseTestCase {
             WriteResult res = collection.insert(new BasicDBObject(), new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
         } catch (WriteConcernException e) {
-            assertNotNull(e.getCommandResult().get("err"));
-            assertEquals(0, e.getCommandResult().get("n"));
+            assertEquals(0, e.getWriteResult().getN());
         }
     }
 
@@ -748,9 +747,8 @@ public class DBCollectionTest extends DatabaseTestCase {
                                                 true, false, new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
         } catch (WriteConcernException e) {
-            assertNotNull(e.getCommandResult().get("err"));
-            assertEquals(1, e.getCommandResult().get("n"));
-            assertEquals(id, e.getCommandResult().get("upserted"));
+            assertEquals(1, e.getWriteResult().getN());
+            assertEquals(id, e.getWriteResult().getUpsertedId());
         }
     }
 
@@ -762,8 +760,7 @@ public class DBCollectionTest extends DatabaseTestCase {
             WriteResult res = collection.remove(new BasicDBObject(), new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
         } catch (WriteConcernException e) {
-            assertNotNull(e.getCommandResult().get("err"));
-            assertEquals(1, e.getCommandResult().get("n"));
+            assertEquals(1, e.getWriteResult().getN());
         }
     }
 

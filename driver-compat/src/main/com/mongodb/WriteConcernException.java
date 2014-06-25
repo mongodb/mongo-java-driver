@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import org.bson.BsonBoolean;
 import org.mongodb.MongoWriteException;
 
 /**
@@ -24,39 +25,30 @@ import org.mongodb.MongoWriteException;
 public class WriteConcernException extends MongoException {
     private static final long serialVersionUID = 841056799207039974L;
 
-    private final CommandResult commandResult;
+    private final WriteResult writeResult;
 
-    /**
-     * Construct a new instance with the CommandResult from getlasterror command
-     *
-     * @param commandResult the command result
-     */
-    public WriteConcernException(final CommandResult commandResult) {
-        this(commandResult, commandResult.toString());
-    }
-
-    WriteConcernException(final CommandResult commandResult, final String message) {
-        super(ServerError.getCode(commandResult), message);
-        this.commandResult = commandResult;
+    WriteConcernException(final int code, final String message, final WriteResult writeResult) {
+        super(code, message);
+        this.writeResult = writeResult;
     }
 
     WriteConcernException(final MongoWriteException e) {
-        this(new CommandResult(DBObjects.toDBObject(e.getCommandResult().getResponse()), new ServerAddress(e.getServerAddress())),
-             e.getMessage());
+        this(e.getErrorCode(), e.getErrorMessage(), createWriteResult(e));
     }
 
-    WriteConcernException(final int errorCode, final String errorMessage, final ServerAddress serverAddress) {
-        this(new CommandResult(new BasicDBObject("ok", 1.0).append("err", errorMessage).append("code", errorCode),
-                               serverAddress),
-             errorMessage);
+    private static WriteResult createWriteResult(final MongoWriteException e) {
+        return new WriteResult(e.getCommandResult().getResponse().getNumber("n").intValue(),
+                               e.getCommandResult().getResponse().getBoolean("updatedExisting", BsonBoolean.FALSE).getValue(),
+                               e.getCommandResult().getResponse().get("upserted"),
+                               WriteConcern.ACKNOWLEDGED);
     }
 
     /**
-     * Gets the getlasterror command result document.
+     * Gets the write result.
      *
-     * @return the command result
+     * @return the write result
      */
-    public CommandResult getCommandResult() {
-        return commandResult;
+    public WriteResult getWriteResult() {
+        return writeResult;
     }
 }
