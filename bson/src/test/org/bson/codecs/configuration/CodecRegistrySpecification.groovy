@@ -164,7 +164,7 @@ class TopCodec implements Codec<Top> {
         writer.writeStartDocument()
         writer.writeString('name', top.getName())
         writer.writeName('other')
-        codecForOther.encode(writer, EncoderContext.builder().build(), top.getOther())
+        codecForOther.encode(writer, top.getOther(), EncoderContext.builder().build())
         writer.writeName('nested')
         codecForNested.encode(writer, top.getNested(), EncoderContext.builder().build())
         writer.writeEndDocument()
@@ -220,7 +220,7 @@ class NestedCodec implements Codec<Nested> {
         writer.writeStartDocument()
         writer.writeString('name', nested.getName())
         writer.writeName('top')
-        codecForTop.encode(writer, EncoderContext.builder().build(), nested.getTop())
+        codecForTop.encode(writer, nested.getTop(), EncoderContext.builder().build())
         writer.writeEndDocument()
     }
 
