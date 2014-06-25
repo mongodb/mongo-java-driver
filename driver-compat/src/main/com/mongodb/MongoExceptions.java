@@ -52,8 +52,6 @@ final class MongoExceptions {
             return new MongoSocketException(e.getMessage(), (IOException) cause);
         } else if (e instanceof org.mongodb.BulkWriteException) {
             return BulkWriteHelper.translateBulkWriteException((org.mongodb.BulkWriteException) e, decoder);
-        } else if (e instanceof org.mongodb.connection.MongoServerSelectionException) {
-            return new MongoServerSelectionException(e.getMessage());
         } else if (e instanceof DuplicateKeyException) {
             return (DuplicateKeyException) e;
         } else {

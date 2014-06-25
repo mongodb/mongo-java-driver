@@ -66,7 +66,6 @@ class MongoExceptionsSpecification extends Specification {
         ERROR_CODE
         new org.mongodb.connection.MongoTimeoutException(MESSAGE)                             | MongoTimeoutException            | -3
         new org.mongodb.connection.MongoWaitQueueFullException(MESSAGE)                       | MongoWaitQueueFullException      | -3
-        new org.mongodb.connection.MongoServerSelectionException('timeout')                   | MongoServerSelectionException    | -3
     }
 
     def 'should convert MongoCursorNotFoundException into MongoException.CursorNotFound'() {
