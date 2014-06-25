@@ -28,15 +28,13 @@ public class MongoCursorNotFoundException extends MongoException {
     private final long cursorId;
     private final ServerAddress serverAddress;
 
-    MongoCursorNotFoundException(final org.mongodb.MongoCursorNotFoundException e) {
-        this(e.getCursor().getId(), new ServerAddress(e.getCursor().getAddress()));
-    }
-
     /**
-     * @param cursorId      cursor
+     * Construct a new instance.
+     *
+     * @param cursorId      cursor identifier
      * @param serverAddress server address
      */
-    MongoCursorNotFoundException(final long cursorId, final ServerAddress serverAddress) {
+    public MongoCursorNotFoundException(final long cursorId, final ServerAddress serverAddress) {
         super(-5, "Cursor " + cursorId + " not found on server " + serverAddress);
         this.cursorId = cursorId;
         this.serverAddress = serverAddress;

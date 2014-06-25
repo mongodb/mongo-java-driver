@@ -16,12 +16,11 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.MongoCursorNotFoundException;
 import org.bson.codecs.Decoder;
 import org.mongodb.Document;
-import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ServerCursor;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.Connection;
@@ -98,7 +97,7 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
         ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             if (responseBuffers.getReplyHeader().isCursorNotFound()) {
-                throw new MongoCursorNotFoundException(new ServerCursor(message.getCursorId(), connection.getServerAddress()));
+                throw new MongoCursorNotFoundException(message.getCursorId(), new com.mongodb.ServerAddress(connection.getServerAddress()));
             }
 
             if (responseBuffers.getReplyHeader().isQueryFailure()) {

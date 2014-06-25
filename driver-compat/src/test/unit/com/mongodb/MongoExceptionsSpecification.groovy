@@ -20,7 +20,6 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.mongodb.MongoCommandFailureException
 import org.mongodb.MongoWriteException
-import org.mongodb.ServerCursor
 import org.mongodb.connection.ClusterDescription
 import org.mongodb.connection.MongoSocketReadException
 import org.mongodb.connection.ServerAddress
@@ -66,29 +65,6 @@ class MongoExceptionsSpecification extends Specification {
         ERROR_CODE
         new org.mongodb.connection.MongoTimeoutException(MESSAGE)                             | MongoTimeoutException            | -3
         new org.mongodb.connection.MongoWaitQueueFullException(MESSAGE)                       | MongoWaitQueueFullException      | -3
-    }
-
-    def 'should convert MongoCursorNotFoundException into MongoException.CursorNotFound'() {
-        given:
-        long cursorId = 123L
-        ServerAddress serverAddress = new ServerAddress()
-        String expectedMessage = "Cursor $cursorId not found on server $serverAddress"
-
-        when:
-        MongoException actualException = mapException(
-                new org.mongodb.MongoCursorNotFoundException(new ServerCursor(cursorId, serverAddress))
-        )
-
-        then:
-        actualException instanceof MongoCursorNotFoundException
-        actualException.getMessage() == expectedMessage
-        MongoCursorNotFoundException actualAsCursorNotFound = (MongoCursorNotFoundException) actualException
-        actualAsCursorNotFound.getCursorId() == cursorId
-        actualAsCursorNotFound.getServerAddress().getHost() == serverAddress.getHost()
-        actualAsCursorNotFound.getServerAddress().getPort() == serverAddress.getPort()
-
-        !(actualException.getCause() instanceof org.mongodb.MongoException)
-        !actualException.getStackTrace().any { it.className.startsWith('org.mongodb') }
     }
 
     def 'should convert SocketExceptions that are not IOExceptions into MongoException'() {

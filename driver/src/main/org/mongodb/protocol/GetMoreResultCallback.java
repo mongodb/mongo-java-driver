@@ -16,11 +16,10 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.MongoCursorNotFoundException;
 import org.bson.codecs.Decoder;
-import org.mongodb.MongoCursorNotFoundException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoInternalException;
-import org.mongodb.ServerCursor;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
@@ -50,7 +49,7 @@ class GetMoreResultCallback<T> extends ResponseCallback {
             if (e != null) {
                 throw e;
             } else if (responseBuffers.getReplyHeader().isCursorNotFound()) {
-                throw new MongoCursorNotFoundException(new ServerCursor(cursorId, getServerAddress()));
+                throw new MongoCursorNotFoundException(cursorId, new com.mongodb.ServerAddress(getServerAddress()));
             } else {
                 result = new QueryResult<T>(new ReplyMessage<T>(responseBuffers, decoder, getRequestId()), getServerAddress());
                 LOGGER.debug("GetMore results received " + result.getResults().size() + " documents with cursor " + result.getCursor());
