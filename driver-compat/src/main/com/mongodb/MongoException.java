@@ -18,7 +18,6 @@
 package com.mongodb;
 
 
-import org.bson.BSONObject;
 import org.mongodb.MongoServerException;
 
 
@@ -76,15 +75,6 @@ public class MongoException extends RuntimeException {
     }
 
     /**
-     * Creates a MongoException from a BSON object representing an error
-     *
-     * @param o a BSONObject representing the MongoException to be thrown.
-     */
-    public MongoException(final BSONObject o) {
-        this(ServerError.getCode(o), ServerError.getMsg(o, "UNKNOWN"));
-    }
-
-    /**
      * Gets the exception code
      *
      * @return the error code.
@@ -105,10 +95,6 @@ public class MongoException extends RuntimeException {
 
         public DuplicateKey(final org.mongodb.MongoDuplicateKeyException e) {
             super(e);
-        }
-
-        public DuplicateKey(final CommandResult commandResult) {
-            super(commandResult);
         }
     }
 }
