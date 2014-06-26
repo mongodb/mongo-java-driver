@@ -16,6 +16,8 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoSocketException;
+import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoWaitQueueFullException;
 import org.bson.ByteBuf;
 import org.mongodb.MongoException;

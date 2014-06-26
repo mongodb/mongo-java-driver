@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package com.mongodb;
+
+import org.mongodb.connection.ServerAddress;
 
 /**
  * This exception is thrown when there is an exception opening a Socket.
+ *
+ * @since 3.0
  */
 public class MongoSocketOpenException extends MongoSocketException {
     private static final long serialVersionUID = 4176754100200191238L;
 
-    public MongoSocketOpenException(final String message, final ServerAddress address) {
-        super(message, address);
-    }
-
-    public MongoSocketOpenException(final String message, final ServerAddress address, final Throwable t) {
-        super(message, address, t);
+    public MongoSocketOpenException(final String message, final ServerAddress address, final Throwable cause) {
+        super(message, address, cause);
     }
 }

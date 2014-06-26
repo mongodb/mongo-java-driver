@@ -16,6 +16,7 @@
 
 package org.mongodb.connection
 
+import com.mongodb.MongoSocketWriteException
 import com.mongodb.MongoTimeoutException
 import org.bson.ByteBuf
 import org.mongodb.event.ConnectionEvent

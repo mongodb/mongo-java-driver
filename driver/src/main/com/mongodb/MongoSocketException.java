@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import java.io.IOException;
+import org.mongodb.connection.ServerAddress;
 
 /**
  * Subclass of {@link MongoException} representing a network-related exception
@@ -27,18 +27,35 @@ public class MongoSocketException extends MongoException {
 
     private static final long serialVersionUID = -4415279469780082174L;
 
+    private final org.mongodb.connection.ServerAddress serverAddress;
+
     /**
+     * @param serverAddress the address
      * @param msg the message
-     * @param ioe the cause
+     * @param e the cause
      */
-    MongoSocketException(final String msg, final IOException ioe) {
-        super(-2, msg, ioe);
+    MongoSocketException(final String msg, final ServerAddress serverAddress, final Throwable e) {
+        super(-2, msg, e);
+        this.serverAddress = serverAddress;
     }
 
     /**
-     * @param ioe the cause
+     * Construct a new instance.
+     *
+     * @param message the message
+     * @param serverAddress the address
      */
-    MongoSocketException(final IOException ioe) {
-        super(ioe.toString(), ioe);
+    public MongoSocketException(final String message, final ServerAddress serverAddress) {
+        super(-2, message);
+        this.serverAddress = serverAddress;
+    }
+
+    /**
+     * Gets the server address for this exception.
+     *
+     * @return the address
+     */
+    public ServerAddress getServerAddress() {
+        return serverAddress;
     }
 }

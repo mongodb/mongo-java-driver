@@ -14,19 +14,26 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package com.mongodb;
+
+import org.mongodb.connection.ServerAddress;
 
 /**
- * This exception is thrown when there is a timeout reading a response from the socket.
+ * This exception is thrown when there is an exception writing a response to a Socket.
+ *
+ * @since 3.0
  */
-public class MongoSocketReadTimeoutException extends MongoSocketException {
+public class MongoSocketWriteException extends MongoSocketException {
+    private static final long serialVersionUID = 5088061954415484493L;
 
-    private static final long serialVersionUID = -7237059971254608960L;
-
-    public MongoSocketReadTimeoutException(final String message, final ServerAddress address,
-                                           final Throwable e) {
-
-        super(message, address, e);
+    /**
+     * Construct a new instance.
+     *
+     * @param message the message
+     * @param address the address
+     * @param cause the cause
+     */
+    public MongoSocketWriteException(final String message, final ServerAddress address, final Throwable cause) {
+        super(message, address, cause);
     }
-
 }

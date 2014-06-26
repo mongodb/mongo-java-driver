@@ -16,6 +16,8 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoSocketOpenException;
+import com.mongodb.MongoSocketReadException;
 import org.bson.ByteBuf;
 
 import java.io.IOException;

@@ -14,19 +14,36 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package com.mongodb;
+
+import org.mongodb.connection.ServerAddress;
 
 /**
  * This exception is thrown when there is an exception reading a response from a Socket.
+ *
+ * @since 3.0
  */
 public class MongoSocketReadException extends MongoSocketException {
     private static final long serialVersionUID = -1142547119966956531L;
 
-    public MongoSocketReadException(final String message, final ServerAddress address) {
+    /**
+     * Construct a new instance.
+     *
+     * @param message the message
+     * @param address the address
+     */
+    public MongoSocketReadException(final String message, final org.mongodb.connection.ServerAddress address) {
         super(message, address);
     }
 
-    public MongoSocketReadException(final String message, final ServerAddress address, final Throwable t) {
-        super(message, address, t);
+    /**
+     * Construct a new instance.
+     *
+     * @param message the message
+     * @param address the address
+     * @param cause the cause
+     */
+    public MongoSocketReadException(final String message, final ServerAddress address, final Throwable cause) {
+        super(message, address, cause);
     }
 }
