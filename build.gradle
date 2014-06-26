@@ -100,10 +100,6 @@ configure(subprojects.findAll { it.name != 'util' }) {
         onlyIf { JavaVersion.current().isJava7Compatible() }
     }
 
-    test {
-        jvmArgs "-XX:MaxPermSize=512m"
-    }
-
     project.ext.buildingWith = { n ->
         project.hasProperty(n) && project.property(n).toBoolean()
     }
