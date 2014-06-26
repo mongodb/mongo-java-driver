@@ -59,20 +59,8 @@ public class JsonWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void flush() {
+    protected void doWriteStartDocument() {
         try {
-            writer.flush();
-        } catch (IOException e) {
-            throwBSONException(e);
-        }
-    }
-
-    @Override
-    public void writeStartDocument() {
-        checkPreconditions("writeStartDocument", State.INITIAL, State.VALUE, State.SCOPE_DOCUMENT);
-
-        try {
-            super.writeStartDocument();
             if (getState() == State.VALUE || getState() == State.SCOPE_DOCUMENT) {
                 writeNameHelper(getName());
             }
@@ -80,18 +68,14 @@ public class JsonWriter extends AbstractBsonWriter {
 
             BsonContextType contextType = (getState() == State.SCOPE_DOCUMENT) ? BsonContextType.SCOPE_DOCUMENT : BsonContextType.DOCUMENT;
             setContext(new Context(getContext(), contextType, settings.getIndentCharacters()));
-            setState(State.NAME);
         } catch (IOException e) {
             throwBSONException(e);
         }
     }
 
     @Override
-    public void writeEndDocument() {
-        checkPreconditions("writeEndDocument", State.NAME);
-
+    protected void doWriteEndDocument() {
         try {
-            super.writeEndDocument();
             if (settings.isIndent() && getContext().hasElements) {
                 writer.write(settings.getNewLineCharacters());
                 if (getContext().getParentContext() != null) {
@@ -108,59 +92,41 @@ public class JsonWriter extends AbstractBsonWriter {
             } else {
                 setContext(getContext().getParentContext());
             }
-
-            if (getContext() == null) {
-                setState(State.DONE);
-            } else {
-                setState(getNextState());
-            }
         } catch (IOException e) {
             throwBSONException(e);
         }
-
     }
 
     @Override
-    public void writeStartArray() {
-        checkPreconditions("writeStartArray", State.VALUE, State.INITIAL);
-
+    protected void doWriteStartArray() {
         try {
-            super.writeStartArray();
             writeNameHelper(getName());
             writer.write("[");
-
             setContext(new Context(getContext(), BsonContextType.ARRAY, settings.getIndentCharacters()));
-            setState(State.VALUE);
         } catch (IOException e) {
             throwBSONException(e);
         }
     }
 
     @Override
-    public void writeEndArray() {
-        checkPreconditions("writeEndArray", State.VALUE);
-
+    protected void doWriteEndArray() {
         try {
-            super.writeEndArray();
             writer.write("]");
-
-            setContext(getContext().getParentContext());
-            setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
         }
+        setContext(getContext().getParentContext());
     }
 
-    @Override
-    public void writeBinaryData(final BsonBinary binary) {
-        checkPreconditions("writeBinaryData", State.VALUE, State.INITIAL);
 
+    @Override
+    protected void doWriteBinaryData(final BsonBinary binary) {
         try {
             switch (settings.getOutputMode()) {
                 case SHELL:
                     writeNameHelper(getName());
                     writer.write(String.format("new BinData(%s, \"%s\")", Integer.toString(binary.getType() & 0xFF),
-                                               printBase64Binary(binary.getData())));
+                            printBase64Binary(binary.getData())));
 
                     break;
                 default:
@@ -169,29 +135,23 @@ public class JsonWriter extends AbstractBsonWriter {
                     writeString("$type", Integer.toHexString(binary.getType() & 0xFF));
                     writeEndDocument();
             }
-            setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
         }
     }
 
     @Override
-    public void writeBoolean(final boolean value) {
-        checkPreconditions("writeBoolean", State.VALUE, State.INITIAL);
-
+    public void doWriteBoolean(final boolean value) {
         try {
             writeNameHelper(getName());
             writer.write(value ? "true" : "false");
-            setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
         }
     }
 
     @Override
-    public void writeDateTime(final long value) {
-        checkPreconditions("writeDateTime", State.VALUE, State.INITIAL);
-
+    protected void doWriteDateTime(final long value) {
         try {
             switch (settings.getOutputMode()) {
                 case STRICT:
@@ -213,16 +173,21 @@ public class JsonWriter extends AbstractBsonWriter {
                 default:
                     throw new BSONException("Unexpected JSONMode.");
             }
-
-            setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
         }
     }
 
     @Override
-    public void writeDouble(final double value) {
-        checkPreconditions("writeDouble", State.VALUE, State.INITIAL);
+    protected void doWriteDBPointer(final BsonDbPointer value) {
+        writeStartDocument();
+        writeString("$ref", value.getNamespace());
+        writeObjectId("$id", value.getId());
+        writeEndDocument();
+    }
+
+    @Override
+    protected void doWriteDouble(final double value) {
         try {
             writeNameHelper(getName());
             writer.write(Double.toString(value));
@@ -233,22 +198,17 @@ public class JsonWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeInt32(final int value) {
-        checkPreconditions("writeInt32", State.VALUE, State.INITIAL);
-
+    protected void doWriteInt32(final int value) {
         try {
             writeNameHelper(getName());
             writer.write(Integer.toString(value));
-            setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
         }
     }
 
     @Override
-    public void writeInt64(final long value) {
-        checkPreconditions("writeInt64", State.VALUE, State.INITIAL);
-
+    protected void doWriteInt64(final long value) {
         try {
             writeNameHelper(getName());
             switch (settings.getOutputMode()) {
@@ -266,75 +226,51 @@ public class JsonWriter extends AbstractBsonWriter {
                     writer.write(Long.toString(value));
                     break;
             }
-
-            setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
         }
     }
 
     @Override
-    public void writeJavaScript(final String code) {
-        checkPreconditions("writeJavaScript", State.VALUE, State.INITIAL);
-
+    protected void doWriteJavaScript(final String code) {
         writeStartDocument();
         writeString("$code", code);
         writeEndDocument();
-
-        setState(getNextState());
     }
 
     @Override
-    public void writeJavaScriptWithScope(final String code) {
-        checkPreconditions("writeJavaScriptWithScope", State.VALUE, State.INITIAL);
-
+    protected void doWriteJavaScriptWithScope(final String code) {
         writeStartDocument();
         writeString("$code", code);
         writeName("$scope");
-
-        setState(State.SCOPE_DOCUMENT);
     }
 
     @Override
-    public void writeMaxKey() {
-        checkPreconditions("writeMaxKey", State.VALUE, State.INITIAL);
-
+    protected void doWriteMaxKey() {
         writeStartDocument();
         writeInt32("$maxKey", 1);
         writeEndDocument();
-
-        setState(getNextState());
     }
 
     @Override
-    public void writeMinKey() {
-        checkPreconditions("writeMinKey", State.VALUE, State.INITIAL);
-
+    protected void doWriteMinKey() {
         writeStartDocument();
         writeInt32("$minKey", 1);
         writeEndDocument();
-
-        setState(getNextState());
     }
 
     @Override
-    public void writeNull() {
-        checkPreconditions("writeNull", State.VALUE, State.INITIAL);
-
+    public void doWriteNull() {
         try {
             writeNameHelper(getName());
             writer.write("null");
-
-            setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
         }
     }
 
     @Override
-    public void writeObjectId(final ObjectId objectId) {
-        checkPreconditions("writeObjectId", State.VALUE, State.INITIAL);
-
+    public void doWriteObjectId(final ObjectId objectId) {
         try {
             switch (settings.getOutputMode()) {
                 case STRICT:
@@ -349,17 +285,13 @@ public class JsonWriter extends AbstractBsonWriter {
                 default:
                     throw new BSONException("Unknown output mode" + settings.getOutputMode());
             }
-
-            setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
         }
     }
 
     @Override
-    public void writeRegularExpression(final BsonRegularExpression regularExpression) {
-        checkPreconditions("writeRegularExpression", State.VALUE, State.INITIAL);
-
+    public void doWriteRegularExpression(final BsonRegularExpression regularExpression) {
         try {
             switch (settings.getOutputMode()) {
                 case STRICT:
@@ -380,41 +312,30 @@ public class JsonWriter extends AbstractBsonWriter {
                 default:
                     throw new BSONException("Unknown output mode" + settings.getOutputMode());
             }
-
-            setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
         }
     }
 
     @Override
-    public void writeString(final String value) {
-        checkPreconditions("writeString", State.VALUE, State.INITIAL);
-
+    public void doWriteString(final String value) {
         try {
             writeNameHelper(getName());
             writeStringHelper(value);
-            setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
         }
     }
 
     @Override
-    public void writeSymbol(final String value) {
-        checkPreconditions("writeSymbol", State.VALUE, State.INITIAL);
-
+    public void doWriteSymbol(final String value) {
         writeStartDocument();
         writeString("$symbol", value);
         writeEndDocument();
-
-        setState(getNextState());
     }
 
     @Override
-    public void writeTimestamp(final BsonTimestamp value) {
-        checkPreconditions("writeTimestamp", State.VALUE, State.INITIAL);
-
+    public void doWriteTimestamp(final BsonTimestamp value) {
         try {
             switch (settings.getOutputMode()) {
                 case STRICT:
@@ -432,19 +353,13 @@ public class JsonWriter extends AbstractBsonWriter {
                 default:
                     throw new BSONException("Unknown output mode" + settings.getOutputMode());
             }
-
-            setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
         }
-
-        setState(getNextState());
     }
 
     @Override
-    public void writeUndefined() {
-        checkPreconditions("writeUndefined", State.VALUE, State.INITIAL);
-
+    public void doWriteUndefined() {
         try {
             switch (settings.getOutputMode()) {
                 case STRICT:
@@ -459,24 +374,18 @@ public class JsonWriter extends AbstractBsonWriter {
                 default:
                     throw new BSONException("Unknown output mode" + settings.getOutputMode());
             }
-
-            setState(getNextState());
         } catch (IOException e) {
             throwBSONException(e);
         }
     }
 
     @Override
-    public void writeDBPointer(final BsonDbPointer value) {
-        checkPreconditions("writeDBPointer", State.VALUE, State.INITIAL);
-
-        writeStartDocument();
-        writeString("$ref", value.getNamespace());
-        writeObjectId("$id", value.getId());
-        writeEndDocument();
-
-
-        setState(getNextState());
+    public void flush() {
+        try {
+            writer.flush();
+        } catch (IOException e) {
+            throwBSONException(e);
+        }
     }
 
     private void writeNameHelper(final String name) throws IOException {

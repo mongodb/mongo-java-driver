@@ -85,10 +85,125 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         this.context = context;
     }
 
+    protected abstract void doWriteStartDocument();
+    protected abstract void doWriteEndDocument();
+    protected abstract void doWriteStartArray();
+    protected abstract void doWriteEndArray();
+    protected abstract void doWriteBinaryData(final BsonBinary binary);
+    protected abstract void doWriteBoolean(final boolean value);
+    protected abstract void doWriteDateTime(final long value);
+    protected abstract void doWriteDBPointer(final BsonDbPointer value);
+    protected abstract void doWriteDouble(final double value);
+    protected abstract void doWriteInt32(final int value);
+    protected abstract void doWriteInt64(final long value);
+    protected abstract void doWriteJavaScript(final String code);
+    protected abstract void doWriteJavaScriptWithScope(final String code);
+    protected abstract void doWriteMaxKey();
+    protected abstract void doWriteMinKey();
+    protected abstract void doWriteNull();
+    protected abstract void doWriteObjectId(final ObjectId objectId);
+    protected abstract void doWriteRegularExpression(final BsonRegularExpression regularExpression);
+    protected abstract void doWriteString(final String value);
+    protected abstract void doWriteSymbol(final String value);
+    protected abstract void doWriteTimestamp(final BsonTimestamp value);
+    protected abstract void doWriteUndefined();
+
+    @Override
+    public void writeStartDocument(final String name) {
+        writeName(name);
+        writeStartDocument();
+    }
+
+    @Override
+    public void writeStartDocument() {
+        checkPreconditions("writeStartDocument", State.INITIAL, State.VALUE, State.SCOPE_DOCUMENT, State.DONE);
+        if (context != null && context.name != null) {
+            fieldNameValidatorStack.push(fieldNameValidatorStack.peek().getValidatorForField(getName()));
+        }
+        serializationDepth++;
+        if (serializationDepth > settings.getMaxSerializationDepth()) {
+            throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being "
+                    + "serialized have a circular reference?).");
+        }
+
+        doWriteStartDocument();
+        setState(State.NAME);
+    }
+
+    @Override
+    public void writeEndDocument() {
+        checkPreconditions("writeEndDocument", State.NAME);
+
+        BsonContextType contextType = getContext().getContextType();
+        if (contextType != BsonContextType.DOCUMENT && contextType != BsonContextType.SCOPE_DOCUMENT) {
+            throwInvalidContextType("WriteEndDocument", contextType, BsonContextType.DOCUMENT, BsonContextType.SCOPE_DOCUMENT);
+        }
+
+        if (context.getParentContext() != null && context.getParentContext().name != null) {
+            fieldNameValidatorStack.pop();
+        }
+        serializationDepth--;
+
+        doWriteEndDocument();
+
+        if (getContext() == null || getContext().getContextType() == BsonContextType.TOP_LEVEL) {
+            setState(State.DONE);
+        } else {
+            setState(getNextState());
+        }
+    }
+
+    @Override
+    public void writeStartArray(final String name) {
+        writeName(name);
+        writeStartArray();
+    }
+
+    @Override
+    public void writeStartArray() {
+        checkPreconditions("writeStartArray", State.VALUE);
+
+        if (context != null && context.name != null) {
+            fieldNameValidatorStack.push(fieldNameValidatorStack.peek().getValidatorForField(getName()));
+        }
+        serializationDepth++;
+        if (serializationDepth > settings.getMaxSerializationDepth()) {
+            throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being "
+                    + "serialized have a circular reference?).");
+        }
+
+        doWriteStartArray();
+        setState(State.VALUE);
+    }
+
+    @Override
+    public void writeEndArray() {
+        checkPreconditions("writeEndArray", State.VALUE);
+
+        if (getContext().getContextType() != BsonContextType.ARRAY) {
+            throwInvalidContextType("WriteEndArray", getContext().getContextType(), BsonContextType.ARRAY);
+        }
+
+        if (context.getParentContext() != null && context.getParentContext().name != null) {
+            fieldNameValidatorStack.pop();
+        }
+        serializationDepth--;
+
+        doWriteEndArray();
+        setState(getNextState());
+    }
+
     @Override
     public void writeBinaryData(final String name, final BsonBinary binary) {
         writeName(name);
         writeBinaryData(binary);
+    }
+
+    @Override
+    public void writeBinaryData(final BsonBinary binary) {
+        checkPreconditions("writeBinaryData", State.VALUE, State.INITIAL);
+        doWriteBinaryData(binary);
+        setState(getNextState());
     }
 
     @Override
@@ -98,9 +213,23 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
+    public void writeBoolean(final boolean value) {
+        checkPreconditions("writeBoolean", State.VALUE, State.INITIAL);
+        doWriteBoolean(value);
+        setState(getNextState());
+    }
+
+    @Override
     public void writeDateTime(final String name, final long value) {
         writeName(name);
         writeDateTime(value);
+    }
+
+    @Override
+    public void writeDateTime(final long value) {
+        checkPreconditions("writeDateTime", State.VALUE, State.INITIAL);
+        doWriteDateTime(value);
+        setState(getNextState());
     }
 
     @Override
@@ -110,25 +239,23 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
+    public void writeDBPointer(final BsonDbPointer value) {
+        checkPreconditions("writeDBPointer", State.VALUE, State.INITIAL);
+        doWriteDBPointer(value);
+        setState(getNextState());
+    }
+
+    @Override
     public void writeDouble(final String name, final double value) {
         writeName(name);
         writeDouble(value);
     }
 
     @Override
-    public void writeEndArray() {
-        if (context.getParentContext() != null && context.getParentContext().name != null) {
-            fieldNameValidatorStack.pop();
-        }
-        serializationDepth--;
-    }
-
-    @Override
-    public void writeEndDocument() {
-        if (context.getParentContext() != null && context.getParentContext().name != null) {
-            fieldNameValidatorStack.pop();
-        }
-        serializationDepth--;
+    public void writeDouble(final double value) {
+        checkPreconditions("writeDBPointer", State.VALUE, State.INITIAL);
+        doWriteDouble(value);
+        setState(getNextState());
     }
 
     @Override
@@ -138,9 +265,23 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
+    public void writeInt32(final int value) {
+        checkPreconditions("writeInt32", State.VALUE);
+        doWriteInt32(value);
+        setState(getNextState());
+    }
+
+    @Override
     public void writeInt64(final String name, final long value) {
         writeName(name);
         writeInt64(value);
+    }
+
+    @Override
+    public void writeInt64(final long value) {
+        checkPreconditions("writeInt64", State.VALUE);
+        doWriteInt64(value);
+        setState(getNextState());
     }
 
     @Override
@@ -150,9 +291,23 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
+    public void writeJavaScript(final String code) {
+        checkPreconditions("writeJavaScript", State.VALUE);
+        doWriteJavaScript(code);
+        setState(getNextState());
+    }
+
+    @Override
     public void writeJavaScriptWithScope(final String name, final String code) {
         writeName(name);
         writeJavaScriptWithScope(code);
+    }
+
+    @Override
+    public void writeJavaScriptWithScope(final String code) {
+        checkPreconditions("writeJavaScriptWithScope", State.VALUE);
+        doWriteJavaScriptWithScope(code);
+        setState(State.SCOPE_DOCUMENT);
     }
 
     @Override
@@ -162,9 +317,23 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
+    public void writeMaxKey() {
+        checkPreconditions("writeMaxKey", State.VALUE);
+        doWriteMaxKey();
+        setState(getNextState());
+    }
+
+    @Override
     public void writeMinKey(final String name) {
         writeName(name);
         writeMinKey();
+    }
+
+    @Override
+    public void writeMinKey() {
+        checkPreconditions("writeMinKey", State.VALUE);
+        doWriteMinKey();
+        setState(getNextState());
     }
 
     @Override
@@ -189,9 +358,23 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
+    public void writeNull() {
+        checkPreconditions("writeNull", State.VALUE);
+        doWriteNull();
+        setState(getNextState());
+    }
+
+    @Override
     public void writeObjectId(final String name, final ObjectId objectId) {
         writeName(name);
         writeObjectId(objectId);
+    }
+
+    @Override
+    public void writeObjectId(final ObjectId objectId) {
+        checkPreconditions("writeObjectId", State.VALUE);
+        doWriteObjectId(objectId);
+        setState(getNextState());
     }
 
     @Override
@@ -201,39 +384,10 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
-    public void writeStartArray() {
-        if (context != null && context.name != null) {
-            fieldNameValidatorStack.push(fieldNameValidatorStack.peek().getValidatorForField(getName()));
-        }
-        serializationDepth++;
-        if (serializationDepth > settings.getMaxSerializationDepth()) {
-            throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being "
-                                                 + "serialized have a circular reference?).");
-        }
-    }
-
-    @Override
-    public void writeStartArray(final String name) {
-        writeName(name);
-        writeStartArray();
-    }
-
-    @Override
-    public void writeStartDocument() {
-        if (context != null && context.name != null) {
-            fieldNameValidatorStack.push(fieldNameValidatorStack.peek().getValidatorForField(getName()));
-        }
-        serializationDepth++;
-        if (serializationDepth > settings.getMaxSerializationDepth()) {
-            throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being "
-                                                 + "serialized have a circular reference?).");
-        }
-    }
-
-    @Override
-    public void writeStartDocument(final String name) {
-        writeName(name);
-        writeStartDocument();
+    public void writeRegularExpression(final BsonRegularExpression regularExpression) {
+        checkPreconditions("writeRegularExpression", State.VALUE);
+        doWriteRegularExpression(regularExpression);
+        setState(getNextState());
     }
 
     @Override
@@ -243,9 +397,24 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
+    public void writeString(final String value) {
+        checkPreconditions("writeString", State.VALUE);
+        doWriteString(value);
+        setState(getNextState());
+
+    }
+
+    @Override
     public void writeSymbol(final String name, final String value) {
         writeName(name);
         writeSymbol(value);
+    }
+
+    @Override
+    public void writeSymbol(final String value) {
+        checkPreconditions("writeSymbol", State.VALUE);
+        doWriteSymbol(value);
+        setState(getNextState());
     }
 
     @Override
@@ -255,9 +424,23 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     @Override
+    public void writeTimestamp(final BsonTimestamp value) {
+        checkPreconditions("writeTimestamp", State.VALUE);
+        doWriteTimestamp(value);
+        setState(getNextState());
+    }
+
+    @Override
     public void writeUndefined(final String name) {
         writeName(name);
         writeUndefined();
+    }
+
+    @Override
+    public void writeUndefined() {
+        checkPreconditions("writeUndefined", State.VALUE);
+        doWriteUndefined();
+        setState(getNextState());
     }
 
     protected State getNextState() {
@@ -469,7 +652,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
          */
         DONE,
 
-        /**
+        state, /**
          * The writer is closed.
          */
         CLOSED

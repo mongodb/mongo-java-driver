@@ -41,19 +41,10 @@ class BsonCallbackAdapter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeStartArray() {
-        super.writeStartArray();
-        bsonCallback.arrayStart(getName());
-        setContext(new Context(getContext(), BsonContextType.ARRAY));
-        setState(State.VALUE);
-    }
-
-    @Override
-    public void writeStartDocument() {
-        super.writeStartDocument();
+    public void doWriteStartDocument() {
         BsonContextType contextType = getState() == State.SCOPE_DOCUMENT
-                                      ? BsonContextType.SCOPE_DOCUMENT
-                                      : BsonContextType.DOCUMENT;
+                ? BsonContextType.SCOPE_DOCUMENT
+                : BsonContextType.DOCUMENT;
 
         if (getContext() == null || contextType == BsonContextType.SCOPE_DOCUMENT) {
             bsonCallback.objectStart();
@@ -61,28 +52,11 @@ class BsonCallbackAdapter extends AbstractBsonWriter {
             bsonCallback.objectStart(getName());
         }
         setContext(new Context(getContext(), contextType));
-        setState(State.NAME);
     }
 
     @Override
-    public void writeEndArray() {
-        super.writeEndArray();
-        if (getContext().getContextType() != BsonContextType.ARRAY) {
-            throwInvalidContextType("WriteEndArray", getContext().getContextType(), BsonContextType.ARRAY);
-        }
-        setContext(getContext().getParentContext());
-        setState(getNextState());
-        bsonCallback.arrayDone();
-    }
-
-    @Override
-    public void writeEndDocument() {
-        super.writeEndDocument();
+    protected void doWriteEndDocument() {
         BsonContextType contextType = getContext().getContextType();
-
-        if (contextType != BsonContextType.DOCUMENT && contextType != BsonContextType.SCOPE_DOCUMENT) {
-            throwInvalidContextType("WriteEndDocument", contextType, BsonContextType.DOCUMENT, BsonContextType.SCOPE_DOCUMENT);
-        }
 
         setContext(getContext().getParentContext());
         bsonCallback.objectDone();
@@ -95,120 +69,115 @@ class BsonCallbackAdapter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeBinaryData(final BsonBinary binary) {
-        if (binary.getType() == BsonBinarySubType.UUID_LEGACY.getValue()) {
-            bsonCallback.gotUUID(getName(),
-                                 readLong(binary.getData(), 0),
-                                 readLong(binary.getData(), 8));
-        } else {
-            bsonCallback.gotBinary(getName(), binary.getType(), binary.getData());
-        }
-
-        setState(getNextState());
+    public void doWriteStartArray() {
+        bsonCallback.arrayStart(getName());
+        setContext(new Context(getContext(), BsonContextType.ARRAY));
     }
 
     @Override
-    public void writeBoolean(final boolean value) {
+    protected void doWriteEndArray() {
+        setContext(getContext().getParentContext());
+        bsonCallback.arrayDone();
+    }
+
+    @Override
+    protected void doWriteBinaryData(final BsonBinary binary) {
+        if (binary.getType() == BsonBinarySubType.UUID_LEGACY.getValue()) {
+            bsonCallback.gotUUID(getName(),
+                    readLong(binary.getData(), 0),
+                    readLong(binary.getData(), 8));
+        } else {
+            bsonCallback.gotBinary(getName(), binary.getType(), binary.getData());
+        }
+    }
+
+    @Override
+    public void doWriteBoolean(final boolean value) {
         bsonCallback.gotBoolean(getName(), value);
         setState(getNextState());
     }
 
     @Override
-    public void writeDateTime(final long value) {
+    protected void doWriteDateTime(final long value) {
         bsonCallback.gotDate(getName(), value);
-        setState(getNextState());
     }
 
     @Override
-    public void writeDouble(final double value) {
+    protected void doWriteDBPointer(final BsonDbPointer value) {
+        bsonCallback.gotDBRef(getName(), value.getNamespace(), value.getId());
+    }
+
+    @Override
+    protected void doWriteDouble(final double value) {
         bsonCallback.gotDouble(getName(), value);
-        setState(getNextState());
     }
 
     @Override
-    public void writeInt32(final int value) {
+    protected void doWriteInt32(final int value) {
         bsonCallback.gotInt(getName(), value);
-        setState(getNextState());
     }
 
     @Override
-    public void writeInt64(final long value) {
+    protected void doWriteInt64(final long value) {
         bsonCallback.gotLong(getName(), value);
-        setState(getNextState());
     }
 
     @Override
-    public void writeJavaScript(final String code) {
+    protected void doWriteJavaScript(final String code) {
         bsonCallback.gotCode(getName(), code);
-        setState(getNextState());
     }
 
     @Override
-    public void writeJavaScriptWithScope(final String code) {
+    protected void doWriteJavaScriptWithScope(final String code) {
         getContext().callback = bsonCallback;
         getContext().code = code;
         getContext().name = getName();
         this.bsonCallback = bsonCallback.createBSONCallback();
-        setState(State.SCOPE_DOCUMENT);
     }
 
     @Override
-    public void writeMaxKey() {
+    protected void doWriteMaxKey() {
         bsonCallback.gotMaxKey(getName());
-        setState(getNextState());
     }
 
     @Override
-    public void writeMinKey() {
+    protected void doWriteMinKey() {
         bsonCallback.gotMinKey(getName());
-        setState(getNextState());
     }
 
     @Override
-    public void writeNull() {
+    public void doWriteNull() {
         bsonCallback.gotNull(getName());
-        setState(getNextState());
     }
 
     @Override
-    public void writeObjectId(final ObjectId objectId) {
+    public void doWriteObjectId(final ObjectId objectId) {
         bsonCallback.gotObjectId(getName(), objectId);
-        setState(getNextState());
     }
 
     @Override
-    public void writeRegularExpression(final BsonRegularExpression regularExpression) {
+    public void doWriteRegularExpression(final BsonRegularExpression regularExpression) {
         bsonCallback.gotRegex(getName(), regularExpression.getPattern(), regularExpression.getOptions());
-        setState(getNextState());
     }
 
     @Override
-    public void writeString(final String value) {
+    public void doWriteString(final String value) {
         bsonCallback.gotString(getName(), value);
-        setState(getNextState());
     }
 
     @Override
-    public void writeSymbol(final String value) {
+    public void doWriteSymbol(final String value) {
         bsonCallback.gotSymbol(getName(), value);
-        setState(getNextState());
     }
 
     @Override
-    public void writeTimestamp(final BsonTimestamp value) {
+    public void doWriteTimestamp(final BsonTimestamp value) {
         bsonCallback.gotTimestamp(getName(), value.getTime(), value.getInc());
-        setState(getNextState());
     }
 
     @Override
-    public void writeUndefined() {
+    public void doWriteUndefined() {
         bsonCallback.gotUndefined(getName());
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeDBPointer(final BsonDbPointer value) {
-        bsonCallback.gotDBRef(getName(), value.getNamespace(), value.getId());
     }
 
     @Override
