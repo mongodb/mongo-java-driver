@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import com.mongodb.MongoQueryFailureException;
 import org.junit.Test;
 
 import static java.util.Arrays.asList;

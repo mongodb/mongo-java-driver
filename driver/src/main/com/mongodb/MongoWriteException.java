@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb;
+
+import org.mongodb.CommandResult;
 
 import static java.lang.String.format;
 
 /**
  * Exception indicating a failure to successfully complete a write operation according to the WriteConcern used for the operation.
+ *
+ * @since 3.0
  */
 public class MongoWriteException extends MongoServerException {
     private static final long serialVersionUID = -1139302724723542251L;

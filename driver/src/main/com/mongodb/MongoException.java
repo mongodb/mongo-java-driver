@@ -18,9 +18,6 @@
 package com.mongodb;
 
 
-import org.mongodb.MongoServerException;
-
-
 /**
  * Top level Exception for all Exceptions, server-side or client-side, that come from the driver.
  */

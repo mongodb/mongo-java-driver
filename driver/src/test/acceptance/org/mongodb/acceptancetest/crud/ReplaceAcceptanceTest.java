@@ -16,11 +16,11 @@
 
 package org.mongodb.acceptancetest.crud;
 
+import com.mongodb.WriteConcernException;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoView;
-import org.mongodb.MongoWriteException;
 
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -89,9 +89,9 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
         try {
             collection.find(searchCriteria).replace(newDocumentWithDifferentId);
             fail("Should have thrown an exception");
-        } catch (MongoWriteException e) {
+        } catch (WriteConcernException e) {
             // Then
-            assertThat("Error code should match one of these error codes", e.getErrorCode(), anyOf(is(13596), is(16837)));
+            assertThat("Error code should match one of these error codes", e.getCode(), anyOf(is(13596), is(16837)));
         }
     }
 

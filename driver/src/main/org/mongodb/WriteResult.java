@@ -38,7 +38,7 @@ public interface WriteResult {
      * Returns the number of documents affected by the write operation.
      *
      * @return the number of documents affected by the write operation
-     * @throws UnacknowledgedWriteException if the write was unacknowledged.
+     * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
      */
     int getCount();
 
@@ -46,7 +46,7 @@ public interface WriteResult {
      * Returns true if the write was an update of an existing document.
      *
      * @return true if the write was an update of an existing document
-     * @throws UnacknowledgedWriteException if the write was unacknowledged.
+     * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
      */
     boolean isUpdateOfExisting();
 
@@ -54,7 +54,7 @@ public interface WriteResult {
      * Returns the value of _id if this write resulted in an upsert.
      *
      * @return the value of _id if this write resulted in an upsert.
-     * @throws UnacknowledgedWriteException if the write was unacknowledged.
+     * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
      */
     BsonValue getUpsertedId();
 }

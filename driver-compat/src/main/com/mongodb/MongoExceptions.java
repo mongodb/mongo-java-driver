@@ -18,7 +18,6 @@ package com.mongodb;
 
 import org.bson.codecs.Decoder;
 import org.mongodb.MongoCommandFailureException;
-import org.mongodb.MongoWriteException;
 
 final class MongoExceptions {
     public static com.mongodb.MongoException mapException(final org.mongodb.MongoException e) {
@@ -28,30 +27,12 @@ final class MongoExceptions {
     @SuppressWarnings("deprecation")
     public static com.mongodb.MongoException mapException(final org.mongodb.MongoException e, final Decoder<DBObject> decoder) {
         Throwable cause = e.getCause();
-        if (e instanceof MongoIncompatibleDriverException) {
-            return (MongoIncompatibleDriverException) e;
-        } else if (e instanceof MongoExecutionTimeoutException) {
-            return (MongoExecutionTimeoutException) e;
-        } else if (e instanceof MongoTimeoutException) {
-            return (MongoTimeoutException) e;
-        } else if (e instanceof MongoWaitQueueFullException) {
-            return (MongoWaitQueueFullException) e;
-        } else if (e instanceof MongoCursorNotFoundException) {
-            return (MongoCursorNotFoundException) e;
-        } else if (e instanceof MongoInterruptedException) {
-            return (MongoInterruptedException) e;
-        } else if (e instanceof DuplicateKeyException) {
-            return (DuplicateKeyException) e;
-        } else if (e instanceof MongoInternalException) {
-            return (MongoInternalException) e;
-        } else if (e instanceof MongoSocketException) {
-            return (MongoSocketException) e;
-        } else if (e instanceof MongoCommandFailureException) {
+        if (e instanceof MongoCommandFailureException) {
             return new CommandFailureException((MongoCommandFailureException) e);
-        } else if (e instanceof MongoWriteException) {
-            return new WriteConcernException((MongoWriteException) e);
         } else if (e instanceof org.mongodb.BulkWriteException) {
             return BulkWriteHelper.translateBulkWriteException((org.mongodb.BulkWriteException) e, decoder);
+        } else if (e instanceof com.mongodb.MongoException) {
+            return (com.mongodb.MongoException) e;
         } else {
             return new MongoException(e.getMessage(), cause);
         }

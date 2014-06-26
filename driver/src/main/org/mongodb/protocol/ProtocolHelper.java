@@ -17,6 +17,8 @@
 package org.mongodb.protocol;
 
 import com.mongodb.MongoExecutionTimeoutException;
+import com.mongodb.MongoQueryFailureException;
+import com.mongodb.WriteConcernException;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -25,8 +27,6 @@ import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoException;
-import org.mongodb.MongoQueryFailureException;
-import org.mongodb.MongoWriteException;
 import org.mongodb.WriteResult;
 import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.ServerAddress;
@@ -130,7 +130,7 @@ final class ProtocolHelper {
             throw new com.mongodb.MongoException.DuplicateKey(code, getWriteErrorMessage(commandResult.getResponse()),
                                                               getWriteResult2(commandResult));
         } else {
-            throw new MongoWriteException(code, getWriteErrorMessage(commandResult.getResponse()), commandResult);
+            throw new WriteConcernException(code, getWriteErrorMessage(commandResult.getResponse()), getWriteResult2(commandResult));
         }
     }
 

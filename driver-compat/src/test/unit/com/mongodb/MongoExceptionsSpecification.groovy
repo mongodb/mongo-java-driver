@@ -19,7 +19,6 @@ package com.mongodb
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.mongodb.MongoCommandFailureException
-import org.mongodb.MongoWriteException
 import org.mongodb.connection.ServerAddress
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -46,8 +45,6 @@ class MongoExceptionsSpecification extends Specification {
         where:
         exceptionToBeMapped                                                                   | exceptionForCompatibilityApi     | errorCode
         new MongoCommandFailureException(commandResultWithErrorCode(ERROR_CODE))              | CommandFailureException          |
-        ERROR_CODE
-        new MongoWriteException(ERROR_CODE, MESSAGE, commandResultWithErrorCode(ERROR_CODE))  | WriteConcernException            |
         ERROR_CODE
     }
 

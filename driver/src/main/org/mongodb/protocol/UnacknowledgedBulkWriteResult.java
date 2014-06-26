@@ -16,9 +16,9 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.UnacknowledgedWriteException;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.BulkWriteUpsert;
-import org.mongodb.UnacknowledgedWriteException;
 
 import java.util.List;
 

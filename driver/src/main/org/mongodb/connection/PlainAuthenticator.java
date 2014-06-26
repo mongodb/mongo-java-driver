@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoSecurityException;
 import org.mongodb.MongoCredential;
 
 import javax.security.auth.callback.Callback;

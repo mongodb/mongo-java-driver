@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoSecurityException;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.mongodb.CommandResult;

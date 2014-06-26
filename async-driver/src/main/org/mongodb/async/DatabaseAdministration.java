@@ -61,7 +61,7 @@ public interface DatabaseAdministration {
      *
      * @param oldCollectionName the collection to rename
      * @param newCollectionName the name the collection will be renamed to
-     * @throws org.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection, or if the
+     * @throws com.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection, or if the
      *                              oldCollectionName is the name of a collection that doesn't exist
      * @mongodb.driver.manual reference/commands/renameCollection Rename collection
      */
@@ -73,7 +73,7 @@ public interface DatabaseAdministration {
      * @param oldCollectionName the collection to rename
      * @param newCollectionName the name the collection will be renamed to
      * @param dropTarget        setting this to true will drop any existing database with the name newCollectionName
-     * @throws org.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection and
+     * @throws com.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection and
      *                              dropTarget is false, or if the oldCollectionName is the name of a collection that doesn't exist
      * @mongodb.driver.manual reference/commands/renameCollection Rename collection
      */

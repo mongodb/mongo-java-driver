@@ -16,9 +16,9 @@
 
 package org.mongodb;
 
+import com.mongodb.MongoSecurityException;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.connection.MongoSecurityException;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertTrue;

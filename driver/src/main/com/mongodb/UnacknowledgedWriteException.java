@@ -30,9 +30,9 @@ public class UnacknowledgedWriteException extends MongoClientException {
     /**
      * Constructs a new instance with the given message.
      *
-     * @param msg the message
+     * @param message the message
      */
-    UnacknowledgedWriteException(final String msg) {
-        super(msg);
+    public UnacknowledgedWriteException(final String message) {
+        super(message);
     }
 }

@@ -16,15 +16,15 @@
 
 package org.mongodb.operation
 
-import org.junit.experimental.categories.Category
 import category.Async
+import com.mongodb.MongoSecurityException
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.ClusterSettings
 import org.mongodb.connection.ConnectionPoolSettings
 import org.mongodb.connection.DefaultClusterFactory
-import org.mongodb.connection.MongoSecurityException
 import org.mongodb.connection.ServerSettings
 import org.mongodb.connection.SocketSettings
 import org.mongodb.connection.SocketStreamFactory

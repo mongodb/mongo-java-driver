@@ -16,8 +16,8 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.UnacknowledgedWriteException;
 import org.bson.BsonValue;
-import org.mongodb.UnacknowledgedWriteException;
 import org.mongodb.WriteResult;
 
 /**

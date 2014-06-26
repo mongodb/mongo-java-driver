@@ -17,10 +17,10 @@
 package org.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoServerException
 import org.junit.experimental.categories.Category
 import org.mongodb.CreateCollectionOptions
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoServerException
 
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding

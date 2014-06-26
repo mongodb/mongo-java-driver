@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb;
 
 import org.mongodb.connection.ServerAddress;
 
 import static java.lang.String.format;
 
+/**
+ * An exception indicating that a query operation failed on the server.
+ *
+ * @since 3.0
+ */
 public class MongoQueryFailureException extends MongoServerException {
     private static final long serialVersionUID = -5113350133297015801L;
     private final int errorCode;

@@ -16,10 +16,6 @@
 
 package com.mongodb;
 
-import org.bson.BsonBoolean;
-import org.bson.BsonInt32;
-import org.mongodb.MongoWriteException;
-
 /**
  * An exception representing an error reported due to a write failure.
  */
@@ -28,19 +24,15 @@ public class WriteConcernException extends MongoException {
 
     private final WriteResult writeResult;
 
-    WriteConcernException(final int code, final String message, final WriteResult writeResult) {
+    /**
+     * Construct a new instance
+     * @param code the error code
+     * @param message the message
+     * @param writeResult the write result
+     */
+    public WriteConcernException(final int code, final String message, final WriteResult writeResult) {
         super(code, message);
         this.writeResult = writeResult;
-    }
-
-    WriteConcernException(final MongoWriteException e) {
-        this(e.getErrorCode(), e.getErrorMessage(), createWriteResult(e));
-    }
-
-    private static WriteResult createWriteResult(final MongoWriteException e) {
-        return new WriteResult(e.getCommandResult().getResponse().getNumber("n", new BsonInt32(0)).intValue(),
-                               e.getCommandResult().getResponse().getBoolean("updatedExisting", BsonBoolean.FALSE).getValue(),
-                               e.getCommandResult().getResponse().get("upserted"));
     }
 
     /**

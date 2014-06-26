@@ -24,11 +24,21 @@ public class MongoClientException extends MongoInternalException {
     private static final long serialVersionUID = -5127414714432646066L;
 
     /**
-     * Constructs a new instance with the given message.
+     * Constructs a new instance.
      *
-     * @param msg the message
+     * @param message the message
      */
-    MongoClientException(final String msg) {
-        super(msg);
+    public MongoClientException(final String message) {
+        super(message);
+    }
+
+    /**
+     * Constructs a new instance.
+     *
+     * @param message the message
+     * @param cause the cause
+     */
+    public MongoClientException(final String message, final Throwable cause) {
+        super(message, cause);
     }
 }

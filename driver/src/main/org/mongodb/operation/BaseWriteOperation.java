@@ -16,18 +16,16 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.WriteConcernException;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.bson.BsonString;
 import org.mongodb.BulkWriteError;
 import org.mongodb.BulkWriteException;
 import org.mongodb.BulkWriteResult;
-import org.mongodb.CommandResult;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.MongoWriteException;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.binding.AsyncWriteBinding;
@@ -146,11 +144,11 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
             if (DUPLICATE_KEY_ERROR_CODES.contains(lastError.getCode())) {
                 return new com.mongodb.MongoException.DuplicateKey(lastError.getCode(), lastError.getMessage(), manufactureWriteResult(e));
             } else {
-                return new MongoWriteException(lastError.getCode(), lastError.getMessage(), manufactureGetLastErrorCommandResult(e));
+                return new WriteConcernException(lastError.getCode(), lastError.getMessage(), manufactureWriteResult(e));
             }
         } else {
-            return new MongoWriteException(e.getWriteConcernError().getCode(), e.getWriteConcernError().getMessage(),
-                                           manufactureGetLastErrorCommandResult(e));
+            return new WriteConcernException(e.getWriteConcernError().getCode(), e.getWriteConcernError().getMessage(),
+                                             manufactureWriteResult(e));
         }
 
     }
@@ -158,24 +156,6 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
     private com.mongodb.WriteResult manufactureWriteResult(final BulkWriteException bulkWriteException) {
         return translateBulkWriteResult2(bulkWriteException.getWriteResult());
 
-    }
-
-    private CommandResult manufactureGetLastErrorCommandResult(final BulkWriteException e) {
-        BsonDocument response = new BsonDocument();
-        addBulkWriteResultToResponse(e.getWriteResult(), response);
-        if (e.getWriteConcernError() != null) {
-            response.putAll(e.getWriteConcernError().getDetails());
-        }
-        if (getLastError(e) != null) {
-            response.put("err", new BsonString(getLastError(e).getMessage()));
-            response.put("code", new BsonInt32(getLastError(e).getCode()));
-            response.putAll(getLastError(e).getDetails());
-
-        } else if (e.getWriteConcernError() != null) {
-            response.put("err", new BsonString(e.getWriteConcernError().getMessage()));
-            response.put("code", new BsonInt32(e.getWriteConcernError().getCode()));
-        }
-        return new CommandResult(e.getServerAddress(), response, 0);
     }
 
     private void addBulkWriteResultToResponse(final BulkWriteResult bulkWriteResult, final BsonDocument response) {

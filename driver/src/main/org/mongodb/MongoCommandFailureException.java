@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import com.mongodb.MongoServerException;
+
 import static java.lang.String.format;
 
 /**

@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package com.mongodb;
 
-import org.mongodb.MongoClientException;
 import org.mongodb.MongoCredential;
 
 /**
