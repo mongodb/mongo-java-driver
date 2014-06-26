@@ -101,7 +101,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
     }
 
     test {
-        jvmArgs "-XX:MaxPermSize=256m"
+        jvmArgs "-XX:MaxPermSize=512m"
     }
 
     project.ext.buildingWith = { n ->
