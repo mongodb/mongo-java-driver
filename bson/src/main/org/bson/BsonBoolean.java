@@ -47,7 +47,7 @@ public final class BsonBoolean extends BsonValue implements Comparable<BsonBoole
 
     @Override
     public int compareTo(final BsonBoolean o) {
-        return Boolean.compare(value, o.value);
+        return Boolean.valueOf(value).compareTo(o.value);
     }
 
     @Override
