@@ -46,138 +46,7 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeBinaryData(final BsonBinary binary) {
-        checkPreconditions("writeBinaryData", State.VALUE);
-        write(binary);
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeBoolean(final boolean value) {
-        checkPreconditions("writeBoolean", State.VALUE);
-        write(BsonBoolean.valueOf(value));
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeDateTime(final long value) {
-        checkPreconditions("writeDateTime", State.VALUE);
-        write(new BsonDateTime(value));
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeDouble(final double value) {
-        checkPreconditions("writeDouble", State.VALUE);
-        write(new BsonDouble(value));
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeInt32(final int value) {
-        checkPreconditions("writeInt32", State.VALUE);
-        write(new BsonInt32(value));
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeInt64(final long value) {
-        checkPreconditions("", State.VALUE);
-        write(new BsonInt64(value));
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeJavaScript(final String code) {
-        checkPreconditions("writeInt64", State.VALUE);
-        write(new BsonJavaScript(code));
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeJavaScriptWithScope(final String code) {
-        checkPreconditions("writeJavaScriptWithScope", State.VALUE);
-
-        setContext(new Context(new BsonString(code), BsonContextType.JAVASCRIPT_WITH_SCOPE, getContext()));
-
-        setState(State.SCOPE_DOCUMENT);
-    }
-
-    @Override
-    public void writeMaxKey() {
-        checkPreconditions("writeMaxKey", State.VALUE);
-        write(new BsonMaxKey());
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeMinKey() {
-        checkPreconditions("writeMinKey", State.VALUE);
-        write(new BsonMinKey());
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeNull() {
-        checkPreconditions("writeNull", State.VALUE);
-        write(BsonNull.VALUE);
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeObjectId(final ObjectId objectId) {
-        checkPreconditions("writeObjectId", State.VALUE);
-        write(new BsonObjectId(objectId));
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeRegularExpression(final BsonRegularExpression regularExpression) {
-        checkPreconditions("writeRegularExpression", State.VALUE);
-        write(regularExpression);
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeString(final String value) {
-        checkPreconditions("writeString", State.VALUE);
-        write(new BsonString(value));
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeSymbol(final String value) {
-        checkPreconditions("writeSymbol", State.VALUE);
-        write(new BsonSymbol(value));
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeTimestamp(final BsonTimestamp value) {
-        checkPreconditions("writeTimestamp", State.VALUE);
-        write(value);
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeUndefined() {
-        checkPreconditions("writeUndefined", State.VALUE);
-        write(new BsonUndefined());
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeDBPointer(final BsonDbPointer value) {
-        checkPreconditions("writeDBPointer", State.VALUE);
-        write(value);
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeStartDocument() {
-        checkPreconditions("writeStartDocument", State.INITIAL, State.VALUE, State.SCOPE_DOCUMENT, State.DONE);
-
-        super.writeStartDocument();
+    protected void doWriteStartDocument() {
         switch (getState()) {
             case INITIAL:
                 setContext(new Context(document, DOCUMENT, getContext()));
@@ -191,16 +60,10 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
             default:
                 throw new BsonInvalidOperationException("Unexpected state " + getState());
         }
-
-        setState(State.NAME);
     }
 
     @Override
-    public void writeEndDocument() {
-        checkPreconditions("writeEndDocument", State.NAME);
-
-        super.writeEndDocument();
-
+    protected void doWriteEndDocument() {
         BsonValue value = getContext().container;
         setContext(getContext().getParentContext());
 
@@ -209,35 +72,111 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
             BsonString code = (BsonString) getContext().container;
             setContext(getContext().getParentContext());
             write(new BsonJavaScriptWithScope(code.getValue(), scope));
-        } else {
-            if (getContext().getContextType() == BsonContextType.TOP_LEVEL) {
-                setState(State.DONE);
-            } else {
-                write(value);
-                setState(getNextState());
-            }
+        } else if (getContext().getContextType() != BsonContextType.TOP_LEVEL) {
+            write(value);
         }
     }
 
     @Override
-    public void writeStartArray() {
-        checkPreconditions("writeStartArray", State.VALUE);
-        super.writeStartArray();
-
+    protected void doWriteStartArray() {
         setContext(new Context(new BsonArray(), BsonContextType.ARRAY, getContext()));
-        setState(State.VALUE);
     }
 
     @Override
-    public void writeEndArray() {
-        checkPreconditions("writeEndArray", State.VALUE);
-        super.writeEndArray();
-
+    protected void doWriteEndArray() {
         BsonValue array = getContext().container;
         setContext(getContext().getParentContext());
         write(array);
+    }
 
-        setState(getNextState());
+    @Override
+    protected void doWriteBinaryData(final BsonBinary binary) {
+        write(binary);
+    }
+
+    @Override
+    public void doWriteBoolean(final boolean value) {
+        write(BsonBoolean.valueOf(value));
+    }
+
+    @Override
+    protected void doWriteDateTime(final long value) {
+        write(new BsonDateTime(value));
+    }
+
+    @Override
+    protected void doWriteDBPointer(final BsonDbPointer value) {
+        write(value);
+    }
+
+    @Override
+    protected void doWriteDouble(final double value) {
+        write(new BsonDouble(value));
+    }
+
+    @Override
+    protected void doWriteInt32(final int value) {
+        write(new BsonInt32(value));
+    }
+
+    @Override
+    protected void doWriteInt64(final long value) {
+        write(new BsonInt64(value));
+    }
+
+    @Override
+    protected void doWriteJavaScript(final String code) {
+        write(new BsonJavaScript(code));
+    }
+
+    @Override
+    protected void doWriteJavaScriptWithScope(final String code) {
+        setContext(new Context(new BsonString(code), BsonContextType.JAVASCRIPT_WITH_SCOPE, getContext()));
+    }
+
+    @Override
+    protected void doWriteMaxKey() {
+        write(new BsonMaxKey());
+    }
+
+    @Override
+    protected void doWriteMinKey() {
+        write(new BsonMinKey());
+    }
+
+    @Override
+    public void doWriteNull() {
+        write(BsonNull.VALUE);
+    }
+
+    @Override
+    public void doWriteObjectId(final ObjectId objectId) {
+        write(new BsonObjectId(objectId));
+    }
+
+    @Override
+    public void doWriteRegularExpression(final BsonRegularExpression regularExpression) {
+        write(regularExpression);
+    }
+
+    @Override
+    public void doWriteString(final String value) {
+        write(new BsonString(value));
+    }
+
+    @Override
+    public void doWriteSymbol(final String value) {
+        write(new BsonSymbol(value));
+    }
+
+    @Override
+    public void doWriteTimestamp(final BsonTimestamp value) {
+        write(value);
+    }
+
+    @Override
+    public void doWriteUndefined() {
+        write(new BsonUndefined());
     }
 
     @Override
