@@ -437,8 +437,8 @@ public class DB {
     }
 
     /**
-     * Calls {@link DB#doEval(java.lang.String, java.lang.Object[]) }. If the command is successful, the "retval" field is extracted and
-     * returned. Otherwise an exception is thrown.
+     * Calls {@link DB#doEval(java.lang.String, java.lang.Object[]) }. If the command is successful,
+     * the "retval" field is extracted and returned. Otherwise an exception is thrown.
      *
      * @param code @{code String} representation of JavaScript function
      * @param args arguments to pass to the JavaScript function
@@ -459,7 +459,9 @@ public class DB {
      */
     public CommandResult getStats() {
         BsonDocument commandDocument = new BsonDocument("dbStats", new BsonInt32(1)).append("scale", new BsonInt32(1));
-        return executeCommand(commandDocument);
+        CommandResult result = executeCommand(commandDocument);
+        result.throwOnError();
+        return result;
     }
 
     /**

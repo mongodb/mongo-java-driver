@@ -592,7 +592,9 @@ public class Mongo {
         if (async) {
             command.put("async", 1);
         }
-        return getDB(ADMIN_DATABASE_NAME).command(command);
+        CommandResult result = getDB(ADMIN_DATABASE_NAME).command(command);
+        result.throwOnError();
+        return result;
     }
 
     /**
@@ -606,7 +608,9 @@ public class Mongo {
     public CommandResult fsyncAndLock() {
         DBObject command = new BasicDBObject("fsync", 1);
         command.put("lock", 1);
-        return getDB(ADMIN_DATABASE_NAME).command(command);
+        CommandResult result = getDB(ADMIN_DATABASE_NAME).command(command);
+        result.throwOnError();
+        return result;
     }
 
     /**
