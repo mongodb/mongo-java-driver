@@ -24,7 +24,14 @@ package com.mongodb;
 public class MongoExecutionTimeoutException extends MongoException {
     private static final long serialVersionUID = 5955669123800274594L;
 
-    MongoExecutionTimeoutException(final org.mongodb.MongoExecutionTimeoutException wrapped) {
-        super(wrapped.getErrorCode(), wrapped.getMessage(), wrapped.getCause());
+    /**
+     * Construct a new instance.
+     *
+     * @param code the error code
+     * @param message the error message
+     */
+    public MongoExecutionTimeoutException(final int code, final String message) {
+        super(code, message);
+
     }
 }

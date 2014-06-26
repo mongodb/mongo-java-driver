@@ -18,11 +18,11 @@
 
 package org.mongodb.connection
 
+import com.mongodb.MongoInternalException
 import org.bson.io.BasicInputBuffer
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.InputBuffer
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoInternalException
 
 class ReplyHeaderSpecification extends FunctionalSpecification {
 

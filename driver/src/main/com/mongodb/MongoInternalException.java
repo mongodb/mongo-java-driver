@@ -38,9 +38,5 @@ public class MongoInternalException extends MongoException {
     public MongoInternalException(final String msg, final Throwable t) {
         super(msg, t);
     }
-
-    MongoInternalException(final org.mongodb.MongoInternalException e) {
-        this(e.getMessage(), e.getCause());
-    }
 }
 

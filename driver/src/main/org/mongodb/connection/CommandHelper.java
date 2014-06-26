@@ -16,11 +16,11 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoInternalException;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoCommandFailureException;
-import org.mongodb.MongoInternalException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.protocol.message.CommandMessage;

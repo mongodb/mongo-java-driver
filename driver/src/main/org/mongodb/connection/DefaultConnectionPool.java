@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoWaitQueueFullException;
 import org.bson.ByteBuf;
 import org.mongodb.MongoException;
 import org.mongodb.diagnostics.Loggers;

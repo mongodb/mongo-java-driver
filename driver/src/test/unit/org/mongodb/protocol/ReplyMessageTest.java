@@ -16,11 +16,11 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.MongoInternalException;
 import org.bson.ByteBufNIO;
 import org.bson.io.BasicInputBuffer;
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.MongoInternalException;
 import org.mongodb.connection.ReplyHeader;
 import org.mongodb.protocol.message.ReplyMessage;
 

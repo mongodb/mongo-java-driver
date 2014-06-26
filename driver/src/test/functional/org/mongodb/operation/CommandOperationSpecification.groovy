@@ -18,13 +18,13 @@
 package org.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoExecutionTimeoutException
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoExecutionTimeoutException
 
 import static java.util.Arrays.asList
 import static org.junit.Assume.assumeFalse

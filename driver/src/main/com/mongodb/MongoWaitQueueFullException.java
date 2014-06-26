@@ -25,7 +25,7 @@ public class MongoWaitQueueFullException extends MongoClientException {
      *
      * @param message the message
      */
-    MongoWaitQueueFullException(final String message) {
+    public MongoWaitQueueFullException(final String message) {
         super(message);
     }
 }

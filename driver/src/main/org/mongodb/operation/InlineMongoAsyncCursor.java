@@ -16,10 +16,10 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.MongoInternalException;
 import org.mongodb.Block;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoFuture;
-import org.mongodb.MongoInternalException;
 
 import java.util.Iterator;
 import java.util.List;

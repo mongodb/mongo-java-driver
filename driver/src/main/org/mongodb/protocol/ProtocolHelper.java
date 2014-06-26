@@ -16,6 +16,7 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.MongoExecutionTimeoutException;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -24,7 +25,6 @@ import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoException;
-import org.mongodb.MongoExecutionTimeoutException;
 import org.mongodb.MongoQueryFailureException;
 import org.mongodb.MongoWriteException;
 import org.mongodb.WriteResult;
@@ -65,15 +65,14 @@ final class ProtocolHelper {
     static MongoException getCommandFailureException(final CommandResult commandResult) {
         isTrue("not ok", !commandResult.isOk());
         if (EXECUTION_TIMEOUT_ERROR_CODES.contains(commandResult.getErrorCode())) {
-            return new MongoExecutionTimeoutException(commandResult.getAddress(), commandResult.getErrorCode(),
-                                                      commandResult.getErrorMessage());
+            return new MongoExecutionTimeoutException(commandResult.getErrorCode(), commandResult.getErrorMessage());
         }
         return new MongoCommandFailureException(commandResult);
     }
 
     static MongoException getQueryFailureException(final ServerAddress serverAddress, final Document errorDocument) {
         if (EXECUTION_TIMEOUT_ERROR_CODES.contains(getErrorCode(errorDocument))) {
-            return new MongoExecutionTimeoutException(serverAddress, getErrorCode(errorDocument), getErrorMessage(errorDocument));
+            return new MongoExecutionTimeoutException(getErrorCode(errorDocument), getErrorMessage(errorDocument));
         }
         return new MongoQueryFailureException(serverAddress, getErrorCode(errorDocument), getErrorMessage(errorDocument));
     }

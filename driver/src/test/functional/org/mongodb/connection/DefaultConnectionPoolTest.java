@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoWaitQueueFullException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

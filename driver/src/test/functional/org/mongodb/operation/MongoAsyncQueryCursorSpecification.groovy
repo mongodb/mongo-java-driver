@@ -15,8 +15,10 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
 import category.Slow
+import com.mongodb.MongoInternalException
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonTimestamp
 import org.junit.experimental.categories.Category
@@ -25,7 +27,6 @@ import org.mongodb.CreateCollectionOptions
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoFuture
-import org.mongodb.MongoInternalException
 import org.mongodb.binding.AsyncClusterBinding
 import org.mongodb.binding.AsyncConnectionSource
 import org.mongodb.binding.AsyncReadBinding

@@ -16,7 +16,7 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.MongoInternalException;
+import com.mongodb.MongoInternalException;
 
 import java.util.HashMap;
 import java.util.Map;

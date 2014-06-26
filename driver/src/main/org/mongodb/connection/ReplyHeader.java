@@ -16,8 +16,8 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoInternalException;
 import org.bson.io.InputBuffer;
-import org.mongodb.MongoInternalException;
 
 import static java.lang.String.format;
 

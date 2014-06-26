@@ -16,6 +16,7 @@
 
 package org.mongodb.protocol
 
+import com.mongodb.MongoInternalException
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -23,7 +24,6 @@ import org.bson.BsonString
 import org.mongodb.BulkWriteError
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.CommandResult
-import org.mongodb.MongoInternalException
 import org.mongodb.WriteConcernError
 import org.mongodb.connection.ServerAddress
 import spock.lang.Specification

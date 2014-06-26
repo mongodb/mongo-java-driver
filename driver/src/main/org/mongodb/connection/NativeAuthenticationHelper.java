@@ -16,10 +16,10 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoInternalException;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
-import org.mongodb.MongoInternalException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

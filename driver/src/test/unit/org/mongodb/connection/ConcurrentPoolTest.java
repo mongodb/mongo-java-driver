@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoTimeoutException;
 import org.junit.Before;
 import org.junit.Test;
 

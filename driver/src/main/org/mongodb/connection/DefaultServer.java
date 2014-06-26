@@ -16,9 +16,9 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoInternalException;
 import org.bson.ByteBuf;
 import org.mongodb.MongoException;
-import org.mongodb.MongoInternalException;
 
 import java.util.Collections;
 import java.util.List;

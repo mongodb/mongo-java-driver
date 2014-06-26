@@ -18,8 +18,6 @@ package com.mongodb;
 
 import java.util.List;
 
-import static com.mongodb.MongoExceptions.mapException;
-
 /**
  * Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>
  * which can be used to create a MongoClient instance. The URI describes the hosts to
@@ -159,12 +157,7 @@ public class MongoClientURI {
      * @since 2.11.0
      */
     public MongoClientURI(final String uri, final MongoClientOptions.Builder builder) {
-        try {
-            proxied = new org.mongodb.MongoClientURI(uri, builder.getProxied());
-        } catch (org.mongodb.MongoInternalException e) {
-            //TODO: test this
-            throw mapException(e);
-        }
+        proxied = new org.mongodb.MongoClientURI(uri, builder.getProxied());
     }
 
 

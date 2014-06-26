@@ -16,6 +16,8 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoTimeoutException;
+
 import java.util.concurrent.CountDownLatch;
 
 class TimeoutTrackingConnectionGetter implements Runnable {

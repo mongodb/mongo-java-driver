@@ -16,12 +16,12 @@
 
 package org.mongodb.protocol.message;
 
+import com.mongodb.MongoInternalException;
 import org.bson.BsonBinaryReader;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
-import org.mongodb.MongoInternalException;
 import org.mongodb.connection.ReplyHeader;
 import org.mongodb.connection.ResponseBuffers;
 

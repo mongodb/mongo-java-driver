@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -25,7 +26,6 @@ import org.mongodb.CommandResult;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
-import org.mongodb.MongoInternalException;
 import org.mongodb.event.ConnectionEvent;
 import org.mongodb.event.ConnectionListener;
 import org.mongodb.event.ConnectionMessageReceivedEvent;

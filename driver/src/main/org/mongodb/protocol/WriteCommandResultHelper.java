@@ -16,6 +16,7 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.MongoInternalException;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -26,7 +27,6 @@ import org.mongodb.BulkWriteException;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.BulkWriteUpsert;
 import org.mongodb.CommandResult;
-import org.mongodb.MongoInternalException;
 import org.mongodb.WriteConcernError;
 import org.mongodb.operation.WriteRequest;
 

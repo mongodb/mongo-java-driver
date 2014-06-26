@@ -18,6 +18,7 @@ package org.mongodb.connection;
 
 import com.mongodb.MongoIncompatibleDriverException;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoTimeoutException;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.event.ClusterDescriptionChangedEvent;
@@ -148,7 +149,7 @@ abstract class BaseCluster implements Cluster {
             while (curDescription.getType() == ClusterType.UNKNOWN) {
 
                 if (curTimeNanos > endTimeNanos) {
-                    throw new MongoTimeoutException(format("Timed out while waiting to connect after %d ms",
+                    throw new com.mongodb.MongoTimeoutException(format("Timed out while waiting to connect after %d ms",
                                                            MILLISECONDS.convert(maxWaitTime, timeUnit)));
                 }
 

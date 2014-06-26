@@ -32,28 +32,28 @@ final class MongoExceptions {
         Throwable cause = e.getCause();
         if (e instanceof MongoIncompatibleDriverException) {
             return (MongoIncompatibleDriverException) e;
-        } else if (e instanceof org.mongodb.MongoExecutionTimeoutException) {
-            return new MongoExecutionTimeoutException((org.mongodb.MongoExecutionTimeoutException) e);
-        } else if (e instanceof MongoWriteException) {
-            return new WriteConcernException((MongoWriteException) e);
-        } else if (e instanceof org.mongodb.MongoInternalException) {
-            return new MongoInternalException((org.mongodb.MongoInternalException) e);
-        } else if (e instanceof org.mongodb.connection.MongoTimeoutException) {
-            return new MongoTimeoutException(e.getMessage());
-        } else if (e instanceof org.mongodb.connection.MongoWaitQueueFullException) {
-            return new MongoWaitQueueFullException(e.getMessage());
+        } else if (e instanceof MongoExecutionTimeoutException) {
+            return (MongoExecutionTimeoutException) e;
+        } else if (e instanceof MongoTimeoutException) {
+            return (MongoTimeoutException) e;
+        } else if (e instanceof MongoWaitQueueFullException) {
+            return (MongoWaitQueueFullException) e;
         } else if (e instanceof MongoCursorNotFoundException) {
             return (MongoCursorNotFoundException) e;
-        } else if (e instanceof MongoCommandFailureException) {
-            return new CommandFailureException((MongoCommandFailureException) e);
         } else if (e instanceof MongoInterruptedException) {
             return (MongoInterruptedException) e;
+        } else if (e instanceof DuplicateKeyException) {
+            return (DuplicateKeyException) e;
+        } else if (e instanceof MongoInternalException) {
+            return (MongoInternalException) e;
+        } else if (e instanceof MongoWriteException) {
+            return new WriteConcernException((MongoWriteException) e);
+        } else if (e instanceof MongoCommandFailureException) {
+            return new CommandFailureException((MongoCommandFailureException) e);
         } else if (e instanceof org.mongodb.connection.MongoSocketException && cause instanceof IOException) {
             return new MongoSocketException(e.getMessage(), (IOException) cause);
         } else if (e instanceof org.mongodb.BulkWriteException) {
             return BulkWriteHelper.translateBulkWriteException((org.mongodb.BulkWriteException) e, decoder);
-        } else if (e instanceof DuplicateKeyException) {
-            return (DuplicateKeyException) e;
         } else {
             return new MongoException(e.getMessage(), cause);
         }

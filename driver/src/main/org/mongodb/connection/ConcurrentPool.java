@@ -16,8 +16,9 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
-import org.mongodb.MongoInternalException;
+import com.mongodb.MongoTimeoutException;
 
 import java.util.Deque;
 import java.util.Iterator;
