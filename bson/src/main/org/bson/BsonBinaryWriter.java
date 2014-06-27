@@ -89,286 +89,180 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     }
 
     @Override
-    public void writeBinaryData(final BsonBinary binary) {
-        checkPreconditions("writeBinaryData", State.VALUE);
-
-        buffer.write(BsonType.BINARY.getValue());
-        writeCurrentName();
-
-        int totalLen = binary.getData().length;
-
-        if (binary.getType() == BsonBinarySubType.OLD_BINARY.getValue()) {
-            totalLen += 4;
-        }
-
-        buffer.writeInt(totalLen);
-        buffer.write(binary.getType());
-        if (binary.getType() == BsonBinarySubType.OLD_BINARY.getValue()) {
-            buffer.writeInt(totalLen - 4);
-        }
-        buffer.write(binary.getData());
-
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeBoolean(final boolean value) {
-        checkPreconditions("writeBoolean", State.VALUE);
-
-        buffer.write(BsonType.BOOLEAN.getValue());
-        writeCurrentName();
-        buffer.write(value ? 1 : 0);
-
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeDateTime(final long value) {
-        checkPreconditions("writeDateTime", State.VALUE);
-
-        buffer.write(BsonType.DATE_TIME.getValue());
-        writeCurrentName();
-        buffer.writeLong(value);
-
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeDouble(final double value) {
-        checkPreconditions("writeDouble", State.VALUE);
-
-        buffer.write(BsonType.DOUBLE.getValue());
-        writeCurrentName();
-        buffer.writeDouble(value);
-
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeInt32(final int value) {
-        checkPreconditions("writeInt32", State.VALUE);
-
-        buffer.write(BsonType.INT32.getValue());
-        writeCurrentName();
-        buffer.writeInt(value);
-
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeInt64(final long value) {
-        checkPreconditions("writeInt64", State.VALUE);
-
-        buffer.write(BsonType.INT64.getValue());
-        writeCurrentName();
-        buffer.writeLong(value);
-
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeJavaScript(final String code) {
-        checkPreconditions("writeJavaScript", State.VALUE);
-
-        buffer.write(BsonType.JAVASCRIPT.getValue());
-        writeCurrentName();
-        buffer.writeString(code);
-
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeJavaScriptWithScope(final String code) {
-        checkPreconditions("writeJavaScriptWithScope", State.VALUE);
-
-        buffer.write(BsonType.JAVASCRIPT_WITH_SCOPE.getValue());
-        writeCurrentName();
-        setContext(new Context(getContext(), BsonContextType.JAVASCRIPT_WITH_SCOPE, buffer.getPosition()));
-        buffer.writeInt(0);
-        buffer.writeString(code);
-
-        setState(State.SCOPE_DOCUMENT);
-    }
-
-    @Override
-    public void writeMaxKey() {
-        checkPreconditions("writeMaxKey", State.VALUE);
-
-        buffer.write(BsonType.MAX_KEY.getValue());
-        writeCurrentName();
-
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeMinKey() {
-        checkPreconditions("writeMinKey", State.VALUE);
-
-        buffer.write(BsonType.MIN_KEY.getValue());
-        writeCurrentName();
-
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeNull() {
-        checkPreconditions("writeNull", State.VALUE);
-
-        buffer.write(BsonType.NULL.getValue());
-        writeCurrentName();
-
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeObjectId(final ObjectId objectId) {
-        checkPreconditions("writeObjectId", State.VALUE);
-
-        buffer.write(BsonType.OBJECT_ID.getValue());
-        writeCurrentName();
-
-        buffer.write(objectId.toByteArray());
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeRegularExpression(final BsonRegularExpression regularExpression) {
-        checkPreconditions("writeRegularExpression", State.VALUE);
-
-        buffer.write(BsonType.REGULAR_EXPRESSION.getValue());
-        writeCurrentName();
-        buffer.writeCString(regularExpression.getPattern());
-        buffer.writeCString(regularExpression.getOptions());
-
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeString(final String value) {
-        checkPreconditions("writeString", State.VALUE);
-
-        buffer.write(BsonType.STRING.getValue());
-        writeCurrentName();
-        buffer.writeString(value);
-
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeSymbol(final String value) {
-        checkPreconditions("writeSymbol", State.VALUE);
-
-        buffer.write(BsonType.SYMBOL.getValue());
-        writeCurrentName();
-        buffer.writeString(value);
-
-        setState(getNextState());
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void writeTimestamp(final BsonTimestamp value) {
-        checkPreconditions("writeTimestamp", State.VALUE);
-
-        buffer.write(BsonType.TIMESTAMP.getValue());
-        writeCurrentName();
-        buffer.writeInt(value.getInc());
-        buffer.writeInt(value.getTime());
-
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeUndefined() {
-        checkPreconditions("writeUndefined", State.VALUE);
-
-        buffer.write(BsonType.UNDEFINED.getValue());
-        writeCurrentName();
-
-        setState(getNextState());
-    }
-
-    @Override
-    public  void writeDBPointer(final BsonDbPointer dbPointer) {
-        checkPreconditions("writeDBPointer", State.VALUE);
-
-        buffer.write(BsonType.DB_POINTER.getValue());
-        writeCurrentName();
-
-        buffer.writeString(dbPointer.getNamespace());
-        buffer.write(dbPointer.getId().toByteArray());
-
-        setState(getNextState());
-    }
-
-    @Override
-    public void writeStartArray() {
-        checkPreconditions("writeStartArray", State.VALUE);
-
-        super.writeStartArray();
-        buffer.write(BsonType.ARRAY.getValue());
-        writeCurrentName();
-        setContext(new Context(getContext(), BsonContextType.ARRAY, buffer.getPosition()));
-        buffer.writeInt(0); // reserve space for size
-
-        setState(State.VALUE);
-    }
-
-    @Override
-    public void writeStartDocument() {
-        checkPreconditions("writeStartDocument", State.INITIAL, State.VALUE, State.SCOPE_DOCUMENT, State.DONE);
-
-        super.writeStartDocument();
+    protected void doWriteStartDocument() {
         if (getState() == State.VALUE) {
             buffer.write(BsonType.DOCUMENT.getValue());
             writeCurrentName();
         }
         setContext(new Context(getContext(), BsonContextType.DOCUMENT, buffer.getPosition()));
         buffer.writeInt(0); // reserve space for size
-
-        setState(State.NAME);
     }
 
     @Override
-    public void writeEndArray() {
-        checkPreconditions("writeEndArray", State.VALUE);
-
-        if (getContext().getContextType() != BsonContextType.ARRAY) {
-            throwInvalidContextType("WriteEndArray", getContext().getContextType(), BsonContextType.ARRAY);
-        }
-
-        super.writeEndArray();
+    protected void doWriteEndDocument() {
         buffer.write(0);
         backpatchSize(); // size of document
 
         setContext(getContext().getParentContext());
-        setState(getNextState());
+        if (getContext() != null && getContext().getContextType() == BsonContextType.JAVASCRIPT_WITH_SCOPE) {
+            backpatchSize(); // size of the JavaScript with scope value
+            setContext(getContext().getParentContext());
+        }
     }
 
     @Override
-    public void writeEndDocument() {
-        checkPreconditions("writeEndDocument", State.NAME);
+    protected void doWriteStartArray() {
+        buffer.write(BsonType.ARRAY.getValue());
+        writeCurrentName();
+        setContext(new Context(getContext(), BsonContextType.ARRAY, buffer.getPosition()));
+        buffer.writeInt(0); // reserve space for size
+    }
 
-        BsonContextType contextType = getContext().getContextType();
-
-        if (contextType != BsonContextType.DOCUMENT && contextType != BsonContextType.SCOPE_DOCUMENT) {
-            throwInvalidContextType("WriteEndDocument", contextType, BsonContextType.DOCUMENT, BsonContextType.SCOPE_DOCUMENT);
-        }
-
-        super.writeEndDocument();
+    @Override
+    protected void doWriteEndArray() {
         buffer.write(0);
         backpatchSize(); // size of document
-
         setContext(getContext().getParentContext());
-        if (getContext() == null) {
-            setState(State.DONE);
-        } else {
-            if (getContext().getContextType() == BsonContextType.JAVASCRIPT_WITH_SCOPE) {
-                backpatchSize(); // size of the JavaScript with scope value
-                setContext(getContext().getParentContext());
-            }
-            setState(getNextState());
+    }
+
+    @Override
+    protected void doWriteBinaryData(final BsonBinary value) {
+        buffer.write(BsonType.BINARY.getValue());
+        writeCurrentName();
+
+        int totalLen = value.getData().length;
+
+        if (value.getType() == BsonBinarySubType.OLD_BINARY.getValue()) {
+            totalLen += 4;
         }
+
+        buffer.writeInt(totalLen);
+        buffer.write(value.getType());
+        if (value.getType() == BsonBinarySubType.OLD_BINARY.getValue()) {
+            buffer.writeInt(totalLen - 4);
+        }
+        buffer.write(value.getData());
+    }
+
+    @Override
+    public void doWriteBoolean(final boolean value) {
+        buffer.write(BsonType.BOOLEAN.getValue());
+        writeCurrentName();
+        buffer.write(value ? 1 : 0);
+    }
+
+    @Override
+    protected void doWriteDateTime(final long value) {
+        buffer.write(BsonType.DATE_TIME.getValue());
+        writeCurrentName();
+        buffer.writeLong(value);
+    }
+
+    @Override
+    protected void doWriteDBPointer(final BsonDbPointer value) {
+        buffer.write(BsonType.DB_POINTER.getValue());
+        writeCurrentName();
+
+        buffer.writeString(value.getNamespace());
+        buffer.write(value.getId().toByteArray());
+    }
+
+    @Override
+    protected void doWriteDouble(final double value) {
+        buffer.write(BsonType.DOUBLE.getValue());
+        writeCurrentName();
+        buffer.writeDouble(value);
+    }
+
+    @Override
+    protected void doWriteInt32(final int value) {
+        buffer.write(BsonType.INT32.getValue());
+        writeCurrentName();
+        buffer.writeInt(value);
+    }
+
+    @Override
+    protected void doWriteInt64(final long value) {
+        buffer.write(BsonType.INT64.getValue());
+        writeCurrentName();
+        buffer.writeLong(value);
+    }
+
+    @Override
+    protected void doWriteJavaScript(final String value) {
+        buffer.write(BsonType.JAVASCRIPT.getValue());
+        writeCurrentName();
+        buffer.writeString(value);
+    }
+
+    @Override
+    protected void doWriteJavaScriptWithScope(final String value) {
+        buffer.write(BsonType.JAVASCRIPT_WITH_SCOPE.getValue());
+        writeCurrentName();
+        setContext(new Context(getContext(), BsonContextType.JAVASCRIPT_WITH_SCOPE, buffer.getPosition()));
+        buffer.writeInt(0);
+        buffer.writeString(value);
+    }
+
+    @Override
+    protected void doWriteMaxKey() {
+        buffer.write(BsonType.MAX_KEY.getValue());
+        writeCurrentName();
+    }
+
+    @Override
+    protected void doWriteMinKey() {
+        buffer.write(BsonType.MIN_KEY.getValue());
+        writeCurrentName();
+    }
+
+    @Override
+    public void doWriteNull() {
+        buffer.write(BsonType.NULL.getValue());
+        writeCurrentName();
+    }
+
+    @Override
+    public void doWriteObjectId(final ObjectId value) {
+        buffer.write(BsonType.OBJECT_ID.getValue());
+        writeCurrentName();
+        buffer.write(value.toByteArray());
+    }
+
+    @Override
+    public void doWriteRegularExpression(final BsonRegularExpression value) {
+        buffer.write(BsonType.REGULAR_EXPRESSION.getValue());
+        writeCurrentName();
+        buffer.writeCString(value.getPattern());
+        buffer.writeCString(value.getOptions());
+    }
+
+    @Override
+    public void doWriteString(final String value) {
+        buffer.write(BsonType.STRING.getValue());
+        writeCurrentName();
+        buffer.writeString(value);
+    }
+
+    @Override
+    public void doWriteSymbol(final String value) {
+        buffer.write(BsonType.SYMBOL.getValue());
+        writeCurrentName();
+        buffer.writeString(value);
+    }
+
+    @Override
+    public void doWriteTimestamp(final BsonTimestamp value) {
+        buffer.write(BsonType.TIMESTAMP.getValue());
+        writeCurrentName();
+        buffer.writeInt(value.getInc());
+        buffer.writeInt(value.getTime());
+    }
+
+    @Override
+    public void doWriteUndefined() {
+        buffer.write(BsonType.UNDEFINED.getValue());
+        writeCurrentName();
     }
 
     @Override
@@ -427,7 +321,6 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
             buffer.writeCString(getName());
         }
     }
-
 
     private void backpatchSize() {
         int size = buffer.getPosition() - getContext().startPosition;

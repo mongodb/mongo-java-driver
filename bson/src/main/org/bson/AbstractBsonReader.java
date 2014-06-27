@@ -91,59 +91,145 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
         return closed;
     }
 
+    /**
+     * Handles the logic to read binary data
+     * @return the BsonBinary value
+     */
     protected abstract BsonBinary doReadBinaryData();
 
+
+    /**
+     * Handles the logic to read booleans
+     * @return the boolean value
+     */
     protected abstract boolean doReadBoolean();
 
+    /**
+     * Handles the logic to read date time
+     * @return the long value
+     */
     protected abstract long doReadDateTime();
 
+    /**
+     * Handles the logic to read doubles
+     * @return the double value
+     */
     protected abstract double doReadDouble();
 
+    /**
+     * Handles the logic when reading the end of an array
+     */
     protected abstract void doReadEndArray();
 
+    /**
+     * Handles the logic when reading the end of a document
+     */
     protected abstract void doReadEndDocument();
 
+    /**
+     * Handles the logic to read 32 bit ints
+     * @return the int value
+     */
     protected abstract int doReadInt32();
 
+    /**
+     * Handles the logic to read 64 bit ints
+     * @return the long value
+     */
     protected abstract long doReadInt64();
 
+    /**
+     * Handles the logic to read Javascript functions
+     * @return the String value
+     */
     protected abstract String doReadJavaScript();
 
+    /**
+     * Handles the logic to read scoped Javascript functions
+     * @return the String value
+     */
     protected abstract String doReadJavaScriptWithScope();
 
+    /**
+     * Handles the logic to read a Max key
+     */
     protected abstract void doReadMaxKey();
 
+    /**
+     * Handles the logic to read a Min key
+     */
     protected abstract void doReadMinKey();
 
+    /**
+     * Handles the logic to read a null value
+     */
     protected abstract void doReadNull();
 
+    /**
+     * Handles the logic to read an ObjectId
+     * @return the ObjectId value
+     */
     protected abstract ObjectId doReadObjectId();
 
+    /**
+     * Handles the logic to read a regular expression
+     * @return the BsonRegularExpression value
+     */
     protected abstract BsonRegularExpression doReadRegularExpression();
 
+    /**
+     * Handles the logic to read a DBPointer
+     * @return the BsonDbPointer value
+     */
     protected abstract BsonDbPointer doReadDBPointer();
 
+    /**
+     * Handles the logic to read the start of an array
+     */
     protected abstract void doReadStartArray();
 
+    /**
+     * Handles the logic to read the start of a document
+     */
     protected abstract void doReadStartDocument();
 
+    /**
+     * Handles the logic to read a String
+     * @return the String value
+     */
     protected abstract String doReadString();
 
+    /**
+     * Handles the logic to read a Symbol
+     * @return the String value
+     */
     protected abstract String doReadSymbol();
 
+    /**
+     * Handles the logic to read a timestamp
+     * @return the BsonTimestamp value
+     */
     protected abstract BsonTimestamp doReadTimestamp();
 
+    /**
+     * Handles the logic to read an Undefined value
+     */
     protected abstract void doReadUndefined();
 
+    /**
+     * Handles any logic required to skip the name (reader must be positioned on a name).
+     */
     protected abstract void doSkipName();
 
+    /**
+     * Handles any logic required to skip the value (reader must be positioned on a value).
+     */
     protected abstract void doSkipValue();
 
     @Override
     public BsonBinary readBinaryData() {
         checkPreconditions("readBinaryData", BsonType.BINARY);
         setState(getNextState());
-
         return doReadBinaryData();
     }
 
