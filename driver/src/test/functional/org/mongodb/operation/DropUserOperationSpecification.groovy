@@ -19,8 +19,9 @@
 
 
 package org.mongodb.operation
+
+import com.mongodb.MongoException
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoException
 
 import static org.mongodb.Fixture.getBinding
 import static org.mongodb.MongoCredential.createMongoCRCredential

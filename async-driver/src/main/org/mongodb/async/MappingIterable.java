@@ -16,9 +16,9 @@
 
 package org.mongodb.async;
 
+import com.mongodb.MongoException;
 import org.mongodb.Block;
 import org.mongodb.Function;
-import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;

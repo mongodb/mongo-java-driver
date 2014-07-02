@@ -45,7 +45,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static com.mongodb.MongoExceptions.mapException;
 import static com.mongodb.ReadPreference.primary;
 import static java.util.Arrays.asList;
 import static org.mongodb.MongoCredential.createMongoCRCredential;
@@ -238,20 +237,16 @@ public class DB {
     public Set<String> getCollectionNames() {
         MongoCursor<BsonDocument> cursor = execute(new QueryOperation<BsonDocument>(new MongoNamespace(name, "system.namespaces"),
                                                                                     new Find(), new BsonDocumentCodec()), primary());
-        try {
-            HashSet<String> collections = new HashSet<String>();
-            int lengthOfDatabaseName = getName().length();
-            while (cursor.hasNext()) {
-                String collectionName = cursor.next().getString("name").getValue();
-                if (!collectionName.contains("$")) {
-                    String collectionNameWithoutDatabasePrefix = collectionName.substring(lengthOfDatabaseName + 1);
-                    collections.add(collectionNameWithoutDatabasePrefix);
-                }
+        HashSet<String> collections = new HashSet<String>();
+        int lengthOfDatabaseName = getName().length();
+        while (cursor.hasNext()) {
+            String collectionName = cursor.next().getString("name").getValue();
+            if (!collectionName.contains("$")) {
+                String collectionNameWithoutDatabasePrefix = collectionName.substring(lengthOfDatabaseName + 1);
+                collections.add(collectionNameWithoutDatabasePrefix);
             }
-            return collections;
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
         }
+        return collections;
     }
 
     /**

@@ -16,7 +16,7 @@
 
 package org.mongodb.protocol;
 
-import org.mongodb.MongoException;
+import com.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;

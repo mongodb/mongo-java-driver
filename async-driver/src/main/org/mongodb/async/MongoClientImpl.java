@@ -16,9 +16,9 @@
 
 package org.mongodb.async;
 
+import com.mongodb.MongoException;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoDatabaseOptions;
-import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.ReadPreference;
 import org.mongodb.binding.AsyncClusterBinding;

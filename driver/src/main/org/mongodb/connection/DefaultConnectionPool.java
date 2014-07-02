@@ -16,11 +16,11 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoWaitQueueFullException;
 import org.bson.ByteBuf;
-import org.mongodb.MongoException;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.event.ConnectionEvent;

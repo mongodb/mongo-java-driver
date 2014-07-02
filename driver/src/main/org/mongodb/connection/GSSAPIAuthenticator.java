@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.MongoException;
 import com.mongodb.MongoSecurityException;
 import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSException;
@@ -23,7 +24,6 @@ import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoException;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;

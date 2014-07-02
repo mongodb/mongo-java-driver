@@ -17,9 +17,9 @@
 package org.mongodb.protocol;
 
 import com.mongodb.MongoCursorNotFoundException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import org.bson.codecs.Decoder;
-import org.mongodb.MongoException;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;

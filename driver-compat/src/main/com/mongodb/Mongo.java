@@ -69,7 +69,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.mongodb.MongoExceptions.mapException;
 import static com.mongodb.ReadPreference.primary;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
@@ -427,12 +426,7 @@ public class Mongo {
     }
 
     private ClusterDescription getClusterDescription() {
-        try {
-            return cluster.getDescription(options.getMaxWaitTime(), TimeUnit.MILLISECONDS);
-        } catch (org.mongodb.MongoException e) {
-            //TODO: test this
-            throw mapException(e);
-        }
+        return cluster.getDescription(options.getMaxWaitTime(), TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -813,8 +807,6 @@ public class Mongo {
         ReadBinding binding = getReadBinding(readPreference);
         try {
             return operation.execute(binding);
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
         } finally {
             binding.release();
         }
@@ -829,8 +821,6 @@ public class Mongo {
         WriteBinding binding = getWriteBinding();
         try {
             return operation.execute(binding);
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e, decoder);
         } finally {
             binding.release();
         }

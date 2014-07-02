@@ -16,7 +16,7 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.MongoException;
+import com.mongodb.MongoException;
 
 public interface SingleResultCallback<T> {
     /**

@@ -21,19 +21,10 @@ package com.mongodb;
 /**
  * Top level Exception for all Exceptions, server-side or client-side, that come from the driver.
  */
-public class MongoException extends org.mongodb.MongoException {
+public class MongoException extends RuntimeException {
     private static final long serialVersionUID = -4415279469780082174L;
 
     private final int code;
-
-    public MongoException(final org.mongodb.MongoException e) {
-        super(e.getMessage(), e);
-        if (e instanceof MongoServerException) {
-            code = ((MongoServerException) e).getErrorCode();
-        } else {
-            code = -1;
-        }
-    }
 
     /**
      * @param msg the message

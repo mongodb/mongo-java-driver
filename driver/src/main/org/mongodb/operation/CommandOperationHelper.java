@@ -17,13 +17,13 @@
 package org.mongodb.operation;
 
 import com.mongodb.CommandFailureException;
+import com.mongodb.MongoException;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
 import org.mongodb.Function;
-import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;

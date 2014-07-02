@@ -17,6 +17,7 @@
 package org.mongodb.connection;
 
 import category.Async;
+import com.mongodb.MongoException;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.io.OutputBuffer;
@@ -25,7 +26,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
 import org.mongodb.event.ConnectionEvent;

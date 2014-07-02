@@ -16,8 +16,8 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.MongoException;
 import org.bson.io.OutputBuffer;
-import org.mongodb.MongoException;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.SingleResultCallback;

@@ -16,12 +16,12 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.MongoException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.ClusterBinding;
 import org.mongodb.binding.ReadWriteBinding;

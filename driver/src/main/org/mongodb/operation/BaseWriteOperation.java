@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.MongoException;
 import com.mongodb.WriteConcernException;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -23,7 +24,6 @@ import org.bson.BsonInt32;
 import org.mongodb.BulkWriteError;
 import org.mongodb.BulkWriteException;
 import org.mongodb.BulkWriteResult;
-import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
@@ -142,7 +142,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
         BulkWriteError lastError = getLastError(e);
         if (lastError != null) {
             if (DUPLICATE_KEY_ERROR_CODES.contains(lastError.getCode())) {
-                return new com.mongodb.MongoException.DuplicateKey(lastError.getCode(), lastError.getMessage(), manufactureWriteResult(e));
+                return new MongoException.DuplicateKey(lastError.getCode(), lastError.getMessage(), manufactureWriteResult(e));
             } else {
                 return new WriteConcernException(lastError.getCode(), lastError.getMessage(), manufactureWriteResult(e));
             }

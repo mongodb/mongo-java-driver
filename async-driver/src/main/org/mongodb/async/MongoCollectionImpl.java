@@ -16,6 +16,7 @@
 
 package org.mongodb.async;
 
+import com.mongodb.MongoException;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
@@ -25,7 +26,6 @@ import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCollectionOptions;
-import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ReadPreference;

@@ -1831,11 +1831,15 @@ public class DBCollection {
 
     BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> writeRequests,
                                               final WriteConcern writeConcern) {
-        return translateBulkWriteResult(execute(new MixedBulkWriteOperation<DBObject>(getNamespace(),
-                                                                                      translateWriteRequestsToNew(writeRequests),
-                                                                                      ordered, writeConcern.toNew(),
-                                                                                      getObjectCodec())),
-                                        getObjectCodec());
+        try {
+            return translateBulkWriteResult(execute(new MixedBulkWriteOperation<DBObject>(getNamespace(),
+                                                                                          translateWriteRequestsToNew(writeRequests),
+                                                                                          ordered, writeConcern.toNew(),
+                                                                                          getObjectCodec())),
+                                            getObjectCodec());
+        } catch (org.mongodb.BulkWriteException e) {
+            throw BulkWriteHelper.translateBulkWriteException(e, DBObjects.codec);
+        }
     }
 
     <T> T execute(final WriteOperation<T> operation) {

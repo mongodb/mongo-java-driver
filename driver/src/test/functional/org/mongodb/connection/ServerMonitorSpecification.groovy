@@ -17,10 +17,10 @@
 
 package org.mongodb.connection
 
+import com.mongodb.MongoException
 import org.mongodb.CommandResult
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoException
 import org.mongodb.ReadPreference
 
 import java.util.concurrent.CountDownLatch

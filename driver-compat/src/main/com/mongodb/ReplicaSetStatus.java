@@ -24,8 +24,6 @@ import org.mongodb.connection.ServerDescription;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.MongoExceptions.mapException;
-
 public class ReplicaSetStatus {
 
     private final Cluster cluster;
@@ -70,12 +68,7 @@ public class ReplicaSetStatus {
     }
 
     private ClusterDescription getClusterDescription() {
-        //TODO: test and check this is OK
-        try {
-            return cluster.getDescription(10, TimeUnit.SECONDS);
-        } catch (org.mongodb.MongoException e) {
-            throw mapException(e);
-        }
+        return cluster.getDescription(10, TimeUnit.SECONDS);
     }
 
     @Override

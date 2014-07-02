@@ -16,7 +16,7 @@
 
 package org.mongodb.async.rxjava;
 
-import org.mongodb.MongoException;
+import com.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.connection.SingleResultCallback;
 import rx.Observable;

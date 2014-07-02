@@ -17,6 +17,7 @@
 package org.mongodb.connection;
 
 import com.mongodb.CommandFailureException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSocketReadException;
@@ -27,7 +28,6 @@ import org.bson.BsonInt32;
 import org.bson.ByteBuf;
 import org.bson.io.BasicInputBuffer;
 import org.mongodb.MongoCredential;
-import org.mongodb.MongoException;
 import org.mongodb.event.ConnectionEvent;
 import org.mongodb.event.ConnectionListener;
 import org.mongodb.event.ConnectionMessageReceivedEvent;

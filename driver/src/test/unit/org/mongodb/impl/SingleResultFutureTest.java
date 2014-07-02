@@ -16,8 +16,8 @@
 
 package org.mongodb.impl;
 
+import com.mongodb.MongoException;
 import org.junit.Test;
-import org.mongodb.MongoException;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
 

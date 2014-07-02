@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.MongoException;
 import com.mongodb.MongoWriteException;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -26,7 +27,6 @@ import org.mongodb.BulkWriteError;
 import org.mongodb.BulkWriteException;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.BulkWriteUpsert;
-import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteConcern;
@@ -112,7 +112,7 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
      * @param binding the WriteBinding        for the operation
      * @return the bulk write result.
      * @throws org.mongodb.BulkWriteException if a failure to complete the bulk write is detected based on the response from the server
-     * @throws org.mongodb.MongoException     for general failures
+     * @throws MongoException     for general failures
      */
     @Override
     public BulkWriteResult execute(final WriteBinding binding) {
@@ -148,7 +148,7 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
      * @param binding the AsyncWriteBinding   for the operation
      * @return the future bulk write result.
      * @throws org.mongodb.BulkWriteException if a failure to complete the bulk write is detected based on the response from the server
-     * @throws org.mongodb.MongoException     for general failures
+     * @throws MongoException     for general failures
      */
     @Override
     public MongoFuture<BulkWriteResult> executeAsync(final AsyncWriteBinding binding) {

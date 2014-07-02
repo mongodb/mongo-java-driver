@@ -16,12 +16,12 @@
 
 package org.mongodb.async.rxjava;
 
+import com.mongodb.MongoException;
 import org.bson.codecs.Codec;
 import org.mongodb.Block;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
 import org.mongodb.MongoCollectionOptions;
-import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;

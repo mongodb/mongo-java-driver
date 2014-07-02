@@ -16,7 +16,7 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.MongoException;
+import com.mongodb.MongoException;
 import org.mongodb.connection.SingleResultCallback;
 
 // TODO: should this be public?

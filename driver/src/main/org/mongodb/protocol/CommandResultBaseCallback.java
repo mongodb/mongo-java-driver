@@ -16,10 +16,10 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.MongoException;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
-import org.mongodb.MongoException;
 import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.protocol.message.ReplyMessage;

@@ -16,11 +16,11 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import org.bson.codecs.Decoder;
 import org.mongodb.Block;
 import org.mongodb.MongoAsyncCursor;
-import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;

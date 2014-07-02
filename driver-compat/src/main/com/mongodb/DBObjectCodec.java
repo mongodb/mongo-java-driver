@@ -35,7 +35,6 @@ import org.bson.types.Binary;
 import org.bson.types.CodeWScope;
 import org.bson.types.Symbol;
 import org.mongodb.IdGenerator;
-import org.mongodb.MongoException;
 import org.mongodb.codecs.BinaryToByteArrayTransformer;
 import org.mongodb.codecs.BinaryToUUIDTransformer;
 import org.mongodb.codecs.CollectibleCodec;
@@ -45,8 +44,6 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
-import static com.mongodb.MongoExceptions.mapException;
 
 @SuppressWarnings("rawtypes")
 class DBObjectCodec implements CollectibleCodec<DBObject> {
@@ -147,33 +144,29 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     @SuppressWarnings("unchecked")
     private void writeValue(final BsonWriter bsonWriter, final EncoderContext encoderContext, final Object initialValue) {
         Object value = BSON.applyEncodingHooks(initialValue);
-        try {
-            if (value == null) {
-                bsonWriter.writeNull();
-            } else if (value instanceof DBRefBase) {
-                encodeDBRef(bsonWriter, (DBRefBase) value);
-            } else if (value instanceof BasicBSONList) {
-                encodeIterable(bsonWriter, (BasicBSONList) value);
-            } else if (value instanceof DBObject) {
-                encodeEmbeddedObject(bsonWriter, ((DBObject) value).toMap());
-            } else if (value instanceof Map) {
-                encodeEmbeddedObject(bsonWriter, (Map<String, Object>) value);
-            } else if (value instanceof Iterable) {
-                encodeIterable(bsonWriter, (Iterable) value);
-            } else if (value instanceof CodeWScope) {
-                encodeCodeWScope(bsonWriter, (CodeWScope) value);
-            } else if (value instanceof byte[]) {
-                encodeByteArray(bsonWriter, (byte[]) value);
-            } else if (value.getClass().isArray()) {
-                encodeArray(bsonWriter, value);
-            } else if (value instanceof Symbol) {
-                bsonWriter.writeSymbol(((Symbol) value).getSymbol());
-            } else {
-                Codec codec = codecRegistry.get(value.getClass());
-                codec.encode(bsonWriter, value, encoderContext);
-            }
-        } catch (final MongoException e) {
-            throw mapException(e);
+        if (value == null) {
+            bsonWriter.writeNull();
+        } else if (value instanceof DBRefBase) {
+            encodeDBRef(bsonWriter, (DBRefBase) value);
+        } else if (value instanceof BasicBSONList) {
+            encodeIterable(bsonWriter, (BasicBSONList) value);
+        } else if (value instanceof DBObject) {
+            encodeEmbeddedObject(bsonWriter, ((DBObject) value).toMap());
+        } else if (value instanceof Map) {
+            encodeEmbeddedObject(bsonWriter, (Map<String, Object>) value);
+        } else if (value instanceof Iterable) {
+            encodeIterable(bsonWriter, (Iterable) value);
+        } else if (value instanceof CodeWScope) {
+            encodeCodeWScope(bsonWriter, (CodeWScope) value);
+        } else if (value instanceof byte[]) {
+            encodeByteArray(bsonWriter, (byte[]) value);
+        } else if (value.getClass().isArray()) {
+            encodeArray(bsonWriter, value);
+        } else if (value instanceof Symbol) {
+            bsonWriter.writeSymbol(((Symbol) value).getSymbol());
+        } else {
+            Codec codec = codecRegistry.get(value.getClass());
+            codec.encode(bsonWriter, value, encoderContext);
         }
     }
 
@@ -229,45 +222,41 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     private Object readValue(final BsonReader reader, final DecoderContext decoderContext, final String fieldName,
                              final List<String> path) {
         Object initialRetVal;
-        try {
-            BsonType bsonType = reader.getCurrentBsonType();
+        BsonType bsonType = reader.getCurrentBsonType();
 
-            if (bsonType.isContainer() && fieldName != null) {
-                //if we got into some new context like nested document or array
-                path.add(fieldName);
-            }
+        if (bsonType.isContainer() && fieldName != null) {
+            //if we got into some new context like nested document or array
+            path.add(fieldName);
+        }
 
-            switch (bsonType) {
-                case DOCUMENT:
-                    initialRetVal = verifyForDBRef(readDocument(reader, decoderContext, path));
-                    break;
-                case ARRAY:
-                    initialRetVal = readArray(reader, decoderContext, path);
-                    break;
-                case JAVASCRIPT_WITH_SCOPE: //custom for driver-compat types
-                    initialRetVal = readCodeWScope(reader, decoderContext, path);
-                    break;
-                case DB_POINTER: //custom for driver-compat types
-                    BsonDbPointer dbPointer = reader.readDBPointer();
-                    initialRetVal = new DBRef(db, dbPointer.getNamespace(), dbPointer.getId());
-                    break;
-                case BINARY:
-                    initialRetVal = readBinary(reader);
-                    break;
-                case NULL:
-                    reader.readNull();
-                    initialRetVal = null;
-                    break;
-                default:
-                    initialRetVal = codecRegistry.get(bsonTypeClassMap.get(bsonType)).decode(reader, decoderContext);
-            }
+        switch (bsonType) {
+            case DOCUMENT:
+                initialRetVal = verifyForDBRef(readDocument(reader, decoderContext, path));
+                break;
+            case ARRAY:
+                initialRetVal = readArray(reader, decoderContext, path);
+                break;
+            case JAVASCRIPT_WITH_SCOPE: //custom for driver-compat types
+                initialRetVal = readCodeWScope(reader, decoderContext, path);
+                break;
+            case DB_POINTER: //custom for driver-compat types
+                BsonDbPointer dbPointer = reader.readDBPointer();
+                initialRetVal = new DBRef(db, dbPointer.getNamespace(), dbPointer.getId());
+                break;
+            case BINARY:
+                initialRetVal = readBinary(reader);
+                break;
+            case NULL:
+                reader.readNull();
+                initialRetVal = null;
+                break;
+            default:
+                initialRetVal = codecRegistry.get(bsonTypeClassMap.get(bsonType)).decode(reader, decoderContext);
+        }
 
-            if (bsonType.isContainer() && fieldName != null) {
-                //step out of current context to a parent
-                path.remove(fieldName);
-            }
-        } catch (MongoException e) {
-            throw mapException(e);
+        if (bsonType.isContainer() && fieldName != null) {
+            //step out of current context to a parent
+            path.remove(fieldName);
         }
 
         return BSON.applyDecodingHooks(initialRetVal);
