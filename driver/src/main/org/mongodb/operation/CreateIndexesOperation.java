@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.CommandFailureException;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -23,7 +24,6 @@ import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.CommandResult;
 import org.mongodb.Index;
-import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
@@ -71,7 +71,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     try {
                         executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), connection);
-                    } catch (MongoCommandFailureException e) {
+                    } catch (CommandFailureException e) {
                         throw checkForDuplicateKeyError(e);
                     }
                 } else {
@@ -161,12 +161,12 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     }
 
     private MongoException translateException(final MongoException e) {
-        return (e instanceof MongoCommandFailureException) ? checkForDuplicateKeyError((MongoCommandFailureException) e) : e;
+        return (e instanceof CommandFailureException) ? checkForDuplicateKeyError((CommandFailureException) e) : e;
     }
 
-    private MongoException checkForDuplicateKeyError(final MongoCommandFailureException e) {
-        if (DUPLICATE_KEY_ERROR_CODES.contains(e.getErrorCode())) {
-            return new com.mongodb.MongoException.DuplicateKey(e.getErrorCode(), e.getErrorMessage(),
+    private MongoException checkForDuplicateKeyError(final CommandFailureException e) {
+        if (DUPLICATE_KEY_ERROR_CODES.contains(e.getCode())) {
+            return new com.mongodb.MongoException.DuplicateKey(e.getCode(), e.getMessage(),
                                                                new com.mongodb.WriteResult(0, false, null));
         } else {
             return e;

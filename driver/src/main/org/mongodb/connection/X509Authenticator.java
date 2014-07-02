@@ -16,12 +16,12 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.CommandFailureException;
 import com.mongodb.MongoSecurityException;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.mongodb.AuthenticationMechanism;
-import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoCredential;
 
 import static org.mongodb.connection.CommandHelper.executeCommand;
@@ -36,7 +36,7 @@ class X509Authenticator extends Authenticator {
         try {
             BsonDocument authCommand = getAuthCommand(getCredential().getUserName());
             executeCommand(getCredential().getSource(), authCommand, getInternalConnection());
-        } catch (MongoCommandFailureException e) {
+        } catch (CommandFailureException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);
         }
     }

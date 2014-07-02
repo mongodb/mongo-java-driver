@@ -16,6 +16,9 @@
 
 package com.mongodb;
 
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
@@ -30,77 +33,84 @@ public class CommandResultTest {
 
     @Test
     public void shouldBeOkWhenOkFieldIsTrue() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
+        CommandResult commandResult = new CommandResult(new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
+                                                                                      new BsonDocument(), 0));
         commandResult.put("ok", true);
         assertTrue(commandResult.ok());
     }
 
     @Test
     public void shouldNotBeOkWithNoOkField() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
+        CommandResult commandResult = new CommandResult(new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
+                                                                                      new BsonDocument(), 0));
         assertFalse(commandResult.ok());
     }
 
     @Test
     public void shouldNotBeOkWhenOkFieldIsFalse() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
+        CommandResult commandResult = new CommandResult(new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
+                                                                                      new BsonDocument(), 0));
         commandResult.put("ok", false);
         assertFalse(commandResult.ok());
     }
 
     @Test
     public void shouldBeOkWhenOkFieldIsOne() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
+        CommandResult commandResult = new CommandResult(new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
+                                                                                      new BsonDocument(), 0));
         commandResult.put("ok", 1.0);
         assertTrue(commandResult.ok());
     }
 
     @Test
     public void shouldNotBeOkWhenOkFieldIsZero() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
+        CommandResult commandResult = new CommandResult(new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
+                                                                                      new BsonDocument(), 0));
         commandResult.put("ok", 0.0);
         assertFalse(commandResult.ok());
     }
 
     @Test
     public void shouldNotHaveExceptionWhenOkIsTrue() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
+        CommandResult commandResult = new CommandResult(new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
+                                                                                      new BsonDocument(), 0));
         commandResult.put("ok", true);
         assertNull(commandResult.getException());
     }
 
     @Test
     public void okShouldThrowWhenOkFieldTypeIsNotBooleanOrNumber() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
+        CommandResult commandResult = new CommandResult(new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
+                                                                                      new BsonDocument(), 0));
         commandResult.put("ok", "1");
         assertFalse(commandResult.ok());
     }
 
     @Test
     public void testNullErrorCode() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
-        commandResult.put("ok", 0);
-        assertEquals(CommandFailureException.class, commandResult.getException().getClass());
+        org.mongodb.CommandResult wrapped = new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
+                                                                          new BsonDocument("ok", new BsonInt32(0)), 0);
         try {
-            commandResult.throwOnError();
+            new CommandResult(wrapped).throwOnError();
             fail("Should throw");
         } catch (CommandFailureException e) {
-            assertEquals(commandResult, e.getCommandResult());
-            assertEquals(-5, e.getCode());
+            assertEquals(wrapped, e.getResult());
+            assertEquals(-1, e.getCode());
         }
     }
 
     @Test
     public void testCommandFailure() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
-        final DBObject result = new BasicDBObject("ok", 0.0).append("errmsg", "no not found").append("code", 5000);
-        commandResult.putAll(result);
-        assertEquals(CommandFailureException.class, commandResult.getException().getClass());
+        org.mongodb.CommandResult wrapped = new org.mongodb.CommandResult(new org.mongodb.connection.ServerAddress(),
+                                                                          new BsonDocument("ok", new BsonInt32(0))
+                                                                          .append("errmsg", new BsonString("ns not found"))
+                                                                          .append("code", new BsonInt32(5000)), 0);
+
         try {
-            commandResult.throwOnError();
+            new CommandResult(wrapped).throwOnError();
             fail("Should throw");
         } catch (CommandFailureException e) {
-            assertEquals(commandResult, e.getCommandResult());
+            assertEquals(wrapped, e.getResult());
             assertEquals(5000, e.getCode());
         }
     }

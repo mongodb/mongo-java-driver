@@ -16,11 +16,11 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.CommandFailureException;
 import com.mongodb.MongoInternalException;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.CommandResult;
-import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.protocol.message.CommandMessage;
@@ -71,7 +71,7 @@ final class CommandHelper {
         CommandResult commandResult = new CommandResult(serverAddress, replyMessage.getDocuments().get(0),
                                                         replyMessage.getElapsedNanoseconds());
         if (!commandResult.isOk()) {
-            throw new MongoCommandFailureException(commandResult);
+            throw new CommandFailureException(commandResult);
         }
 
         return commandResult;

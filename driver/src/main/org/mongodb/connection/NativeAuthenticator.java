@@ -16,11 +16,11 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.CommandFailureException;
 import com.mongodb.MongoSecurityException;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.mongodb.CommandResult;
-import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoCredential;
 
 import static org.mongodb.connection.CommandHelper.executeCommand;
@@ -42,7 +42,7 @@ class NativeAuthenticator extends Authenticator {
                                                       getCredential().getPassword(),
                                                       ((BsonString) nonceResponse.getResponse().get("nonce")).getValue());
             executeCommand(getCredential().getSource(), authCommand, getInternalConnection());
-        } catch (MongoCommandFailureException e) {
+        } catch (CommandFailureException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);
         }
     }

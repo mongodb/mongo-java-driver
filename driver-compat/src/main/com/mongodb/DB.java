@@ -363,7 +363,7 @@ public class DB {
         try {
             return executeCommand(wrap(cmd, encoder), readPreference);
         } catch (CommandFailureException ex) {
-            return ex.getCommandResult();
+            return new CommandResult(ex.getResult());
         }
     }
 

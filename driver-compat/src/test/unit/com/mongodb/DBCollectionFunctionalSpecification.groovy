@@ -162,7 +162,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         CommandFailureException exception = thrown(CommandFailureException)
-        exception.getCommandResult().getErrorMessage().contains('index not found')
+        exception.getResult().getErrorMessage().contains('index not found')
     }
 
     def 'should throw Exception if dropping an index with an incorrect type'() {
@@ -175,7 +175,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         CommandFailureException exception = thrown(CommandFailureException)
-        exception.getCommandResult().getErrorMessage().contains('index not found')
+        exception.getResult().getErrorMessage().contains('index not found')
     }
 
     def 'should drop nested index'() {

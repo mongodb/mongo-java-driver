@@ -16,6 +16,7 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.CommandFailureException;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoQueryFailureException;
 import com.mongodb.WriteConcernException;
@@ -25,7 +26,6 @@ import org.bson.BsonInt32;
 import org.bson.BsonValue;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
-import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoException;
 import org.mongodb.WriteResult;
 import org.mongodb.connection.ByteBufferOutputBuffer;
@@ -45,7 +45,7 @@ final class ProtocolHelper {
 
     static WriteResult getWriteResult(final CommandResult commandResult) {
         if (!commandResult.isOk()) {
-            throw new MongoCommandFailureException(commandResult);
+            throw new CommandFailureException(commandResult);
         }
 
         if (hasWriteError(commandResult.getResponse())) {
@@ -67,7 +67,7 @@ final class ProtocolHelper {
         if (EXECUTION_TIMEOUT_ERROR_CODES.contains(commandResult.getErrorCode())) {
             return new MongoExecutionTimeoutException(commandResult.getErrorCode(), commandResult.getErrorMessage());
         }
-        return new MongoCommandFailureException(commandResult);
+        return new CommandFailureException(commandResult);
     }
 
     static MongoException getQueryFailureException(final ServerAddress serverAddress, final Document errorDocument) {

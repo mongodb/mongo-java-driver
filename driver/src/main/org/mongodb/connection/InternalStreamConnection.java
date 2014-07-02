@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.CommandFailureException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSocketReadException;
@@ -25,8 +26,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.ByteBuf;
 import org.bson.io.BasicInputBuffer;
-import org.mongodb.CommandResult;
-import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
 import org.mongodb.event.ConnectionEvent;
@@ -219,15 +218,16 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     private void initializeConnectionId() {
-        CommandResult result;
+        BsonDocument response;
         try {
-            result = CommandHelper.executeCommand("admin", new BsonDocument("getlasterror", new BsonInt32(1)), this);
+            response = CommandHelper.executeCommand("admin", new BsonDocument("getlasterror", new BsonInt32(1)), this).getResponse();
 
-        } catch (MongoCommandFailureException e) {
-            result = e.getCommandResult();
+        } catch (CommandFailureException e) {
+            response = e.getResult().getResponse();
         }
-        BsonInt32 connectionIdFromServer = (BsonInt32) result.getResponse().get("connectionId");
-        id = "conn" + (connectionIdFromServer != null ? connectionIdFromServer.getValue() : "*" + incrementingId.incrementAndGet() + "*");
+        id = "conn" + (response.containsKey("connectionId")
+                       ? response.getNumber("connectionId").intValue()
+                       : "*" + incrementingId.incrementAndGet() + "*");
     }
 
     private void authenticateAll() {

@@ -16,13 +16,13 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.CommandFailureException;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
 import org.mongodb.Function;
-import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
@@ -400,12 +400,12 @@ final class CommandOperationHelper {
         return future;
     }
 
-    static CommandResult ignoreNameSpaceErrors(final MongoCommandFailureException e) {
+    static CommandResult ignoreNameSpaceErrors(final CommandFailureException e) {
         String message = e.getErrorMessage();
         if (!message.startsWith("ns not found") && !(message.matches("Collection \\[(.*)\\] not found."))) {
             throw e;
         }
-        return e.getCommandResult();
+        return e.getResult();
     }
 
     static MongoFuture<CommandResult> ignoreNameSpaceErrors(final MongoFuture<CommandResult> future) {
@@ -416,11 +416,11 @@ final class CommandOperationHelper {
                 MongoException checkedError = e;
                 CommandResult fixedResult = result;
                 // Check for a namespace error which we can safely ignore
-                if (e instanceof MongoCommandFailureException) {
+                if (e instanceof CommandFailureException) {
                     try {
                         checkedError = null;
-                        fixedResult = ignoreNameSpaceErrors((MongoCommandFailureException) e);
-                    } catch (MongoCommandFailureException error) {
+                        fixedResult = ignoreNameSpaceErrors((CommandFailureException) e);
+                    } catch (CommandFailureException error) {
                         checkedError = error;
                     }
                 }

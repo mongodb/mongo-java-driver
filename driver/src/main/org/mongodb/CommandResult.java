@@ -36,12 +36,6 @@ public class CommandResult {
         this.elapsedNanoseconds = elapsedNanoseconds;
     }
 
-    public CommandResult(final CommandResult baseResult) {
-        this.address = baseResult.address;
-        this.response = baseResult.response;
-        this.elapsedNanoseconds = baseResult.elapsedNanoseconds;
-    }
-
     public ServerAddress getAddress() {
         return address;
     }

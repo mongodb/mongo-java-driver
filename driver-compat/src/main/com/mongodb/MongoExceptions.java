@@ -17,7 +17,6 @@
 package com.mongodb;
 
 import org.bson.codecs.Decoder;
-import org.mongodb.MongoCommandFailureException;
 
 final class MongoExceptions {
     public static com.mongodb.MongoException mapException(final org.mongodb.MongoException e) {
@@ -27,9 +26,7 @@ final class MongoExceptions {
     @SuppressWarnings("deprecation")
     public static com.mongodb.MongoException mapException(final org.mongodb.MongoException e, final Decoder<DBObject> decoder) {
         Throwable cause = e.getCause();
-        if (e instanceof MongoCommandFailureException) {
-            return new CommandFailureException((MongoCommandFailureException) e);
-        } else if (e instanceof org.mongodb.BulkWriteException) {
+        if (e instanceof org.mongodb.BulkWriteException) {
             return BulkWriteHelper.translateBulkWriteException((org.mongodb.BulkWriteException) e, decoder);
         } else if (e instanceof com.mongodb.MongoException) {
             return (com.mongodb.MongoException) e;

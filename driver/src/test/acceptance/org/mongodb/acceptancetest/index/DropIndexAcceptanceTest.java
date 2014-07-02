@@ -16,12 +16,12 @@
 
 package org.mongodb.acceptancetest.index;
 
+import com.mongodb.CommandFailureException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.Index;
-import org.mongodb.MongoCommandFailureException;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.core.Is.is;
@@ -68,7 +68,7 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
         assertThat("Should only be the default index on the collection", collection.tools().getIndexes().size(), is(1));
     }
 
-    @Test(expected = MongoCommandFailureException.class)
+    @Test(expected = CommandFailureException.class)
     public void shouldErrorWhenDroppingAnIndexThatDoesNotExist() {
         //Given
         collection.insert(new Document("to", "createTheCollection"));

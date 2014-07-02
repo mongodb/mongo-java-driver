@@ -25,21 +25,15 @@ import static org.mongodb.assertions.Assertions.notNull;
 public class CommandResult extends BasicDBObject {
     private static final long serialVersionUID = 5907909423864204060L;
     private final ServerAddress host;
+    private final org.mongodb.CommandResult wrapped;
 
     CommandResult(final org.mongodb.CommandResult commandResult) {
-        this(new ServerAddress(commandResult.getAddress()));
-        putAll(toDBObject(commandResult.getResponse()));
-    }
-
-    CommandResult(final DBObject response, final ServerAddress serverAddress) {
-        this(serverAddress);
-        putAll(response);
-    }
-
-    CommandResult(final ServerAddress serverAddress) {
-        host = notNull("serverAddress", serverAddress);
+        wrapped = notNull("commandResult", commandResult);
+        notNull("serverAddress", commandResult.getAddress());
+        host = new ServerAddress(commandResult.getAddress());
         // so it is shown in toString/debug
-        put("serverUsed", serverAddress.toString());
+        put("serverUsed", host.toString());
+        putAll(toDBObject(commandResult.getResponse()));
     }
 
     /**
@@ -78,7 +72,7 @@ public class CommandResult extends BasicDBObject {
      */
     public MongoException getException() {
         if (!ok()) {
-            return new CommandFailureException(this);
+            return new CommandFailureException(wrapped);
         }
 
         return null;

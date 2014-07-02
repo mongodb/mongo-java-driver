@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import com.mongodb.CommandFailureException;
 import com.mongodb.MongoSecurityException;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,7 +38,7 @@ public class GSSAPIAuthenticationTest {
         assumeTrue(!getCredentialList().isEmpty() && getCredentialList().get(0).getMechanism().equals(GSSAPI));
     }
 
-    @Test(expected = MongoCommandFailureException.class)
+    @Test(expected = CommandFailureException.class)
     public void testUnsuccessfulAuthorization() throws InterruptedException {
         MongoClient client = MongoClients.create(getPrimary());
         MongoCollection<Document> collection = client.getDatabase(getMongoClientURI().getDatabase()).getCollection("test");

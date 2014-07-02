@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb;
 
-import com.mongodb.MongoServerException;
+import org.mongodb.CommandResult;
 
 import static java.lang.String.format;
 
 /**
- * Exception thrown when a command fails.
+ * An exception indicating that a command sent to a MongoDB server returned a failure.
  */
-public class MongoCommandFailureException extends MongoServerException {
-    private static final long serialVersionUID = -50109343643507362L;
-
+public class CommandFailureException extends MongoServerException {
+    private static final long serialVersionUID = -1180715413196161037L;
     private final CommandResult commandResult;
 
-    public MongoCommandFailureException(final CommandResult commandResult) {
+    /**
+     * Construct a new instance with the CommandResult from a failed command
+     *
+     * @param commandResult the result of running the command
+     */
+    public CommandFailureException(final CommandResult commandResult) {
         super(format("Command failed with error %s: '%s' on server %s", commandResult.getErrorCode(),
-                     commandResult.getErrorMessage(), commandResult.getAddress()), commandResult.getAddress());
+                                   commandResult.getErrorMessage(), commandResult.getAddress()), commandResult.getAddress());
         this.commandResult = commandResult;
-    }
-
-    public CommandResult getCommandResult() {
-        return commandResult;
     }
 
     @Override
@@ -46,5 +46,15 @@ public class MongoCommandFailureException extends MongoServerException {
     @Override
     public String getErrorMessage() {
         return commandResult.getErrorMessage();
+    }
+
+    /**
+     * Gets the command result.
+     *
+     * @return the command result
+     * @since 3.0
+     */
+    public CommandResult getResult() {
+        return commandResult;
     }
 }

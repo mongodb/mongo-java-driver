@@ -16,9 +16,9 @@
 
 package org.mongodb.async;
 
+import com.mongodb.CommandFailureException;
 import org.mongodb.Document;
 import org.mongodb.MongoClientURI;
-import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoNamespace;
 
 /**
@@ -65,7 +65,7 @@ public final class Fixture {
         MongoDatabase database = getMongoClient().getDatabase(namespace.getDatabaseName());
         try {
             database.executeCommand(new Document("drop", namespace.getCollectionName())).get();
-        } catch (MongoCommandFailureException e) {
+        } catch (CommandFailureException e) {
             if (!e.getErrorMessage().startsWith("ns not found")) {
                 throw e;
             }
@@ -77,7 +77,7 @@ public final class Fixture {
         try {
             getMongoClient().getDatabase(namespace.getDatabaseName())
                             .executeCommand(new Document("drop", namespace.getCollectionName())).get();
-        } catch (MongoCommandFailureException e) {
+        } catch (CommandFailureException e) {
             if (!e.getErrorMessage().startsWith("ns not found")) {
                 throw e;
             }
@@ -91,7 +91,7 @@ public final class Fixture {
                 if (defaultDatabase != null) {
                     try {
                         defaultDatabase.executeCommand(new Document("dropDatabase", defaultDatabase.getName())).get();
-                    } catch (MongoCommandFailureException e) {
+                    } catch (CommandFailureException e) {
                         // ignore
                     }
                 }
