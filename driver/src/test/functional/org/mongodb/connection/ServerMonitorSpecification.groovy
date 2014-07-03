@@ -20,9 +20,11 @@ package org.mongodb.connection
 import org.mongodb.CommandResult
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
+import org.mongodb.MongoException
 import org.mongodb.ReadPreference
 
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 import static java.util.Arrays.asList
 import static org.junit.Assume.assumeFalse
@@ -31,6 +33,8 @@ import static org.mongodb.Fixture.getCredentialList
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
 import static org.mongodb.Fixture.serverVersionAtLeast
+import static org.mongodb.connection.ServerMonitor.exceptionHasChanged
+import static org.mongodb.connection.ServerMonitor.stateHasChanged
 
 class ServerMonitorSpecification extends FunctionalSpecification {
     ServerDescription newDescription
@@ -100,4 +104,67 @@ class ServerMonitorSpecification extends FunctionalSpecification {
         newDescription.maxWriteBatchSize == ServerDescription.getDefaultMaxWriteBatchSize()
     }
 
+    def 'should report exception has changed when the current and previous are different'() {
+        expect:
+        exceptionHasChanged(null, new NullPointerException())
+        exceptionHasChanged(new NullPointerException(), null)
+        exceptionHasChanged(new SocketException(), new SocketException('A message'))
+        exceptionHasChanged(new SocketException('A message'), new SocketException())
+        exceptionHasChanged(new SocketException('A message'), new MongoException('A message'))
+        exceptionHasChanged(new SocketException('A message'), new SocketException('A different message'))
+    }
+
+    def 'should report exception has not changed when the current and previous are the same'() {
+        expect:
+        !exceptionHasChanged(null, null)
+        !exceptionHasChanged(new NullPointerException(), new NullPointerException())
+        !exceptionHasChanged(new MongoException('A message'), new MongoException('A message'))
+    }
+
+    def 'should report state has changed if descriptions are different'() {
+        expect:
+        stateHasChanged(ServerDescription.builder()
+                                         .type(ServerType.UNKNOWN)
+                                         .state(ServerConnectionState.CONNECTING)
+                                         .address(new ServerAddress())
+                                         .build(),
+                        ServerDescription.builder()
+                                         .type(ServerType.STANDALONE)
+                                         .state(ServerConnectionState.CONNECTED)
+                                         .address(new ServerAddress())
+                                         .roundTripTime(5, TimeUnit.MILLISECONDS)
+                                         .build());
+    }
+
+    def 'should report state has changed if latencies are different'() {
+        expect:
+        stateHasChanged(ServerDescription.builder()
+                                         .type(ServerType.STANDALONE)
+                                         .state(ServerConnectionState.CONNECTED)
+                                         .address(new ServerAddress())
+                                         .roundTripTime(5, TimeUnit.MILLISECONDS)
+                                         .build(),
+                        ServerDescription.builder()
+                                         .type(ServerType.STANDALONE)
+                                         .state(ServerConnectionState.CONNECTED)
+                                         .address(new ServerAddress())
+                                         .roundTripTime(6, TimeUnit.MILLISECONDS)
+                                         .build());
+    }
+
+    def 'should report state has not changed if descriptions and latencies are the same'() {
+        expect:
+        !stateHasChanged(ServerDescription.builder()
+                                          .type(ServerType.STANDALONE)
+                                          .state(ServerConnectionState.CONNECTED)
+                                          .address(new ServerAddress())
+                                          .roundTripTime(5, TimeUnit.MILLISECONDS)
+                                          .build(),
+                         ServerDescription.builder()
+                                          .type(ServerType.STANDALONE)
+                                          .state(ServerConnectionState.CONNECTED)
+                                          .address(new ServerAddress())
+                                          .roundTripTime(5, TimeUnit.MILLISECONDS)
+                                          .build());
+    }
 }

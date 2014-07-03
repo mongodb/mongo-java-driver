@@ -70,8 +70,6 @@ class ServerMonitor {
     private final Condition condition = lock.newCondition();
     private int count;
     private long roundTripTimeSum;
-    private volatile InternalConnection connection;
-    private volatile ServerDescription serverDescription;
     private volatile boolean isClosed;
 
     ServerMonitor(final ServerAddress serverAddress, final ServerSettings settings,
@@ -82,7 +80,6 @@ class ServerMonitor {
         this.serverStateListener = serverStateListener;
         this.internalConnectionFactory = internalConnectionFactory;
         this.connectionPool = connectionPool;
-        serverDescription = getConnectingServerDescription();
         monitorThread = new Thread(new ServerMonitorRunnable(), "cluster-" + clusterId + "-" + serverAddress);
         monitorThread.setDaemon(true);
     }
@@ -102,45 +99,48 @@ class ServerMonitor {
 
     public void close() {
         isClosed = true;
-        if (connection != null) {
-            connection.close();
-            connection = null;
-        }
+        monitorThread.interrupt();
     }
 
     class ServerMonitorRunnable implements Runnable {
         @Override
         @SuppressWarnings("unchecked")
         public synchronized void run() {
+            InternalConnection connection = null;
             try {
+                ServerDescription currentServerDescription = getConnectingServerDescription();
+                Throwable currentException = null;
                 while (!isClosed) {
-                    ServerDescription currentServerDescription = serverDescription;
-                    Throwable throwable = null;
+                    ServerDescription previousServerDescription = currentServerDescription;
+                    Throwable previousException = currentException;
                     try {
                         if (connection == null) {
                             connection = internalConnectionFactory.create(serverAddress);
                         }
                         try {
-                            serverDescription = lookupServerDescription();
+                            currentServerDescription = lookupServerDescription(connection);
                         } catch (MongoSocketException e) {
                             reset();
+                            connection.close();
+                            connection = null;
                             connection = internalConnectionFactory.create(serverAddress);
                             try {
-                                serverDescription = lookupServerDescription();
+                                currentServerDescription = lookupServerDescription(connection);
                             } catch (MongoSocketException e1) {
-                                reset();
+                                connection.close();
+                                connection = null;
                                 throw e1;
                             }
                         }
                     } catch (Throwable t) {
-                        throwable = t;
-                        serverDescription = getConnectingServerDescription();
+                        currentException = t;
+                        currentServerDescription = getConnectingServerDescription();
                     }
 
                     if (!isClosed) {
                         try {
-                            logStateChange(currentServerDescription, throwable);
-                            sendStateChangedEvent(currentServerDescription);
+                            logStateChange(previousServerDescription, previousException, currentServerDescription, currentException);
+                            sendStateChangedEvent(previousServerDescription, currentServerDescription);
                         } catch (Throwable t) {
                             LOGGER.warn("Exception in monitor thread during notification of server description state change", t);
                         }
@@ -154,18 +154,24 @@ class ServerMonitor {
             }
         }
 
-        private void sendStateChangedEvent(final ServerDescription currentServerDescription) {
-            serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(currentServerDescription, serverDescription));
+        private void sendStateChangedEvent(final ServerDescription previousServerDescription,
+                                           final ServerDescription currentServerDescription) {
+            if (stateHasChanged(previousServerDescription, currentServerDescription)) {
+                serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(previousServerDescription,
+                                                                                    currentServerDescription));
+            }
         }
 
-        private void logStateChange(final ServerDescription currentServerDescription, final Throwable throwable) {
-            // Note that the ServerDescription.equals method does not include the round trip time as part of the comparison,
+        private void logStateChange(final ServerDescription previousServerDescription, final Throwable previousException,
+                                    final ServerDescription currentServerDescription, final Throwable currentException) {
+            // Note that the ServerDescription.equals method does not include the average ping time as part of the comparison,
             // so this will not spam the logs too hard.
-            if (!currentServerDescription.equals(serverDescription)) {
-                if (throwable != null) {
-                    LOGGER.info(format("Exception in monitor thread while connecting to server %s", serverAddress), throwable);
+            if (descriptionHasChanged(previousServerDescription, currentServerDescription)
+                || exceptionHasChanged(previousException, currentException)) {
+                if (currentException != null) {
+                    LOGGER.info(format("Exception in monitor thread while connecting to server %s", serverAddress), currentException);
                 } else {
-                    LOGGER.info(format("Monitor thread successfully connected to server with description %s", serverDescription));
+                    LOGGER.info(format("Monitor thread successfully connected to server with description %s", currentServerDescription));
                 }
             }
         }
@@ -201,14 +207,34 @@ class ServerMonitor {
     private void reset() {
         count = 0;
         roundTripTimeSum = 0;
-        if (connection != null) {
-            connection.close();
-            connection = null;
-            connectionPool.invalidate();
+        connectionPool.invalidate();
+    }
+
+    static boolean descriptionHasChanged(final ServerDescription previousServerDescription,
+                                         final ServerDescription currentServerDescription) {
+        return !previousServerDescription.equals(currentServerDescription);
+    }
+
+    static boolean stateHasChanged(final ServerDescription previousServerDescription, final ServerDescription currentServerDescription) {
+        return descriptionHasChanged(previousServerDescription, currentServerDescription)
+               || previousServerDescription.getRoundTripTimeNanos() != currentServerDescription.getRoundTripTimeNanos();
+    }
+
+    static boolean exceptionHasChanged(final Throwable previousException, final Throwable currentException) {
+        if (currentException == null) {
+            return previousException != null;
+        } else if (previousException == null) {
+            return true;
+        } else if (!currentException.getClass().equals(previousException.getClass())) {
+            return true;
+        } else if (currentException.getMessage() == null) {
+            return previousException.getMessage() != null;
+        } else {
+            return !currentException.getMessage().equals(previousException.getMessage());
         }
     }
 
-    private ServerDescription lookupServerDescription() {
+    private ServerDescription lookupServerDescription(final InternalConnection connection) {
         LOGGER.debug(format("Checking status of %s", serverAddress));
         CommandResult isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
         count++;
