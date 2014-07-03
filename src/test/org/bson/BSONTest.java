@@ -164,18 +164,14 @@ public class BSONTest {
     public void testUTF8() {
         for (int i = 1; i <= Character.MAX_CODE_POINT; i++) {
 
-            if (!Character.isValidCodePoint(i)) {
-                continue;
-            }
-
-            if (Character.isSurrogate((char) i)) {
+            if (Character.getType(i) == Character.SURROGATE) {
                 continue;
             }
 
             String orig = new String(Character.toChars(i));
             BSONObject a = new BasicBSONObject(orig, orig);
             BSONObject b = BSON.decode(BSON.encode(a));
-            assertEquals(a, b);
+            assertEquals("Could not round trip code point " + i, a, b);
         }
     }
 
