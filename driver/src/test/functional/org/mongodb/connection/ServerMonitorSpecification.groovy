@@ -32,13 +32,13 @@ import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
 import static org.mongodb.Fixture.serverVersionAtLeast
 
-class ServerStateNotifierSpecification extends FunctionalSpecification {
+class ServerMonitorSpecification extends FunctionalSpecification {
     ServerDescription newDescription
-    ServerMonitor serverStateNotifier
+    ServerMonitor serverMonitor
     CountDownLatch latch = new CountDownLatch(1)
 
     def setup() {
-        serverStateNotifier = new ServerMonitor(getPrimary(), ServerSettings.builder().build(), 'cluster-1',
+        serverMonitor = new ServerMonitor(getPrimary(), ServerSettings.builder().build(), 'cluster-1',
                                                 new ChangeListener<ServerDescription>() {
                                                     @Override
                                                     void stateChanged(final ChangeEvent<ServerDescription> event) {
@@ -53,11 +53,11 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
                                                                                     getCredentialList(),
                                                                                     new NoOpConnectionListener()),
                                                 new TestConnectionPool())
-        serverStateNotifier.start()
+        serverMonitor.start()
     }
 
     def cleanup() {
-        serverStateNotifier.close();
+        serverMonitor.close();
     }
 
     def 'should return server version'() {
@@ -73,7 +73,7 @@ class ServerStateNotifierSpecification extends FunctionalSpecification {
         newDescription.version == expectedVersion
 
         cleanup:
-        serverStateNotifier.close()
+        serverMonitor.close()
     }
 
     def 'should set max wire batch size when provided by server'() {
