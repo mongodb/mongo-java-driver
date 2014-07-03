@@ -21,24 +21,11 @@
 
 
 package org.mongodb.connection
-
 import spock.lang.Specification
-
-import java.util.concurrent.Executors
-import java.util.concurrent.ScheduledExecutorService
 
 class DefaultServerSpecification extends Specification {
 
-    static ScheduledExecutorService scheduledExecutorService
     DefaultServer server;
-
-    def setupSpec() {
-        scheduledExecutorService = Executors.newScheduledThreadPool(1)
-    }
-
-    def cleanupSpec() {
-        scheduledExecutorService.shutdown()
-    }
 
     def setup() {
         server = new DefaultServer(new ServerAddress(), ServerSettings.builder().build(), 'cluster-1', new TestConnectionPool(),
