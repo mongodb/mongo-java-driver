@@ -161,18 +161,22 @@ public class BSONTest {
     }
 
     @Test
-    public void testUTF8(){
-        for ( int i=1; i<=Character.MAX_CODE_POINT; i++ ){
-            
-            if ( ! Character.isValidCodePoint( i ) )
-                continue;
-            
-            String orig = new String( Character.toChars( i ) );
-            BSONObject a = new BasicBSONObject( orig , orig );
-            BSONObject b = BSON.decode( BSON.encode( a ) );
-            assertEquals( a , b );
-        }
+    public void testUTF8() {
+        for (int i = 1; i <= Character.MAX_CODE_POINT; i++) {
 
+            if (!Character.isValidCodePoint(i)) {
+                continue;
+            }
+
+            if (Character.isSurrogate((char) i)) {
+                continue;
+            }
+
+            String orig = new String(Character.toChars(i));
+            BSONObject a = new BasicBSONObject(orig, orig);
+            BSONObject b = BSON.decode(BSON.encode(a));
+            assertEquals(a, b);
+        }
     }
 
     @Test
