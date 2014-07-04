@@ -18,6 +18,7 @@
 
 package com.mongodb;
 
+import com.mongodb.util.Base64Codec;
 import com.mongodb.util.ThreadUtil;
 import org.ietf.jgss.GSSCredential;
 import org.ietf.jgss.GSSException;
@@ -25,6 +26,10 @@ import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
 
+import javax.crypto.Mac;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.auth.callback.NameCallback;
@@ -37,14 +42,21 @@ import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -358,6 +370,8 @@ public class DBPort implements Connection {
             authenticator = new PlainAuthenticator(mongo, credentials);
         } else if (credentials.getMechanism().equals(MongoCredential.MONGODB_X509_MECHANISM)) {
             authenticator = new X509Authenticator(mongo, credentials);
+        } else if (credentials.getMechanism().equals(MongoCredential.SCRAM_SHA_1_MECHANISM)) {
+            authenticator = new ScramSha1Authenticator(mongo, credentials);
         } else {
             throw new IllegalArgumentException("Unsupported authentication protocol: " + credentials.getMechanism());
         }
@@ -548,6 +562,267 @@ public class DBPort implements Connection {
             GSSName name = manager.createName(userName, GSSName.NT_USER_NAME);
             return manager.createCredential(name, GSSCredential.INDEFINITE_LIFETIME,
                     krb5Mechanism, GSSCredential.INITIATE_ONLY);
+        }
+    }
+
+    class ScramSha1Authenticator extends SaslAuthenticator {
+
+        ScramSha1Authenticator(final Mongo mongo, final MongoCredential credential) {
+            super(mongo, credential);
+
+            if (!this.credential.getMechanism().equals(MongoCredential.SCRAM_SHA_1_MECHANISM)) {
+                throw new MongoException("Incorrect mechanism: " + this.credential.getMechanism());
+            }
+        }
+
+        @Override
+        protected SaslClient createSaslClient() {
+            return new ScramSha1SaslClient(this.credential);
+        }
+
+        @Override
+        public String getMechanismName() {
+            return MongoCredential.SCRAM_SHA_1_MECHANISM;
+        }
+
+        class ScramSha1SaslClient implements SaslClient {
+
+            private static final String gs2Header = "n,,";
+            private static final int randomLength = 24;
+
+            private final Base64Codec base64Codec;
+            private final MongoCredential credential;
+            private String clientFirstMessageBare;
+            private String rPrefix;
+            private byte[] serverSignature;
+            private int step;
+
+            ScramSha1SaslClient(MongoCredential credential) {
+                this.credential = credential;
+                this.base64Codec = new Base64Codec();
+            }
+
+            public String getMechanismName() {
+                return MongoCredential.SCRAM_SHA_1_MECHANISM;
+            }
+
+            public boolean hasInitialResponse() {
+                return true;
+            }
+
+            public byte[] evaluateChallenge(final byte[] challenge) throws SaslException {
+                if(this.step == 0) {
+                    this.step++;
+
+                    return computeClientFirstMessage();
+                }
+                else if(this.step == 1) {
+                    this.step++;
+
+                    return computeClientFinalMessage(challenge);
+                }
+                else if(this.step == 2) {
+                    this.step++;
+
+                    String serverResponse = encodeUTF8(challenge);
+                    HashMap<String, String> map = parseServerResponse(serverResponse);
+
+                    if(!map.get("v").equals(encodeBase64(this.serverSignature))) {
+                        throw new SaslException("Server signature was invalid.");
+                    }
+
+                    return challenge;
+                }
+                else {
+                    throw new SaslException("Too many steps involved in the SCRAM-SHA-1 negotiation.");
+                }
+            }
+
+            public boolean isComplete() {
+                return this.step > 2;
+            }
+
+            public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
+                throw new UnsupportedOperationException("Not implemented yet!");
+            }
+
+            public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
+                throw new UnsupportedOperationException("Not implemented yet!");
+            }
+
+            public Object getNegotiatedProperty(final String propName) {
+                throw new UnsupportedOperationException("Not implemented yet!");
+            }
+
+            public void dispose() throws SaslException {
+                // nothing to do
+            }
+
+            private byte[] computeClientFirstMessage() throws SaslException {
+                String userName = "n=" + prepUserName(this.credential.getUserName());
+                this.rPrefix = generateRandomString();
+                String nonce = "r=" + this.rPrefix;
+
+                this.clientFirstMessageBare = userName + "," + nonce;
+                String clientFirstMessage = gs2Header + this.clientFirstMessageBare;
+
+                return decodeUTF8(clientFirstMessage);
+            }
+
+            private byte[] computeClientFinalMessage(final byte[] challenge) throws SaslException {
+                String serverFirstMessage = encodeUTF8(challenge);
+
+                HashMap<String, String> map = parseServerResponse(serverFirstMessage);
+                String r = map.get("r");
+                if(!r.startsWith(this.rPrefix)) {
+                    throw new SaslException("Server sent an invalid nonce.");
+                }
+
+                String s = map.get("s");
+                String i = map.get("i");
+
+                String channelBinding = "c=" + encodeBase64(decodeUTF8(gs2Header));
+                String nonce = "r=" + r;
+                String clientFinalMessageWithoutProof = channelBinding + "," + nonce;
+
+                byte[] saltedPassword = Hi(
+                                          NativeAuthenticationHelper.createHash(this.credential.getUserName(),
+                                                                                this.credential.getPassword()),
+                                          decodeBase64(s),
+                                          Integer.parseInt(i)
+                                          );
+                byte[] clientKey = HMAC(saltedPassword, "Client Key");
+                byte[] storedKey = H(clientKey);
+                String authMessage = this.clientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessageWithoutProof;
+                byte[] clientSignature = HMAC(storedKey, authMessage);
+                byte[] clientProof = XOR(clientKey, clientSignature);
+                byte[] serverKey = HMAC(saltedPassword, "Server Key");
+                this.serverSignature = HMAC(serverKey, authMessage);
+
+                String proof = "p=" + encodeBase64(clientProof);
+                String clientFinalMessage = clientFinalMessageWithoutProof + "," + proof;
+
+                return decodeUTF8(clientFinalMessage);
+            }
+
+            private byte[] decodeBase64(String str) {
+                return this.base64Codec.decode(str);
+            }
+
+            private byte[] decodeUTF8(String str) throws SaslException {
+                try {
+                    return str.getBytes("UTF-8");
+                }
+                catch (UnsupportedEncodingException e) {
+                    throw new SaslException("UTF-8 is not a supported encoding.", e);
+                }
+            }
+
+            private String encodeBase64(byte[] bytes) {
+                return this.base64Codec.encode(bytes);
+            }
+
+            private String encodeUTF8(byte[] bytes) throws SaslException {
+                try {
+                    return new String(bytes, "UTF-8");
+                }
+                catch (UnsupportedEncodingException e) {
+                    throw new SaslException("UTF-8 is not a supported encoding.", e);
+                }
+            }
+
+            private String generateRandomString() {
+                final int comma = 44;
+                final int low = 33;
+                final int high = 126;
+                final int range = high - low;
+
+                Random random = new Random();
+                char[] text = new char[randomLength];
+                for (int i = 0; i < randomLength; i++)
+                {
+                    int next = random.nextInt(range) + low;
+                    while(next == comma) {
+                        next = random.nextInt(range) + low;
+                    }
+                    text[i] = (char)next;
+                }
+                return new String(text);
+            }
+
+            private byte[] H(byte[] data) throws SaslException {
+                try {
+                    return MessageDigest.getInstance("SHA-1").digest(data);
+                }
+                catch (NoSuchAlgorithmException e) {
+                    throw new SaslException("SHA-1 could not be found.", e);
+                }
+            }
+
+            private byte[] Hi(byte[] password, byte[] salt, int iterations) throws SaslException {
+                PBEKeySpec spec = new PBEKeySpec(encodeUTF8(password).toCharArray(), salt, iterations, 20 * 8);
+
+                SecretKeyFactory keyFactory;
+                try {
+                    keyFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+                }
+                catch (NoSuchAlgorithmException e) {
+                    throw new SaslException("Unable to find PBKDF2WithHmacSHA1.", e);
+                }
+
+                try {
+                    return keyFactory.generateSecret(spec).getEncoded();
+                }
+                catch (InvalidKeySpecException e) {
+                    throw new SaslException("Invalid key spec for PBKDC2WithHmacSHA1.", e);
+                }
+            }
+
+            private byte[] HMAC(byte[] bytes, String key) throws SaslException {
+                SecretKeySpec signingKey = new SecretKeySpec(bytes, "HmacSHA1");
+
+                Mac mac;
+                try {
+                    mac = Mac.getInstance("HmacSHA1");
+                }
+                catch (NoSuchAlgorithmException e) {
+                    throw new SaslException("Could not find HmacSHA1.", e);
+                }
+
+                try {
+                    mac.init(signingKey);
+                }
+                catch (InvalidKeyException e) {
+                    throw new SaslException("Could not initialize mac.", e);
+                }
+
+                return mac.doFinal(decodeUTF8(key));
+            }
+
+            private HashMap<String, String> parseServerResponse(String response) {
+                HashMap<String, String> map = new HashMap<String, String>();
+                String[] pairs = response.split(",");
+                for(String pair : pairs) {
+                    String[] parts = pair.split("=", 2);
+                    map.put(parts[0], parts[1]);
+                }
+
+                return map;
+            }
+
+            private String prepUserName(String userName) {
+                return userName.replace("=", "=3D").replace(",","=2D");
+            }
+
+            private byte[] XOR(byte[] a, byte[] b) {
+                byte[] result = new byte[a.length];
+
+                for(int i = 0; i < a.length; i++) {
+                    result[i] = (byte)(a[i] ^ b[i]);
+                }
+
+                return result;
+            }
         }
     }
 

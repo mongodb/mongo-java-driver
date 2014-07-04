@@ -122,6 +122,9 @@ public class MongoClientURITest {
 
         u = new MongoClientURI("mongodb://user:pass@host");
         assertEquals(MongoCredential.createMongoCRCredential(userName, "admin", password), u.getCredentials());
+
+        u = new MongoClientURI("mongodb://bob:pwd@host/?authMechanism=SCRAM-SHA-1");
+        assertEquals(MongoCredential.createScramSha1Credential("bob", "admin", "pwd".toCharArray()), u.getCredentials());
     }
 
     @Test

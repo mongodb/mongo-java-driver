@@ -457,6 +457,9 @@ public class MongoClientURI {
         else if (mechanism.equals(MongoCredential.MONGODB_X509_MECHANISM)) {
             return MongoCredential.createMongoX509Credential(userName);
         }
+        else if(mechanism.equals(MongoCredential.SCRAM_SHA_1_MECHANISM)) {
+            return MongoCredential.createScramSha1Credential(userName, authSource, password);
+        }
         else {
              throw new IllegalArgumentException("Unsupported authMechanism: " + mechanism);
         }

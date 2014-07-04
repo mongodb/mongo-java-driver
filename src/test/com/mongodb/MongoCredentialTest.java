@@ -144,7 +144,7 @@ public class MongoCredentialTest extends TestCase {
 
         assertEquals(mechanism, credential.getMechanism());
         assertEquals(userName, credential.getUserName());
-        assertEquals("$external", credential.getSource());
+        assertEquals(source, credential.getSource());
         assertArrayEquals(password, credential.getPassword());
     }
 
@@ -160,5 +160,21 @@ public class MongoCredentialTest extends TestCase {
         assertEquals(userName, credential.getUserName());
         assertEquals("$external", credential.getSource());
         assertArrayEquals(null, credential.getPassword());
+    }
+
+    @Test
+    public void testScramSha1Mechanism() {
+        MongoCredential credential;
+
+        final String mechanism = MongoCredential.SCRAM_SHA_1_MECHANISM;
+        final String userName = "user";
+        final char[] password = "pwd".toCharArray();
+        final String source = "admin";
+        credential = MongoCredential.createScramSha1Credential(userName, source, password);
+
+        assertEquals(mechanism, credential.getMechanism());
+        assertEquals(userName, credential.getUserName());
+        assertEquals(source, credential.getSource());
+        assertArrayEquals(password, credential.getPassword());
     }
 }

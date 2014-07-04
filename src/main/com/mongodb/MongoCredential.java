@@ -51,6 +51,13 @@ public final class MongoCredential {
      */
     public static final String PLAIN_MECHANISM = "PLAIN";
 
+    /**
+     * The SCRAM-SHA-1 mechanism. See the <a href="http://tools.ietf.org/html/rfc5802">RFC</a>.
+     *
+     * @mongodb.server.release 2.8
+     */
+    public static final String SCRAM_SHA_1_MECHANISM = "SCRAM-SHA-1";
+
 
     /**
      * The MongoDB X.509
@@ -118,6 +125,19 @@ public final class MongoCredential {
         return new MongoCredential(PLAIN_MECHANISM, userName, source, password);
     }
 
+    /**
+     * Creates a MongoCredential instance for the SCRAM-SHA-1 SASL mechanism.
+     *
+     * @param userName the non-null user name
+     * @param source the source where the user is defined.
+     * @param password the non-null user password
+     * @return the credential
+     *
+     * @mongodb.server.release 2.8
+     */
+    public static MongoCredential createScramSha1Credential(final String userName, final String source, final char[] password) {
+        return new MongoCredential(SCRAM_SHA_1_MECHANISM, userName, source, password);
+    }
 
     /**
      * Creates a new MongoCredential as a copy of this instance, with the specified mechanism property added.
