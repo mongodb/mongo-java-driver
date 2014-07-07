@@ -243,5 +243,25 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 }
             }));
         }
+
+        @Override
+        public Observable<WriteResult> remove() {
+            return Observable.create(new OnSubscribeAdapter<WriteResult>(new FutureFunction<WriteResult>() {
+                @Override
+                public MongoFuture<WriteResult> apply() {
+                    return wrappedView.remove();
+                }
+            }));
+        }
+
+        @Override
+        public Observable<WriteResult> removeOne() {
+            return Observable.create(new OnSubscribeAdapter<WriteResult>(new FutureFunction<WriteResult>() {
+                @Override
+                public MongoFuture<WriteResult> apply() {
+                    return wrappedView.removeOne();
+                }
+            }));
+        }
     }
 }

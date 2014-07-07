@@ -56,4 +56,20 @@ public interface MongoWritableView<T> {
      * successfully.
      */
     Observable<WriteResult> updateOne(Document updateOperations);
+
+    /**
+     * Removes all the documents in the underlying collection matching the filter criteria in the view.
+     *
+     * @return an Observable representing the completion of the update. It will report exactly one event when the command completes
+     * successfully.
+     */
+    Observable<WriteResult> remove();
+
+    /**
+     * Removes one document in the underlying collection matching the filter criteria in the view.
+     *
+     * @return an Observable representing the completion of the update. It will report exactly one event when the command completes
+     * successfully.
+     */
+    Observable<WriteResult> removeOne();
 }
