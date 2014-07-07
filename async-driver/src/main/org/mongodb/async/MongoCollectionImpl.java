@@ -41,6 +41,8 @@ import org.mongodb.operation.InsertOperation;
 import org.mongodb.operation.InsertRequest;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;
+import org.mongodb.operation.RemoveOperation;
+import org.mongodb.operation.RemoveRequest;
 import org.mongodb.operation.ReplaceOperation;
 import org.mongodb.operation.ReplaceRequest;
 import org.mongodb.operation.SingleResultFuture;
@@ -330,6 +332,18 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                                                                           options.getDocumentCodec()))
                                                       .upsert(upsert).multi(false)),
                                                new DocumentCodec()));
+        }
+
+        @Override
+        public MongoFuture<WriteResult> remove() {
+            return execute(new RemoveOperation(getNamespace(), true, options.getWriteConcern(),
+                                               asList(new RemoveRequest(find.getFilter()).multi(true))));
+        }
+
+        @Override
+        public MongoFuture<WriteResult> removeOne() {
+            return execute(new RemoveOperation(getNamespace(), true, options.getWriteConcern(),
+                                               asList(new RemoveRequest(find.getFilter()).multi(false))));
         }
     }
 }
