@@ -16,6 +16,9 @@
 
 package org.mongodb;
 
+import org.bson.BsonDocument;
+import org.mongodb.connection.ServerAddress;
+
 import static java.lang.String.format;
 
 /**
@@ -26,14 +29,13 @@ public class MongoWriteException extends MongoServerException {
 
     private final int code;
     private final String message;
-    private final CommandResult commandResult;
+    private final BsonDocument response;
 
-    public MongoWriteException(final int code, final String message, final CommandResult commandResult) {
-        super(format("Write failed with error code %d and error message '%s'", code, message),
-              commandResult.getAddress());
+    public <T> MongoWriteException(final int code, final String message, final BsonDocument response, final ServerAddress serverAddress) {
+        super(format("Write failed with error code %d and error message '%s'", code, message), serverAddress);
         this.code = code;
         this.message = message;
-        this.commandResult = commandResult;
+        this.response = response;
     }
 
     @Override
@@ -46,7 +48,7 @@ public class MongoWriteException extends MongoServerException {
         return message;
     }
 
-    public CommandResult getCommandResult() {
-        return commandResult;
+    public BsonDocument getResponse() {
+        return response;
     }
 }

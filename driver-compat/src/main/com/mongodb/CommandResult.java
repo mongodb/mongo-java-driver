@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import static com.mongodb.DBObjects.toDBObject;
 import static org.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -26,9 +25,9 @@ public class CommandResult extends BasicDBObject {
     private static final long serialVersionUID = 5907909423864204060L;
     private final ServerAddress host;
 
-    CommandResult(final org.mongodb.CommandResult commandResult) {
+    CommandResult(final org.mongodb.CommandResult<DBObject> commandResult) {
         this(new ServerAddress(commandResult.getAddress()));
-        putAll(toDBObject(commandResult.getResponse()));
+        putAll(commandResult.getResponse());
     }
 
     CommandResult(final DBObject response, final ServerAddress serverAddress) {

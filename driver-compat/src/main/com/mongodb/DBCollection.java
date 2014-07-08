@@ -1273,7 +1273,8 @@ public class DBCollection {
      * @mongodb.server.release 2.6
      */
     public CommandResult explainAggregate(final List<DBObject> pipeline, final AggregationOptions options) {
-        return new CommandResult(execute(new AggregateExplainOperation(getNamespace(), preparePipeline(pipeline), options.toNew()),
+        return new CommandResult(execute(new AggregateExplainOperation<DBObject>(getNamespace(), preparePipeline(pipeline),
+                                                                                 options.toNew(), getObjectCodec()),
                                          primaryPreferred()));
     }
 

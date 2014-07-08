@@ -44,22 +44,22 @@ final class ProtocolHelper {
     private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
     private static final List<Integer> EXECUTION_TIMEOUT_ERROR_CODES = Arrays.asList(50);
 
-    static WriteResult getWriteResult(final CommandResult commandResult) {
+    static <T> WriteResult getWriteResult(final CommandResult<T> commandResult) {
         if (!commandResult.isOk()) {
             throw new MongoCommandFailureException(commandResult);
         }
 
-        if (hasWriteError(commandResult.getResponse())) {
+        if (hasWriteError(commandResult.getRawResponse())) {
             throwWriteException(commandResult);
         }
 
-        BsonBoolean updatedExisting = commandResult.getResponse().getBoolean("updatedExisting", BsonBoolean.FALSE);
+        BsonBoolean updatedExisting = commandResult.getRawResponse().getBoolean("updatedExisting", BsonBoolean.FALSE);
 
-        return new AcknowledgedWriteResult(commandResult.getResponse().getNumber("n").intValue(),
-                                           updatedExisting.getValue(), commandResult.getResponse().get("upserted"));
+        return new AcknowledgedWriteResult(commandResult.getRawResponse().getNumber("n").intValue(),
+                                           updatedExisting.getValue(), commandResult.getRawResponse().get("upserted"));
     }
 
-    static MongoException getCommandFailureException(final CommandResult commandResult) {
+    static <T> MongoException getCommandFailureException(final CommandResult<T> commandResult) {
         isTrue("not ok", !commandResult.isOk());
         if (EXECUTION_TIMEOUT_ERROR_CODES.contains(commandResult.getErrorCode())) {
             return new MongoExecutionTimeoutException(commandResult.getAddress(), commandResult.getErrorCode(),
@@ -116,12 +116,14 @@ final class ProtocolHelper {
         }
     }
 
-    private static void throwWriteException(final CommandResult commandResult) {
-        int code = getCode(commandResult.getResponse());
+    private static <T> void throwWriteException(final CommandResult<T> commandResult) {
+        int code = getCode(commandResult.getRawResponse());
         if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
-            throw new MongoDuplicateKeyException(code, getWriteErrorMessage(commandResult.getResponse()), commandResult);
+            throw new MongoDuplicateKeyException(code, getWriteErrorMessage(commandResult.getRawResponse()),
+                                                 commandResult.getRawResponse(), commandResult.getAddress());
         } else {
-            throw new MongoWriteException(code, getWriteErrorMessage(commandResult.getResponse()), commandResult);
+            throw new MongoWriteException(code, getWriteErrorMessage(commandResult.getRawResponse()),
+                                          commandResult.getRawResponse(), commandResult.getAddress());
         }
     }
 

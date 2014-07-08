@@ -43,11 +43,11 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(databaseName, DROP_DATABASE, binding, new VoidTransformer<CommandResult>());
+        return executeWrappedCommandProtocol(databaseName, DROP_DATABASE, binding, new VoidTransformer<CommandResult<BsonDocument>>());
     }
 
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(databaseName, DROP_DATABASE, binding, new VoidTransformer<CommandResult>());
+        return executeWrappedCommandProtocolAsync(databaseName, DROP_DATABASE, binding, new VoidTransformer<CommandResult<BsonDocument>>());
     }
 }

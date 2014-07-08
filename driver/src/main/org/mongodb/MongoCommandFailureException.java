@@ -16,6 +16,9 @@
 
 package org.mongodb;
 
+import org.bson.BsonDocument;
+import org.mongodb.connection.ServerAddress;
+
 import static java.lang.String.format;
 
 /**
@@ -24,25 +27,33 @@ import static java.lang.String.format;
 public class MongoCommandFailureException extends MongoServerException {
     private static final long serialVersionUID = -50109343643507362L;
 
-    private final CommandResult commandResult;
+    private final BsonDocument response;
+    private final int errorCode;
+    private final String errorMessage;
 
-    public MongoCommandFailureException(final CommandResult commandResult) {
-        super(format("Command failed with error %s: '%s' on server %s", commandResult.getErrorCode(),
-                     commandResult.getErrorMessage(), commandResult.getAddress()), commandResult.getAddress());
-        this.commandResult = commandResult;
+    public MongoCommandFailureException(final BsonDocument response, final int errorCode, final String errorMessage,
+                                        final ServerAddress serverAddress) {
+        super(format("Command failed with error %s: '%s' on server %s", errorCode, errorMessage, serverAddress), serverAddress);
+        this.response = response;
+        this.errorCode = errorCode;
+        this.errorMessage = errorMessage;
     }
 
-    public CommandResult getCommandResult() {
-        return commandResult;
+    public <T> MongoCommandFailureException(final CommandResult<T> commandResult) {
+        this(commandResult.getRawResponse(), commandResult.getErrorCode(), commandResult.getErrorMessage(), commandResult.getAddress());
+    }
+
+    public BsonDocument getResponse() {
+        return response;
     }
 
     @Override
     public int getErrorCode() {
-        return commandResult.getErrorCode();
+        return errorCode;
     }
 
     @Override
     public String getErrorMessage() {
-        return commandResult.getErrorMessage();
+        return errorMessage;
     }
 }

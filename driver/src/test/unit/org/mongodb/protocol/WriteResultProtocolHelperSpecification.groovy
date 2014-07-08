@@ -22,6 +22,7 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonObjectId
 import org.bson.BsonString
+import org.bson.codecs.BsonDocumentCodec
 import org.bson.types.ObjectId
 import org.mongodb.CommandResult
 import org.mongodb.MongoCommandFailureException
@@ -35,9 +36,9 @@ class WriteResultProtocolHelperSpecification extends Specification {
 
     def 'should return a write result for an insert'() {
         given:
-        def commandResult = new CommandResult(new ServerAddress(),
-                                              new BsonDocument('ok', new BsonInt32(1)).append('n', new BsonInt32(0)),
-                                              1);
+        def commandResult = new CommandResult<BsonDocument>(new ServerAddress(),
+                                                            new BsonDocument('ok', new BsonInt32(1)).append('n', new BsonInt32(0)),
+                                                            1, new BsonDocumentCodec());
         when:
         def writeResult = ProtocolHelper.getWriteResult(commandResult)
 
@@ -49,11 +50,12 @@ class WriteResultProtocolHelperSpecification extends Specification {
     def 'should return a write result for an upsert'() {
         given:
         def id = new ObjectId()
-        def commandResult = new CommandResult(new ServerAddress(),
-                                              new BsonDocument('ok', new BsonInt32(1)).append('n', new BsonInt32(1))
-                                                                                      .append('updatedExisting', BsonBoolean.FALSE).
-                                                      append('upserted', new BsonObjectId(id)),
-                                              1);
+        def commandResult = new CommandResult<BsonDocument>(new ServerAddress(),
+                                                            new BsonDocument('ok', new BsonInt32(1)).append('n', new BsonInt32(1))
+                                                                                                    .
+                                                                    append('updatedExisting', BsonBoolean.FALSE).
+                                                                    append('upserted', new BsonObjectId(id)),
+                                                            1, new BsonDocumentCodec());
         when:
         def writeResult = ProtocolHelper.getWriteResult(commandResult)
 
@@ -64,11 +66,11 @@ class WriteResultProtocolHelperSpecification extends Specification {
 
     def 'should throw command failure if result is not ok'() {
         given:
-        def commandResult = new CommandResult(new ServerAddress(),
-                                              new BsonDocument('ok', new BsonInt32(0))
-                                                      .append('errmsg', new BsonString('Something is very wrong'))
-                                                      .append('code', new BsonInt32(14)),
-                                              1);
+        def commandResult = new CommandResult<BsonDocument>(new ServerAddress(),
+                                                            new BsonDocument('ok', new BsonInt32(0))
+                                                                    .append('errmsg', new BsonString('Something is very wrong'))
+                                                                    .append('code', new BsonInt32(14)),
+                                                            1, new BsonDocumentCodec());
         when:
         ProtocolHelper.getWriteResult(commandResult)
 
@@ -79,11 +81,11 @@ class WriteResultProtocolHelperSpecification extends Specification {
 
     def 'should throw duplicate key when response has a duplicate key error code'() {
         given:
-        def commandResult = new CommandResult(new ServerAddress(),
-                                              new BsonDocument('ok', new BsonInt32(1))
-                                                      .append('err', new BsonString('E11000 duplicate key error index 1'))
-                                                      .append('code', new BsonInt32(11000)),
-                                              1);
+        def commandResult = new CommandResult<BsonDocument>(new ServerAddress(),
+                                                            new BsonDocument('ok', new BsonInt32(1))
+                                                                    .append('err', new BsonString('E11000 duplicate key error index 1'))
+                                                                    .append('code', new BsonInt32(11000)),
+                                                            1, new BsonDocumentCodec());
 
         when:
         ProtocolHelper.getWriteResult(commandResult)
@@ -96,19 +98,21 @@ class WriteResultProtocolHelperSpecification extends Specification {
     def 'should throw duplicate key when errObjects has a duplicate key error code'() {
         given:
         def commandResult =
-                new CommandResult(new ServerAddress(),
-                                  new BsonDocument('ok', new BsonInt32(1))
-                                          .append('err', new BsonString('E11000 duplicate key error index 1'))
-                                          .append('errObjects',
-                                                  new BsonArray(asList(new BsonDocument('ok', new BsonInt32(1))
-                                                                               .append('err', new BsonString('E11000 duplicate key error ' +
-                                                                                                             'index 1'))
-                                                                               .append('code', new BsonInt32(11000)),
-                                                                       new BsonDocument('ok', new BsonInt32(1))
-                                                                               .append('err', new BsonString('E11000 duplicate key error ' +
-                                                                                                             'index 2'))
-                                                                               .append('code', new BsonInt32(11000))))),
-                                  1);
+                new CommandResult<BsonDocument>(new ServerAddress(),
+                                                new BsonDocument('ok', new BsonInt32(1))
+                                                        .append('err', new BsonString('E11000 duplicate key error index 1'))
+                                                        .append('errObjects',
+                                                                new BsonArray(asList(new BsonDocument('ok', new BsonInt32(1))
+                                                                                             .append('err', new BsonString(
+                                                                        'E11000 duplicate key error ' +
+                                                                        'index 1'))
+                                                                                             .append('code', new BsonInt32(11000)),
+                                                                                     new BsonDocument('ok', new BsonInt32(1))
+                                                                                             .append('err', new BsonString(
+                                                                                             'E11000 duplicate key error ' +
+                                                                                             'index 2'))
+                                                                                             .append('code', new BsonInt32(11000))))),
+                                                1, new BsonDocumentCodec());
 
         when:
         ProtocolHelper.getWriteResult(commandResult)

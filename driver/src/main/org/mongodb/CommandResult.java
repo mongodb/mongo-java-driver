@@ -18,35 +18,50 @@ package org.mongodb;
 
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentReader;
 import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.codecs.Decoder;
+import org.bson.codecs.DecoderContext;
 import org.mongodb.connection.ServerAddress;
 
-public class CommandResult {
+public class CommandResult<T> {
     private final ServerAddress address;
     private final BsonDocument response;
     private final long elapsedNanoseconds;
+    private final Decoder<T> decoder;
+    private T decodedResponse;
 
-    public CommandResult(final ServerAddress address, final BsonDocument response, final long elapsedNanoseconds) {
+    public CommandResult(final ServerAddress address, final BsonDocument response, final long elapsedNanoseconds,
+                         final Decoder<T> decoder) {
         this.address = address;
         this.response = response;
         this.elapsedNanoseconds = elapsedNanoseconds;
+        this.decoder = decoder;
     }
 
-    public CommandResult(final CommandResult baseResult) {
+    public CommandResult(final CommandResult<T> baseResult) {
         this.address = baseResult.address;
         this.response = baseResult.response;
         this.elapsedNanoseconds = baseResult.elapsedNanoseconds;
+        this.decoder = baseResult.decoder;
     }
 
     public ServerAddress getAddress() {
         return address;
     }
 
-    public BsonDocument getResponse() {
+    public T getResponse() {
+        if (decodedResponse == null) {
+            decodedResponse = decoder.decode(new BsonDocumentReader(response), DecoderContext.builder().build());
+        }
+        return decodedResponse;
+    }
+
+    public BsonDocument getRawResponse() {
         return response;
     }
 
@@ -71,16 +86,16 @@ public class CommandResult {
     }
 
     public int getErrorCode() {
-        if (getResponse().containsKey("code")) {
-            return ((BsonInt32) getResponse().get("code")).getValue();
+        if (response.containsKey("code")) {
+            return ((BsonInt32) response.get("code")).getValue();
         } else {
             return -1;
         }
     }
 
     public String getErrorMessage() {
-        if (getResponse().containsKey("errmsg")) {
-            return ((BsonString) getResponse().get("errmsg")).getValue();
+        if (response.containsKey("errmsg")) {
+            return ((BsonString) response.get("errmsg")).getValue();
         } else {
             return null;
         }

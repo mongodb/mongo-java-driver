@@ -43,7 +43,8 @@ public class CommandFailureException extends MongoException {
     }
 
     CommandFailureException(final MongoCommandFailureException e) {
-        this(new CommandResult(e.getCommandResult()), e.getMessage());
+        this(new CommandResult(DBObjects.toDBObject(e.getResponse()), new ServerAddress(e.getServerAddress())),
+             e.getMessage());
     }
 
     /**

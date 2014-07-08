@@ -27,7 +27,6 @@ import org.mongodb.binding.WriteBinding;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.CommandOperationHelper.ignoreNameSpaceErrors;
-import static org.mongodb.operation.OperationHelper.ignoreResult;
 
 /**
  * Operation to drop a Collection in MongoDB.  The {@code execute} method throws MongoCommandFailureException if something goes wrong, but
@@ -59,8 +58,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
 
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return ignoreResult(ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
-                                                                                     binding)));
+        return ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding));
     }
 
     private BsonDocument getCommand() {

@@ -33,8 +33,8 @@ import static java.lang.String.format;
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 
 final class CommandHelper {
-    static CommandResult executeCommand(final String database, final BsonDocument command,
-                                        final InternalConnection internalConnection) {
+    static CommandResult<BsonDocument> executeCommand(final String database, final BsonDocument command,
+                                                      final InternalConnection internalConnection) {
         return receiveMessage(internalConnection, sendMessage(database, command, internalConnection));
     }
 
@@ -52,14 +52,13 @@ final class CommandHelper {
         }
     }
 
-    private static CommandResult receiveMessage(final InternalConnection internalConnection, final CommandMessage message) {
+    private static CommandResult<BsonDocument> receiveMessage(final InternalConnection internalConnection, final CommandMessage message) {
         ResponseBuffers responseBuffers = internalConnection.receiveMessage();
         if (responseBuffers == null) {
             throw new MongoInternalException(format("Response buffers received from %s should not be null", internalConnection));
         }
         try {
-            ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers,
-                                                                                     new BsonDocumentCodec(),
+            ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
                                                                                      message.getId());
             return createCommandResult(replyMessage, internalConnection.getServerAddress());
         } finally {
@@ -67,9 +66,10 @@ final class CommandHelper {
         }
     }
 
-    private static CommandResult createCommandResult(final ReplyMessage<BsonDocument> replyMessage, final ServerAddress serverAddress) {
-        CommandResult commandResult = new CommandResult(serverAddress, replyMessage.getDocuments().get(0),
-                                                        replyMessage.getElapsedNanoseconds());
+    private static CommandResult<BsonDocument> createCommandResult(final ReplyMessage<BsonDocument> replyMessage,
+                                                                   final ServerAddress serverAddress) {
+        CommandResult<BsonDocument> commandResult = new CommandResult<BsonDocument>(serverAddress, replyMessage.getDocuments().get(0),
+                                                                         replyMessage.getElapsedNanoseconds(), new BsonDocumentCodec());
         if (!commandResult.isOk()) {
             throw new MongoCommandFailureException(commandResult);
         }

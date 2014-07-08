@@ -59,11 +59,11 @@ public class GetDatabaseNamesOperation implements AsyncReadOperation<List<String
         return executeWrappedCommandProtocolAsync("admin", getCommand(), binding, transformer());
     }
 
-    private Function<CommandResult, List<String>> transformer() {
-        return new Function<CommandResult, List<String>>() {
+    private Function<CommandResult<BsonDocument>, List<String>> transformer() {
+        return new Function<CommandResult<BsonDocument>, List<String>>() {
             @SuppressWarnings("unchecked")
             @Override
-            public List<String> apply(final CommandResult result) {
+            public List<String> apply(final CommandResult<BsonDocument> result) {
                 BsonArray databases = result.getResponse().getArray("databases");
 
                 List<String> databaseNames = new ArrayList<String>();

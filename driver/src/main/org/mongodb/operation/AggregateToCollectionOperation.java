@@ -17,7 +17,6 @@
 package org.mongodb.operation;
 
 import org.bson.BsonDocument;
-import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
@@ -66,16 +65,15 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     @SuppressWarnings("unchecked")
     @Override
     public Void execute(final WriteBinding binding) {
-        executeWrappedCommandProtocol(namespace, asCommandDocument(namespace, pipeline, options),
-                                      new BsonDocumentCodec(), binding, new VoidTransformer<CommandResult>());
+        executeWrappedCommandProtocol(namespace.getDatabaseName(), asCommandDocument(namespace, pipeline, options),
+                                      binding, new VoidTransformer<CommandResult<BsonDocument>>());
 
         return null;
     }
 
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, asCommandDocument(namespace, pipeline, options),
-                                                  new BsonDocumentCodec(), binding,
-                                                  new VoidTransformer<CommandResult>());
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), asCommandDocument(namespace, pipeline, options),
+                                                  binding, new VoidTransformer<CommandResult<BsonDocument>>());
     }
 }

@@ -23,7 +23,6 @@ import org.bson.BsonString;
 import org.mongodb.BulkWriteError;
 import org.mongodb.BulkWriteException;
 import org.mongodb.BulkWriteResult;
-import org.mongodb.CommandResult;
 import org.mongodb.MongoDuplicateKeyException;
 import org.mongodb.MongoException;
 import org.mongodb.MongoFuture;
@@ -145,18 +144,20 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
         BulkWriteError lastError = getLastError(e);
         if (lastError != null) {
             if (DUPLICATE_KEY_ERROR_CODES.contains(lastError.getCode())) {
-                return new MongoDuplicateKeyException(lastError.getCode(), lastError.getMessage(), manufactureGetLastErrorCommandResult(e));
+                return new MongoDuplicateKeyException(lastError.getCode(), lastError.getMessage(),
+                                                      manufactureGetLastErrorResponse(e), e.getServerAddress());
             } else {
-                return new MongoWriteException(lastError.getCode(), lastError.getMessage(), manufactureGetLastErrorCommandResult(e));
+                return new MongoWriteException(lastError.getCode(), lastError.getMessage(), manufactureGetLastErrorResponse(e),
+                                               e.getServerAddress());
             }
         } else {
             return new MongoWriteException(e.getWriteConcernError().getCode(), e.getWriteConcernError().getMessage(),
-                                           manufactureGetLastErrorCommandResult(e));
+                                           manufactureGetLastErrorResponse(e), e.getServerAddress());
         }
 
     }
 
-    private CommandResult manufactureGetLastErrorCommandResult(final BulkWriteException e) {
+    private BsonDocument manufactureGetLastErrorResponse(final BulkWriteException e) {
         BsonDocument response = new BsonDocument();
         addBulkWriteResultToResponse(e.getWriteResult(), response);
         if (e.getWriteConcernError() != null) {
@@ -171,7 +172,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
             response.put("err", new BsonString(e.getWriteConcernError().getMessage()));
             response.put("code", new BsonInt32(e.getWriteConcernError().getCode()));
         }
-        return new CommandResult(e.getServerAddress(), response, 0);
+        return response;
     }
 
     private void addBulkWriteResultToResponse(final BulkWriteResult bulkWriteResult, final BsonDocument response) {

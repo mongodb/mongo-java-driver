@@ -77,14 +77,16 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
                                                                              buffer,
                                                                              getLastErrorMessage.getId(),
                                                                              retVal,
-                                                                             new WriteResultCallback(retVal,
-                                                                                                     new BsonDocumentCodec(),
-                                                                                                     getNamespace(),
-                                                                                                     nextMessage,
-                                                                                                     ordered,
-                                                                                                     writeConcern,
-                                                                                                     getLastErrorMessage.getId(),
-                                                                                                     connection)
+                                                                             new WriteResultCallback<BsonDocument>(retVal,
+                                                                                                                   new BsonDocumentCodec(),
+                                                                                                                   new BsonDocumentCodec(),
+                                                                                                                   getNamespace(),
+                                                                                                                   nextMessage,
+                                                                                                                   ordered,
+                                                                                                                   writeConcern,
+                                                                                                                   getLastErrorMessage
+                                                                                                                       .getId(),
+                                                                                                                   connection)
                                         )
                                        );
         } else {
@@ -143,9 +145,11 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
         ResponseBuffers responseBuffers = connection.receiveMessage(requestMessage.getId());
         try {
             ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
-                                                                                     requestMessage.getId());
-            return ProtocolHelper.getWriteResult(new CommandResult(connection.getServerAddress(), replyMessage.getDocuments().get(0),
-                                                                   replyMessage.getElapsedNanoseconds()));
+                                                                          requestMessage.getId());
+            return ProtocolHelper.getWriteResult(new CommandResult<BsonDocument>(connection.getServerAddress(),
+                                                                                 replyMessage.getDocuments().get(0),
+                                                                                 replyMessage.getElapsedNanoseconds(),
+                                                                                 new BsonDocumentCodec()));
         } finally {
             responseBuffers.close();
         }

@@ -75,32 +75,32 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     @Override
     @SuppressWarnings("unchecked")
     public MapReduceCursor<T> execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "results"),
-                                             binding, transformer());
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
+                                             CommandResultDocumentCodec.create(decoder, "results"), binding, transformer());
     }
 
     @Override
     public MongoFuture<MapReduceAsyncCursor<T>> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "results"),
-                                                  binding, asyncTransformer());
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
+                                                  CommandResultDocumentCodec.create(decoder, "results"), binding, asyncTransformer());
     }
 
-    private Function<CommandResult, MapReduceCursor<T>> transformer() {
-        return new Function<CommandResult, MapReduceCursor<T>>() {
+    private Function<CommandResult<BsonDocument>, MapReduceCursor<T>> transformer() {
+        return new Function<CommandResult<BsonDocument>, MapReduceCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MapReduceCursor<T> apply(final CommandResult result) {
+            public MapReduceCursor<T> apply(final CommandResult<BsonDocument> result) {
                 return new MapReduceInlineResultsCursor<T>(BsonDocumentWrapperHelper.<T>toList(result.getResponse().getArray("results")),
                                                            MapReduceHelper.createStatistics(result), result.getAddress());
             }
         };
     }
 
-    private Function<CommandResult, MapReduceAsyncCursor<T>> asyncTransformer() {
-        return new Function<CommandResult, MapReduceAsyncCursor<T>>() {
+    private Function<CommandResult<BsonDocument>, MapReduceAsyncCursor<T>> asyncTransformer() {
+        return new Function<CommandResult<BsonDocument>, MapReduceAsyncCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MapReduceAsyncCursor<T> apply(final CommandResult result) {
+            public MapReduceAsyncCursor<T> apply(final CommandResult<BsonDocument> result) {
                 return new MapReduceInlineResultsAsyncCursor<T>(BsonDocumentWrapperHelper.<T>toList(result.getResponse()
                                                                                                           .getArray("results")),
                                                                 MapReduceHelper.createStatistics(result));

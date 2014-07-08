@@ -66,8 +66,8 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     @Override
     @SuppressWarnings("unchecked")
     public MongoCursor<T> execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "retval"), binding,
-                                             transformer());
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
+                CommandResultDocumentCodec.create(decoder, "retval"), binding, transformer());
     }
 
     /**
@@ -79,31 +79,30 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     @Override
     @SuppressWarnings("unchecked")
     public MongoFuture<MongoAsyncCursor<T>> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "retval"), binding,
-                                                  asyncTransformer());
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
+                CommandResultDocumentCodec.create(decoder, "retval"), binding, asyncTransformer());
     }
 
-    private Function<CommandResult, MongoCursor<T>> transformer() {
-        return new Function<CommandResult, MongoCursor<T>>() {
+    private Function<CommandResult<BsonDocument>, MongoCursor<T>> transformer() {
+        return new Function<CommandResult<BsonDocument>, MongoCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MongoCursor<T> apply(final CommandResult result) {
+            public MongoCursor<T> apply(final CommandResult<BsonDocument> result) {
                 return new InlineMongoCursor<T>(result.getAddress(),
                                                 BsonDocumentWrapperHelper.<T>toList(result.getResponse().getArray("retval")));
             }
         };
     }
 
-    private Function<CommandResult, MongoAsyncCursor<T>> asyncTransformer() {
-        return new Function<CommandResult, MongoAsyncCursor<T>>() {
+    private Function<CommandResult<BsonDocument>, MongoAsyncCursor<T>> asyncTransformer() {
+        return new Function<CommandResult<BsonDocument>, MongoAsyncCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MongoAsyncCursor<T> apply(final CommandResult result) {
+            public MongoAsyncCursor<T> apply(final CommandResult<BsonDocument> result) {
                 return new InlineMongoAsyncCursor<T>(BsonDocumentWrapperHelper.<T>toList(result.getResponse().getArray("retval")));
             }
         };
     }
-
 
     private BsonDocument getCommand() {
 

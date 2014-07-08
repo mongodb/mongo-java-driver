@@ -77,7 +77,7 @@ public interface MongoDatabase {
      * @return an Observable representing the completion of the command. It will report exactly one event when the command completes
      * successfully.
      */
-    Observable<CommandResult> executeCommand(Document commandDocument);
+    Observable<CommandResult<Document>> executeCommand(Document commandDocument);
 
     /**
      * @return the DatabaseAdministration that provides admin methods that can be performed

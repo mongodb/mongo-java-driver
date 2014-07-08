@@ -16,16 +16,17 @@
 
 package org.mongodb.operation;
 
+import org.bson.BsonDocument;
 import org.mongodb.CommandResult;
 import org.mongodb.Function;
 
 final class FindAndModifyHelper {
 
-    static <T> Function<CommandResult, T> transformer() {
-        return new Function<CommandResult, T>() {
+    static <T> Function<CommandResult<BsonDocument>, T> transformer() {
+        return new Function<CommandResult<BsonDocument>, T>() {
             @SuppressWarnings("unchecked")
             @Override
-            public T apply(final CommandResult result) {
+            public T apply(final CommandResult<BsonDocument> result) {
                 if (!result.getResponse().isDocument("value")) {
                     return null;
                 }

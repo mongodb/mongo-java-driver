@@ -18,6 +18,7 @@ package org.mongodb.protocol;
 
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
@@ -41,30 +42,31 @@ import static org.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
 import static org.mongodb.protocol.ProtocolHelper.getCommandFailureException;
 import static org.mongodb.protocol.ProtocolHelper.getMessageSettings;
 
-public class CommandProtocol implements Protocol<CommandResult> {
+public class CommandProtocol<T> implements Protocol<CommandResult<T>> {
 
     public static final Logger LOGGER = Loggers.getLogger("protocol.command");
 
     private final MongoNamespace namespace;
     private final BsonDocument command;
-    private final Decoder<BsonDocument> commandResultDecoder;
+    private final Decoder<T> decoder;
+    private final Decoder<BsonDocument> commandResultDecoder = new BsonDocumentCodec();
     private final EnumSet<QueryFlag> queryFlags;
     private final FieldNameValidator fieldNameValidator;
 
     public CommandProtocol(final String database, final BsonDocument command, final EnumSet<QueryFlag> queryFlags,
-                           final FieldNameValidator fieldNameValidator, final Decoder<BsonDocument> commandResultDecoder) {
+                           final FieldNameValidator fieldNameValidator, final Decoder<T> decoder) {
         this.queryFlags = queryFlags;
         this.fieldNameValidator = fieldNameValidator;
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
+        this.decoder = decoder;
         this.command = command;
-        this.commandResultDecoder = commandResultDecoder;
     }
 
-    public CommandResult execute(final Connection connection) {
+    public CommandResult<T> execute(final Connection connection) {
         LOGGER.debug(format("Sending command {%s : %s} to database %s on connection [%s] to server %s",
                             command.keySet().iterator().next(), command.values().iterator().next(),
                             namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
-        CommandResult commandResult = receiveMessage(connection, sendMessage(connection).getId());
+        CommandResult<T> commandResult = receiveMessage(connection, sendMessage(connection).getId());
         LOGGER.debug("Command execution completed with status " + commandResult.isOk());
         return commandResult;
     }
@@ -82,7 +84,7 @@ public class CommandProtocol implements Protocol<CommandResult> {
         }
     }
 
-    private CommandResult receiveMessage(final Connection connection, final int messageId) {
+    private CommandResult<T> receiveMessage(final Connection connection, final int messageId) {
         ResponseBuffers responseBuffers = connection.receiveMessage(messageId);
         try {
             ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, commandResultDecoder, messageId);
@@ -92,31 +94,29 @@ public class CommandProtocol implements Protocol<CommandResult> {
         }
     }
 
-    public MongoFuture<CommandResult> executeAsync(final Connection connection) {
+    public MongoFuture<CommandResult<T>> executeAsync(final Connection connection) {
         LOGGER.debug(format("Asynchronously sending command {%s : %s} to database %s on connection [%s] to server %s",
                             command.keySet().iterator().next(), command.values().iterator().next(),
                             namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
-        SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
+        SingleResultFuture<CommandResult<T>> retVal = new SingleResultFuture<CommandResult<T>>();
 
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags, fieldNameValidator,
                                                     getMessageSettings(connection.getServerDescription()));
         encodeMessageToBuffer(message, buffer);
 
-        CommandResultCallback receiveCallback = new CommandResultCallback(new SingleResultFutureCallback<CommandResult>(retVal),
-                                                                          commandResultDecoder,
-                                                                          message.getId(),
-                                                                          connection.getServerAddress());
-        connection.sendMessageAsync(buffer.getByteBuffers(),
-                                    message.getId(),
-                                    new SendMessageCallback<CommandResult>(connection, buffer, message.getId(), retVal, receiveCallback));
+        CommandResultCallback<T> receiveCallback = new CommandResultCallback<T>(
+                new SingleResultFutureCallback<CommandResult<T>>(retVal), decoder, commandResultDecoder,
+                message.getId(), connection.getServerAddress());
+        connection.sendMessageAsync(buffer.getByteBuffers(), message.getId(),
+                new SendMessageCallback<CommandResult<T>>(connection, buffer, message.getId(),
+                        retVal, receiveCallback));
         return retVal;
     }
 
-    private CommandResult createCommandResult(final ReplyMessage<BsonDocument> replyMessage, final ServerAddress serverAddress) {
-        CommandResult commandResult = new CommandResult(serverAddress,
-                                                        replyMessage.getDocuments().get(0),
-                                                        replyMessage.getElapsedNanoseconds());
+    private CommandResult<T> createCommandResult(final ReplyMessage<BsonDocument> replyMessage, final ServerAddress serverAddress) {
+        CommandResult<T> commandResult = new CommandResult<T>(serverAddress, replyMessage.getDocuments().get(0),
+                                                              replyMessage.getElapsedNanoseconds(), decoder);
         if (!commandResult.isOk()) {
             throw getCommandFailureException(commandResult);
         }

@@ -236,16 +236,17 @@ class ServerMonitor {
 
     private ServerDescription lookupServerDescription(final InternalConnection connection) {
         LOGGER.debug(format("Checking status of %s", serverAddress));
-        CommandResult isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
+        CommandResult<BsonDocument> isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
         count++;
         roundTripTimeSum += isMasterResult.getElapsedNanoseconds();
 
-        CommandResult buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
+        CommandResult<BsonDocument> buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
         return createDescription(isMasterResult, buildInfoResult, roundTripTimeSum / count);
     }
 
     @SuppressWarnings("unchecked")
-    private ServerDescription createDescription(final CommandResult commandResult, final CommandResult buildInfoResult,
+    private ServerDescription createDescription(final CommandResult<BsonDocument> commandResult,
+                                                final CommandResult<BsonDocument> buildInfoResult,
                                                 final long roundTripTime) {
         return ServerDescription.builder()
                                 .state(CONNECTED)
@@ -284,7 +285,7 @@ class ServerMonitor {
     }
 
     @SuppressWarnings("unchecked")
-    private static ServerVersion getVersion(final CommandResult buildInfoResult) {
+    private static ServerVersion getVersion(final CommandResult<BsonDocument> buildInfoResult) {
         List<BsonValue> versionArray = buildInfoResult.getResponse().getArray("versionArray").subList(0, 3);
 
         return new ServerVersion(asList(versionArray.get(0).asInt32().getValue(),

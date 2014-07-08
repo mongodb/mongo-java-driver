@@ -58,29 +58,29 @@ public class DistinctOperation implements AsyncReadOperation<BsonArray>, ReadOpe
 
     @Override
     public BsonArray execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getCommand(), binding, transformer());
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), binding, transformer());
     }
 
     @Override
     public MongoFuture<BsonArray> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), binding, asyncTransformer());
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding, asyncTransformer());
     }
 
     @SuppressWarnings("unchecked")
-    private Function<CommandResult, BsonArray> transformer() {
-        return new Function<CommandResult, BsonArray>() {
+    private Function<CommandResult<BsonDocument>, BsonArray> transformer() {
+        return new Function<CommandResult<BsonDocument>, BsonArray>() {
             @Override
-            public BsonArray apply(final CommandResult result) {
+            public BsonArray apply(final CommandResult<BsonDocument> result) {
                 return result.getResponse().getArray("values");
             }
         };
     }
 
-    private Function<CommandResult, BsonArray> asyncTransformer() {
-        return new Function<CommandResult, BsonArray>() {
+    private Function<CommandResult<BsonDocument>, BsonArray> asyncTransformer() {
+        return new Function<CommandResult<BsonDocument>, BsonArray>() {
             @SuppressWarnings("unchecked")
             @Override
-            public BsonArray apply(final CommandResult result) {
+            public BsonArray apply(final CommandResult<BsonDocument> result) {
                 return result.getResponse().getArray("values");
             }
         };

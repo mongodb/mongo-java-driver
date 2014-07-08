@@ -24,22 +24,25 @@ import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.connection.ServerAddress;
 import org.mongodb.protocol.message.ReplyMessage;
 
-abstract class CommandResultBaseCallback extends ResponseCallback {
-    private final Decoder<BsonDocument> decoder;
+abstract class CommandResultBaseCallback<T> extends ResponseCallback {
+    private final Decoder<T> decoder;
+    private final Decoder<BsonDocument> rawDecoder;
 
-    public CommandResultBaseCallback(final Decoder<BsonDocument> decoder, final long requestId, final ServerAddress serverAddress) {
+    public CommandResultBaseCallback(final Decoder<T> decoder, final Decoder<BsonDocument> rawDecoder,
+                                     final long requestId, final ServerAddress serverAddress) {
         super(requestId, serverAddress);
         this.decoder = decoder;
+        this.rawDecoder = rawDecoder;
     }
 
     protected boolean callCallback(final ResponseBuffers responseBuffers, final MongoException e) {
         try {
             if (e != null || responseBuffers == null) {
-                return callCallback((CommandResult) null, e);
+                return callCallback((CommandResult<T>) null, e);
             } else {
-                ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, decoder, getRequestId());
-                return callCallback(new CommandResult(getServerAddress(), replyMessage.getDocuments().get(0),
-                                                      replyMessage.getElapsedNanoseconds()), null);
+                ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, rawDecoder, getRequestId());
+                return callCallback(new CommandResult<T>(getServerAddress(), replyMessage.getDocuments().get(0),
+                                    replyMessage.getElapsedNanoseconds(), decoder), null);
             }
         } finally {
             if (responseBuffers != null) {
@@ -48,5 +51,5 @@ abstract class CommandResultBaseCallback extends ResponseCallback {
         }
     }
 
-    protected abstract boolean callCallback(CommandResult commandResult, MongoException e);
+    protected abstract boolean callCallback(CommandResult<T> commandResult, MongoException e);
 }

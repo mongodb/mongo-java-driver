@@ -66,7 +66,7 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
      */
     @Override
     public Void execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol("admin", getCommand(), binding, new VoidTransformer<CommandResult>());
+        return executeWrappedCommandProtocol("admin", getCommand(), binding, new VoidTransformer<CommandResult<BsonDocument>>());
     }
 
     /**
@@ -78,7 +78,7 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
      */
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync("admin", getCommand(), binding, new VoidTransformer<CommandResult>());
+        return executeWrappedCommandProtocolAsync("admin", getCommand(), binding, new VoidTransformer<CommandResult<BsonDocument>>());
     }
 
     private BsonDocument getCommand() {

@@ -41,7 +41,7 @@ public class WriteConcernException extends MongoException {
     }
 
     WriteConcernException(final MongoWriteException e) {
-        this(new CommandResult(DBObjects.toDBObject(e.getCommandResult().getResponse()), new ServerAddress(e.getServerAddress())),
+        this(new CommandResult(DBObjects.toDBObject(e.getResponse()), new ServerAddress(e.getServerAddress())),
              e.getMessage());
     }
 

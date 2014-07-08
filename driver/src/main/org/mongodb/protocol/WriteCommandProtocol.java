@@ -68,7 +68,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
             BaseWriteCommandMessage nextMessage = sendMessage(connection, message, batchNum);
             int itemCount = nextMessage != null ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
             IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
-            CommandResult commandResult = receiveMessage(connection, message);
+            CommandResult<BsonDocument> commandResult = receiveMessage(connection, message);
 
             if (nextMessage != null || batchNum > 1) {
                 getLogger().debug(format("Received response for batch %d", batchNum));
@@ -111,9 +111,9 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
                 getLogger().debug(format("Asynchronously sending batch %d", batchNum));
             }
 
-            sendMessageAsync(connection, message.getId(), buffer).register(new SingleResultCallback<CommandResult>() {
+            sendMessageAsync(connection, message.getId(), buffer).register(new SingleResultCallback<CommandResult<BsonDocument>>() {
                 @Override
-                public void onResult(final CommandResult result, final MongoException e) {
+                public void onResult(final CommandResult<BsonDocument> result, final MongoException e) {
                     buffer.close();
                     if (e != null) {
                         future.init(null, e);
@@ -160,13 +160,15 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
         }
     }
 
-    private CommandResult receiveMessage(final Connection connection, final RequestMessage message) {
+    private CommandResult<BsonDocument> receiveMessage(final Connection connection, final RequestMessage message) {
         ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
                                                                                      message.getId());
-            CommandResult commandResult = new CommandResult(connection.getServerAddress(), replyMessage.getDocuments().get(0),
-                                                            replyMessage.getElapsedNanoseconds());
+            CommandResult<BsonDocument> commandResult = new CommandResult<BsonDocument>(connection.getServerAddress(),
+                                                                                        replyMessage.getDocuments().get(0),
+                                                                                        replyMessage.getElapsedNanoseconds(),
+                                                                                        new BsonDocumentCodec());
             if (!commandResult.isOk()) {
                 throw getCommandFailureException(commandResult);
             }
@@ -178,16 +180,17 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
         }
     }
 
-    private MongoFuture<CommandResult> sendMessageAsync(final Connection connection, final int messageId,
-                                                        final ByteBufferOutputBuffer buffer) {
-        SingleResultFuture<CommandResult> future = new SingleResultFuture<CommandResult>();
+    private MongoFuture<CommandResult<BsonDocument>> sendMessageAsync(final Connection connection, final int messageId,
+                                                                      final ByteBufferOutputBuffer buffer) {
+        SingleResultFuture<CommandResult<BsonDocument>> future = new SingleResultFuture<CommandResult<BsonDocument>>();
 
-        CommandResultCallback receiveCallback = new CommandResultCallback(new SingleResultFutureCallback<CommandResult>(future),
-                                                                          new BsonDocumentCodec(),
-                                                                          messageId,
-                                                                          connection.getServerAddress());
+        CommandResultCallback<BsonDocument> receiveCallback
+            = new CommandResultCallback<BsonDocument>(new SingleResultFutureCallback<CommandResult<BsonDocument>>(future),
+                                                      new BsonDocumentCodec(), new BsonDocumentCodec(), messageId,
+                                                      connection.getServerAddress());
         connection.sendMessageAsync(buffer.getByteBuffers(), messageId,
-                                    new SendMessageCallback<CommandResult>(connection, buffer, messageId, future, receiveCallback));
+                                    new SendMessageCallback<CommandResult<BsonDocument>>(connection, buffer, messageId, future,
+                                                                                         receiveCallback));
 
         return future;
     }

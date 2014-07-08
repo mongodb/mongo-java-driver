@@ -93,10 +93,10 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             public MongoFuture<Void> call(final Connection connection) {
                 final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    executeWrappedCommandProtocolAsync(namespace, getCommand(), connection)
-                    .register(new SingleResultCallback<CommandResult>() {
+                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), connection)
+                    .register(new SingleResultCallback<CommandResult<BsonDocument>>() {
                         @Override
-                        public void onResult(final CommandResult result, final MongoException e) {
+                        public void onResult(final CommandResult<BsonDocument> result, final MongoException e) {
                             future.init(null, translateException(e));
                         }
                     });
@@ -168,7 +168,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
 
     private MongoServerException checkForDuplicateKeyError(final MongoCommandFailureException e) {
         if (DUPLICATE_KEY_ERROR_CODES.contains(e.getErrorCode())) {
-            return new MongoDuplicateKeyException(e.getErrorCode(), e.getErrorMessage(), e.getCommandResult());
+            return new MongoDuplicateKeyException(e.getErrorCode(), e.getErrorMessage(), e.getResponse(), e.getServerAddress());
         } else {
             return e;
         }

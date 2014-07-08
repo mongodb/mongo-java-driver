@@ -76,7 +76,7 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
             public MongoFuture<Void> call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     return executeWrappedCommandProtocolAsync(user.getCredential().getSource(), getCommand(), connection,
-                                                              new VoidTransformer<CommandResult>());
+                                                              new VoidTransformer<CommandResult<BsonDocument>>());
                 } else {
                     return executeProtocolAsync(getCollectionBasedProtocol(), connection, new VoidTransformer<WriteResult>());
                 }
