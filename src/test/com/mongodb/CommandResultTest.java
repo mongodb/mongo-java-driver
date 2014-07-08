@@ -129,4 +129,41 @@ public class CommandResultTest extends TestCase {
             assertEquals(5000, e.getCode());
         }
     }
+
+
+    /**
+     * mongoS return an "err" but don't return a "code" for duplicate key errors
+     */
+    @Test
+    public void testCommandDuplicateKeyWithoutCode() throws UnknownHostException {
+        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
+        final DBObject result = new BasicDBObject("ok", 1.0).append("err", "E11000 duplicate key error index");
+        commandResult.putAll(result);
+        assertEquals(MongoException.DuplicateKey.class, commandResult.getException().getClass());
+        try {
+            commandResult.throwOnError();
+            fail("Should throw");
+        } catch (MongoException.DuplicateKey e) {
+            assertEquals(commandResult, e.getCommandResult());
+        }
+    }
+
+    /**
+     * mongoS return an "err" but causedBy might be "E11000"
+     */
+    @Test
+    public void testCommandDuplicateKeyInnerException() throws UnknownHostException {
+        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
+        final DBObject result = new BasicDBObject("ok", 1.0).append("err", "error inserting 1 documents to shard " +
+            " :: caused by :: " +
+            "E11000 duplicate key error index");
+        commandResult.putAll(result);
+        assertEquals(MongoException.DuplicateKey.class, commandResult.getException().getClass());
+        try {
+            commandResult.throwOnError();
+            fail("Should throw");
+        } catch (MongoException.DuplicateKey e) {
+            assertEquals(commandResult, e.getCommandResult());
+        }
+    }
 }
