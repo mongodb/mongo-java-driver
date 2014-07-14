@@ -211,6 +211,24 @@ project(':bson') {
         }
     }
 }
+
+project(':jackson-codec') {
+    sourceSets {
+        test {
+            groovy { srcDirs = ['src/test'] }
+            java { srcDirs = ['src/test'] }
+        }
+    }
+
+    dependencies {
+        compile project(':bson')
+        compile project(':driver-core')
+        compile "com.fasterxml.jackson.core:jackson-core:2.4.1.1"
+        compile "com.fasterxml.jackson.core:jackson-databind:2.4.1.3"
+    }
+
+}
+
 project(':driver-core') {
     sourceSets {
         test {
