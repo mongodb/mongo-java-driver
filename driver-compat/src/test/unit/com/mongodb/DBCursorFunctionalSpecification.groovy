@@ -48,10 +48,45 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
         when:
         dbCursor = collection.find().hint(new BasicDBObject('a', 1))
-        def explainDocument = dbCursor.explain()
 
         then:
-        explainDocument.get('cursor') == 'BtreeCursor a_1'
+        dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
+
+        when:
+        dbCursor = collection.find().addSpecial('$hint', new BasicDBObject('a', 1))
+
+        then:
+        dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
+    }
+
+    def 'should use provided string hints for queries'() {
+        given:
+        collection.createIndex(new BasicDBObject('a', 1))
+
+        when:
+        dbCursor = collection.find().hint('a_1')
+
+        then:
+        dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
+
+        when:
+        dbCursor = collection.find().addSpecial('$hint', 'a_1')
+
+        then:
+        dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
+    }
+
+
+    def 'should be able to use addSpecial with $explain'() {
+        given:
+        collection.createIndex(new BasicDBObject('a', 1))
+
+        when:
+        dbCursor = collection.find().hint(new BasicDBObject('a', 1))
+        dbCursor.addSpecial('$explain', 1)
+
+        then:
+        dbCursor.next().get('cursor') == 'BtreeCursor a_1'
     }
 
     def 'should return results in the order they are on disk when natural sort applied'() {
@@ -61,13 +96,18 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.insert(new BasicDBObject('name', 'Bob'))
 
         when:
-        DBCursor sortedCollection = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
-                                              .sort(new BasicDBObject('$natural', 1))
+        dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
+                             .sort(new BasicDBObject('$natural', 1))
 
         then:
-        sortedCollection.next().get('name') == 'Chris'
-        sortedCollection.next().get('name') == 'Adam'
-        sortedCollection.next().get('name') == 'Bob'
+        dbCursor *.get('name') == ['Chris', 'Adam', 'Bob']
+
+        when:
+        dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
+                             .addSpecial('$natural', 1)
+
+        then:
+        dbCursor *.get('name') == ['Chris', 'Adam', 'Bob']
     }
 
     def 'should return results in the reverse order they are on disk when natural sort of minus one applied'() {
@@ -77,13 +117,18 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.insert(new BasicDBObject('name', 'Bob'))
 
         when:
-        DBCursor sortedCollection = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
-                                              .sort(new BasicDBObject('$natural', -1))
+        dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
+                             .sort(new BasicDBObject('$natural', -1))
 
         then:
-        sortedCollection.next().get('name') == 'Bob'
-        sortedCollection.next().get('name') == 'Adam'
-        sortedCollection.next().get('name') == 'Chris'
+        dbCursor *.get('name') == ['Bob', 'Adam', 'Chris']
+
+        when:
+        dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
+                             .addSpecial('$natural', -1)
+
+        then:
+        dbCursor *.get('name') == ['Bob', 'Adam', 'Chris']
     }
 
     def 'should sort in reverse order'() {
@@ -124,24 +169,17 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.insert(new BasicDBObject('_id', 4).append('name', 'Adam'))
 
         when:
-        def cursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
+        dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
                                .sort(new BasicDBObject('name', 1).append('_id', 1))
 
         then:
-        def first = cursor.next()
-        first.get('name') == 'Adam'
-        first.get('_id') == 2
-        def second = cursor.next()
-        second.get('name') == 'Adam'
-        second.get('_id') == 4
-        def third = cursor.next()
-        third.get('name') == 'Adam'
-        third.get('_id') == 5
-        def fourth = cursor.next()
-        fourth.get('name') == 'Bob'
-        fourth.get('_id') == 3
-        def fifth = cursor.next()
-        fifth.get('name') == 'Chris'
-        fifth.get('_id') == 1
+        dbCursor.collect { it -> [ it.get('name'), it.get('_id') ] } == [['Adam', 2], ['Adam', 4], ['Adam', 5], ['Bob', 3], ['Chris', 1]]
+
+        when:
+        dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
+                                      .addSpecial('$orderby', new BasicDBObject('name', 1).append('_id', 1))
+
+        then:
+        dbCursor.collect { it -> [ it.get('name'), it.get('_id') ] } == [['Adam', 2], ['Adam', 4], ['Adam', 5], ['Bob', 3], ['Chris', 1]]
     }
 }

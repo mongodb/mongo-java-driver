@@ -201,18 +201,32 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
         if ("$comment".equals(name)) {
             comment(o.toString());
+        } else if ("$explain".equals(name)) {
+            find.explain();
+        } else if ("$hint".equals(name)) {
+            if (o instanceof String) {
+                hint((String) o);
+            } else {
+                hint((DBObject) o);
+            }
         } else if ("$maxScan".equals(name)) {
             maxScan(((Number) o).intValue());
+        } else if ("$maxTimeMS".equals(name)) {
+            maxTime(((Number) o).longValue(), MILLISECONDS);
         } else if ("$max".equals(name)) {
-            max(((DBObject) o));
+            max((DBObject) o);
         } else if ("$min".equals(name)) {
-            min(((DBObject) o));
+            min((DBObject) o);
+        } else if ("$orderby".equals(name)) {
+            sort((DBObject) o);
         } else if ("$returnKey".equals(name)) {
             returnKey();
         } else if ("$showDiskLoc".equals(name)) {
             showDiskLoc();
         } else if ("$snapshot".equals(name)) {
             snapshot();
+        } else if ("$natural".equals(name)) {
+            sort(new BasicDBObject("$natural", ((Number) o).intValue()));
         } else {
             throw new IllegalArgumentException(name + "is not a supported modifier");
         }
