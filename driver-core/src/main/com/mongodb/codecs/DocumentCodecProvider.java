@@ -78,10 +78,10 @@ public class DocumentCodecProvider implements CodecProvider {
             return (Codec<T>) new DocumentCodec(registry, bsonTypeClassMap);
         }
 
+
         if (List.class.isAssignableFrom(clazz)) {
             return (Codec<T>) new ListCodec(registry, bsonTypeClassMap);
         }
-
         return null;
     }
 

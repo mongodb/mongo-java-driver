@@ -16,6 +16,9 @@
 
 package org.bson.codecs;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.bson.BsonWriter;
 
 /**
@@ -29,6 +32,8 @@ public final class EncoderContext {
     private static final EncoderContext DEFAULT_CONTEXT = EncoderContext.builder().build();
 
     private final boolean encodingCollectibleDocument;
+
+    private Map<String, Object> context;
 
     /**
      * Create a builder.
@@ -44,8 +49,10 @@ public final class EncoderContext {
      */
     public static final class Builder {
         private boolean encodingCollectibleDocument;
+        private Map<String, Object> context;
 
         private Builder() {
+            context = new HashMap<String, Object>();
         }
 
         /**
@@ -60,7 +67,20 @@ public final class EncoderContext {
         }
 
         /**
+         * Method to add arbitrary encoding context information to the context
+         *
+         * @param key   identifier for the configuration
+         * @param value configuration value
+         * @return
+         */
+        public Builder addParameter(final String key, final Object value) {
+            context.put(key, value);
+            return this;
+        }
+
+        /**
          * Build an instance of {@code EncoderContext}.
+         *
          * @return the encoder context
          */
         public EncoderContext build() {
@@ -83,9 +103,9 @@ public final class EncoderContext {
      * Creates a child context based on this and serializes the value with it to the writer.
      *
      * @param encoder the encoder to encode value with
-     * @param writer the writer to encode to
-     * @param value the value to encode
-     * @param <T> the type of the value
+     * @param writer  the writer to encode to
+     * @param value   the value to encode
+     * @param <T>     the type of the value
      */
     public <T> void encodeWithChildContext(final Encoder<T> encoder, final BsonWriter writer, final T value) {
         encoder.encode(writer, value, DEFAULT_CONTEXT);
@@ -93,5 +113,17 @@ public final class EncoderContext {
 
     private EncoderContext(final Builder builder) {
         encodingCollectibleDocument = builder.encodingCollectibleDocument;
+        context = new HashMap<String, Object>(builder.context);
+    }
+
+    /**
+     * Returns the encoding context information associated with the given key, or null if no such key exists in the
+     * context
+     *
+     * @param key
+     * @return object associated with the given key or null if no such key exists
+     */
+    public Object getParameter(final String key) {
+        return context.get(key);
     }
 }

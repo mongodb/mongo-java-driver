@@ -16,13 +16,18 @@
 
 package org.bson.codecs;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
- * The context for decoding values to BSON.  Currently this is a placeholder, as there is nothing needed yet.
+ * The context for decoding values to BSON. Currently this is a placeholder, as there is nothing needed yet.
  *
  * @see org.bson.codecs.Decoder
  * @since 3.0
  */
 public final class DecoderContext {
+    private Map<String, Object> context;
+
     /**
      * Create a builder.
      *
@@ -36,11 +41,27 @@ public final class DecoderContext {
      * A builder for {@code DecoderContext} instances.
      */
     public static final class Builder {
+        private Map<String, Object> context;
+
         private Builder() {
+            context = new HashMap<String, Object>();
+        }
+
+        /**
+         * Method to add arbitrary decoding context information to the context
+         *
+         * @param key   identifier for the configuration
+         * @param value configuration value
+         * @return
+         */
+        public Builder addParameter(final String key, final Object value) {
+            context.put(key, value);
+            return this;
         }
 
         /**
          * Build an instance of {@code DecoderContext}.
+         *
          * @return the decoder context
          */
         public DecoderContext build() {
@@ -49,5 +70,17 @@ public final class DecoderContext {
     }
 
     private DecoderContext(final Builder builder) {
+        context = new HashMap<String, Object>(builder.context);
+    }
+
+    /**
+     * Returns the decoding context information associated with the given key, or null if no such key exists in the
+     * context
+     *
+     * @param key
+     * @return object associated with the given key or null if no such key exists
+     */
+    public Object getParameter(final String key) {
+        return context.get(key);
     }
 }
