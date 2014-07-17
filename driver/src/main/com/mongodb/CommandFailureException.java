@@ -17,10 +17,12 @@
 package com.mongodb;
 
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.json.JsonWriter;
-import org.mongodb.CommandResult;
+import org.mongodb.connection.ServerAddress;
 
 import java.io.StringWriter;
 
@@ -31,39 +33,32 @@ import static java.lang.String.format;
  */
 public class CommandFailureException extends MongoServerException {
     private static final long serialVersionUID = -1180715413196161037L;
-    private final CommandResult commandResult;
+    private final BsonDocument response;
 
     /**
      * Construct a new instance with the CommandResult from a failed command
      *
-     * @param commandResult the result of running the command
+     * @param response the command response
+     * @param address the address of the server that generated the response
      */
-    public CommandFailureException(final CommandResult commandResult) {
-        super(format("Command failed with error %s: '%s' on server %s. The full response is %s", commandResult.getErrorCode(),
-                     commandResult.getErrorMessage(), commandResult.getAddress(),
-                     getResponseAsJson(commandResult.getResponse())),
-              commandResult.getAddress());
-        this.commandResult = commandResult;
+    public CommandFailureException(final BsonDocument response, final ServerAddress address) {
+        super(format("Command failed with error %s: '%s' on server %s. The full response is %s", getErrorCodeFromResponse(response),
+                     getErrorMessageFromResponse(response), address, getResponseAsJson(response)), address);
+        this.response = response;
     }
 
     @Override
     public int getErrorCode() {
-        return commandResult.getErrorCode();
+        return getErrorCodeFromResponse(response);
     }
 
     @Override
     public String getErrorMessage() {
-        return commandResult.getErrorMessage();
+        return getErrorMessageFromResponse(response);
     }
 
-    /**
-     * Gets the command result.
-     *
-     * @return the command result
-     * @since 3.0
-     */
-    public CommandResult getResult() {
-        return commandResult;
+    BsonDocument getResponse() {
+        return response;
     }
 
     private static String getResponseAsJson(final BsonDocument commandResponse) {
@@ -72,4 +67,21 @@ public class CommandFailureException extends MongoServerException {
         new BsonDocumentCodec().encode(jsonWriter, commandResponse, EncoderContext.builder().build());
         return writer.toString();
     }
+
+    private static int getErrorCodeFromResponse(final BsonDocument response) {
+        if (response.containsKey("code")) {
+            return ((BsonInt32) response.get("code")).getValue();
+        } else {
+            return -1;
+        }
+    }
+
+    private static String getErrorMessageFromResponse(final BsonDocument response) {
+        if (response.containsKey("errmsg")) {
+            return ((BsonString) response.get("errmsg")).getValue();
+        } else {
+            return null;
+        }
+    }
+
 }

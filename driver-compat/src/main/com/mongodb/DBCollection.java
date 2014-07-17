@@ -1274,7 +1274,7 @@ public class DBCollection {
      */
     public CommandResult explainAggregate(final List<DBObject> pipeline, final AggregationOptions options) {
         return new CommandResult(execute(new AggregateExplainOperation(getNamespace(), preparePipeline(pipeline), options.toNew()),
-                                         primaryPreferred()));
+                                         primaryPreferred()).getResponse());
     }
 
     @SuppressWarnings("unchecked")

@@ -80,7 +80,7 @@ final class CommandHelper {
         CommandResult commandResult = new CommandResult(serverAddress, replyMessage.getDocuments().get(0)
         );
         if (!commandResult.isOk()) {
-            throw new CommandFailureException(commandResult);
+            throw new CommandFailureException(commandResult.getResponse(), commandResult.getAddress());
         }
 
         return commandResult;

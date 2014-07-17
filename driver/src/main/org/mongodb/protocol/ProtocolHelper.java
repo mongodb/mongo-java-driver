@@ -45,7 +45,7 @@ final class ProtocolHelper {
 
     static WriteResult getWriteResult(final CommandResult commandResult) {
         if (!commandResult.isOk()) {
-            throw new CommandFailureException(commandResult);
+            throw new CommandFailureException(commandResult.getResponse(), commandResult.getAddress());
         }
 
         if (hasWriteError(commandResult.getResponse())) {
@@ -67,7 +67,7 @@ final class ProtocolHelper {
         if (EXECUTION_TIMEOUT_ERROR_CODES.contains(commandResult.getErrorCode())) {
             return new MongoExecutionTimeoutException(commandResult.getErrorCode(), commandResult.getErrorMessage());
         }
-        return new CommandFailureException(commandResult);
+        return new CommandFailureException(commandResult.getResponse(), commandResult.getAddress());
     }
 
     static MongoException getQueryFailureException(final ServerAddress serverAddress, final Document errorDocument) {

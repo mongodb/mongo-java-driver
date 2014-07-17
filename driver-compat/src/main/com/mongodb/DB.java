@@ -358,7 +358,7 @@ public class DB {
         try {
             return executeCommand(wrap(cmd, encoder), readPreference);
         } catch (CommandFailureException ex) {
-            return new CommandResult(ex.getResult());
+            return new CommandResult(ex.getResponse(), new ServerAddress(ex.getServerAddress()));
         }
     }
 
@@ -566,12 +566,11 @@ public class DB {
     }
 
     CommandResult executeCommand(final BsonDocument commandDocument) {
-        return new CommandResult(getMongo().execute(new CommandWriteOperation(getName(), commandDocument)));
+        return new CommandResult(getMongo().execute(new CommandWriteOperation(getName(), commandDocument)).getResponse());
     }
 
     CommandResult executeCommand(final BsonDocument commandDocument, final ReadPreference readPreference) {
-        return new CommandResult(getMongo().execute(new CommandReadOperation(getName(), commandDocument),
-                                                    readPreference));
+        return new CommandResult(getMongo().execute(new CommandReadOperation(getName(), commandDocument), readPreference).getResponse());
     }
 
     Bytes.OptionHolder getOptionHolder() {

@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import org.bson.BsonDocument;
+
 import static com.mongodb.DBObjects.toDBObject;
 import static org.mongodb.assertions.Assertions.notNull;
 
@@ -24,16 +26,17 @@ import static org.mongodb.assertions.Assertions.notNull;
  */
 public class CommandResult extends BasicDBObject {
     private static final long serialVersionUID = 5907909423864204060L;
-    private final ServerAddress host;
-    private final org.mongodb.CommandResult wrapped;
+    private final BsonDocument response;
+    private final ServerAddress address;
 
-    CommandResult(final org.mongodb.CommandResult commandResult) {
-        wrapped = notNull("commandResult", commandResult);
-        notNull("serverAddress", commandResult.getAddress());
-        host = new ServerAddress(commandResult.getAddress());
-        // so it is shown in toString/debug
-        put("serverUsed", host.toString());
-        putAll(toDBObject(commandResult.getResponse()));
+    CommandResult(final BsonDocument response) {
+        this(response, null);
+    }
+
+    CommandResult(final BsonDocument response, final ServerAddress address) {
+        this.address = address;
+        this.response = notNull("response", response);
+        putAll(toDBObject(response));
     }
 
     /**
@@ -72,7 +75,7 @@ public class CommandResult extends BasicDBObject {
      */
     public MongoException getException() {
         if (!ok()) {
-            return new CommandFailureException(wrapped);
+            return new CommandFailureException(response, address.toNew());
         }
 
         return null;
@@ -87,14 +90,5 @@ public class CommandResult extends BasicDBObject {
         if (!ok()) {
             throw getException();
         }
-    }
-
-    /**
-     * Gets the server that the command result came from.
-     *
-     * @return the server address
-     */
-    public ServerAddress getServerUsed() {
-        return host;
     }
 }

@@ -19,7 +19,6 @@ package com.mongodb;
 import category.ReplicaSet;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.operation.UserExistsOperation;
@@ -29,7 +28,6 @@ import java.net.UnknownHostException;
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static com.mongodb.Fixture.getMongoClient;
-import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.secondary;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.containsString;
@@ -197,7 +195,7 @@ public class DBTest extends DatabaseTestCase {
     @Test
     public void shouldExecuteCommand() {
         CommandResult commandResult = database.command(new BasicDBObject("isMaster", 1));
-        assertThat(commandResult, hasFields(new String[]{"ismaster", "maxBsonObjectSize", "ok", "serverUsed"}));
+        assertThat(commandResult, hasFields(new String[]{"ismaster", "maxBsonObjectSize", "ok"}));
     }
 
     @Test(expected = MongoExecutionTimeoutException.class)
@@ -223,7 +221,7 @@ public class DBTest extends DatabaseTestCase {
     @Test
     public void shouldNotThrowAnExceptionOnCommandFailure() {
         CommandResult commandResult = database.command(new BasicDBObject("collStats", "a" + System.currentTimeMillis()));
-        assertThat(commandResult, hasFields(new String[]{"serverUsed", "ok", "errmsg"}));
+        assertThat(commandResult, hasFields(new String[]{"ok", "errmsg"}));
     }
 
     @Test
@@ -381,38 +379,5 @@ public class DBTest extends DatabaseTestCase {
         // Then
         assertThat(commandResult.ok(), is(true));
         assertThat((String) commandResult.get("serverUsed"), not(containsString(":27017")));
-    }
-
-    @Test
-    @Category(ReplicaSet.class)
-    public void shouldRunCommandAgainstPrimaryWhenOnlyPrimaryReadPreferenceSpecified() throws UnknownHostException {
-        // When
-        CommandResult commandResult = database.command(new BasicDBObject("dbstats", 1), primary());
-
-        // Then
-        assertThat(commandResult.ok(), is(true));
-        assertThat((String) commandResult.get("serverUsed"), containsString(":27017"));
-    }
-
-    @Test
-    @Category(ReplicaSet.class)
-    @Ignore("This is intermittent, and needs fixing.")
-    //TODO: worryingly broken
-    public void shouldOverrideDefaultReadPreferenceWhenCommandReadPreferenceSpecified() throws UnknownHostException {
-        // Given
-        DB databaseWithSecondaryReadPreference = getMongoClient().getDB("DatabaseForReadPreferenceChange-" + System.nanoTime());
-        databaseWithSecondaryReadPreference.setReadPreference(secondary());
-
-        try {
-            // When
-            CommandResult commandResult = databaseWithSecondaryReadPreference.command(new BasicDBObject("dbstats", 1), primary());
-
-            // Then
-            assertThat(commandResult.ok(), is(true));
-            assertThat((String) commandResult.get("serverUsed"), containsString(":27018"));
-        } finally {
-            // Finally
-            databaseWithSecondaryReadPreference.dropDatabase();
-        }
     }
 }
