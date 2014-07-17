@@ -38,8 +38,8 @@ abstract class CommandResultBaseCallback extends ResponseCallback {
                 return callCallback((CommandResult) null, e);
             } else {
                 ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, decoder, getRequestId());
-                return callCallback(new CommandResult(getServerAddress(), replyMessage.getDocuments().get(0),
-                                                      replyMessage.getElapsedNanoseconds()), null);
+                return callCallback(new CommandResult(getServerAddress(), replyMessage.getDocuments().get(0)
+                ), null);
             }
         } finally {
             if (responseBuffers != null) {

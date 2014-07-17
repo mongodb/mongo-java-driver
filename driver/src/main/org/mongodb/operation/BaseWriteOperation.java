@@ -157,7 +157,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
     }
 
     private CommandResult manufactureCommandResult(final BulkWriteException bulkWriteException) {
-        return new CommandResult(bulkWriteException.getServerAddress(), new BsonDocument(), 0);  // TODO, this is fake
+        return new CommandResult(bulkWriteException.getServerAddress(), new BsonDocument());  // TODO, this is fake
     }
 
     private com.mongodb.WriteResult manufactureWriteResult(final BulkWriteException bulkWriteException) {

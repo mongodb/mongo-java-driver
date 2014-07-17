@@ -64,6 +64,14 @@ class ServerMonitorSpecification extends FunctionalSpecification {
         serverMonitor.close();
     }
 
+    def 'should have positive round trip time'() {
+        when:
+        latch.await()
+
+        then:
+        newDescription.roundTripTimeNanos > 0
+    }
+
     def 'should return server version'() {
         given:
         CommandResult commandResult = database.executeCommand(new Document('buildinfo', 1), ReadPreference.primary())

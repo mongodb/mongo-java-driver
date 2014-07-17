@@ -115,8 +115,8 @@ public class CommandProtocol implements Protocol<CommandResult> {
 
     private CommandResult createCommandResult(final ReplyMessage<BsonDocument> replyMessage, final ServerAddress serverAddress) {
         CommandResult commandResult = new CommandResult(serverAddress,
-                                                        replyMessage.getDocuments().get(0),
-                                                        replyMessage.getElapsedNanoseconds());
+                                                        replyMessage.getDocuments().get(0)
+        );
         if (!commandResult.isOk()) {
             throw getCommandFailureException(commandResult);
         }

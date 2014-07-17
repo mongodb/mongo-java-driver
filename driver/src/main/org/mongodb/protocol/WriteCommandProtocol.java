@@ -165,8 +165,8 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
         try {
             ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
                                                                                      message.getId());
-            CommandResult commandResult = new CommandResult(connection.getServerAddress(), replyMessage.getDocuments().get(0),
-                                                            replyMessage.getElapsedNanoseconds());
+            CommandResult commandResult = new CommandResult(connection.getServerAddress(), replyMessage.getDocuments().get(0)
+            );
             if (!commandResult.isOk()) {
                 throw getCommandFailureException(commandResult);
             }

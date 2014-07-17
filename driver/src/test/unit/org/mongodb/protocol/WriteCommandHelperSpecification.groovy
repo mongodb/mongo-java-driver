@@ -144,6 +144,6 @@ class WriteCommandHelperSpecification extends Specification {
 
 
     def getCommandResult(BsonDocument document) {
-        new CommandResult(new ServerAddress(), document, 1)
+        new CommandResult(new ServerAddress(), document)
     }
 }

@@ -144,8 +144,8 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
         try {
             ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
                                                                                      requestMessage.getId());
-            return ProtocolHelper.getWriteResult(new CommandResult(connection.getServerAddress(), replyMessage.getDocuments().get(0),
-                                                                   replyMessage.getElapsedNanoseconds()));
+            return ProtocolHelper.getWriteResult(new CommandResult(connection.getServerAddress(), replyMessage.getDocuments().get(0)
+            ));
         } finally {
             responseBuffers.close();
         }

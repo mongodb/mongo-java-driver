@@ -47,7 +47,7 @@ public class ReplyMessageTest {
 
         BasicInputBuffer headerInputBuffer = new BasicInputBuffer(new ByteBufNIO(headerByteBuffer));
         ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
-        new ReplyMessage<Document>(replyHeader, expectedResponseTo, 100);
+        new ReplyMessage<Document>(replyHeader, expectedResponseTo);
     }
 
     @Test(expected = MongoInternalException.class)
@@ -68,6 +68,6 @@ public class ReplyMessageTest {
 
         BasicInputBuffer headerInputBuffer = new BasicInputBuffer(new ByteBufNIO(headerByteBuffer));
         ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer);
-        new ReplyMessage<Document>(replyHeader, 5, 100);
+        new ReplyMessage<Document>(replyHeader, 5);
     }
 }

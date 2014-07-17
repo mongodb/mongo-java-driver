@@ -77,8 +77,8 @@ final class CommandHelper {
     }
 
     private static CommandResult createCommandResult(final ReplyMessage<BsonDocument> replyMessage, final ServerAddress serverAddress) {
-        CommandResult commandResult = new CommandResult(serverAddress, replyMessage.getDocuments().get(0),
-                                                        replyMessage.getElapsedNanoseconds());
+        CommandResult commandResult = new CommandResult(serverAddress, replyMessage.getDocuments().get(0)
+        );
         if (!commandResult.isOk()) {
             throw new CommandFailureException(commandResult);
         }

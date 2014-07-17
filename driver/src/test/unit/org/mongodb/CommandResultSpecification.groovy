@@ -27,48 +27,48 @@ import spock.lang.Specification
 class CommandResultSpecification extends Specification {
     def 'when ok field is missing then ok property should be false'() {
         expect:
-        !new CommandResult(new ServerAddress(), new BsonDocument(), 1).ok
+        !new CommandResult(new ServerAddress(), new BsonDocument()).ok
     }
 
     def 'when ok field is false then ok property should be false'() {
         expect:
-        !new CommandResult(new ServerAddress(), new BsonDocument('ok', BsonBoolean.FALSE), 1).ok
+        !new CommandResult(new ServerAddress(), new BsonDocument('ok', BsonBoolean.FALSE)).ok
     }
 
     def 'when ok field is true then ok property should be true'() {
         expect:
-        new CommandResult(new ServerAddress(), new BsonDocument('ok', BsonBoolean.TRUE), 1).ok
+        new CommandResult(new ServerAddress(), new BsonDocument('ok', BsonBoolean.TRUE)).ok
     }
 
     def 'when ok field is zero then ok property should be false'() {
         expect:
-        !new CommandResult(new ServerAddress(), new BsonDocument('ok', new BsonDouble(0)), 1).ok
-        !new CommandResult(new ServerAddress(), new BsonDocument('ok', new BsonInt32(0)), 1).ok
+        !new CommandResult(new ServerAddress(), new BsonDocument('ok', new BsonDouble(0))).ok
+        !new CommandResult(new ServerAddress(), new BsonDocument('ok', new BsonInt32(0))).ok
     }
 
     def 'when ok field is one then ok property should be true'() {
         expect:
-        new CommandResult(new ServerAddress(), new BsonDocument('ok', new BsonDouble(1)), 1).ok
-        new CommandResult(new ServerAddress(), new BsonDocument('ok', new BsonInt32(1)), 1).ok
+        new CommandResult(new ServerAddress(), new BsonDocument('ok', new BsonDouble(1))).ok
+        new CommandResult(new ServerAddress(), new BsonDocument('ok', new BsonInt32(1))).ok
     }
 
     def 'when code field is missing then code property should be -1'() {
         expect:
-        new CommandResult(new ServerAddress(), new BsonDocument(), 1).errorCode == -1
+        new CommandResult(new ServerAddress(), new BsonDocument()).errorCode == -1
     }
 
     def 'when code field is present then code property should be equal to it'() {
         expect:
-        new CommandResult(new ServerAddress(), new BsonDocument('code', new BsonInt32(11000)), 1).errorCode == 11000
+        new CommandResult(new ServerAddress(), new BsonDocument('code', new BsonInt32(11000))).errorCode == 11000
     }
 
     def 'when errmsg field is missing then errorMessage property should be null'() {
         expect:
-        new CommandResult(new ServerAddress(), new BsonDocument(), 1).errorMessage == null
+        new CommandResult(new ServerAddress(), new BsonDocument()).errorMessage == null
     }
 
     def 'when errmsg field is present then errorMessage property should equal to it'() {
         expect:
-        new CommandResult(new ServerAddress(), new BsonDocument('errmsg', new BsonString('Hello')), 1).errorMessage == 'Hello'
+        new CommandResult(new ServerAddress(), new BsonDocument('errmsg', new BsonString('Hello'))).errorMessage == 'Hello'
     }
 }

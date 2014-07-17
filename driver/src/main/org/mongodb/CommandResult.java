@@ -28,12 +28,10 @@ import org.mongodb.connection.ServerAddress;
 public class CommandResult {
     private final ServerAddress address;
     private final BsonDocument response;
-    private final long elapsedNanoseconds;
 
-    public CommandResult(final ServerAddress address, final BsonDocument response, final long elapsedNanoseconds) {
+    public CommandResult(final ServerAddress address, final BsonDocument response) {
         this.address = address;
         this.response = response;
-        this.elapsedNanoseconds = elapsedNanoseconds;
     }
 
     public ServerAddress getAddress() {
@@ -78,9 +76,5 @@ public class CommandResult {
         } else {
             return null;
         }
-    }
-
-    public long getElapsedNanoseconds() {
-        return elapsedNanoseconds;
     }
 }

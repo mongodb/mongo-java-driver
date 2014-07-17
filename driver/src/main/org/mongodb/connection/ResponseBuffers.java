@@ -23,13 +23,11 @@ import java.io.Closeable;
 public class ResponseBuffers implements Closeable {
     private final ReplyHeader replyHeader;
     private final ByteBuf bodyByteBuffer;
-    private final long elapsedNanoseconds;
     private volatile boolean isClosed;
 
-    public ResponseBuffers(final ReplyHeader replyHeader, final ByteBuf bodyByteBuffer, final long elapsedNanoseconds) {
+    public ResponseBuffers(final ReplyHeader replyHeader, final ByteBuf bodyByteBuffer) {
         this.replyHeader = replyHeader;
         this.bodyByteBuffer = bodyByteBuffer;
-        this.elapsedNanoseconds = elapsedNanoseconds;
     }
 
     public ReplyHeader getReplyHeader() {
@@ -44,10 +42,6 @@ public class ResponseBuffers implements Closeable {
      */
     public ByteBuf getBodyByteBuffer() {
         return bodyByteBuffer.asReadOnly();
-    }
-
-    public long getElapsedNanoseconds() {
-        return elapsedNanoseconds;
     }
 
     @Override

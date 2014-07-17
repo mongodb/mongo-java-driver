@@ -237,9 +237,10 @@ class ServerMonitor {
 
     private ServerDescription lookupServerDescription(final InternalConnection connection) {
         LOGGER.debug(format("Checking status of %s", serverAddress));
+        long start = System.nanoTime();
         CommandResult isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
         count++;
-        roundTripTimeSum += isMasterResult.getElapsedNanoseconds();
+        roundTripTimeSum += System.nanoTime() - start;
 
         CommandResult buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
         return createDescription(isMasterResult, buildInfoResult, roundTripTimeSum / count);

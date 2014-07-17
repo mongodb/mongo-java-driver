@@ -36,8 +36,8 @@ class WriteResultProtocolHelperSpecification extends Specification {
     def 'should return a write result for an insert'() {
         given:
         def commandResult = new CommandResult(new ServerAddress(),
-                                              new BsonDocument('ok', new BsonInt32(1)).append('n', new BsonInt32(0)),
-                                              1);
+                                              new BsonDocument('ok', new BsonInt32(1)).append('n', new BsonInt32(0))
+        );
         when:
         def writeResult = ProtocolHelper.getWriteResult(commandResult)
 
@@ -52,8 +52,8 @@ class WriteResultProtocolHelperSpecification extends Specification {
         def commandResult = new CommandResult(new ServerAddress(),
                                               new BsonDocument('ok', new BsonInt32(1)).append('n', new BsonInt32(1))
                                                                                       .append('updatedExisting', BsonBoolean.FALSE).
-                                                      append('upserted', new BsonObjectId(id)),
-                                              1);
+                                                      append('upserted', new BsonObjectId(id))
+        );
         when:
         def writeResult = ProtocolHelper.getWriteResult(commandResult)
 
@@ -67,8 +67,8 @@ class WriteResultProtocolHelperSpecification extends Specification {
         def commandResult = new CommandResult(new ServerAddress(),
                                               new BsonDocument('ok', new BsonInt32(0))
                                                       .append('errmsg', new BsonString('Something is very wrong'))
-                                                      .append('code', new BsonInt32(14)),
-                                              1);
+                                                      .append('code', new BsonInt32(14))
+        );
         when:
         ProtocolHelper.getWriteResult(commandResult)
 
@@ -82,8 +82,8 @@ class WriteResultProtocolHelperSpecification extends Specification {
         def commandResult = new CommandResult(new ServerAddress(),
                                               new BsonDocument('ok', new BsonInt32(1))
                                                       .append('err', new BsonString('E11000 duplicate key error index 1'))
-                                                      .append('code', new BsonInt32(11000)),
-                                              1);
+                                                      .append('code', new BsonInt32(11000))
+        );
 
         when:
         ProtocolHelper.getWriteResult(commandResult)
@@ -107,8 +107,8 @@ class WriteResultProtocolHelperSpecification extends Specification {
                                                                        new BsonDocument('ok', new BsonInt32(1))
                                                                                .append('err', new BsonString('E11000 duplicate key error ' +
                                                                                                              'index 2'))
-                                                                               .append('code', new BsonInt32(11000))))),
-                                  1);
+                                                                               .append('code', new BsonInt32(11000)))))
+                );
 
         when:
         ProtocolHelper.getWriteResult(commandResult)

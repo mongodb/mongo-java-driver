@@ -108,7 +108,7 @@ class InternalStreamConnection implements InternalConnection {
     public ResponseBuffers receiveMessage() {
         isTrue("open", !isClosed());
         try {
-            ResponseBuffers responseBuffers = receiveMessage(System.nanoTime());
+            ResponseBuffers responseBuffers = receiveResponseBuffers();
             eventPublisher.messageReceived(new ConnectionMessageReceivedEvent(clusterId,
                                                                               stream.getAddress(),
                                                                               getId(),
@@ -143,8 +143,7 @@ class InternalStreamConnection implements InternalConnection {
                 if (t instanceof MongoException) {
                     callback.onResult(null, (MongoException) t);
                 } else if (t instanceof IOException) {
-                    callback.onResult(null, new MongoSocketWriteException("Exception writing to stream", getServerAddress(),
-                                                                          (IOException) t));
+                    callback.onResult(null, new MongoSocketWriteException("Exception writing to stream", getServerAddress(), t));
                 } else {
                     callback.onResult(null, new MongoInternalException("Unexpected exception", t));
                 }
@@ -154,7 +153,7 @@ class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void receiveMessageAsync(final SingleResultCallback<ResponseBuffers> callback) {
-        fillAndFlipBuffer(REPLY_HEADER_LENGTH, new ResponseHeaderCallback(System.nanoTime(), callback));
+        fillAndFlipBuffer(REPLY_HEADER_LENGTH, new ResponseHeaderCallback(callback));
     }
 
     private void fillAndFlipBuffer(final int numBytes, final SingleResultCallback<ByteBuf> callback) {
@@ -188,7 +187,7 @@ class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private ResponseBuffers receiveMessage(final long start) throws IOException {
+    private ResponseBuffers receiveResponseBuffers() throws IOException {
         ByteBuf headerByteBuffer = stream.read(REPLY_HEADER_LENGTH);
         ReplyHeader replyHeader;
         BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
@@ -204,7 +203,7 @@ class InternalStreamConnection implements InternalConnection {
             bodyByteBuffer = stream.read(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
         }
 
-        return new ResponseBuffers(replyHeader, bodyByteBuffer, System.nanoTime() - start);
+        return new ResponseBuffers(replyHeader, bodyByteBuffer);
     }
 
     private void initialize() {
@@ -248,11 +247,9 @@ class InternalStreamConnection implements InternalConnection {
 
     private class ResponseHeaderCallback implements SingleResultCallback<ByteBuf> {
         private final SingleResultCallback<ResponseBuffers> callback;
-        private final long start;
 
-        public ResponseHeaderCallback(final long start, final SingleResultCallback<ResponseBuffers> callback) {
+        public ResponseHeaderCallback(final SingleResultCallback<ResponseBuffers> callback) {
             this.callback = callback;
-            this.start = start;
         }
 
         @Override
@@ -269,7 +266,7 @@ class InternalStreamConnection implements InternalConnection {
                 }
 
                 if (replyHeader.getMessageLength() == REPLY_HEADER_LENGTH) {
-                    onSuccess(new ResponseBuffers(replyHeader, null, System.nanoTime() - start));
+                    onSuccess(new ResponseBuffers(replyHeader, null));
                 } else {
                     fillAndFlipBuffer(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH,
                                       new ResponseBodyCallback(replyHeader));
@@ -298,7 +295,7 @@ class InternalStreamConnection implements InternalConnection {
                 if (e != null) {
                     callback.onResult(null, e);
                 } else {
-                    onSuccess(new ResponseBuffers(replyHeader, result, System.nanoTime() - start));
+                    onSuccess(new ResponseBuffers(replyHeader, result));
                 }
             }
         }
