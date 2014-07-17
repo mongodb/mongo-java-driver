@@ -18,6 +18,8 @@
 package com.mongodb;
 
 
+import org.mongodb.CommandResult;
+
 /**
  * Top level Exception for all Exceptions, server-side or client-side, that come from the driver.
  */
@@ -88,8 +90,8 @@ public class MongoException extends RuntimeException {
          * @param message the error message
          * @param writeResult the result of the write operation
          */
-        public DuplicateKey(final int code, final String message, final WriteResult writeResult) {
-            super(code, message, writeResult);
+        public DuplicateKey(final int code, final String message, final CommandResult commandResult, final WriteResult writeResult) {
+            super(code, message, commandResult, writeResult);
         }
 
     }

@@ -16,10 +16,12 @@
 
 package com.mongodb;
 
+import org.mongodb.CommandResult;
+
 /**
  * An exception representing an error reported due to a write failure.
  */
-public class WriteConcernException extends MongoException {
+public class WriteConcernException extends MongoWriteException {
     private static final long serialVersionUID = 841056799207039974L;
 
     private final WriteResult writeResult;
@@ -30,8 +32,8 @@ public class WriteConcernException extends MongoException {
      * @param message the message
      * @param writeResult the write result
      */
-    public WriteConcernException(final int code, final String message, final WriteResult writeResult) {
-        super(code, message);
+    public WriteConcernException(final int code, final String message, final CommandResult commandResult, final WriteResult writeResult) {
+        super(code, message, commandResult);
         this.writeResult = writeResult;
     }
 

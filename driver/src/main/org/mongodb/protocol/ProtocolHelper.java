@@ -127,10 +127,11 @@ final class ProtocolHelper {
     private static void throwWriteException(final CommandResult commandResult) {
         int code = getCode(commandResult.getResponse());
         if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
-            throw new MongoException.DuplicateKey(code, getWriteErrorMessage(commandResult.getResponse()),
-                                                              getWriteResult2(commandResult));
+            throw new MongoException.DuplicateKey(code, getWriteErrorMessage(commandResult.getResponse()), commandResult,
+                                                  getWriteResult2(commandResult));
         } else {
-            throw new WriteConcernException(code, getWriteErrorMessage(commandResult.getResponse()), getWriteResult2(commandResult));
+            throw new WriteConcernException(code, getWriteErrorMessage(commandResult.getResponse()),
+                                            commandResult, getWriteResult2(commandResult));
         }
     }
 
