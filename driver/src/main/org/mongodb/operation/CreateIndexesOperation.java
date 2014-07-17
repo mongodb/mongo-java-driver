@@ -166,9 +166,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
 
     private MongoException checkForDuplicateKeyError(final CommandFailureException e) {
         if (DUPLICATE_KEY_ERROR_CODES.contains(e.getCode())) {
-            return new MongoException.DuplicateKey(e.getCode(), e.getMessage(),
-                                                   new CommandResult(e.getServerAddress(), new BsonDocument()), // TODO, this is fake
-                                                   new com.mongodb.WriteResult(0, false, null));
+            return new MongoException.DuplicateKey(e.getResponse(), e.getServerAddress(), new com.mongodb.WriteResult(0, false, null));
         } else {
             return e;
         }

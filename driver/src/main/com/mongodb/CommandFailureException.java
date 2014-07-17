@@ -42,22 +42,27 @@ public class CommandFailureException extends MongoServerException {
      * @param address the address of the server that generated the response
      */
     public CommandFailureException(final BsonDocument response, final ServerAddress address) {
-        super(format("Command failed with error %s: '%s' on server %s. The full response is %s", getErrorCodeFromResponse(response),
-                     getErrorMessageFromResponse(response), address, getResponseAsJson(response)), address);
+        super(format("Command failed with error %s: '%s' on server %s. The full response is %s", extractErrorCode(response),
+                     extractErrorMessage(response), address, getResponseAsJson(response)), address);
         this.response = response;
     }
 
     @Override
     public int getErrorCode() {
-        return getErrorCodeFromResponse(response);
+        return extractErrorCode(response);
     }
 
     @Override
     public String getErrorMessage() {
-        return getErrorMessageFromResponse(response);
+        return extractErrorMessage(response);
     }
 
-    BsonDocument getResponse() {
+    /**
+     * For internal use only.
+     *
+     * @return the full response to the command failure.
+     */
+    public BsonDocument getResponse() {
         return response;
     }
 
@@ -68,7 +73,7 @@ public class CommandFailureException extends MongoServerException {
         return writer.toString();
     }
 
-    private static int getErrorCodeFromResponse(final BsonDocument response) {
+    private static int extractErrorCode(final BsonDocument response) {
         if (response.containsKey("code")) {
             return ((BsonInt32) response.get("code")).getValue();
         } else {
@@ -76,7 +81,7 @@ public class CommandFailureException extends MongoServerException {
         }
     }
 
-    private static String getErrorMessageFromResponse(final BsonDocument response) {
+    private static String extractErrorMessage(final BsonDocument response) {
         if (response.containsKey("errmsg")) {
             return ((BsonString) response.get("errmsg")).getValue();
         } else {

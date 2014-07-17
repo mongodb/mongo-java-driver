@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.mongodb.CommandResult;
+import org.bson.BsonDocument;
 
 /**
  * An exception representing an error reported due to a write failure.
@@ -26,14 +26,17 @@ public class WriteConcernException extends MongoWriteException {
 
     private final WriteResult writeResult;
 
+
     /**
-     * Construct a new instance
-     * @param code the error code
-     * @param message the message
-     * @param writeResult the write result
+     * Construct a new instance.
+     *
+     * @param response the response to the write operation
+     * @param address the address of the server that executed the operation
+     * @param writeResult the result of the write operation
      */
-    public WriteConcernException(final int code, final String message, final CommandResult commandResult, final WriteResult writeResult) {
-        super(code, message, commandResult);
+    public WriteConcernException(final BsonDocument response, final org.mongodb.connection.ServerAddress address,
+                                 final WriteResult writeResult) {
+        super(response, address);
         this.writeResult = writeResult;
     }
 

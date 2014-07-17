@@ -18,7 +18,8 @@
 package com.mongodb;
 
 
-import org.mongodb.CommandResult;
+import org.bson.BsonDocument;
+import org.mongodb.connection.ServerAddress;
 
 /**
  * Top level Exception for all Exceptions, server-side or client-side, that come from the driver.
@@ -83,16 +84,8 @@ public class MongoException extends RuntimeException {
 
         private static final long serialVersionUID = 6557680785576001838L;
 
-        /**
-         * Construct a new instance.
-         *
-         * @param code the error code
-         * @param message the error message
-         * @param writeResult the result of the write operation
-         */
-        public DuplicateKey(final int code, final String message, final CommandResult commandResult, final WriteResult writeResult) {
-            super(code, message, commandResult, writeResult);
+        public DuplicateKey(final BsonDocument response, final ServerAddress address, final WriteResult writeResult) {
+            super(response, address, writeResult);
         }
-
     }
 }

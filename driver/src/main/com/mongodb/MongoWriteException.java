@@ -16,7 +16,10 @@
 
 package com.mongodb;
 
-import org.mongodb.CommandResult;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonValue;
+import org.mongodb.connection.ServerAddress;
 
 import static java.lang.String.format;
 
@@ -28,29 +31,69 @@ import static java.lang.String.format;
 public class MongoWriteException extends MongoServerException {
     private static final long serialVersionUID = -1139302724723542251L;
 
-    private final int code;
-    private final String message;
-    private final CommandResult commandResult;
+    private final BsonDocument response;
 
-    public MongoWriteException(final int code, final String message, final CommandResult commandResult) {
-        super(format("Write failed with error code %d and error message '%s'", code, message),
-              commandResult.getAddress());
-        this.code = code;
-        this.message = message;
-        this.commandResult = commandResult;
+    /**
+     * Construct a new instance.
+     *
+     * @param response the response to the write operation
+     * @param address the address of the server that executed the operation.
+     */
+    public MongoWriteException(final BsonDocument response, final ServerAddress address) {
+        super(format("Write failed with error code %d and error message '%s'", extractErrorCode(response), extractErrorMessage(response)),
+              address);
+        this.response = response;
     }
 
     @Override
     public int getErrorCode() {
-        return code;
+        return extractErrorCode(response);
     }
 
     @Override
     public String getErrorMessage() {
-        return message;
+        return extractErrorMessage(response);
     }
 
-    public CommandResult getCommandResult() {
-        return commandResult;
+    /**
+     * Gets the response to the write operation.
+     *
+     * @return the response to the write operation
+     */
+    public BsonDocument getResponse() {
+        return response;
+    }
+
+    /**
+     * For internal use only: extract the error code from the response to a getlasterror command.
+     * @param response the response
+     * @return the code, or -1 if there is none
+     */
+    public static int extractErrorCode(final BsonDocument response) {
+        // mongos may return a list of documents representing getlasterror responses from each shard.  Return the one with a matching
+        // "err" field, so that it can be used to get the error code
+        if (!response.containsKey("code") && response.containsKey("errObjects")) {
+            for (BsonValue curErrorDocument : response.getArray("errObjects")) {
+                if (extractErrorMessage(response).equals(extractErrorMessage(curErrorDocument.asDocument()))) {
+                    return curErrorDocument.asDocument().getNumber("code").intValue();
+                }
+            }
+        }
+
+        return response.getNumber("code", new BsonInt32(-1)).intValue();
+    }
+
+    /**
+     * For internal use only: extract the error message from the response to a getlasterror command.
+     *
+     * @param response the response
+     * @return the error message
+     */
+    public static String extractErrorMessage(final BsonDocument response) {
+        if (response.isString("err")) {
+            return response.getString("err").getValue();
+        } else {
+            return null;
+        }
     }
 }

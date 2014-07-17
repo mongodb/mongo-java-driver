@@ -16,7 +16,8 @@
 
 package com.mongodb;
 
-import org.mongodb.CommandResult;
+import org.bson.BsonDocument;
+import org.mongodb.connection.ServerAddress;
 
 /**
  * Subclass of {@link WriteConcernException} representing a duplicate key exception
@@ -27,7 +28,7 @@ public class DuplicateKeyException extends WriteConcernException {
 
     private static final long serialVersionUID = -4415279469780082174L;
 
-    DuplicateKeyException(final int code, final String message, final CommandResult commandResult, final WriteResult writeResult) {
-        super(code, message, commandResult, writeResult);
+    public DuplicateKeyException(final BsonDocument response, final ServerAddress address, final WriteResult writeResult) {
+        super(response, address, writeResult);
     }
 }

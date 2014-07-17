@@ -509,7 +509,7 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
                                 bulkWriteBatchCombiner.addResult(bulkWriteResult, indexMap);
                             }
                         } catch (MongoWriteException writeException) {
-                            if (writeException.getCommandResult().getResponse().get("wtimeout") != null) {
+                            if (writeException.getResponse().get("wtimeout") != null) {
                                 bulkWriteBatchCombiner.addWriteConcernErrorResult(getWriteConcernError(writeException));
                             } else {
                                 bulkWriteBatchCombiner.addWriteErrorResult(getBulkWriteError(writeException), indexMap);
@@ -548,7 +548,7 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
                         if (e != null) {
                             if (e instanceof MongoWriteException) {
                                 MongoWriteException writeException = (MongoWriteException) e;
-                                if (writeException.getCommandResult().getResponse().get("wtimeout") != null) {
+                                if (writeException.getResponse().get("wtimeout") != null) {
                                     bulkWriteBatchCombiner.addWriteConcernErrorResult(getWriteConcernError(writeException));
                                 } else {
                                     bulkWriteBatchCombiner.addWriteErrorResult(getBulkWriteError(writeException), indexMap);
@@ -633,13 +633,13 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
 
             private BulkWriteError getBulkWriteError(final MongoWriteException writeException) {
                 return new BulkWriteError(writeException.getErrorCode(), writeException.getErrorMessage(),
-                                          translateGetLastErrorResponseToErrInfo(writeException.getCommandResult().getResponse()), 0);
+                                          translateGetLastErrorResponseToErrInfo(writeException.getResponse()), 0);
             }
 
             private WriteConcernError getWriteConcernError(final MongoWriteException writeException) {
                 return new WriteConcernError(writeException.getErrorCode(),
-                                             ((BsonString) writeException.getCommandResult().getResponse().get("err")).getValue(),
-                                             translateGetLastErrorResponseToErrInfo(writeException.getCommandResult().getResponse()));
+                                             ((BsonString) writeException.getResponse().get("err")).getValue(),
+                                             translateGetLastErrorResponseToErrInfo(writeException.getResponse()));
             }
 
             private BsonDocument translateGetLastErrorResponseToErrInfo(final BsonDocument response) {

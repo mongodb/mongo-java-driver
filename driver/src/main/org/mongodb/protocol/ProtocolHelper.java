@@ -20,11 +20,11 @@ import com.mongodb.CommandFailureException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoQueryFailureException;
+import com.mongodb.MongoWriteException;
 import com.mongodb.WriteConcernException;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.bson.BsonValue;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.WriteResult;
@@ -106,16 +106,8 @@ final class ProtocolHelper {
     }
 
     private static boolean hasWriteError(final BsonDocument response) {
-        String err = getWriteErrorMessage(response);
+        String err = MongoWriteException.extractErrorMessage(response);
         return err != null && err.length() > 0;
-    }
-
-    private static String getWriteErrorMessage(final BsonDocument response) {
-        if (response.isString("err")) {
-            return response.getString("err").getValue();
-        } else {
-            return null;
-        }
     }
 
     private static com.mongodb.WriteResult getWriteResult2(final CommandResult commandResult) {
@@ -125,29 +117,12 @@ final class ProtocolHelper {
     }
 
     private static void throwWriteException(final CommandResult commandResult) {
-        int code = getCode(commandResult.getResponse());
+        int code = MongoWriteException.extractErrorCode(commandResult.getResponse());
         if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
-            throw new MongoException.DuplicateKey(code, getWriteErrorMessage(commandResult.getResponse()), commandResult,
-                                                  getWriteResult2(commandResult));
+            throw new MongoException.DuplicateKey(commandResult.getResponse(), commandResult.getAddress(), getWriteResult2(commandResult));
         } else {
-            throw new WriteConcernException(code, getWriteErrorMessage(commandResult.getResponse()),
-                                            commandResult, getWriteResult2(commandResult));
+            throw new WriteConcernException(commandResult.getResponse(), commandResult.getAddress(), getWriteResult2(commandResult));
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static int getCode(final BsonDocument response) {
-        // mongos may return a list of documents representing getlasterror responses from each shard.  Return the one with a matching
-        // "err" field, so that it can be used to get the error code
-        if (!response.containsKey("code") && response.containsKey("errObjects")) {
-            for (BsonValue curErrorDocument : response.getArray("errObjects")) {
-                if (getWriteErrorMessage(response).equals(getWriteErrorMessage(curErrorDocument.asDocument()))) {
-                    return curErrorDocument.asDocument().getNumber("code").intValue();
-                }
-            }
-        }
-
-        return response.getNumber("code", new BsonInt32(-1)).intValue();
     }
 
     private ProtocolHelper() {
