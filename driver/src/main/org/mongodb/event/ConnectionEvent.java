@@ -16,7 +16,7 @@
 
 package org.mongodb.event;
 
-import org.mongodb.connection.ServerAddress;
+import com.mongodb.ServerAddress;
 
 /**
  * A connection-related event.

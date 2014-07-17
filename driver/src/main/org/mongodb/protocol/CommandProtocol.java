@@ -16,6 +16,7 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.ServerAddress;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -25,7 +26,6 @@ import org.mongodb.MongoNamespace;
 import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ServerAddress;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.QueryFlag;

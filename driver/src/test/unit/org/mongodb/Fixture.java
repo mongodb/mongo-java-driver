@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import com.mongodb.ServerAddress;
 import org.mongodb.binding.AsyncClusterBinding;
 import org.mongodb.binding.AsyncReadWriteBinding;
 import org.mongodb.binding.AsyncSingleConnectionBinding;
@@ -30,7 +31,6 @@ import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.ClusterType;
 import org.mongodb.connection.DefaultClusterFactory;
 import org.mongodb.connection.SSLSettings;
-import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.connection.SocketStreamFactory;

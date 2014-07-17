@@ -18,60 +18,40 @@ package com.mongodb;
 
 import org.mongodb.annotations.Immutable;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
+/**
+ * Represents the location of a Mongo server - i.e. server name and port number
+ */
 @Immutable
-public class ServerAddress {
-    private final org.mongodb.connection.ServerAddress proxied;
+public class ServerAddress implements Serializable {
+    private static final long serialVersionUID = 4027873363095395504L;
 
-    /**
-     * Returns the default database host: "127.0.0.1"
-     *
-     * @return IP address of default host.
-     */
-    public static String defaultHost() {
-        return org.mongodb.connection.ServerAddress.getDefaultHost();
-    }
-
-    /**
-     * Returns the default database port: 27017
-     *
-     * @return the default port
-     */
-    public static int defaultPort() {
-        return org.mongodb.connection.ServerAddress.getDefaultPort();
-    }
+    private final String host;
+    private final int port;
 
     /**
      * Creates a ServerAddress with default host and port
      */
     public ServerAddress() {
-        proxied = new org.mongodb.connection.ServerAddress();
-    }
-
-    /**
-     * Creates a ServerAddress with default port.
-     * If the host parameter contains a port, i.e. 127.0.0.1:3333
-     * it will use that port instead of the default one.
-     * @param host hostname
-     */
-    public ServerAddress(final String host) {
-        proxied = new org.mongodb.connection.ServerAddress(host);
-    }
-
-    /**
-     * Creates a ServerAddress
-     * @param host hostname
-     * @param port mongod port
-     */
-    public ServerAddress(final String host, final int port) {
-        proxied = new org.mongodb.connection.ServerAddress(host, port);
+        this(defaultHost(), defaultPort());
     }
 
     /**
      * Creates a ServerAddress with default port
+     *
+     * @param host hostname
+     */
+    public ServerAddress(final String host) {
+        this(host, defaultPort());
+    }
+
+    /**
+     * Creates a ServerAddress with default port
+     *
      * @param inetAddress host address
      */
     public ServerAddress(final InetAddress inetAddress) {
@@ -80,8 +60,9 @@ public class ServerAddress {
 
     /**
      * Creates a ServerAddress
+     *
      * @param inetAddress host address
-     * @param port mongod port
+     * @param port        mongod port
      */
     public ServerAddress(final InetAddress inetAddress, final int port) {
         this(inetAddress.getHostName(), port);
@@ -89,14 +70,88 @@ public class ServerAddress {
 
     /**
      * Creates a ServerAddress
+     *
      * @param inetSocketAddress inet socket address containing hostname and port
      */
     public ServerAddress(final InetSocketAddress inetSocketAddress) {
         this(inetSocketAddress.getAddress(), inetSocketAddress.getPort());
     }
 
-    public ServerAddress(final org.mongodb.connection.ServerAddress address) {
-        proxied = address;
+    /**
+     * Creates a ServerAddress
+     *
+     * @param host hostname
+     * @param port mongod port
+     */
+    public ServerAddress(final String host, final int port) {
+        String hostToUse = host;
+        if (hostToUse == null) {
+            hostToUse = defaultHost();
+        }
+        hostToUse = hostToUse.trim();
+        if (hostToUse.length() == 0) {
+            hostToUse = defaultHost();
+        }
+
+        int portToUse = port;
+
+        if (hostToUse.startsWith("[")) {
+            int idx = host.indexOf("]");
+            if (idx == -1) {
+                throw new IllegalArgumentException("an IPV6 address must be encosed with '[' and ']'"
+                                                   + " according to RFC 2732.");
+            }
+
+            int portIdx = host.indexOf("]:");
+            if (portIdx != -1) {
+                if (port != defaultPort()) {
+                    throw new IllegalArgumentException("can't specify port in construct and via host");
+                }
+                portToUse = Integer.parseInt(host.substring(portIdx + 2));
+            }
+            hostToUse = host.substring(1, idx);
+        } else {
+            int idx = hostToUse.indexOf(":");
+            if (idx > 0) {
+                if (port != defaultPort()) {
+                    throw new IllegalArgumentException("can't specify port in construct and via host");
+                }
+                portToUse = Integer.parseInt(hostToUse.substring(idx + 1));
+                hostToUse = hostToUse.substring(0, idx).trim();
+            }
+        }
+
+        this.host = hostToUse;
+        this.port = portToUse;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        ServerAddress that = (ServerAddress) o;
+
+        if (port != that.port) {
+            return false;
+        }
+
+        if (!host.equals(that.host)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = host.hashCode();
+        result = 31 * result + port;
+        return result;
     }
 
     /**
@@ -105,7 +160,7 @@ public class ServerAddress {
      * @return hostname
      */
     public String getHost() {
-        return proxied.getHost();
+        return host;
     }
 
     /**
@@ -114,7 +169,7 @@ public class ServerAddress {
      * @return port
      */
     public int getPort() {
-        return proxied.getPort();
+        return port;
     }
 
     /**
@@ -124,42 +179,33 @@ public class ServerAddress {
      */
     public InetSocketAddress getSocketAddress() {
         try {
-            return proxied.getSocketAddress();
+            return new InetSocketAddress(InetAddress.getByName(host), port);
         } catch (UnknownHostException e) {
-            throw new MongoException("Unknown host", e);
+            throw new MongoSocketException(e.getMessage(), this, e);
         }
-    }
-
-    @Override
-    public boolean equals(final Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (other == null || getClass() != other.getClass()) {
-            return false;
-        }
-
-        ServerAddress that = (ServerAddress) other;
-
-        if (!proxied.equals(that.proxied)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return proxied.hashCode();
     }
 
     @Override
     public String toString() {
-        return proxied.toString();
+        return host + ":" + port;
     }
 
-    org.mongodb.connection.ServerAddress toNew() {
-        return proxied;
+    /**
+     * Returns the default database host: "127.0.0.1"
+     *
+     * @return IP address of default host.
+     */
+    public static String defaultHost() {
+        return "127.0.0.1"; // NOPMD
+    }
+
+    /**
+     * Returns the default database port: 27017
+     *
+     * @return the default port
+     */
+    public static int defaultPort() {
+        return 27017;
     }
 
     /**

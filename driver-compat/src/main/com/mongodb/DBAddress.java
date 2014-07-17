@@ -23,6 +23,7 @@ import java.net.UnknownHostException;
  * Represents a database address
  */
 public class DBAddress extends ServerAddress {
+    private static final long serialVersionUID = -813211264765778133L;
     private final String _db;
 
     /**

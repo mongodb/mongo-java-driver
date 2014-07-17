@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.connection.ServerAddress;
+import com.mongodb.ServerAddress;
 
 class MongoMappingCursor<T, U> implements MongoCursor<U> {
     private final MongoCursor<T> proxied;

@@ -52,7 +52,7 @@ final class BulkWriteHelper {
 
     static BulkWriteException translateBulkWriteException(final org.mongodb.BulkWriteException e, final Decoder<DBObject> decoder) {
         return new BulkWriteException(translateBulkWriteResult(e.getWriteResult(), decoder), translateWriteErrors(e.getWriteErrors()),
-                                      translateWriteConcernError(e.getWriteConcernError()), new ServerAddress(e.getServerAddress()));
+                                      translateWriteConcernError(e.getWriteConcernError()), e.getServerAddress());
     }
 
     static WriteConcernError translateWriteConcernError(final org.mongodb.WriteConcernError writeConcernError) {

@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import org.mongodb.connection.ServerAddress;
-
 import static java.lang.String.format;
 
 /**

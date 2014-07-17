@@ -97,7 +97,7 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
         ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             if (responseBuffers.getReplyHeader().isCursorNotFound()) {
-                throw new MongoCursorNotFoundException(message.getCursorId(), new com.mongodb.ServerAddress(connection.getServerAddress()));
+                throw new MongoCursorNotFoundException(message.getCursorId(), connection.getServerAddress());
             }
 
             if (responseBuffers.getReplyHeader().isQueryFailure()) {

@@ -16,10 +16,8 @@
 
 
 package org.mongodb.operation
-
 import category.Slow
 import com.mongodb.MongoCursorNotFoundException
-import com.mongodb.ServerAddress
 import org.bson.BsonDocument
 import org.bson.BsonTimestamp
 import org.junit.experimental.categories.Category
@@ -437,7 +435,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
             cursor.next()
         } catch (MongoCursorNotFoundException e) {
             assertEquals(cursor.getServerCursor().getId(), e.getCursorId())
-            assertEquals(new ServerAddress(cursor.getServerCursor().getAddress()), e.getServerAddress())
+            assertEquals(cursor.getServerCursor().getAddress(), e.getServerAddress())
         } catch (ignored) {
             fail()
         }

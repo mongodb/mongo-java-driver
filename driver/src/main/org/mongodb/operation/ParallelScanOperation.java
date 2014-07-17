@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.ServerAddress;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -34,7 +35,6 @@ import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ConnectionSource;
 import org.mongodb.binding.ReadBinding;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerAddress;
 import org.mongodb.protocol.QueryResult;
 
 import java.util.ArrayList;

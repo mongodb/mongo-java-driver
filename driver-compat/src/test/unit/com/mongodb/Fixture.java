@@ -92,6 +92,6 @@ public final class Fixture {
             Thread.sleep(100);
             serverDescriptions = mongoClient.getCluster().getDescription(10, TimeUnit.SECONDS).getPrimaries();
         }
-        return new ServerAddress(serverDescriptions.get(0).getAddress());
+        return serverDescriptions.get(0).getAddress();
     }
 }

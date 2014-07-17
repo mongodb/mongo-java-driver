@@ -20,6 +20,7 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadTimeoutException;
+import com.mongodb.ServerAddress;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.CompositeByteBuf;
@@ -40,7 +41,6 @@ import io.netty.util.concurrent.GenericFutureListener;
 import org.bson.ByteBuf;
 import org.mongodb.connection.AsyncCompletionHandler;
 import org.mongodb.connection.SSLSettings;
-import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SocketSettings;
 import org.mongodb.connection.Stream;
 

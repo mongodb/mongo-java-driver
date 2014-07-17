@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.ServerAddress;
 import org.mongodb.MongoCredential;
 import org.mongodb.event.ConnectionListener;
 import org.mongodb.event.ConnectionPoolListener;

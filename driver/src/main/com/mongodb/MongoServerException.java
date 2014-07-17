@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import org.mongodb.connection.ServerAddress;
-
 /**
  * An exception indicating that some error has been raised by a MongoDB server in response to an operation.
  *

@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.ServerAddress;
 import org.junit.Test;
 
 import java.net.UnknownHostException;

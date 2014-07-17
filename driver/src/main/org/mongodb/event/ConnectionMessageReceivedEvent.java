@@ -16,7 +16,7 @@
 
 package org.mongodb.event;
 
-import org.mongodb.connection.ServerAddress;
+import com.mongodb.ServerAddress;
 
 /**
  * An event signifying that a message has been received on a connection.

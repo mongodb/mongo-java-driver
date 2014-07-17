@@ -16,13 +16,13 @@
 
 package org.mongodb.protocol
 
+import com.mongodb.ServerAddress
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.mongodb.BulkWriteError
 import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.WriteConcernError
-import org.mongodb.connection.ServerAddress
 import spock.lang.Specification
 
 import static org.mongodb.WriteConcern.ACKNOWLEDGED

@@ -34,7 +34,7 @@ class MongoCursorAdapter implements Cursor {
 
     @Override
     public ServerAddress getServerAddress() {
-        return new ServerAddress(cursor.getServerAddress());
+        return cursor.getServerAddress();
     }
 
     @Override

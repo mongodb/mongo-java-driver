@@ -16,6 +16,7 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.ServerAddress;
 import org.mongodb.annotations.Immutable;
 import org.mongodb.selector.ServerSelector;
 

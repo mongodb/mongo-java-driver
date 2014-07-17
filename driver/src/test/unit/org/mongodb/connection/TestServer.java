@@ -16,6 +16,8 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.ServerAddress;
+
 import static org.mongodb.connection.ServerConnectionState.CONNECTING;
 
 public class TestServer implements ClusterableServer {

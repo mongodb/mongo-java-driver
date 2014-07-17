@@ -617,7 +617,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public ServerAddress getServerAddress() {
         if (cursor != null) {
-            return new ServerAddress(cursor.getServerAddress());
+            return cursor.getServerAddress();
         } else {
             return null;
         }

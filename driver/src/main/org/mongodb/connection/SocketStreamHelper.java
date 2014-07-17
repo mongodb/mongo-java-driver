@@ -16,6 +16,8 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.ServerAddress;
+
 import java.io.IOException;
 import java.net.Socket;
 

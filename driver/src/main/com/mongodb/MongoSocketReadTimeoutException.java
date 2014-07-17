@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import org.mongodb.connection.ServerAddress;
-
 /**
  * This exception is thrown when there is a timeout reading a response from the socket.
  *

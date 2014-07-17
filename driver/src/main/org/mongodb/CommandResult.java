@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import com.mongodb.ServerAddress;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
@@ -23,7 +24,6 @@ import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.mongodb.connection.ServerAddress;
 
 public class CommandResult {
     private final ServerAddress address;

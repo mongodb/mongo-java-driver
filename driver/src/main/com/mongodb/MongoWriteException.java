@@ -19,7 +19,6 @@ package com.mongodb;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonValue;
-import org.mongodb.connection.ServerAddress;
 
 import static java.lang.String.format;
 

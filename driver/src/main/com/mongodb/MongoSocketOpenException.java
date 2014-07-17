@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import org.mongodb.connection.ServerAddress;
-
 /**
  * This exception is thrown when there is an exception opening a Socket.
  *

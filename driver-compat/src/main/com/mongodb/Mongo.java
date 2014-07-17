@@ -420,7 +420,7 @@ public class Mongo {
     public List<ServerAddress> getServerAddressList() {
         List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
         for (final ServerDescription cur : getClusterDescription().getAll()) {
-            serverAddresses.add(new ServerAddress(cur.getAddress()));
+            serverAddresses.add(cur.getAddress());
         }
         return serverAddresses;
     }
@@ -439,7 +439,7 @@ public class Mongo {
         if (description.getPrimaries().isEmpty()) {
             return null;
         }
-        return new ServerAddress(description.getPrimaries().get(0).getAddress());
+        return description.getPrimaries().get(0).getAddress();
     }
 
     /**
@@ -707,7 +707,7 @@ public class Mongo {
                                          final MongoClientOptions options) {
         return createCluster(ClusterSettings.builder()
                                             .mode(getSingleServerClusterMode(options.toNew()))
-                                            .hosts(asList(serverAddress.toNew()))
+                                            .hosts(asList(serverAddress))
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                             .serverSelector(createServerSelector(options))
                                             .build(),
@@ -726,10 +726,10 @@ public class Mongo {
                                                   null, new JMXConnectionPoolListener(), null);
     }
 
-    private static List<org.mongodb.connection.ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
-        List<org.mongodb.connection.ServerAddress> retVal = new ArrayList<org.mongodb.connection.ServerAddress>(seedList.size());
+    private static List<ServerAddress> createNewSeedList(final List<ServerAddress> seedList) {
+        List<ServerAddress> retVal = new ArrayList<ServerAddress>(seedList.size());
         for (final ServerAddress cur : seedList) {
-            retVal.add(cur.toNew());
+            retVal.add(cur);
         }
         return retVal;
     }

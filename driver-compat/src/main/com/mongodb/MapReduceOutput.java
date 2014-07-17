@@ -39,12 +39,12 @@ public class MapReduceOutput {
      * Constructor for use with inline map reduce.  Collection will always be null.
      */
     MapReduceOutput(final DBObject command, final MapReduceCursor<DBObject> results,
-                    final org.mongodb.connection.ServerAddress serverAddress) {
+                    final ServerAddress serverAddress) {
 
         this.command = command;
         this.mapReduceStatistics = results.getStatistics();
 
-        this.serverAddress = new ServerAddress(serverAddress);
+        this.serverAddress = serverAddress;
         this.collection = null;
         this.resultsFromCollection = null;
         this.inlineResults = new ArrayList<DBObject>();
@@ -57,14 +57,14 @@ public class MapReduceOutput {
      * Constructor for use when the map reduce output was put into a collection
      */
     MapReduceOutput(final DBObject command, final DBCursor resultsFromCollection, final MapReduceStatistics mapReduceStatistics,
-                    final DBCollection outputCollection, final org.mongodb.connection.ServerAddress serverAddress) {
+                    final DBCollection outputCollection, final ServerAddress serverAddress) {
         this.command = command;
         this.inlineResults = null;
         this.mapReduceStatistics = mapReduceStatistics;
 
         this.collection = outputCollection;
         this.resultsFromCollection = resultsFromCollection;
-        this.serverAddress = new ServerAddress(serverAddress);
+        this.serverAddress = serverAddress;
     }
 
     /**

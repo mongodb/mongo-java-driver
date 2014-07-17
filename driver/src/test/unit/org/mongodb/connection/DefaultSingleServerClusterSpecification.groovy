@@ -22,6 +22,7 @@
 
 package org.mongodb.connection
 
+import com.mongodb.ServerAddress
 import org.mongodb.event.ClusterListener
 import spock.lang.Specification
 

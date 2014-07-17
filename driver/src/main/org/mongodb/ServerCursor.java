@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.connection.ServerAddress;
+import com.mongodb.ServerAddress;
 
 import java.io.Serializable;
 

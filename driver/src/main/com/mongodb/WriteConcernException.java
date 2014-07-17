@@ -34,8 +34,7 @@ public class WriteConcernException extends MongoWriteException {
      * @param address the address of the server that executed the operation
      * @param writeResult the result of the write operation
      */
-    public WriteConcernException(final BsonDocument response, final org.mongodb.connection.ServerAddress address,
-                                 final WriteResult writeResult) {
+    public WriteConcernException(final BsonDocument response, final ServerAddress address, final WriteResult writeResult) {
         super(response, address);
         this.writeResult = writeResult;
     }

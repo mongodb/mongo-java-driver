@@ -18,6 +18,7 @@
 package org.mongodb.connection
 
 import com.mongodb.MongoException
+import com.mongodb.ServerAddress
 import org.mongodb.CommandResult
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification

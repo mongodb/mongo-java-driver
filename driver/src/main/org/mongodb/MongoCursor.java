@@ -17,8 +17,8 @@
 package org.mongodb;
 
 
+import com.mongodb.ServerAddress;
 import org.mongodb.annotations.NotThreadSafe;
-import org.mongodb.connection.ServerAddress;
 
 import java.io.Closeable;
 import java.util.Iterator;

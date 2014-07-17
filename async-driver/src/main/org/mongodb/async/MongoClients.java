@@ -16,6 +16,7 @@
 
 package org.mongodb.async;
 
+import com.mongodb.ServerAddress;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
 import org.mongodb.MongoCredential;
@@ -25,7 +26,6 @@ import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.DefaultClusterFactory;
 import org.mongodb.connection.SSLSettings;
-import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SocketSettings;
 import org.mongodb.connection.StreamFactory;
 import org.mongodb.connection.netty.NettyStreamFactory;

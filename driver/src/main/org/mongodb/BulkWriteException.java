@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import com.mongodb.MongoException;
-import org.mongodb.connection.ServerAddress;
+import com.mongodb.ServerAddress;
 
 import java.util.List;
 

@@ -16,6 +16,8 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.ServerAddress;
+
 /**
  * A factory for streams.
  *

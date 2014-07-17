@@ -21,6 +21,8 @@
 
 
 package org.mongodb.connection
+
+import com.mongodb.ServerAddress
 import spock.lang.Specification
 
 class DefaultServerSpecification extends Specification {

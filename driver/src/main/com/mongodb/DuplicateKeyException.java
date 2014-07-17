@@ -17,7 +17,6 @@
 package com.mongodb;
 
 import org.bson.BsonDocument;
-import org.mongodb.connection.ServerAddress;
 
 /**
  * Subclass of {@link WriteConcernException} representing a duplicate key exception

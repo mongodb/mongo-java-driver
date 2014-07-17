@@ -16,6 +16,7 @@
 
 package org.mongodb.connection
 
+import com.mongodb.ServerAddress
 import org.mongodb.event.ClusterEvent
 import org.mongodb.event.ClusterListener
 import org.mongodb.selector.PrimaryServerSelector

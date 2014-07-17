@@ -16,12 +16,12 @@
 
 package org.mongodb.connection.netty;
 
+import com.mongodb.ServerAddress;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import org.mongodb.connection.SSLSettings;
-import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SocketSettings;
 import org.mongodb.connection.Stream;
 import org.mongodb.connection.StreamFactory;

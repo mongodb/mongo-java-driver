@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.ServerAddress;
 import org.bson.BsonDocument;
 import org.mongodb.CommandResult;
 import org.mongodb.Function;
@@ -24,7 +25,6 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;
-import org.mongodb.connection.ServerAddress;
 
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandDocuments.createMapReduce;

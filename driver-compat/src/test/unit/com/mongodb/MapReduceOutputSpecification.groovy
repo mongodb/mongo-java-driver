@@ -64,8 +64,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         MapReduceCursor mongoCursor = Mock();
 
         @Subject
-        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor,
-                                                  new org.mongodb.connection.ServerAddress());
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor, new ServerAddress());
 
         when:
         def collectionName = mapReduceOutput.getCollectionName();
@@ -100,8 +99,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         mapReduceStats.getDuration() >> expectedDuration
 
         @Subject
-        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), null, mapReduceStats, null,
-                                                  new org.mongodb.connection.ServerAddress());
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), null, mapReduceStats, null, new ServerAddress());
 
         expect:
         mapReduceOutput.getDuration() == expectedDuration;
@@ -115,8 +113,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
         mongoCursor.getStatistics() >> new MapReduceStatistics(5, 10, 5, expectedDuration)
 
         @Subject
-        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor,
-                                                  new org.mongodb.connection.ServerAddress());
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mongoCursor, new ServerAddress());
 
         expect:
         mapReduceOutput.getDuration() == expectedDuration
@@ -151,7 +148,7 @@ class MapReduceOutputSpecification extends FunctionalSpecification {
                                                                    expectedDuration)
 
         @Subject
-        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mapReduceCursor, new org.mongodb.connection.ServerAddress());
+        def mapReduceOutput = new MapReduceOutput(new BasicDBObject(), mapReduceCursor, new ServerAddress());
 
         expect:
         mapReduceOutput.getInputCount() == expectedInputCount

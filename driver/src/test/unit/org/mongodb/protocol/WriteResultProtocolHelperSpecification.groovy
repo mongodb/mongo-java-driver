@@ -18,6 +18,7 @@ package org.mongodb.protocol
 
 import com.mongodb.CommandFailureException
 import com.mongodb.MongoException
+import com.mongodb.ServerAddress
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -26,7 +27,6 @@ import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.types.ObjectId
 import org.mongodb.CommandResult
-import org.mongodb.connection.ServerAddress
 import spock.lang.Specification
 
 import static java.util.Arrays.asList

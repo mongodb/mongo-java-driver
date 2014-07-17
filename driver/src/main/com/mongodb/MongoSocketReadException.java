@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import org.mongodb.connection.ServerAddress;
-
 /**
  * This exception is thrown when there is an exception reading a response from a Socket.
  *
@@ -32,7 +30,7 @@ public class MongoSocketReadException extends MongoSocketException {
      * @param message the message
      * @param address the address
      */
-    public MongoSocketReadException(final String message, final org.mongodb.connection.ServerAddress address) {
+    public MongoSocketReadException(final String message, final ServerAddress address) {
         super(message, address);
     }
 

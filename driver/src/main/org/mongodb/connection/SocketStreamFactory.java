@@ -16,6 +16,8 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.ServerAddress;
+
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 

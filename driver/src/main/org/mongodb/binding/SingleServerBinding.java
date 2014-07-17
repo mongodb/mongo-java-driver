@@ -16,10 +16,10 @@
 
 package org.mongodb.binding;
 
+import com.mongodb.ServerAddress;
 import org.mongodb.ReadPreference;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerAddress;
 import org.mongodb.selector.ServerAddressSelector;
 
 import java.util.concurrent.TimeUnit;

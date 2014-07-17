@@ -18,6 +18,7 @@ package org.mongodb.connection;
 
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadException;
+import com.mongodb.ServerAddress;
 import org.bson.ByteBuf;
 
 import javax.net.SocketFactory;

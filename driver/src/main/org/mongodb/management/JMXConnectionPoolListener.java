@@ -16,7 +16,7 @@
 
 package org.mongodb.management;
 
-import org.mongodb.connection.ServerAddress;
+import com.mongodb.ServerAddress;
 import org.mongodb.event.ConnectionEvent;
 import org.mongodb.event.ConnectionPoolEvent;
 import org.mongodb.event.ConnectionPoolListener;

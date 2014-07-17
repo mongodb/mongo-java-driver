@@ -18,6 +18,7 @@ package org.mongodb.connection;
 
 import com.mongodb.CommandFailureException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.ServerAddress;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.CommandResult;

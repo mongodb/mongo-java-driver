@@ -22,7 +22,6 @@ import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.json.JsonWriter;
-import org.mongodb.connection.ServerAddress;
 
 import java.io.StringWriter;
 

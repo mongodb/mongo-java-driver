@@ -16,6 +16,7 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.ServerAddress;
 import org.bson.codecs.Decoder;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
@@ -23,7 +24,6 @@ import org.mongodb.ServerCursor;
 import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.binding.ConnectionSource;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerAddress;
 import org.mongodb.protocol.GetMoreDiscardProtocol;
 import org.mongodb.protocol.GetMoreProtocol;
 import org.mongodb.protocol.GetMoreReceiveProtocol;

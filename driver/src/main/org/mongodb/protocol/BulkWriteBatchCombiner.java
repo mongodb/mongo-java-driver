@@ -16,13 +16,13 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.ServerAddress;
 import org.mongodb.BulkWriteError;
 import org.mongodb.BulkWriteException;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.BulkWriteUpsert;
 import org.mongodb.WriteConcern;
 import org.mongodb.WriteConcernError;
-import org.mongodb.connection.ServerAddress;
 
 import java.util.ArrayList;
 import java.util.Comparator;

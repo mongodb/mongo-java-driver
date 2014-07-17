@@ -43,7 +43,7 @@ public class ReplicaSetStatus {
      */
     public ServerAddress getMaster() {
         List<ServerDescription> primaries = getClusterDescription().getPrimaries();
-        return primaries.isEmpty() ? null : new ServerAddress(primaries.get(0).getAddress());
+        return primaries.isEmpty() ? null : primaries.get(0).getAddress();
     }
 
     /**

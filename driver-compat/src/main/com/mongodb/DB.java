@@ -358,7 +358,7 @@ public class DB {
         try {
             return executeCommand(wrap(cmd, encoder), readPreference);
         } catch (CommandFailureException ex) {
-            return new CommandResult(ex.getResponse(), new ServerAddress(ex.getServerAddress()));
+            return new CommandResult(ex.getResponse(), ex.getServerAddress());
         }
     }
 

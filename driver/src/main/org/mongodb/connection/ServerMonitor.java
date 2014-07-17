@@ -17,6 +17,7 @@
 package org.mongodb.connection;
 
 import com.mongodb.MongoSocketException;
+import com.mongodb.ServerAddress;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;

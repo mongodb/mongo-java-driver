@@ -16,12 +16,12 @@
 
 package org.mongodb
 
+import com.mongodb.ServerAddress
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDouble
 import org.bson.BsonInt32
 import org.bson.BsonString
-import org.mongodb.connection.ServerAddress
 import spock.lang.Specification
 
 class CommandResultSpecification extends Specification {

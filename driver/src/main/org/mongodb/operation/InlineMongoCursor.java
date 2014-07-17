@@ -16,9 +16,9 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.ServerAddress;
 import org.mongodb.MongoCursor;
 import org.mongodb.ServerCursor;
-import org.mongodb.connection.ServerAddress;
 
 import java.util.Iterator;
 import java.util.List;

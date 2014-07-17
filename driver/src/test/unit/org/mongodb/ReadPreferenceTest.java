@@ -16,12 +16,12 @@
 
 package org.mongodb;
 
+import com.mongodb.ServerAddress;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerType;
 import org.mongodb.connection.Tags;

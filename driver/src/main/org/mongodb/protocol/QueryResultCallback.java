@@ -18,11 +18,11 @@ package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.ServerAddress;
 import org.bson.codecs.Decoder;
 import org.mongodb.Document;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;

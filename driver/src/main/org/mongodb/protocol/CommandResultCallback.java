@@ -17,10 +17,10 @@
 package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
+import com.mongodb.ServerAddress;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
-import org.mongodb.connection.ServerAddress;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;

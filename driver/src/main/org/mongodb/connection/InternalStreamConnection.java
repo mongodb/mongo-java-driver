@@ -22,6 +22,7 @@ import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
+import com.mongodb.ServerAddress;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.ByteBuf;

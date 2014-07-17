@@ -65,7 +65,7 @@ class ReplicaSetStatusSpecification extends Specification {
     def 'should return master'() throws UnknownHostException {
         given:
         ServerDescription serverDescription = Mock();
-        serverDescription.getAddress() >> new ServerAddress('localhost').toNew()
+        serverDescription.getAddress() >> new ServerAddress('localhost')
         clusterDescription.getPrimaries() >> [serverDescription]
 
         expect:
@@ -75,7 +75,7 @@ class ReplicaSetStatusSpecification extends Specification {
     def 'should test specific server for being master or not'() throws UnknownHostException {
         given:
         ServerDescription primaryDescription = Mock();
-        primaryDescription.getAddress() >> new ServerAddress('localhost', 3000).toNew()
+        primaryDescription.getAddress() >> new ServerAddress('localhost', 3000)
         clusterDescription.getPrimaries() >> [primaryDescription]
 
         expect:

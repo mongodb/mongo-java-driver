@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import org.mongodb.connection.ServerAddress;
-
 /**
  * Subclass of {@link MongoException} representing a network-related exception
  *
@@ -27,7 +25,7 @@ public class MongoSocketException extends MongoException {
 
     private static final long serialVersionUID = -4415279469780082174L;
 
-    private final org.mongodb.connection.ServerAddress serverAddress;
+    private final ServerAddress serverAddress;
 
     /**
      * @param serverAddress the address

@@ -16,9 +16,9 @@
 
 package org.mongodb.selector
 
+import com.mongodb.ServerAddress
 import org.mongodb.connection.ClusterDescription
 import org.mongodb.connection.ClusterType
-import org.mongodb.connection.ServerAddress
 import org.mongodb.connection.ServerDescription
 import spock.lang.Specification
 import spock.lang.Unroll

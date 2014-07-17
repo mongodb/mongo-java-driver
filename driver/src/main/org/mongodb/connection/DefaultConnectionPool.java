@@ -20,6 +20,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoWaitQueueFullException;
+import com.mongodb.ServerAddress;
 import org.bson.ByteBuf;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
