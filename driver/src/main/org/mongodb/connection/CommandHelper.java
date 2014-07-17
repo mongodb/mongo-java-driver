@@ -33,9 +33,13 @@ import static java.lang.String.format;
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 
 final class CommandHelper {
-    static CommandResult executeCommand(final String database, final BsonDocument command,
-                                        final InternalConnection internalConnection) {
-        return receiveMessage(internalConnection, sendMessage(database, command, internalConnection));
+    static CommandResult executeCommand(final String database, final BsonDocument command, final InternalConnection internalConnection) {
+        return receiveCommandResult(internalConnection, sendMessage(database, command, internalConnection));
+    }
+
+    static BsonDocument executeCommandWithoutCheckingForFailure(final String database, final BsonDocument command,
+                                                                final InternalConnection internalConnection) {
+        return receiveCommandDocument(internalConnection, sendMessage(database, command, internalConnection));
     }
 
     private static CommandMessage sendMessage(final String database, final BsonDocument command,
@@ -52,16 +56,21 @@ final class CommandHelper {
         }
     }
 
-    private static CommandResult receiveMessage(final InternalConnection internalConnection, final CommandMessage message) {
+    private static CommandResult receiveCommandResult(final InternalConnection internalConnection, final CommandMessage message) {
+        return createCommandResult(receiveReply(internalConnection, message), internalConnection.getServerAddress());
+    }
+
+    private static BsonDocument receiveCommandDocument(final InternalConnection internalConnection, final CommandMessage message) {
+        return receiveReply(internalConnection, message).getDocuments().get(0);
+    }
+
+    private static ReplyMessage<BsonDocument> receiveReply(final InternalConnection internalConnection, final CommandMessage message) {
         ResponseBuffers responseBuffers = internalConnection.receiveMessage();
         if (responseBuffers == null) {
             throw new MongoInternalException(format("Response buffers received from %s should not be null", internalConnection));
         }
         try {
-            ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers,
-                                                                                     new BsonDocumentCodec(),
-                                                                                     message.getId());
-            return createCommandResult(replyMessage, internalConnection.getServerAddress());
+            return new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(), message.getId());
         } finally {
             responseBuffers.close();
         }

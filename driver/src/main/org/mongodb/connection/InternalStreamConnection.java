@@ -16,7 +16,6 @@
 
 package org.mongodb.connection;
 
-import com.mongodb.CommandFailureException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
@@ -218,13 +217,9 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     private void initializeConnectionId() {
-        BsonDocument response;
-        try {
-            response = CommandHelper.executeCommand("admin", new BsonDocument("getlasterror", new BsonInt32(1)), this).getResponse();
-
-        } catch (CommandFailureException e) {
-            response = e.getResult().getResponse();
-        }
+        BsonDocument response = CommandHelper.executeCommandWithoutCheckingForFailure("admin",
+                                                                                      new BsonDocument("getlasterror", new BsonInt32(1)),
+                                                                                      this);
         id = "conn" + (response.containsKey("connectionId")
                        ? response.getNumber("connectionId").intValue()
                        : "*" + incrementingId.incrementAndGet() + "*");

@@ -400,31 +400,29 @@ final class CommandOperationHelper {
         return future;
     }
 
-    static CommandResult ignoreNameSpaceErrors(final CommandFailureException e) {
+    static void rethrowIfNotNamespaceError(final CommandFailureException e) {
         String message = e.getErrorMessage();
         if (!message.startsWith("ns not found") && !(message.matches("Collection \\[(.*)\\] not found."))) {
             throw e;
         }
-        return e.getResult();
     }
 
-    static MongoFuture<CommandResult> ignoreNameSpaceErrors(final MongoFuture<CommandResult> future) {
-        final SingleResultFuture<CommandResult> ignoringFuture = new SingleResultFuture<CommandResult>();
+    static MongoFuture<Void> rethrowIfNotNamespaceError(final MongoFuture<CommandResult> future) {
+        final SingleResultFuture<Void> ignoringFuture = new SingleResultFuture<Void>();
         future.register(new SingleResultCallback<CommandResult>() {
             @Override
             public void onResult(final CommandResult result, final MongoException e) {
                 MongoException checkedError = e;
-                CommandResult fixedResult = result;
                 // Check for a namespace error which we can safely ignore
                 if (e instanceof CommandFailureException) {
                     try {
                         checkedError = null;
-                        fixedResult = ignoreNameSpaceErrors((CommandFailureException) e);
+                        rethrowIfNotNamespaceError((CommandFailureException) e);
                     } catch (CommandFailureException error) {
                         checkedError = error;
                     }
                 }
-                ignoringFuture.init(fixedResult, checkedError);
+                ignoringFuture.init(null, checkedError);
             }
         });
         return ignoringFuture;

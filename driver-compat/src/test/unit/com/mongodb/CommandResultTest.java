@@ -94,7 +94,6 @@ public class CommandResultTest {
             new CommandResult(wrapped).throwOnError();
             fail("Should throw");
         } catch (CommandFailureException e) {
-            assertEquals(wrapped, e.getResult());
             assertEquals(-1, e.getCode());
         }
     }
@@ -110,7 +109,6 @@ public class CommandResultTest {
             new CommandResult(wrapped).throwOnError();
             fail("Should throw");
         } catch (CommandFailureException e) {
-            assertEquals(wrapped, e.getResult());
             assertEquals(5000, e.getCode());
         }
     }

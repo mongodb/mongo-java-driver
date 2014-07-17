@@ -26,8 +26,7 @@ import org.mongodb.binding.WriteBinding;
 
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
-import static org.mongodb.operation.CommandOperationHelper.ignoreNameSpaceErrors;
-import static org.mongodb.operation.OperationHelper.ignoreResult;
+import static org.mongodb.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 
 /**
  * An operation that drops an index.
@@ -48,14 +47,14 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
         try {
             executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), binding);
         } catch (CommandFailureException e) {
-            ignoreNameSpaceErrors(e);
+            CommandOperationHelper.rethrowIfNotNamespaceError(e);
         }
         return null;
     }
 
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return ignoreResult(ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding)));
+        return rethrowIfNotNamespaceError(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding));
     }
 
     private BsonDocument getCommand() {

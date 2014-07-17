@@ -16,7 +16,13 @@
 
 package com.mongodb;
 
+import org.bson.BsonDocument;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.EncoderContext;
+import org.bson.json.JsonWriter;
 import org.mongodb.CommandResult;
+
+import java.io.StringWriter;
 
 import static java.lang.String.format;
 
@@ -33,8 +39,10 @@ public class CommandFailureException extends MongoServerException {
      * @param commandResult the result of running the command
      */
     public CommandFailureException(final CommandResult commandResult) {
-        super(format("Command failed with error %s: '%s' on server %s", commandResult.getErrorCode(),
-                                   commandResult.getErrorMessage(), commandResult.getAddress()), commandResult.getAddress());
+        super(format("Command failed with error %s: '%s' on server %s. The full response is %s", commandResult.getErrorCode(),
+                     commandResult.getErrorMessage(), commandResult.getAddress(),
+                     getResponseAsJson(commandResult.getResponse())),
+              commandResult.getAddress());
         this.commandResult = commandResult;
     }
 
@@ -56,5 +64,12 @@ public class CommandFailureException extends MongoServerException {
      */
     public CommandResult getResult() {
         return commandResult;
+    }
+
+    private static String getResponseAsJson(final BsonDocument commandResponse) {
+        StringWriter writer = new StringWriter();
+        JsonWriter jsonWriter = new JsonWriter(writer);
+        new BsonDocumentCodec().encode(jsonWriter, commandResponse, EncoderContext.builder().build());
+        return writer.toString();
     }
 }
