@@ -18,13 +18,13 @@ package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
+import com.mongodb.diagnostics.Loggers;
+import com.mongodb.diagnostics.logging.Logger;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.diagnostics.Loggers;
-import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.RemoveRequest;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.WriteRequest;
@@ -85,7 +85,7 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
     }
 
     @Override
-    protected org.mongodb.diagnostics.logging.Logger getLogger() {
+    protected com.mongodb.diagnostics.logging.Logger getLogger() {
         return LOGGER;
     }
 

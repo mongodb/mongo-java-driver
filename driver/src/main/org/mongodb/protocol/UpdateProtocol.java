@@ -18,13 +18,13 @@ package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
+import com.mongodb.diagnostics.Loggers;
+import com.mongodb.diagnostics.logging.Logger;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.diagnostics.Loggers;
-import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.UpdateRequest;
 import org.mongodb.protocol.message.MessageSettings;
@@ -36,7 +36,7 @@ import java.util.List;
 import static java.lang.String.format;
 
 public class UpdateProtocol extends WriteProtocol {
-    private static final org.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.update");
+    private static final com.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.update");
 
     private final List<UpdateRequest> updates;
 

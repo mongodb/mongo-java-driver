@@ -36,7 +36,7 @@ class GenericWriteProtocol extends WriteProtocol {
     }
 
     @Override
-    protected org.mongodb.diagnostics.logging.Logger getLogger() {
+    protected com.mongodb.diagnostics.logging.Logger getLogger() {
         throw new UnsupportedOperationException();
     }
 }

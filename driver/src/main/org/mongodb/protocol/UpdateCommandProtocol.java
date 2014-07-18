@@ -18,6 +18,7 @@ package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
+import com.mongodb.diagnostics.Loggers;
 import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
@@ -25,7 +26,6 @@ import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.diagnostics.Loggers;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.UpdateRequest;
 import org.mongodb.operation.WriteRequest;
@@ -39,7 +39,7 @@ import static java.lang.String.format;
 
 public class UpdateCommandProtocol extends WriteCommandProtocol {
 
-    private static final org.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.update");
+    private static final com.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.update");
 
     private final List<UpdateRequest> updates;
 
@@ -87,7 +87,7 @@ public class UpdateCommandProtocol extends WriteCommandProtocol {
     }
 
     @Override
-    protected org.mongodb.diagnostics.logging.Logger getLogger() {
+    protected com.mongodb.diagnostics.logging.Logger getLogger() {
         return LOGGER;
     }
 

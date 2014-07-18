@@ -196,7 +196,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
         return namespace;
     }
 
-    protected abstract org.mongodb.diagnostics.logging.Logger getLogger();
+    protected abstract com.mongodb.diagnostics.logging.Logger getLogger();
 
     protected boolean isOrdered() {
         return ordered;

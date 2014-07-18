@@ -18,14 +18,14 @@ package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
+import com.mongodb.diagnostics.Loggers;
+import com.mongodb.diagnostics.logging.Logger;
 import org.bson.codecs.Encoder;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
-import org.mongodb.diagnostics.Loggers;
-import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.InsertRequest;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.protocol.message.InsertMessage;
@@ -81,7 +81,7 @@ public class InsertProtocol<T> extends WriteProtocol {
     }
 
     @Override
-    protected org.mongodb.diagnostics.logging.Logger getLogger() {
+    protected com.mongodb.diagnostics.logging.Logger getLogger() {
         return LOGGER;
     }
 }

@@ -20,8 +20,8 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.ReadPreference;
 import com.mongodb.Tags;
 import com.mongodb.WriteConcern;
-import org.mongodb.diagnostics.Loggers;
-import org.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.Loggers;
+import com.mongodb.diagnostics.logging.Logger;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;

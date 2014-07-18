@@ -17,6 +17,7 @@
 package org.mongodb.protocol;
 
 import com.mongodb.WriteConcern;
+import com.mongodb.diagnostics.logging.Logger;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
@@ -27,7 +28,6 @@ import org.mongodb.WriteResult;
 import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.protocol.message.CommandMessage;

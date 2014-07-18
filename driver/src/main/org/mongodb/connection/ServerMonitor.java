@@ -20,6 +20,8 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.ServerAddress;
 import com.mongodb.Tags;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.diagnostics.Loggers;
+import com.mongodb.diagnostics.logging.Logger;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -27,8 +29,6 @@ import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.mongodb.CommandResult;
-import org.mongodb.diagnostics.Loggers;
-import org.mongodb.diagnostics.logging.Logger;
 
 import java.util.Collections;
 import java.util.HashSet;

@@ -20,11 +20,11 @@ import com.mongodb.MongoIncompatibleDriverException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
+import com.mongodb.diagnostics.Loggers;
+import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterEvent;
 import com.mongodb.event.ClusterListener;
-import org.mongodb.diagnostics.Loggers;
-import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.selector.CompositeServerSelector;
 import org.mongodb.selector.ServerSelector;
 

@@ -16,8 +16,8 @@
 
 package org.mongodb.management.jmx;
 
-import org.mongodb.diagnostics.Loggers;
-import org.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.Loggers;
+import com.mongodb.diagnostics.logging.Logger;
 import org.mongodb.management.MBeanServer;
 
 import javax.management.ObjectName;

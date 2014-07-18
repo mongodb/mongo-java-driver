@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 
-package org.mongodb.diagnostics.logging;
+package com.mongodb.diagnostics.logging;
 
-import java.util.logging.Level;
+import org.slf4j.LoggerFactory;
 
-import static java.util.logging.Level.FINE;
-import static java.util.logging.Level.FINER;
-import static java.util.logging.Level.INFO;
-import static java.util.logging.Level.SEVERE;
-import static java.util.logging.Level.WARNING;
+public class SLF4JLogger implements Logger {
+    
+    private final org.slf4j.Logger delegate;
 
-public class JULLogger implements Logger {
-
-    private final java.util.logging.Logger delegate;
-
-    public JULLogger(final String name) {
-        this.delegate = java.util.logging.Logger.getLogger(name);
+    public SLF4JLogger(final String name) {
+        this.delegate = LoggerFactory.getLogger(name);
     }
 
     @Override
@@ -39,90 +33,76 @@ public class JULLogger implements Logger {
 
     @Override
     public boolean isTraceEnabled() {
-        return isEnabled(FINER);
+        return delegate.isTraceEnabled();
     }
 
     @Override
     public void trace(final String msg) {
-        log(FINER, msg);
+        delegate.trace(msg);
     }
 
     @Override
     public void trace(final String msg, final Throwable t) {
-        log(FINER, msg, t);
+        delegate.trace(msg, t);
     }
 
     @Override
     public boolean isDebugEnabled() {
-        return isEnabled(FINE);
+        return delegate.isDebugEnabled();
     }
 
     @Override
     public void debug(final String msg) {
-        log(FINE, msg);
+        delegate.debug(msg);
     }
 
     @Override
     public void debug(final String msg, final Throwable t) {
-        log(FINE, msg, t);
+        delegate.debug(msg, t);
     }
 
     @Override
     public boolean isInfoEnabled() {
-        return delegate.isLoggable(INFO);
+        return delegate.isInfoEnabled();
     }
 
     @Override
     public void info(final String msg) {
-        log(INFO, msg);
+        delegate.info(msg);
     }
 
     @Override
     public void info(final String msg, final Throwable t) {
-        log(INFO, msg, t);
+        delegate.info(msg, t);
     }
 
     @Override
     public boolean isWarnEnabled() {
-        return delegate.isLoggable(WARNING);
+        return delegate.isWarnEnabled();
     }
 
     @Override
     public void warn(final String msg) {
-        log(WARNING, msg);
+        delegate.warn(msg);
     }
 
     @Override
     public void warn(final String msg, final Throwable t) {
-        log(WARNING, msg, t);
+        delegate.warn(msg, t);
     }
-
 
     @Override
     public boolean isErrorEnabled() {
-        return delegate.isLoggable(SEVERE);
+        return delegate.isErrorEnabled();
     }
 
     @Override
     public void error(final String msg) {
-        log(SEVERE, msg);
+        delegate.error(msg);
     }
 
     @Override
     public void error(final String msg, final Throwable t) {
-        log(SEVERE, msg, t);
-    }
-
-
-    private boolean isEnabled(final Level level) {
-        return delegate.isLoggable(level);
-    }
-
-    private void log(final Level level, final String msg) {
-        delegate.log(level, msg);
-    }
-
-    public void log(final Level level, final String msg, final Throwable t) {
-        delegate.log(level, msg, t);
+        delegate.error(msg, t);
     }
 }

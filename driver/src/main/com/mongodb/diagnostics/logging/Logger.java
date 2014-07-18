@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.diagnostics.logging;
+package com.mongodb.diagnostics.logging;
 
 public interface Logger {
     /**

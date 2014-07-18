@@ -16,11 +16,11 @@
 
 package com.mongodb;
 
+import com.mongodb.diagnostics.Loggers;
+import com.mongodb.diagnostics.logging.Logger;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.diagnostics.Loggers;
-import org.mongodb.diagnostics.logging.Logger;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;

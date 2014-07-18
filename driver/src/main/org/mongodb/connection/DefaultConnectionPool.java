@@ -21,14 +21,14 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoWaitQueueFullException;
 import com.mongodb.ServerAddress;
+import com.mongodb.diagnostics.Loggers;
+import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.event.ConnectionEvent;
 import com.mongodb.event.ConnectionPoolEvent;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolOpenedEvent;
 import com.mongodb.event.ConnectionPoolWaitQueueEvent;
 import org.bson.ByteBuf;
-import org.mongodb.diagnostics.Loggers;
-import org.mongodb.diagnostics.logging.Logger;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb.diagnostics;
+package com.mongodb.diagnostics;
 
-import org.mongodb.diagnostics.logging.JULLogger;
-import org.mongodb.diagnostics.logging.Logger;
-import org.mongodb.diagnostics.logging.SLF4JLogger;
+import com.mongodb.diagnostics.logging.JULLogger;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.SLF4JLogger;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
