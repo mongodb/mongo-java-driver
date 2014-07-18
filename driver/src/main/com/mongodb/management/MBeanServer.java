@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.management;
+package com.mongodb.management;
 
 /**
  * This class is NOT part of the public API.  It may change at any time without notification.

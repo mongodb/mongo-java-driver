@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package org.mongodb.management.jmx;
+package com.mongodb.management.jmx;
 
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
-import org.mongodb.management.MBeanServer;
+import com.mongodb.management.MBeanServer;
 
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;

@@ -18,6 +18,7 @@ package org.mongodb;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
+import com.mongodb.management.JMXConnectionPoolListener;
 import org.mongodb.binding.AsyncClusterBinding;
 import org.mongodb.binding.AsyncReadWriteBinding;
 import org.mongodb.binding.AsyncSingleConnectionBinding;
@@ -37,7 +38,6 @@ import org.mongodb.connection.ServerVersion;
 import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.connection.StreamFactory;
 import org.mongodb.connection.netty.NettyStreamFactory;
-import org.mongodb.management.JMXConnectionPoolListener;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.management;
+package com.mongodb.management;
 
 /**
  * A standard MXBean interface for a Mongo connection pool, for use on Java 6 and above virtual machines.

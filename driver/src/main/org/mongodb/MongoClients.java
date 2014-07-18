@@ -18,13 +18,13 @@ package org.mongodb;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.management.JMXConnectionPoolListener;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterSettings;
 import org.mongodb.connection.DefaultClusterFactory;
 import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.connection.StreamFactory;
-import org.mongodb.management.JMXConnectionPoolListener;
 import org.mongodb.selector.CompositeServerSelector;
 import org.mongodb.selector.LatencyMinimizingServerSelector;
 import org.mongodb.selector.MongosHAServerSelector;

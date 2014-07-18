@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.management;
+package com.mongodb.management;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.event.ConnectionEvent;

@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.management.JMXConnectionPoolListener;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.configuration.CodecProvider;
@@ -42,7 +43,6 @@ import org.mongodb.connection.DefaultClusterFactory;
 import org.mongodb.connection.PowerOfTwoBufferPool;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.SocketStreamFactory;
-import org.mongodb.management.JMXConnectionPoolListener;
 import org.mongodb.operation.GetDatabaseNamesOperation;
 import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.WriteOperation;

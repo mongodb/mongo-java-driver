@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.mongodb.management;
+package com.mongodb.management;
 
-import org.mongodb.management.jmx.JMXMBeanServer;
+import com.mongodb.management.jmx.JMXMBeanServer;
 
 /**
  * This class is NOT part of the public API.  It may change at any time without notification.

@@ -19,7 +19,7 @@
 package org.mongodb.connection
 
 import com.mongodb.ServerAddress
-import org.mongodb.management.JMXConnectionPoolListener
+import com.mongodb.management.JMXConnectionPoolListener
 import spock.lang.Specification
 import spock.lang.Subject
 
