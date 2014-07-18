@@ -24,12 +24,12 @@ import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.operation.AsyncReadOperation;
+import com.mongodb.operation.AsyncWriteOperation;
+import com.mongodb.operation.SingleResultFuture;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.MongoFuture;
-import org.mongodb.operation.AsyncReadOperation;
-import org.mongodb.operation.AsyncWriteOperation;
-import org.mongodb.operation.SingleResultFuture;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

@@ -16,9 +16,9 @@
 
 package com.mongodb;
 
+import com.mongodb.operation.Group;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;
-import org.mongodb.operation.Group;
 
 /**
  * This class groups the argument for a group operation and can build the underlying command object

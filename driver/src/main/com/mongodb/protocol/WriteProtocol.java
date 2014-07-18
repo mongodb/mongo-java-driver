@@ -21,6 +21,8 @@ import com.mongodb.connection.ByteBufferOutputBuffer;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.operation.QueryFlag;
+import com.mongodb.operation.SingleResultFuture;
 import com.mongodb.protocol.message.CommandMessage;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.ReplyMessage;
@@ -32,8 +34,6 @@ import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
-import org.mongodb.operation.QueryFlag;
-import org.mongodb.operation.SingleResultFuture;
 
 import java.util.EnumSet;
 

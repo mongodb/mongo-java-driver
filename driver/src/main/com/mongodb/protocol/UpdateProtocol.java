@@ -22,14 +22,14 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.operation.UpdateRequest;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
 import com.mongodb.protocol.message.UpdateMessage;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
-import org.mongodb.operation.SingleResultFuture;
-import org.mongodb.operation.UpdateRequest;
 
 import java.util.List;
 

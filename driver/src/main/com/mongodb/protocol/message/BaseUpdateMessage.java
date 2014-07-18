@@ -16,8 +16,8 @@
 
 package com.mongodb.protocol.message;
 
+import com.mongodb.operation.BaseUpdateRequest;
 import org.bson.io.OutputBuffer;
-import org.mongodb.operation.BaseUpdateRequest;
 
 public abstract class BaseUpdateMessage extends RequestMessage {
     public BaseUpdateMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {

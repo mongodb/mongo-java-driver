@@ -16,8 +16,8 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.GetDatabaseNamesOperation;
-import org.mongodb.operation.PingOperation;
+import com.mongodb.operation.GetDatabaseNamesOperation;
+import com.mongodb.operation.PingOperation;
 
 import java.util.List;
 

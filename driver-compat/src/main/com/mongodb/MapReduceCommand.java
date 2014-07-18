@@ -16,10 +16,10 @@
 
 package com.mongodb;
 
+import com.mongodb.operation.MapReduce;
+import com.mongodb.operation.MapReduceOutputOptions;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;
-import org.mongodb.operation.MapReduce;
-import org.mongodb.operation.MapReduceOutputOptions;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;

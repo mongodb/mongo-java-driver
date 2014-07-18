@@ -16,8 +16,8 @@
 
 package com.mongodb.protocol.message;
 
+import com.mongodb.operation.GetMore;
 import org.bson.io.OutputBuffer;
-import org.mongodb.operation.GetMore;
 
 public class GetMoreMessage extends RequestMessage {
     private final GetMore getMore;

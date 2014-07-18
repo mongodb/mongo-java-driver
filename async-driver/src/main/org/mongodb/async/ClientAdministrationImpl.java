@@ -16,9 +16,9 @@
 
 package org.mongodb.async;
 
+import com.mongodb.operation.GetDatabaseNamesOperation;
+import com.mongodb.operation.PingOperation;
 import org.mongodb.MongoFuture;
-import org.mongodb.operation.GetDatabaseNamesOperation;
-import org.mongodb.operation.PingOperation;
 
 import java.util.List;
 

@@ -19,8 +19,8 @@ package org.mongodb;
 import com.mongodb.ReadPreference;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.connection.Cluster;
-import org.mongodb.operation.ReadOperation;
-import org.mongodb.operation.WriteOperation;
+import com.mongodb.operation.ReadOperation;
+import com.mongodb.operation.WriteOperation;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;

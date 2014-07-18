@@ -18,8 +18,8 @@ package org.mongodb.impl;
 
 import com.mongodb.MongoException;
 import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.operation.SingleResultFuture;
 import org.junit.Test;
-import org.mongodb.operation.SingleResultFuture;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;

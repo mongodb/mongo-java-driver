@@ -16,8 +16,8 @@
 
 package com.mongodb.protocol.message;
 
+import com.mongodb.operation.RemoveRequest;
 import org.bson.io.OutputBuffer;
-import org.mongodb.operation.RemoveRequest;
 
 import java.util.List;
 

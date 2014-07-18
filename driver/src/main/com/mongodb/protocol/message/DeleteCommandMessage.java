@@ -17,12 +17,12 @@
 package com.mongodb.protocol.message;
 
 import com.mongodb.WriteConcern;
+import com.mongodb.operation.RemoveRequest;
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoNamespace;
-import org.mongodb.operation.RemoveRequest;
 
 import java.util.Collections;
 import java.util.List;

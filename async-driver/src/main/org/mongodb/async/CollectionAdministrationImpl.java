@@ -17,14 +17,14 @@
 package org.mongodb.async;
 
 import com.mongodb.codecs.DocumentCodec;
+import com.mongodb.operation.CreateIndexesOperation;
+import com.mongodb.operation.DropCollectionOperation;
+import com.mongodb.operation.DropIndexOperation;
+import com.mongodb.operation.GetIndexesOperation;
 import org.mongodb.Document;
 import org.mongodb.Index;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.operation.CreateIndexesOperation;
-import org.mongodb.operation.DropCollectionOperation;
-import org.mongodb.operation.DropIndexOperation;
-import org.mongodb.operation.GetIndexesOperation;
 
 import java.util.List;
 

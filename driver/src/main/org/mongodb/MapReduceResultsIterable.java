@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.MapReduceWithInlineResultsOperation;
+import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 
 import java.util.Collection;
 

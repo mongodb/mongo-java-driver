@@ -23,7 +23,7 @@ class InsertRequest extends WriteRequest {
         this.document = document;
     }
 
-    InsertRequest(final org.mongodb.operation.InsertRequest<DBObject> insertRequest) {
+    InsertRequest(final com.mongodb.operation.InsertRequest<DBObject> insertRequest) {
         this(insertRequest.getDocument());
     }
 
@@ -32,7 +32,7 @@ class InsertRequest extends WriteRequest {
     }
 
     @Override
-    org.mongodb.operation.WriteRequest toNew() {
-        return new org.mongodb.operation.InsertRequest<DBObject>(document);
+    com.mongodb.operation.WriteRequest toNew() {
+        return new com.mongodb.operation.InsertRequest<DBObject>(document);
     }
 }

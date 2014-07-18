@@ -17,12 +17,12 @@
 package com.mongodb.protocol.message;
 
 import com.mongodb.WriteConcern;
+import com.mongodb.operation.BaseUpdateRequest;
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoNamespace;
-import org.mongodb.operation.BaseUpdateRequest;
 
 import java.util.Collections;
 import java.util.HashMap;

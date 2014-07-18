@@ -16,8 +16,8 @@
 
 package com.mongodb.protocol.message;
 
+import com.mongodb.operation.QueryFlag;
 import org.bson.io.OutputBuffer;
-import org.mongodb.operation.QueryFlag;
 
 import java.util.EnumSet;
 

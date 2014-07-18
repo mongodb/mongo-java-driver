@@ -18,12 +18,12 @@ package com.mongodb;
 
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.operation.Find;
+import com.mongodb.operation.QueryFlag;
+import com.mongodb.operation.QueryOperation;
 import org.bson.codecs.Decoder;
 import org.mongodb.MongoCursor;
 import org.mongodb.ServerCursor;
-import org.mongodb.operation.Find;
-import org.mongodb.operation.QueryFlag;
-import org.mongodb.operation.QueryOperation;
 
 import java.util.ArrayList;
 import java.util.Iterator;

@@ -22,6 +22,7 @@ import com.mongodb.event.ConnectionEvent;
 import com.mongodb.event.ConnectionListener;
 import com.mongodb.event.ConnectionMessageReceivedEvent;
 import com.mongodb.event.ConnectionMessagesSentEvent;
+import com.mongodb.operation.QueryFlag;
 import com.mongodb.protocol.KillCursor;
 import com.mongodb.protocol.message.CommandMessage;
 import com.mongodb.protocol.message.KillCursorsMessage;
@@ -37,7 +38,6 @@ import org.junit.experimental.categories.Category;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
-import org.mongodb.operation.QueryFlag;
 
 import java.util.Collections;
 import java.util.EnumSet;

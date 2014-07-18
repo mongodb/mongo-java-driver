@@ -18,11 +18,11 @@ package com.mongodb.protocol;
 
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
+import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.operation.SingleResultFutureCallback;
 import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.codecs.Decoder;
 import org.mongodb.MongoFuture;
-import org.mongodb.operation.SingleResultFuture;
-import org.mongodb.operation.SingleResultFutureCallback;
 
 public class GetMoreReceiveProtocol<T> implements Protocol<QueryResult<T>> {
 

@@ -16,9 +16,9 @@
 
 package com.mongodb.protocol;
 
+import com.mongodb.operation.WriteRequest;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.BulkWriteUpsert;
-import org.mongodb.operation.WriteRequest;
 
 import java.util.Collections;
 import java.util.List;

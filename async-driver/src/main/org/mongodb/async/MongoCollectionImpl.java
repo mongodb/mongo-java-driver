@@ -21,6 +21,21 @@ import com.mongodb.ReadPreference;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.operation.AsyncReadOperation;
+import com.mongodb.operation.AsyncWriteOperation;
+import com.mongodb.operation.CountOperation;
+import com.mongodb.operation.Find;
+import com.mongodb.operation.InsertOperation;
+import com.mongodb.operation.InsertRequest;
+import com.mongodb.operation.QueryFlag;
+import com.mongodb.operation.QueryOperation;
+import com.mongodb.operation.RemoveOperation;
+import com.mongodb.operation.RemoveRequest;
+import com.mongodb.operation.ReplaceOperation;
+import com.mongodb.operation.ReplaceRequest;
+import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.operation.UpdateOperation;
+import com.mongodb.operation.UpdateRequest;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
@@ -33,21 +48,6 @@ import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
-import org.mongodb.operation.AsyncReadOperation;
-import org.mongodb.operation.AsyncWriteOperation;
-import org.mongodb.operation.CountOperation;
-import org.mongodb.operation.Find;
-import org.mongodb.operation.InsertOperation;
-import org.mongodb.operation.InsertRequest;
-import org.mongodb.operation.QueryFlag;
-import org.mongodb.operation.QueryOperation;
-import org.mongodb.operation.RemoveOperation;
-import org.mongodb.operation.RemoveRequest;
-import org.mongodb.operation.ReplaceOperation;
-import org.mongodb.operation.ReplaceRequest;
-import org.mongodb.operation.SingleResultFuture;
-import org.mongodb.operation.UpdateOperation;
-import org.mongodb.operation.UpdateRequest;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -299,7 +299,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public <U> org.mongodb.async.MongoIterable<U> map(final Function<T, U> mapper) {
+        public <U> MongoIterable<U> map(final Function<T, U> mapper) {
             return new MappingIterable<T, U>(this, mapper);
         }
 

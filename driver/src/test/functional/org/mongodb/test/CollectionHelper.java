@@ -18,17 +18,17 @@ package org.mongodb.test;
 
 import com.mongodb.WriteConcern;
 import com.mongodb.codecs.DocumentCodec;
+import com.mongodb.operation.CountOperation;
+import com.mongodb.operation.Find;
+import com.mongodb.operation.InsertOperation;
+import com.mongodb.operation.InsertRequest;
+import com.mongodb.operation.QueryOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
-import org.mongodb.operation.CountOperation;
-import org.mongodb.operation.Find;
-import org.mongodb.operation.InsertOperation;
-import org.mongodb.operation.InsertRequest;
-import org.mongodb.operation.QueryOperation;
 
 import java.util.ArrayList;
 import java.util.List;

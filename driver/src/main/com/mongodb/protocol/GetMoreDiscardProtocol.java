@@ -20,8 +20,8 @@ import com.mongodb.MongoException;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.operation.SingleResultFuture;
 import org.mongodb.MongoFuture;
-import org.mongodb.operation.SingleResultFuture;
 
 public class GetMoreDiscardProtocol implements Protocol<Void> {
     private final long cursorId;

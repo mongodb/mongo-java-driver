@@ -18,6 +18,10 @@
 package com.mongodb.protocol
 
 import com.mongodb.codecs.DocumentCodec
+import com.mongodb.operation.CountOperation
+import com.mongodb.operation.Find
+import com.mongodb.operation.InsertRequest
+import com.mongodb.operation.UpdateRequest
 import com.mongodb.selector.PrimaryServerSelector
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -26,10 +30,6 @@ import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.operation.CountOperation
-import org.mongodb.operation.Find
-import org.mongodb.operation.InsertRequest
-import org.mongodb.operation.UpdateRequest
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList

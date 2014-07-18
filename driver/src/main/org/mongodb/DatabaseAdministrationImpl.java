@@ -16,10 +16,10 @@
 
 package org.mongodb;
 
-import org.mongodb.operation.CreateCollectionOperation;
-import org.mongodb.operation.DropDatabaseOperation;
-import org.mongodb.operation.GetCollectionNamesOperation;
-import org.mongodb.operation.RenameCollectionOperation;
+import com.mongodb.operation.CreateCollectionOperation;
+import com.mongodb.operation.DropDatabaseOperation;
+import com.mongodb.operation.GetCollectionNamesOperation;
+import com.mongodb.operation.RenameCollectionOperation;
 
 import java.util.List;
 

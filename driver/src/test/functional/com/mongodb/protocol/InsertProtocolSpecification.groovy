@@ -17,6 +17,8 @@
 package com.mongodb.protocol
 
 import com.mongodb.WriteConcern
+import com.mongodb.operation.InsertRequest
+import com.mongodb.operation.QueryFlag
 import org.bson.BsonArray
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
@@ -41,8 +43,6 @@ import org.bson.BsonUndefined
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.types.ObjectId
 import org.mongodb.FunctionalSpecification
-import org.mongodb.operation.InsertRequest
-import org.mongodb.operation.QueryFlag
 
 import static org.mongodb.Fixture.getBinding
 

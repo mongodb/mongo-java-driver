@@ -18,11 +18,11 @@ package org.mongodb;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.codecs.DocumentCodec;
+import com.mongodb.operation.CommandReadOperation;
+import com.mongodb.operation.CommandWriteOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
-import org.mongodb.operation.CommandReadOperation;
-import org.mongodb.operation.CommandWriteOperation;
 
 import static com.mongodb.assertions.Assertions.notNull;
 

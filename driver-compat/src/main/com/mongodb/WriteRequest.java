@@ -17,5 +17,5 @@
 package com.mongodb;
 
 abstract class WriteRequest {
-    abstract org.mongodb.operation.WriteRequest toNew();
+    abstract com.mongodb.operation.WriteRequest toNew();
 }

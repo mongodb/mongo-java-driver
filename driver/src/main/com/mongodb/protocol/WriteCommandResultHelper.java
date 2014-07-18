@@ -17,6 +17,7 @@
 package com.mongodb.protocol;
 
 import com.mongodb.MongoInternalException;
+import com.mongodb.operation.WriteRequest;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -28,14 +29,13 @@ import org.mongodb.BulkWriteResult;
 import org.mongodb.BulkWriteUpsert;
 import org.mongodb.CommandResult;
 import org.mongodb.WriteConcernError;
-import org.mongodb.operation.WriteRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.mongodb.operation.WriteRequest.Type.REPLACE;
-import static org.mongodb.operation.WriteRequest.Type.UPDATE;
+import static com.mongodb.operation.WriteRequest.Type.REPLACE;
+import static com.mongodb.operation.WriteRequest.Type.UPDATE;
 
 final class WriteCommandResultHelper {
 

@@ -18,7 +18,7 @@ package org.mongodb;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import org.mongodb.operation.QueryFlag;
+import com.mongodb.operation.QueryFlag;
 
 import java.util.EnumSet;
 

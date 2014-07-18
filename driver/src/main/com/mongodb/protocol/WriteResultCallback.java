@@ -19,6 +19,8 @@ package com.mongodb.protocol;
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
 import com.mongodb.connection.Connection;
+import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.operation.SingleResultFutureCallback;
 import com.mongodb.protocol.message.RequestMessage;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
@@ -26,8 +28,6 @@ import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
-import org.mongodb.operation.SingleResultFuture;
-import org.mongodb.operation.SingleResultFutureCallback;
 
 class WriteResultCallback extends CommandResultBaseCallback {
     private final SingleResultFuture<WriteResult> future;

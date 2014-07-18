@@ -16,10 +16,10 @@
 
 package com.mongodb.protocol.message;
 
+import com.mongodb.operation.BaseUpdateRequest;
+import com.mongodb.operation.ReplaceRequest;
 import org.bson.codecs.Encoder;
 import org.bson.io.OutputBuffer;
-import org.mongodb.operation.BaseUpdateRequest;
-import org.mongodb.operation.ReplaceRequest;
 
 import java.util.List;
 

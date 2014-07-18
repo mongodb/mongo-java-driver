@@ -28,13 +28,13 @@ import org.mongodb.CommandResult
 import org.mongodb.WriteConcernError
 import spock.lang.Specification
 
+import static com.mongodb.operation.WriteRequest.Type.INSERT
+import static com.mongodb.operation.WriteRequest.Type.REMOVE
+import static com.mongodb.operation.WriteRequest.Type.REPLACE
+import static com.mongodb.operation.WriteRequest.Type.UPDATE
 import static com.mongodb.protocol.WriteCommandResultHelper.getBulkWriteException
 import static com.mongodb.protocol.WriteCommandResultHelper.getBulkWriteResult
 import static com.mongodb.protocol.WriteCommandResultHelper.hasError
-import static org.mongodb.operation.WriteRequest.Type.INSERT
-import static org.mongodb.operation.WriteRequest.Type.REMOVE
-import static org.mongodb.operation.WriteRequest.Type.REPLACE
-import static org.mongodb.operation.WriteRequest.Type.UPDATE
 
 class WriteCommandHelperSpecification extends Specification {
 

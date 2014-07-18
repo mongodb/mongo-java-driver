@@ -38,7 +38,7 @@ class RemoveRequest extends WriteRequest {
     }
 
     @Override
-    org.mongodb.operation.WriteRequest toNew() {
-        return new org.mongodb.operation.RemoveRequest(new BsonDocumentWrapper<DBObject>(query, codec)).multi(isMulti());
+    com.mongodb.operation.WriteRequest toNew() {
+        return new com.mongodb.operation.RemoveRequest(new BsonDocumentWrapper<DBObject>(query, codec)).multi(isMulti());
     }
 }

@@ -20,8 +20,8 @@ import com.mongodb.binding.AsyncSingleConnectionBinding
 import com.mongodb.binding.PinnedBinding
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.connection.ServerHelper
-import org.mongodb.operation.InsertOperation
-import org.mongodb.operation.InsertRequest
+import com.mongodb.operation.InsertOperation
+import com.mongodb.operation.InsertRequest
 import org.mongodb.test.CollectionHelper
 import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec

@@ -23,15 +23,15 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.operation.GetMore;
+import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.operation.SingleResultFutureCallback;
 import com.mongodb.protocol.message.GetMoreMessage;
 import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.codecs.Decoder;
 import org.mongodb.Document;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.operation.GetMore;
-import org.mongodb.operation.SingleResultFuture;
-import org.mongodb.operation.SingleResultFutureCallback;
 
 import static com.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
 import static com.mongodb.protocol.ProtocolHelper.getQueryFailureException;

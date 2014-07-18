@@ -21,6 +21,9 @@ import com.mongodb.WriteConcern;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
+import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.operation.UpdateRequest;
+import com.mongodb.operation.WriteRequest;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.UpdateCommandMessage;
 import org.bson.codecs.Encoder;
@@ -28,9 +31,6 @@ import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.operation.SingleResultFuture;
-import org.mongodb.operation.UpdateRequest;
-import org.mongodb.operation.WriteRequest;
 
 import java.util.List;
 

@@ -16,9 +16,9 @@
 
 package com.mongodb.protocol.message;
 
+import com.mongodb.operation.BaseUpdateRequest;
+import com.mongodb.operation.UpdateRequest;
 import org.bson.io.OutputBuffer;
-import org.mongodb.operation.BaseUpdateRequest;
-import org.mongodb.operation.UpdateRequest;
 
 import java.util.List;
 

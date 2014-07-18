@@ -17,11 +17,11 @@
 package com.mongodb;
 
 import category.ReplicaSet;
+import com.mongodb.operation.UserExistsOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.operation.UserExistsOperation;
 
 import java.net.UnknownHostException;
 
