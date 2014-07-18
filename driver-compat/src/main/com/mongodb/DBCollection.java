@@ -159,7 +159,7 @@ public class DBCollection {
      * @param name     the name of the collection
      */
     protected DBCollection(final DB database, final String name) {
-        this(name, database, new org.mongodb.codecs.DocumentCodec());
+        this(name, database, new com.mongodb.codecs.DocumentCodec());
     }
 
     /**

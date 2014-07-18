@@ -16,13 +16,13 @@
 
 package org.mongodb.test;
 
+import com.mongodb.codecs.CollectibleCodec;
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.types.ObjectId;
-import org.mongodb.codecs.CollectibleCodec;
 
 import java.util.Date;
 

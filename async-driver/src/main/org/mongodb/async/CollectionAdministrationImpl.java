@@ -16,11 +16,11 @@
 
 package org.mongodb.async;
 
+import com.mongodb.codecs.DocumentCodec;
 import org.mongodb.Document;
 import org.mongodb.Index;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.CreateIndexesOperation;
 import org.mongodb.operation.DropCollectionOperation;
 import org.mongodb.operation.DropIndexOperation;

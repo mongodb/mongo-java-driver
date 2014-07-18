@@ -20,6 +20,7 @@ import category.Async
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.ReadPreference
 import com.mongodb.binding.ClusterBinding
+import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.junit.experimental.categories.Category
@@ -28,7 +29,6 @@ import org.mongodb.Document
 import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
-import org.mongodb.codecs.DocumentCodec
 
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS

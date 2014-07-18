@@ -19,8 +19,8 @@ package org.mongodb;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.codecs.DocumentCodec;
 import org.bson.codecs.Codec;
-import org.mongodb.codecs.DocumentCodec;
 
 @Immutable
 public class MongoDatabaseOptions {

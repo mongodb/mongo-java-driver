@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.codecs.DocumentCodec;
+import com.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.CreateIndexesOperation;
 import org.mongodb.operation.DropCollectionOperation;
 import org.mongodb.operation.DropIndexOperation;

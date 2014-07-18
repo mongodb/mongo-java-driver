@@ -16,8 +16,8 @@
 
 package org.mongodb;
 
+import com.mongodb.codecs.DocumentCodec;
 import org.junit.Test;
-import org.mongodb.codecs.DocumentCodec;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;

@@ -17,10 +17,10 @@
 package org.mongodb;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.codecs.DocumentCodec;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.CommandReadOperation;
 import org.mongodb.operation.CommandWriteOperation;
 

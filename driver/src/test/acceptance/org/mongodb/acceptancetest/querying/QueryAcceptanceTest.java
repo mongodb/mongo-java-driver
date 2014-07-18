@@ -16,6 +16,7 @@
 
 package org.mongodb.acceptancetest.querying;
 
+import com.mongodb.codecs.CollectibleCodec;
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
@@ -29,7 +30,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 import org.mongodb.QueryBuilder;
-import org.mongodb.codecs.CollectibleCodec;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -18,6 +18,8 @@ package org.mongodb.async;
 
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
+import com.mongodb.codecs.CollectibleCodec;
+import com.mongodb.codecs.DocumentCodec;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
@@ -30,8 +32,6 @@ import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
-import org.mongodb.codecs.CollectibleCodec;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.AsyncReadOperation;
 import org.mongodb.operation.AsyncWriteOperation;

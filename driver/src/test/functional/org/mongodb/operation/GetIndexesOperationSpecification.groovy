@@ -17,11 +17,11 @@
 package org.mongodb.operation
 
 import category.Async
+import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
-import org.mongodb.codecs.DocumentCodec
 
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.mongodb.Fixture.getAsyncBinding

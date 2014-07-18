@@ -18,10 +18,10 @@ package org.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoExecutionTimeoutException
+import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.codecs.DocumentCodec
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList

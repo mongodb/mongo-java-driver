@@ -16,11 +16,11 @@
 
 package org.mongodb;
 
+import com.mongodb.codecs.DocumentCodec;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.junit.After;
 import org.junit.Before;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ServerHelper;
 import org.mongodb.test.CollectionHelper;
 

@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import com.mongodb.codecs.DocumentCodec;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
@@ -25,7 +26,6 @@ import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 import org.bson.types.ObjectId;
-import org.mongodb.codecs.DocumentCodec;
 
 import java.io.Serializable;
 import java.io.StringWriter;

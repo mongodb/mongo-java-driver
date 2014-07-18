@@ -17,6 +17,7 @@
 package org.mongodb.async;
 
 
+import com.mongodb.codecs.DocumentCodec;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
 import org.mongodb.CommandResult;
@@ -25,7 +26,6 @@ import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.operation.CommandWriteOperation;
 
 class MongoDatabaseImpl implements MongoDatabase {

@@ -1,10 +1,11 @@
 package org.mongodb.operation
+
+import com.mongodb.codecs.DocumentCodec
 import org.mongodb.Block
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoAsyncCursor
 import org.mongodb.MongoCursor
-import org.mongodb.codecs.DocumentCodec
 
 import static java.util.Arrays.asList
 import static org.junit.Assert.assertTrue

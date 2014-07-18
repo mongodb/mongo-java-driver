@@ -18,11 +18,11 @@ package org.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoSecurityException
+import com.mongodb.codecs.DocumentCodec
 import com.mongodb.selector.PrimaryServerSelector
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.ClusterSettings
 import org.mongodb.connection.ConnectionPoolSettings
 import org.mongodb.connection.DefaultClusterFactory

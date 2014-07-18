@@ -17,10 +17,10 @@
 package org.mongodb.operation;
 
 import com.mongodb.WriteConcern;
+import com.mongodb.codecs.CollectibleCodec;
 import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.MongoNamespace;
-import org.mongodb.codecs.CollectibleCodec;
 import org.mongodb.protocol.InsertCommandProtocol;
 import org.mongodb.protocol.InsertProtocol;
 import org.mongodb.protocol.WriteCommandProtocol;

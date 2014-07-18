@@ -93,7 +93,7 @@ public class DB {
      * @param name  the database name - must not be empty and cannot contain spaces
      */
     public DB(final Mongo mongo, final String name) {
-        this(mongo, name, new org.mongodb.codecs.DocumentCodec());
+        this(mongo, name, new com.mongodb.codecs.DocumentCodec());
     }
 
     /**

@@ -16,6 +16,7 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.codecs.DocumentCodec;
 import org.bson.BsonSerializationException;
 import org.bson.types.Binary;
 import org.junit.After;
@@ -23,7 +24,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
 import org.mongodb.SimpleBufferProvider;
-import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.operation.InsertRequest;
 import org.mongodb.protocol.message.InsertMessage;

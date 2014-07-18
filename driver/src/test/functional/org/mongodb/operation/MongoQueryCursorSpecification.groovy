@@ -20,6 +20,7 @@ package org.mongodb.operation
 import category.Slow
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.binding.ConnectionSource
+import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonTimestamp
 import org.junit.experimental.categories.Category
@@ -28,7 +29,6 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.QueryOptions
 import org.mongodb.ServerCursor
-import org.mongodb.codecs.DocumentCodec
 import org.mongodb.protocol.GetMoreProtocol
 import org.mongodb.protocol.KillCursor
 import org.mongodb.protocol.KillCursorProtocol

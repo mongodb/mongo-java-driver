@@ -17,13 +17,13 @@
 package org.mongodb.operation
 
 import category.Async
+import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonSerializationException
 import org.bson.types.Binary
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.codecs.DocumentCodec
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList

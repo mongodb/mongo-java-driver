@@ -19,6 +19,7 @@ package org.mongodb.operation
 
 import category.Slow
 import com.mongodb.WriteConcern
+import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -31,7 +32,6 @@ import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
 import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
-import org.mongodb.codecs.DocumentCodec
 import org.mongodb.protocol.AcknowledgedBulkWriteResult
 
 import static WriteConcern.ACKNOWLEDGED

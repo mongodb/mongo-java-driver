@@ -17,6 +17,7 @@
 
 package org.mongodb.protocol
 
+import com.mongodb.codecs.DocumentCodec
 import com.mongodb.selector.PrimaryServerSelector
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -25,7 +26,6 @@ import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.codecs.DocumentCodec
 import org.mongodb.operation.CountOperation
 import org.mongodb.operation.Find
 import org.mongodb.operation.InsertRequest

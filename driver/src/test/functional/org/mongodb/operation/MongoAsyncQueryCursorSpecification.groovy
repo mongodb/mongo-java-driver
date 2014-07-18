@@ -22,6 +22,7 @@ import com.mongodb.MongoInternalException
 import com.mongodb.binding.AsyncClusterBinding
 import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.binding.AsyncReadBinding
+import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonTimestamp
 import org.junit.experimental.categories.Category
@@ -30,7 +31,6 @@ import org.mongodb.CreateCollectionOptions
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MongoFuture
-import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.Connection
 import org.mongodb.protocol.QueryProtocol
 import org.mongodb.protocol.QueryResult

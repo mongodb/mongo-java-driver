@@ -15,14 +15,15 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
+import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonJavaScript
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.MapReduceStatistics
 import org.mongodb.MongoNamespace
-import org.mongodb.codecs.DocumentCodec
 import org.mongodb.test.CollectionHelper
 import spock.lang.Shared
 

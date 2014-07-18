@@ -18,12 +18,12 @@ package org.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoException
+import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonSerializationException
 import org.bson.types.Binary
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.codecs.DocumentCodec
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
