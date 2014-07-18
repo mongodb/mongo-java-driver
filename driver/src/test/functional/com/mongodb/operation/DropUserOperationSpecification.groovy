@@ -23,8 +23,8 @@ package com.mongodb.operation
 import com.mongodb.MongoException
 import org.mongodb.FunctionalSpecification
 
+import static com.mongodb.MongoCredential.createMongoCRCredential
 import static org.mongodb.Fixture.getBinding
-import static org.mongodb.MongoCredential.createMongoCRCredential
 
 class DropUserOperationSpecification extends FunctionalSpecification {
     def 'should delete user without error'() {

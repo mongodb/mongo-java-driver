@@ -16,7 +16,7 @@
 
 package com.mongodb.operation;
 
-import org.mongodb.MongoCredential;
+import com.mongodb.MongoCredential;
 
 /**
  * Encapsulates information about a user for the user-related operations.

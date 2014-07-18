@@ -21,15 +21,15 @@ import com.mongodb.MongoSecurityException;
 import org.junit.Before;
 import org.junit.Test;
 
+import static com.mongodb.AuthenticationMechanism.PLAIN;
+import static com.mongodb.MongoCredential.createPlainCredential;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
-import static org.mongodb.AuthenticationMechanism.PLAIN;
 import static org.mongodb.Fixture.getCredentialList;
 import static org.mongodb.Fixture.getMongoClient;
 import static org.mongodb.Fixture.getMongoClientURI;
 import static org.mongodb.Fixture.getPrimary;
-import static org.mongodb.MongoCredential.createPlainCredential;
 
 public class PlainAuthenticationTest {
     @Before

@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.Cluster;
@@ -29,7 +30,6 @@ import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoClientURI;
-import org.mongodb.MongoCredential;
 
 import java.util.ArrayList;
 import java.util.Arrays;

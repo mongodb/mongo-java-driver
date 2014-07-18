@@ -35,6 +35,7 @@ import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 
+import static com.mongodb.MongoCredential.createMongoCRCredential;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.WriteConcern.ACKNOWLEDGED;
 import static java.util.Arrays.asList;
@@ -46,7 +47,6 @@ import static org.mongodb.Fixture.getBinding;
 import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.Fixture.getSSLSettings;
 import static org.mongodb.Fixture.isAuthenticated;
-import static org.mongodb.MongoCredential.createMongoCRCredential;
 
 // This test is here because the assertion is conditional on auth being enabled, and there"s no way to do that in Spock
 @SuppressWarnings("unchecked")

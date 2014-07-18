@@ -17,11 +17,11 @@
 package com.mongodb.connection;
 
 import com.mongodb.CommandFailureException;
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.mongodb.CommandResult;
-import org.mongodb.MongoCredential;
 
 import static com.mongodb.connection.CommandHelper.executeCommand;
 import static com.mongodb.connection.NativeAuthenticationHelper.getAuthCommand;

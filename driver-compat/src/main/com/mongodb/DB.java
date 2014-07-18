@@ -45,9 +45,9 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.mongodb.MongoCredential.createMongoCRCredential;
 import static com.mongodb.ReadPreference.primary;
 import static java.util.Arrays.asList;
-import static org.mongodb.MongoCredential.createMongoCRCredential;
 
 /**
  * A thread-safe client view of a logical database in a MongoDB cluster. A DB instance can be achieved from a {@link MongoClient} instance

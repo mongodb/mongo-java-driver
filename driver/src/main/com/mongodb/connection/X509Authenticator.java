@@ -16,13 +16,13 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.AuthenticationMechanism;
 import com.mongodb.CommandFailureException;
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
-import org.mongodb.AuthenticationMechanism;
-import org.mongodb.MongoCredential;
 
 import static com.mongodb.connection.CommandHelper.executeCommand;
 

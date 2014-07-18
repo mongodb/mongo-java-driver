@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.MongoSecurityException;
 import org.ietf.jgss.GSSCredential;
@@ -23,7 +24,6 @@ import org.ietf.jgss.GSSException;
 import org.ietf.jgss.GSSManager;
 import org.ietf.jgss.GSSName;
 import org.ietf.jgss.Oid;
-import org.mongodb.MongoCredential;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslClient;
@@ -33,7 +33,7 @@ import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.mongodb.AuthenticationMechanism.GSSAPI;
+import static com.mongodb.AuthenticationMechanism.GSSAPI;
 
 class GSSAPIAuthenticator extends SaslAuthenticator {
     private static final String GSSAPI_MECHANISM_NAME = "GSSAPI";
@@ -45,7 +45,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
     GSSAPIAuthenticator(final MongoCredential credential, final InternalConnection internalConnection) {
         super(credential, internalConnection);
 
-        if (getCredential().getMechanism() != GSSAPI) {
+        if (getCredential().getAuthenticationMechanism() != GSSAPI) {
             throw new MongoException("Incorrect mechanism: " + this.getCredential().getMechanism());
         }
     }

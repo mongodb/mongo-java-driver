@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import org.bson.BsonBinary;
 import org.bson.BsonBoolean;
@@ -23,7 +24,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.mongodb.CommandResult;
-import org.mongodb.MongoCredential;
 
 import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;

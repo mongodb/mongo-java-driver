@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.Cluster;

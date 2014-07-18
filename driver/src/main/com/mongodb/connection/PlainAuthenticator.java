@@ -16,8 +16,8 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
-import org.mongodb.MongoCredential;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
@@ -29,8 +29,8 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 import java.io.IOException;
 
+import static com.mongodb.AuthenticationMechanism.PLAIN;
 import static com.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.AuthenticationMechanism.PLAIN;
 
 class PlainAuthenticator extends SaslAuthenticator {
     private static final String DEFAULT_PROTOCOL = "mongodb";
@@ -47,7 +47,7 @@ class PlainAuthenticator extends SaslAuthenticator {
     @Override
     protected SaslClient createSaslClient() {
         final MongoCredential credential = getCredential();
-        isTrue("mechanism is PLAIN", credential.getMechanism() == PLAIN);
+        isTrue("mechanism is PLAIN", credential.getAuthenticationMechanism() == PLAIN);
         try {
             return Sasl.createSaslClient(new String[]{PLAIN.getMechanismName()},
                                          credential.getUserName(),

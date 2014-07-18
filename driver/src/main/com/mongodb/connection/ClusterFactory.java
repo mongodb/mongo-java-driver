@@ -16,10 +16,10 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoCredential;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ConnectionListener;
 import com.mongodb.event.ConnectionPoolListener;
-import org.mongodb.MongoCredential;
 
 import java.util.List;
 

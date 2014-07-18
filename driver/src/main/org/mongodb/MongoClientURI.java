@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import com.mongodb.AuthenticationMechanism;
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ReadPreference;
 import com.mongodb.Tags;
@@ -35,11 +37,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.mongodb.AuthenticationMechanism.GSSAPI;
+import static com.mongodb.AuthenticationMechanism.MONGODB_CR;
+import static com.mongodb.AuthenticationMechanism.MONGODB_X509;
+import static com.mongodb.AuthenticationMechanism.PLAIN;
 import static java.lang.String.format;
-import static org.mongodb.AuthenticationMechanism.GSSAPI;
-import static org.mongodb.AuthenticationMechanism.MONGODB_CR;
-import static org.mongodb.AuthenticationMechanism.MONGODB_X509;
-import static org.mongodb.AuthenticationMechanism.PLAIN;
 
 
 /**

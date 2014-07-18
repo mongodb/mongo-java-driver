@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008 - 2014 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb;
-
+package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
 
@@ -24,17 +23,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.AuthenticationMechanism.GSSAPI;
+import static com.mongodb.AuthenticationMechanism.MONGODB_CR;
+import static com.mongodb.AuthenticationMechanism.MONGODB_X509;
+import static com.mongodb.AuthenticationMechanism.PLAIN;
 import static com.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.AuthenticationMechanism.GSSAPI;
-import static org.mongodb.AuthenticationMechanism.MONGODB_CR;
-import static org.mongodb.AuthenticationMechanism.MONGODB_X509;
-import static org.mongodb.AuthenticationMechanism.PLAIN;
 
 /**
- * Represents credentials to authenticate to a mongo server, as well as the source of the credentials and the authentication mechanism to
+ * Represents credentials to authenticate to a mongo server,as well as the source of the credentials and the authentication mechanism to
  * use.
  *
- * @since 3.0
+ * @since 2.11.0
  */
 @Immutable
 public final class MongoCredential {
@@ -46,11 +45,37 @@ public final class MongoCredential {
     private final Map<String, Object> mechanismProperties;
 
     /**
+     * The MongoDB Challenge Response mechanism.
+     */
+    public static final String MONGODB_CR_MECHANISM = AuthenticationMechanism.MONGODB_CR.getMechanismName();
+
+    /**
+     * The GSSAPI mechanism.  See the <a href="http://tools.ietf.org/html/rfc4752">RFC</a>.
+     *
+     * @mongodb.server.release 2.4
+     */
+    public static final String GSSAPI_MECHANISM = AuthenticationMechanism.GSSAPI.getMechanismName();
+
+    /**
+     * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
+     *
+     * @mongodb.server.release 2.6
+     */
+    public static final String PLAIN_MECHANISM = AuthenticationMechanism.PLAIN.getMechanismName();
+
+    /**
+     * The MongoDB X.509
+     *
+     * @mongodb.server.release 2.6
+     */
+    public static final String MONGODB_X509_MECHANISM = AuthenticationMechanism.MONGODB_X509.getMechanismName();
+
+    /**
      * Creates a MongoCredential instance for the MongoDB Challenge Response protocol.
      *
-     * @param userName the non-null user name
-     * @param database the non-null database where the user is defined
-     * @param password the non-null password
+     * @param userName the user name
+     * @param database the database where the user is defined
+     * @param password the user's password
      * @return the credential
      */
     public static MongoCredential createMongoCRCredential(final String userName, final String database, final char[] password) {
@@ -60,12 +85,29 @@ public final class MongoCredential {
     /**
      * Creates a MongoCredential instance for the MongoDB X.509 protocol.
      *
-     * @param userName the non-null user name
+     * @param userName the user name
      * @return the credential
+     *
+     * @mongodb.server.release 2.6
      */
     public static MongoCredential createMongoX509Credential(final String userName) {
         return new MongoCredential(MONGODB_X509, userName, "$external", null);
     }
+
+    /**
+     * Creates a MongoCredential instance for the PLAIN SASL mechanism.
+     *
+     * @param userName the non-null user name
+     * @param source   the source where the user is defined.  This can be either {@code "$external"} or the name of a database.
+     * @param password the non-null user password
+     * @return the credential
+     *
+     * @mongodb.server.release 2.6
+     */
+    public static MongoCredential createPlainCredential(final String userName, final String source, final char[] password) {
+        return new MongoCredential(PLAIN, userName, source, password);
+    }
+
 
     /**
      * Creates a MongoCredential instance for the GSSAPI SASL mechanism.  To override the default service name of {@code "mongodb"}, add a
@@ -75,21 +117,11 @@ public final class MongoCredential {
      * @param userName the non-null user name
      * @return the credential
      * @see #withMechanismProperty(String, Object)
+     *
+     * @mongodb.server.release 2.4
      */
     public static MongoCredential createGSSAPICredential(final String userName) {
         return new MongoCredential(GSSAPI, userName, "$external", null);
-    }
-
-    /**
-     * Creates a MongoCredential instance for the PLAIN SASL mechanism.
-     *
-     * @param userName the non-null user name
-     * @param source   the non-null source where the user is defined. This can be either {@code "$external"} or the name of a database.
-     * @param password the non-null user password
-     * @return the credential
-     */
-    public static MongoCredential createPlainCredential(final String userName, final String source, final char[] password) {
-        return new MongoCredential(PLAIN, userName, source, password);
     }
 
     /**
@@ -153,7 +185,16 @@ public final class MongoCredential {
      *
      * @return the mechanism.
      */
-    public AuthenticationMechanism getMechanism() {
+    public String getMechanism() {
+        return mechanism.getMechanismName();
+    }
+
+    /**
+     * Gets the mechanism
+     *
+     * @return the mechanism.
+     */
+    public AuthenticationMechanism getAuthenticationMechanism() {
         return mechanism;
     }
 
@@ -187,7 +228,6 @@ public final class MongoCredential {
         return password.clone();
     }
 
-
     /**
      * Get the value of the given key to a mechanism property, or defaultValue if there is no mapping.
      *
@@ -202,8 +242,8 @@ public final class MongoCredential {
 
         T value = (T) mechanismProperties.get(key);
         return (value == null) ? defaultValue : value;
-    }
 
+    }
 
     @Override
     public boolean equals(final Object o) {
@@ -256,3 +296,4 @@ public final class MongoCredential {
                + '}';
     }
 }
+

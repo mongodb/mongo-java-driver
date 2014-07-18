@@ -227,7 +227,7 @@ public class MongoClientURI {
         if (proxied.getCredentialList().isEmpty()) {
             return null;
         } else {
-            return new MongoCredential(proxied.getCredentialList().get(0));
+            return proxied.getCredentialList().get(0);
         }
     }
 

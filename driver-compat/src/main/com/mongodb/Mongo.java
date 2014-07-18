@@ -664,22 +664,11 @@ public class Mongo {
                                  .build();
     }
 
-    private static List<org.mongodb.MongoCredential> createNewCredentialList(final List<MongoCredential> credentialsList) {
-        if (credentialsList == null) {
-            return Collections.emptyList();
-        }
-        List<org.mongodb.MongoCredential> retVal = new ArrayList<org.mongodb.MongoCredential>(credentialsList.size());
-        for (final MongoCredential cur : credentialsList) {
-            retVal.add(cur.toNew());
-        }
-        return retVal;
-    }
-
     private static Cluster createCluster(final MongoClientURI mongoURI) throws UnknownHostException {
 
         List<MongoCredential> credentialList = mongoURI.getCredentials() != null
                                                ? asList(mongoURI.getCredentials())
-                                               : null;
+                                               : Collections.<MongoCredential>emptyList();
 
         if (mongoURI.getHosts().size() == 1) {
             return createCluster(new ServerAddress(mongoURI.getHosts().get(0)),
@@ -722,7 +711,7 @@ public class Mongo {
                                                   new SocketStreamFactory(options.getSocketSettings(), options.getSocketFactory()),
                                                   new SocketStreamFactory(options.getHeartbeatSocketSettings(),
                                                                           options.getSocketFactory()),
-                                                  createNewCredentialList(credentialsList),
+                                                  credentialsList,
                                                   null, new JMXConnectionPoolListener(), null);
     }
 

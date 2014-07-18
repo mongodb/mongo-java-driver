@@ -16,7 +16,7 @@
 
 package com.mongodb.connection;
 
-import org.mongodb.MongoCredential;
+import com.mongodb.MongoCredential;
 
 abstract class Authenticator {
     private final MongoCredential credential;

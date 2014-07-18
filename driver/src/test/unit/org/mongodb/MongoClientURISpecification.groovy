@@ -22,12 +22,12 @@ import com.mongodb.WriteConcern
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import static com.mongodb.MongoCredential.createGSSAPICredential
+import static com.mongodb.MongoCredential.createMongoCRCredential
+import static com.mongodb.MongoCredential.createMongoX509Credential
+import static com.mongodb.MongoCredential.createPlainCredential
 import static com.mongodb.ReadPreference.secondaryPreferred
 import static java.util.Arrays.asList
-import static org.mongodb.MongoCredential.createGSSAPICredential
-import static org.mongodb.MongoCredential.createMongoCRCredential
-import static org.mongodb.MongoCredential.createMongoX509Credential
-import static org.mongodb.MongoCredential.createPlainCredential
 
 class MongoClientURISpecification extends Specification {
     def 'should throw Exception if URI does not have a trailing slash'() {

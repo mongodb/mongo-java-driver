@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import org.mongodb.MongoCredential;
-
 /**
  * This exception is thrown when there is an error reported by the underlying client authentication mechanism.
  */

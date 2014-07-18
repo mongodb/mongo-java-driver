@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import category.Async;
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.event.ConnectionEvent;
 import com.mongodb.event.ConnectionListener;
@@ -35,7 +36,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.MongoCredential;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
 

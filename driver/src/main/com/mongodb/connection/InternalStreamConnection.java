@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
@@ -31,7 +32,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.ByteBuf;
 import org.bson.io.BasicInputBuffer;
-import org.mongodb.MongoCredential;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -232,7 +232,7 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     private Authenticator createAuthenticator(final MongoCredential credential) {
-        switch (credential.getMechanism()) {
+        switch (credential.getAuthenticationMechanism()) {
             case MONGODB_CR:
                 return new NativeAuthenticator(credential, this);
             case GSSAPI:

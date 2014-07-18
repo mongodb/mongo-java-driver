@@ -16,12 +16,12 @@
 
 
 
-package org.mongodb
+package com.mongodb
 
 import spock.lang.Specification
 
-import static org.mongodb.AuthenticationMechanism.MONGODB_CR
-import static org.mongodb.AuthenticationMechanism.PLAIN
+import static com.mongodb.AuthenticationMechanism.MONGODB_CR
+import static com.mongodb.AuthenticationMechanism.PLAIN
 
 class MongoCredentialSpecification extends Specification {
     def 'creating a challenge-response credential should populate correct fields'() {
@@ -35,11 +35,11 @@ class MongoCredentialSpecification extends Specification {
         MongoCredential credential = MongoCredential.createMongoCRCredential(userName, database, password);
 
         then:
-        mechanism == credential.getMechanism()
         userName == credential.getUserName()
         database == credential.getSource()
         password == credential.getPassword()
-        MONGODB_CR == credential.getMechanism()
+        mechanism == credential.getAuthenticationMechanism()
+        MongoCredential.MONGODB_CR_MECHANISM == credential.getMechanism()
     }
 
     def 'should throw IllegalArgumentException when required parameter is not supplied for challenge-response'() {
@@ -70,11 +70,11 @@ class MongoCredentialSpecification extends Specification {
         MongoCredential credential = MongoCredential.createPlainCredential(userName, source, password);
 
         then:
-        mechanism == credential.getMechanism()
         userName == credential.getUserName()
         source == credential.getSource()
         password == credential.getPassword()
-        mechanism == credential.getMechanism()
+        mechanism == credential.getAuthenticationMechanism()
+        MongoCredential.PLAIN_MECHANISM == credential.getMechanism()
     }
 
     def 'should throw IllegalArgumentException when a required field is not passed in'() {
@@ -103,10 +103,11 @@ class MongoCredentialSpecification extends Specification {
         MongoCredential credential = MongoCredential.createGSSAPICredential(userName);
 
         then:
-        mechanism == credential.getMechanism()
         userName == credential.getUserName()
         '$external' == credential.getSource()
         null == credential.getPassword()
+        mechanism == credential.getAuthenticationMechanism()
+        MongoCredential.GSSAPI_MECHANISM == credential.getMechanism()
     }
 
     def 'creating an X.509 Credential should populate the correct fields'() {
@@ -118,10 +119,11 @@ class MongoCredentialSpecification extends Specification {
         MongoCredential credential = MongoCredential.createMongoX509Credential(userName)
 
         then:
-        mechanism == credential.getMechanism()
         userName == credential.getUserName()
         '$external' == credential.getSource()
         null == credential.getPassword()
+        mechanism == credential.getAuthenticationMechanism()
+        MongoCredential.MONGODB_X509_MECHANISM == credential.getMechanism()
     }
 
     def 'should get default value of mechanism property when there is no mapping'() {
@@ -155,7 +157,7 @@ class MongoCredentialSpecification extends Specification {
 
     def 'should preserve other properties when adding a mechanism property'() {
         given:
-        def  credential = MongoCredential.createPlainCredential('user', 'source', 'pwd'.toCharArray())
+        def credential = MongoCredential.createPlainCredential('user', 'source', 'pwd'.toCharArray())
 
         when:
         def newCredential = credential.withMechanismProperty('foo', 'bar')
@@ -173,6 +175,18 @@ class MongoCredentialSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def 'should make a copy of the password'() {
+        given:
+        def credential = MongoCredential.createPlainCredential('user', 'source', 'pwd'.toCharArray())
+        def password = credential.getPassword()
+
+        when:
+        password[0] = 's'
+
+        then:
+        credential.password == credential.password
     }
 
     def 'testObjectOverrides'() {

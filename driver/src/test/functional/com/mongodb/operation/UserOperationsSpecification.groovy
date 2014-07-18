@@ -30,6 +30,7 @@ import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 
+import static com.mongodb.MongoCredential.createMongoCRCredential
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -37,7 +38,6 @@ import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.getSSLSettings
-import static org.mongodb.MongoCredential.createMongoCRCredential
 
 class UserOperationsSpecification extends FunctionalSpecification {
     private User readOnlyUser
