@@ -17,11 +17,11 @@
 package org.mongodb;
 
 import com.mongodb.codecs.DocumentCodec;
+import com.mongodb.connection.ServerHelper;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.junit.After;
 import org.junit.Before;
-import org.mongodb.connection.ServerHelper;
 import org.mongodb.test.CollectionHelper;
 
 import static org.mongodb.Fixture.getDefaultDatabase;

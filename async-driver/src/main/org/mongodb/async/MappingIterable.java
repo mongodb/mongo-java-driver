@@ -17,10 +17,10 @@
 package org.mongodb.async;
 
 import com.mongodb.MongoException;
+import com.mongodb.connection.SingleResultCallback;
 import org.mongodb.Block;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
 
 import java.util.Collection;

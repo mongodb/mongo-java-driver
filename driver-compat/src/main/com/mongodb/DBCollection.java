@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.connection.BufferProvider;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
@@ -35,7 +36,6 @@ import org.mongodb.MapReduceStatistics;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.OrderBy;
-import org.mongodb.connection.BufferProvider;
 import org.mongodb.operation.AggregateExplainOperation;
 import org.mongodb.operation.AggregateOperation;
 import org.mongodb.operation.AggregateToCollectionOperation;

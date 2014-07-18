@@ -25,6 +25,16 @@ import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.SingleServerBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.codecs.DocumentCodec;
+import com.mongodb.connection.BufferProvider;
+import com.mongodb.connection.Cluster;
+import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.Connection;
+import com.mongodb.connection.DefaultClusterFactory;
+import com.mongodb.connection.PowerOfTwoBufferPool;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
@@ -37,16 +47,6 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.mongodb.Document;
 import org.mongodb.ServerCursor;
-import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Cluster;
-import org.mongodb.connection.ClusterConnectionMode;
-import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ClusterSettings;
-import org.mongodb.connection.Connection;
-import org.mongodb.connection.DefaultClusterFactory;
-import org.mongodb.connection.PowerOfTwoBufferPool;
-import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.SocketStreamFactory;
 import org.mongodb.operation.GetDatabaseNamesOperation;
 import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.WriteOperation;
@@ -70,12 +70,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
-import static org.mongodb.connection.ClusterType.REPLICA_SET;
 
 /**
  * A database connection with internal connection pooling. For most applications, you should have one Mongo instance for the entire JVM.

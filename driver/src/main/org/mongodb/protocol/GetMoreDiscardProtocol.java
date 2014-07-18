@@ -17,10 +17,10 @@
 package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
+import com.mongodb.connection.Connection;
+import com.mongodb.connection.ResponseBuffers;
+import com.mongodb.connection.SingleResultCallback;
 import org.mongodb.MongoFuture;
-import org.mongodb.connection.Connection;
-import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
 
 public class GetMoreDiscardProtocol implements Protocol<Void> {

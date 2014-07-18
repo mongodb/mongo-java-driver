@@ -17,9 +17,9 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
-import org.mongodb.connection.ConnectionPoolSettings;
-import org.mongodb.connection.ServerSettings;
-import org.mongodb.connection.SocketSettings;
+import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.ServerSettings;
+import com.mongodb.connection.SocketSettings;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;

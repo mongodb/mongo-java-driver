@@ -17,14 +17,14 @@
 package org.mongodb.operation;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterType;
 import org.mongodb.Document;
-import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ClusterType;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.mongodb.connection.ClusterConnectionMode.SINGLE;
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 
 /**
  * Help for managing read preferences for commands.

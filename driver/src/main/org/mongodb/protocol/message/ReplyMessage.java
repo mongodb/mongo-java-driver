@@ -17,13 +17,13 @@
 package org.mongodb.protocol.message;
 
 import com.mongodb.MongoInternalException;
+import com.mongodb.connection.ReplyHeader;
+import com.mongodb.connection.ResponseBuffers;
 import org.bson.BsonBinaryReader;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
-import org.mongodb.connection.ReplyHeader;
-import org.mongodb.connection.ResponseBuffers;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -16,7 +16,7 @@
 
 package com.mongodb.event;
 
-import org.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterDescription;
 
 /**
  * An event signifying that the cluster description has changed.

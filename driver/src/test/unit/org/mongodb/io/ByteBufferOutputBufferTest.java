@@ -16,10 +16,10 @@
 
 package org.mongodb.io;
 
+import com.mongodb.connection.ByteBufferOutputBuffer;
 import org.bson.BsonSerializationException;
 import org.junit.Test;
 import org.mongodb.SimpleBufferProvider;
-import org.mongodb.connection.ByteBufferOutputBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

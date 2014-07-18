@@ -16,24 +16,24 @@
 
 package com.mongodb;
 
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ServerType;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.ServerType;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static com.mongodb.connection.ClusterType.REPLICA_SET;
+import static com.mongodb.connection.ServerConnectionState.CONNECTED;
+import static com.mongodb.connection.ServerType.REPLICA_SET_OTHER;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
-import static org.mongodb.connection.ClusterType.REPLICA_SET;
-import static org.mongodb.connection.ServerConnectionState.CONNECTED;
-import static org.mongodb.connection.ServerType.REPLICA_SET_OTHER;
 
 public class ReadPreferenceChooseServersTest {
     private static final int FOUR_MEG = 4 * 1024 * 1024;

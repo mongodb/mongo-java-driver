@@ -22,10 +22,10 @@
 
 package com.mongodb
 
-import org.mongodb.connection.Cluster
-import org.mongodb.connection.ClusterConnectionMode
-import org.mongodb.connection.ClusterDescription
-import org.mongodb.connection.ClusterType
+import com.mongodb.connection.Cluster
+import com.mongodb.connection.ClusterConnectionMode
+import com.mongodb.connection.ClusterDescription
+import com.mongodb.connection.ClusterType
 import spock.lang.Specification
 import spock.lang.Subject
 

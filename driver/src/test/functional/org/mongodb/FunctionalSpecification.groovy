@@ -19,7 +19,7 @@ package org.mongodb
 import com.mongodb.binding.AsyncSingleConnectionBinding
 import com.mongodb.binding.PinnedBinding
 import com.mongodb.codecs.DocumentCodec
-import org.mongodb.connection.ServerHelper
+import com.mongodb.connection.ServerHelper
 import org.mongodb.operation.InsertOperation
 import org.mongodb.operation.InsertRequest
 import org.mongodb.test.CollectionHelper

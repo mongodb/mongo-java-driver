@@ -17,23 +17,23 @@
 package org.mongodb.operation;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ServerDescription;
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ServerDescription;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.secondary;
+import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
+import static com.mongodb.connection.ClusterType.REPLICA_SET;
+import static com.mongodb.connection.ClusterType.SHARDED;
+import static com.mongodb.connection.ServerConnectionState.CONNECTED;
+import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
+import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
+import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
-import static org.mongodb.connection.ClusterConnectionMode.SINGLE;
-import static org.mongodb.connection.ClusterType.REPLICA_SET;
-import static org.mongodb.connection.ClusterType.SHARDED;
-import static org.mongodb.connection.ServerConnectionState.CONNECTED;
-import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
-import static org.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
-import static org.mongodb.connection.ServerType.SHARD_ROUTER;
 import static org.mongodb.operation.CommandReadPreferenceHelper.getCommandReadPreference;
 
 public class CommandReadPreferenceHelperTest {

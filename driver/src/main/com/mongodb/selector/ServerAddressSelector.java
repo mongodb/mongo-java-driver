@@ -17,8 +17,8 @@
 package com.mongodb.selector;
 
 import com.mongodb.ServerAddress;
-import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ServerDescription;
 
 import java.util.Arrays;
 import java.util.Collections;

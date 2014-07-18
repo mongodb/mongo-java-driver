@@ -17,12 +17,12 @@
 package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
+import com.mongodb.connection.Connection;
+import com.mongodb.connection.SingleResultCallback;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.Connection;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.RequestMessage;

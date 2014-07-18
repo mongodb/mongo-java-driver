@@ -20,6 +20,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.codecs.DocumentCodec;
+import com.mongodb.connection.Connection;
 import org.bson.BsonDocument;
 import org.bson.types.Binary;
 import org.junit.After;
@@ -27,7 +28,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.connection.Connection;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 

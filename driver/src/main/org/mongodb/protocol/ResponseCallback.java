@@ -19,8 +19,8 @@ package org.mongodb.protocol;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
-import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.SingleResultCallback;
+import com.mongodb.connection.ResponseBuffers;
+import com.mongodb.connection.SingleResultCallback;
 
 abstract class ResponseCallback implements SingleResultCallback<ResponseBuffers> {
     private volatile boolean closed;

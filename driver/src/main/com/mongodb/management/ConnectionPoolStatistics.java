@@ -17,11 +17,11 @@
 package com.mongodb.management;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.event.ConnectionEvent;
 import com.mongodb.event.ConnectionPoolListenerAdapter;
 import com.mongodb.event.ConnectionPoolOpenedEvent;
 import com.mongodb.event.ConnectionPoolWaitQueueEvent;
-import org.mongodb.connection.ConnectionPoolSettings;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

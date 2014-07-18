@@ -18,13 +18,13 @@ package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
+import com.mongodb.connection.Connection;
+import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.Connection;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.UpdateRequest;
 import org.mongodb.protocol.message.MessageSettings;

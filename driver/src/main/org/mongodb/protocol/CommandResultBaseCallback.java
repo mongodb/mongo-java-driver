@@ -18,10 +18,10 @@ package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.ResponseBuffers;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
-import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.protocol.message.ReplyMessage;
 
 abstract class CommandResultBaseCallback extends ResponseCallback {

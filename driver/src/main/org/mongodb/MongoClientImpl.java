@@ -18,7 +18,7 @@ package org.mongodb;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.binding.ClusterBinding;
-import org.mongodb.connection.Cluster;
+import com.mongodb.connection.Cluster;
 import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.WriteOperation;
 

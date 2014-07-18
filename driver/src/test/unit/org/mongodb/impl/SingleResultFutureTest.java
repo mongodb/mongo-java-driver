@@ -17,8 +17,8 @@
 package org.mongodb.impl;
 
 import com.mongodb.MongoException;
+import com.mongodb.connection.SingleResultCallback;
 import org.junit.Test;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
 
 import java.util.concurrent.CancellationException;

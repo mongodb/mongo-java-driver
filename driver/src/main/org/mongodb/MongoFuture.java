@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.connection.SingleResultCallback;
+import com.mongodb.connection.SingleResultCallback;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;

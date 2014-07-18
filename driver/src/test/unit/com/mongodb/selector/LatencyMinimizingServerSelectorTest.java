@@ -17,19 +17,19 @@
 package com.mongodb.selector;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ServerType;
 import org.junit.Test;
-import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.ServerType;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static com.mongodb.connection.ClusterType.REPLICA_SET;
+import static com.mongodb.connection.ServerConnectionState.CONNECTED;
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
-import static org.mongodb.connection.ClusterType.REPLICA_SET;
-import static org.mongodb.connection.ServerConnectionState.CONNECTED;
 
 public class LatencyMinimizingServerSelectorTest {
     @Test

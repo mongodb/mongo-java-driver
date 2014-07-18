@@ -19,10 +19,10 @@ package org.mongodb;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Immutable;
-import org.mongodb.connection.ConnectionPoolSettings;
-import org.mongodb.connection.SSLSettings;
-import org.mongodb.connection.ServerSettings;
-import org.mongodb.connection.SocketSettings;
+import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.SSLSettings;
+import com.mongodb.connection.ServerSettings;
+import com.mongodb.connection.SocketSettings;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -666,7 +666,7 @@ public final class MongoClientOptions {
      * socketTimeout and socketKeepAlive.
      *
      * @return a SocketSettings object populated with the connection settings from this MongoClientOptions instance.
-     * @see org.mongodb.connection.SocketSettings
+     * @see com.mongodb.connection.SocketSettings
      */
     public SocketSettings getSocketSettings() {
         return socketSettings;
@@ -677,7 +677,7 @@ public final class MongoClientOptions {
      * settings object. This settings object uses the values for heartbeatConnectTimeout, heartbeatSocketTimeout and socketKeepAlive.
      *
      * @return a SocketSettings object populated with the heartbeat connection settings from this MongoClientOptions instance.
-     * @see org.mongodb.connection.SocketSettings
+     * @see com.mongodb.connection.SocketSettings
      */
     public SocketSettings getHeartbeatSocketSettings() {
         return heartbeatSocketSettings;
@@ -689,7 +689,7 @@ public final class MongoClientOptions {
      * threadsAllowedToBlockForConnectionMultiplier to calculate maxWaitQueueSize.
      *
      * @return a ConnectionPoolSettings populated with the settings from this options instance that relate to the connection provider.
-     * @see org.mongodb.connection.ConnectionPoolSettings
+     * @see com.mongodb.connection.ConnectionPoolSettings
      */
     public ConnectionPoolSettings getConnectionPoolSettings() {
         return connectionPoolSettings;

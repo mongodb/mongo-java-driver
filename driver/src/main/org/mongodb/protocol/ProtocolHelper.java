@@ -23,14 +23,14 @@ import com.mongodb.MongoQueryFailureException;
 import com.mongodb.MongoWriteException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcernException;
+import com.mongodb.connection.ByteBufferOutputBuffer;
+import com.mongodb.connection.ServerDescription;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.ByteBufferOutputBuffer;
-import org.mongodb.connection.ServerDescription;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.RequestMessage;
 

@@ -14,7 +14,7 @@
 
     <!-- these specific issues are deliberate design decisions -->
     <Match>
-        <Class name="org.mongodb.connection.BaseCluster">
+        <Class name="com.mongodb.connection.BaseCluster">
             <Bug pattern="RV_RETURN_VALUE_IGNORED"/>  <!-- Deliberately ignoring return value of CountDownLatch.await -->
         </Class>
     </Match>

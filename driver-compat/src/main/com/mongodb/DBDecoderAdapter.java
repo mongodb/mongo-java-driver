@@ -16,12 +16,12 @@
 
 package com.mongodb;
 
+import com.mongodb.connection.BufferProvider;
+import com.mongodb.connection.ByteBufferOutputBuffer;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonReader;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
-import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.ByteBufferOutputBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

@@ -18,12 +18,12 @@ package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
-import org.mongodb.connection.SingleResultCallback;
 
 class CommandResultCallback extends CommandResultBaseCallback {
     public static final Logger LOGGER = Loggers.getLogger("protocol.command");

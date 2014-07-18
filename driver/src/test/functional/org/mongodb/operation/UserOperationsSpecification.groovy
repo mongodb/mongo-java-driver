@@ -19,16 +19,16 @@ package org.mongodb.operation
 import category.Async
 import com.mongodb.MongoSecurityException
 import com.mongodb.codecs.DocumentCodec
+import com.mongodb.connection.ClusterSettings
+import com.mongodb.connection.ConnectionPoolSettings
+import com.mongodb.connection.DefaultClusterFactory
+import com.mongodb.connection.ServerSettings
+import com.mongodb.connection.SocketSettings
+import com.mongodb.connection.SocketStreamFactory
 import com.mongodb.selector.PrimaryServerSelector
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.connection.ClusterSettings
-import org.mongodb.connection.ConnectionPoolSettings
-import org.mongodb.connection.DefaultClusterFactory
-import org.mongodb.connection.ServerSettings
-import org.mongodb.connection.SocketSettings
-import org.mongodb.connection.SocketStreamFactory
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList

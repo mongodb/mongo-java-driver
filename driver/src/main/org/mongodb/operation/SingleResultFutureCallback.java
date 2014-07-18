@@ -17,7 +17,7 @@
 package org.mongodb.operation;
 
 import com.mongodb.MongoException;
-import org.mongodb.connection.SingleResultCallback;
+import com.mongodb.connection.SingleResultCallback;
 
 // TODO: should this be public?
 public class SingleResultFutureCallback<T> implements SingleResultCallback<T> {

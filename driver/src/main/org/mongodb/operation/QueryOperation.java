@@ -22,6 +22,9 @@ import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.connection.Connection;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.SingleResultCallback;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -32,16 +35,13 @@ import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.mongodb.connection.ServerType.SHARD_ROUTER;
 import static org.mongodb.operation.OperationHelper.withConnection;
 
 /**

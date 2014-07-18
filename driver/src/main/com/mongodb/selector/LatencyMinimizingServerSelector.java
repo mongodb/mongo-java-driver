@@ -16,17 +16,17 @@
 
 package com.mongodb.selector;
 
-import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ServerDescription;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
-import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 
 /**
  * A server selector that accepts only servers within the given ping-time latency difference from the faster of the servers.

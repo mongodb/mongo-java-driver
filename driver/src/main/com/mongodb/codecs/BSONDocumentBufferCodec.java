@@ -17,6 +17,8 @@
 package com.mongodb.codecs;
 
 import com.mongodb.MongoInternalException;
+import com.mongodb.connection.BufferProvider;
+import com.mongodb.connection.ByteBufferOutputBuffer;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonReader;
@@ -26,8 +28,6 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicInputBuffer;
 import org.mongodb.BSONDocumentBuffer;
-import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.ByteBufferOutputBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

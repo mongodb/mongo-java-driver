@@ -17,9 +17,9 @@
 package com.mongodb;
 
 
-import org.mongodb.connection.Cluster;
-import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ServerDescription;
+import com.mongodb.connection.Cluster;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ServerDescription;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

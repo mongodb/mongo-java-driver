@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
@@ -45,7 +46,6 @@ import static org.mongodb.Fixture.enableMaxTimeFailPoint;
 import static org.mongodb.Fixture.isDiscoverableReplicaSet;
 import static org.mongodb.Fixture.isSharded;
 import static org.mongodb.Fixture.serverVersionAtLeast;
-import static org.mongodb.connection.ClusterType.REPLICA_SET;
 
 
 public class JavaClientOldTest extends DatabaseTestCase {

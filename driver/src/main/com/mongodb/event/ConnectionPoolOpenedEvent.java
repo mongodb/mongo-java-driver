@@ -17,7 +17,7 @@
 package com.mongodb.event;
 
 import com.mongodb.ServerAddress;
-import org.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.ConnectionPoolSettings;
 
 /**
  * An event signifying the opening of a connection pool.

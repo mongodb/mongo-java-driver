@@ -17,13 +17,13 @@
 package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
+import com.mongodb.connection.ByteBufferOutputBuffer;
+import com.mongodb.connection.Connection;
+import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import org.mongodb.MongoFuture;
 import org.mongodb.ServerCursor;
-import org.mongodb.connection.ByteBufferOutputBuffer;
-import org.mongodb.connection.Connection;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.protocol.message.KillCursorsMessage;
 

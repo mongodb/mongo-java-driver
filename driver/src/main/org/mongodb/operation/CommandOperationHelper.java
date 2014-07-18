@@ -25,6 +25,9 @@ import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.connection.Connection;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.SingleResultCallback;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
@@ -33,9 +36,6 @@ import org.mongodb.CommandResult;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.CommandProtocol;
 import org.mongodb.protocol.Protocol;
 import org.mongodb.protocol.message.NoOpFieldNameValidator;
@@ -43,7 +43,7 @@ import org.mongodb.protocol.message.NoOpFieldNameValidator;
 import java.util.EnumSet;
 
 import static com.mongodb.ReadPreference.primary;
-import static org.mongodb.connection.ServerType.SHARD_ROUTER;
+import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static org.mongodb.operation.OperationHelper.IdentityTransformer;
 
 final class CommandOperationHelper {

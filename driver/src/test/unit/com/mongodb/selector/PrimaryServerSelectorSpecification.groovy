@@ -17,16 +17,16 @@
 package com.mongodb.selector
 
 import com.mongodb.ServerAddress
-import org.mongodb.connection.ClusterDescription
-import org.mongodb.connection.ClusterType
-import org.mongodb.connection.ServerDescription
+import com.mongodb.connection.ClusterDescription
+import com.mongodb.connection.ClusterType
+import com.mongodb.connection.ServerDescription
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE
-import static org.mongodb.connection.ServerConnectionState.CONNECTED
-import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
-import static org.mongodb.connection.ServerType.REPLICA_SET_SECONDARY
+import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
+import static com.mongodb.connection.ServerConnectionState.CONNECTED
+import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
+import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY
 
 class PrimaryServerSelectorSpecification extends Specification {
     private static final ServerDescription.Builder SERVER_DESCRIPTION_BUILDER = ServerDescription.builder()

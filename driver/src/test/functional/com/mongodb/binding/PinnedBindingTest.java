@@ -18,12 +18,12 @@ package com.mongodb.binding;
 
 import category.ReplicaSet;
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.Connection;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mongodb.DatabaseTestCase;
-import org.mongodb.connection.Connection;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;

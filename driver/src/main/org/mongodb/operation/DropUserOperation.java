@@ -19,13 +19,13 @@ package org.mongodb.operation;
 import com.mongodb.WriteConcern;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.connection.Connection;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.Connection;
 import org.mongodb.protocol.DeleteProtocol;
 
 import static com.mongodb.assertions.Assertions.notNull;

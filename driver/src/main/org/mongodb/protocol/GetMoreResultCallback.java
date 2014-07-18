@@ -20,11 +20,11 @@ import com.mongodb.MongoCursorNotFoundException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.ResponseBuffers;
+import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import org.bson.codecs.Decoder;
-import org.mongodb.connection.ResponseBuffers;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.message.ReplyMessage;
 
 class GetMoreResultCallback<T> extends ResponseCallback {

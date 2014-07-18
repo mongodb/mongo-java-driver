@@ -17,11 +17,11 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ServerDescription;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
-import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ServerDescription;
 
 import java.util.ArrayList;
 import java.util.Collections;

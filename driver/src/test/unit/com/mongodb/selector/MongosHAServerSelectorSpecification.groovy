@@ -21,20 +21,20 @@
 package com.mongodb.selector
 
 import com.mongodb.ServerAddress
-import org.mongodb.connection.ClusterDescription
-import org.mongodb.connection.ServerDescription
+import com.mongodb.connection.ClusterDescription
+import com.mongodb.connection.ServerDescription
 import spock.lang.Specification
 
+import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
+import static com.mongodb.connection.ClusterType.REPLICA_SET
+import static com.mongodb.connection.ClusterType.SHARDED
+import static com.mongodb.connection.ServerConnectionState.CONNECTED
+import static com.mongodb.connection.ServerConnectionState.CONNECTING
+import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
+import static com.mongodb.connection.ServerType.SHARD_ROUTER
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.MILLISECONDS
-import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE
-import static org.mongodb.connection.ClusterConnectionMode.SINGLE
-import static org.mongodb.connection.ClusterType.REPLICA_SET
-import static org.mongodb.connection.ClusterType.SHARDED
-import static org.mongodb.connection.ServerConnectionState.CONNECTED
-import static org.mongodb.connection.ServerConnectionState.CONNECTING
-import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
-import static org.mongodb.connection.ServerType.SHARD_ROUTER
 
 class MongosHAServerSelectorSpecification extends Specification {
     private MongosHAServerSelector selector;

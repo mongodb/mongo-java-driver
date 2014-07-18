@@ -17,8 +17,8 @@
 package com.mongodb.selector;
 
 import com.mongodb.ServerAddress;
-import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ServerDescription;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,8 +26,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
-import static org.mongodb.connection.ClusterType.SHARDED;
+import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static com.mongodb.connection.ClusterType.SHARDED;
 
 /**
  * A server selector that "sticks" to the fastest mongos in the cluster, so long as it's still available.

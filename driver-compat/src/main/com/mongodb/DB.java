@@ -17,6 +17,8 @@
 package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.connection.BufferProvider;
+import com.mongodb.connection.Cluster;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
@@ -26,8 +28,6 @@ import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
-import org.mongodb.connection.BufferProvider;
-import org.mongodb.connection.Cluster;
 import org.mongodb.operation.CommandReadOperation;
 import org.mongodb.operation.CommandWriteOperation;
 import org.mongodb.operation.CreateCollectionOperation;

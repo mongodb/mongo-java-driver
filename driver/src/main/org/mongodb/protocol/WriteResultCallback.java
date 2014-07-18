@@ -18,13 +18,13 @@ package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
+import com.mongodb.connection.Connection;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.Connection;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.RequestMessage;

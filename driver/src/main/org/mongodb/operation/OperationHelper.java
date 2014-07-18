@@ -23,11 +23,11 @@ import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.connection.Connection;
+import com.mongodb.connection.ServerVersion;
+import com.mongodb.connection.SingleResultCallback;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
-import org.mongodb.connection.Connection;
-import org.mongodb.connection.ServerVersion;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.Protocol;
 
 import java.util.Arrays;

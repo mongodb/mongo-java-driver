@@ -16,10 +16,10 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.connection.Connection;
+import com.mongodb.connection.ResponseBuffers;
 import org.bson.codecs.Decoder;
 import org.mongodb.MongoFuture;
-import org.mongodb.connection.Connection;
-import org.mongodb.connection.ResponseBuffers;
 import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.ReplyMessage;

@@ -16,8 +16,8 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.connection.Connection;
 import org.mongodb.MongoFuture;
-import org.mongodb.connection.Connection;
 
 /**
  * An interface for the execution of a MongoDB wire protocol conversation

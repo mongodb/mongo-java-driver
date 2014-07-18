@@ -17,6 +17,7 @@
 package org.mongodb.async.rxjava;
 
 import com.mongodb.MongoException;
+import com.mongodb.connection.SingleResultCallback;
 import org.bson.codecs.Codec;
 import org.mongodb.Block;
 import org.mongodb.ConvertibleToDocument;
@@ -25,7 +26,6 @@ import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
-import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.QueryFlag;
 import rx.Observable;
 import rx.Subscriber;

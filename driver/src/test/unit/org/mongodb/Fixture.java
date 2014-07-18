@@ -24,31 +24,31 @@ import com.mongodb.binding.AsyncSingleConnectionBinding;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.PinnedBinding;
 import com.mongodb.binding.ReadWriteBinding;
+import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
+import com.mongodb.connection.Cluster;
+import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ClusterType;
+import com.mongodb.connection.DefaultClusterFactory;
+import com.mongodb.connection.SSLSettings;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ServerVersion;
+import com.mongodb.connection.SocketStreamFactory;
+import com.mongodb.connection.StreamFactory;
+import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
-import org.mongodb.connection.AsynchronousSocketChannelStreamFactory;
-import org.mongodb.connection.Cluster;
-import org.mongodb.connection.ClusterConnectionMode;
-import org.mongodb.connection.ClusterDescription;
-import org.mongodb.connection.ClusterSettings;
-import org.mongodb.connection.ClusterType;
-import org.mongodb.connection.DefaultClusterFactory;
-import org.mongodb.connection.SSLSettings;
-import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.ServerVersion;
-import org.mongodb.connection.SocketStreamFactory;
-import org.mongodb.connection.StreamFactory;
-import org.mongodb.connection.netty.NettyStreamFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static com.mongodb.connection.ClusterType.REPLICA_SET;
+import static com.mongodb.connection.ClusterType.SHARDED;
 import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
-import static org.mongodb.connection.ClusterType.REPLICA_SET;
-import static org.mongodb.connection.ClusterType.SHARDED;
 
 /**
  * Helper class for the acceptance tests.  Used primarily by DatabaseTestCase and FunctionalSpecification.  This fixture allows Test

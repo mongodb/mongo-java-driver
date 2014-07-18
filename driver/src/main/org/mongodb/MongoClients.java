@@ -18,17 +18,17 @@ package org.mongodb;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.connection.Cluster;
+import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.DefaultClusterFactory;
+import com.mongodb.connection.SocketStreamFactory;
+import com.mongodb.connection.StreamFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.MongosHAServerSelector;
 import com.mongodb.selector.ServerSelector;
-import org.mongodb.connection.Cluster;
-import org.mongodb.connection.ClusterConnectionMode;
-import org.mongodb.connection.ClusterSettings;
-import org.mongodb.connection.DefaultClusterFactory;
-import org.mongodb.connection.SocketStreamFactory;
-import org.mongodb.connection.StreamFactory;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;

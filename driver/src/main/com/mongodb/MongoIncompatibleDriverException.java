@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterDescription;
 
 /**
  * An exception indicating that this version of the driver is not compatible with at least one of the servers that it is currently
