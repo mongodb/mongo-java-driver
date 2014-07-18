@@ -17,8 +17,8 @@
 package org.mongodb;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.annotations.ThreadSafe;
 import org.bson.codecs.Codec;
-import org.mongodb.annotations.ThreadSafe;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.

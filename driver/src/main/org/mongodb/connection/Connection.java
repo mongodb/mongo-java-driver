@@ -17,8 +17,8 @@
 package org.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.annotations.ThreadSafe;
 import org.bson.ByteBuf;
-import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.binding.ReferenceCounted;
 
 import java.util.List;

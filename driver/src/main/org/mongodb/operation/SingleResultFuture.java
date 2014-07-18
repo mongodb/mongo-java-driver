@@ -18,8 +18,8 @@ package org.mongodb.operation;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.annotations.ThreadSafe;
 import org.mongodb.MongoFuture;
-import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.SingleResultCallback;
 
 import java.util.ArrayList;

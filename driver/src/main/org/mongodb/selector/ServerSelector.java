@@ -16,7 +16,7 @@
 
 package org.mongodb.selector;
 
-import org.mongodb.annotations.ThreadSafe;
+import com.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
 

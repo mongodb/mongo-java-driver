@@ -16,7 +16,7 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.annotations.ThreadSafe;
+import com.mongodb.annotations.ThreadSafe;
 
 /**
  * A logical connection to a MongoDB server.

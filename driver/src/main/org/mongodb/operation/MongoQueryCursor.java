@@ -17,11 +17,11 @@
 package org.mongodb.operation;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.annotations.NotThreadSafe;
 import org.bson.codecs.Decoder;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
-import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.binding.ConnectionSource;
 import org.mongodb.connection.Connection;
 import org.mongodb.protocol.GetMoreDiscardProtocol;

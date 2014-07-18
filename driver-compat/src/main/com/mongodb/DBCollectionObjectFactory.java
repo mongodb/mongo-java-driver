@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.mongodb.annotations.Immutable;
+import com.mongodb.annotations.Immutable;
 
 import java.util.Collections;
 import java.util.HashMap;

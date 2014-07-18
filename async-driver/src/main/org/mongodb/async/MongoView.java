@@ -16,9 +16,9 @@
 
 package org.mongodb.async;
 
+import com.mongodb.annotations.NotThreadSafe;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
-import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.QueryFlag;
 
 import java.util.EnumSet;

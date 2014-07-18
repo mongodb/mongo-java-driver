@@ -16,7 +16,7 @@
 
 package org.bson.util;
 
-import org.mongodb.annotations.ThreadSafe;
+import com.mongodb.annotations.ThreadSafe;
 
 import java.util.Collection;
 import java.util.Collections;

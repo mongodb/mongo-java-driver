@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.mongodb.annotations.Immutable;
+import com.mongodb.annotations.Immutable;
 import org.mongodb.connection.ConnectionPoolSettings;
 import org.mongodb.connection.ServerSettings;
 import org.mongodb.connection.SocketSettings;

@@ -16,7 +16,7 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.annotations.Immutable;
+import com.mongodb.annotations.Immutable;
 
 import java.util.concurrent.TimeUnit;
 

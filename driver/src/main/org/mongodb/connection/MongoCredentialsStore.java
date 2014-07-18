@@ -16,8 +16,8 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.annotations.ThreadSafe;
 import org.mongodb.MongoCredential;
-import org.mongodb.annotations.ThreadSafe;
 
 import java.util.ArrayList;
 import java.util.Collections;

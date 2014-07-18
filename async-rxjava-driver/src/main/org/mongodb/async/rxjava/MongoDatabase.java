@@ -16,11 +16,11 @@
 
 package org.mongodb.async.rxjava;
 
+import com.mongodb.annotations.Immutable;
 import org.bson.codecs.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCollectionOptions;
-import org.mongodb.annotations.Immutable;
 import rx.Observable;
 
 /**

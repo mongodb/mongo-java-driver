@@ -17,8 +17,8 @@
 package org.mongodb;
 
 import com.mongodb.WriteConcern;
+import com.mongodb.annotations.ThreadSafe;
 import org.bson.codecs.Codec;
-import org.mongodb.annotations.ThreadSafe;
 
 import java.util.List;
 

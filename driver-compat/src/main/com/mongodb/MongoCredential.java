@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import org.mongodb.annotations.Immutable;
+import com.mongodb.annotations.Immutable;
 
 /**
  * Represents credentials to authenticate to a mongo server,as well as the source of the credentials and the authentication mechanism to

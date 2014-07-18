@@ -17,7 +17,7 @@
 package org.mongodb;
 
 
-import org.mongodb.annotations.ThreadSafe;
+import com.mongodb.annotations.ThreadSafe;
 
 import java.io.Closeable;
 

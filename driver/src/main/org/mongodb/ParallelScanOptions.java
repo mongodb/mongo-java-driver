@@ -16,7 +16,7 @@
 
 package org.mongodb;
 
-import org.mongodb.annotations.Immutable;
+import com.mongodb.annotations.Immutable;
 
 import static org.mongodb.assertions.Assertions.isTrue;
 

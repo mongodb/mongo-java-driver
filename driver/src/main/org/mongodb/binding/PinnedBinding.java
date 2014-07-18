@@ -17,7 +17,7 @@
 package org.mongodb.binding;
 
 import com.mongodb.ReadPreference;
-import org.mongodb.annotations.NotThreadSafe;
+import com.mongodb.annotations.NotThreadSafe;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.Server;

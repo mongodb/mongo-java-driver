@@ -8,7 +8,7 @@
  * must include this copyright and license notice.
  */
 
-package org.mongodb.annotations;
+package com.mongodb.annotations;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

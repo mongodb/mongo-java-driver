@@ -18,7 +18,7 @@ package org.mongodb.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.Tags;
-import org.mongodb.annotations.Immutable;
+import com.mongodb.annotations.Immutable;
 
 import java.text.DecimalFormat;
 import java.util.Collections;

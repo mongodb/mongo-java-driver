@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.ThreadSafe;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.configuration.CodecProvider;
@@ -23,7 +24,6 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.mongodb.Document;
 import org.mongodb.ServerCursor;
-import org.mongodb.annotations.ThreadSafe;
 import org.mongodb.binding.ClusterBinding;
 import org.mongodb.binding.ConnectionSource;
 import org.mongodb.binding.PinnedBinding;

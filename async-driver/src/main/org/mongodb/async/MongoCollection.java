@@ -17,13 +17,13 @@
 package org.mongodb.async;
 
 
+import com.mongodb.annotations.Immutable;
 import org.bson.codecs.Codec;
 import org.mongodb.Document;
 import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
-import org.mongodb.annotations.Immutable;
 
 import java.util.List;
 

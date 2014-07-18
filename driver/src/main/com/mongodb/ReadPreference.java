@@ -16,10 +16,10 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Immutable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.mongodb.ConvertibleToBsonDocument;
-import org.mongodb.annotations.Immutable;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
 

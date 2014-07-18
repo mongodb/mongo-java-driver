@@ -17,10 +17,10 @@
 package com.mongodb;
 
 
+import com.mongodb.annotations.NotThreadSafe;
 import org.bson.codecs.Decoder;
 import org.mongodb.MongoCursor;
 import org.mongodb.ServerCursor;
-import org.mongodb.annotations.NotThreadSafe;
 import org.mongodb.operation.Find;
 import org.mongodb.operation.QueryFlag;
 import org.mongodb.operation.QueryOperation;

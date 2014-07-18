@@ -16,7 +16,7 @@
 
 package org.mongodb.protocol.message;
 
-import org.mongodb.annotations.Immutable;
+import com.mongodb.annotations.Immutable;
 
 @Immutable
 public final class MessageSettings {

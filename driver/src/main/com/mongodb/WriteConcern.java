@@ -18,11 +18,11 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Immutable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
-import org.mongodb.annotations.Immutable;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;

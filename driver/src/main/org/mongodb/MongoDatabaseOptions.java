@@ -18,8 +18,8 @@ package org.mongodb;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.annotations.Immutable;
 import org.bson.codecs.Codec;
-import org.mongodb.annotations.Immutable;
 import org.mongodb.codecs.DocumentCodec;
 
 @Immutable

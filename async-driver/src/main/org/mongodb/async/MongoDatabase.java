@@ -16,12 +16,12 @@
 
 package org.mongodb.async;
 
+import com.mongodb.annotations.Immutable;
 import org.bson.codecs.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoFuture;
-import org.mongodb.annotations.Immutable;
 
 /**
  * A representation of a logical MongoDB database, which contains zero or more collections.  Instances of this class serve as factories

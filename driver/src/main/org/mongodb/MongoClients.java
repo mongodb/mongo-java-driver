@@ -17,7 +17,7 @@
 package org.mongodb;
 
 import com.mongodb.ServerAddress;
-import org.mongodb.annotations.ThreadSafe;
+import com.mongodb.annotations.ThreadSafe;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterConnectionMode;
 import org.mongodb.connection.ClusterSettings;
