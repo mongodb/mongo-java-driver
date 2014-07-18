@@ -19,7 +19,7 @@ package com.mongodb;
 import java.util.Collections;
 import java.util.List;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 class AcknowledgedBulkWriteResult extends BulkWriteResult {
     private int insertedCount;

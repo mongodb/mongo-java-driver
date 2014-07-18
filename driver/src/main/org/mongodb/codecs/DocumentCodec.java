@@ -34,7 +34,7 @@ import org.mongodb.IdGenerator;
 import java.util.Arrays;
 import java.util.Map;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * A Codec for Document instances.

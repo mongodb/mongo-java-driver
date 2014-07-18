@@ -24,7 +24,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 public class ByteBufferOutputBuffer extends OutputBuffer {
 

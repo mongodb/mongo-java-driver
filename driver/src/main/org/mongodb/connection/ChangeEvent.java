@@ -16,7 +16,7 @@
 
 package org.mongodb.connection;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 public class ChangeEvent<T> {
     private final T oldValue;

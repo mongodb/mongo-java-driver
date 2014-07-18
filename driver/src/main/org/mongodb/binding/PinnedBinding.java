@@ -26,9 +26,9 @@ import org.mongodb.selector.ReadPreferenceServerSelector;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.assertions.Assertions.notNull;
 
 /**
  * A binding that ensures that reads to the primary use the same connection as writes, while reads to any other server go to the same

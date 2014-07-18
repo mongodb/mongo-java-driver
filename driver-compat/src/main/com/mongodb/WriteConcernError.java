@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * An error representing a failure by the server to apply the requested write concern to the bulk operation.

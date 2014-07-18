@@ -27,8 +27,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
-import static org.mongodb.assertions.Assertions.notNull;
 
 /**
  * Immutable snapshot state of a cluster.

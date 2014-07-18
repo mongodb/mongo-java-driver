@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.assertions;
+package com.mongodb.assertions;
 
 /**
  * Design by contract assertions.

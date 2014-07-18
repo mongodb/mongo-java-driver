@@ -54,8 +54,8 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
-import static org.mongodb.assertions.Assertions.notNull;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final MongoNamespace namespace;

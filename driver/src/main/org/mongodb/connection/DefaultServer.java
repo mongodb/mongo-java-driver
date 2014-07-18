@@ -26,9 +26,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
-import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerConnectionState.CONNECTING;
 
 class DefaultServer implements ClusterableServer {

@@ -18,9 +18,9 @@ package org.mongodb.connection;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
-import static org.mongodb.assertions.Assertions.isTrue;
 
 /**
  * @since 3.0

@@ -29,8 +29,8 @@ import javax.security.sasl.SaslClient;
 import javax.security.sasl.SaslException;
 import java.io.IOException;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.AuthenticationMechanism.PLAIN;
-import static org.mongodb.assertions.Assertions.isTrue;
 
 class PlainAuthenticator extends SaslAuthenticator {
     private static final String DEFAULT_PROTOCOL = "mongodb";

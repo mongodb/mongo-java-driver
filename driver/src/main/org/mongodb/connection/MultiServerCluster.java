@@ -28,8 +28,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static java.lang.String.format;
-import static org.mongodb.assertions.Assertions.isTrue;
 import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static org.mongodb.connection.ClusterType.UNKNOWN;
 import static org.mongodb.connection.ServerConnectionState.CONNECTING;

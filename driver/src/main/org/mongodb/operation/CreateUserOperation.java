@@ -29,8 +29,8 @@ import org.mongodb.connection.Connection;
 import org.mongodb.protocol.InsertProtocol;
 import org.mongodb.protocol.Protocol;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
-import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;

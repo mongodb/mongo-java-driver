@@ -22,7 +22,7 @@ import org.mongodb.connection.ServerDescription;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * A server selector that composes a list of server selectors, and selects the servers by iterating through the list from start to

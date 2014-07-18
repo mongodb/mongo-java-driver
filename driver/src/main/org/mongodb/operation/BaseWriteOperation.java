@@ -37,7 +37,7 @@ import org.mongodb.protocol.AcknowledgedWriteResult;
 import org.mongodb.protocol.WriteCommandProtocol;
 import org.mongodb.protocol.WriteProtocol;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static org.mongodb.operation.OperationHelper.CallableWithConnection;
 import static org.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;

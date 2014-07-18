@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import static org.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.isTrue;
 
 /**
  * A map of String keys to String values, intended for use in specifying server tags.

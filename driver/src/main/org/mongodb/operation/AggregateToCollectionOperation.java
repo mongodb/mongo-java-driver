@@ -27,8 +27,8 @@ import org.mongodb.binding.WriteBinding;
 
 import java.util.List;
 
-import static org.mongodb.assertions.Assertions.isTrueArgument;
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.AggregateHelper.asCommandDocument;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;

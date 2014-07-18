@@ -21,7 +21,7 @@ import com.mongodb.ServerAddress;
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 public class SocketStreamFactory implements StreamFactory {
     private final SocketSettings settings;

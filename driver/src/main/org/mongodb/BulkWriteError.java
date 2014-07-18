@@ -18,7 +18,7 @@ package org.mongodb;
 
 import org.bson.BsonDocument;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * Represents an error for an item included in a bulk write operation, e.g. a duplicate key error

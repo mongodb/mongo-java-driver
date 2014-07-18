@@ -18,7 +18,7 @@ package org.mongodb.operation;
 
 import org.bson.BsonDocument;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 public class UpdateRequest extends BaseUpdateRequest {
     private final BsonDocument updateOperations;

@@ -18,7 +18,7 @@ package org.mongodb;
 
 import com.mongodb.annotations.Immutable;
 
-import static org.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.isTrue;
 
 /**
  * The options to use for a parallel collection scan.

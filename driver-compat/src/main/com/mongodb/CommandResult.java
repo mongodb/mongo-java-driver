@@ -19,7 +19,7 @@ package com.mongodb;
 import org.bson.BsonDocument;
 
 import static com.mongodb.DBObjects.toDBObject;
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * A simple wrapper to hold the result of a command.  All the fields from the response document have been added to this result.

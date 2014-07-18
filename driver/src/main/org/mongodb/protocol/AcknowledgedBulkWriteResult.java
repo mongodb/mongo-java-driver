@@ -23,7 +23,7 @@ import org.mongodb.operation.WriteRequest;
 import java.util.Collections;
 import java.util.List;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * This class is not part of the public API.

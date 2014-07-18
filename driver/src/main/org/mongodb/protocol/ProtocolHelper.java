@@ -37,7 +37,7 @@ import org.mongodb.protocol.message.RequestMessage;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.isTrue;
 
 final class ProtocolHelper {
     private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);

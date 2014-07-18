@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.List;
 
-import static org.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.isTrue;
 
 class SocketChannelStream implements Stream {
     private final SocketChannel socketChannel;

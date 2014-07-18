@@ -39,8 +39,8 @@ import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerType.SHARD_ROUTER;
 import static org.mongodb.operation.OperationHelper.withConnection;
 

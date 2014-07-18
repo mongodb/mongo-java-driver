@@ -18,7 +18,7 @@ package org.mongodb.connection;
 
 import com.mongodb.ServerAddress;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * @since 3.0

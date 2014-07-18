@@ -27,7 +27,7 @@ import org.mongodb.protocol.WriteProtocol;
 
 import java.util.List;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * An operation that atomically replaces a document in a collection with a new document.

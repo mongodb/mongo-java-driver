@@ -28,7 +28,7 @@ import org.mongodb.protocol.QueryProtocol;
 import java.util.EnumSet;
 import java.util.List;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.QueryOperationHelper.queryResultToList;
 import static org.mongodb.operation.QueryOperationHelper.queryResultToListAsync;
 

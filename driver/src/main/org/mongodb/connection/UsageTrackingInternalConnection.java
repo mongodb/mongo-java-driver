@@ -21,7 +21,7 @@ import org.bson.ByteBuf;
 
 import java.util.List;
 
-import static org.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.isTrue;
 
 /**
  * A connection that tracks when it was opened and when it was last used.

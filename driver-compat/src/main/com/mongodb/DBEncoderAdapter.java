@@ -24,8 +24,8 @@ import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.nio.ByteBuffer.wrap;
-import static org.mongodb.assertions.Assertions.notNull;
 
 class DBEncoderAdapter implements Encoder<DBObject> {
 

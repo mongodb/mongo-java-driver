@@ -25,8 +25,8 @@ import org.bson.BsonValue;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.OrderBy.ASC;
-import static org.mongodb.assertions.Assertions.notNull;
 
 
 /**

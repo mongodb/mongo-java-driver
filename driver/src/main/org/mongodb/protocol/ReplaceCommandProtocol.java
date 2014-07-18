@@ -34,8 +34,8 @@ import org.mongodb.protocol.message.ReplaceCommandMessage;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
-import static org.mongodb.assertions.Assertions.notNull;
 
 public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
 

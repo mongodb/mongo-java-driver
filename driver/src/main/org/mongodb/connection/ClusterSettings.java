@@ -25,8 +25,8 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import static org.mongodb.assertions.Assertions.isTrueArgument;
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * Settings for the cluster.

@@ -20,7 +20,7 @@ import org.mongodb.diagnostics.logging.JULLogger;
 import org.mongodb.diagnostics.logging.Logger;
 import org.mongodb.diagnostics.logging.SLF4JLogger;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * This class is not part of the public API.

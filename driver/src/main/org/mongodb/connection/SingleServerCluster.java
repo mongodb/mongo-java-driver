@@ -24,8 +24,8 @@ import org.mongodb.event.ClusterListener;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static java.lang.String.format;
-import static org.mongodb.assertions.Assertions.isTrue;
 
 /**
  * This class needs to be final because we are leaking a reference to "this" from the constructor

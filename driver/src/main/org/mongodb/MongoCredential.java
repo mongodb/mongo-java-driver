@@ -24,11 +24,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.AuthenticationMechanism.GSSAPI;
 import static org.mongodb.AuthenticationMechanism.MONGODB_CR;
 import static org.mongodb.AuthenticationMechanism.MONGODB_X509;
 import static org.mongodb.AuthenticationMechanism.PLAIN;
-import static org.mongodb.assertions.Assertions.notNull;
 
 /**
  * Represents credentials to authenticate to a mongo server, as well as the source of the credentials and the authentication mechanism to

@@ -30,8 +30,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
-import static org.mongodb.assertions.Assertions.notNull;
 
 /**
  * This class is not part of the public API.  Do not use!

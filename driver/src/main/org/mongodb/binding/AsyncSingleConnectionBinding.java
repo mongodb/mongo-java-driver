@@ -26,9 +26,9 @@ import org.mongodb.selector.ReadPreferenceServerSelector;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.assertions.Assertions.notNull;
 
 /**
  * An asynchronous factory of providing a single connection source for servers that can be read from or written to.

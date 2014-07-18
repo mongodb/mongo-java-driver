@@ -28,7 +28,7 @@ import org.mongodb.protocol.WriteProtocol;
 
 import java.util.List;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * An operation that inserts one or more documents into a collection.

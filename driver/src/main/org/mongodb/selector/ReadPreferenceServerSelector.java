@@ -22,7 +22,7 @@ import org.mongodb.connection.ServerDescription;
 
 import java.util.List;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * A server selector that chooses based on a read preference.

@@ -26,7 +26,7 @@ import org.mongodb.connection.SocketSettings;
 import org.mongodb.connection.Stream;
 import org.mongodb.connection.StreamFactory;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * A StreamFactory for Streams based on Netty 4.0

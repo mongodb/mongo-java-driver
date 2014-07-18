@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerConnectionState.CONNECTED;
 import static org.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
 import static org.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;

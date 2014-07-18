@@ -41,8 +41,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.mongodb.assertions.Assertions.isTrue;
-import static org.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 
 class InternalStreamConnection implements InternalConnection {

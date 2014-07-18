@@ -28,8 +28,8 @@ import org.mongodb.binding.WriteBinding;
 import org.mongodb.connection.Connection;
 import org.mongodb.protocol.DeleteProtocol;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
-import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
