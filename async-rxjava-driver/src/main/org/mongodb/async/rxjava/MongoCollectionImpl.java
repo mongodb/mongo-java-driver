@@ -37,9 +37,9 @@ import static org.mongodb.async.rxjava.OnSubscribeAdapter.FutureFunction;
 import static rx.Observable.OnSubscribe;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
-    private final org.mongodb.async.MongoCollection<T> wrapped;
+    private final com.mongodb.async.client.MongoCollection<T> wrapped;
 
-    public MongoCollectionImpl(final org.mongodb.async.MongoCollection<T> wrapped) {
+    public MongoCollectionImpl(final com.mongodb.async.client.MongoCollection<T> wrapped) {
         this.wrapped = wrapped;
     }
 
@@ -104,7 +104,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private final class MongoCollectionView implements MongoView<T> {
-        private final org.mongodb.async.MongoView<T> wrappedView;
+        private final com.mongodb.async.client.MongoView<T> wrappedView;
 
         private MongoCollectionView(final Document filter) {
             wrappedView = wrapped.find(filter);

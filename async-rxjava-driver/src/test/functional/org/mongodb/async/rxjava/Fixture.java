@@ -36,25 +36,25 @@ public final class Fixture {
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            mongoClient = new MongoClientImpl(org.mongodb.async.Fixture.getMongoClient());
+            mongoClient = new MongoClientImpl(com.mongodb.async.client.Fixture.getMongoClient());
         }
         return mongoClient;
     }
 
     public static synchronized MongoDatabase getDefaultDatabase() {
         if (defaultDatabase == null) {
-            defaultDatabase = getMongoClient().getDatabase(org.mongodb.async.Fixture.getDefaultDatabase().getName());
+            defaultDatabase = getMongoClient().getDatabase(com.mongodb.async.client.Fixture.getDefaultDatabase().getName());
         }
         return defaultDatabase;
     }
 
     public static MongoCollection<Document> initializeCollection(final MongoNamespace namespace) {
-        org.mongodb.async.Fixture.initializeCollection(namespace);
+        com.mongodb.async.client.Fixture.initializeCollection(namespace);
         return getMongoClient().getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName());
     }
 
     public static void dropCollection(final MongoNamespace namespace) {
-        org.mongodb.async.Fixture.dropCollection(namespace);
+        com.mongodb.async.client.Fixture.dropCollection(namespace);
     }
 
 

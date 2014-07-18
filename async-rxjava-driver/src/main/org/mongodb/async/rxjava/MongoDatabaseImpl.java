@@ -24,9 +24,9 @@ import org.mongodb.MongoFuture;
 import rx.Observable;
 
 class MongoDatabaseImpl implements MongoDatabase {
-    private final org.mongodb.async.MongoDatabase wrapped;
+    private final com.mongodb.async.client.MongoDatabase wrapped;
 
-    public MongoDatabaseImpl(final org.mongodb.async.MongoDatabase wrapped) {
+    public MongoDatabaseImpl(final com.mongodb.async.client.MongoDatabase wrapped) {
         this.wrapped = wrapped;
     }
 

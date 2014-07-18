@@ -24,9 +24,9 @@ import java.util.List;
 
 public class ClientAdministrationImpl implements ClientAdministration {
 
-    private final org.mongodb.async.ClientAdministration wrapped;
+    private final com.mongodb.async.client.ClientAdministration wrapped;
 
-    ClientAdministrationImpl(final org.mongodb.async.ClientAdministration wrapped) {
+    ClientAdministrationImpl(final com.mongodb.async.client.ClientAdministration wrapped) {
         this.wrapped = wrapped;
     }
 

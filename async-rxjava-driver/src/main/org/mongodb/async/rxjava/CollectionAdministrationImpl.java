@@ -32,9 +32,9 @@ import java.util.List;
  */
 public class CollectionAdministrationImpl implements CollectionAdministration {
 
-    private final org.mongodb.async.CollectionAdministration wrapped;
+    private final com.mongodb.async.client.CollectionAdministration wrapped;
 
-    CollectionAdministrationImpl(final org.mongodb.async.CollectionAdministration wrapped) {
+    CollectionAdministrationImpl(final com.mongodb.async.client.CollectionAdministration wrapped) {
         this.wrapped = wrapped;
     }
 

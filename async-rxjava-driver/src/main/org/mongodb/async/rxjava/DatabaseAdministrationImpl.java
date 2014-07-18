@@ -31,9 +31,9 @@ import java.util.List;
  */
 public class DatabaseAdministrationImpl implements DatabaseAdministration {
 
-    private final org.mongodb.async.DatabaseAdministration wrapped;
+    private final com.mongodb.async.client.DatabaseAdministration wrapped;
 
-    DatabaseAdministrationImpl(final org.mongodb.async.DatabaseAdministration wrapped) {
+    DatabaseAdministrationImpl(final com.mongodb.async.client.DatabaseAdministration wrapped) {
         this.wrapped = wrapped;
     }
 

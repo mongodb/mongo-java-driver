@@ -14,28 +14,31 @@
  * limitations under the License.
  */
 
-package org.mongodb.async.rxjava;
+package com.mongodb.async.client
 
-class MongoClientImpl implements MongoClient {
+import org.mongodb.Document
 
-    private final com.mongodb.async.client.MongoClient wrapped;
+class SaveSpecification extends FunctionalSpecification {
+    def 'save should upsert a document that has an _id'() {
+        given:
+        def document = new Document('_id', 1)
 
-    public MongoClientImpl(final com.mongodb.async.client.MongoClient wrapped) {
-        this.wrapped = wrapped;
+        when:
+        collection.save(document).get()
+
+        then:
+        collection.find(new Document()).one().get() == document
+
     }
 
-    @Override
-    public MongoDatabase getDatabase(final String name) {
-        return new MongoDatabaseImpl(wrapped.getDatabase(name));
-    }
+    def 'save should insert a document that has no _id'() {
+        given:
+        def document = new Document()
 
-    @Override
-    public void close() {
-        wrapped.close();
-    }
+        when:
+        collection.save(document).get()
 
-    @Override
-    public ClientAdministration tools() {
-        return new ClientAdministrationImpl(wrapped.tools());
+        then:
+        collection.find(new Document()).one().get() == document
     }
 }

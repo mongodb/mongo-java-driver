@@ -14,28 +14,27 @@
  * limitations under the License.
  */
 
-package org.mongodb.async.rxjava;
+package com.mongodb.async.client
 
-class MongoClientImpl implements MongoClient {
+import org.mongodb.Document
 
-    private final com.mongodb.async.client.MongoClient wrapped;
+class ClientAdministrationSpecification extends FunctionalSpecification {
 
-    public MongoClientImpl(final com.mongodb.async.client.MongoClient wrapped) {
-        this.wrapped = wrapped;
+    def 'ping should be greater than 0'() {
+        when:
+        def client = Fixture.getMongoClient()
+
+        then:
+        client.tools().ping().get() > 0.0
     }
 
-    @Override
-    public MongoDatabase getDatabase(final String name) {
-        return new MongoDatabaseImpl(wrapped.getDatabase(name));
+    def 'should return the database name in getDatabaseNames'() {
+        when:
+        collection.insert(['_id': 1] as Document)
+        def client = Fixture.getMongoClient()
+
+        then:
+        client.tools().getDatabaseNames().get().contains(databaseName)
     }
 
-    @Override
-    public void close() {
-        wrapped.close();
-    }
-
-    @Override
-    public ClientAdministration tools() {
-        return new ClientAdministrationImpl(wrapped.tools());
-    }
 }
