@@ -14,32 +14,36 @@
  * limitations under the License.
  */
 
-package org.mongodb.event;
+package com.mongodb.event;
+
+import org.mongodb.connection.ClusterDescription;
 
 /**
- * A cluster-related event.
+ * An event signifying that the cluster description has changed.
  *
  * @since 3.0
  */
-public class ClusterEvent {
-    private final String clusterId;
+public class ClusterDescriptionChangedEvent extends ClusterEvent {
+    private final ClusterDescription clusterDescription;
 
     /**
      * Constructs a new instance of the event.
      *
-     * @param clusterId the cluster id
+     * @param clusterId          the cluster id
+     * @param clusterDescription the cluster description
      */
-    public ClusterEvent(final String clusterId) {
-        this.clusterId = clusterId;
+    public ClusterDescriptionChangedEvent(final String clusterId, final ClusterDescription clusterDescription) {
+        super(clusterId);
+        this.clusterDescription = clusterDescription;
     }
 
     /**
-     * Gets the cluster id associated with this event.
+     * Gets the new cluster description.
      *
-     * @return the cluster id
+     * @return the cluster description
      */
-    public String getClusterId() {
-        return clusterId;
+    public ClusterDescription getClusterDescription() {
+        return clusterDescription;
     }
 
     @Override
@@ -51,9 +55,12 @@ public class ClusterEvent {
             return false;
         }
 
-        ClusterEvent that = (ClusterEvent) o;
+        ClusterDescriptionChangedEvent that = (ClusterDescriptionChangedEvent) o;
 
-        if (!clusterId.equals(that.clusterId)) {
+        if (!getClusterId().equals(that.getClusterId())) {
+            return false;
+        }
+        if (!clusterDescription.equals(that.clusterDescription)) {
             return false;
         }
 
@@ -62,6 +69,6 @@ public class ClusterEvent {
 
     @Override
     public int hashCode() {
-        return clusterId.hashCode();
+        return clusterDescription.hashCode();
     }
 }

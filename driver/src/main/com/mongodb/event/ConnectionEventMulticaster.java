@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.event;
+package com.mongodb.event;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;

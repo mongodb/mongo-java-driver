@@ -17,8 +17,8 @@
 package org.mongodb.connection
 
 import com.mongodb.ServerAddress
-import org.mongodb.event.ClusterEvent
-import org.mongodb.event.ClusterListener
+import com.mongodb.event.ClusterEvent
+import com.mongodb.event.ClusterListener
 import org.mongodb.selector.PrimaryServerSelector
 import spock.lang.Specification
 

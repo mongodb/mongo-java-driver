@@ -14,29 +14,24 @@
  * limitations under the License.
  */
 
-package org.mongodb.event;
-
+package com.mongodb.event;
 
 /**
- * An adapter for connection listener implementations, for clients that want to listen for a subset of connection events. Extend this class
- * to listen for connection events and override the methods of interest.
+ * An adapter for cluster listener implementations, for clients that want to listen for a subset of cluster events.  Extend this class to
+ * listen for cluster events and override the methods of interest.
  *
  * @since 3.0
  */
-public abstract class ConnectionListenerAdapter implements ConnectionListener {
+public abstract class ClusterListenerAdapter implements ClusterListener {
     @Override
-    public void connectionOpened(final ConnectionEvent event) {
+    public void clusterOpened(final ClusterEvent event) {
     }
 
     @Override
-    public void connectionClosed(final ConnectionEvent event) {
+    public void clusterClosed(final ClusterEvent event) {
     }
 
     @Override
-    public void messagesSent(final ConnectionMessagesSentEvent event) {
-    }
-
-    @Override
-    public void messageReceived(final ConnectionMessageReceivedEvent event) {
+    public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
     }
 }

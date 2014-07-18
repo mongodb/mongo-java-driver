@@ -17,11 +17,11 @@
 
 package org.mongodb.connection
 
+import com.mongodb.event.ConnectionListener
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.mongodb.MongoNamespace
 import org.mongodb.ServerCursor
-import org.mongodb.event.ConnectionListener
 import org.mongodb.operation.QueryFlag
 import org.mongodb.protocol.KillCursor
 import org.mongodb.protocol.message.CommandMessage

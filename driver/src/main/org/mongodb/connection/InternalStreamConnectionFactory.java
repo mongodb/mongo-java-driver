@@ -17,8 +17,8 @@
 package org.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.event.ConnectionListener;
 import org.mongodb.MongoCredential;
-import org.mongodb.event.ConnectionListener;
 
 import java.util.List;
 

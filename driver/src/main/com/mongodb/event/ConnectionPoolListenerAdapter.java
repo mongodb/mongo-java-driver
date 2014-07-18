@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.event;
+package com.mongodb.event;
 
 /**
  * An adapter for connection pool listener implementations, for clients that want to listen for a subset of connection pool events. Extend

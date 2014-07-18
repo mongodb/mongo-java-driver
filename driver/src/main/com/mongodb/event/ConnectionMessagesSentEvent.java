@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-package org.mongodb.event;
+package com.mongodb.event;
 
 import com.mongodb.ServerAddress;
 
 /**
- * An event signifying that a message has been received on a connection.
+ * An event signifying that a message has been sent on a connection.
  *
  * @since 3.0
  */
-public class ConnectionMessageReceivedEvent extends ConnectionEvent {
-    private final int responseTo;
+public class ConnectionMessagesSentEvent extends ConnectionEvent {
+    private final int requestId;
     private final int size;
 
     /**
@@ -33,29 +33,29 @@ public class ConnectionMessageReceivedEvent extends ConnectionEvent {
      * @param clusterId     the cluster id
      * @param serverAddress the server address
      * @param connectionId  the connection id
-     * @param responseTo    the request id that this message is in response to
-     * @param size          the size of the received message
+     * @param requestId     the request id
+     * @param size          the size of the sent message
      */
-    public ConnectionMessageReceivedEvent(final String clusterId, final ServerAddress serverAddress, final String connectionId,
-                                          final int responseTo, final int size) {
+    public ConnectionMessagesSentEvent(final String clusterId, final ServerAddress serverAddress, final String connectionId,
+                                       final int requestId, final int size) {
         super(clusterId, serverAddress, connectionId);
-        this.responseTo = responseTo;
+        this.requestId = requestId;
         this.size = size;
     }
 
     /**
-     * The responseTo identifier of the message.  This corresponds to the requestId of the message that this message is in reply to.
+     * Gets the request id of the message that was sent.
      *
-     * @return the responseTo identifier
+     * @return the request id
      */
-    public int getResponseTo() {
-        return responseTo;
+    public int getRequestId() {
+        return requestId;
     }
 
     /**
-     * Gets the size of the received message.
+     * Gets the size of the sent message.
      *
-     * @return the size of the received message
+     * @return the size of the sent message
      */
     public int getSize() {
         return size;
@@ -73,7 +73,7 @@ public class ConnectionMessageReceivedEvent extends ConnectionEvent {
             return false;
         }
 
-        ConnectionMessageReceivedEvent that = (ConnectionMessageReceivedEvent) o;
+        ConnectionMessagesSentEvent that = (ConnectionMessagesSentEvent) o;
 
         if (!getClusterId().equals(that.getClusterId())) {
             return false;
@@ -84,7 +84,7 @@ public class ConnectionMessageReceivedEvent extends ConnectionEvent {
         if (!getConnectionId().equals(that.getConnectionId())) {
             return false;
         }
-        if (responseTo != that.responseTo) {
+        if (requestId != that.requestId) {
             return false;
         }
         if (size != that.size) {
@@ -97,7 +97,7 @@ public class ConnectionMessageReceivedEvent extends ConnectionEvent {
     @Override
     public int hashCode() {
         int result = super.hashCode();
-        result = 31 * result + responseTo;
+        result = 31 * result + requestId;
         result = 31 * result + size;
         return result;
     }

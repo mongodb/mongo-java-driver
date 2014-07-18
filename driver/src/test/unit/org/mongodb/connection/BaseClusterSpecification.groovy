@@ -22,7 +22,7 @@ package org.mongodb.connection
 
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
-import org.mongodb.event.ClusterListener
+import com.mongodb.event.ClusterListener
 import org.mongodb.selector.ReadPreferenceServerSelector
 import org.mongodb.selector.ServerSelector
 import spock.lang.Specification

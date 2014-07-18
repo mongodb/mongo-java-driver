@@ -16,7 +16,7 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.event.ConnectionListenerAdapter;
+import com.mongodb.event.ConnectionListenerAdapter;
 
 class NoOpConnectionListener extends ConnectionListenerAdapter {
 }

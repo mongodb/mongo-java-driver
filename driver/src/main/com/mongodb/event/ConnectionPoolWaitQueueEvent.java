@@ -14,36 +14,37 @@
  * limitations under the License.
  */
 
-package org.mongodb.event;
+package com.mongodb.event;
 
-import org.mongodb.connection.ClusterDescription;
+import com.mongodb.ServerAddress;
 
 /**
- * An event signifying that the cluster description has changed.
+ * An event related to the connection pool's wait queue..
  *
  * @since 3.0
  */
-public class ClusterDescriptionChangedEvent extends ClusterEvent {
-    private final ClusterDescription clusterDescription;
+public class ConnectionPoolWaitQueueEvent extends ConnectionPoolEvent {
+    private final long threadId;
 
     /**
      * Constructs a new instance of the event.
      *
-     * @param clusterId          the cluster id
-     * @param clusterDescription the cluster description
+     * @param clusterId     the cluster id
+     * @param serverAddress the server address
+     * @param threadId      the identifier of the waiting thread
      */
-    public ClusterDescriptionChangedEvent(final String clusterId, final ClusterDescription clusterDescription) {
-        super(clusterId);
-        this.clusterDescription = clusterDescription;
+    public ConnectionPoolWaitQueueEvent(final String clusterId, final ServerAddress serverAddress, final long threadId) {
+        super(clusterId, serverAddress);
+        this.threadId = threadId;
     }
 
     /**
-     * Gets the new cluster description.
+     * Gets the identifier of the waiting thread.
      *
-     * @return the cluster description
+     * @return the thread id
      */
-    public ClusterDescription getClusterDescription() {
-        return clusterDescription;
+    public long getThreadId() {
+        return threadId;
     }
 
     @Override
@@ -55,12 +56,15 @@ public class ClusterDescriptionChangedEvent extends ClusterEvent {
             return false;
         }
 
-        ClusterDescriptionChangedEvent that = (ClusterDescriptionChangedEvent) o;
+        ConnectionPoolWaitQueueEvent that = (ConnectionPoolWaitQueueEvent) o;
 
         if (!getClusterId().equals(that.getClusterId())) {
             return false;
         }
-        if (!clusterDescription.equals(that.clusterDescription)) {
+        if (!getServerAddress().equals(that.getServerAddress())) {
+            return false;
+        }
+        if (threadId != that.threadId) {
             return false;
         }
 
@@ -69,6 +73,9 @@ public class ClusterDescriptionChangedEvent extends ClusterEvent {
 
     @Override
     public int hashCode() {
-        return clusterDescription.hashCode();
+        int result = super.hashCode();
+        result = 31 * result + (int) (threadId ^ (threadId >>> 32));
+        return result;
     }
 }
+

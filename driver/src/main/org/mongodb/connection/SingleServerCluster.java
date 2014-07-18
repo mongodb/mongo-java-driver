@@ -17,9 +17,9 @@
 package org.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.event.ClusterListener;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
-import org.mongodb.event.ClusterListener;
 
 import java.util.Arrays;
 import java.util.Collections;

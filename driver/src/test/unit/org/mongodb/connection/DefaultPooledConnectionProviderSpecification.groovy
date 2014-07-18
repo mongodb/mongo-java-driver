@@ -19,12 +19,12 @@ package org.mongodb.connection
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.ServerAddress
+import com.mongodb.event.ConnectionEvent
+import com.mongodb.event.ConnectionPoolEvent
+import com.mongodb.event.ConnectionPoolListener
+import com.mongodb.event.ConnectionPoolOpenedEvent
+import com.mongodb.event.ConnectionPoolWaitQueueEvent
 import org.bson.ByteBuf
-import org.mongodb.event.ConnectionEvent
-import org.mongodb.event.ConnectionPoolEvent
-import org.mongodb.event.ConnectionPoolListener
-import org.mongodb.event.ConnectionPoolOpenedEvent
-import org.mongodb.event.ConnectionPoolWaitQueueEvent
 import spock.lang.Specification
 import spock.lang.Subject
 

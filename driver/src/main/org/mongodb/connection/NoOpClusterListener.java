@@ -16,7 +16,7 @@
 
 package org.mongodb.connection;
 
-import org.mongodb.event.ClusterListenerAdapter;
+import com.mongodb.event.ClusterListenerAdapter;
 
 class NoOpClusterListener extends ClusterListenerAdapter {
 }
