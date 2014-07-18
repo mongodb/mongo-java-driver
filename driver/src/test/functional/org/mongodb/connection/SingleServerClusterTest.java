@@ -16,10 +16,10 @@
 
 package org.mongodb.connection;
 
+import com.mongodb.selector.ServerSelector;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.selector.ServerSelector;
 
 import java.util.Arrays;
 import java.util.List;

@@ -17,7 +17,7 @@
 package org.mongodb.connection
 
 import com.mongodb.ServerAddress
-import org.mongodb.selector.PrimaryServerSelector
+import com.mongodb.selector.PrimaryServerSelector
 import spock.lang.Specification
 
 class ClusterSettingsSpecification extends Specification {

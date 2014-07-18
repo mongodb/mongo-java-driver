@@ -17,6 +17,7 @@
 
 package org.mongodb.protocol
 
+import com.mongodb.selector.PrimaryServerSelector
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.types.Binary
@@ -29,7 +30,6 @@ import org.mongodb.operation.CountOperation
 import org.mongodb.operation.Find
 import org.mongodb.operation.InsertRequest
 import org.mongodb.operation.UpdateRequest
-import org.mongodb.selector.PrimaryServerSelector
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList

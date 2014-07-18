@@ -18,7 +18,7 @@ package org.mongodb.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
-import org.mongodb.selector.ServerSelector;
+import com.mongodb.selector.ServerSelector;
 
 import java.util.ArrayList;
 import java.util.Collections;

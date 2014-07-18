@@ -23,8 +23,8 @@ package org.mongodb.connection
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.event.ClusterListener
-import org.mongodb.selector.ReadPreferenceServerSelector
-import org.mongodb.selector.ServerSelector
+import com.mongodb.selector.ReadPreferenceServerSelector
+import com.mongodb.selector.ServerSelector
 import spock.lang.Specification
 
 import static java.util.concurrent.TimeUnit.SECONDS

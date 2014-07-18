@@ -25,8 +25,8 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterEvent;
 import com.mongodb.event.ClusterListener;
-import org.mongodb.selector.CompositeServerSelector;
-import org.mongodb.selector.ServerSelector;
+import com.mongodb.selector.CompositeServerSelector;
+import com.mongodb.selector.ServerSelector;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -14,51 +14,56 @@
  * limitations under the License.
  */
 
-package org.mongodb.selector;
+package com.mongodb.selector;
 
-import com.mongodb.ReadPreference;
+import com.mongodb.ServerAddress;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * A server selector that chooses based on a read preference.
+ * A server selector that chooses a server that matches the server address.
  *
  * @since 3.0
  */
-public class ReadPreferenceServerSelector implements ServerSelector {
-    private final ReadPreference readPreference;
+public class ServerAddressSelector implements ServerSelector {
+    private final ServerAddress serverAddress;
 
     /**
-     * Gets the read preference.
+     * Constructs a new instance.
      *
-     * @param readPreference the read preference
+     * @param serverAddress the server address
      */
-    public ReadPreferenceServerSelector(final ReadPreference readPreference) {
-        this.readPreference = notNull("readPreference", readPreference);
+    public ServerAddressSelector(final ServerAddress serverAddress) {
+        this.serverAddress = notNull("serverAddress", serverAddress);
     }
 
     /**
-     * Gets the read preference.
+     * Gets the server address.
      *
-     * @return the read preference
+     * @return the server address
      */
-    public ReadPreference getReadPreference() {
-        return readPreference;
+    public ServerAddress getServerAddress() {
+        return serverAddress;
     }
 
     @Override
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-        return readPreference.choose(clusterDescription);
+        if (clusterDescription.getByServerAddress(serverAddress) != null) {
+            return Arrays.asList(clusterDescription.getByServerAddress(serverAddress));
+        }
+        return Collections.emptyList();
     }
 
     @Override
     public String toString() {
-        return "ReadPreferenceServerSelector{"
-               + "readPreference=" + readPreference
+        return "ServerAddressSelector{"
+               + "serverAddress=" + serverAddress
                + '}';
     }
 }

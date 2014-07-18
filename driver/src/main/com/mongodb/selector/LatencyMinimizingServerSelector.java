@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.selector;
+package com.mongodb.selector;
 
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;

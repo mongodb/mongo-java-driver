@@ -17,12 +17,12 @@
 package org.mongodb.binding;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.selector.PrimaryServerSelector;
+import com.mongodb.selector.ReadPreferenceServerSelector;
+import com.mongodb.selector.ServerSelector;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.Server;
-import org.mongodb.selector.PrimaryServerSelector;
-import org.mongodb.selector.ReadPreferenceServerSelector;
-import org.mongodb.selector.ServerSelector;
 
 import java.util.concurrent.TimeUnit;
 

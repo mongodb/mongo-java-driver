@@ -18,9 +18,9 @@ package org.mongodb.binding;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
+import com.mongodb.selector.ServerAddressSelector;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.Connection;
-import org.mongodb.selector.ServerAddressSelector;
 
 import java.util.concurrent.TimeUnit;
 

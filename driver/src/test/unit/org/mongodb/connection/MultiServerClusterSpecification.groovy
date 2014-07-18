@@ -19,7 +19,7 @@ package org.mongodb.connection
 import com.mongodb.ServerAddress
 import com.mongodb.event.ClusterEvent
 import com.mongodb.event.ClusterListener
-import org.mongodb.selector.PrimaryServerSelector
+import com.mongodb.selector.PrimaryServerSelector
 import spock.lang.Specification
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS

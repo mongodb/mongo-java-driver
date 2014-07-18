@@ -18,7 +18,7 @@
 
 
 
-package org.mongodb.selector
+package com.mongodb.selector
 
 import com.mongodb.ServerAddress
 import org.mongodb.connection.ClusterDescription

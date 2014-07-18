@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.mongodb.selector;
+package com.mongodb.selector;
 
-import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import org.junit.Test;
 import org.mongodb.connection.ClusterDescription;
@@ -24,21 +23,22 @@ import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerType;
 
 import java.net.UnknownHostException;
+import java.util.Arrays;
 
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
 import static org.mongodb.connection.ServerConnectionState.CONNECTED;
 
-public class ReadPreferenceServerSelectorTest {
+public class ServerAddressSelectorTest {
     @Test
     public void testAll() throws UnknownHostException {
-        ReadPreferenceServerSelector selector = new ReadPreferenceServerSelector(ReadPreference.primary());
+        ServerAddressSelector selector = new ServerAddressSelector(new ServerAddress("localhost:27018"));
 
-        assertEquals(ReadPreference.primary(), selector.getReadPreference());
+        assertTrue(selector.toString().startsWith("ServerAddressSelector"));
 
-        assertEquals("ReadPreferenceServerSelector{readPreference=primary}", selector.toString());
+        assertEquals(selector.getServerAddress(), selector.getServerAddress());
 
         ServerDescription primary = ServerDescription.builder()
                                                      .state(CONNECTED)
@@ -47,12 +47,12 @@ public class ReadPreferenceServerSelectorTest {
                                                      .type(ServerType.REPLICA_SET_PRIMARY)
                                                      .build();
         ServerDescription secondary = ServerDescription.builder()
-                                                     .state(CONNECTED)
-                                                     .address(new ServerAddress())
-                                                     .ok(true)
-                                                     .type(ServerType.REPLICA_SET_SECONDARY)
-                                                     .build();
-        assertEquals(asList(primary), selector.select(new ClusterDescription(MULTIPLE, REPLICA_SET, asList(primary, secondary))));
+                                                       .state(CONNECTED)
+                                                       .address(new ServerAddress("localhost:27018"))
+                                                       .ok(true)
+                                                       .type(ServerType.REPLICA_SET_SECONDARY)
+                                                       .build();
+        assertEquals(Arrays.asList(secondary), selector.select(new ClusterDescription(MULTIPLE, REPLICA_SET,
+                                                                                      Arrays.asList(primary, secondary))));
     }
 }
-

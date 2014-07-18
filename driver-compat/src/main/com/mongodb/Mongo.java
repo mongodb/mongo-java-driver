@@ -18,6 +18,10 @@ package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.management.JMXConnectionPoolListener;
+import com.mongodb.selector.CompositeServerSelector;
+import com.mongodb.selector.LatencyMinimizingServerSelector;
+import com.mongodb.selector.MongosHAServerSelector;
+import com.mongodb.selector.ServerSelector;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.configuration.CodecProvider;
@@ -48,10 +52,6 @@ import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.WriteOperation;
 import org.mongodb.protocol.KillCursor;
 import org.mongodb.protocol.KillCursorProtocol;
-import org.mongodb.selector.CompositeServerSelector;
-import org.mongodb.selector.LatencyMinimizingServerSelector;
-import org.mongodb.selector.MongosHAServerSelector;
-import org.mongodb.selector.ServerSelector;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
