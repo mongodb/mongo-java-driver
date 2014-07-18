@@ -125,6 +125,10 @@ public class ServerAddressTest {
         new ServerAddress("somewhere:80", 80);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+     public void testParseWithPortWhenNonEquivalentPortIsAlsoSpecified() throws UnknownHostException {
+    	 new ServerAddress("somewhere:80", 1000);
+    }
     @Test(expected = MongoException.class)
     public void testParseUrl() throws UnknownHostException {
         new ServerAddress("http://www.mongodb.com/");
