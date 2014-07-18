@@ -129,4 +129,9 @@ public class ServerAddressTest {
     public void testParseWithPortWhenNonEquivalentPortIsAlsoSpecified() throws UnknownHostException {
         new ServerAddress("somewhere:80", 1000);
     }
+
+    @Test(expected = MongoException.class)
+    public void testParseUrlWithMissingPort() throws UnknownHostException {
+        new ServerAddress("mongodb://somewhere/");
+    }
 }
