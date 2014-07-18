@@ -36,13 +36,13 @@ import org.mongodb.protocol.QueryProtocol
 import org.mongodb.protocol.QueryResult
 import spock.lang.Shared
 
+import static com.mongodb.ReadPreference.primary
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeFalse
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getAsyncCluster
 import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.isSharded
-import static org.mongodb.ReadPreference.primary
 import static org.mongodb.operation.QueryFlag.Exhaust
 
 @Category(Async)

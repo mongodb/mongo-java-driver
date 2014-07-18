@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import com.mongodb.ReadPreference;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;

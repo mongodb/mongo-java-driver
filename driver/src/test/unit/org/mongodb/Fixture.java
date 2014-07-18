@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import org.mongodb.binding.AsyncClusterBinding;
 import org.mongodb.binding.AsyncReadWriteBinding;

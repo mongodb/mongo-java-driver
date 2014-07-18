@@ -22,10 +22,10 @@ import org.mongodb.Document;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
 
+import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.ReadPreference.secondary;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.ReadPreference.primary;
-import static org.mongodb.ReadPreference.secondary;
 import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static org.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;

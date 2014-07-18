@@ -18,6 +18,7 @@ package org.mongodb.operation;
 
 import com.mongodb.CommandFailureException;
 import com.mongodb.MongoException;
+import com.mongodb.ReadPreference;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
@@ -26,7 +27,6 @@ import org.mongodb.CommandResult;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ReadPreference;
 import org.mongodb.binding.AsyncConnectionSource;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.AsyncWriteBinding;
@@ -42,7 +42,7 @@ import org.mongodb.protocol.message.NoOpFieldNameValidator;
 
 import java.util.EnumSet;
 
-import static org.mongodb.ReadPreference.primary;
+import static com.mongodb.ReadPreference.primary;
 import static org.mongodb.connection.ServerType.SHARD_ROUTER;
 import static org.mongodb.operation.OperationHelper.IdentityTransformer;
 

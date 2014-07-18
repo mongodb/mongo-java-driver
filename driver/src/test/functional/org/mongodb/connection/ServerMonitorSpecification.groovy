@@ -18,11 +18,11 @@
 package org.mongodb.connection
 
 import com.mongodb.MongoException
+import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import org.mongodb.CommandResult
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
-import org.mongodb.ReadPreference
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit

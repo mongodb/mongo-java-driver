@@ -183,7 +183,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the bitmask of options
      */
     public int getOptions() {
-        return QueryFlag.fromSet(find.getFlags(readPreference.toNew()));
+        return QueryFlag.fromSet(find.getFlags(readPreference));
     }
 
     /**

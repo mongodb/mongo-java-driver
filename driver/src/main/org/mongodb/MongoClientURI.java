@@ -17,8 +17,9 @@
 package org.mongodb;
 
 import com.mongodb.MongoInternalException;
+import com.mongodb.ReadPreference;
+import com.mongodb.Tags;
 import com.mongodb.WriteConcern;
-import org.mongodb.connection.Tags;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 

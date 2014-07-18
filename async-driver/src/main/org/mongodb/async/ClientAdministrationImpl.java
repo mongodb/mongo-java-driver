@@ -22,7 +22,7 @@ import org.mongodb.operation.PingOperation;
 
 import java.util.List;
 
-import static org.mongodb.ReadPreference.primary;
+import static com.mongodb.ReadPreference.primary;
 
 public class ClientAdministrationImpl implements ClientAdministration {
 

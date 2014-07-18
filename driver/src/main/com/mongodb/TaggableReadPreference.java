@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb;
 
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -22,7 +22,6 @@ import org.bson.BsonString;
 import org.mongodb.annotations.Immutable;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.Tags;
 
 import java.util.ArrayList;
 import java.util.Collections;

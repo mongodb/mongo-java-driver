@@ -14,17 +14,13 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb;
 
-import com.mongodb.ServerAddress;
-import org.bson.BsonDocument;
-import org.bson.BsonString;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
 import org.mongodb.connection.ServerType;
-import org.mongodb.connection.Tags;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,7 +35,7 @@ import static org.mongodb.connection.ClusterType.REPLICA_SET;
 import static org.mongodb.connection.ServerConnectionState.CONNECTED;
 import static org.mongodb.connection.ServerType.REPLICA_SET_OTHER;
 
-public class ReadPreferenceTest {
+public class ReadPreferenceChooseServersTest {
     private static final int FOUR_MEG = 4 * 1024 * 1024;
     private static final String HOST = "localhost";
 
@@ -98,15 +94,6 @@ public class ReadPreferenceTest {
         setNoSecondary = new ClusterDescription(MULTIPLE, REPLICA_SET, Arrays.asList(primary, uninitiatedMember));
     }
 
-
-    @Test
-    public void testStaticPreferences() {
-        assertEquals(new BsonDocument("mode", new BsonString("primary")), ReadPreference.primary().toDocument());
-        assertEquals(new BsonDocument("mode", new BsonString("secondary")), ReadPreference.secondary().toDocument());
-        assertEquals(new BsonDocument("mode", new BsonString("secondaryPreferred")), ReadPreference.secondaryPreferred().toDocument());
-        assertEquals(new BsonDocument("mode", new BsonString("primaryPreferred")), ReadPreference.primaryPreferred().toDocument());
-        assertEquals(new BsonDocument("mode", new BsonString("nearest")), ReadPreference.nearest().toDocument());
-    }
 
     @Test
     public void testPrimaryReadPreference() {
@@ -206,37 +193,5 @@ public class ReadPreferenceTest {
         //         .append("tags", Arrays.asList(new Tags("madeup", "1"))),
         //                pref.toDocument());
         assertTrue(pref.choose(set).isEmpty());
-    }
-
-    @Test
-    public void testValueOf() {
-        assertEquals(ReadPreference.primary(), ReadPreference.valueOf("primary"));
-        assertEquals(ReadPreference.secondary(), ReadPreference.valueOf("secondary"));
-        assertEquals(ReadPreference.primaryPreferred(), ReadPreference.valueOf("primaryPreferred"));
-        assertEquals(ReadPreference.secondaryPreferred(), ReadPreference.valueOf("secondaryPreferred"));
-        assertEquals(ReadPreference.nearest(), ReadPreference.valueOf("nearest"));
-
-        Tags first = new Tags("dy", "ny");
-        assertEquals(ReadPreference.secondary(first), ReadPreference.valueOf("secondary", Arrays.asList(first)));
-        assertEquals(ReadPreference.primaryPreferred(first),
-                     ReadPreference.valueOf("primaryPreferred", Arrays.asList(first)));
-        assertEquals(ReadPreference.secondaryPreferred(Arrays.asList(first)),
-                     ReadPreference.valueOf("secondaryPreferred", Arrays.asList(first)));
-        assertEquals(ReadPreference.nearest(first), ReadPreference.valueOf("nearest", Arrays.asList(first)));
-    }
-
-    @Test
-    public void testGetName() {
-        assertEquals("primary", ReadPreference.primary().getName());
-        assertEquals("secondary", ReadPreference.secondary().getName());
-        assertEquals("primaryPreferred", ReadPreference.primaryPreferred().getName());
-        assertEquals("secondaryPreferred", ReadPreference.secondaryPreferred().getName());
-        assertEquals("nearest", ReadPreference.nearest().getName());
-
-        Tags first = new Tags("dy", "ny");
-        assertEquals(ReadPreference.secondary(first), ReadPreference.valueOf("secondary", Arrays.asList(first)));
-        assertEquals(ReadPreference.primaryPreferred(first), ReadPreference.valueOf("primaryPreferred", Arrays.asList(first)));
-        assertEquals(ReadPreference.secondaryPreferred(first), ReadPreference.valueOf("secondaryPreferred", Arrays.asList(first)));
-        assertEquals(ReadPreference.nearest(first), ReadPreference.valueOf("nearest", Arrays.asList(first)));
     }
 }

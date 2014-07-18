@@ -28,7 +28,7 @@ import org.mongodb.operation.GetIndexesOperation;
 
 import java.util.List;
 
-import static org.mongodb.ReadPreference.primary;
+import static com.mongodb.ReadPreference.primary;
 
 /**
  * Provides the functionality for a collection that is useful for administration, but not necessarily in the course of normal use of a

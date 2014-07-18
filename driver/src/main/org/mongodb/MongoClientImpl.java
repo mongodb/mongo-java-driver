@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import com.mongodb.ReadPreference;
 import org.mongodb.binding.ClusterBinding;
 import org.mongodb.connection.Cluster;
 import org.mongodb.operation.ReadOperation;
@@ -25,8 +26,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.mongodb.ReadPreference.primary;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.mongodb.ReadPreference.primary;
 
 class MongoClientImpl implements MongoClient {
 

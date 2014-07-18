@@ -23,7 +23,7 @@ import org.mongodb.operation.RenameCollectionOperation;
 
 import java.util.List;
 
-import static org.mongodb.ReadPreference.primary;
+import static com.mongodb.ReadPreference.primary;
 
 /**
  * Runs the admin commands for a selected database.  This should be accessed from MongoDatabase.  The methods here are not implemented in

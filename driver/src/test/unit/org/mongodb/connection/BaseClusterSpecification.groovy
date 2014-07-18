@@ -20,8 +20,8 @@
 
 package org.mongodb.connection
 
+import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
-import org.mongodb.ReadPreference
 import org.mongodb.event.ClusterListener
 import org.mongodb.selector.ReadPreferenceServerSelector
 import org.mongodb.selector.ServerSelector

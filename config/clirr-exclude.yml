@@ -265,6 +265,8 @@ members:
   - _resultSet
 
   com.mongodb.ReadPreference:
+  - PRIMARY
+  - SECONDARY
   - withTags(java.util.Map)                                     # old ones
   - withTags(com.mongodb.DBObject)                              # old ones
 

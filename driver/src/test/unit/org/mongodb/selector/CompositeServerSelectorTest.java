@@ -25,10 +25,10 @@ import org.mongodb.connection.ServerDescription;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 
+import static com.mongodb.ReadPreference.secondary;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.ReadPreference.secondary;
 import static org.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static org.mongodb.connection.ClusterType.REPLICA_SET;
 import static org.mongodb.connection.ServerConnectionState.CONNECTED;

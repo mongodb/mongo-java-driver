@@ -17,6 +17,7 @@
 package org.mongodb.operation;
 
 import com.mongodb.MongoException;
+import com.mongodb.ReadPreference;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -27,7 +28,6 @@ import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ReadPreference;
 import org.mongodb.binding.AsyncConnectionSource;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.ConnectionSource;
@@ -38,8 +38,8 @@ import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.QueryProtocol;
 import org.mongodb.protocol.QueryResult;
 
+import static com.mongodb.ReadPreference.primary;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.mongodb.ReadPreference.primary;
 import static org.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.connection.ServerType.SHARD_ROUTER;
 import static org.mongodb.operation.OperationHelper.withConnection;

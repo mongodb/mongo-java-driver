@@ -16,8 +16,8 @@
 
 package org.mongodb.binding;
 
+import com.mongodb.ReadPreference;
 import org.mongodb.MongoFuture;
-import org.mongodb.ReadPreference;
 
 /**
  * An asynchronous factory of connection sources to servers that can be read from and that satisfy the specified read preference.

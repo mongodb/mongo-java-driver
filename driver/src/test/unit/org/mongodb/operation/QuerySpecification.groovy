@@ -21,8 +21,8 @@ import org.bson.BsonInt32
 import org.bson.BsonString
 import spock.lang.Specification
 
-import static org.mongodb.ReadPreference.primary
-import static org.mongodb.ReadPreference.secondary
+import static com.mongodb.ReadPreference.primary
+import static com.mongodb.ReadPreference.secondary
 import static org.mongodb.operation.QueryFlag.AwaitData
 import static org.mongodb.operation.QueryFlag.Exhaust
 import static org.mongodb.operation.QueryFlag.SlaveOk

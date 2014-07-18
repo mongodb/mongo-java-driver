@@ -16,7 +16,7 @@
 
 package org.mongodb.selector;
 
-import org.mongodb.ReadPreference;
+import com.mongodb.ReadPreference;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
 

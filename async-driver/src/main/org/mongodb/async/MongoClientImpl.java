@@ -17,10 +17,10 @@
 package org.mongodb.async;
 
 import com.mongodb.MongoException;
+import com.mongodb.ReadPreference;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.MongoFuture;
-import org.mongodb.ReadPreference;
 import org.mongodb.binding.AsyncClusterBinding;
 import org.mongodb.binding.AsyncReadBinding;
 import org.mongodb.binding.AsyncReadWriteBinding;

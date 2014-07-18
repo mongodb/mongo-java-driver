@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import org.junit.Test;
 

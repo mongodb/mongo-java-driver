@@ -25,7 +25,7 @@ import org.mongodb.operation.RenameCollectionOperation;
 
 import java.util.List;
 
-import static org.mongodb.ReadPreference.primary;
+import static com.mongodb.ReadPreference.primary;
 
 /**
  * The administrative commands that can be run against a selected database.  Application developers should not normally need to call these

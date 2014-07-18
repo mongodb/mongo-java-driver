@@ -16,7 +16,7 @@
 
 package org.mongodb.binding;
 
-import org.mongodb.ReadPreference;
+import com.mongodb.ReadPreference;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.Server;

@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb;
 
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.mongodb.ConvertibleToBsonDocument;
 import org.mongodb.annotations.Immutable;
 import org.mongodb.connection.ClusterDescription;
 import org.mongodb.connection.ServerDescription;
-import org.mongodb.connection.Tags;
 
 import java.util.List;
 
 /**
- * An abstract class that represents preferred replica set members to which a query or command can be sent.
+ * A class that represents preferred replica set members to which a query or command can be sent.
  *
- * @mongodb.driver.manual applications/replication/#replica-set-read-preference  Read Preference
+ * @mongodb.driver.manual core/read-preference  Read Preference
  */
 @Immutable
 public abstract class ReadPreference implements ConvertibleToBsonDocument {
@@ -36,68 +36,11 @@ public abstract class ReadPreference implements ConvertibleToBsonDocument {
     ReadPreference() {
     }
 
-    /**
-     * @return {@code true} if this preference allows reads or commands from secondary nodes
-     */
     public abstract boolean isSlaveOk();
 
-    /**
-     * @return {@code DBObject} representation of this preference
-     */
-    @Override
-    public abstract BsonDocument toDocument();
-
-    /**
-     * The name of this read preference.
-     *
-     * @return the name
-     */
     public abstract String getName();
 
     public abstract List<ServerDescription> choose(final ClusterDescription clusterDescription);
-
-    /**
-     * Preference to read from primary only. Cannot be combined with tags.
-     */
-    private static final class PrimaryReadPreference extends ReadPreference {
-        private PrimaryReadPreference() {
-        }
-
-        @Override
-        public boolean isSlaveOk() {
-            return false;
-        }
-
-        @Override
-        public String toString() {
-            return getName();
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            return o != null && getClass() == o.getClass();
-        }
-
-        @Override
-        public int hashCode() {
-            return getName().hashCode();
-        }
-
-        public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
-            return clusterDescription.getPrimaries();
-        }
-
-        @Override
-        public BsonDocument toDocument() {
-            return new BsonDocument("mode", new BsonString(getName()));
-        }
-
-        @Override
-        public String getName() {
-            return "primary";
-        }
-    }
-
 
     /**
      * @return ReadPreference which reads from primary only
@@ -111,6 +54,27 @@ public abstract class ReadPreference implements ConvertibleToBsonDocument {
      */
     public static ReadPreference primaryPreferred() {
         return PRIMARY_PREFERRED;
+    }
+
+    /**
+     * @return ReadPreference which reads secondary.
+     */
+    public static ReadPreference secondary() {
+        return SECONDARY;
+    }
+
+    /**
+     * @return ReadPreference which reads secondary if available, otherwise from primary.
+     */
+    public static ReadPreference secondaryPreferred() {
+        return SECONDARY_PREFERRED;
+    }
+
+    /**
+     * @return ReadPreference which reads nearest node.
+     */
+    public static ReadPreference nearest() {
+        return NEAREST;
     }
 
     /**
@@ -128,13 +92,6 @@ public abstract class ReadPreference implements ConvertibleToBsonDocument {
     }
 
     /**
-     * @return ReadPreference which reads secondary.
-     */
-    public static ReadPreference secondary() {
-        return SECONDARY;
-    }
-
-    /**
      * @return ReadPreference which reads secondary respective of tags.
      */
     public static TaggableReadPreference secondary(final Tags tags) {
@@ -146,13 +103,6 @@ public abstract class ReadPreference implements ConvertibleToBsonDocument {
      */
     public static TaggableReadPreference secondary(final List<Tags> tagsList) {
         return new TaggableReadPreference.SecondaryReadPreference(tagsList);
-    }
-
-    /**
-     * @return ReadPreference which reads secondary if available, otherwise from primary.
-     */
-    public static ReadPreference secondaryPreferred() {
-        return SECONDARY_PREFERRED;
     }
 
     /**
@@ -170,13 +120,6 @@ public abstract class ReadPreference implements ConvertibleToBsonDocument {
     }
 
     /**
-     * @return ReadPreference which reads nearest node.
-     */
-    public static ReadPreference nearest() {
-        return NEAREST;
-    }
-
-    /**
      * @return ReadPreference which reads nearest node respective of tags.
      */
     public static TaggableReadPreference nearest(final Tags tags) {
@@ -189,6 +132,52 @@ public abstract class ReadPreference implements ConvertibleToBsonDocument {
     public static TaggableReadPreference nearest(final List<Tags> tagsList) {
         return new TaggableReadPreference.NearestReadPreference(tagsList);
     }
+
+//    private static List<Tags> toTagsList(final DBObject firstTagSet, final DBObject[] remainingTagSets) {
+//        List<Tags> tagsList = new ArrayList<Tags>();
+//        tagsList.add(toTagMap(firstTagSet));
+//        for (final DBObject cur : remainingTagSets) {
+//            tagsList.add(toTagMap(cur));
+//        }
+//        return tagsList;
+//    }
+//
+//    private static Tags toTagMap(final DBObject tagSet) {
+//        Tags tags = new Tags();
+//        for (final String key : tagSet.keySet()) {
+//            tags.put(key, tagSet.get(key).toString());
+//        }
+//        return tags;
+//    }
+//
+//
+//    /**
+//     * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
+//     */
+//    public static TaggableReadPreference primaryPreferred(final DBObject firstTagSet, final DBObject... remainingTagSets) {
+//        return new TaggableReadPreference.PrimaryPreferredReadPreference(toTagsList(firstTagSet, remainingTagSets));
+//    }
+//
+//    /**
+//     * @return ReadPreference which reads secondary respective of tags.
+//     */
+//    public static TaggableReadPreference secondary(final DBObject firstTagSet, final DBObject... remainingTagSets) {
+//        return new TaggableReadPreference.SecondaryReadPreference(toTagsList(firstTagSet, remainingTagSets));
+//    }
+//
+//    /**
+//     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
+//     */
+//    public static TaggableReadPreference secondaryPreferred(final DBObject firstTagSet, final DBObject... remainingTagSets) {
+//        return new TaggableReadPreference.SecondaryPreferredReadPreference(toTagsList(firstTagSet, remainingTagSets));
+//    }
+//
+//    /**
+//     * @return ReadPreference which reads nearest node respective of tags.
+//     */
+//    public static TaggableReadPreference nearest(final DBObject firstTagSet, final DBObject... remainingTagSets) {
+//        return new TaggableReadPreference.NearestReadPreference(toTagsList(firstTagSet, remainingTagSets));
+//    }
 
     public static ReadPreference valueOf(final String name) {
         if (name == null) {
@@ -239,6 +228,48 @@ public abstract class ReadPreference implements ConvertibleToBsonDocument {
         throw new IllegalArgumentException("No match for read preference of " + name);
     }
 
+    /**
+     * Preference to read from primary only. Cannot be combined with tags.
+     */
+    private static final class PrimaryReadPreference extends ReadPreference {
+        private PrimaryReadPreference() {
+        }
+
+        @Override
+        public boolean isSlaveOk() {
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return getName();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            return o != null && getClass() == o.getClass();
+        }
+
+        @Override
+        public int hashCode() {
+            return getName().hashCode();
+        }
+
+        public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
+            return clusterDescription.getPrimaries();
+        }
+
+        @Override
+        public BsonDocument toDocument() {
+            return new BsonDocument("mode", new BsonString(getName()));
+        }
+
+        @Override
+        public String getName() {
+            return "primary";
+        }
+    }
+
     private static final ReadPreference PRIMARY;
     private static final ReadPreference SECONDARY;
     private static final ReadPreference SECONDARY_PREFERRED;
@@ -251,6 +282,5 @@ public abstract class ReadPreference implements ConvertibleToBsonDocument {
         SECONDARY_PREFERRED = new TaggableReadPreference.SecondaryPreferredReadPreference();
         PRIMARY_PREFERRED = new TaggableReadPreference.PrimaryPreferredReadPreference();
         NEAREST = new TaggableReadPreference.NearestReadPreference();
-    }
+   }
 }
-

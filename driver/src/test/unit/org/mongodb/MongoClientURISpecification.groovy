@@ -16,17 +16,18 @@
 
 package org.mongodb
 
+import com.mongodb.ReadPreference
+import com.mongodb.Tags
 import com.mongodb.WriteConcern
-import org.mongodb.connection.Tags
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import static com.mongodb.ReadPreference.secondaryPreferred
 import static java.util.Arrays.asList
 import static org.mongodb.MongoCredential.createGSSAPICredential
 import static org.mongodb.MongoCredential.createMongoCRCredential
 import static org.mongodb.MongoCredential.createMongoX509Credential
 import static org.mongodb.MongoCredential.createPlainCredential
-import static org.mongodb.ReadPreference.secondaryPreferred
 
 class MongoClientURISpecification extends Specification {
     def 'should throw Exception if URI does not have a trailing slash'() {

@@ -335,7 +335,7 @@ public class MongoClientOptions {
      * @see com.mongodb.ReadPreference#primary()
      */
     public ReadPreference getReadPreference() {
-        return ReadPreference.fromNew(proxied.getReadPreference());
+        return proxied.getReadPreference();
     }
 
     /**
@@ -647,7 +647,7 @@ public class MongoClientOptions {
             if (readPreference == null) {
                 throw new IllegalArgumentException("null is not a legal value");
             }
-            proxied.readPreference(readPreference.toNew());
+            proxied.readPreference(readPreference);
             return this;
         }
 

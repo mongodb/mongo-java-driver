@@ -24,7 +24,7 @@ import org.mongodb.operation.GetIndexesOperation;
 
 import java.util.List;
 
-import static org.mongodb.ReadPreference.primary;
+import static com.mongodb.ReadPreference.primary;
 
 /**
  * Encapsulates functionality that is not part of the day-to-day use of a Collection.  For example, via this admin class you can create

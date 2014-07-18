@@ -21,7 +21,7 @@ import org.mongodb.operation.PingOperation;
 
 import java.util.List;
 
-import static org.mongodb.ReadPreference.primary;
+import static com.mongodb.ReadPreference.primary;
 
 /**
  * Contains the commands that can be run on MongoDB that do not require a database to be selected first.

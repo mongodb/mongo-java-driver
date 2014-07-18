@@ -16,6 +16,7 @@
 
 package org.mongodb.acceptancetest.core;
 
+import com.mongodb.ReadPreference;
 import org.bson.BsonDocument;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -25,7 +26,6 @@ import org.mongodb.Document;
 import org.mongodb.MongoClient;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoDatabase;
-import org.mongodb.ReadPreference;
 
 import java.util.List;
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.connection;
+package com.mongodb;
 
 import org.bson.BsonDocument;
 import org.bson.BsonString;

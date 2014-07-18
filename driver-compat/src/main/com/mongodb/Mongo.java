@@ -771,10 +771,10 @@ public class Mongo {
     private ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference) {
         if (pinnedBinding.get() != null) {
             PinnedBinding binding = pinnedBinding.get().binding;
-            binding.setReadPreference(readPreference.toNew());
+            binding.setReadPreference(readPreference);
             return binding.retain(); // retain since caller will release
         } else {
-            return new ClusterBinding(getCluster(), readPreference.toNew(), options.getMaxWaitTime(), MILLISECONDS);
+            return new ClusterBinding(getCluster(), readPreference, options.getMaxWaitTime(), MILLISECONDS);
         }
     }
 

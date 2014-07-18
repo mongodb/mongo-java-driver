@@ -18,8 +18,8 @@
 package org.mongodb.operation;
 
 
+import com.mongodb.ReadPreference;
 import org.mongodb.QueryOptions;
-import org.mongodb.ReadPreference;
 
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
