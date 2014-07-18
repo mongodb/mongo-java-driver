@@ -21,6 +21,7 @@ import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
+import com.mongodb.protocol.QueryResult;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
@@ -32,7 +33,6 @@ import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.protocol.QueryResult;
 
 import java.util.List;
 

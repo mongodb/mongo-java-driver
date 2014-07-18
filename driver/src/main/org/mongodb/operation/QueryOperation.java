@@ -25,6 +25,8 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.protocol.QueryProtocol;
+import com.mongodb.protocol.QueryResult;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -35,8 +37,6 @@ import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.protocol.QueryProtocol;
-import org.mongodb.protocol.QueryResult;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;

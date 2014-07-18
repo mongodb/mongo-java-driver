@@ -21,6 +21,11 @@ import category.Slow
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.codecs.DocumentCodec
+import com.mongodb.protocol.GetMoreProtocol
+import com.mongodb.protocol.KillCursor
+import com.mongodb.protocol.KillCursorProtocol
+import com.mongodb.protocol.QueryProtocol
+import com.mongodb.protocol.QueryResult
 import org.bson.BsonDocument
 import org.bson.BsonTimestamp
 import org.junit.experimental.categories.Category
@@ -29,11 +34,6 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.QueryOptions
 import org.mongodb.ServerCursor
-import org.mongodb.protocol.GetMoreProtocol
-import org.mongodb.protocol.KillCursor
-import org.mongodb.protocol.KillCursorProtocol
-import org.mongodb.protocol.QueryProtocol
-import org.mongodb.protocol.QueryResult
 
 import java.util.concurrent.CountDownLatch
 

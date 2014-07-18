@@ -19,14 +19,14 @@ package com.mongodb.connection;
 import com.mongodb.CommandFailureException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
+import com.mongodb.protocol.message.CommandMessage;
+import com.mongodb.protocol.message.MessageSettings;
+import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoNamespace;
 import org.mongodb.operation.QueryFlag;
-import org.mongodb.protocol.message.CommandMessage;
-import org.mongodb.protocol.message.MessageSettings;
-import org.mongodb.protocol.message.ReplyMessage;
 
 import java.util.EnumSet;
 

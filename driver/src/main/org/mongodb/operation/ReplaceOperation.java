@@ -17,13 +17,13 @@
 package org.mongodb.operation;
 
 import com.mongodb.WriteConcern;
+import com.mongodb.protocol.ReplaceCommandProtocol;
+import com.mongodb.protocol.ReplaceProtocol;
+import com.mongodb.protocol.WriteCommandProtocol;
+import com.mongodb.protocol.WriteProtocol;
 import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.MongoNamespace;
-import org.mongodb.protocol.ReplaceCommandProtocol;
-import org.mongodb.protocol.ReplaceProtocol;
-import org.mongodb.protocol.WriteCommandProtocol;
-import org.mongodb.protocol.WriteProtocol;
 
 import java.util.List;
 

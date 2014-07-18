@@ -26,9 +26,9 @@ import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerVersion;
 import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.protocol.Protocol;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
-import org.mongodb.protocol.Protocol;
 
 import java.util.Arrays;
 import java.util.List;

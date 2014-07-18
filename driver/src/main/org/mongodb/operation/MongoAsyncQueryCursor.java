@@ -23,18 +23,18 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.protocol.GetMoreDiscardProtocol;
+import com.mongodb.protocol.GetMoreProtocol;
+import com.mongodb.protocol.GetMoreReceiveProtocol;
+import com.mongodb.protocol.KillCursor;
+import com.mongodb.protocol.KillCursorProtocol;
+import com.mongodb.protocol.QueryResult;
 import org.bson.codecs.Decoder;
 import org.mongodb.Block;
 import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
-import org.mongodb.protocol.GetMoreDiscardProtocol;
-import org.mongodb.protocol.GetMoreProtocol;
-import org.mongodb.protocol.GetMoreReceiveProtocol;
-import org.mongodb.protocol.KillCursor;
-import org.mongodb.protocol.KillCursorProtocol;
-import org.mongodb.protocol.QueryResult;
 
 
 class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {

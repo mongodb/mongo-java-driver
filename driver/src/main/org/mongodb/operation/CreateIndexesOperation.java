@@ -23,6 +23,7 @@ import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.protocol.InsertProtocol;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -33,7 +34,6 @@ import org.mongodb.Index;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
-import org.mongodb.protocol.InsertProtocol;
 
 import java.util.List;
 

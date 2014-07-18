@@ -28,6 +28,9 @@ import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.protocol.CommandProtocol;
+import com.mongodb.protocol.Protocol;
+import com.mongodb.protocol.message.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
@@ -36,9 +39,6 @@ import org.mongodb.CommandResult;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.protocol.CommandProtocol;
-import org.mongodb.protocol.Protocol;
-import org.mongodb.protocol.message.NoOpFieldNameValidator;
 
 import java.util.EnumSet;
 

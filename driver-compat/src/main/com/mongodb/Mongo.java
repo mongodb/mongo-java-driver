@@ -36,6 +36,8 @@ import com.mongodb.connection.PowerOfTwoBufferPool;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
+import com.mongodb.protocol.KillCursor;
+import com.mongodb.protocol.KillCursorProtocol;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.MongosHAServerSelector;
@@ -50,8 +52,6 @@ import org.mongodb.ServerCursor;
 import org.mongodb.operation.GetDatabaseNamesOperation;
 import org.mongodb.operation.ReadOperation;
 import org.mongodb.operation.WriteOperation;
-import org.mongodb.protocol.KillCursor;
-import org.mongodb.protocol.KillCursorProtocol;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;

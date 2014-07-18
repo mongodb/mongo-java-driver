@@ -18,13 +18,13 @@ package org.mongodb.operation;
 
 import com.mongodb.WriteConcern;
 import com.mongodb.codecs.CollectibleCodec;
+import com.mongodb.protocol.InsertCommandProtocol;
+import com.mongodb.protocol.InsertProtocol;
+import com.mongodb.protocol.WriteCommandProtocol;
+import com.mongodb.protocol.WriteProtocol;
 import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.MongoNamespace;
-import org.mongodb.protocol.InsertCommandProtocol;
-import org.mongodb.protocol.InsertProtocol;
-import org.mongodb.protocol.WriteCommandProtocol;
-import org.mongodb.protocol.WriteProtocol;
 
 import java.util.List;
 

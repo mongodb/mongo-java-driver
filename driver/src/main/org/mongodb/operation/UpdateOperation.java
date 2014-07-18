@@ -17,14 +17,14 @@
 package org.mongodb.operation;
 
 import com.mongodb.WriteConcern;
+import com.mongodb.protocol.UpdateCommandProtocol;
+import com.mongodb.protocol.UpdateProtocol;
+import com.mongodb.protocol.WriteCommandProtocol;
+import com.mongodb.protocol.WriteProtocol;
 import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.protocol.UpdateCommandProtocol;
-import org.mongodb.protocol.UpdateProtocol;
-import org.mongodb.protocol.WriteCommandProtocol;
-import org.mongodb.protocol.WriteProtocol;
 
 import java.util.List;
 

@@ -18,6 +18,9 @@ package org.mongodb.operation;
 
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.protocol.message.CollectibleDocumentFieldNameValidator;
+import com.mongodb.protocol.message.MappedFieldNameValidator;
+import com.mongodb.protocol.message.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonString;
@@ -25,9 +28,6 @@ import org.bson.FieldNameValidator;
 import org.bson.codecs.Codec;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.protocol.message.CollectibleDocumentFieldNameValidator;
-import org.mongodb.protocol.message.MappedFieldNameValidator;
-import org.mongodb.protocol.message.NoOpFieldNameValidator;
 
 import java.util.HashMap;
 import java.util.Map;

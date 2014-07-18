@@ -18,15 +18,15 @@
 package com.mongodb.connection
 
 import com.mongodb.event.ConnectionListener
+import com.mongodb.protocol.KillCursor
+import com.mongodb.protocol.message.CommandMessage
+import com.mongodb.protocol.message.KillCursorsMessage
+import com.mongodb.protocol.message.MessageSettings
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.mongodb.MongoNamespace
 import org.mongodb.ServerCursor
 import org.mongodb.operation.QueryFlag
-import org.mongodb.protocol.KillCursor
-import org.mongodb.protocol.message.CommandMessage
-import org.mongodb.protocol.message.KillCursorsMessage
-import org.mongodb.protocol.message.MessageSettings
 import spock.lang.Specification
 
 import static org.mongodb.Fixture.getPrimary
