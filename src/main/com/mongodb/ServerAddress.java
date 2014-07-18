@@ -82,7 +82,13 @@ public class ServerAddress {
             if ( idx > 0 ){
                 if ( port != defaultPort() )
                     throw new IllegalArgumentException( "can't specify port in construct and via host" );
+                try {
                 port = Integer.parseInt( host.substring( idx + 1 ) );
+                }
+                catch(NumberFormatException e){
+                	throw new MongoException( "host and port should be specified in host:port format" );
+                    
+                }
                 host = host.substring( 0 , idx ).trim();
             }
         }
