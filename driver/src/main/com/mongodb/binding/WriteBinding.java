@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-package org.mongodb.binding;
-
+package com.mongodb.binding;
 
 /**
- * A factory of connection sources to servers that can be read from or written to.
+ * A factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
  *
  * @since 3.0
  */
-public interface ReadWriteBinding extends ReadBinding, WriteBinding, ReferenceCounted {
+public interface WriteBinding extends ReferenceCounted {
+    /**
+     * Supply a connection source to a server that can be written to
+     *
+     * @return a connection source
+     */
+    ConnectionSource getWriteConnectionSource();
+
     @Override
-    ReadWriteBinding retain();
+    WriteBinding retain();
 }

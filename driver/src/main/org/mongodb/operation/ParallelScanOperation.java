@@ -17,6 +17,10 @@
 package org.mongodb.operation;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.binding.AsyncConnectionSource;
+import com.mongodb.binding.AsyncReadBinding;
+import com.mongodb.binding.ConnectionSource;
+import com.mongodb.binding.ReadBinding;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -30,10 +34,6 @@ import org.mongodb.MongoCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ParallelScanOptions;
-import org.mongodb.binding.AsyncConnectionSource;
-import org.mongodb.binding.AsyncReadBinding;
-import org.mongodb.binding.ConnectionSource;
-import org.mongodb.binding.ReadBinding;
 import org.mongodb.connection.Connection;
 import org.mongodb.protocol.QueryResult;
 

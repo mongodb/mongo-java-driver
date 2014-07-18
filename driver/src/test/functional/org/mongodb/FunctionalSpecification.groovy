@@ -16,8 +16,8 @@
 
 package org.mongodb
 
-import org.mongodb.binding.AsyncSingleConnectionBinding
-import org.mongodb.binding.PinnedBinding
+import com.mongodb.binding.AsyncSingleConnectionBinding
+import com.mongodb.binding.PinnedBinding
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.ServerHelper
 import org.mongodb.operation.InsertOperation

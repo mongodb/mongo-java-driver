@@ -18,13 +18,13 @@ package org.mongodb.async;
 
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
+import com.mongodb.binding.AsyncClusterBinding;
+import com.mongodb.binding.AsyncReadBinding;
+import com.mongodb.binding.AsyncReadWriteBinding;
+import com.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.MongoClientOptions;
 import org.mongodb.MongoDatabaseOptions;
 import org.mongodb.MongoFuture;
-import org.mongodb.binding.AsyncClusterBinding;
-import org.mongodb.binding.AsyncReadBinding;
-import org.mongodb.binding.AsyncReadWriteBinding;
-import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.operation.AsyncReadOperation;

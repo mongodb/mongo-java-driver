@@ -14,22 +14,23 @@
  * limitations under the License.
  */
 
-package org.mongodb.binding;
+package com.mongodb.binding;
 
-import org.mongodb.connection.Connection;
+import org.mongodb.MongoFuture;
 
 /**
- * A source of connections to a single MongoDB server.
+ * An asynchronous factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
  *
  * @since 3.0
  */
-public interface ConnectionSource extends ReferenceCounted {
+public interface AsyncWriteBinding extends ReferenceCounted {
     /**
-     * Gets a connection from this source.
-     * @return the connection
+     * Supply a connection source to a server that can be written to
+     *
+     * @return a connection source
      */
-    Connection getConnection();
+    MongoFuture<AsyncConnectionSource> getWriteConnectionSource();
 
     @Override
-    ConnectionSource retain();
+    AsyncWriteBinding retain();
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.binding;
+package com.mongodb.binding;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.selector.ReadPreferenceServerSelector;

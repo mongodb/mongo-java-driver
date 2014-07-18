@@ -16,6 +16,8 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.binding.AsyncReadBinding;
+import com.mongodb.binding.ReadBinding;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
@@ -24,8 +26,6 @@ import org.mongodb.MapReduceAsyncCursor;
 import org.mongodb.MapReduceCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.binding.AsyncReadBinding;
-import org.mongodb.binding.ReadBinding;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static org.mongodb.operation.CommandDocuments.createMapReduce;

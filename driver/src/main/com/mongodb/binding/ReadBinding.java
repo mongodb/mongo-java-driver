@@ -14,23 +14,28 @@
  * limitations under the License.
  */
 
-package org.mongodb.binding;
+package com.mongodb.binding;
 
-import org.mongodb.MongoFuture;
-import org.mongodb.connection.Connection;
+import com.mongodb.ReadPreference;
 
 /**
- * A source of connections to a single MongoDB server.
+ * A factory of connection sources to servers that can be read from and that satisfy the specified read preference.
  *
  * @since 3.0
  */
-public interface AsyncConnectionSource extends ReferenceCounted {
+public interface ReadBinding extends ReferenceCounted {
     /**
-     * Gets a connection from this source.
-     * @return the connection
+     * The read preference that all connection sources returned by this instance will satisfy.
+     * @return the non-null read preference
      */
-    MongoFuture<Connection> getConnection();
+    ReadPreference getReadPreference();
+
+    /**
+     * Returns a connection source to a server that satisfies the specified read preference.
+     * @return the connection source
+     */
+    ConnectionSource getReadConnectionSource();
 
     @Override
-    AsyncConnectionSource retain();
+    ReadBinding retain();
 }

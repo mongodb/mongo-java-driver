@@ -14,41 +14,44 @@
  * limitations under the License.
  */
 
-package org.mongodb.binding;
+package com.mongodb.binding;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.selector.PrimaryServerSelector;
-import com.mongodb.selector.ReadPreferenceServerSelector;
-import com.mongodb.selector.ServerSelector;
+import com.mongodb.ServerAddress;
+import com.mongodb.selector.ServerAddressSelector;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.Connection;
-import org.mongodb.connection.Server;
 
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * A simple ReadWriteBinding implementation that supplies write connection sources bound to a possibly different primary each time and a
- * read connection source bound to a possible different server each time.
+ * A simple binding where all connection sources are bound to the server specified in the constructor.
  *
  * @since 3.0
  */
-public class ClusterBinding extends AbstractReferenceCounted implements ReadWriteBinding {
+public class SingleServerBinding extends AbstractReferenceCounted implements ReadWriteBinding {
     private final Cluster cluster;
+    private final ServerAddress serverAddress;
     private final ReadPreference readPreference;
-    private final long maxWaitTimeMS;
+    private long maxWaitTimeMS;
 
-    public ClusterBinding(final Cluster cluster, final ReadPreference readPreference, final long maxWaitTime, final TimeUnit timeUnit) {
+    public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, final long maxWaitTime, final TimeUnit timeUnit) {
+        this(cluster, serverAddress, ReadPreference.primary(), maxWaitTime, timeUnit);
+    }
+
+    public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, final ReadPreference readPreference,
+                               final long maxWaitTime, final TimeUnit timeUnit) {
         this.cluster = cluster;
+        this.serverAddress = serverAddress;
         this.readPreference = readPreference;
         this.maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
     }
 
     @Override
-    public ReadWriteBinding retain() {
-        super.retain();
-        return this;
+    public ConnectionSource getWriteConnectionSource() {
+        return new MyConnectionSource();
     }
 
     @Override
@@ -58,37 +61,36 @@ public class ClusterBinding extends AbstractReferenceCounted implements ReadWrit
 
     @Override
     public ConnectionSource getReadConnectionSource() {
-        return new MyConnectionSource(new ReadPreferenceServerSelector(readPreference));
+        return new MyConnectionSource();
     }
 
     @Override
-    public ConnectionSource getWriteConnectionSource() {
-        return new MyConnectionSource(new PrimaryServerSelector());
+    public SingleServerBinding retain() {
+        super.retain();
+        return this;
     }
 
     private final class MyConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
-        private final Server server;
-
-        private MyConnectionSource(final ServerSelector serverSelector) {
-            this.server = cluster.selectServer(serverSelector, maxWaitTimeMS, MILLISECONDS);
-            ClusterBinding.this.retain();
+        private MyConnectionSource() {
+            SingleServerBinding.this.retain();
         }
 
         @Override
         public Connection getConnection() {
-            return server.getConnection();
+            return cluster.selectServer(new ServerAddressSelector(serverAddress), maxWaitTimeMS, MILLISECONDS).getConnection();
         }
 
+        @Override
         public ConnectionSource retain() {
             super.retain();
-            ClusterBinding.this.retain();
+            SingleServerBinding.this.retain();
             return this;
         }
 
         @Override
         public void release() {
-            super.release();
-            ClusterBinding.this.release();
+            SingleServerBinding.this.release();
         }
     }
 }
+

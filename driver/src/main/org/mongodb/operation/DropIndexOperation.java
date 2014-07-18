@@ -17,12 +17,12 @@
 package org.mongodb.operation;
 
 import com.mongodb.CommandFailureException;
+import com.mongodb.binding.AsyncWriteBinding;
+import com.mongodb.binding.WriteBinding;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.binding.AsyncWriteBinding;
-import org.mongodb.binding.WriteBinding;
 
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;

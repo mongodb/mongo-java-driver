@@ -1,4 +1,4 @@
-package org.mongodb.binding;
+package com.mongodb.binding;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.binding;
+package com.mongodb.binding;
 
 import category.ReplicaSet;
 import org.junit.After;

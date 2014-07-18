@@ -17,6 +17,13 @@
 package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.binding.ClusterBinding;
+import com.mongodb.binding.ConnectionSource;
+import com.mongodb.binding.PinnedBinding;
+import com.mongodb.binding.ReadBinding;
+import com.mongodb.binding.ReadWriteBinding;
+import com.mongodb.binding.SingleServerBinding;
+import com.mongodb.binding.WriteBinding;
 import com.mongodb.management.JMXConnectionPoolListener;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
@@ -29,13 +36,6 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.mongodb.Document;
 import org.mongodb.ServerCursor;
-import org.mongodb.binding.ClusterBinding;
-import org.mongodb.binding.ConnectionSource;
-import org.mongodb.binding.PinnedBinding;
-import org.mongodb.binding.ReadBinding;
-import org.mongodb.binding.ReadWriteBinding;
-import org.mongodb.binding.SingleServerBinding;
-import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.BufferProvider;
 import org.mongodb.connection.Cluster;

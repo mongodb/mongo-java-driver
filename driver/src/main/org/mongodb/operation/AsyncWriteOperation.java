@@ -16,8 +16,8 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.MongoFuture;
-import org.mongodb.binding.AsyncWriteBinding;
 
 /**
  * An operation which asynchronously writes to a MongoDB server.

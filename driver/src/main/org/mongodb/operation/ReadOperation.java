@@ -16,7 +16,7 @@
 
 package org.mongodb.operation;
 
-import org.mongodb.binding.ReadBinding;
+import com.mongodb.binding.ReadBinding;
 
 /**
  * An operation that reads from a MongoDB server.

@@ -14,31 +14,23 @@
  * limitations under the License.
  */
 
-package org.mongodb.binding;
+package com.mongodb.binding;
+
+import org.mongodb.MongoFuture;
+import org.mongodb.connection.Connection;
 
 /**
- * An interface for reference-counted objects.
+ * A source of connections to a single MongoDB server.
  *
  * @since 3.0
  */
-public interface ReferenceCounted {
+public interface AsyncConnectionSource extends ReferenceCounted {
     /**
-     * Gets the current reference count, which starts at 0.
-     *
-     * @return the current count, which must be >= 0
+     * Gets a connection from this source.
+     * @return the connection
      */
-    int getCount();
+    MongoFuture<Connection> getConnection();
 
-    /**
-     * Retain an additional reference to this object.  All retained references must be released, or there will be a leak.
-     *
-     * @return this
-     */
-    ReferenceCounted retain();
-
-    /**
-     * Release a reference to this object.
-     * @throws java.lang.IllegalStateException if the reference count is already 0
-     */
-    void release();
+    @Override
+    AsyncConnectionSource retain();
 }

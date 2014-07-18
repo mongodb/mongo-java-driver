@@ -17,14 +17,14 @@
 package org.mongodb.operation;
 
 import com.mongodb.MongoException;
+import com.mongodb.binding.AsyncConnectionSource;
+import com.mongodb.binding.AsyncReadBinding;
+import com.mongodb.binding.AsyncWriteBinding;
+import com.mongodb.binding.ConnectionSource;
+import com.mongodb.binding.ReadBinding;
+import com.mongodb.binding.WriteBinding;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
-import org.mongodb.binding.AsyncConnectionSource;
-import org.mongodb.binding.AsyncReadBinding;
-import org.mongodb.binding.AsyncWriteBinding;
-import org.mongodb.binding.ConnectionSource;
-import org.mongodb.binding.ReadBinding;
-import org.mongodb.binding.WriteBinding;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ServerVersion;
 import org.mongodb.connection.SingleResultCallback;

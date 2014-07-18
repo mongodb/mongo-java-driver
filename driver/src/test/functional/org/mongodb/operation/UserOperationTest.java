@@ -17,15 +17,15 @@
 package org.mongodb.operation;
 
 import com.mongodb.MongoException;
+import com.mongodb.binding.ClusterBinding;
+import com.mongodb.binding.ReadWriteBinding;
+import com.mongodb.binding.WriteBinding;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.binding.ClusterBinding;
-import org.mongodb.binding.ReadWriteBinding;
-import org.mongodb.binding.WriteBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Cluster;
 import org.mongodb.connection.ClusterSettings;

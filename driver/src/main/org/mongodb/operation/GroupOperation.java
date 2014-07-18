@@ -16,6 +16,8 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.binding.AsyncReadBinding;
+import com.mongodb.binding.ReadBinding;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.codecs.Decoder;
@@ -25,8 +27,6 @@ import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.binding.AsyncReadBinding;
-import org.mongodb.binding.ReadBinding;
 
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;

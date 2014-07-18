@@ -16,13 +16,13 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.binding.AsyncWriteBinding;
+import com.mongodb.binding.WriteBinding;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
-import org.mongodb.binding.AsyncWriteBinding;
-import org.mongodb.binding.WriteBinding;
 
 import static org.mongodb.MongoNamespace.asNamespaceString;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;

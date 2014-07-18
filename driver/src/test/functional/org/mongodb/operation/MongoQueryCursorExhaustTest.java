@@ -17,6 +17,8 @@
 package org.mongodb.operation;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.binding.ConnectionSource;
+import com.mongodb.binding.ReadBinding;
 import org.bson.BsonDocument;
 import org.bson.types.Binary;
 import org.junit.After;
@@ -24,8 +26,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.binding.ConnectionSource;
-import org.mongodb.binding.ReadBinding;
 import org.mongodb.codecs.DocumentCodec;
 import org.mongodb.connection.Connection;
 import org.mongodb.protocol.QueryProtocol;

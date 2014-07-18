@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-package org.mongodb.binding;
+package com.mongodb.binding;
+
+import org.mongodb.connection.Connection;
 
 /**
- * A factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
+ * A source of connections to a single MongoDB server.
  *
  * @since 3.0
  */
-public interface WriteBinding extends ReferenceCounted {
+public interface ConnectionSource extends ReferenceCounted {
     /**
-     * Supply a connection source to a server that can be written to
-     *
-     * @return a connection source
+     * Gets a connection from this source.
+     * @return the connection
      */
-    ConnectionSource getWriteConnectionSource();
+    Connection getConnection();
 
     @Override
-    WriteBinding retain();
+    ConnectionSource retain();
 }

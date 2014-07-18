@@ -18,6 +18,7 @@ package org.mongodb.operation;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import org.bson.codecs.Decoder;
@@ -26,7 +27,6 @@ import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
-import org.mongodb.binding.AsyncConnectionSource;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.protocol.GetMoreDiscardProtocol;

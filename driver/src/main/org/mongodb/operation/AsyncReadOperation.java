@@ -16,8 +16,8 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.binding.AsyncReadBinding;
 import org.mongodb.MongoFuture;
-import org.mongodb.binding.AsyncReadBinding;
 
 /**
  * An operation which asynchronously reads from a MongoDB server.

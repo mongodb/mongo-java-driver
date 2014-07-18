@@ -16,14 +16,14 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.binding.AsyncWriteBinding;
+import com.mongodb.binding.WriteBinding;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.binding.AsyncWriteBinding;
-import org.mongodb.binding.WriteBinding;
 
 import java.util.List;
 
