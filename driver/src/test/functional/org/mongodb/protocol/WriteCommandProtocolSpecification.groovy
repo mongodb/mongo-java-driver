@@ -31,6 +31,7 @@ import org.mongodb.operation.InsertRequest
 import org.mongodb.operation.UpdateRequest
 import org.mongodb.selector.PrimaryServerSelector
 
+import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeTrue
@@ -38,7 +39,6 @@ import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getCluster
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.serverVersionAtLeast
-import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
 class WriteCommandProtocolSpecification extends FunctionalSpecification {
 

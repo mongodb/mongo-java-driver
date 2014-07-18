@@ -16,6 +16,7 @@
 
 package org.mongodb.acceptancetest.core;
 
+import com.mongodb.WriteConcern;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.types.Binary;
@@ -29,7 +30,6 @@ import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
-import org.mongodb.WriteConcern;
 
 import java.util.Arrays;
 import java.util.Date;

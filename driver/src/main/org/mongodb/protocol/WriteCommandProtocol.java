@@ -17,13 +17,13 @@
 package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
+import com.mongodb.WriteConcern;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.WriteConcern;
 import org.mongodb.connection.ByteBufferOutputBuffer;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.ResponseBuffers;

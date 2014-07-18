@@ -17,9 +17,9 @@
 package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
+import com.mongodb.WriteConcern;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;

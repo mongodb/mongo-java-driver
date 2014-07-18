@@ -18,6 +18,7 @@ package org.mongodb.operation
 
 import category.Async
 import category.Slow
+import com.mongodb.WriteConcern
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -30,16 +31,15 @@ import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
 import org.mongodb.Fixture
 import org.mongodb.FunctionalSpecification
-import org.mongodb.WriteConcern
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.protocol.AcknowledgedBulkWriteResult
 
+import static WriteConcern.ACKNOWLEDGED
+import static WriteConcern.UNACKNOWLEDGED
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getAsyncSingleConnectionBinding
 import static org.mongodb.Fixture.serverVersionAtLeast
-import static org.mongodb.WriteConcern.ACKNOWLEDGED
-import static org.mongodb.WriteConcern.UNACKNOWLEDGED
 import static org.mongodb.operation.WriteRequest.Type.REMOVE
 import static org.mongodb.operation.WriteRequest.Type.UPDATE
 

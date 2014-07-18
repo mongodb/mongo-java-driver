@@ -17,10 +17,10 @@
 package org.mongodb.protocol;
 
 import com.mongodb.MongoException;
+import com.mongodb.WriteConcern;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.WriteConcern;
 import org.mongodb.connection.Connection;
 import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;

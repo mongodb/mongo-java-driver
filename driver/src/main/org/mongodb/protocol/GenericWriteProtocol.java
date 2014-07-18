@@ -16,8 +16,8 @@
 
 package org.mongodb.protocol;
 
+import com.mongodb.WriteConcern;
 import org.mongodb.MongoNamespace;
-import org.mongodb.WriteConcern;
 import org.mongodb.protocol.message.MessageSettings;
 import org.mongodb.protocol.message.RequestMessage;
 

@@ -25,10 +25,10 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 
+import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
-import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
 class ReplaceOperationSpecification extends FunctionalSpecification {
     def 'should return correct result'() {

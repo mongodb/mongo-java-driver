@@ -18,12 +18,12 @@
 
 package org.mongodb.protocol
 
+import com.mongodb.WriteConcern
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.mongodb.Document
 import org.mongodb.MongoNamespace
 import org.mongodb.SimpleBufferProvider
-import org.mongodb.WriteConcern
 import org.mongodb.codecs.DocumentCodec
 import org.mongodb.connection.ByteBufferOutputBuffer
 import org.mongodb.operation.InsertRequest

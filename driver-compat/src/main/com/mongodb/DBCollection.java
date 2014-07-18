@@ -289,7 +289,7 @@ public class DBCollection {
 
     private WriteResult insert(final List<InsertRequest<DBObject>> insertRequestList, final Encoder<DBObject> encoder,
                                final WriteConcern writeConcern) {
-        return executeWriteOperation(new InsertOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
+        return executeWriteOperation(new InsertOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(), writeConcern,
                                                                    insertRequestList, encoder),
                                      writeConcern);
     }
@@ -358,8 +358,7 @@ public class DBCollection {
         ReplaceRequest<DBObject> replaceRequest = new ReplaceRequest<DBObject>(wrap(filter), obj).upsert(true);
 
         return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(),
-                                                                    writeConcern.toNew(), asList(replaceRequest),
-                                                                    getObjectCodec()),
+                                                                    writeConcern, asList(replaceRequest), getObjectCodec()),
                                      writeConcern);
     }
 
@@ -409,12 +408,12 @@ public class DBCollection {
         if (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")) {
             UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, encoder)).upsert(upsert).multi(multi);
 
-            return executeWriteOperation(new UpdateOperation(getNamespace(), !aWriteConcern.getContinueOnError(), aWriteConcern.toNew(),
+            return executeWriteOperation(new UpdateOperation(getNamespace(), !aWriteConcern.getContinueOnError(), aWriteConcern,
                                                              asList(updateRequest), documentCodec),
                                          aWriteConcern);
         } else {
             ReplaceRequest<DBObject> replaceRequest = new ReplaceRequest<DBObject>(wrap(query), update).upsert(upsert);
-            return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), true, aWriteConcern.toNew(),
+            return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), true, aWriteConcern,
                                                                         asList(replaceRequest), toEncoder(encoder)),
                                          aWriteConcern);
         }
@@ -481,7 +480,7 @@ public class DBCollection {
      * @mongodb.driver.manual tutorial/remove-documents/ Remove
      */
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
-        return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
+        return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern,
                                                          asList(new RemoveRequest(wrap(query)))), writeConcern);
     }
 
@@ -498,7 +497,7 @@ public class DBCollection {
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern, final DBEncoder encoder) {
         RemoveRequest removeRequest = new RemoveRequest(wrap(query, encoder));
 
-        return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern.toNew(),
+        return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern,
                                                          asList(removeRequest)), writeConcern);
     }
 
@@ -1834,7 +1833,7 @@ public class DBCollection {
         try {
             return translateBulkWriteResult(execute(new MixedBulkWriteOperation<DBObject>(getNamespace(),
                                                                                           translateWriteRequestsToNew(writeRequests),
-                                                                                          ordered, writeConcern.toNew(),
+                                                                                          ordered, writeConcern,
                                                                                           getObjectCodec())),
                                             getObjectCodec());
         } catch (org.mongodb.BulkWriteException e) {

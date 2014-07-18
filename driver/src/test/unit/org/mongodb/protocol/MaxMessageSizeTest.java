@@ -31,9 +31,9 @@ import org.mongodb.protocol.message.RequestMessage;
 
 import java.util.Arrays;
 
+import static com.mongodb.WriteConcern.ACKNOWLEDGED;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
-import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
 public class MaxMessageSizeTest {
     private ByteBufferOutputBuffer buffer;

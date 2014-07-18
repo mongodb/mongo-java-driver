@@ -29,8 +29,8 @@ import org.mongodb.operation.InsertRequest;
 import org.mongodb.protocol.message.InsertMessage;
 import org.mongodb.protocol.message.MessageSettings;
 
+import static com.mongodb.WriteConcern.ACKNOWLEDGED;
 import static java.util.Arrays.asList;
-import static org.mongodb.WriteConcern.ACKNOWLEDGED;
 
 @SuppressWarnings("unchecked")
 public class MaxDocumentSizeTest {

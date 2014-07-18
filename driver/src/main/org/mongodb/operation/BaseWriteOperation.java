@@ -17,6 +17,7 @@
 package org.mongodb.operation;
 
 import com.mongodb.MongoException;
+import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernException;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -27,7 +28,6 @@ import org.mongodb.BulkWriteException;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
-import org.mongodb.WriteConcern;
 import org.mongodb.WriteResult;
 import org.mongodb.binding.AsyncWriteBinding;
 import org.mongodb.binding.WriteBinding;

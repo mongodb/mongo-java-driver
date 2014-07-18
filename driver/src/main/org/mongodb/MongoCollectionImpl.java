@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import com.mongodb.WriteConcern;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;

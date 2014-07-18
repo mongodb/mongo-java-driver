@@ -25,8 +25,8 @@ import org.mongodb.BulkWriteUpsert
 import org.mongodb.WriteConcernError
 import spock.lang.Specification
 
-import static org.mongodb.WriteConcern.ACKNOWLEDGED
-import static org.mongodb.WriteConcern.UNACKNOWLEDGED
+import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static org.mongodb.operation.WriteRequest.Type.INSERT
 import static org.mongodb.operation.WriteRequest.Type.UPDATE
 

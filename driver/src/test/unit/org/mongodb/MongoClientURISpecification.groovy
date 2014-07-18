@@ -16,6 +16,7 @@
 
 package org.mongodb
 
+import com.mongodb.WriteConcern
 import org.mongodb.connection.Tags
 import spock.lang.Specification
 import spock.lang.Unroll

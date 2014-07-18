@@ -347,7 +347,7 @@ public class MongoClientOptions {
      * @see WriteConcern#ACKNOWLEDGED
      */
     public WriteConcern getWriteConcern() {
-        return new WriteConcern(proxied.getWriteConcern());
+        return proxied.getWriteConcern();
     }
 
     /**
@@ -662,7 +662,7 @@ public class MongoClientOptions {
             if (writeConcern == null) {
                 throw new IllegalArgumentException("null is not a legal value");
             }
-            proxied.writeConcern(writeConcern.toNew());
+            proxied.writeConcern(writeConcern);
             return this;
         }
 
@@ -839,7 +839,7 @@ public class MongoClientOptions {
          * @see MongoOptions
          */
         public Builder legacyDefaults() {
-            proxied.maxConnectionPoolSize(10).writeConcern(org.mongodb.WriteConcern.UNACKNOWLEDGED);
+            proxied.maxConnectionPoolSize(10).writeConcern(WriteConcern.UNACKNOWLEDGED);
             return this;
         }
 

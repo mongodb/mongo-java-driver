@@ -16,11 +16,11 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.WriteConcern;
 import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
-import org.mongodb.WriteConcern;
 import org.mongodb.protocol.UpdateCommandProtocol;
 import org.mongodb.protocol.UpdateProtocol;
 import org.mongodb.protocol.WriteCommandProtocol;

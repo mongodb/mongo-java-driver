@@ -16,11 +16,11 @@
 
 package org.mongodb.protocol.message;
 
+import com.mongodb.WriteConcern;
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
 import org.mongodb.MongoNamespace;
-import org.mongodb.WriteConcern;
 import org.mongodb.operation.UpdateRequest;
 
 import java.util.List;

@@ -16,6 +16,7 @@
 
 package org.mongodb.protocol.message;
 
+import com.mongodb.WriteConcern;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBinaryWriterSettings;
 import org.bson.BsonWriterSettings;
@@ -23,7 +24,6 @@ import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.OutputBuffer;
 import org.mongodb.MongoNamespace;
-import org.mongodb.WriteConcern;
 
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static org.mongodb.protocol.message.RequestMessage.OpCode.OP_QUERY;

@@ -18,6 +18,10 @@
 
 package com.mongodb;
 
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.mongodb.annotations.Immutable;
 
 import java.io.Serializable;
@@ -25,6 +29,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.mongodb.assertions.Assertions.isTrueArgument;
+import static org.mongodb.assertions.Assertions.notNull;
 
 /**
  * <p>Controls the acknowledgment of write operations with various options.
@@ -63,8 +70,15 @@ public class WriteConcern implements Serializable {
     // map of the constants from above for use by fromString
     private static final Map<String, WriteConcern> NAMED_CONCERNS;
 
-    private final org.mongodb.WriteConcern proxied;
     private final boolean continueOnError;
+
+    private final Object w;
+
+    private final int wtimeout;
+
+    private final boolean fsync;
+
+    private final boolean j;
 
     /**
      * Write operations that use this write concern will wait for acknowledgement from the primary server before returning. Exceptions are
@@ -72,30 +86,31 @@ public class WriteConcern implements Serializable {
      *
      * @since 2.10.0
      */
-    public static final WriteConcern ACKNOWLEDGED = new WriteConcern(org.mongodb.WriteConcern.ACKNOWLEDGED);
+    public static final WriteConcern ACKNOWLEDGED = new WriteConcern(1);
+
     /**
      * Write operations that use this write concern will return as soon as the message is written to the socket. Exceptions are raised for
      * network issues, but not server errors.
      *
      * @since 2.10.0
      */
-    public static final WriteConcern UNACKNOWLEDGED = new WriteConcern(org.mongodb.WriteConcern.UNACKNOWLEDGED);
+    public static final WriteConcern UNACKNOWLEDGED = new WriteConcern(0);
 
     /**
      * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush the data to disk.
      */
-    public static final WriteConcern FSYNCED = new WriteConcern(org.mongodb.WriteConcern.FSYNCED);
+    public static final WriteConcern FSYNCED = new WriteConcern(true);
 
     /**
      * Exceptions are raised for network issues, and server errors; the write operation waits for the server to group commit to the journal
      * file on disk.
      */
-    public static final WriteConcern JOURNALED = new WriteConcern(org.mongodb.WriteConcern.JOURNALED);
+    public static final WriteConcern JOURNALED = new WriteConcern(1, 0, false, true);
 
     /**
      * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.
      */
-    public static final WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(org.mongodb.WriteConcern.REPLICA_ACKNOWLEDGED);
+    public static final WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(2);
 
     /**
      * Write operations that use this write concern will return as soon as the message is written to the socket. Exceptions are raised for
@@ -239,7 +254,11 @@ public class WriteConcern implements Serializable {
      * @param continueOnError if batch writes should continue after the first error
      */
     public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnError) {
-        proxied = new org.mongodb.WriteConcern(w, wtimeout, fsync, j);
+        isTrueArgument("w >= 0", w >= 0);
+        this.w = w;
+        this.wtimeout = wtimeout;
+        this.fsync = fsync;
+        this.j = j;
         this.continueOnError = continueOnError;
     }
 
@@ -271,29 +290,25 @@ public class WriteConcern implements Serializable {
      * @param continueOnError if batch writes should continue after the first error
      */
     public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnError) {
-        proxied = new org.mongodb.WriteConcern(w, wtimeout, fsync, j);
+        this.w = notNull("w", w);
+        this.wtimeout = wtimeout;
+        this.fsync = fsync;
+        this.j = j;
         this.continueOnError = continueOnError;
     }
 
     /**
      * Creates a WriteConcern based on an instance of org.mongodb.WriteConcern.
      *
-     * @param proxied the write concern to copy
-     *
-     */
-    public WriteConcern(final org.mongodb.WriteConcern proxied) {
-        this(proxied, false);
-    }
-
-    /**
-     * Creates a WriteConcern based on an instance of org.mongodb.WriteConcern.
-     *
-     * @param proxied the write concern to copy
+     * @param from the write concern to copy
      * @param continueOnError if batch writes should continue after the first error
      *
      */
-    WriteConcern(final org.mongodb.WriteConcern proxied, final boolean continueOnError) {
-        this.proxied = proxied;
+    private WriteConcern(final WriteConcern from, final boolean continueOnError) {
+        this.w = from.getWObject();
+        this.wtimeout = from.getWtimeout();
+        this.fsync = from.getFsync();
+        this.j = from.getJ();
         this.continueOnError = continueOnError;
     }
 
@@ -303,7 +318,7 @@ public class WriteConcern implements Serializable {
      * @return w, either an instance of Integer or String
      */
     public Object getWObject() {
-        return proxied.getWObject();
+        return w;
     }
 
     /**
@@ -313,7 +328,7 @@ public class WriteConcern implements Serializable {
      * @throws ClassCastException if w is not an integer
      */
     public int getW() {
-        return proxied.getW();
+        return (Integer) w;
     }
 
     /**
@@ -323,7 +338,7 @@ public class WriteConcern implements Serializable {
      * @throws ClassCastException if w is not a String
      */
     public String getWString() {
-        return proxied.getWString();
+        return (String) w;
     }
 
     /**
@@ -332,7 +347,7 @@ public class WriteConcern implements Serializable {
      * @return the timeout
      */
     public int getWtimeout() {
-        return proxied.getWtimeout();
+        return wtimeout;
     }
 
     /**
@@ -341,7 +356,7 @@ public class WriteConcern implements Serializable {
      * @return the fsync flag
      */
     public boolean getFsync() {
-        return proxied.getFsync();
+        return fsync();
     }
 
     /**
@@ -350,7 +365,7 @@ public class WriteConcern implements Serializable {
      * @return the fsync flag
      */
     public boolean fsync() {
-        return proxied.getFsync();
+        return fsync;
     }
 
     /**
@@ -359,7 +374,49 @@ public class WriteConcern implements Serializable {
      * @return whether this write concern will result in an an acknowledged write
      */
     public boolean callGetLastError() {
-        return proxied.isAcknowledged();
+        return isAcknowledged();
+    }
+
+    /**
+     * The server default is w == 1 and everything else the default value.
+     *
+     * @return true if this write concern is the server's default
+     * @mongodb.driver.manual /reference/replica-configuration/#local.system.replset.settings.getLastErrorDefaults getLastErrorDefaults
+     */
+    public boolean isServerDefault() {
+        return w.equals(1) && wtimeout == 0 && !fsync && !j;
+    }
+
+    /**
+     * Gets this write concern as a document
+     *
+     * @return The write concern as a Document, even if {@code w <= 0}
+     */
+    public BsonDocument asDocument() {
+        if (!isAcknowledged()) {
+            throw new IllegalStateException("The write is unacknowledged, so no document can be created");
+        }
+        BsonDocument document = new BsonDocument();
+
+        addW(document);
+
+        addWTimeout(document);
+        addFSync(document);
+        addJ(document);
+
+        return document;
+    }
+
+    /**
+     * Returns whether write operations should be acknowledged
+     *
+     * @return true w != null or w > 0
+     */
+    public boolean isAcknowledged() {
+        if (w instanceof Integer) {
+            return (Integer) w > 0;
+        }
+        return w != null;
     }
 
     /**
@@ -383,21 +440,31 @@ public class WriteConcern implements Serializable {
 
         WriteConcern that = (WriteConcern) o;
 
-        if (!proxied.equals(that.proxied)) {
+        if (fsync != that.fsync) {
             return false;
         }
-
-        return true;
+        if (j != that.j) {
+            return false;
+        }
+        if (wtimeout != that.wtimeout) {
+            return false;
+        }
+        return w.equals(that.w);
     }
 
     @Override
     public int hashCode() {
-        return proxied.hashCode();
+        int result = w.hashCode();
+        result = 31 * result + wtimeout;
+        result = 31 * result + (fsync ? 1 : 0);
+        result = 31 * result + (j ? 1 : 0);
+        return result;
     }
 
     @Override
     public String toString() {
-        return proxied.toString();
+        return "WriteConcern{w=" + w + ", wtimeout=" + wtimeout + ", fsync=" + fsync + ", j=" + j;
+
     }
 
     /**
@@ -406,7 +473,7 @@ public class WriteConcern implements Serializable {
      * @return true if j is set
      */
     public boolean getJ() {
-        return proxied.getJ();
+        return j;
     }
 
     /**
@@ -418,8 +485,44 @@ public class WriteConcern implements Serializable {
         return continueOnError;
     }
 
-    public org.mongodb.WriteConcern toNew() {
-        return proxied;
+    /**
+     * @param w an int representation of the write concern
+     * @return the WriteConcern matching the given w value
+     */
+    public WriteConcern withW(final int w) {
+        return new WriteConcern(w, getWtimeout(), getFsync(), getJ());
+    }
+
+    /**
+     * @param w a String representation of the write concern
+     * @return the WriteConcern
+     */
+    public WriteConcern withW(final String w) {
+        return new WriteConcern(w, getWtimeout(), getFsync(), getJ());
+    }
+
+    /**
+     * @param fsync true if the write concern needs to include fsync
+     * @return the WriteConcern
+     */
+    public WriteConcern withFsync(final boolean fsync) {
+        if (getWObject() instanceof Integer) {
+            return new WriteConcern(getW(), getWtimeout(), fsync, getJ());
+        } else {
+            return new WriteConcern(getWString(), getWtimeout(), fsync, getJ());
+        }
+    }
+
+    /**
+     * @param j true if journalling is required
+     * @return the WriteConcern
+     */
+    public WriteConcern withJ(final boolean j) {
+        if (getWObject() instanceof Integer) {
+            return new WriteConcern(getW(), getWtimeout(), getFsync(), j);
+        } else {
+            return new WriteConcern(getWString(), getWtimeout(), getFsync(), j);
+        }
     }
 
     /**
@@ -430,8 +533,35 @@ public class WriteConcern implements Serializable {
      * @param continueOnError true if the operation should continue when the server continues an error
      */
     public WriteConcern continueOnError(final boolean continueOnError) {
-        return new WriteConcern(proxied, continueOnError);
+        return new WriteConcern(this, continueOnError);
     }
+
+    private void addW(final BsonDocument document) {
+        if (w instanceof String) {
+            document.put("w", new BsonString((String) w));
+        } else {
+            document.put("w", new BsonInt32((Integer) w));
+        }
+    }
+
+    private void addJ(final BsonDocument document) {
+        if (j) {
+            document.put("j", BsonBoolean.TRUE);
+        }
+    }
+
+    private void addFSync(final BsonDocument document) {
+        if (fsync) {
+            document.put("fsync", BsonBoolean.TRUE);
+        }
+    }
+
+    private void addWTimeout(final BsonDocument document) {
+        if (wtimeout > 0) {
+            document.put("wtimeout", new BsonInt32(wtimeout));
+        }
+    }
+
 
     /**
      * Create a Majority Write Concern that requires a majority of servers to acknowledge the write.

@@ -16,9 +16,9 @@
 
 package org.mongodb.operation;
 
+import com.mongodb.WriteConcern;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.MongoNamespace;
-import org.mongodb.WriteConcern;
 import org.mongodb.protocol.DeleteCommandProtocol;
 import org.mongodb.protocol.DeleteProtocol;
 import org.mongodb.protocol.WriteCommandProtocol;

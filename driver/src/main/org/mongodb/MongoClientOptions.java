@@ -16,6 +16,7 @@
 
 package org.mongodb;
 
+import com.mongodb.WriteConcern;
 import org.mongodb.annotations.Immutable;
 import org.mongodb.connection.ConnectionPoolSettings;
 import org.mongodb.connection.SSLSettings;

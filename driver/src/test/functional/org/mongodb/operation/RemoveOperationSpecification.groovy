@@ -25,9 +25,9 @@ import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 
+import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
-import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
 class RemoveOperationSpecification extends FunctionalSpecification {
     def 'should remove a document'() {

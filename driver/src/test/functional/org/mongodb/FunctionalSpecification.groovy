@@ -27,10 +27,10 @@ import org.mongodb.test.Worker
 import org.mongodb.test.WorkerCodec
 import spock.lang.Specification
 
+import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static org.mongodb.Fixture.getDefaultDatabase
 import static org.mongodb.Fixture.getPrimary
 import static org.mongodb.Fixture.initialiseCollection
-import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
 class FunctionalSpecification extends Specification {
     protected MongoDatabase database;

@@ -29,7 +29,7 @@ public abstract class BulkWriteResult {
      * Returns true if the write was acknowledged.
      *
      * @return true if the write was acknowledged
-     * @see WriteConcern#UNACKNOWLEDGED
+     * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      */
     public abstract boolean isAcknowledged();
 
@@ -39,7 +39,7 @@ public abstract class BulkWriteResult {
      * @return the number of documents inserted by the write operation
      *
      * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
-     * @see WriteConcern#UNACKNOWLEDGED
+     * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      */
     public abstract int getInsertedCount();
 
@@ -51,7 +51,7 @@ public abstract class BulkWriteResult {
      * @return the number of documents matched by updates in the write operation
      *
      * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
-     * @see WriteConcern#UNACKNOWLEDGED
+     * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      */
     public abstract int getMatchedCount();
 
@@ -61,7 +61,7 @@ public abstract class BulkWriteResult {
      * @return the number of documents removed by the write operation
      *
      * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
-     * @see WriteConcern#UNACKNOWLEDGED
+     * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      */
     public abstract int getRemovedCount();
 
@@ -72,7 +72,7 @@ public abstract class BulkWriteResult {
      * @return true if modifiedCount is available
      *
      * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
-     * @see WriteConcern#UNACKNOWLEDGED
+     * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      * @see #getModifiedCount()
      */
     public abstract boolean isModifiedCountAvailable();
@@ -91,7 +91,7 @@ public abstract class BulkWriteResult {
      *
      * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
      * @throws java.lang.UnsupportedOperationException if no modified count is available
-     * @see WriteConcern#UNACKNOWLEDGED
+     * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      * @see #isModifiedCountAvailable()
      */
     public abstract int getModifiedCount();
@@ -103,7 +103,7 @@ public abstract class BulkWriteResult {
      * @return a list of upserted items, or the empty list if there were none.
      *
      * @throws com.mongodb.UnacknowledgedWriteException if the write was unacknowledged.
-     * @see WriteConcern#UNACKNOWLEDGED
+     * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      */
     public abstract List<BulkWriteUpsert> getUpserts();
 }

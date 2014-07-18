@@ -16,10 +16,10 @@
 
 package org.mongodb.protocol.message;
 
+import com.mongodb.WriteConcern;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Encoder;
 import org.bson.io.OutputBuffer;
-import org.mongodb.WriteConcern;
 import org.mongodb.operation.InsertRequest;
 
 import java.util.List;

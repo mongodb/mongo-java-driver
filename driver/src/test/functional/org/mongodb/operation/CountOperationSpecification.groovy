@@ -23,6 +23,7 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 
+import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeTrue
@@ -31,7 +32,6 @@ import static org.mongodb.Fixture.enableMaxTimeFailPoint
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.serverVersionAtLeast
-import static org.mongodb.WriteConcern.ACKNOWLEDGED
 
 class CountOperationSpecification extends FunctionalSpecification {
 

@@ -27,7 +27,7 @@ import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.RequestMessage;
 
-import static org.mongodb.WriteConcern.UNACKNOWLEDGED;
+import static com.mongodb.WriteConcern.UNACKNOWLEDGED;
 
 class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
     private final SingleResultFuture<WriteResult> future;

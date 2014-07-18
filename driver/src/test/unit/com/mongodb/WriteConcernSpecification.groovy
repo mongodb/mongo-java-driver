@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-
-package org.mongodb
+package com.mongodb
 
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -159,5 +158,24 @@ class WriteConcernSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def 'majority write concern'() {
+        expect:
+        new WriteConcern.Majority().with {
+            getWString() == 'majority'
+            getWtimeout() == 0
+            !getFsync()
+            !getJ()
+            !getContinueOnError()
+        }
+
+        new WriteConcern.Majority(10, true, true).with {
+            getWString() == 'majority'
+            getWtimeout() == 10
+            getFsync()
+            getJ()
+            !getContinueOnError()
+        }
     }
 }

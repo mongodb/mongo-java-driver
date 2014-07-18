@@ -15,6 +15,7 @@
  */
 
 package org.mongodb.operation
+
 import category.Async
 import com.mongodb.MongoException
 import org.bson.BsonSerializationException
@@ -24,13 +25,13 @@ import org.mongodb.Document
 import org.mongodb.FunctionalSpecification
 import org.mongodb.codecs.DocumentCodec
 
+import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static java.util.Arrays.asList
 import static org.mongodb.Fixture.getAsyncBinding
 import static org.mongodb.Fixture.getAsyncSingleConnectionBinding
 import static org.mongodb.Fixture.getBinding
 import static org.mongodb.Fixture.getPinnedBinding
-import static org.mongodb.WriteConcern.ACKNOWLEDGED
-import static org.mongodb.WriteConcern.UNACKNOWLEDGED
 
 class InsertOperationSpecification extends FunctionalSpecification {
     def 'should return correct result'() {
