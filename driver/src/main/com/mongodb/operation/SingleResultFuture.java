@@ -19,8 +19,8 @@ package com.mongodb.operation;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.SingleResultCallback;
-import org.mongodb.MongoFuture;
 
 import java.util.ArrayList;
 import java.util.List;

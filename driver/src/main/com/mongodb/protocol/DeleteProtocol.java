@@ -18,6 +18,7 @@ package com.mongodb.protocol;
 
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
@@ -27,7 +28,6 @@ import com.mongodb.operation.SingleResultFuture;
 import com.mongodb.protocol.message.DeleteMessage;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
-import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 

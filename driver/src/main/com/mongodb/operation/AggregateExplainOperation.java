@@ -16,13 +16,13 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
-import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 
 import java.util.List;

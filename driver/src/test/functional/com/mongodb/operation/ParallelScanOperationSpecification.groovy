@@ -1,20 +1,20 @@
 package com.mongodb.operation
 
+import com.mongodb.Block
+import com.mongodb.async.MongoAsyncCursor
+import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
-import org.mongodb.Block
 import org.mongodb.Document
-import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoAsyncCursor
 import org.mongodb.MongoCursor
 
+import static com.mongodb.client.Fixture.getAsyncBinding
+import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.client.Fixture.isSharded
+import static com.mongodb.client.Fixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static org.junit.Assert.assertTrue
 import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getBinding
-import static org.mongodb.Fixture.isSharded
-import static org.mongodb.Fixture.serverVersionAtLeast
 import static org.mongodb.ParallelScanOptions.builder
 
 class ParallelScanOperationSpecification extends FunctionalSpecification {

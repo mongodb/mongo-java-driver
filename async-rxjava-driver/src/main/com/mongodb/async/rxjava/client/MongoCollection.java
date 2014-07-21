@@ -16,9 +16,9 @@
 
 package com.mongodb.async.rxjava.client;
 
+import com.mongodb.client.MongoCollectionOptions;
 import org.bson.codecs.Codec;
 import org.mongodb.Document;
-import org.mongodb.MongoCollectionOptions;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 import rx.Observable;

@@ -19,10 +19,10 @@
 package com.mongodb.connection
 
 import com.mongodb.MongoInternalException
+import com.mongodb.client.FunctionalSpecification
 import org.bson.io.BasicInputBuffer
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.InputBuffer
-import org.mongodb.FunctionalSpecification
 
 class ReplyHeaderSpecification extends FunctionalSpecification {
 

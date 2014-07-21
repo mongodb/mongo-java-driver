@@ -136,7 +136,7 @@ import java.util.List;
  * @since 2.10.0
  */
 public class MongoClientURI {
-    private final org.mongodb.MongoClientURI proxied;
+    private final com.mongodb.client.MongoClientURI proxied;
 
     /**
      * Creates a MongoURI from the given string.
@@ -153,11 +153,11 @@ public class MongoClientURI {
      *
      * @param uri     the URI
      * @param builder a Builder
-     * @see org.mongodb.MongoClientURI#getOptions()
+     * @see com.mongodb.client.MongoClientURI#getOptions()
      * @since 2.11.0
      */
     public MongoClientURI(final String uri, final MongoClientOptions.Builder builder) {
-        proxied = new org.mongodb.MongoClientURI(uri, builder.getProxied());
+        proxied = new com.mongodb.client.MongoClientURI(uri, builder.getProxied());
     }
 
 
@@ -245,7 +245,7 @@ public class MongoClientURI {
      *
      * @return the new stuff
      */
-    public org.mongodb.MongoClientURI toNew() {
+    public com.mongodb.client.MongoClientURI toNew() {
         return proxied;
     }
 

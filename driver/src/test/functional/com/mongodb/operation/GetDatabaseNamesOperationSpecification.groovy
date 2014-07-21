@@ -17,13 +17,13 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.client.FunctionalSpecification
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.FunctionalSpecification
 
+import static com.mongodb.client.Fixture.getAsyncBinding
+import static com.mongodb.client.Fixture.getBinding
 import static java.util.concurrent.TimeUnit.SECONDS
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getBinding
 
 class GetDatabaseNamesOperationSpecification extends FunctionalSpecification {
 

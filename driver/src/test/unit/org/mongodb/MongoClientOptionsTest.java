@@ -18,6 +18,7 @@ package org.mongodb;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.MongoClientOptions;
 import org.junit.Test;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;

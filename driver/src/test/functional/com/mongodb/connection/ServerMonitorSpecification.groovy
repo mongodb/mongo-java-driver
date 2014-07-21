@@ -20,22 +20,22 @@ package com.mongodb.connection
 import com.mongodb.MongoException
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
+import com.mongodb.client.FunctionalSpecification
 import org.mongodb.CommandResult
 import org.mongodb.Document
-import org.mongodb.FunctionalSpecification
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.client.Fixture.getCredentialList
+import static com.mongodb.client.Fixture.getPrimary
+import static com.mongodb.client.Fixture.getSSLSettings
+import static com.mongodb.client.Fixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerMonitor.exceptionHasChanged
 import static com.mongodb.connection.ServerMonitor.stateHasChanged
 import static java.util.Arrays.asList
 import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
-import static org.mongodb.Fixture.getCredentialList
-import static org.mongodb.Fixture.getPrimary
-import static org.mongodb.Fixture.getSSLSettings
-import static org.mongodb.Fixture.serverVersionAtLeast
 
 class ServerMonitorSpecification extends FunctionalSpecification {
     ServerDescription newDescription

@@ -16,11 +16,11 @@
 
 package com.mongodb.async.rxjava.client;
 
+import com.mongodb.async.MongoFuture;
+import com.mongodb.client.MongoCollectionOptions;
 import org.bson.codecs.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
-import org.mongodb.MongoCollectionOptions;
-import org.mongodb.MongoFuture;
 import rx.Observable;
 
 class MongoDatabaseImpl implements MongoDatabase {

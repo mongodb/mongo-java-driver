@@ -29,6 +29,12 @@ import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static com.mongodb.Fixture.getMongoClient;
 import static com.mongodb.ReadPreference.secondary;
+import static com.mongodb.client.Fixture.disableMaxTimeFailPoint;
+import static com.mongodb.client.Fixture.enableMaxTimeFailPoint;
+import static com.mongodb.client.Fixture.getBinding;
+import static com.mongodb.client.Fixture.isDiscoverableReplicaSet;
+import static com.mongodb.client.Fixture.isSharded;
+import static com.mongodb.client.Fixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -42,12 +48,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
-import static org.mongodb.Fixture.disableMaxTimeFailPoint;
-import static org.mongodb.Fixture.enableMaxTimeFailPoint;
-import static org.mongodb.Fixture.getBinding;
-import static org.mongodb.Fixture.isDiscoverableReplicaSet;
-import static org.mongodb.Fixture.isSharded;
-import static org.mongodb.Fixture.serverVersionAtLeast;
 
 @SuppressWarnings("deprecation")
 public class DBTest extends DatabaseTestCase {
@@ -151,7 +151,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldDoEval() {
-        assumeFalse(org.mongodb.Fixture.isAuthenticated());
+        assumeFalse(com.mongodb.client.Fixture.isAuthenticated());
         String code = "function(name, incAmount) {\n"
                       + "var doc = db.myCollection.findOne( { name : name } );\n"
                       + "doc = doc || { name : name , num : 0 , total : 0 , avg : 0 , _id: 1 };\n"

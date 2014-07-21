@@ -22,7 +22,6 @@ import org.bson.BsonReader;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.types.Binary;
-import org.mongodb.BinaryTransformer;
 
 import java.util.HashMap;
 import java.util.Map;

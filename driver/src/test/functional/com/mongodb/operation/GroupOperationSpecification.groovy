@@ -17,17 +17,17 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.Block
+import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonJavaScript
 import org.junit.experimental.categories.Category
-import org.mongodb.Block
 import org.mongodb.Document
-import org.mongodb.FunctionalSpecification
 
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getBinding
+import static com.mongodb.client.Fixture.getAsyncBinding
+import static com.mongodb.client.Fixture.getBinding
 
 class GroupOperationSpecification extends FunctionalSpecification {
 

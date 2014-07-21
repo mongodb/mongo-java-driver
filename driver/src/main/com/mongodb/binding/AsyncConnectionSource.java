@@ -16,8 +16,8 @@
 
 package com.mongodb.binding;
 
+import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.Connection;
-import org.mongodb.MongoFuture;
 
 /**
  * A source of connections to a single MongoDB server.

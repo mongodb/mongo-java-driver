@@ -19,6 +19,8 @@ package com.mongodb.operation
 import category.Async
 import category.Slow
 import com.mongodb.WriteConcern
+import com.mongodb.client.Fixture
+import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.protocol.AcknowledgedBulkWriteResult
 import org.bson.BsonBoolean
@@ -31,17 +33,15 @@ import org.junit.experimental.categories.Category
 import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
-import org.mongodb.Fixture
-import org.mongodb.FunctionalSpecification
 
+import static Fixture.getAsyncBinding
+import static Fixture.getAsyncSingleConnectionBinding
+import static Fixture.serverVersionAtLeast
 import static WriteConcern.ACKNOWLEDGED
 import static WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.operation.WriteRequest.Type.REMOVE
 import static com.mongodb.operation.WriteRequest.Type.UPDATE
 import static org.junit.Assume.assumeTrue
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getAsyncSingleConnectionBinding
-import static org.mongodb.Fixture.serverVersionAtLeast
 
 @Category(Async)
 class MixedBulkWriteOperationAsyncSpecification extends FunctionalSpecification {

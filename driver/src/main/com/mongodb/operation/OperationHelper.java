@@ -17,6 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoException;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncWriteBinding;
@@ -28,7 +29,6 @@ import com.mongodb.connection.ServerVersion;
 import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.protocol.Protocol;
 import org.mongodb.Function;
-import org.mongodb.MongoFuture;
 
 import java.util.Arrays;
 import java.util.List;

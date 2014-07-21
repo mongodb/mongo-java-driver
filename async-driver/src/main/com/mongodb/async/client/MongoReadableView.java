@@ -16,7 +16,7 @@
 
 package com.mongodb.async.client;
 
-import org.mongodb.MongoFuture;
+import com.mongodb.async.MongoFuture;
 
 /**
  * Asynchronous read operations on a collection view.

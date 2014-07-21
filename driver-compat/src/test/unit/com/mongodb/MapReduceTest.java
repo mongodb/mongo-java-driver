@@ -27,6 +27,10 @@ import java.util.Map;
 
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
+import static com.mongodb.client.Fixture.disableMaxTimeFailPoint;
+import static com.mongodb.client.Fixture.enableMaxTimeFailPoint;
+import static com.mongodb.client.Fixture.isSharded;
+import static com.mongodb.client.Fixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.allOf;
@@ -43,10 +47,6 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
-import static org.mongodb.Fixture.disableMaxTimeFailPoint;
-import static org.mongodb.Fixture.enableMaxTimeFailPoint;
-import static org.mongodb.Fixture.isSharded;
-import static org.mongodb.Fixture.serverVersionAtLeast;
 
 public class MapReduceTest extends DatabaseTestCase {
 

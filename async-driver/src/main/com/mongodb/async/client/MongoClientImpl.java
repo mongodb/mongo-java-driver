@@ -18,18 +18,18 @@ package com.mongodb.async.client;
 
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncClusterBinding;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.AsyncWriteBinding;
+import com.mongodb.client.MongoClientOptions;
+import com.mongodb.client.MongoDatabaseOptions;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.operation.SingleResultFuture;
-import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoDatabaseOptions;
-import org.mongodb.MongoFuture;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

@@ -20,6 +20,7 @@ package com.mongodb.operation
 import category.Slow
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.binding.ConnectionSource
+import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.protocol.GetMoreProtocol
 import com.mongodb.protocol.KillCursor
@@ -31,15 +32,13 @@ import org.bson.BsonTimestamp
 import org.junit.experimental.categories.Category
 import org.mongodb.CreateCollectionOptions
 import org.mongodb.Document
-import org.mongodb.FunctionalSpecification
-import org.mongodb.QueryOptions
 import org.mongodb.ServerCursor
 
 import java.util.concurrent.CountDownLatch
 
+import static com.mongodb.client.Fixture.getBinding
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
-import static org.mongodb.Fixture.getBinding
 
 class MongoQueryCursorSpecification extends FunctionalSpecification {
     private ConnectionSource connectionSource

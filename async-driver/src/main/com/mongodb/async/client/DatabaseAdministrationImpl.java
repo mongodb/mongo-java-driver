@@ -16,12 +16,12 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.async.MongoFuture;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.GetCollectionNamesOperation;
 import com.mongodb.operation.RenameCollectionOperation;
 import org.mongodb.CreateCollectionOptions;
-import org.mongodb.MongoFuture;
 
 import java.util.List;
 

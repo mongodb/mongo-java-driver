@@ -16,10 +16,10 @@
 
 package org.mongodb.acceptancetest.core;
 
+import com.mongodb.Block;
+import com.mongodb.client.DatabaseTestCase;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.Block;
-import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.Function;
 import org.mongodb.Sort;

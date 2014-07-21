@@ -16,6 +16,8 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.async.MongoAsyncCursor;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
@@ -29,9 +31,7 @@ import org.bson.codecs.Decoder;
 import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
 import org.mongodb.Function;
-import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
-import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 
 import java.util.List;

@@ -16,8 +16,8 @@
 
 package com.mongodb.async.client
 
+import com.mongodb.Block
 import org.bson.types.ObjectId
-import org.mongodb.Block
 import org.mongodb.Document
 import org.mongodb.Function
 

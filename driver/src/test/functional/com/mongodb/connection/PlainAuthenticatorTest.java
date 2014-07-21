@@ -26,7 +26,7 @@ import org.junit.Test;
 
 import java.util.Collections;
 
-import static org.mongodb.Fixture.getSSLSettings;
+import static com.mongodb.client.Fixture.getSSLSettings;
 
 @Ignore
 public class PlainAuthenticatorTest {

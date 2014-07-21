@@ -16,12 +16,12 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.Block;
 import com.mongodb.MongoException;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.operation.SingleResultFuture;
-import org.mongodb.Block;
 import org.mongodb.Function;
-import org.mongodb.MongoFuture;
 
 import java.util.Collection;
 

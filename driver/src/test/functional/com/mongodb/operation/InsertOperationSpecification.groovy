@@ -18,20 +18,20 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoException
+import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonSerializationException
 import org.bson.types.Binary
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.FunctionalSpecification
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
+import static com.mongodb.client.Fixture.getAsyncBinding
+import static com.mongodb.client.Fixture.getAsyncSingleConnectionBinding
+import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.client.Fixture.getPinnedBinding
 import static java.util.Arrays.asList
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getAsyncSingleConnectionBinding
-import static org.mongodb.Fixture.getBinding
-import static org.mongodb.Fixture.getPinnedBinding
 
 class InsertOperationSpecification extends FunctionalSpecification {
     def 'should return correct result'() {

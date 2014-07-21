@@ -18,6 +18,7 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoSecurityException
+import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.connection.ClusterSettings
 import com.mongodb.connection.ConnectionPoolSettings
@@ -28,16 +29,15 @@ import com.mongodb.connection.SocketStreamFactory
 import com.mongodb.selector.PrimaryServerSelector
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.FunctionalSpecification
 
 import static com.mongodb.MongoCredential.createMongoCRCredential
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static com.mongodb.client.Fixture.getAsyncBinding
+import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.client.Fixture.getPrimary
+import static com.mongodb.client.Fixture.getSSLSettings
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getBinding
-import static org.mongodb.Fixture.getPrimary
-import static org.mongodb.Fixture.getSSLSettings
 
 class UserOperationsSpecification extends FunctionalSpecification {
     private User readOnlyUser

@@ -17,6 +17,7 @@
 package com.mongodb.protocol
 
 import com.mongodb.WriteConcern
+import com.mongodb.client.FunctionalSpecification
 import com.mongodb.operation.InsertRequest
 import com.mongodb.operation.QueryFlag
 import org.bson.BsonArray
@@ -42,9 +43,8 @@ import org.bson.BsonTimestamp
 import org.bson.BsonUndefined
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.types.ObjectId
-import org.mongodb.FunctionalSpecification
 
-import static org.mongodb.Fixture.getBinding
+import static com.mongodb.client.Fixture.getBinding
 
 class InsertProtocolSpecification extends FunctionalSpecification {
     def 'should insert all types'() {

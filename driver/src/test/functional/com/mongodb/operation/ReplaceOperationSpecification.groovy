@@ -17,18 +17,18 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonSerializationException
 import org.bson.types.Binary
 import org.mongodb.Document
-import org.mongodb.FunctionalSpecification
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static com.mongodb.client.Fixture.getAsyncBinding
+import static com.mongodb.client.Fixture.getBinding
 import static java.util.Arrays.asList
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getBinding
 
 class ReplaceOperationSpecification extends FunctionalSpecification {
     def 'should return correct result'() {

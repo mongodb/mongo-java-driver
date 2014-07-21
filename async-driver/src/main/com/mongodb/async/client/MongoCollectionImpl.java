@@ -16,8 +16,12 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.Block;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
+import com.mongodb.async.MongoAsyncCursor;
+import com.mongodb.async.MongoFuture;
+import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.SingleResultCallback;
@@ -39,13 +43,9 @@ import com.mongodb.operation.UpdateRequest;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
-import org.mongodb.Block;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
 import org.mongodb.Function;
-import org.mongodb.MongoAsyncCursor;
-import org.mongodb.MongoCollectionOptions;
-import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 

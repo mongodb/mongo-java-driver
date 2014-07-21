@@ -17,18 +17,17 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.client.FunctionalSpecification
+import com.mongodb.client.test.CollectionHelper
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonJavaScript
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.FunctionalSpecification
-import org.mongodb.MapReduceStatistics
 import org.mongodb.MongoNamespace
-import org.mongodb.test.CollectionHelper
 import spock.lang.Shared
 
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getBinding
+import static com.mongodb.client.Fixture.getAsyncBinding
+import static com.mongodb.client.Fixture.getBinding
 
 class MapReduceToCollectionOperationFunctionalSpecification extends FunctionalSpecification {
     private final documentCodec = new DocumentCodec()

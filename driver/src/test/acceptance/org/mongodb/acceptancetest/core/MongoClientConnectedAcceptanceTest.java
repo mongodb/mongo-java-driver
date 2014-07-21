@@ -16,16 +16,16 @@
 
 package org.mongodb.acceptancetest.core;
 
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.MongoClient;
-import org.mongodb.MongoClients;
 
+import static com.mongodb.client.Fixture.getOptions;
+import static com.mongodb.client.Fixture.getPrimary;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Fixture.getOptions;
-import static org.mongodb.Fixture.getPrimary;
 
 public class MongoClientConnectedAcceptanceTest {
 

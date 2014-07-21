@@ -16,8 +16,8 @@
 
 package com.mongodb;
 
-import org.mongodb.MapReduceCursor;
-import org.mongodb.MapReduceStatistics;
+import com.mongodb.operation.MapReduceCursor;
+import com.mongodb.operation.MapReduceStatistics;
 
 import java.util.ArrayList;
 import java.util.List;

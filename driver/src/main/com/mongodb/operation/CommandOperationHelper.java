@@ -19,6 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.CommandFailureException;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncWriteBinding;
@@ -37,7 +38,6 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
 import org.mongodb.Function;
-import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 
 import java.util.EnumSet;

@@ -17,7 +17,6 @@
 package com.mongodb.operation;
 
 import org.mongodb.CommandResult;
-import org.mongodb.MapReduceStatistics;
 
 final class MapReduceHelper {
 

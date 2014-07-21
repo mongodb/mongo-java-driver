@@ -16,8 +16,7 @@
 
 package com.mongodb.operation;
 
-import org.mongodb.MapReduceAsyncCursor;
-import org.mongodb.MapReduceStatistics;
+import com.mongodb.async.MapReduceAsyncCursor;
 
 import java.util.List;
 

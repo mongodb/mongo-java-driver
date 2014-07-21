@@ -20,6 +20,7 @@ import com.mongodb.MongoException;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterSettings;
@@ -31,22 +32,21 @@ import com.mongodb.connection.SocketStreamFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 
 import static com.mongodb.MongoCredential.createMongoCRCredential;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.WriteConcern.ACKNOWLEDGED;
+import static com.mongodb.client.Fixture.getBinding;
+import static com.mongodb.client.Fixture.getPrimary;
+import static com.mongodb.client.Fixture.getSSLSettings;
+import static com.mongodb.client.Fixture.isAuthenticated;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeTrue;
-import static org.mongodb.Fixture.getBinding;
-import static org.mongodb.Fixture.getPrimary;
-import static org.mongodb.Fixture.getSSLSettings;
-import static org.mongodb.Fixture.isAuthenticated;
 
 // This test is here because the assertion is conditional on auth being enabled, and there"s no way to do that in Spock
 @SuppressWarnings("unchecked")

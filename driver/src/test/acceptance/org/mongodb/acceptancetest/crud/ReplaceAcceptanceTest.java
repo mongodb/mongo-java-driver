@@ -17,10 +17,10 @@
 package org.mongodb.acceptancetest.crud;
 
 import com.mongodb.WriteConcernException;
+import com.mongodb.client.DatabaseTestCase;
+import com.mongodb.client.MongoView;
 import org.junit.Test;
-import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoView;
 
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;

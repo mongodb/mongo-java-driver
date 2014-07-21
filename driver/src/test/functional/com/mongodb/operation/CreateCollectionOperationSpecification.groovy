@@ -18,12 +18,12 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoServerException
+import com.mongodb.client.FunctionalSpecification
 import org.junit.experimental.categories.Category
 import org.mongodb.CreateCollectionOptions
-import org.mongodb.FunctionalSpecification
 
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getBinding
+import static com.mongodb.client.Fixture.getAsyncBinding
+import static com.mongodb.client.Fixture.getBinding
 
 class CreateCollectionOperationSpecification extends FunctionalSpecification {
 

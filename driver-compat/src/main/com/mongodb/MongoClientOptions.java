@@ -38,7 +38,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @Immutable
 public class MongoClientOptions {
 
-    private final org.mongodb.MongoClientOptions proxied;
+    private final com.mongodb.client.MongoClientOptions proxied;
     private final DBDecoderFactory dbDecoderFactory;
     private final DBEncoderFactory dbEncoderFactory;
     private final SocketFactory socketFactory;
@@ -48,7 +48,7 @@ public class MongoClientOptions {
     private final ServerSettings serverSettings;
     private final SocketSettings heartbeatSocketSettings;
 
-    MongoClientOptions(final org.mongodb.MongoClientOptions proxied) {
+    MongoClientOptions(final com.mongodb.client.MongoClientOptions proxied) {
         this(proxied, DefaultDBDecoder.FACTORY, DefaultDBEncoder.FACTORY,
              proxied.isSSLEnabled() ? SSLSocketFactory.getDefault() : SocketFactory.getDefault(),
              true);
@@ -59,7 +59,7 @@ public class MongoClientOptions {
              builder.cursorFinalizerEnabled);
     }
 
-    private MongoClientOptions(final org.mongodb.MongoClientOptions proxied, final DBDecoderFactory dbDecoderFactory,
+    private MongoClientOptions(final com.mongodb.client.MongoClientOptions proxied, final DBDecoderFactory dbDecoderFactory,
                                final DBEncoderFactory dbEncoderFactory, final SocketFactory socketFactory,
                                final boolean cursorFinalizerEnabled) {
         this.proxied = proxied;
@@ -105,7 +105,7 @@ public class MongoClientOptions {
         return new Builder();
     }
 
-    public org.mongodb.MongoClientOptions toNew() {
+    public com.mongodb.client.MongoClientOptions toNew() {
         return proxied;
     }
 
@@ -478,7 +478,7 @@ public class MongoClientOptions {
      * @since 2.10.0
      */
     public static class Builder {
-        private final org.mongodb.MongoClientOptions.Builder proxied = new org.mongodb.MongoClientOptions.Builder();
+        private final com.mongodb.client.MongoClientOptions.Builder proxied = new com.mongodb.client.MongoClientOptions.Builder();
         private DBDecoderFactory dbDecoderFactory = DefaultDBDecoder.FACTORY;
         private DBEncoderFactory dbEncoderFactory = DefaultDBEncoder.FACTORY;
         private SocketFactory socketFactory = SocketFactory.getDefault();
@@ -566,7 +566,7 @@ public class MongoClientOptions {
          * @param maxConnectionIdleTime the maximum idle time
          * @return {@code this}
          * @throws IllegalArgumentException if {@code aMaxConnectionIdleTime < 0}
-         * @see org.mongodb.MongoClientOptions#getMaxConnectionIdleTime()
+         * @see com.mongodb.client.MongoClientOptions#getMaxConnectionIdleTime()
          * @since 2.12
          */
         public Builder maxConnectionIdleTime(final int maxConnectionIdleTime) {
@@ -580,7 +580,7 @@ public class MongoClientOptions {
          * @param maxConnectionLifeTime the maximum life time
          * @return {@code this}
          * @throws IllegalArgumentException if {@code aMaxConnectionIdleTime < 0}
-         * @see org.mongodb.MongoClientOptions#getMaxConnectionIdleTime()
+         * @see com.mongodb.client.MongoClientOptions#getMaxConnectionIdleTime()
          * @since 2.12
          */
         public Builder maxConnectionLifeTime(final int maxConnectionLifeTime) {
@@ -852,7 +852,7 @@ public class MongoClientOptions {
             return new MongoClientOptions(this);
         }
 
-        org.mongodb.MongoClientOptions.Builder getProxied() {
+        com.mongodb.client.MongoClientOptions.Builder getProxied() {
             return proxied;
         }
     }

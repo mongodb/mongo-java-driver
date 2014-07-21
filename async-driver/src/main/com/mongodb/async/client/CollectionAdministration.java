@@ -16,9 +16,9 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.async.MongoFuture;
 import org.mongodb.Document;
 import org.mongodb.Index;
-import org.mongodb.MongoFuture;
 
 import java.util.List;
 

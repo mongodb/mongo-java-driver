@@ -19,6 +19,8 @@ package org.mongodb
 import com.mongodb.ReadPreference
 import com.mongodb.Tags
 import com.mongodb.WriteConcern
+import com.mongodb.client.MongoClientOptions
+import com.mongodb.client.MongoClientURI
 import spock.lang.Specification
 import spock.lang.Unroll
 

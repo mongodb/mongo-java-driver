@@ -16,9 +16,9 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.async.MongoFuture;
 import com.mongodb.operation.GetDatabaseNamesOperation;
 import com.mongodb.operation.PingOperation;
-import org.mongodb.MongoFuture;
 
 import java.util.List;
 

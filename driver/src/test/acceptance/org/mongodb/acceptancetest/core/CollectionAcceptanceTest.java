@@ -17,6 +17,8 @@
 package org.mongodb.acceptancetest.core;
 
 import com.mongodb.WriteConcern;
+import com.mongodb.client.DatabaseTestCase;
+import com.mongodb.client.MongoCollection;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.types.Binary;
@@ -26,9 +28,7 @@ import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.mongodb.CodeWithScope;
-import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
 
 import java.util.Arrays;

@@ -17,7 +17,6 @@
 package com.mongodb.codecs;
 
 import org.bson.types.ObjectId;
-import org.mongodb.IdGenerator;
 
 public class ObjectIdGenerator implements IdGenerator {
     @Override

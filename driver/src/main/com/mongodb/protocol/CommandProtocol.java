@@ -17,6 +17,7 @@
 package com.mongodb.protocol;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.ByteBufferOutputBuffer;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
@@ -31,7 +32,6 @@ import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
-import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 
 import java.util.EnumSet;

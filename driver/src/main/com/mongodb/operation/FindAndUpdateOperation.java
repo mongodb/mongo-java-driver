@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.protocol.message.MappedFieldNameValidator;
@@ -25,7 +26,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
-import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 
 import java.util.HashMap;

@@ -17,6 +17,7 @@
 package com.mongodb.protocol;
 
 import com.mongodb.MongoCursorNotFoundException;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.ByteBufferOutputBuffer;
 import com.mongodb.connection.Connection;
@@ -30,7 +31,6 @@ import com.mongodb.protocol.message.GetMoreMessage;
 import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.codecs.Decoder;
 import org.mongodb.Document;
-import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 
 import static com.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;

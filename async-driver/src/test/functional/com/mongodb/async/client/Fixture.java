@@ -17,8 +17,8 @@
 package com.mongodb.async.client;
 
 import com.mongodb.CommandFailureException;
+import com.mongodb.client.MongoClientURI;
 import org.mongodb.Document;
-import org.mongodb.MongoClientURI;
 import org.mongodb.MongoNamespace;
 
 /**

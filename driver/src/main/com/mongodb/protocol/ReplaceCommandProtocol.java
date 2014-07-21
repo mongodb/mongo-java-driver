@@ -18,6 +18,7 @@ package com.mongodb.protocol;
 
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
@@ -29,7 +30,6 @@ import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.ReplaceCommandMessage;
 import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
-import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 
 import java.util.List;

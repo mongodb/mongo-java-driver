@@ -16,8 +16,11 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.Block;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.async.MongoAsyncCursor;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.SingleResultCallback;
@@ -30,9 +33,6 @@ import com.mongodb.protocol.KillCursor;
 import com.mongodb.protocol.KillCursorProtocol;
 import com.mongodb.protocol.QueryResult;
 import org.bson.codecs.Decoder;
-import org.mongodb.Block;
-import org.mongodb.MongoAsyncCursor;
-import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.ServerCursor;
 

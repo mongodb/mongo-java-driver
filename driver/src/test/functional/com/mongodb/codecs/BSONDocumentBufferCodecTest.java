@@ -16,11 +16,11 @@
 
 package com.mongodb.codecs;
 
+import com.mongodb.client.DatabaseTestCase;
+import com.mongodb.client.MongoCollection;
 import org.junit.Test;
 import org.mongodb.BSONDocumentBuffer;
-import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoCollection;
 import org.mongodb.SimpleBufferProvider;
 
 import java.util.ArrayList;

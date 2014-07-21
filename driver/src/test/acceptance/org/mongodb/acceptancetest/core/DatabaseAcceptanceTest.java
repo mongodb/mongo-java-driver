@@ -17,25 +17,25 @@
 package org.mongodb.acceptancetest.core;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.client.DatabaseTestCase;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
 import org.bson.BsonDocument;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.CreateCollectionOptions;
-import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoClient;
-import org.mongodb.MongoCollection;
-import org.mongodb.MongoDatabase;
 
 import java.util.List;
 
+import static com.mongodb.client.Fixture.getMongoClient;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Fixture.getMongoClient;
 
 /**
  * Documents the basic functionality available for Databases via the Java driver.

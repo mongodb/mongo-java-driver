@@ -16,6 +16,9 @@
 
 package org.mongodb.acceptancetest.querying;
 
+import com.mongodb.client.DatabaseTestCase;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.QueryBuilder;
 import com.mongodb.codecs.CollectibleCodec;
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
@@ -25,22 +28,19 @@ import org.bson.codecs.EncoderContext;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoCollection;
 import org.mongodb.MongoCursor;
-import org.mongodb.QueryBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.client.QueryBuilder.query;
+import static com.mongodb.client.QueryOperators.TYPE;
 import static java.util.Arrays.asList;
 import static org.bson.BsonType.INT32;
 import static org.bson.BsonType.INT64;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.QueryBuilder.query;
-import static org.mongodb.QueryOperators.TYPE;
 import static org.mongodb.Sort.ascending;
 import static org.mongodb.Sort.descending;
 

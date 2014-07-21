@@ -18,20 +18,20 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoExecutionTimeoutException
+import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.FunctionalSpecification
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static com.mongodb.client.Fixture.disableMaxTimeFailPoint
+import static com.mongodb.client.Fixture.enableMaxTimeFailPoint
+import static com.mongodb.client.Fixture.getAsyncBinding
+import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.client.Fixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeTrue
-import static org.mongodb.Fixture.disableMaxTimeFailPoint
-import static org.mongodb.Fixture.enableMaxTimeFailPoint
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getBinding
-import static org.mongodb.Fixture.serverVersionAtLeast
 
 class CountOperationSpecification extends FunctionalSpecification {
 

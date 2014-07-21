@@ -16,13 +16,13 @@
 
 package org.mongodb.acceptancetest.atomicoperations;
 
+import com.mongodb.client.DatabaseTestCase;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.test.Worker;
+import com.mongodb.client.test.WorkerCodec;
 import org.bson.types.ObjectId;
 import org.junit.Test;
-import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
-import org.mongodb.MongoCollection;
-import org.mongodb.test.Worker;
-import org.mongodb.test.WorkerCodec;
 
 import java.util.Date;
 

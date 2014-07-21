@@ -19,6 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.ReadPreference;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.Connection;
 import com.mongodb.protocol.QueryProtocol;
@@ -28,16 +29,15 @@ import org.bson.types.Binary;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 
 import java.util.EnumSet;
 
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.client.Fixture.getBinding;
+import static com.mongodb.client.Fixture.isSharded;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
-import static org.mongodb.Fixture.getBinding;
-import static org.mongodb.Fixture.isSharded;
 
 public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
 

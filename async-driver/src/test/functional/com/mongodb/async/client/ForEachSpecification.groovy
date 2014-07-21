@@ -16,8 +16,8 @@
 
 package com.mongodb.async.client
 
+import com.mongodb.Block
 import com.mongodb.MongoInternalException
-import org.mongodb.Block
 import org.mongodb.Document
 
 class ForEachSpecification extends FunctionalSpecification {

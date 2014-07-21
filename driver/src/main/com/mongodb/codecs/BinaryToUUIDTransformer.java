@@ -17,7 +17,6 @@
 package com.mongodb.codecs;
 
 import org.bson.BsonBinary;
-import org.mongodb.BinaryTransformer;
 
 import java.util.UUID;
 

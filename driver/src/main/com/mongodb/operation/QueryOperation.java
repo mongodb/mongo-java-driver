@@ -18,6 +18,8 @@ package com.mongodb.operation;
 
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
+import com.mongodb.async.MongoAsyncCursor;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
@@ -33,9 +35,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.codecs.Decoder;
-import org.mongodb.MongoAsyncCursor;
 import org.mongodb.MongoCursor;
-import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 
 import static com.mongodb.ReadPreference.primary;

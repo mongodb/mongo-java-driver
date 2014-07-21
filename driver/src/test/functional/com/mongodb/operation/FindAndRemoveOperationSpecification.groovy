@@ -17,17 +17,17 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.client.FunctionalSpecification
+import com.mongodb.client.test.Worker
+import com.mongodb.client.test.WorkerCodec
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.FunctionalSpecification
-import org.mongodb.test.Worker
-import org.mongodb.test.WorkerCodec
 
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getBinding
+import static com.mongodb.client.Fixture.getAsyncBinding
+import static com.mongodb.client.Fixture.getBinding
 
 class FindAndRemoveOperationSpecification extends FunctionalSpecification {
     private final DocumentCodec documentCodec = new DocumentCodec()

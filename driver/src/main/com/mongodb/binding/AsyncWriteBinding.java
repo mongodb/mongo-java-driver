@@ -16,7 +16,7 @@
 
 package com.mongodb.binding;
 
-import org.mongodb.MongoFuture;
+import com.mongodb.async.MongoFuture;
 
 /**
  * An asynchronous factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.

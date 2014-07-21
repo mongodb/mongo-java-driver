@@ -43,9 +43,9 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.concurrent.CountDownLatch;
 
+import static com.mongodb.client.Fixture.getAsyncStreamFactory;
+import static com.mongodb.client.Fixture.getPrimary;
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.Fixture.getAsyncStreamFactory;
-import static org.mongodb.Fixture.getPrimary;
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 
 // This is a Java test so that we can use categories.

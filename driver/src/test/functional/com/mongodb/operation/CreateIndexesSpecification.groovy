@@ -18,13 +18,13 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoServerException
+import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
-import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getBinding
+import static com.mongodb.client.Fixture.getAsyncBinding
+import static com.mongodb.client.Fixture.getBinding
 import static org.mongodb.OrderBy.ASC
 
 class CreateIndexesSpecification extends FunctionalSpecification {

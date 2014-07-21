@@ -17,21 +17,21 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.client.FunctionalSpecification
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.AggregationOptions
 import org.mongodb.Document
-import org.mongodb.FunctionalSpecification
 import spock.lang.Shared
 
+import static com.mongodb.client.Fixture.getAsyncBinding
+import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.client.Fixture.getDefaultDatabase
+import static com.mongodb.client.Fixture.initialiseCollection
+import static com.mongodb.client.Fixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static org.junit.Assume.assumeTrue
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getBinding
-import static org.mongodb.Fixture.getDefaultDatabase
-import static org.mongodb.Fixture.initialiseCollection
-import static org.mongodb.Fixture.serverVersionAtLeast
 
 class AggregateToCollectionOperationSpecification extends FunctionalSpecification {
 

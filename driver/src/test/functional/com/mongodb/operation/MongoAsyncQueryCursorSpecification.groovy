@@ -18,10 +18,13 @@ package com.mongodb.operation
 
 import category.Async
 import category.Slow
+import com.mongodb.Block
 import com.mongodb.MongoInternalException
+import com.mongodb.async.MongoFuture
 import com.mongodb.binding.AsyncClusterBinding
 import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.binding.AsyncReadBinding
+import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.connection.Connection
 import com.mongodb.protocol.QueryProtocol
@@ -29,21 +32,18 @@ import com.mongodb.protocol.QueryResult
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonTimestamp
 import org.junit.experimental.categories.Category
-import org.mongodb.Block
 import org.mongodb.CreateCollectionOptions
 import org.mongodb.Document
-import org.mongodb.FunctionalSpecification
-import org.mongodb.MongoFuture
 import spock.lang.Shared
 
 import static com.mongodb.ReadPreference.primary
+import static com.mongodb.client.Fixture.getAsyncBinding
+import static com.mongodb.client.Fixture.getAsyncCluster
+import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.client.Fixture.isSharded
 import static com.mongodb.operation.QueryFlag.Exhaust
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeFalse
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getAsyncCluster
-import static org.mongodb.Fixture.getBinding
-import static org.mongodb.Fixture.isSharded
 
 @Category(Async)
 class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {

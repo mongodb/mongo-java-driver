@@ -26,6 +26,10 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.client.Fixture.disableMaxTimeFailPoint;
+import static com.mongodb.client.Fixture.enableMaxTimeFailPoint;
+import static com.mongodb.client.Fixture.isSharded;
+import static com.mongodb.client.Fixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
@@ -36,10 +40,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
-import static org.mongodb.Fixture.disableMaxTimeFailPoint;
-import static org.mongodb.Fixture.enableMaxTimeFailPoint;
-import static org.mongodb.Fixture.isSharded;
-import static org.mongodb.Fixture.serverVersionAtLeast;
 
 public class DBCursorTest extends DatabaseTestCase {
     private static final int NUMBER_OF_DOCUMENTS = 10;

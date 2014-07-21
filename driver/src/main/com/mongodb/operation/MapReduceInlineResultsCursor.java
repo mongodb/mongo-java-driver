@@ -17,8 +17,6 @@
 package com.mongodb.operation;
 
 import com.mongodb.ServerAddress;
-import org.mongodb.MapReduceCursor;
-import org.mongodb.MapReduceStatistics;
 import org.mongodb.ServerCursor;
 
 import java.util.Iterator;

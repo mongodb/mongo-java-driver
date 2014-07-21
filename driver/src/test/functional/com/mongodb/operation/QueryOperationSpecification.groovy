@@ -17,31 +17,31 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.Block
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.ReadPreference
 import com.mongodb.binding.ClusterBinding
+import com.mongodb.client.Fixture
+import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.junit.experimental.categories.Category
-import org.mongodb.Block
 import org.mongodb.Document
-import org.mongodb.Fixture
-import org.mongodb.FunctionalSpecification
 import org.mongodb.Index
 
+import static Fixture.disableMaxTimeFailPoint
+import static Fixture.enableMaxTimeFailPoint
+import static Fixture.getAsyncBinding
+import static Fixture.getBinding
+import static Fixture.getCluster
+import static Fixture.isSharded
+import static Fixture.serverVersionAtLeast
 import static com.mongodb.operation.QueryFlag.Exhaust
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
-import static org.mongodb.Fixture.disableMaxTimeFailPoint
-import static org.mongodb.Fixture.enableMaxTimeFailPoint
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getBinding
-import static org.mongodb.Fixture.getCluster
-import static org.mongodb.Fixture.isSharded
-import static org.mongodb.Fixture.serverVersionAtLeast
 
 class QueryOperationSpecification extends FunctionalSpecification {
 

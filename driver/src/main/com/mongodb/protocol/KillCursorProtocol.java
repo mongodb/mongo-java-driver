@@ -17,6 +17,7 @@
 package com.mongodb.protocol;
 
 import com.mongodb.MongoException;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.ByteBufferOutputBuffer;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.SingleResultCallback;
@@ -24,7 +25,6 @@ import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.operation.SingleResultFuture;
 import com.mongodb.protocol.message.KillCursorsMessage;
-import org.mongodb.MongoFuture;
 import org.mongodb.ServerCursor;
 
 import static java.lang.String.format;

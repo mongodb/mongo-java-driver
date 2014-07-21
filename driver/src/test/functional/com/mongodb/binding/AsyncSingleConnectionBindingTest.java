@@ -17,16 +17,16 @@
 package com.mongodb.binding;
 
 import category.ReplicaSet;
+import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.connection.Connection;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.DatabaseTestCase;
 
+import static com.mongodb.client.Fixture.getAsyncCluster;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.Fixture.getAsyncCluster;
 
 @Category(ReplicaSet.class)
 public class AsyncSingleConnectionBindingTest extends DatabaseTestCase {

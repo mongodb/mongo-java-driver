@@ -16,11 +16,11 @@
 
 package org.mongodb.acceptancetest.index;
 
+import com.mongodb.client.DatabaseTestCase;
+import com.mongodb.client.MongoCollection;
 import org.junit.Test;
-import org.mongodb.DatabaseTestCase;
 import org.mongodb.Document;
 import org.mongodb.Index;
-import org.mongodb.MongoCollection;
 import org.mongodb.OrderBy;
 
 import static java.util.Arrays.asList;

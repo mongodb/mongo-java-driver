@@ -852,7 +852,7 @@ public class Mongo {
         }
     }
 
-    private static ClusterConnectionMode getSingleServerClusterMode(final org.mongodb.MongoClientOptions options) {
+    private static ClusterConnectionMode getSingleServerClusterMode(final com.mongodb.client.MongoClientOptions options) {
         if (options.getRequiredReplicaSetName() == null) {
             return ClusterConnectionMode.SINGLE;
         } else {

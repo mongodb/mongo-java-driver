@@ -16,12 +16,13 @@
 
 package org.mongodb;
 
+import com.mongodb.client.QueryBuilder;
 import org.junit.Test;
 
+import static com.mongodb.client.QueryBuilder.query;
+import static com.mongodb.client.QueryOperators.TYPE;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.QueryBuilder.query;
-import static org.mongodb.QueryOperators.TYPE;
 
 public class QueryBuilderTest {
     /**

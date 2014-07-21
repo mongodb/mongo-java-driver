@@ -16,15 +16,14 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.async.MapReduceAsyncCursor;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
 import org.mongodb.Function;
-import org.mongodb.MapReduceAsyncCursor;
-import org.mongodb.MapReduceCursor;
-import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 
 import static com.mongodb.assertions.Assertions.notNull;

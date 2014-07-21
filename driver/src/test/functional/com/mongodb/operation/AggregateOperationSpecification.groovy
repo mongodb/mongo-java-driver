@@ -17,20 +17,20 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.Block
+import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.AggregationOptions
-import org.mongodb.Block
 import org.mongodb.Document
-import org.mongodb.FunctionalSpecification
 
 import java.util.concurrent.TimeUnit
 
-import static org.mongodb.Fixture.getAsyncBinding
-import static org.mongodb.Fixture.getBinding
-import static org.mongodb.Fixture.serverVersionAtLeast
+import static com.mongodb.client.Fixture.getAsyncBinding
+import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.client.Fixture.serverVersionAtLeast
 
 class AggregateOperationSpecification extends FunctionalSpecification {
 

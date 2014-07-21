@@ -29,6 +29,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.client.Fixture.clusterIsType;
+import static com.mongodb.client.Fixture.disableMaxTimeFailPoint;
+import static com.mongodb.client.Fixture.enableMaxTimeFailPoint;
+import static com.mongodb.client.Fixture.isDiscoverableReplicaSet;
+import static com.mongodb.client.Fixture.isSharded;
+import static com.mongodb.client.Fixture.serverVersionAtLeast;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -40,12 +46,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
-import static org.mongodb.Fixture.clusterIsType;
-import static org.mongodb.Fixture.disableMaxTimeFailPoint;
-import static org.mongodb.Fixture.enableMaxTimeFailPoint;
-import static org.mongodb.Fixture.isDiscoverableReplicaSet;
-import static org.mongodb.Fixture.isSharded;
-import static org.mongodb.Fixture.serverVersionAtLeast;
 
 
 public class JavaClientOldTest extends DatabaseTestCase {

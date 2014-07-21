@@ -16,8 +16,8 @@
 
 package com.mongodb.async.rxjava.client;
 
-import org.mongodb.MongoClientOptions;
-import org.mongodb.MongoClientURI;
+import com.mongodb.client.MongoClientOptions;
+import com.mongodb.client.MongoClientURI;
 
 import java.net.UnknownHostException;
 
