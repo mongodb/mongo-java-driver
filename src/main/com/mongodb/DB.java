@@ -790,7 +790,7 @@ public abstract class DB {
      * @return the result of executing this operation
      * @throws MongoException
      * @mongodb.driver.manual administration/security-access-control/  Access Control
-     * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
+     * @deprecated Use {@code DB.command} to call either the createUser or updateUser command
      */
     @Deprecated
     public WriteResult addUser( String username , char[] passwd ){
@@ -806,7 +806,7 @@ public abstract class DB {
      * @return the result of executing this operation
      * @throws MongoException
      * @mongodb.driver.manual administration/security-access-control/  Access Control
-     * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
+     * @deprecated Use {@code DB.command} to call either the createUser or updateUser command
      */
     @Deprecated
     public WriteResult addUser( String username , char[] passwd, boolean readOnly ){
