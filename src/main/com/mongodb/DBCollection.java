@@ -64,6 +64,25 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @SuppressWarnings("unchecked")
 public abstract class DBCollection {
 
+    private boolean validateDBObjects = true;
+
+    /**
+     *
+     * @return wheter or not this collection validates DBObjects prior to insertion
+     */
+    public boolean isValidatingDBObjects() {
+        return validateDBObjects;
+    }
+
+    /**
+     * Specify whether or not to validate json prior to insertion
+     *
+     * @param val boolean whether or not to validate DBObjects
+     */
+    public void setValidateDBObjects(boolean val) {
+        validateDBObjects = val;
+    }
+
     /**
      * Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
      * does not contain an '_id' field, it will be added.
@@ -1780,7 +1799,7 @@ public abstract class DBCollection {
      * Checks key strings for invalid characters.
      */
     private void _checkKeys( DBObject o ) {
-        if ( o instanceof LazyDBObject || o instanceof LazyDBList )
+        if ( o instanceof LazyDBObject || o instanceof LazyDBList || !validateDBObjects )
             return;
 
         for ( String s : o.keySet() ){
