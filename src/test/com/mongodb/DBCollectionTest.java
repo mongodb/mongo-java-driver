@@ -431,6 +431,21 @@ public class DBCollectionTest extends TestCase {
     }
 
     @Test
+    public void testNonValidatingDocKeysPass() {
+        DBObject obj = BasicDBObjectBuilder.start().add("_id", "lazydottest1").add("x",1).add("y",2).add("foo.bar","baz").get();
+
+        // Disable validation on the collection
+        collection.setValidateDBObjects(false);
+        collection.insert(obj);
+
+        DBObject insertedObj = collection.findOne();
+        assertEquals("lazydottest1", insertedObj.get("_id"));
+        assertEquals(1, insertedObj.get("x"));
+        assertEquals(2, insertedObj.get("y"));
+        assertEquals("baz", insertedObj.get("foo.bar"));
+    }
+
+    @Test
     public void testFindAndUpdateTimeout() {
         assumeFalse(isSharded(getMongoClient()));
         checkServerVersion(2.5);
