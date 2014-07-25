@@ -354,6 +354,6 @@ gradle.buildFinished { BuildResult result ->
 }
 
 
-//apply from: 'gradle/maven-deployment.gradle'
-//apply from: 'gradle/osgi-compatibility.gradle'
+apply from: 'gradle/maven-deployment.gradle'
+apply from: 'gradle/osgi-compatibility.gradle'
 //apply from: 'gradle/release-process.gradle'
