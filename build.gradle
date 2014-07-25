@@ -24,7 +24,6 @@ buildscript {
     }
     dependencies {
         classpath 'me.trnl:clirr-gradle-plugin:0.4'
-//        classpath 'com.antwerkz.github:github-release-gradle-plugin:1.1.0'
     }
 }
 
@@ -171,6 +170,11 @@ configure(subprojects.findAll { it.name != 'util' }) {
         sourceSets = [sourceSets.main]
     }
 
+    codenarc {
+        toolVersion = '0.20'
+        reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
+    }
+
     tasks.withType(FindBugs) {
         reports {
             xml.enabled = project.buildingWith('xmlReports.enabled')
@@ -227,11 +231,6 @@ project(':driver') {
 
     sourceSets.main.compileClasspath += configurations.provided
 
-    codenarc {
-        toolVersion = '0.20'
-        reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
-    }
-
     task uberJar(type: Jar) {
         classifier = 'all'
         from project(':bson').sourceSets.main.output
@@ -259,11 +258,6 @@ project(':async-driver') {
     }
 
     sourceSets.main.compileClasspath += configurations.provided
-
-    codenarc {
-        toolVersion = '0.20'
-        reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
-    }
 
     task uberJar(type: Jar) {
         classifier = 'all'
@@ -296,11 +290,6 @@ project(':async-rxjava-driver') {
     }
 
     sourceSets.main.compileClasspath += configurations.provided
-
-    codenarc {
-        toolVersion = '0.20'
-        reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
-    }
 
     task uberJar(type: Jar) {
         classifier = 'all'
@@ -342,11 +331,6 @@ project(':driver-compat') {
         configFile = new File("$configDir/checkstyle-lite.xml")
     }
 
-    codenarc {
-        toolVersion = '0.20'
-        reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
-    }
-
     task uberJar(type: Jar) {
         classifier = 'all'
         from project(':bson').sourceSets.main.output
@@ -370,6 +354,6 @@ gradle.buildFinished { BuildResult result ->
 }
 
 
-apply from: 'gradle/maven-deployment.gradle'
-apply from: 'gradle/osgi-compatibility.gradle'
+//apply from: 'gradle/maven-deployment.gradle'
+//apply from: 'gradle/osgi-compatibility.gradle'
 //apply from: 'gradle/release-process.gradle'

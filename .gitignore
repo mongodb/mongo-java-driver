@@ -8,6 +8,7 @@
 *Thumbs.db*
 *.DS_Store
 
+# Build artifacts
 build
 out
 mongo*.jar
@@ -30,3 +31,6 @@ atlassian-ide-plugin.xml
 
 # code review
 codereview.rc
+
+# local settings
+**/gradle.properties
