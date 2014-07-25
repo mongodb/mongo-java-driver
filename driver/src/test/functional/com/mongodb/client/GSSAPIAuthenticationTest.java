@@ -24,9 +24,9 @@ import org.mongodb.Document;
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI;
 import static com.mongodb.MongoCredential.createGSSAPICredential;
+import static com.mongodb.client.Fixture.getConnectionString;
 import static com.mongodb.client.Fixture.getCredentialList;
 import static com.mongodb.client.Fixture.getMongoClient;
-import static com.mongodb.client.Fixture.getMongoClientURI;
 import static com.mongodb.client.Fixture.getPrimary;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertTrue;
@@ -36,13 +36,13 @@ public class GSSAPIAuthenticationTest {
 
     @Before
     public void setUp() {
-        assumeTrue(!getCredentialList().isEmpty() && getCredentialList().get(0).getMechanism().equals(GSSAPI));
+        assumeTrue(!getCredentialList().isEmpty() && getCredentialList().get(0).getAuthenticationMechanism() == GSSAPI);
     }
 
     @Test(expected = CommandFailureException.class)
     public void testUnsuccessfulAuthorization() throws InterruptedException {
         MongoClient client = MongoClients.create(getPrimary());
-        MongoCollection<Document> collection = client.getDatabase(getMongoClientURI().getDatabase()).getCollection("test");
+        MongoCollection<Document> collection = client.getDatabase(getConnectionString().getDatabase()).getCollection("test");
         try {
             collection.find().count();
         } finally {
@@ -52,14 +52,14 @@ public class GSSAPIAuthenticationTest {
 
     @Test
     public void testSuccessfulAuthenticationAndAuthorization() {
-        MongoCollection<Document> collection = getMongoClient().getDatabase(getMongoClientURI().getDatabase()).getCollection("test");
+        MongoCollection<Document> collection = getMongoClient().getDatabase(getConnectionString().getDatabase()).getCollection("test");
         assertTrue(collection.find().count() >= 0); // Really just asserting that the query doesn't throw any security-related exceptions
     }
 
     @Test(expected = MongoSecurityException.class)
     public void testUnsuccessfulAuthentication() throws InterruptedException {
         MongoClient client = MongoClients.create(getPrimary(), asList(createGSSAPICredential("wrongUserName")));
-        MongoCollection<Document> collection = client.getDatabase(getMongoClientURI().getDatabase()).getCollection("test");
+        MongoCollection<Document> collection = client.getDatabase(getConnectionString().getDatabase()).getCollection("test");
         try {
             collection.find().count();
         } finally {

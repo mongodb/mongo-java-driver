@@ -16,13 +16,13 @@
 
 package com.mongodb.client;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadPreference;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.connection.Cluster;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -32,11 +32,11 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 class MongoClientImpl implements MongoClient {
 
     private final Cluster cluster;
-    private final MongoClientOptions clientOptions;
+    private final MongoClientSettings settings;
     private final ExecutorService executorService = Executors.newCachedThreadPool();
 
-    MongoClientImpl(final MongoClientOptions clientOptions, final Cluster cluster) {
-        this.clientOptions = clientOptions;
+    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster) {
+        this.settings = settings;
         this.cluster = cluster;
     }
 
@@ -47,7 +47,7 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoDatabase getDatabase(final String databaseName, final MongoDatabaseOptions options) {
-        return new MongoDatabaseImpl(databaseName, this, options.withDefaults(clientOptions));
+        return new MongoDatabaseImpl(databaseName, this, options.withDefaults(settings));
     }
 
     @Override
@@ -57,8 +57,8 @@ class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public MongoClientOptions getOptions() {
-        return clientOptions;
+    public MongoClientSettings getSettings() {
+        return settings;
     }
 
     @Override
@@ -70,12 +70,9 @@ class MongoClientImpl implements MongoClient {
         return cluster;
     }
 
-    public Executor getExecutor() {
-        return executorService;
-    }
-
     public <V> V execute(final ReadOperation<V> readOperation, final ReadPreference readPreference) {
-        ClusterBinding binding = new ClusterBinding(cluster, readPreference, clientOptions.getMaxWaitTime(), MILLISECONDS);
+        ClusterBinding binding = new ClusterBinding(cluster, readPreference,
+                                                    settings.getConnectionPoolSettings().getMaxWaitTime(MILLISECONDS), MILLISECONDS);
         try {
             return readOperation.execute(binding);
         } finally {
@@ -84,7 +81,8 @@ class MongoClientImpl implements MongoClient {
     }
 
     public <V> V execute(final WriteOperation<V> writeOperation) {
-        ClusterBinding binding = new ClusterBinding(cluster, primary(), clientOptions.getMaxWaitTime(), MILLISECONDS);
+        ClusterBinding binding = new ClusterBinding(cluster, primary(),
+                                                    settings.getConnectionPoolSettings().getMaxWaitTime(MILLISECONDS), MILLISECONDS);
         try {
             return writeOperation.execute(binding);
         } finally {

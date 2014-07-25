@@ -105,10 +105,6 @@ public class MongoClientOptions {
         return new Builder();
     }
 
-    public com.mongodb.client.MongoClientOptions toNew() {
-        return proxied;
-    }
-
     /**
      * Gets the description for this MongoClient, which is used in various places like logging and JMX.
      * <p/>

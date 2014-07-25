@@ -16,8 +16,7 @@
 
 package com.mongodb.async.rxjava.client;
 
-import com.mongodb.client.MongoClientOptions;
-import com.mongodb.client.MongoClientURI;
+import com.mongodb.MongoClientSettings;
 
 import java.net.UnknownHostException;
 
@@ -30,14 +29,13 @@ public final class MongoClients {
     /**
      * Create a new client with the given URI and options.
      *
-     * @param mongoURI the URI of the cluster to connect to
-     * @param options  the options, which override the options from the URI
+     * @param settings the settings for this client
      * @return the client
      * @throws java.net.UnknownHostException
      */
-    public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options)
+    public static MongoClient create(final MongoClientSettings settings)
     throws UnknownHostException {
-        return new MongoClientImpl(com.mongodb.async.client.MongoClients.create(mongoURI, options));
+        return new MongoClientImpl(com.mongodb.async.client.MongoClients.create(settings));
     }
 
     private MongoClients() {

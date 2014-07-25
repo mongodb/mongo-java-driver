@@ -14,14 +14,8 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb;
 
-import com.mongodb.AuthenticationMechanism;
-import com.mongodb.MongoCredential;
-import com.mongodb.MongoInternalException;
-import com.mongodb.ReadPreference;
-import com.mongodb.Tags;
-import com.mongodb.WriteConcern;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 
@@ -45,8 +39,7 @@ import static java.lang.String.format;
 
 
 /**
- * Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>
- * which can be used to create a MongoClient instance. The URI describes the hosts to
+ * Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>. The URI describes the hosts to
  * be used and options.
  * <p>The format of the URI is:
  * <pre>
@@ -157,42 +150,43 @@ import static java.lang.String.format;
  * <p/>
  *
  * @mongodb.driver.manual reference/connection-string Connection String URI Format
- * @see com.mongodb.client.MongoClientOptions for the default values for all options
  * @since 3.0.0
  */
-public class MongoClientURI {
+public class ConnectionString {
 
     private static final String PREFIX = "mongodb://";
     private static final String UTF_8 = "UTF-8";
 
     private static final Logger LOGGER = Loggers.getLogger("uri");
 
-    private final MongoClientOptions options;
     private final MongoCredential credentials;
     private final List<String> hosts;
     private final String database;
     private final String collection;
     private final String uri;
 
-    /**
-     * Creates a MongoURI from the given string.
-     *
-     * @param uri the URI
-     */
-    public MongoClientURI(final String uri) {
-        this(uri, new MongoClientOptions.Builder());
-    }
+    private ReadPreference readPreference;
+    private WriteConcern writeConcern;
+
+    private Integer minConnectionPoolSize;
+    private Integer maxConnectionPoolSize;
+    private Integer threadsAllowedToBlockForConnectionMultiplier;
+    private Integer maxWaitTime;
+    private Integer maxConnectionIdleTime;
+    private Integer maxConnectionLifeTime;
+    private Integer connectTimeout;
+    private Integer socketTimeout;
+    private Boolean sslEnabled;
+    private String requiredReplicaSetName;
 
     /**
      * Creates a MongoURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured with default options,
      * which may be overridden by options specified in the URI string.
      *
      * @param uri     the URI
-     * @param builder a Builder
-     * @see MongoClientURI#getOptions()
      * @since 2.11.0
      */
-    public MongoClientURI(final String uri, final MongoClientOptions.Builder builder) {
+    public ConnectionString(final String uri) {
         try {
             if (!uri.startsWith(PREFIX)) {
                 throw new IllegalArgumentException("uri needs to start with " + PREFIX);
@@ -265,7 +259,7 @@ public class MongoClientURI {
             }
 
             Map<String, List<String>> optionsMap = parseOptions(optionsPart);
-            options = createOptions(optionsMap, builder);
+            translateOptions(optionsMap);
             credentials = createCredentials(optionsMap, userName, password);
             warnOnUnsupportedOptions(optionsMap);
         } catch (UnsupportedEncodingException e) {
@@ -319,7 +313,7 @@ public class MongoClientURI {
         }
     }
 
-    private MongoClientOptions createOptions(final Map<String, List<String>> optionsMap, final MongoClientOptions.Builder builder) {
+    private void translateOptions(final Map<String, List<String>> optionsMap) {
         for (final String key : GENERAL_OPTIONS_KEYS) {
             String value = getLastValue(optionsMap, key);
             if (value == null) {
@@ -327,39 +321,30 @@ public class MongoClientURI {
             }
 
             if (key.equals("maxpoolsize")) {
-                builder.maxConnectionPoolSize(Integer.parseInt(value));
+                maxConnectionPoolSize = Integer.parseInt(value);
             } else if (key.equals("minpoolsize")) {
-                builder.minConnectionPoolSize(Integer.parseInt(value));
+                minConnectionPoolSize = Integer.parseInt(value);
             } else if (key.equals("maxidletimems")) {
-                builder.maxConnectionIdleTime(Integer.parseInt(value));
+                maxConnectionIdleTime = Integer.parseInt(value);
             } else if (key.equals("maxlifetimems")) {
-                builder.maxConnectionLifeTime(Integer.parseInt(value));
+                maxConnectionLifeTime = Integer.parseInt(value);
             } else if (key.equals("waitqueuemultiple")) {
-                builder.threadsAllowedToBlockForConnectionMultiplier(Integer.parseInt(value));
+                threadsAllowedToBlockForConnectionMultiplier  = Integer.parseInt(value);
             } else if (key.equals("waitqueuetimeoutms")) {
-                builder.maxWaitTime(Integer.parseInt(value));
+                maxWaitTime = Integer.parseInt(value);
             } else if (key.equals("connecttimeoutms")) {
-                builder.connectTimeout(Integer.parseInt(value));
+                connectTimeout = Integer.parseInt(value);
             } else if (key.equals("sockettimeoutms")) {
-                builder.socketTimeout(Integer.parseInt(value));
+                socketTimeout = Integer.parseInt(value);
             } else if (key.equals("ssl") && parseBoolean(value)) {
-                builder.SSLEnabled(true);
+                sslEnabled = true;
             } else if (key.equals("replicaset")) {
-                builder.requiredReplicaSetName(value);
+                requiredReplicaSetName = value;
             }
         }
 
-        WriteConcern writeConcern = createWriteConcern(optionsMap);
-        ReadPreference readPreference = createReadPreference(optionsMap);
-
-        if (writeConcern != null) {
-            builder.writeConcern(writeConcern);
-        }
-        if (readPreference != null) {
-            builder.readPreference(readPreference);
-        }
-
-        return builder.build();
+        writeConcern = createWriteConcern(optionsMap);
+        readPreference = createReadPreference(optionsMap);
     }
 
     private WriteConcern createWriteConcern(final Map<String, List<String>> optionsMap) {
@@ -486,6 +471,9 @@ public class MongoClientURI {
     private ReadPreference buildReadPreference(final String readPreferenceType,
                                                final List<Tags> tagsList) {
         if (readPreferenceType != null) {
+            if (tagsList.isEmpty()) {
+                return ReadPreference.valueOf(readPreferenceType);
+            }
             return ReadPreference.valueOf(readPreferenceType, tagsList);
         }
         return null;
@@ -601,12 +589,99 @@ public class MongoClientURI {
     }
 
     /**
-     * Gets the options
-     *
-     * @return the MongoClientOptions based on this URI.
+     * Gets the read preference specified in the connection string.
+     * @return the read preference
      */
-    public MongoClientOptions getOptions() {
-        return options;
+    public ReadPreference getReadPreference() {
+        return readPreference;
+    }
+
+    /**
+     * Gets the write concern specified in the connection string.
+     * @return the write concern
+     */
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
+    }
+
+    /**
+     * Gets the minimum connection pool size specified in the connection string.
+     * @return the minimum connection pool size
+     */
+    public Integer getMinConnectionPoolSize() {
+        return minConnectionPoolSize;
+    }
+
+    /**
+     * Gets the maximum connection pool size specified in the connection string.
+     * @return the maximum connection pool size
+     */
+    public Integer getMaxConnectionPoolSize() {
+        return maxConnectionPoolSize;
+    }
+
+    /**
+     * Gets the multiplier for the number of threads allowed to block waiting for a connection specified in the connection string.
+     * @return the multiplier for the number of threads allowed to block waiting for a connection
+     */
+    public Integer getThreadsAllowedToBlockForConnectionMultiplier() {
+        return threadsAllowedToBlockForConnectionMultiplier;
+    }
+
+    /**
+     * Gets the maximum wait time of a thread waiting for a connection specified in the connection string.
+     * @return the maximum wait time of a thread waiting for a connection
+     */
+    public Integer getMaxWaitTime() {
+        return maxWaitTime;
+    }
+
+    /**
+     * Gets the maximum connection idle time specified in the connection string.
+     * @return the maximum connection idle time
+     */
+    public Integer getMaxConnectionIdleTime() {
+        return maxConnectionIdleTime;
+    }
+
+    /**
+     * Gets the maximum connection life time specified in the connection string.
+     * @return the maximum connection life time
+     */
+    public Integer getMaxConnectionLifeTime() {
+        return maxConnectionLifeTime;
+    }
+
+    /**
+     * Gets the socket connect timeout specified in the connection string.
+     * @return the socket connect timeout
+     */
+    public Integer getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    /**
+     * Gets the socket timeout specified in the connection string.
+     * @return the socket timeout
+     */
+    public Integer getSocketTimeout() {
+        return socketTimeout;
+    }
+
+    /**
+     * Gets the SSL enabled value specified in the connection string.
+     * @return the SSL enabled value
+     */
+    public Boolean getSslEnabled() {
+        return sslEnabled;
+    }
+
+    /**
+     * Gets the required replica set name specified in the connection string.
+     * @return the required replica set name
+     */
+    public String getRequiredReplicaSetName() {
+        return requiredReplicaSetName;
     }
 
     @Override

@@ -88,7 +88,7 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
     def 'should throw if pool is exhausted'() throws InterruptedException {
         given:
         provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
-                ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
+                ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).maxWaitTime(1, MILLISECONDS).build(),
                 new NoOpConnectionPoolListener())
 
         when:

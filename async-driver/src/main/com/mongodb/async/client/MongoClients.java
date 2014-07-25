@@ -16,24 +16,15 @@
 
 package com.mongodb.async.client;
 
-import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
-import com.mongodb.client.MongoClientOptions;
-import com.mongodb.client.MongoClientURI;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.Cluster;
-import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.SSLSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * A factory for MongoClient instances.
@@ -42,51 +33,30 @@ import java.util.List;
  */
 public final class MongoClients {
     /**
-     * Create a new client with the given URI and options.
+     * Create a new client with the given client settings.
      *
-     * @param mongoURI the URI of the cluster to connect to
-     * @param options the options, which override the options from the URI
+     * @param settings the settings
      * @return the client
      */
-    public static MongoClient create(final MongoClientURI mongoURI, final MongoClientOptions options) {
-        if (mongoURI.getHosts().size() == 1) {
-            return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
-                                                                             .mode(ClusterConnectionMode.SINGLE)
-                                                                             .hosts(Arrays.asList(new ServerAddress(mongoURI.getHosts()
-                                                                                                                            .get(0))))
-                                                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                                                                             .build(),
-                                                              mongoURI.getCredentialList(), options, getStreamFactory(options)
-                                                             ));
-        } else {
-            List<ServerAddress> seedList = new ArrayList<ServerAddress>();
-            for (final String cur : mongoURI.getHosts()) {
-                seedList.add(new ServerAddress(cur));
-            }
-            return new MongoClientImpl(options, createCluster(ClusterSettings.builder()
-                                                                             .hosts(seedList)
-                                                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
-                                                                             .build(),
-                                                              mongoURI.getCredentialList(), options, getStreamFactory(options)
-                                                             ));
-        }
+    public static MongoClient create(final MongoClientSettings settings) {
+        return new MongoClientImpl(settings, createCluster(settings, getStreamFactory(settings)));
     }
 
-    private static Cluster createCluster(final ClusterSettings clusterSettings, final List<MongoCredential> credentialList,
-                                         final MongoClientOptions options, final StreamFactory streamFactory) {
-        StreamFactory heartbeatStreamFactory = getHeartbeatStreamFactory(options);
-        return new DefaultClusterFactory().create(clusterSettings, options.getServerSettings(),
-                                                  options.getConnectionPoolSettings(), streamFactory,
+
+    private static Cluster createCluster(final MongoClientSettings settings, final StreamFactory streamFactory) {
+        StreamFactory heartbeatStreamFactory = getHeartbeatStreamFactory(settings);
+        return new DefaultClusterFactory().create(settings.getClusterSettings(), settings.getServerSettings(),
+                                                  settings.getConnectionPoolSettings(), streamFactory,
                                                   heartbeatStreamFactory,
-                                                  credentialList, null, new JMXConnectionPoolListener(), null);
+                                                  settings.getCredentialList(), null, new JMXConnectionPoolListener(), null);
     }
 
-    private static StreamFactory getHeartbeatStreamFactory(final MongoClientOptions options) {
-        return getStreamFactory(options.getHeartbeatSocketSettings(), options.getSslSettings());
+    private static StreamFactory getHeartbeatStreamFactory(final MongoClientSettings settings) {
+        return getStreamFactory(settings.getHeartbeatSocketSettings(), settings.getSslSettings());
     }
 
-    private static StreamFactory getStreamFactory(final MongoClientOptions options) {
-        return getStreamFactory(options.getSocketSettings(), options.getSslSettings());
+    private static StreamFactory getStreamFactory(final MongoClientSettings settings) {
+        return getStreamFactory(settings.getSocketSettings(), settings.getSslSettings());
     }
 
     private static StreamFactory getStreamFactory(final SocketSettings socketSettings,

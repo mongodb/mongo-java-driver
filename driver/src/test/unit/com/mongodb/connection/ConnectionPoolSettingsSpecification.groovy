@@ -44,7 +44,7 @@ class ConnectionPoolSettingsSpecification extends Specification {
                 maxConnectionIdleTimeMS | minSize | maintenanceInitialDelayMS | maintenanceFrequencyMS
         ConnectionPoolSettings
                 .builder()
-                .maxSize(1).build()           | 0L   | 1  | 0  |      0 |     0 | 0 | 0 | 60000
+                .build()                       | 120000L    | 100  | 500  |      0 |     0 | 0 | 0 | 60000
         ConnectionPoolSettings
                 .builder()
                 .maxWaitTime(5, SECONDS)
@@ -63,12 +63,6 @@ class ConnectionPoolSettingsSpecification extends Specification {
     }
 
     def 'should throw exception on invalid argument'() {
-        when:
-        ConnectionPoolSettings.builder().build()
-
-        then:
-        thrown(IllegalStateException)
-
         when:
         ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(-1).build()
 

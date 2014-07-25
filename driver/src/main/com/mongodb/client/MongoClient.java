@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.annotations.ThreadSafe;
 
 import java.io.Closeable;
@@ -46,11 +47,11 @@ public interface MongoClient extends Closeable {
     void close();
 
     /**
-     * Get the options for this client.
+     * Get the settings for this client.
      *
-     * @return the options
+     * @return the settings
      */
-    MongoClientOptions getOptions();
+    MongoClientSettings getSettings();
 
     /**
      * @return the ClientAdministration that provides admin methods that can be performed

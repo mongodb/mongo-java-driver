@@ -40,10 +40,10 @@ public class ConnectionPoolSettings {
     }
 
     public static class Builder {
-        private int maxSize;
+        private int maxSize = 100;
         private int minSize;
-        private int maxWaitQueueSize;
-        private long maxWaitTimeMS;
+        private int maxWaitQueueSize = 500;
+        private long maxWaitTimeMS = 1000 * 60 * 2;
         private long maxConnectionLifeTimeMS;
         private long maxConnectionIdleTimeMS;
         private long maintenanceInitialDelayMS;
@@ -198,9 +198,10 @@ public class ConnectionPoolSettings {
         isTrue("maxSize > 0", builder.maxSize > 0);
         isTrue("minSize >= 0", builder.minSize >= 0);
         isTrue("maxWaitQueueSize >= 0", builder.maxWaitQueueSize >= 0);
+        isTrue("maintenanceInitialDelayMS >= 0", builder.maintenanceInitialDelayMS >= 0);
         isTrue("maxConnectionLifeTime >= 0", builder.maxConnectionLifeTimeMS >= 0);
         isTrue("maxConnectionIdleTime >= 0", builder.maxConnectionIdleTimeMS >= 0);
-        isTrue("sizeMaintenanceFrequency >= 0", builder.maintenanceFrequencyMS >= 0);
+        isTrue("sizeMaintenanceFrequency > 0", builder.maintenanceFrequencyMS > 0);
         isTrue("maxSize >= minSize", builder.maxSize >= builder.minSize);
 
         maxSize = builder.maxSize;

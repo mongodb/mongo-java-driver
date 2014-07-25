@@ -16,6 +16,8 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
@@ -27,9 +29,7 @@ import com.mongodb.binding.PinnedBinding;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.Cluster;
-import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
-import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.SSLSettings;
@@ -41,8 +41,6 @@ import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
 import org.mongodb.Document;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
@@ -60,7 +58,7 @@ public final class Fixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
 
-    private static MongoClientURI mongoClientURI;
+    private static ConnectionString connectionString;
     private static MongoClientImpl mongoClient;
     private static MongoDatabase defaultDatabase;
     private static Cluster asyncCluster;
@@ -70,8 +68,8 @@ public final class Fixture {
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            MongoClientURI mongoURI = getMongoClientURI();
-            mongoClient = (MongoClientImpl) MongoClients.create(mongoURI, mongoURI.getOptions());
+            ConnectionString connectionString = getConnectionString();
+            mongoClient = (MongoClientImpl) MongoClients.create(MongoClientSettings.builder(connectionString).build());
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
@@ -120,14 +118,14 @@ public final class Fixture {
         }
     }
 
-    public static synchronized MongoClientURI getMongoClientURI() {
-        if (mongoClientURI == null) {
+    public static synchronized ConnectionString getConnectionString() {
+        if (connectionString == null) {
             String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
             String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
                                     ? DEFAULT_URI : mongoURIProperty;
-            mongoClientURI = new MongoClientURI(mongoURIString);
+            connectionString = new ConnectionString(mongoURIString);
         }
-        return mongoClientURI;
+        return connectionString;
     }
 
     /**
@@ -170,70 +168,39 @@ public final class Fixture {
     }
 
     public static StreamFactory getAsyncStreamFactory() {
-        return getAsyncStreamFactory(getMongoClientURI().getOptions());
+        return getAsyncStreamFactory(getMongoClient().getSettings());
     }
 
     public static Cluster getAsyncCluster() {
         if (asyncCluster == null) {
-                asyncCluster = createCluster(getMongoClientURI());
+            asyncCluster = createCluster(getMongoClient().getSettings());
         }
         return asyncCluster;
     }
 
-    public static Cluster createCluster(final MongoClientURI mongoURI) {
-        if (mongoURI.getHosts().size() == 1) {
-            return createCluster(ClusterSettings.builder()
-                                                .mode(ClusterConnectionMode.SINGLE)
-                                                .hosts(Arrays.asList(new ServerAddress(mongoURI.getHosts()
-                                                                                               .get(0))))
-                                                .requiredReplicaSetName(mongoURI.getOptions().getRequiredReplicaSetName())
-                                                .build(),
-                                 mongoURI.getCredentialList(), mongoURI.getOptions(), getAsyncStreamFactory(mongoURI.getOptions())
-                                );
-        } else {
-            List<ServerAddress> seedList = new ArrayList<ServerAddress>();
-            for (final String cur : mongoURI.getHosts()) {
-                seedList.add(new ServerAddress(cur));
-            }
-            return createCluster(ClusterSettings.builder()
-                                                .hosts(seedList)
-                                                .requiredReplicaSetName(mongoURI.getOptions().getRequiredReplicaSetName())
-                                                .build(),
-                                 mongoURI.getCredentialList(), mongoURI.getOptions(), getAsyncStreamFactory(mongoURI.getOptions()));
-        }
+    public static Cluster createCluster(final MongoClientSettings settings) {
+        return new DefaultClusterFactory().create(settings.getClusterSettings(), settings.getServerSettings(),
+                                                  settings.getConnectionPoolSettings(),
+                                                  getAsyncStreamFactory(settings),
+                                                  new SocketStreamFactory(settings.getHeartbeatSocketSettings(), settings.getSslSettings()),
+                                                  settings.getCredentialList(), null, new JMXConnectionPoolListener(), null);
+
     }
 
-    private static Cluster createCluster(final ClusterSettings clusterSettings, final List<MongoCredential> credentialList,
-                                         final MongoClientOptions options, final StreamFactory streamFactory) {
-        StreamFactory heartbeatStreamFactory = getHeartbeatStreamFactory(options);
-        return new DefaultClusterFactory().create(clusterSettings, options.getServerSettings(),
-                                                  options.getConnectionPoolSettings(), streamFactory,
-                                                  heartbeatStreamFactory,
-                                                  credentialList, null, new JMXConnectionPoolListener(), null);
-    }
-
-    private static StreamFactory getHeartbeatStreamFactory(final MongoClientOptions options) {
-        return new SocketStreamFactory(options.getHeartbeatSocketSettings(), options.getSslSettings());
-    }
-
-    private static StreamFactory getAsyncStreamFactory(final MongoClientOptions options) {
+    private static StreamFactory getAsyncStreamFactory(final MongoClientSettings settings) {
         String streamType = System.getProperty("org.mongodb.async.type", "nio2");
 
-        if (streamType.equals("netty") || options.getSslSettings().isEnabled()) {
-            return new NettyStreamFactory(options.getSocketSettings(), options.getSslSettings());
+        if (streamType.equals("netty") || settings.getSslSettings().isEnabled()) {
+            return new NettyStreamFactory(settings.getSocketSettings(), settings.getSslSettings());
         } else if (streamType.equals("nio2")) {
-            return new AsynchronousSocketChannelStreamFactory(options.getSocketSettings(), options.getSslSettings());
+            return new AsynchronousSocketChannelStreamFactory(settings.getSocketSettings(), settings.getSslSettings());
         } else {
             throw new IllegalArgumentException("Unsupported stream type " + streamType);
         }
     }
 
     public static SSLSettings getSSLSettings() {
-        return getOptions().getSslSettings();
-    }
-
-    public static MongoClientOptions getOptions() {
-        return getMongoClientURI().getOptions();
+        return getMongoClient().getSettings().getSslSettings();
     }
 
     public static ServerAddress getPrimary() throws InterruptedException {
@@ -247,7 +214,7 @@ public final class Fixture {
     }
 
     public static List<MongoCredential> getCredentialList() {
-        return getMongoClientURI().getCredentialList();
+        return getConnectionString().getCredentialList();
     }
 
     public static boolean isDiscoverableReplicaSet() {
@@ -262,7 +229,7 @@ public final class Fixture {
     }
 
     public static boolean isAuthenticated() {
-        return !getMongoClientURI().getCredentialList().isEmpty();
+        return !getConnectionString().getCredentialList().isEmpty();
     }
 
     public static void enableMaxTimeFailPoint() {

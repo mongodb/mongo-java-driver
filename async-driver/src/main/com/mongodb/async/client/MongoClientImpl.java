@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.MongoFuture;
@@ -23,7 +24,6 @@ import com.mongodb.binding.AsyncClusterBinding;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.AsyncWriteBinding;
-import com.mongodb.client.MongoClientOptions;
 import com.mongodb.client.MongoDatabaseOptions;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.SingleResultCallback;
@@ -31,25 +31,24 @@ import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.operation.SingleResultFuture;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 class MongoClientImpl implements MongoClient {
     private final Cluster cluster;
-    private final MongoClientOptions options;
-    private final ExecutorService executorService = Executors.newCachedThreadPool();
+    private final MongoClientSettings settings;
 
-    MongoClientImpl(final MongoClientOptions options, final Cluster cluster) {
-        this.options = options;
+    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster) {
+        this.settings = settings;
         this.cluster = cluster;
     }
 
     @Override
     public MongoDatabase getDatabase(final String name) {
-        return new MongoDatabaseImpl(name, this, MongoDatabaseOptions.builder().build().withDefaults(options));
+        return new MongoDatabaseImpl(name, this, MongoDatabaseOptions.builder()
+                                                                     .readPreference(settings.getReadPreference())
+                                                                     .writeConcern(settings.getWriteConcern()).build());
     }
 
     @Override
@@ -105,12 +104,14 @@ class MongoClientImpl implements MongoClient {
     private AsyncWriteBinding getWriteBinding() {
         return getReadWriteBinding(ReadPreference.primary());
     }
+
     private AsyncReadBinding getReadBinding(final ReadPreference readPreference) {
         return getReadWriteBinding(readPreference);
     }
 
     private AsyncReadWriteBinding getReadWriteBinding(final ReadPreference readPreference) {
         notNull("readPreference", readPreference);
-        return new AsyncClusterBinding(cluster, readPreference, options.getMaxWaitTime(), TimeUnit.MILLISECONDS);
+        return new AsyncClusterBinding(cluster, readPreference, settings.getConnectionPoolSettings().getMaxWaitTime(TimeUnit.MILLISECONDS),
+                                       TimeUnit.MILLISECONDS);
     }
 }

@@ -695,7 +695,7 @@ public class Mongo {
     private static Cluster createCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialsList,
                                          final MongoClientOptions options) {
         return createCluster(ClusterSettings.builder()
-                                            .mode(getSingleServerClusterMode(options.toNew()))
+                                            .mode(getSingleServerClusterMode(options))
                                             .hosts(asList(serverAddress))
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                             .serverSelector(createServerSelector(options))
@@ -852,7 +852,7 @@ public class Mongo {
         }
     }
 
-    private static ClusterConnectionMode getSingleServerClusterMode(final com.mongodb.client.MongoClientOptions options) {
+    private static ClusterConnectionMode getSingleServerClusterMode(final MongoClientOptions options) {
         if (options.getRequiredReplicaSetName() == null) {
             return ClusterConnectionMode.SINGLE;
         } else {

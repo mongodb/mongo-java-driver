@@ -17,7 +17,8 @@
 package com.mongodb.async.client;
 
 import com.mongodb.CommandFailureException;
-import com.mongodb.client.MongoClientURI;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 
@@ -28,7 +29,7 @@ public final class Fixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
 
-    private static MongoClientURI mongoClientURI;
+    private static ConnectionString connectionString;
     private static MongoClientImpl mongoClient;
     private static MongoDatabase defaultDatabase;
 
@@ -37,21 +38,21 @@ public final class Fixture {
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            MongoClientURI mongoURI = getMongoClientURI();
-            mongoClient = (MongoClientImpl) MongoClients.create(mongoURI, mongoURI.getOptions());
+            ConnectionString connectionString = getConnectionString();
+            mongoClient = (MongoClientImpl) MongoClients.create(MongoClientSettings.builder(connectionString).build());
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
     }
 
-    public static synchronized MongoClientURI getMongoClientURI() {
-        if (mongoClientURI == null) {
+    public static synchronized ConnectionString getConnectionString() {
+        if (connectionString == null) {
             String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
             String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
                                     ? DEFAULT_URI : mongoURIProperty;
-            mongoClientURI = new MongoClientURI(mongoURIString);
+            connectionString = new ConnectionString(mongoURIString);
         }
-        return mongoClientURI;
+        return connectionString;
     }
 
     public static synchronized MongoDatabase getDefaultDatabase() {

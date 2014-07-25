@@ -24,9 +24,9 @@ import org.mongodb.Document;
 
 import static com.mongodb.AuthenticationMechanism.PLAIN;
 import static com.mongodb.MongoCredential.createPlainCredential;
+import static com.mongodb.client.Fixture.getConnectionString;
 import static com.mongodb.client.Fixture.getCredentialList;
 import static com.mongodb.client.Fixture.getMongoClient;
-import static com.mongodb.client.Fixture.getMongoClientURI;
 import static com.mongodb.client.Fixture.getPrimary;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertTrue;
@@ -41,7 +41,7 @@ public class PlainAuthenticationTest {
     @Test(expected = CommandFailureException.class)
     public void testUnsuccessfulAuthorization() throws InterruptedException {
         MongoClient client = MongoClients.create(getPrimary());
-        MongoCollection<Document> collection = client.getDatabase(getMongoClientURI().getDatabase()).getCollection("test");
+        MongoCollection<Document> collection = client.getDatabase(getConnectionString().getDatabase()).getCollection("test");
         try {
             collection.find().count();
         } finally {
@@ -51,7 +51,7 @@ public class PlainAuthenticationTest {
 
     @Test
     public void testSuccessfulAuthenticationAndAuthorization() {
-        MongoCollection<Document> collection = getMongoClient().getDatabase(getMongoClientURI().getDatabase()).getCollection("test");
+        MongoCollection<Document> collection = getMongoClient().getDatabase(getConnectionString().getDatabase()).getCollection("test");
         assertTrue(collection.find().count() >= 0); // Really just asserting that the query doesn't throw any security-related exceptions
     }
 
@@ -59,7 +59,7 @@ public class PlainAuthenticationTest {
     public void testUnsuccessfulAuthentication() throws InterruptedException {
         MongoClient client = MongoClients.create(getPrimary(), asList(createPlainCredential("wrongUserName", "$external",
                                                                                             "wrongPassword".toCharArray())));
-        MongoCollection<Document> collection = client.getDatabase(getMongoClientURI().getDatabase()).getCollection("test");
+        MongoCollection<Document> collection = client.getDatabase(getConnectionString().getDatabase()).getCollection("test");
         try {
             collection.find().count();
         } finally {
