@@ -153,6 +153,24 @@ public final class Index {
         }
     }
 
+    public static class GeoSphereKey implements Key<BsonString> {
+        private final String fieldName;
+
+        public GeoSphereKey(final String fieldName) {
+            this.fieldName = fieldName;
+        }
+
+        @Override
+        public String getFieldName() {
+            return fieldName;
+        }
+
+        @Override
+        public BsonString getValue() {
+            return new BsonString("2dsphere");
+        }
+    }
+
     public static class Text implements Key<BsonString> {
         private final String fieldName;
 

@@ -29,6 +29,7 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mongodb.Index.GeoKey;
+import static org.mongodb.Index.GeoSphereKey;
 import static org.mongodb.Index.OrderedKey;
 import static org.mongodb.OrderBy.ASC;
 import static org.mongodb.OrderBy.DESC;
@@ -168,6 +169,12 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldBeAbleToAddGeoIndexes() {
         collection.tools().createIndexes(asList(Index.builder().addKey(new GeoKey("theField")).build()));
+        assertThat("Should be default index and new index on the database now", collection.tools().getIndexes().size(), is(2));
+    }
+
+    @Test
+    public void shouldBeAbleToAddGeoSphereIndexes() {
+        collection.tools().createIndexes(asList(Index.builder().addKey(new GeoSphereKey("theField")).build()));
         assertThat("Should be default index and new index on the database now", collection.tools().getIndexes().size(), is(2));
     }
 

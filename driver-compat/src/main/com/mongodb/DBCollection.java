@@ -1900,6 +1900,8 @@ public class DBCollection {
                 keys.add(new Index.OrderedKey(key, OrderBy.fromInt((Integer) fields.get(key))));
             } else if (keyType.equals("2d")) {
                 keys.add(new Index.GeoKey(key));
+            } else if (keyType.equals("2dsphere")) {
+                keys.add(new Index.GeoSphereKey(key));
             } else if (keyType.equals("text")) {
                 keys.add(new Index.Text(key));
             } else {

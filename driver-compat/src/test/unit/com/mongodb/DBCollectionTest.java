@@ -253,6 +253,16 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    public void testCreateIndexAs2dsphere() {
+        // when
+        DBObject index = new BasicDBObject("x", "2dsphere");
+        collection.createIndex(index);
+
+        // then
+        assertThat(collection.getIndexInfo(), notNullValue());
+    }
+
+    @Test
     public void testCreateIndexAsText() {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 5)));
         DBObject index = new BasicDBObject("x", "text");
