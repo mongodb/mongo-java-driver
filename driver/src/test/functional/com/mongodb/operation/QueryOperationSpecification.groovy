@@ -18,11 +18,11 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.Block
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoExecutionTimeoutException
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.binding.ClusterBinding
-import com.mongodb.client.Fixture
-import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -30,25 +30,25 @@ import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.Index
 
-import static Fixture.disableMaxTimeFailPoint
-import static Fixture.enableMaxTimeFailPoint
-import static Fixture.getAsyncBinding
-import static Fixture.getBinding
-import static Fixture.getCluster
-import static Fixture.isSharded
-import static Fixture.serverVersionAtLeast
+import static ClusterFixture.disableMaxTimeFailPoint
+import static ClusterFixture.enableMaxTimeFailPoint
+import static ClusterFixture.getAsyncBinding
+import static ClusterFixture.getBinding
+import static ClusterFixture.getCluster
+import static ClusterFixture.isSharded
+import static ClusterFixture.serverVersionAtLeast
 import static com.mongodb.operation.QueryFlag.Exhaust
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
 
-class QueryOperationSpecification extends FunctionalSpecification {
+class QueryOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should query with no filter'() {
         def document = new Document()
         given:
-        collection.insert(document)
+        getCollectionHelper().insertDocuments(document);
 
         when:
         def cursor = new QueryOperation<Document>(getNamespace(), new Find().filter(null), new DocumentCodec()).execute(getBinding())
@@ -62,7 +62,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 
         given:
-        collection.insert(new Document())
+        getCollectionHelper().insertDocuments(new Document())
         def find = new Find().maxTime(1, SECONDS)
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
         enableMaxTimeFailPoint()
@@ -83,7 +83,7 @@ class QueryOperationSpecification extends FunctionalSpecification {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
 
         given:
-        collection.insert(new Document())
+        getCollectionHelper().insertDocuments(new Document())
         def find = new Find().maxTime(1, SECONDS)
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
         enableMaxTimeFailPoint()
@@ -100,12 +100,10 @@ class QueryOperationSpecification extends FunctionalSpecification {
 
     def '$max should limit items returned'() {
         given:
-        for (
-                i in
-                        1..100) {
-            collection.insert(new Document('x', 'y').append('count', i))
+        for ( i in 1..100) {
+            collectionHelper.insertDocuments(new Document('x', 'y').append('count', i))
         }
-        collection.tools().createIndexes(asList(Index.builder().addKey('count').build()))
+        collectionHelper.createIndexes(asList(Index.builder().addKey('count').build()))
         def count = 0;
         def find = new Find()
         find.getOptions().max(new BsonDocument('count', new BsonInt32(11)))
@@ -121,12 +119,10 @@ class QueryOperationSpecification extends FunctionalSpecification {
 
     def '$min should limit items returned'() {
         given:
-        for (
-                i in
-                        1..100) {
-            collection.insert(new Document('x', 'y').append('count', i))
+        for ( i in 1..100) {
+            collectionHelper.insertDocuments(new Document('x', 'y').append('count', i))
         }
-        collection.tools().createIndexes(asList(Index.builder().addKey('count').build()))
+        collectionHelper.createIndexes(asList(Index.builder().addKey('count').build()))
         def count = 0;
         def find = new Find()
         find.getOptions().min(new BsonDocument('count', new BsonInt32(10)))
@@ -142,10 +138,8 @@ class QueryOperationSpecification extends FunctionalSpecification {
 
     def '$maxScan should limit items returned'() {
         given:
-        for (
-                i in
-                        1..100) {
-            collection.insert(new Document('x', 'y'))
+        for ( i in 1..100) {
+            collectionHelper.insertDocuments(new Document('x', 'y'))
         }
         def count = 0;
         def find = new Find()
@@ -162,12 +156,10 @@ class QueryOperationSpecification extends FunctionalSpecification {
 
     def '$returnKey should only return the field that was in an index used to perform the find'() {
         given:
-        for (
-                i in
-                        1..13) {
-            collection.insert(new Document('x', i))
+        for (i in 1..13) {
+            collectionHelper.insertDocuments(new Document('x', i))
         }
-        collection.tools().createIndexes([Index.builder().addKey('x').build()])
+        collectionHelper.createIndexes([Index.builder().addKey('x').build()])
 
         def find = new Find(new BsonDocument('x', new BsonInt32(7)))
         find.getOptions().returnKey()
@@ -184,10 +176,8 @@ class QueryOperationSpecification extends FunctionalSpecification {
 
     def '$showDiskLoc should return disk locations'() {
         given:
-        for (
-                i in
-                        1..100) {
-            collection.insert(new Document('x', 'y'))
+        for (i in 1..100) {
+            collectionHelper.insertDocuments(new Document('x', 'y'))
         }
         def found = true;
         def find = new Find()
@@ -203,8 +193,8 @@ class QueryOperationSpecification extends FunctionalSpecification {
     }
 
     def 'should read from a secondary'() {
-        assumeTrue(Fixture.isDiscoverableReplicaSet())
-        collection.insert(new Document())
+        assumeTrue(ClusterFixture.isDiscoverableReplicaSet())
+        collectionHelper.insertDocuments(new Document())
         def find = new Find()
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
         def binding = new ClusterBinding(getCluster(), ReadPreference.secondary(), 1, SECONDS)
@@ -216,10 +206,8 @@ class QueryOperationSpecification extends FunctionalSpecification {
     def 'should exhaust'() {
         assumeFalse(isSharded())
 
-        for (
-                i in
-                        1..500) {
-            collection.insert(new Document('_id', i))
+        for (i in 1..500) {
+            collectionHelper.insertDocuments(new Document('_id', i))
         }
         def queryOperation = new QueryOperation<Document>(getNamespace(), new Find().addFlags(EnumSet.of(Exhaust)),
                                                           new DocumentCodec())
@@ -245,10 +233,8 @@ class QueryOperationSpecification extends FunctionalSpecification {
     def 'should iterate asynchronously'() {
         assumeFalse(isSharded())
 
-        for (
-                i in
-                        1..500) {
-            collection.insert(new Document('_id', i))
+        for (i in 1..500) {
+            collectionHelper.insertDocuments(new Document('_id', i))
         }
         def queryOperation = new QueryOperation<Document>(getNamespace(), new Find(), new DocumentCodec())
 
@@ -271,10 +257,8 @@ class QueryOperationSpecification extends FunctionalSpecification {
     def 'should exhaust asynchronously'() {
         assumeFalse(isSharded())
 
-        for (
-                i in
-                        1..500) {
-            collection.insert(new Document('_id', i))
+        for (i in 1..500) {
+            collectionHelper.insertDocuments(new Document('_id', i))
         }
         def queryOperation = new QueryOperation<Document>(getNamespace(), new Find().addFlags(EnumSet.of(Exhaust)),
                                                           new DocumentCodec())

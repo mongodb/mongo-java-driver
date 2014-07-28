@@ -32,6 +32,7 @@ public final class Fixture {
     private static MongoClient mongoClient;
     private static MongoClientURI mongoClientURI;
     private static DB defaultDatabase;
+    private static String defaultDatabaseName = "DriverTest-" + System.nanoTime();
 
     private Fixture() {
     }
@@ -51,9 +52,13 @@ public final class Fixture {
 
     public static synchronized DB getDefaultDatabase() {
         if (defaultDatabase == null) {
-            defaultDatabase = getMongoClient().getDB("DriverTest-" + System.nanoTime());
+            defaultDatabase = getMongoClient().getDB(defaultDatabaseName);
         }
         return defaultDatabase;
+    }
+
+    public static synchronized String getDefaultDatabaseName() {
+        return defaultDatabaseName;
     }
 
     static class ShutdownHook extends Thread {

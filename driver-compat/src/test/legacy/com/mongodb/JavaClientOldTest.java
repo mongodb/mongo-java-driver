@@ -29,12 +29,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.mongodb.client.Fixture.clusterIsType;
-import static com.mongodb.client.Fixture.disableMaxTimeFailPoint;
-import static com.mongodb.client.Fixture.enableMaxTimeFailPoint;
-import static com.mongodb.client.Fixture.isDiscoverableReplicaSet;
-import static com.mongodb.client.Fixture.isSharded;
-import static com.mongodb.client.Fixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.clusterIsType;
+import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
+import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;

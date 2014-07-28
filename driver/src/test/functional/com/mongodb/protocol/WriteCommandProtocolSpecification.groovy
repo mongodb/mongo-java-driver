@@ -16,11 +16,8 @@
 
 
 package com.mongodb.protocol
-
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
-import com.mongodb.operation.CountOperation
-import com.mongodb.operation.Find
 import com.mongodb.operation.InsertRequest
 import com.mongodb.operation.UpdateRequest
 import com.mongodb.selector.PrimaryServerSelector
@@ -31,16 +28,15 @@ import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
 
+import static com.mongodb.ClusterFixture.getCluster
+import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
-import static com.mongodb.client.Fixture.getBinding
-import static com.mongodb.client.Fixture.getCluster
-import static com.mongodb.client.Fixture.getPrimary
-import static com.mongodb.client.Fixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeTrue
 
-class WriteCommandProtocolSpecification extends FunctionalSpecification {
+class WriteCommandProtocolSpecification extends OperationFunctionalSpecification {
 
     def server = getCluster().selectServer(new PrimaryServerSelector(), 1, SECONDS)
     def connection = server.connection
@@ -65,7 +61,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         then:
         result.insertedCount == 1
         result.upserts == []
-        collection.find(document).one == document
+        collectionHelper.find(document).first() == document
     }
 
     def 'should insert documents'() {
@@ -77,7 +73,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
         protocol.execute(connection)
 
         then:
-        collection.find().count() == 2
+        collectionHelper.count() == 2
     }
 
     def 'should throw exception'() {
@@ -133,7 +129,7 @@ class WriteCommandProtocolSpecification extends FunctionalSpecification {
 
         then:
         result.insertedCount == 4
-        documents.size() == new CountOperation(collection.getNamespace(), new Find()).execute(getBinding())
+        documents.size() == collectionHelper.count()
     }
 
     def 'should have correct list of processed and unprocessed requests after error on split'() {

@@ -17,7 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -25,12 +25,12 @@ import org.bson.BsonSerializationException
 import org.bson.types.Binary
 import org.mongodb.Document
 
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getBinding
 import static java.util.Arrays.asList
 
-class ReplaceOperationSpecification extends FunctionalSpecification {
+class ReplaceOperationSpecification extends OperationFunctionalSpecification {
     def 'should return correct result'() {
         given:
         def replacement = new ReplaceRequest<Document>(new BsonDocument(), new Document('_id', 1))

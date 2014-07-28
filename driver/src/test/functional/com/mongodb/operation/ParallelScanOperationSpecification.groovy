@@ -1,23 +1,23 @@
 package com.mongodb.operation
 
 import com.mongodb.Block
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.async.MongoAsyncCursor
-import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.mongodb.Document
 import org.mongodb.MongoCursor
 
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getBinding
-import static com.mongodb.client.Fixture.isSharded
-import static com.mongodb.client.Fixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isSharded
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static org.junit.Assert.assertTrue
 import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
 import static org.mongodb.ParallelScanOptions.builder
 
-class ParallelScanOperationSpecification extends FunctionalSpecification {
+class ParallelScanOperationSpecification extends OperationFunctionalSpecification {
     Set<Integer> ids = [] as Set
 
     def 'setup'() {

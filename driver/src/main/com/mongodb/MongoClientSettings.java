@@ -35,7 +35,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * Various settings to control the behavior of a {@code MongoClient}.
  *
- * @see com.mongodb.client.MongoClient
  * @since 3.0
  */
 @Immutable
@@ -73,7 +72,7 @@ public final class MongoClientSettings {
     /**
      * A builder for MongoClientOptions so that MongoClientOptions can be immutable, and to support easier construction through chaining.
      */
-    public static class Builder {
+    public static final class Builder {
 
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;

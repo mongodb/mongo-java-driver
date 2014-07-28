@@ -15,31 +15,28 @@
  */
 
 package com.mongodb.operation
-
 import category.Async
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.client.test.CollectionHelper
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.AggregationOptions
 import org.mongodb.Document
-import spock.lang.Shared
+import org.mongodb.MongoNamespace
 
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getBinding
-import static com.mongodb.client.Fixture.getDefaultDatabase
-import static com.mongodb.client.Fixture.initialiseCollection
-import static com.mongodb.client.Fixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static org.junit.Assume.assumeTrue
 
-class AggregateToCollectionOperationSpecification extends FunctionalSpecification {
+class AggregateToCollectionOperationSpecification extends OperationFunctionalSpecification {
 
-    @Shared
-            outCollection
+    def aggregateCollectionNamespace = new MongoNamespace(getDatabaseName(), 'aggregateCollectionName')
 
     def setup() {
-        outCollection = initialiseCollection(getDefaultDatabase(), 'aggregateCollection')
+        CollectionHelper.drop(aggregateCollectionNamespace)
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
@@ -72,27 +69,26 @@ class AggregateToCollectionOperationSpecification extends FunctionalSpecificatio
         when:
         AggregateToCollectionOperation op =
                 new AggregateToCollectionOperation(getNamespace(),
-                                                   [new BsonDocument('$out', new BsonString(outCollection.name))],
+                                                   [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
                                                    AggregationOptions.builder().build())
         op.execute(getBinding());
 
         then:
-        getCollectionHelper(outCollection.namespace).count() == 3
+        getCollectionHelper(aggregateCollectionNamespace).count() == 3
     }
 
     @Category(Async)
     def 'should be able to output to a collection asynchronously'() {
         assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
-
         when:
         AggregateToCollectionOperation op =
                 new AggregateToCollectionOperation(getNamespace(),
-                                                   [new BsonDocument('$out', new BsonString(outCollection.name))],
+                                                   [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
                                                    AggregationOptions.builder().build())
         op.executeAsync(getAsyncBinding()).get();
 
         then:
-        getCollectionHelper(outCollection.namespace).count() == 3
+        getCollectionHelper(aggregateCollectionNamespace).count() == 3
     }
 
     def 'should be able to match then output to a collection'() {
@@ -102,12 +98,12 @@ class AggregateToCollectionOperationSpecification extends FunctionalSpecificatio
         AggregateToCollectionOperation op =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
-                                                    new BsonDocument('$out', new BsonString(outCollection.name))],
+                                                    new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
                                                    AggregationOptions.builder().build())
         op.execute(getBinding());
 
         then:
-        getCollectionHelper(outCollection.namespace).count() == 1
+        getCollectionHelper(aggregateCollectionNamespace).count() == 1
     }
 
     @Category(Async)
@@ -118,12 +114,12 @@ class AggregateToCollectionOperationSpecification extends FunctionalSpecificatio
         AggregateToCollectionOperation op =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
-                                                    new BsonDocument('$out', new BsonString(outCollection.name))],
+                                                    new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
                                                    AggregationOptions.builder().build())
         op.executeAsync(getAsyncBinding()).get();
 
         then:
-        getCollectionHelper(outCollection.namespace).count() == 1
+        getCollectionHelper(aggregateCollectionNamespace).count() == 1
     }
 
 }

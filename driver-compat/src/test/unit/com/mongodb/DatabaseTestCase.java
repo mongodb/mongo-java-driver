@@ -19,6 +19,7 @@ package com.mongodb;
 import org.junit.After;
 import org.junit.Before;
 
+import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;
 
 public class DatabaseTestCase {
@@ -31,7 +32,8 @@ public class DatabaseTestCase {
 
     @Before
     public void setUp() {
-        database = Fixture.getDefaultDatabase();
+        database = getMongoClient().getDB(getDefaultDatabaseName());
+
         //create a brand new collection for each test
         collectionName = getClass().getName() + System.nanoTime();
         collection = database.getCollection(collectionName);

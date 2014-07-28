@@ -18,9 +18,9 @@ package com.mongodb.operation
 
 import category.Async
 import category.Slow
+import com.mongodb.ClusterFixture
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
-import com.mongodb.client.Fixture
-import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.protocol.AcknowledgedBulkWriteResult
 import org.bson.BsonBoolean
@@ -34,9 +34,9 @@ import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
 
-import static Fixture.getAsyncBinding
-import static Fixture.getAsyncSingleConnectionBinding
-import static Fixture.serverVersionAtLeast
+import static ClusterFixture.getAsyncBinding
+import static ClusterFixture.getAsyncSingleConnectionBinding
+import static ClusterFixture.serverVersionAtLeast
 import static WriteConcern.ACKNOWLEDGED
 import static WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.operation.WriteRequest.Type.REMOVE
@@ -44,7 +44,7 @@ import static com.mongodb.operation.WriteRequest.Type.UPDATE
 import static org.junit.Assume.assumeTrue
 
 @Category(Async)
-class MixedBulkWriteOperationAsyncSpecification extends FunctionalSpecification {
+class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpecification {
 
     def 'when no document with the same id exists, should insert the document'() {
         given:
@@ -522,7 +522,7 @@ class MixedBulkWriteOperationAsyncSpecification extends FunctionalSpecification 
 
     // using w = 5 to force a timeout
     def 'should throw bulk write exception with a write concern error when wtimeout is exceeded'() {
-        assumeTrue(Fixture.isDiscoverableReplicaSet())
+        assumeTrue(ClusterFixture.isDiscoverableReplicaSet())
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new InsertRequest<Document>(new Document('_id', 1))],
@@ -537,7 +537,7 @@ class MixedBulkWriteOperationAsyncSpecification extends FunctionalSpecification 
     }
 
     def 'when there is a duplicate key error and a write concern error, both should be reported'() {
-        assumeTrue(Fixture.isDiscoverableReplicaSet())
+        assumeTrue(ClusterFixture.isDiscoverableReplicaSet())
 
         given:
         getCollectionHelper().insertDocuments(getTestInserts())

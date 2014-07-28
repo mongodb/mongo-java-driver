@@ -18,24 +18,22 @@ package com.mongodb.binding;
 
 import category.ReplicaSet;
 import com.mongodb.ServerAddress;
-import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.connection.Connection;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import static com.mongodb.client.Fixture.getCluster;
+import static com.mongodb.ClusterFixture.getCluster;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 
 @Category(ReplicaSet.class)
-public class PinnedBindingTest extends DatabaseTestCase {
+public class PinnedBindingTest {
     private PinnedBinding binding;
 
     @Before
     public void setUp() {
-        super.setUp();
         binding = new PinnedBinding(getCluster(), 1, SECONDS);
     }
 

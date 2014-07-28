@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
-
 package com.mongodb.connection
-
 import com.mongodb.MongoException
-import com.mongodb.ReadPreference
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerAddress
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.operation.CommandReadOperation
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.mongodb.CommandResult
-import org.mongodb.Document
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.client.Fixture.getCredentialList
-import static com.mongodb.client.Fixture.getPrimary
-import static com.mongodb.client.Fixture.getSSLSettings
-import static com.mongodb.client.Fixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.getCredentialList
+import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.ClusterFixture.getSSLSettings
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerMonitor.exceptionHasChanged
 import static com.mongodb.connection.ServerMonitor.stateHasChanged
 import static java.util.Arrays.asList
 import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
 
-class ServerMonitorSpecification extends FunctionalSpecification {
+class ServerMonitorSpecification extends OperationFunctionalSpecification {
     ServerDescription newDescription
     ServerMonitor serverMonitor
     CountDownLatch latch = new CountDownLatch(1)
@@ -75,7 +75,8 @@ class ServerMonitorSpecification extends FunctionalSpecification {
 
     def 'should return server version'() {
         given:
-        CommandResult commandResult = database.executeCommand(new Document('buildinfo', 1), ReadPreference.primary())
+        CommandResult commandResult = new CommandReadOperation('admin', new BsonDocument('buildinfo', new BsonInt32(1)))
+                .execute(getBinding())
         def expectedVersion = new ServerVersion(commandResult.getResponse().getArray('versionArray')
                                                              .subList(0, 3)*.getValue() as List<Integer>)
 
@@ -93,7 +94,8 @@ class ServerMonitorSpecification extends FunctionalSpecification {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 5)))
 
         given:
-        CommandResult commandResult = database.executeCommand(new Document('ismaster', 1), ReadPreference.primary())
+        CommandResult commandResult = new CommandReadOperation('admin', new BsonDocument('ismaster', new BsonInt32(1)))
+                .execute(getBinding())
         def expected = commandResult.response.getInt32('maxWriteBatchSize').getValue()
 
         when:

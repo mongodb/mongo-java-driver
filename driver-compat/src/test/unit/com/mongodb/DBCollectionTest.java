@@ -44,12 +44,12 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
+import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
-import static com.mongodb.client.Fixture.disableMaxTimeFailPoint;
-import static com.mongodb.client.Fixture.enableMaxTimeFailPoint;
-import static com.mongodb.client.Fixture.isDiscoverableReplicaSet;
-import static com.mongodb.client.Fixture.isSharded;
-import static com.mongodb.client.Fixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.instanceOf;

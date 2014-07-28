@@ -20,11 +20,11 @@ import category.Async
 import category.Slow
 import com.mongodb.Block
 import com.mongodb.MongoInternalException
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.async.MongoFuture
 import com.mongodb.binding.AsyncClusterBinding
 import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.binding.AsyncReadBinding
-import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.connection.Connection
 import com.mongodb.protocol.QueryProtocol
@@ -36,17 +36,17 @@ import org.mongodb.CreateCollectionOptions
 import org.mongodb.Document
 import spock.lang.Shared
 
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getAsyncCluster
+import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ReadPreference.primary
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getAsyncCluster
-import static com.mongodb.client.Fixture.getBinding
-import static com.mongodb.client.Fixture.isSharded
 import static com.mongodb.operation.QueryFlag.Exhaust
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assume.assumeFalse
 
 @Category(Async)
-class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
+class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecification {
 
     @Shared
     List<Document> documentList
@@ -76,7 +76,7 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         QueryResult<Document> firstBatch = executeQuery()
 
         when:
-        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+        new MongoAsyncQueryCursor<Document>(getNamespace(),
                                             firstBatch, 0, 2, new DocumentCodec(),
                                             source)
                 .forEach(new TestBlock()).get()
@@ -90,7 +90,7 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         QueryResult<Document> firstBatch = executeQuery()
 
         when:
-        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+        new MongoAsyncQueryCursor<Document>(getNamespace(),
                                             firstBatch, 100, 0, new DocumentCodec(),
                                             source)
                 .forEach(new TestBlock()).get()
@@ -109,7 +109,7 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
                                                         connection)
 
         when:
-        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+        new MongoAsyncQueryCursor<Document>(getNamespace(),
                                             firstBatch, 0, 2, new DocumentCodec(),
                                             connection)
                 .forEach(new TestBlock()).get()
@@ -129,7 +129,7 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection)
 
         when:
-        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+        new MongoAsyncQueryCursor<Document>(getNamespace(),
                                             firstBatch, 5, 2, new DocumentCodec(),
                                             connection)
                 .forEach(new TestBlock()).get()
@@ -150,7 +150,7 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection)
 
         when:
-        new MongoAsyncQueryCursor<Document>(collection.getNamespace(), firstBatch, 5, 2, new DocumentCodec(), connection)
+        new MongoAsyncQueryCursor<Document>(getNamespace(), firstBatch, 5, 2, new DocumentCodec(), connection)
                 .forEach(new TestBlock(1)).get()
 
         then:
@@ -174,7 +174,7 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         TestBlock block = new TestBlock(1)
 
         when:
-        new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+        new MongoAsyncQueryCursor<Document>(getNamespace(),
                                             firstBatch, 5, 2, new DocumentCodec(),
                                             connection)
                 .forEach(block).get()
@@ -203,7 +203,7 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         TestBlock block = new TestBlock(2)
 
         when:
-        MongoFuture<Void> future = new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+        MongoFuture<Void> future = new MongoAsyncQueryCursor<Document>(getNamespace(),
                                                                        firstBatch, 5, 2, new DocumentCodec(),
                                                                        source).forEach(block)
         then:
@@ -232,7 +232,7 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
         QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection)
 
         when:
-        MongoAsyncQueryCursor<Document> asyncCursor = new MongoAsyncQueryCursor<Document>(collection.getNamespace(),
+        MongoAsyncQueryCursor<Document> asyncCursor = new MongoAsyncQueryCursor<Document>(getNamespace(),
                                                                                          firstBatch, 5, 2, new DocumentCodec(),
                                                                                          connection);
 
@@ -266,7 +266,7 @@ class MongoAsyncQueryCursorSpecification extends FunctionalSpecification {
 
     private QueryResult<Document> executeQuery(final Document query, final int numberToReturn, final EnumSet<QueryFlag> queryFlag,
                                                final Connection connection) {
-        new QueryProtocol<Document>(collection.getNamespace(), queryFlag, 0, numberToReturn,
+        new QueryProtocol<Document>(getNamespace(), queryFlag, 0, numberToReturn,
                                            new BsonDocumentWrapper<Document>(query, new DocumentCodec()), null,
                                            new DocumentCodec()).execute(connection)
     }

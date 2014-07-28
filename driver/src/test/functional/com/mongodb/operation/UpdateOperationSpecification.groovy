@@ -17,7 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -26,12 +26,12 @@ import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getBinding
 import static java.util.Arrays.asList
 
-class UpdateOperationSpecification extends FunctionalSpecification {
+class UpdateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should throw IllegalArgumentException if any top level keys do not start with $'() {
         given:

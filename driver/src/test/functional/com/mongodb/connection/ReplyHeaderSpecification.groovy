@@ -19,12 +19,12 @@
 package com.mongodb.connection
 
 import com.mongodb.MongoInternalException
-import com.mongodb.client.FunctionalSpecification
 import org.bson.io.BasicInputBuffer
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.InputBuffer
+import spock.lang.Specification
 
-class ReplyHeaderSpecification extends FunctionalSpecification {
+class ReplyHeaderSpecification extends Specification {
 
     def 'should parse reply header'() {
         def outputBuffer = new BasicOutputBuffer();

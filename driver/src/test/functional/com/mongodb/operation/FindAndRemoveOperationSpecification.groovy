@@ -17,7 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.client.test.Worker
 import com.mongodb.client.test.WorkerCodec
 import com.mongodb.codecs.DocumentCodec
@@ -26,10 +26,10 @@ import org.bson.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
 
-class FindAndRemoveOperationSpecification extends FunctionalSpecification {
+class FindAndRemoveOperationSpecification extends OperationFunctionalSpecification {
     private final DocumentCodec documentCodec = new DocumentCodec()
     private final WorkerCodec workerCodec = new WorkerCodec()
 

@@ -26,8 +26,8 @@ import org.junit.Test;
 
 import java.util.Collections;
 
-import static com.mongodb.client.Fixture.getPrimary;
-import static com.mongodb.client.Fixture.getSSLSettings;
+import static com.mongodb.ClusterFixture.getPrimary;
+import static com.mongodb.ClusterFixture.getSSLSettings;
 import static java.util.Arrays.asList;
 
 public class AuthenticatingConnectionTest {

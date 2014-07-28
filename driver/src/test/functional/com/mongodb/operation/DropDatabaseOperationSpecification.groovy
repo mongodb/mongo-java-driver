@@ -17,14 +17,14 @@
 package com.mongodb.operation
 
 import category.Async
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
 
-class DropDatabaseOperationSpecification extends FunctionalSpecification {
+class DropDatabaseOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should drop a database that exists'() {
         given:

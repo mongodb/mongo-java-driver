@@ -18,7 +18,7 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.Block
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonString
@@ -28,11 +28,11 @@ import org.mongodb.Document
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getBinding
-import static com.mongodb.client.Fixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 
-class AggregateOperationSpecification extends FunctionalSpecification {
+class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     def setup() {
         Document pete = new Document('name', 'Pete').append('job', 'handyman')

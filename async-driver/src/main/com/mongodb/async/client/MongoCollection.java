@@ -19,7 +19,6 @@ package com.mongodb.async.client;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.client.MongoCollectionOptions;
 import org.bson.codecs.Codec;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;

@@ -43,8 +43,8 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.concurrent.CountDownLatch;
 
-import static com.mongodb.client.Fixture.getAsyncStreamFactory;
-import static com.mongodb.client.Fixture.getPrimary;
+import static com.mongodb.ClusterFixture.getAsyncStreamFactory;
+import static com.mongodb.ClusterFixture.getPrimary;
 import static org.junit.Assert.assertEquals;
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 

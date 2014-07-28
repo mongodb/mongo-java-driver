@@ -18,16 +18,16 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoServerException
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Index
 
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
 import static org.mongodb.OrderBy.ASC
 
-class CreateIndexesSpecification extends FunctionalSpecification {
+class CreateIndexesSpecification extends OperationFunctionalSpecification {
     def idIndex = ['_id': 1]
     def field1Index = ['field': 1]
     def field2Index = ['field2': 1]

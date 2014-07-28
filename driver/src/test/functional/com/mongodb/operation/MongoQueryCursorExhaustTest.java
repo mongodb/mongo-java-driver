@@ -16,10 +16,10 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.FunctionalTest;
 import com.mongodb.ReadPreference;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
-import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.Connection;
 import com.mongodb.protocol.QueryProtocol;
@@ -33,13 +33,13 @@ import org.mongodb.Document;
 
 import java.util.EnumSet;
 
+import static com.mongodb.ClusterFixture.getBinding;
+import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ReadPreference.primary;
-import static com.mongodb.client.Fixture.getBinding;
-import static com.mongodb.client.Fixture.isSharded;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 
-public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
+public class MongoQueryCursorExhaustTest extends FunctionalTest {
 
     private final Binary binary = new Binary(new byte[10000]);
     private EnumSet<QueryFlag> exhaustFlag = EnumSet.of(QueryFlag.Exhaust);
@@ -52,12 +52,12 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         super.setUp();
 
         for (int i = 0; i < 1000; i++) {
-            collection.insert(new Document("_id", i).append("bytes", binary));
+            getCollectionHelper().insertDocuments(new Document("_id", i).append("bytes", binary));
         }
 
         readConnectionSource = getBinding().getReadConnectionSource();
         exhaustConnection = readConnectionSource.getConnection();
-        firstBatch = new QueryProtocol<Document>(collection.getNamespace(), exhaustFlag, 0, 0, new BsonDocument(), null,
+        firstBatch = new QueryProtocol<Document>(getNamespace(), exhaustFlag, 0, 0, new BsonDocument(), null,
                                                  new DocumentCodec())
                      .execute(exhaustConnection);
 
@@ -74,7 +74,7 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
     public void testExhaustReadAllDocuments() {
         assumeFalse(isSharded());
 
-        MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(), firstBatch, 0, 0,
+        MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(getNamespace(), firstBatch, 0, 0,
                                                                            new DocumentCodec(), exhaustConnection);
 
         int count = 0;
@@ -93,14 +93,14 @@ public class MongoQueryCursorExhaustTest extends DatabaseTestCase {
         ConnectionSource source = singleConnectionBinding.getReadConnectionSource();
         Connection connection = source.getConnection();
         try {
-            MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(collection.getNamespace(), firstBatch, 0, 0,
+            MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(getNamespace(), firstBatch, 0, 0,
                                                                                new DocumentCodec(),
                                                                                connection);
 
             cursor.next();
             cursor.close();
 
-            new QueryProtocol<Document>(collection.getNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, new BsonDocument(), null,
+            new QueryProtocol<Document>(getNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, new BsonDocument(), null,
                                         new DocumentCodec())
             .execute(connection);
 

@@ -25,16 +25,16 @@ import org.junit.experimental.categories.Category;
 
 import java.net.UnknownHostException;
 
+import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
+import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
+import static com.mongodb.ClusterFixture.getBinding;
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static com.mongodb.Fixture.getMongoClient;
 import static com.mongodb.ReadPreference.secondary;
-import static com.mongodb.client.Fixture.disableMaxTimeFailPoint;
-import static com.mongodb.client.Fixture.enableMaxTimeFailPoint;
-import static com.mongodb.client.Fixture.getBinding;
-import static com.mongodb.client.Fixture.isDiscoverableReplicaSet;
-import static com.mongodb.client.Fixture.isSharded;
-import static com.mongodb.client.Fixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -151,7 +151,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldDoEval() {
-        assumeFalse(com.mongodb.client.Fixture.isAuthenticated());
+        assumeFalse(ClusterFixture.isAuthenticated());
         String code = "function(name, incAmount) {\n"
                       + "var doc = db.myCollection.findOne( { name : name } );\n"
                       + "doc = doc || { name : name , num : 0 , total : 0 , avg : 0 , _id: 1 };\n"

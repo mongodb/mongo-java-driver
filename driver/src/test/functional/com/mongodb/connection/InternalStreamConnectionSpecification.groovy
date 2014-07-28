@@ -29,8 +29,8 @@ import org.mongodb.MongoNamespace
 import org.mongodb.ServerCursor
 import spock.lang.Specification
 
-import static com.mongodb.client.Fixture.getPrimary
-import static com.mongodb.client.Fixture.getSSLSettings
+import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.ClusterFixture.getSSLSettings
 import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME
 
 class InternalStreamConnectionSpecification extends Specification {

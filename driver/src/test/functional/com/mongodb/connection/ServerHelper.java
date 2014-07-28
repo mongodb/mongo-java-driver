@@ -21,7 +21,7 @@ import com.mongodb.selector.ServerAddressSelector;
 
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.Fixture.getCluster;
+import static com.mongodb.ClusterFixture.getCluster;
 
 public final class ServerHelper {
     public static void checkPool(final ServerAddress address) {

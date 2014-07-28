@@ -22,8 +22,8 @@ import org.junit.experimental.categories.Category;
 
 import java.net.UnknownHostException;
 
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ReadPreference.secondary;
-import static com.mongodb.client.Fixture.isDiscoverableReplicaSet;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 

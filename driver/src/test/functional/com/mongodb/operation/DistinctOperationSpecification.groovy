@@ -17,7 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -25,10 +25,10 @@ import org.bson.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
 
-class DistinctOperationSpecification extends FunctionalSpecification {
+class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should be able to distinct by name'() {
         given:

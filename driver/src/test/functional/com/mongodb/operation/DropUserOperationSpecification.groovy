@@ -21,12 +21,12 @@
 package com.mongodb.operation
 
 import com.mongodb.MongoException
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 
+import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.MongoCredential.createMongoCRCredential
-import static com.mongodb.client.Fixture.getBinding
 
-class DropUserOperationSpecification extends FunctionalSpecification {
+class DropUserOperationSpecification extends OperationFunctionalSpecification {
     def 'should delete user without error'() {
         given:
         User jeff = new User(createMongoCRCredential('jeff', databaseName, '123'.toCharArray()), true)

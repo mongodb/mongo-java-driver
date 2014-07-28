@@ -16,6 +16,9 @@
 
 package com.mongodb;
 
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.MongoDatabaseOptions;
+
 import java.net.UnknownHostException;
 import java.util.List;
 
@@ -202,8 +205,9 @@ public class MongoClient extends Mongo {
      * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
      * standalone server, use the Mongo(ServerAddress) constructor.
      * <p/>
-     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically fail
-     * over to the next server if the closest is down.
+     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all reques        return new
+     * MongoDatabaseImpl(databaseName, this, options.withDefaults(settings)); ts to, and automatically fail over to the next server if the
+     * closest is down.
      *
      * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of
      *                mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
@@ -264,5 +268,16 @@ public class MongoClient extends Mongo {
      */
     public List<MongoCredential> getCredentialsList() {
         return super.getCredentialsList();
+    }
+
+    /**
+     * @param databaseName the name of the database to retrieve
+     * @return a MongoDatabase representing the specified database
+     */
+    public MongoDatabase getDatabase(final String databaseName) {
+        return new MongoDatabaseImpl(databaseName, this, MongoDatabaseOptions.builder()
+                                                                             .writeConcern(getWriteConcern())
+                                                                             .readPreference(getReadPreference())
+                                                                             .build());
     }
 }

@@ -19,24 +19,24 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoExecutionTimeoutException
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.client.Fixture.disableMaxTimeFailPoint
-import static com.mongodb.client.Fixture.enableMaxTimeFailPoint
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getBinding
-import static com.mongodb.client.Fixture.isSharded
-import static com.mongodb.client.Fixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
+import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isSharded
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
 
-class CommandOperationSpecification extends FunctionalSpecification {
+class CommandOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should execute command'() {
         given:
@@ -53,7 +53,7 @@ class CommandOperationSpecification extends FunctionalSpecification {
     def 'should execute command larger than 16MB'() {
         when:
         def result = new CommandReadOperation(getNamespace().databaseName,
-                                              new BsonDocument('findAndModify', new BsonString(collection.getNamespace().fullName))
+                                              new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
                                                       .append('query', new BsonDocument('_id', new BsonInt32(42)))
                                                       .append('update',
                                                               new BsonDocument('_id', new BsonInt32(42))

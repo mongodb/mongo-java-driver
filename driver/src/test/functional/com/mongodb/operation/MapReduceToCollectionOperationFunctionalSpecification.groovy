@@ -17,7 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonJavaScript
@@ -26,10 +26,10 @@ import org.mongodb.Document
 import org.mongodb.MongoNamespace
 import spock.lang.Shared
 
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
 
-class MapReduceToCollectionOperationFunctionalSpecification extends FunctionalSpecification {
+class MapReduceToCollectionOperationFunctionalSpecification extends OperationFunctionalSpecification {
     private final documentCodec = new DocumentCodec()
     def mapReduce = new MapReduce(new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
                                   new BsonJavaScript('function(key, values){ return values.length; }'),

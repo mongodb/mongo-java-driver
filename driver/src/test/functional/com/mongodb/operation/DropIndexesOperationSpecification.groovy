@@ -18,17 +18,17 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoException
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import org.mongodb.Index
 
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
 import static org.mongodb.OrderBy.ASC
 
-class DropIndexesOperationSpecification extends FunctionalSpecification {
+class DropIndexesOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should not error when dropping non-existent index on non-existent collection'() {
         given:

@@ -17,24 +17,22 @@
 package com.mongodb.binding;
 
 import category.ReplicaSet;
-import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.connection.Connection;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-import static com.mongodb.client.Fixture.getAsyncCluster;
+import static com.mongodb.ClusterFixture.getAsyncCluster;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 
 @Category(ReplicaSet.class)
-public class AsyncSingleConnectionBindingTest extends DatabaseTestCase {
+public class AsyncSingleConnectionBindingTest  {
     private AsyncSingleConnectionBinding binding;
 
     @Before
     public void setUp() {
-        super.setUp();
         binding = new AsyncSingleConnectionBinding(getAsyncCluster(), 1, SECONDS);
     }
 

@@ -25,9 +25,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.Fixture.getCredentialList;
-import static com.mongodb.client.Fixture.getPrimary;
-import static com.mongodb.client.Fixture.getSSLSettings;
+import static com.mongodb.ClusterFixture.getCredentialList;
+import static com.mongodb.ClusterFixture.getPrimary;
+import static com.mongodb.ClusterFixture.getSSLSettings;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 

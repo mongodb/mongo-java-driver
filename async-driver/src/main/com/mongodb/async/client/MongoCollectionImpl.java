@@ -21,7 +21,6 @@ import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.SingleResultCallback;

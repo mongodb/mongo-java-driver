@@ -18,17 +18,17 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.Block
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonJavaScript
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
 
-class MapReduceWithInlineResultsOperationFunctionalSpecification extends FunctionalSpecification {
+class MapReduceWithInlineResultsOperationFunctionalSpecification extends OperationFunctionalSpecification {
     private final documentCodec = new DocumentCodec()
     def mapReduce = new MapReduce(new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
                                   new BsonJavaScript('function(key, values){ return values.length; }'))

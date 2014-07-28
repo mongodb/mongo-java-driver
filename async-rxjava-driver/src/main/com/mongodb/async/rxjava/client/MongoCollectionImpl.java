@@ -19,7 +19,7 @@ package com.mongodb.async.rxjava.client;
 import com.mongodb.Block;
 import com.mongodb.MongoException;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.client.MongoCollectionOptions;
+import com.mongodb.async.client.MongoCollectionOptions;
 import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.operation.QueryFlag;
 import org.bson.codecs.Codec;

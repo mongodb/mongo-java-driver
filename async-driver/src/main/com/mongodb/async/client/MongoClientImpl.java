@@ -24,7 +24,6 @@ import com.mongodb.binding.AsyncClusterBinding;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.AsyncWriteBinding;
-import com.mongodb.client.MongoDatabaseOptions;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.operation.AsyncReadOperation;
@@ -48,7 +47,9 @@ class MongoClientImpl implements MongoClient {
     public MongoDatabase getDatabase(final String name) {
         return new MongoDatabaseImpl(name, this, MongoDatabaseOptions.builder()
                                                                      .readPreference(settings.getReadPreference())
-                                                                     .writeConcern(settings.getWriteConcern()).build());
+                                                                     .writeConcern(settings.getWriteConcern())
+                                                                     .build()
+                                                                     .withDefaults(settings));
     }
 
     @Override

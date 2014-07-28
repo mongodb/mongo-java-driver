@@ -26,10 +26,10 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.client.Fixture.disableMaxTimeFailPoint;
-import static com.mongodb.client.Fixture.enableMaxTimeFailPoint;
-import static com.mongodb.client.Fixture.isSharded;
-import static com.mongodb.client.Fixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
+import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
+import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;

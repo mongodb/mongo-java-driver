@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-
 package com.mongodb.operation
 
 import category.Slow
 import com.mongodb.MongoCursorNotFoundException
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.binding.ConnectionSource
-import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.protocol.GetMoreProtocol
 import com.mongodb.protocol.KillCursor
@@ -36,20 +35,18 @@ import org.mongodb.ServerCursor
 
 import java.util.concurrent.CountDownLatch
 
-import static com.mongodb.client.Fixture.getBinding
+import static com.mongodb.ClusterFixture.getBinding
+import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
 
-class MongoQueryCursorSpecification extends FunctionalSpecification {
+class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
     private ConnectionSource connectionSource
     private MongoQueryCursor<Document> cursor
 
     def setup() {
-        for (
-                int i = 0;
-                i < 10;
-                i++) {
-            collection.insert(new Document('_id', i))
+        for (int i = 0; i < 10; i++) {
+            collectionHelper.insertDocuments(new Document('_id', i))
         }
         connectionSource = getBinding().getReadConnectionSource()
     }
@@ -65,7 +62,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 0, 0, new DocumentCodec(),
                                                 connectionSource)
 
@@ -78,7 +75,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         def firstBatch = executeQuery()
 
         when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 0, 0, new DocumentCodec(),
                                                 connectionSource)
         then:
@@ -89,7 +86,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         given:
         def firstBatch = executeQuery()
 
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 0, 0, new DocumentCodec(),
                                                 connectionSource)
 
@@ -120,7 +117,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         given:
         def firstBatch = executeQuery(1)
 
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 2, 0, new DocumentCodec(),
                                                 connectionSource)
         when:
@@ -136,7 +133,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         given:
         def firstBatch = executeQuery()
 
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 0, 0, new DocumentCodec(),
                                                 connectionSource)
 
@@ -155,7 +152,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         given:
         def firstBatch = executeQuery(5)
 
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 5, 0, new DocumentCodec(),
                                                 connectionSource)
 
@@ -174,7 +171,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         given:
         def firstBatch = executeQuery()
 
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 0, 0, new DocumentCodec(),
                                                 connectionSource)
 
@@ -190,7 +187,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 0, 2, new DocumentCodec(),
                                                 connectionSource)
 
@@ -221,15 +218,14 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
 
     @Category(Slow)
     def 'test tailable'() {
-        collection.tools().drop()
-        database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000))
+        collectionHelper.create(new CreateCollectionOptions(collectionName, true, 1000))
 
-        collection.insert(new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
+        collectionHelper.insertDocuments(new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2,
                                       EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData))
 
         when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 0, 2, new DocumentCodec(),
                                                 connectionSource)
 
@@ -244,9 +240,9 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
             void run() {
                 try {
                     Thread.sleep(500)
-                    collection.insert(new Document('_id', 2).append('ts', new BsonTimestamp(6, 0)))
+                    MongoQueryCursorSpecification.this.collectionHelper
+                                                 .insertDocuments(new Document('_id', 2).append('ts', new BsonTimestamp(6, 0)))
                 } catch (ignored) {
-                    // all good
                 }
                 latch.countDown()
             }
@@ -259,21 +255,20 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         cursor.next().get('_id') == 2
 
         cleanup:
-        latch.await()
+        latch.await(5, SECONDS)
     }
 
     @Category(Slow)
     def 'test tailable interrupt'() throws InterruptedException {
-        collection.tools().drop()
-        database.tools().createCollection(new CreateCollectionOptions(collectionName, true, 1000))
+        collectionHelper.create(new CreateCollectionOptions(collectionName, true, 1000))
 
-        collection.insert(new Document('_id', 1))
+        collectionHelper.insertDocuments(new Document('_id', 1))
 
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2,
                                       EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData))
 
         when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 0, 2, new DocumentCodec(),
                                                 connectionSource)
 
@@ -306,7 +301,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         given:
         def firstBatch = executeQuery(5)
 
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 5, 0, new DocumentCodec(),
                                                 connectionSource)
 
@@ -324,7 +319,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         given:
         def firstBatch = executeQuery(3)
 
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 5, 3, new DocumentCodec(),
                                                 connectionSource)
         ServerCursor serverCursor = cursor.getServerCursor()
@@ -343,31 +338,41 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
     }
 
     def 'test limit with get more'() {
+        given:
+        def firstBatch = executeQuery(2)
+
         when:
-        List<Document> list = []
-        collection.find().withQueryOptions(new QueryOptions().batchSize(2)).limit(5).into(list)
+        cursor = new MongoQueryCursor<Document>(getNamespace(), firstBatch, 5, 2, new DocumentCodec(), connectionSource)
 
         then:
-        list.size() == 5
+        cursor.next() != null
+        cursor.next() != null
+        cursor.next() != null
+        cursor.next() != null
+        cursor.next() != null
+        !cursor.hasNext()
     }
 
     def 'test limit with large documents'() {
+        given:
         char[] array = 'x' * 16000
         String bigString = new String(array)
 
-        for (
-                int i = 11;
-                i < 1000;
-                i++) {
-            collection.insert(new Document('_id', i).append('s', bigString))
+        for (int i = 11; i < 1000; i++) {
+            collectionHelper.insertDocuments(new Document('_id', i).append('s', bigString))
         }
 
+        def firstBatch = executeQuery()
+
         when:
-        List<Document> list = []
-        collection.find().limit(300).into(list)
+        cursor = new MongoQueryCursor<Document>(getNamespace(), firstBatch, 300, 0, new DocumentCodec(), connectionSource)
 
         then:
-        list.size() == 300
+        for (int i = 0; i < 300; i++) {
+           cursor.hasNext()
+           cursor.next() != null
+        }
+        !cursor.hasNext()
     }
 
     def 'test normal loop with get more'() {
@@ -375,7 +380,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 0, 2, new DocumentCodec(),
                                                 connectionSource)
 
@@ -395,15 +400,12 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 0, 2, new DocumentCodec(),
                                                 connectionSource)
 
         then:
-        for (
-                int i = 0;
-                i < 10;
-                i++) {
+        for (int i = 0; i < 10; i++) {
             cursor.next()
         }
         !cursor.hasNext()
@@ -421,7 +423,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
         def firstBatch = executeQuery(2)
 
         when:
-        cursor = new MongoQueryCursor<Document>(collection.getNamespace(),
+        cursor = new MongoQueryCursor<Document>(getNamespace(),
                                                 firstBatch, 0, 2, new DocumentCodec(),
                                                 connectionSource)
 
@@ -452,7 +454,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
     private QueryResult<Document> executeQuery(BsonDocument query, int numberToReturn, EnumSet<QueryFlag> queryFlag) {
         def connection = connectionSource.getConnection()
         try {
-            new QueryProtocol<Document>(collection.getNamespace(), queryFlag, 0, numberToReturn, query, null, new DocumentCodec())
+            new QueryProtocol<Document>(getNamespace(), queryFlag, 0, numberToReturn, query, null, new DocumentCodec())
                     .execute(connection)
         } finally {
             connection.release();
@@ -462,9 +464,7 @@ class MongoQueryCursorSpecification extends FunctionalSpecification {
     private void makeAdditionalGetMoreCall(ServerCursor serverCursor) {
         def connection = connectionSource.getConnection()
         try {
-            new GetMoreProtocol<Document>(collection.getNamespace(), new GetMore(serverCursor, 1, 1, 1),
-                                          collection.getOptions().getDocumentCodec())
-                    .execute(connection)
+            new GetMoreProtocol<Document>(getNamespace(), new GetMore(serverCursor, 1, 1, 1), new DocumentCodec()).execute(connection)
         } finally {
             connection.release()
         }

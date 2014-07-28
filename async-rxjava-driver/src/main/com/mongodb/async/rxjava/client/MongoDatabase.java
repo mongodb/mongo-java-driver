@@ -17,7 +17,7 @@
 package com.mongodb.async.rxjava.client;
 
 import com.mongodb.annotations.Immutable;
-import com.mongodb.client.MongoCollectionOptions;
+import com.mongodb.async.client.MongoCollectionOptions;
 import org.bson.codecs.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;

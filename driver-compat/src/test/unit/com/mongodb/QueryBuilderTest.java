@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-import static com.mongodb.client.Fixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

@@ -16,10 +16,7 @@
 
 package com.mongodb.async.client;
 
-
 import com.mongodb.async.MongoFuture;
-import com.mongodb.client.MongoCollectionOptions;
-import com.mongodb.client.MongoDatabaseOptions;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.operation.CommandWriteOperation;
 import org.bson.BsonDocumentWrapper;

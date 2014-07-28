@@ -15,22 +15,21 @@
  */
 
 package com.mongodb.operation
-
 import category.Async
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.AggregationOptions
 import org.mongodb.Document
 
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getBinding
-import static com.mongodb.client.Fixture.serverVersionAtLeast
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static org.junit.Assume.assumeTrue
 
-class AggregateExplainOperationSpecification extends FunctionalSpecification {
+class AggregateExplainOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should be able to explain an empty pipeline'() {
         assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))

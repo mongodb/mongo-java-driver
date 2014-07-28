@@ -18,22 +18,22 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoException
-import com.mongodb.client.FunctionalSpecification
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonSerializationException
 import org.bson.types.Binary
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getAsyncSingleConnectionBinding
+import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.getPinnedBinding
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
-import static com.mongodb.client.Fixture.getAsyncBinding
-import static com.mongodb.client.Fixture.getAsyncSingleConnectionBinding
-import static com.mongodb.client.Fixture.getBinding
-import static com.mongodb.client.Fixture.getPinnedBinding
 import static java.util.Arrays.asList
 
-class InsertOperationSpecification extends FunctionalSpecification {
+class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should return correct result'() {
         given:
         def insert = new InsertRequest<Document>(new Document('_id', 1))

@@ -18,9 +18,9 @@
 package com.mongodb.operation
 
 import category.Slow
+import com.mongodb.ClusterFixture
+import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
-import com.mongodb.client.Fixture
-import com.mongodb.client.FunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.protocol.AcknowledgedBulkWriteResult
 import org.bson.BsonBoolean
@@ -34,16 +34,16 @@ import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
 
-import static Fixture.getBinding
-import static Fixture.getPinnedBinding
-import static Fixture.serverVersionAtLeast
+import static ClusterFixture.getBinding
+import static ClusterFixture.getPinnedBinding
+import static ClusterFixture.serverVersionAtLeast
 import static WriteConcern.ACKNOWLEDGED
 import static WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.operation.WriteRequest.Type.REMOVE
 import static com.mongodb.operation.WriteRequest.Type.UPDATE
 import static org.junit.Assume.assumeTrue
 
-class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
+class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecification {
 
     def 'when no document with the same id exists, should insert the document'() {
         given:
@@ -520,7 +520,7 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
 
     // using w = 5 to force a timeout
     def 'should throw bulk write exception with a write concern error when wtimeout is exceeded'() {
-        assumeTrue(Fixture.isDiscoverableReplicaSet())
+        assumeTrue(ClusterFixture.isDiscoverableReplicaSet())
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new InsertRequest<Document>(new Document('_id', 1))],
@@ -535,7 +535,7 @@ class MixedBulkWriteOperationSpecification extends FunctionalSpecification {
     }
 
     def 'when there is a duplicate key error and a write concern error, both should be reported'() {
-        assumeTrue(Fixture.isDiscoverableReplicaSet())
+        assumeTrue(ClusterFixture.isDiscoverableReplicaSet())
 
         given:
         getCollectionHelper().insertDocuments(getTestInserts())

@@ -19,6 +19,9 @@ package com.mongodb.client.test;
 import com.mongodb.WriteConcern;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.operation.CountOperation;
+import com.mongodb.operation.CreateCollectionOperation;
+import com.mongodb.operation.CreateIndexesOperation;
+import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.Find;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
@@ -26,20 +29,31 @@ import com.mongodb.operation.QueryOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
+import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
+import org.mongodb.Index;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mongodb.client.Fixture.getBinding;
+import static com.mongodb.ClusterFixture.getBinding;
 import static java.util.Arrays.asList;
 
 public final class CollectionHelper<T> {
 
     private Codec<T> codec;
     private MongoNamespace namespace;
+
+    public static void drop(final MongoNamespace namespace) {
+        new DropCollectionOperation(namespace).execute(getBinding());
+    }
+
+    public void create(final CreateCollectionOptions options) {
+        drop(namespace);
+        new CreateCollectionOperation(namespace.getDatabaseName(), options).execute(getBinding());
+    }
 
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
         this.codec = codec;
@@ -48,6 +62,14 @@ public final class CollectionHelper<T> {
 
     @SuppressWarnings("unchecked")
     public void insertDocuments(final T... documents) {
+        for (T document : documents) {
+            new InsertOperation<T>(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                   asList(new InsertRequest<T>(document)), codec).execute(getBinding());
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void insertDocuments(final List<T> documents) {
         for (T document : documents) {
             new InsertOperation<T>(namespace, true, WriteConcern.ACKNOWLEDGED,
                                    asList(new InsertRequest<T>(document)), codec).execute(getBinding());
@@ -90,5 +112,9 @@ public final class CollectionHelper<T> {
 
     public BsonDocument wrap(final Document document) {
         return new BsonDocumentWrapper<Document>(document, new DocumentCodec());
+    }
+
+    public void createIndexes(final List<Index> indexes) {
+        new CreateIndexesOperation(indexes, namespace).execute(getBinding());
     }
 }
