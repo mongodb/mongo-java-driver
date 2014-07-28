@@ -20,6 +20,7 @@ import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
+import org.bson.codecs.BsonDocumentCodec
 import org.mongodb.BulkWriteError
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.CommandResult
@@ -144,6 +145,6 @@ class WriteCommandHelperSpecification extends Specification {
 
 
     def getCommandResult(BsonDocument document) {
-        new CommandResult(new ServerAddress(), document, 1)
+        new CommandResult<BsonDocument>(new ServerAddress(), document, 1, new BsonDocumentCodec())
     }
 }

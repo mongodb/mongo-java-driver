@@ -50,10 +50,10 @@ public class PingOperation implements AsyncReadOperation<Double>, ReadOperation<
     //TODO: it's not clear from the documentation what the return type should be
     //http://docs.mongodb.org/manual/reference/command/ping/
     @SuppressWarnings("unchecked")
-    private Function<CommandResult, Double> transformer() {
-        return new Function<CommandResult, Double>() {
+    private Function<CommandResult<BsonDocument>, Double> transformer() {
+        return new Function<CommandResult<BsonDocument>, Double>() {
             @Override
-            public Double apply(final CommandResult result) {
+            public Double apply(final CommandResult<BsonDocument> result) {
                 return result.getResponse().getDouble("ok").doubleValue();
             }
         };

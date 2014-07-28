@@ -36,7 +36,7 @@ import static org.mongodb.Fixture.serverVersionAtLeast
 class AggregateToCollectionOperationSpecification extends FunctionalSpecification {
 
     @Shared
-            outCollection
+    outCollection
 
     def setup() {
         outCollection = initialiseCollection(getDefaultDatabase(), 'aggregateCollection')

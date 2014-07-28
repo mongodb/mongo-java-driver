@@ -39,17 +39,17 @@ import static org.mongodb.operation.WriteRequest.Type.UPDATE;
 
 final class WriteCommandResultHelper {
 
-    static boolean hasError(final CommandResult commandResult) {
+    static boolean hasError(final CommandResult<BsonDocument> commandResult) {
         return commandResult.getResponse().get("writeErrors") != null || commandResult.getResponse().get("writeConcernError") != null;
     }
 
-    static BulkWriteResult getBulkWriteResult(final WriteRequest.Type type, final CommandResult commandResult) {
+    static BulkWriteResult getBulkWriteResult(final WriteRequest.Type type, final CommandResult<BsonDocument> commandResult) {
         int count = getCount(commandResult);
         List<BulkWriteUpsert> upsertedItems = getUpsertedItems(commandResult);
         return new AcknowledgedBulkWriteResult(type, count - upsertedItems.size(), getModifiedCount(type, commandResult), upsertedItems);
     }
 
-    static BulkWriteException getBulkWriteException(final WriteRequest.Type type, final CommandResult commandResult) {
+    static BulkWriteException getBulkWriteException(final WriteRequest.Type type, final CommandResult<BsonDocument> commandResult) {
         if (!hasError(commandResult)) {
             throw new MongoInternalException("This method should not have been called");
         }
@@ -58,7 +58,7 @@ final class WriteCommandResultHelper {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<BulkWriteError> getWriteErrors(final CommandResult commandResult) {
+    private static List<BulkWriteError> getWriteErrors(final CommandResult<BsonDocument> commandResult) {
         List<BulkWriteError> writeErrors = new ArrayList<BulkWriteError>();
         BsonArray writeErrorsDocuments = (BsonArray) commandResult.getResponse().get("writeErrors");
         if (writeErrorsDocuments != null) {
@@ -73,7 +73,7 @@ final class WriteCommandResultHelper {
         return writeErrors;
     }
 
-    private static WriteConcernError getWriteConcernError(final CommandResult commandResult) {
+    private static WriteConcernError getWriteConcernError(final CommandResult<BsonDocument> commandResult) {
         BsonDocument writeConcernErrorDocument = (BsonDocument) commandResult.getResponse().get("writeConcernError");
         if (writeConcernErrorDocument == null) {
             return null;
@@ -85,7 +85,7 @@ final class WriteCommandResultHelper {
     }
 
     @SuppressWarnings("unchecked")
-    private static List<BulkWriteUpsert> getUpsertedItems(final CommandResult commandResult) {
+    private static List<BulkWriteUpsert> getUpsertedItems(final CommandResult<BsonDocument> commandResult) {
         BsonValue upsertedValue = commandResult.getResponse().get("upserted");
         if (upsertedValue == null) {
             return Collections.emptyList();
@@ -100,11 +100,11 @@ final class WriteCommandResultHelper {
         }
     }
 
-    private static int getCount(final CommandResult commandResult) {
+    private static int getCount(final CommandResult<BsonDocument> commandResult) {
         return commandResult.getResponse().getNumber("n").intValue();
     }
 
-    private static Integer getModifiedCount(final WriteRequest.Type type, final CommandResult commandResult) {
+    private static Integer getModifiedCount(final WriteRequest.Type type, final CommandResult<BsonDocument> commandResult) {
         BsonNumber modifiedCount = commandResult.getResponse().getNumber("nModified",
                                                      (type == UPDATE || type == REPLACE) ? null : new BsonInt32(0));
         return modifiedCount == null ? null : modifiedCount.intValue();

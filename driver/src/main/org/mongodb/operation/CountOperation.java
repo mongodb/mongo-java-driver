@@ -18,7 +18,6 @@ package org.mongodb.operation;
 
 import org.bson.BsonDocument;
 import org.bson.BsonString;
-import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.CommandResult;
 import org.mongodb.Function;
 import org.mongodb.MongoFuture;
@@ -48,20 +47,18 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
 
     public Long execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, asCommandDocument(), new BsonDocumentCodec(), binding,
-                                             transformer());
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), asCommandDocument(), binding, transformer());
     }
 
     @Override
     public MongoFuture<Long> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, asCommandDocument(), new BsonDocumentCodec(),
-                                                  binding, transformer());
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), asCommandDocument(), binding, transformer());
     }
 
-    private Function<CommandResult, Long> transformer() {
-        return new Function<CommandResult, Long>() {
+    private Function<CommandResult<BsonDocument>, Long> transformer() {
+        return new Function<CommandResult<BsonDocument>, Long>() {
             @Override
-            public Long apply(final CommandResult result) {
+            public Long apply(final CommandResult<BsonDocument> result) {
                 return (result.getResponse().getNumber("n")).longValue();
             }
         };

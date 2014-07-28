@@ -17,6 +17,7 @@
 package org.mongodb.operation;
 
 import org.bson.BsonDocument;
+import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.binding.AsyncReadBinding;
@@ -30,22 +31,24 @@ import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  *
  * @since 3.0
  */
-public class CommandReadOperation implements AsyncReadOperation<CommandResult>, ReadOperation<CommandResult> {
+public class CommandReadOperation<T> implements AsyncReadOperation<CommandResult<T>>, ReadOperation<CommandResult<T>> {
     private final String database;
-    private final BsonDocument commandDocument;
+    private final BsonDocument command;
+    private final Decoder<T> decoder;
 
-    public CommandReadOperation(final String database, final BsonDocument command) {
+    public CommandReadOperation(final String database, final BsonDocument command, final Decoder<T> decoder) {
         this.database = database;
-        this.commandDocument = command;
+        this.command = command;
+        this.decoder = decoder;
     }
 
     @Override
-    public CommandResult execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(database, commandDocument, binding);
+    public CommandResult<T> execute(final ReadBinding binding) {
+        return executeWrappedCommandProtocol(database, command, decoder, binding);
     }
 
     @Override
-    public MongoFuture<CommandResult> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(database, commandDocument, binding);
+    public MongoFuture<CommandResult<T>> executeAsync(final AsyncReadBinding binding) {
+        return executeWrappedCommandProtocolAsync(database, command, decoder, binding);
     }
 }

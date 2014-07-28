@@ -19,6 +19,7 @@ package org.mongodb.operation
 import category.Async
 import org.bson.BsonDocument
 import org.bson.BsonString
+import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.AggregationOptions
 import org.mongodb.Document
@@ -32,11 +33,13 @@ import static org.mongodb.Fixture.serverVersionAtLeast
 
 class AggregateExplainOperationSpecification extends FunctionalSpecification {
 
+    def decoder = new BsonDocumentCodec()
+
     def 'should be able to explain an empty pipeline'() {
         assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
 
         given:
-        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [], aggregateOptions)
+        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [], aggregateOptions, decoder)
 
         when:
         def result = op.execute(getBinding());
@@ -55,7 +58,7 @@ class AggregateExplainOperationSpecification extends FunctionalSpecification {
         assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
 
         given:
-        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [], aggregateOptions)
+        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [], aggregateOptions, decoder)
 
         when:
         def result = op.executeAsync(getAsyncBinding()).get();
@@ -76,7 +79,7 @@ class AggregateExplainOperationSpecification extends FunctionalSpecification {
         def match = new BsonDocument('job', new BsonString('plumber'))
         AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(),
                                                                      [new BsonDocument('$match', match)],
-                                                                     aggregateOptions)
+                                                                     aggregateOptions, decoder)
 
         when:
         def result = op.execute(getBinding());
@@ -100,7 +103,7 @@ class AggregateExplainOperationSpecification extends FunctionalSpecification {
         def match = new BsonDocument('job', new BsonString('plumber'))
         AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(),
                                                                      [new BsonDocument('$match', match)],
-                                                                     aggregateOptions)
+                                                                     aggregateOptions, decoder)
         when:
         def result = op.executeAsync(getAsyncBinding()).get();
 

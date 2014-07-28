@@ -16,29 +16,30 @@
 
 package org.mongodb.operation;
 
+import org.bson.BsonDocument;
 import org.mongodb.CommandResult;
 import org.mongodb.MapReduceStatistics;
 
 final class MapReduceHelper {
 
-    static MapReduceStatistics createStatistics(final CommandResult commandResult) {
+    static MapReduceStatistics createStatistics(final CommandResult<BsonDocument> commandResult) {
         return new MapReduceStatistics(getInputCount(commandResult), getOutputCount(commandResult), getEmitCount(commandResult),
                                        getDuration(commandResult));
     }
 
-    private static int getInputCount(final CommandResult commandResult) {
+    private static int getInputCount(final CommandResult<BsonDocument> commandResult) {
         return commandResult.getResponse().getDocument("counts").getInt32("input").getValue();
     }
 
-    private static int getOutputCount(final CommandResult commandResult) {
+    private static int getOutputCount(final CommandResult<BsonDocument> commandResult) {
         return commandResult.getResponse().getDocument("counts").getInt32("output").getValue();
     }
 
-    private static int getEmitCount(final CommandResult commandResult) {
+    private static int getEmitCount(final CommandResult<BsonDocument> commandResult) {
         return commandResult.getResponse().getDocument("counts").getInt32("emit").getValue();
     }
 
-    private static int getDuration(final CommandResult commandResult) {
+    private static int getDuration(final CommandResult<BsonDocument> commandResult) {
         return commandResult.getResponse().getInt32("timeMillis").getValue();
     }
 

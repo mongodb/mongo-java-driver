@@ -17,6 +17,7 @@
 package org.mongodb.operation;
 
 import org.bson.BsonDocument;
+import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoFuture;
 import org.mongodb.binding.AsyncWriteBinding;
@@ -30,22 +31,24 @@ import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  *
  * @since 3.0
  */
-public class CommandWriteOperation implements AsyncWriteOperation<CommandResult>, WriteOperation<CommandResult> {
+public class CommandWriteOperation<T> implements AsyncWriteOperation<CommandResult<T>>, WriteOperation<CommandResult<T>> {
     private final String database;
-    private final BsonDocument commandDocument;
+    private final BsonDocument command;
+    private final Decoder<T> decoder;
 
-    public CommandWriteOperation(final String database, final BsonDocument command) {
+    public CommandWriteOperation(final String database, final BsonDocument command, final Decoder<T> decoder) {
         this.database = database;
-        this.commandDocument = command;
+        this.command = command;
+        this.decoder = decoder;
     }
 
     @Override
-    public CommandResult execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(database, commandDocument, binding);
+    public CommandResult<T> execute(final WriteBinding binding) {
+        return executeWrappedCommandProtocol(database, command, decoder, binding);
     }
 
     @Override
-    public MongoFuture<CommandResult> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(database, commandDocument, binding);
+    public MongoFuture<CommandResult<T>> executeAsync(final AsyncWriteBinding binding) {
+        return executeWrappedCommandProtocolAsync(database, command, decoder, binding);
     }
 }

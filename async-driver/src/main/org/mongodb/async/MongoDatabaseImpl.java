@@ -62,10 +62,11 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public MongoFuture<CommandResult> executeCommand(final Document commandDocument) {
-        return client.execute(new CommandWriteOperation(name, new BsonDocumentWrapper<Document>(commandDocument,
-                                                                                                options.getDocumentCodec())
-        ));
+    public MongoFuture<CommandResult<Document>> executeCommand(final Document commandDocument) {
+        return client.execute(new CommandWriteOperation<Document>(name,
+                                                                  new BsonDocumentWrapper<Document>(commandDocument,
+                                                                                                    options.getDocumentCodec()),
+                                                                  options.getDocumentCodec()));
     }
 
     @Override

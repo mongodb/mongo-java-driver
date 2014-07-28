@@ -16,6 +16,9 @@
 
 package org.mongodb;
 
+import org.bson.BsonDocument;
+import org.mongodb.connection.ServerAddress;
+
 /**
  * A duplicate key error.
  *
@@ -24,7 +27,8 @@ package org.mongodb;
 public class MongoDuplicateKeyException extends MongoWriteException {
     private static final long serialVersionUID = 3661905154229799985L;
 
-    public MongoDuplicateKeyException(final int errorCode, final String errorMessage, final CommandResult commandResult) {
-        super(errorCode, errorMessage, commandResult);
+    public MongoDuplicateKeyException(final int errorCode, final String errorMessage, final BsonDocument response,
+                                      final ServerAddress serverAddress) {
+        super(errorCode, errorMessage, response, serverAddress);
     }
 }

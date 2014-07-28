@@ -75,7 +75,7 @@ public interface MongoDatabase {
      * @param commandDocument the document describing the command to execute.
      * @return a future representation the completion of the command
      */
-    MongoFuture<CommandResult> executeCommand(Document commandDocument);
+    MongoFuture<CommandResult<Document>> executeCommand(Document commandDocument);
 
     /**
      * @return the DatabaseAdministration that provides admin methods that can be performed

@@ -74,7 +74,8 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
             @Override
             public MongoFuture<Void> call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    return executeWrappedCommandProtocolAsync(database, getCommand(), connection, new VoidTransformer<CommandResult>());
+                    return executeWrappedCommandProtocolAsync(database, getCommand(), connection,
+                                                              new VoidTransformer<CommandResult<BsonDocument>>());
                 } else {
                     return executeProtocolAsync(getCollectionBasedProtocol(), connection, new VoidTransformer<WriteResult>());
                 }

@@ -25,19 +25,19 @@ import org.mongodb.connection.SingleResultCallback;
 import org.mongodb.diagnostics.Loggers;
 import org.mongodb.diagnostics.logging.Logger;
 
-class CommandResultCallback extends CommandResultBaseCallback {
+class CommandResultCallback<T> extends CommandResultBaseCallback<T> {
     public static final Logger LOGGER = Loggers.getLogger("protocol.command");
 
-    private final SingleResultCallback<CommandResult> callback;
+    private final SingleResultCallback<CommandResult<T>> callback;
 
-    public CommandResultCallback(final SingleResultCallback<CommandResult> callback, final Decoder<BsonDocument> decoder,
-                                 final long requestId, final ServerAddress serverAddress) {
-        super(decoder, requestId, serverAddress);
+    public CommandResultCallback(final SingleResultCallback<CommandResult<T>> callback, final Decoder<T> decoder,
+                                 final Decoder<BsonDocument> rawDecoder, final long requestId, final ServerAddress serverAddress) {
+        super(decoder, rawDecoder, requestId, serverAddress);
         this.callback = callback;
     }
 
     @Override
-    protected boolean callCallback(final CommandResult commandResult, final MongoException e) {
+    protected boolean callCallback(final CommandResult<T> commandResult, final MongoException e) {
         if (e != null) {
             callback.onResult(null, e);
         } else {

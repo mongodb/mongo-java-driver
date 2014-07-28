@@ -33,9 +33,9 @@ class NativeAuthenticator extends Authenticator {
     @Override
     public void authenticate() {
         try {
-            CommandResult nonceResponse = executeCommand(getCredential().getSource(),
-                                                         NativeAuthenticationHelper.getNonceCommand(),
-                                                         getInternalConnection());
+            CommandResult<BsonDocument> nonceResponse = executeCommand(getCredential().getSource(),
+                                                                       NativeAuthenticationHelper.getNonceCommand(),
+                                                                       getInternalConnection());
 
             BsonDocument authCommand = getAuthCommand(getCredential().getUserName(),
                                                       getCredential().getPassword(),

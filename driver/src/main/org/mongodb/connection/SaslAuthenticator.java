@@ -39,7 +39,7 @@ abstract class SaslAuthenticator extends Authenticator {
         SaslClient saslClient = createSaslClient();
         try {
             byte[] response = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
-            CommandResult res = sendSaslStart(response);
+            CommandResult<BsonDocument> res = sendSaslStart(response);
 
             BsonInt32 conversationId = (BsonInt32) res.getResponse().get("conversationId");
 
@@ -66,11 +66,11 @@ abstract class SaslAuthenticator extends Authenticator {
 
     protected abstract SaslClient createSaslClient();
 
-    private CommandResult sendSaslStart(final byte[] outToken) {
+    private CommandResult<BsonDocument> sendSaslStart(final byte[] outToken) {
         return executeCommand(getCredential().getSource(), createSaslStartCommandDocument(outToken), getInternalConnection());
     }
 
-    private CommandResult sendSaslContinue(final BsonInt32 conversationId, final byte[] outToken) {
+    private CommandResult<BsonDocument> sendSaslContinue(final BsonInt32 conversationId, final byte[] outToken) {
         return executeCommand(getCredential().getSource(), createSaslContinueDocument(conversationId, outToken), getInternalConnection());
     }
 

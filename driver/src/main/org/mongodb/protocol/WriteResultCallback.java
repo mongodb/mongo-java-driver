@@ -29,7 +29,7 @@ import org.mongodb.operation.SingleResultFuture;
 import org.mongodb.operation.SingleResultFutureCallback;
 import org.mongodb.protocol.message.RequestMessage;
 
-class WriteResultCallback extends CommandResultBaseCallback {
+class WriteResultCallback<T> extends CommandResultBaseCallback<T> {
     private final SingleResultFuture<WriteResult> future;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
@@ -38,12 +38,12 @@ class WriteResultCallback extends CommandResultBaseCallback {
     private final Connection connection;
 
     // CHECKSTYLE:OFF
-    public WriteResultCallback(final SingleResultFuture<WriteResult> future, final Decoder<BsonDocument> decoder,
-                               final MongoNamespace namespace, final RequestMessage nextMessage,
-                               final boolean ordered, final WriteConcern writeConcern, final long requestId,
-                               final Connection connection) {
+    public WriteResultCallback(final SingleResultFuture<WriteResult> future, final Decoder<T> decoder,
+                               final Decoder<BsonDocument> rawDecoder, final MongoNamespace namespace,
+                               final RequestMessage nextMessage, final boolean ordered, final WriteConcern writeConcern,
+                               final long requestId, final Connection connection) {
         // CHECKSTYLE:ON
-        super(decoder, requestId, connection.getServerAddress());
+        super(decoder, rawDecoder, requestId, connection.getServerAddress());
         this.future = future;
         this.namespace = namespace;
         this.nextMessage = nextMessage;
@@ -53,7 +53,7 @@ class WriteResultCallback extends CommandResultBaseCallback {
     }
 
     @Override
-    protected boolean callCallback(final CommandResult commandResult, final MongoException e) {
+    protected boolean callCallback(final CommandResult<T> commandResult, final MongoException e) {
         boolean done = true;
         if (e != null) {
             future.init(null, e);

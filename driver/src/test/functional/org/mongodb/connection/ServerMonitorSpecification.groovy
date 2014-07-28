@@ -66,9 +66,8 @@ class ServerMonitorSpecification extends FunctionalSpecification {
 
     def 'should return server version'() {
         given:
-        CommandResult commandResult = database.executeCommand(new Document('buildinfo', 1), ReadPreference.primary())
-        def expectedVersion = new ServerVersion(commandResult.getResponse().getArray('versionArray')
-                                                             .subList(0, 3)*.getValue() as List<Integer>)
+        CommandResult<Document> commandResult = database.executeCommand(new Document('buildinfo', 1), ReadPreference.primary())
+        def expectedVersion = new ServerVersion(((List<Integer>) commandResult.getResponse().get('versionArray')).subList(0, 3))
 
         when:
         latch.await()
@@ -84,8 +83,8 @@ class ServerMonitorSpecification extends FunctionalSpecification {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 5)))
 
         given:
-        CommandResult commandResult = database.executeCommand(new Document('ismaster', 1), ReadPreference.primary())
-        def expected = commandResult.response.getInt32('maxWriteBatchSize').getValue()
+        CommandResult<Document> commandResult = database.executeCommand(new Document('ismaster', 1), ReadPreference.primary())
+        def expected = commandResult.response.getInteger('maxWriteBatchSize')
 
         when:
         latch.await()

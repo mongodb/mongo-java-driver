@@ -27,7 +27,6 @@ import org.mongodb.binding.WriteBinding;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static org.mongodb.operation.CommandOperationHelper.ignoreNameSpaceErrors;
-import static org.mongodb.operation.OperationHelper.ignoreResult;
 
 /**
  * An operation that drops an index.
@@ -55,7 +54,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
 
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return ignoreResult(ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding)));
+        return ignoreNameSpaceErrors(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding));
     }
 
     private BsonDocument getCommand() {

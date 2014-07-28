@@ -86,11 +86,11 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
         return serverUsed;
     }
 
-    private Function<CommandResult, MapReduceStatistics> transformer() {
-        return new Function<CommandResult, MapReduceStatistics>() {
+    private Function<CommandResult<BsonDocument>, MapReduceStatistics> transformer() {
+        return new Function<CommandResult<BsonDocument>, MapReduceStatistics>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MapReduceStatistics apply(final CommandResult result) {
+            public MapReduceStatistics apply(final CommandResult<BsonDocument> result) {
                 serverUsed = result.getAddress();
                 return MapReduceHelper.createStatistics(result);
             }

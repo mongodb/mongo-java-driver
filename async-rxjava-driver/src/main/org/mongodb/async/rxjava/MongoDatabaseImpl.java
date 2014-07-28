@@ -51,13 +51,14 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public Observable<CommandResult> executeCommand(final Document commandDocument) {
-         return Observable.create(new OnSubscribeAdapter<CommandResult>(new OnSubscribeAdapter.FutureFunction<CommandResult>() {
-             @Override
-             public MongoFuture<CommandResult> apply() {
-                 return wrapped.executeCommand(commandDocument);
-             }
-         }));
+    public Observable<CommandResult<Document>> executeCommand(final Document command) {
+        return Observable.create(new OnSubscribeAdapter<CommandResult<Document>>(
+                new OnSubscribeAdapter.FutureFunction<CommandResult<Document>>() {
+                    @Override
+                    public MongoFuture<CommandResult<Document>> apply() {
+                        return wrapped.executeCommand(command);
+                    }
+                }));
     }
 
     @Override

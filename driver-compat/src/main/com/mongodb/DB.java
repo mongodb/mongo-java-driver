@@ -571,11 +571,11 @@ public class DB {
     }
 
     CommandResult executeCommand(final BsonDocument commandDocument) {
-        return new CommandResult(getMongo().execute(new CommandWriteOperation(getName(), commandDocument)));
+        return new CommandResult(getMongo().execute(new CommandWriteOperation<DBObject>(getName(), commandDocument, DBObjects.codec)));
     }
 
     CommandResult executeCommand(final BsonDocument commandDocument, final ReadPreference readPreference) {
-        return new CommandResult(getMongo().execute(new CommandReadOperation(getName(), commandDocument),
+        return new CommandResult(getMongo().execute(new CommandReadOperation<DBObject>(getName(), commandDocument, DBObjects.codec),
                                                     readPreference));
     }
 

@@ -62,8 +62,8 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
             @Override
             public Boolean call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    return executeWrappedCommandProtocol(database, getCommand(), connection, binding.getReadPreference(),
-                                                         transformCommandResult());
+                    return executeWrappedCommandProtocol(database, getCommand(), new BsonDocumentCodec(), connection,
+                                                         binding.getReadPreference(), transformCommandResult());
                 } else {
                     return executeProtocol(getCollectionBasedProtocol(), connection, transformQueryResult());
                 }
@@ -77,7 +77,8 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
             @Override
             public MongoFuture<Boolean> call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    return executeWrappedCommandProtocolAsync(database, getCommand(), connection, transformCommandResult());
+                    return executeWrappedCommandProtocolAsync(database, getCommand(), new BsonDocumentCodec(), connection,
+                                                              binding.getReadPreference(), transformCommandResult());
                 } else {
                     return executeProtocolAsync(getCollectionBasedProtocol(), connection, transformQueryResult());
                 }
@@ -85,10 +86,10 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
         });
     }
 
-    private Function<CommandResult, Boolean> transformCommandResult() {
-        return new Function<CommandResult, Boolean>() {
+    private Function<CommandResult<BsonDocument>, Boolean> transformCommandResult() {
+        return new Function<CommandResult<BsonDocument>, Boolean>() {
             @Override
-            public Boolean apply(final CommandResult result) {
+            public Boolean apply(final CommandResult<BsonDocument> result) {
                 return result.getResponse().get("users").isArray() && !result.getResponse().getArray("users").isEmpty();
             }
         };

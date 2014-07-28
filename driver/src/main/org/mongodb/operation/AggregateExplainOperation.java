@@ -18,8 +18,10 @@ package org.mongodb.operation;
 
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.codecs.Decoder;
 import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
+import org.mongodb.Function;
 import org.mongodb.MongoFuture;
 import org.mongodb.MongoNamespace;
 import org.mongodb.binding.AsyncReadBinding;
@@ -35,38 +37,53 @@ import static org.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  *
  * @since 3.0
  */
-public class AggregateExplainOperation implements AsyncReadOperation<CommandResult>, ReadOperation<CommandResult> {
+public class AggregateExplainOperation<T> implements AsyncReadOperation<CommandResult<T>>, ReadOperation<CommandResult<T>> {
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final AggregationOptions options;
+    private final Decoder<T> decoder;
 
     /**
      * Constructs a new instance.
      *
      * @param namespace the namespace
      * @param pipeline  the aggregation pipeline
+     * @param decoder   the decoder
      * @param options   the aggregation options
      */
-    public AggregateExplainOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final AggregationOptions options) {
+    public AggregateExplainOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final AggregationOptions options,
+                                     final Decoder<T> decoder) {
         this.namespace = namespace;
         this.pipeline = pipeline;
         this.options = options;
+        this.decoder = decoder;
     }
 
     @Override
-    public CommandResult execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getCommand(), binding);
+    public CommandResult<T> execute(final ReadBinding binding) {
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), binding, transformer());
     }
 
     @Override
-    public MongoFuture<CommandResult> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), binding);
+    public MongoFuture<CommandResult<T>> executeAsync(final AsyncReadBinding binding) {
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding, transformer());
     }
 
     private BsonDocument getCommand() {
         BsonDocument command = AggregateHelper.asCommandDocument(namespace, pipeline, options);
         command.put("explain", BsonBoolean.TRUE);
         return command;
+    }
+
+    private Function<CommandResult<BsonDocument>, CommandResult<T>> transformer() {
+        return new Function<CommandResult<BsonDocument>, CommandResult<T>>() {
+
+            @Override
+            public CommandResult<T> apply(final CommandResult<BsonDocument> commandResult) {
+                return new CommandResult<T>(commandResult.getAddress(), commandResult.getResponse(),
+                                            commandResult.getElapsedNanoseconds(), decoder);
+            }
+        };
     }
 
 }

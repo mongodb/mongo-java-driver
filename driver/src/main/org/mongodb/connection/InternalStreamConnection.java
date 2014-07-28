@@ -20,7 +20,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.ByteBuf;
 import org.bson.io.BasicInputBuffer;
-import org.mongodb.CommandResult;
 import org.mongodb.MongoCommandFailureException;
 import org.mongodb.MongoCredential;
 import org.mongodb.MongoException;
@@ -216,14 +215,13 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     private void initializeConnectionId() {
-        CommandResult result;
+        BsonDocument response;
         try {
-            result = CommandHelper.executeCommand("admin", new BsonDocument("getlasterror", new BsonInt32(1)), this);
-
+            response = CommandHelper.executeCommand("admin", new BsonDocument("getlasterror", new BsonInt32(1)), this).getResponse();
         } catch (MongoCommandFailureException e) {
-            result = e.getCommandResult();
+            response = e.getResponse();
         }
-        BsonInt32 connectionIdFromServer = (BsonInt32) result.getResponse().get("connectionId");
+        BsonInt32 connectionIdFromServer = (BsonInt32) response.get("connectionId");
         id = "conn" + (connectionIdFromServer != null ? connectionIdFromServer.getValue() : "*" + incrementingId.incrementAndGet() + "*");
     }
 
