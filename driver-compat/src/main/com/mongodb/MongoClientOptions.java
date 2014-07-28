@@ -22,8 +22,9 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 
 import javax.net.SocketFactory;
-import javax.net.ssl.SSLSocketFactory;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -38,7 +39,32 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @Immutable
 public class MongoClientOptions {
 
-    private final com.mongodb.client.MongoClientOptions proxied;
+    private final String description;
+    private final ReadPreference readPreference;
+    private final WriteConcern writeConcern;
+
+    private final int minConnectionPoolSize;
+    private final int maxConnectionPoolSize;
+    private final int threadsAllowedToBlockForConnectionMultiplier;
+    private final int maxWaitTime;
+    private final int maxConnectionIdleTime;
+    private final int maxConnectionLifeTime;
+
+    private final int connectTimeout;
+    private final int socketTimeout;
+    private final boolean socketKeepAlive;
+    //CHECKSTYLE:OFF
+    private final boolean sslEnabled;
+    //CHECKSTYLE:ON
+    private final boolean alwaysUseMBeans;
+    private final int heartbeatFrequency;
+    private final int heartbeatConnectRetryFrequency;
+    private final int heartbeatConnectTimeout;
+    private final int heartbeatSocketTimeout;
+    private final int heartbeatThreadCount;
+    private final int acceptableLatencyDifference;
+
+    private final String requiredReplicaSetName;
     private final DBDecoderFactory dbDecoderFactory;
     private final DBEncoderFactory dbEncoderFactory;
     private final SocketFactory socketFactory;
@@ -48,51 +74,58 @@ public class MongoClientOptions {
     private final ServerSettings serverSettings;
     private final SocketSettings heartbeatSocketSettings;
 
-    MongoClientOptions(final com.mongodb.client.MongoClientOptions proxied) {
-        this(proxied, DefaultDBDecoder.FACTORY, DefaultDBEncoder.FACTORY,
-             proxied.isSSLEnabled() ? SSLSocketFactory.getDefault() : SocketFactory.getDefault(),
-             true);
-    }
-
     private MongoClientOptions(final Builder builder) {
-        this(builder.proxied.build(), builder.dbDecoderFactory, builder.dbEncoderFactory, builder.socketFactory,
-             builder.cursorFinalizerEnabled);
-    }
+        description = builder.description;
+        minConnectionPoolSize = builder.minConnectionPoolSize;
+        maxConnectionPoolSize = builder.maxConnectionPoolSize;
+        threadsAllowedToBlockForConnectionMultiplier = builder.threadsAllowedToBlockForConnectionMultiplier;
+        maxWaitTime = builder.maxWaitTime;
+        maxConnectionIdleTime = builder.maxConnectionIdleTime;
+        maxConnectionLifeTime = builder.maxConnectionLifeTime;
+        connectTimeout = builder.connectTimeout;
+        socketTimeout = builder.socketTimeout;
+        socketKeepAlive = builder.socketKeepAlive;
+        readPreference = builder.readPreference;
+        writeConcern = builder.writeConcern;
+        sslEnabled = builder.SSLEnabled;
+        alwaysUseMBeans = builder.alwaysUseMBeans;
+        heartbeatFrequency = builder.heartbeatFrequency;
+        heartbeatConnectRetryFrequency = builder.heartbeatConnectRetryFrequency;
+        heartbeatConnectTimeout = builder.heartbeatConnectTimeout;
+        heartbeatSocketTimeout = builder.heartbeatSocketTimeout;
+        heartbeatThreadCount = builder.heartbeatThreadCount;
+        acceptableLatencyDifference = builder.acceptableLatencyDifference;
+        requiredReplicaSetName = builder.requiredReplicaSetName;
+        dbDecoderFactory = builder.dbDecoderFactory;
+        dbEncoderFactory = builder.dbEncoderFactory;
+        socketFactory = builder.socketFactory;
+        cursorFinalizerEnabled = builder.cursorFinalizerEnabled;
 
-    private MongoClientOptions(final com.mongodb.client.MongoClientOptions proxied, final DBDecoderFactory dbDecoderFactory,
-                               final DBEncoderFactory dbEncoderFactory, final SocketFactory socketFactory,
-                               final boolean cursorFinalizerEnabled) {
-        this.proxied = proxied;
-        this.dbDecoderFactory = dbDecoderFactory;
-        this.dbEncoderFactory = dbEncoderFactory;
-        this.socketFactory = socketFactory;
-        this.cursorFinalizerEnabled = cursorFinalizerEnabled;
-
-        int maxWaitQueueSize = proxied.getMaxConnectionPoolSize() * proxied.getThreadsAllowedToBlockForConnectionMultiplier();
         connectionPoolSettings = ConnectionPoolSettings.builder()
-                                                       .minSize(proxied.getMinConnectionPoolSize())
-                                                       .maxSize(proxied.getMaxConnectionPoolSize())
-                                                       .maxWaitQueueSize(maxWaitQueueSize)
-                                                       .maxWaitTime(proxied.getMaxWaitTime(), MILLISECONDS)
-                                                       .maxConnectionIdleTime(proxied.getMaxConnectionIdleTime(), MILLISECONDS)
-                                                       .maxConnectionLifeTime(proxied.getMaxConnectionLifeTime(), MILLISECONDS)
+                                                       .minSize(getMinConnectionsPerHost())
+                                                       .maxSize(getConnectionsPerHost())
+                                                       .maxWaitQueueSize(getThreadsAllowedToBlockForConnectionMultiplier())
+                                                       .maxWaitTime(getMaxWaitTime(), MILLISECONDS)
+                                                       .maxConnectionIdleTime(getMaxConnectionIdleTime(), MILLISECONDS)
+                                                       .maxConnectionLifeTime(getMaxConnectionLifeTime(), MILLISECONDS)
                                                        .build();
 
         socketSettings = SocketSettings.builder()
-                                       .connectTimeout(proxied.getConnectTimeout(), MILLISECONDS)
-                                       .readTimeout(proxied.getSocketTimeout(), MILLISECONDS)
-                                       .keepAlive(proxied.isSocketKeepAlive())
+                                       .connectTimeout(getConnectTimeout(), MILLISECONDS)
+                                       .readTimeout(getSocketTimeout(), MILLISECONDS)
+                                       .keepAlive(isSocketKeepAlive())
                                        .build();
         heartbeatSocketSettings = SocketSettings.builder()
-                                                .connectTimeout(proxied.getHeartbeatConnectTimeout(), MILLISECONDS)
-                                                .readTimeout(proxied.getHeartbeatSocketTimeout(), MILLISECONDS)
-                                                .keepAlive(proxied.isSocketKeepAlive())
+                                                .connectTimeout(getHeartbeatConnectTimeout(), MILLISECONDS)
+                                                .readTimeout(getHeartbeatSocketTimeout(), MILLISECONDS)
+                                                .keepAlive(isSocketKeepAlive())
                                                 .build();
         serverSettings = ServerSettings.builder()
-                                       .heartbeatFrequency(proxied.getHeartbeatFrequency(), MILLISECONDS)
-                                       .heartbeatConnectRetryFrequency(proxied.getHeartbeatConnectRetryFrequency(), MILLISECONDS)
-                                       .heartbeatThreadCount(proxied.getHeartbeatThreadCount())
+                                       .heartbeatFrequency(getHeartbeatFrequency(), MILLISECONDS)
+                                       .heartbeatConnectRetryFrequency(getHeartbeatConnectRetryFrequency(), MILLISECONDS)
+                                       .heartbeatThreadCount(getHeartbeatThreadCount())
                                        .build();
+
     }
 
     /**
@@ -113,7 +146,7 @@ public class MongoClientOptions {
      * @return the description
      */
     public String getDescription() {
-        return proxied.getDescription();
+        return description;
     }
 
     /**
@@ -126,7 +159,7 @@ public class MongoClientOptions {
      * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
      */
     public int getConnectionsPerHost() {
-        return proxied.getMaxConnectionPoolSize();
+        return maxConnectionPoolSize;
     }
 
     /**
@@ -138,7 +171,7 @@ public class MongoClientOptions {
      * @return the minimum size of the connection pool per host
      */
     public int getMinConnectionsPerHost() {
-        return proxied.getMinConnectionPoolSize();
+        return minConnectionPoolSize;
     }
 
     /**
@@ -151,7 +184,7 @@ public class MongoClientOptions {
      * @return the multiplier
      */
     public int getThreadsAllowedToBlockForConnectionMultiplier() {
-        return proxied.getThreadsAllowedToBlockForConnectionMultiplier();
+        return threadsAllowedToBlockForConnectionMultiplier;
     }
 
     /**
@@ -162,7 +195,7 @@ public class MongoClientOptions {
      * @return the maximum wait time.
      */
     public int getMaxWaitTime() {
-        return proxied.getMaxWaitTime();
+        return maxWaitTime;
     }
 
     /**
@@ -173,7 +206,7 @@ public class MongoClientOptions {
      * @since 2.12
      */
     public int getMaxConnectionIdleTime() {
-        return proxied.getMaxConnectionIdleTime();
+        return maxConnectionIdleTime;
     }
 
     /**
@@ -184,7 +217,7 @@ public class MongoClientOptions {
      * @since 2.12
      */
     public int getMaxConnectionLifeTime() {
-        return proxied.getMaxConnectionLifeTime();
+        return maxConnectionLifeTime;
     }
 
     /**
@@ -196,7 +229,7 @@ public class MongoClientOptions {
      * @return the socket connect timeout
      */
     public int getConnectTimeout() {
-        return proxied.getConnectTimeout();
+        return connectTimeout;
     }
 
     /**
@@ -207,7 +240,7 @@ public class MongoClientOptions {
      * @return the socket timeout
      */
     public int getSocketTimeout() {
-        return proxied.getSocketTimeout();
+        return socketTimeout;
     }
 
     /**
@@ -219,7 +252,7 @@ public class MongoClientOptions {
      * @return whether keep-alive is enabled on each socket
      */
     public boolean isSocketKeepAlive() {
-        return proxied.isSocketKeepAlive();
+        return socketKeepAlive;
     }
 
     /**
@@ -230,7 +263,7 @@ public class MongoClientOptions {
      * @since 2.12
      */
     public int getHeartbeatFrequency() {
-        return proxied.getHeartbeatFrequency();
+        return heartbeatFrequency;
     }
 
     /**
@@ -241,7 +274,7 @@ public class MongoClientOptions {
      * @since 2.12
      */
     public int getHeartbeatConnectRetryFrequency() {
-        return proxied.getHeartbeatConnectRetryFrequency();
+        return heartbeatConnectRetryFrequency;
     }
 
     /**
@@ -251,7 +284,7 @@ public class MongoClientOptions {
      * @since 2.12
      */
     public int getHeartbeatConnectTimeout() {
-        return proxied.getHeartbeatConnectTimeout();
+        return heartbeatConnectTimeout;
     }
 
     /**
@@ -261,7 +294,7 @@ public class MongoClientOptions {
      * @since 2.12
      */
     public int getHeartbeatSocketTimeout() {
-        return proxied.getHeartbeatSocketTimeout();
+        return heartbeatSocketTimeout;
     }
 
     /**
@@ -275,7 +308,7 @@ public class MongoClientOptions {
      * @since 2.12.0
      */
     public int getHeartbeatThreadCount() {
-        return proxied.getHeartbeatThreadCount();
+        return heartbeatThreadCount;
     }
 
     /**
@@ -297,7 +330,7 @@ public class MongoClientOptions {
      * @since 2.12.0
      */
     public int getAcceptableLatencyDifference() {
-        return proxied.getAcceptableLatencyDifference();
+        return acceptableLatencyDifference;
     }
 
     /**
@@ -310,7 +343,7 @@ public class MongoClientOptions {
      * @since 2.12
      */
     public String getRequiredReplicaSetName() {
-        return proxied.getRequiredReplicaSetName();
+        return requiredReplicaSetName;
     }
 
     /**
@@ -319,7 +352,7 @@ public class MongoClientOptions {
      * @return true if SSL should be used
      */
     public boolean isSSLEnabled() {
-        return proxied.isSSLEnabled();
+        return sslEnabled;
     }
 
     /**
@@ -331,7 +364,7 @@ public class MongoClientOptions {
      * @see com.mongodb.ReadPreference#primary()
      */
     public ReadPreference getReadPreference() {
-        return proxied.getReadPreference();
+        return readPreference;
     }
 
     /**
@@ -343,7 +376,7 @@ public class MongoClientOptions {
      * @see WriteConcern#ACKNOWLEDGED
      */
     public WriteConcern getWriteConcern() {
-        return proxied.getWriteConcern();
+        return writeConcern;
     }
 
     /**
@@ -369,7 +402,7 @@ public class MongoClientOptions {
      * the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if the VM is Java 5. <p> Default is false. </p>
      */
     public boolean isAlwaysUseMBeans() {
-        return proxied.isAlwaysUseMBeans();
+        return alwaysUseMBeans;
     }
 
     /**
@@ -425,19 +458,82 @@ public class MongoClientOptions {
 
         MongoClientOptions that = (MongoClientOptions) o;
 
-        if (!dbDecoderFactory.equals(that.dbDecoderFactory)) {
+        if (acceptableLatencyDifference != that.acceptableLatencyDifference) {
             return false;
         }
-        if (!dbEncoderFactory.equals(that.dbEncoderFactory)) {
+        if (alwaysUseMBeans != that.alwaysUseMBeans) {
+            return false;
+        }
+        if (connectTimeout != that.connectTimeout) {
             return false;
         }
         if (cursorFinalizerEnabled != that.cursorFinalizerEnabled) {
             return false;
         }
-        if (!socketFactory.equals(that.socketFactory)) {
+        if (heartbeatConnectRetryFrequency != that.heartbeatConnectRetryFrequency) {
             return false;
         }
-        if (!proxied.equals(that.proxied)) {
+        if (heartbeatConnectTimeout != that.heartbeatConnectTimeout) {
+            return false;
+        }
+        if (heartbeatFrequency != that.heartbeatFrequency) {
+            return false;
+        }
+        if (heartbeatSocketTimeout != that.heartbeatSocketTimeout) {
+            return false;
+        }
+        if (heartbeatThreadCount != that.heartbeatThreadCount) {
+            return false;
+        }
+        if (maxConnectionIdleTime != that.maxConnectionIdleTime) {
+            return false;
+        }
+        if (maxConnectionLifeTime != that.maxConnectionLifeTime) {
+            return false;
+        }
+        if (maxConnectionPoolSize != that.maxConnectionPoolSize) {
+            return false;
+        }
+        if (maxWaitTime != that.maxWaitTime) {
+            return false;
+        }
+        if (minConnectionPoolSize != that.minConnectionPoolSize) {
+            return false;
+        }
+        if (socketKeepAlive != that.socketKeepAlive) {
+            return false;
+        }
+        if (socketTimeout != that.socketTimeout) {
+            return false;
+        }
+        if (sslEnabled != that.sslEnabled) {
+            return false;
+        }
+        if (threadsAllowedToBlockForConnectionMultiplier != that.threadsAllowedToBlockForConnectionMultiplier) {
+            return false;
+        }
+        if (connectionPoolSettings != null ? !connectionPoolSettings.equals(that.connectionPoolSettings)
+                                           : that.connectionPoolSettings != null) {
+            return false;
+        }
+        if (dbDecoderFactory != null ? !dbDecoderFactory.equals(that.dbDecoderFactory) : that.dbDecoderFactory != null) {
+            return false;
+        }
+        if (dbEncoderFactory != null ? !dbEncoderFactory.equals(that.dbEncoderFactory) : that.dbEncoderFactory != null) {
+            return false;
+        }
+        if (description != null ? !description.equals(that.description) : that.description != null) {
+            return false;
+        }
+        if (heartbeatSocketSettings != null ? !heartbeatSocketSettings.equals(that.heartbeatSocketSettings)
+                                            : that.heartbeatSocketSettings != null) {
+            return false;
+        }
+        if (!readPreference.equals(that.readPreference)) {
+            return false;
+        }
+        if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
+                                           : that.requiredReplicaSetName != null) {
             return false;
         }
 
@@ -446,10 +542,30 @@ public class MongoClientOptions {
 
     @Override
     public int hashCode() {
-        int result = proxied.hashCode();
-        result = 31 * result + dbDecoderFactory.hashCode();
-        result = 31 * result + dbEncoderFactory.hashCode();
-        result = 31 * result + socketFactory.hashCode();
+        int result = description != null ? description.hashCode() : 0;
+        result = 31 * result + readPreference.hashCode();
+        result = 31 * result + writeConcern.hashCode();
+        result = 31 * result + minConnectionPoolSize;
+        result = 31 * result + maxConnectionPoolSize;
+        result = 31 * result + threadsAllowedToBlockForConnectionMultiplier;
+        result = 31 * result + maxWaitTime;
+        result = 31 * result + maxConnectionIdleTime;
+        result = 31 * result + maxConnectionLifeTime;
+        result = 31 * result + connectTimeout;
+        result = 31 * result + socketTimeout;
+        result = 31 * result + (socketKeepAlive ? 1 : 0);
+        result = 31 * result + (sslEnabled ? 1 : 0);
+        result = 31 * result + (alwaysUseMBeans ? 1 : 0);
+        result = 31 * result + heartbeatFrequency;
+        result = 31 * result + heartbeatConnectRetryFrequency;
+        result = 31 * result + heartbeatConnectTimeout;
+        result = 31 * result + heartbeatSocketTimeout;
+        result = 31 * result + heartbeatThreadCount;
+        result = 31 * result + acceptableLatencyDifference;
+        result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
+        result = 31 * result + (dbDecoderFactory != null ? dbDecoderFactory.hashCode() : 0);
+        result = 31 * result + (dbEncoderFactory != null ? dbEncoderFactory.hashCode() : 0);
+        result = 31 * result + (socketFactory != null ? socketFactory.hashCode() : 0);
         result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
         return result;
     }
@@ -457,14 +573,35 @@ public class MongoClientOptions {
     @Override
     public String toString() {
         return "MongoClientOptions{"
-               + "connectionPoolSettings=" + connectionPoolSettings
-               + ", socketSettings=" + socketSettings
-               + ", serverSettings=" + serverSettings
-               + ", heartbeatSocketSettings=" + heartbeatSocketSettings
+               + "description='" + description + '\''
+               + ", readPreference=" + readPreference
+               + ", writeConcern=" + writeConcern
+               + ", minConnectionPoolSize=" + minConnectionPoolSize
+               + ", maxConnectionPoolSize=" + maxConnectionPoolSize
+               + ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier
+               + ", maxWaitTime=" + maxWaitTime
+               + ", maxConnectionIdleTime=" + maxConnectionIdleTime
+               + ", maxConnectionLifeTime=" + maxConnectionLifeTime
+               + ", connectTimeout=" + connectTimeout
+               + ", socketTimeout=" + socketTimeout
+               + ", socketKeepAlive=" + socketKeepAlive
+               + ", sslEnabled=" + sslEnabled
+               + ", alwaysUseMBeans=" + alwaysUseMBeans
+               + ", heartbeatFrequency=" + heartbeatFrequency
+               + ", heartbeatConnectRetryFrequency=" + heartbeatConnectRetryFrequency
+               + ", heartbeatConnectTimeout=" + heartbeatConnectTimeout
+               + ", heartbeatSocketTimeout=" + heartbeatSocketTimeout
+               + ", heartbeatThreadCount=" + heartbeatThreadCount
+               + ", acceptableLatencyDifference=" + acceptableLatencyDifference
+               + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
                + ", dbDecoderFactory=" + dbDecoderFactory
                + ", dbEncoderFactory=" + dbEncoderFactory
                + ", socketFactory=" + socketFactory
                + ", cursorFinalizerEnabled=" + cursorFinalizerEnabled
+               + ", connectionPoolSettings=" + connectionPoolSettings
+               + ", socketSettings=" + socketSettings
+               + ", serverSettings=" + serverSettings
+               + ", heartbeatSocketSettings=" + heartbeatSocketSettings
                + '}';
     }
 
@@ -474,18 +611,43 @@ public class MongoClientOptions {
      * @since 2.10.0
      */
     public static class Builder {
-        private final com.mongodb.client.MongoClientOptions.Builder proxied = new com.mongodb.client.MongoClientOptions.Builder();
+        private String description;
+        private ReadPreference readPreference = ReadPreference.primary();
+        private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
+
+        private int minConnectionPoolSize;
+        private int maxConnectionPoolSize = 100;
+        private int threadsAllowedToBlockForConnectionMultiplier = 5;
+        private int maxWaitTime = 1000 * 60 * 2;
+        private int maxConnectionIdleTime;
+        private int maxConnectionLifeTime;
+        private int connectTimeout = 1000 * 10;
+        private int socketTimeout = 0;
+        private boolean socketKeepAlive = false;
+        //CHECKSTYLE:OFF
+        private boolean SSLEnabled = false;
+        //CHECKSTYLE:ON
+        private boolean alwaysUseMBeans = false;
+
+        private int heartbeatFrequency = 10000;
+        private int heartbeatConnectRetryFrequency = 10;
+        private int heartbeatConnectTimeout = 20000;
+        private int heartbeatSocketTimeout = 20000;
+        private int heartbeatThreadCount;
+        private int acceptableLatencyDifference = 15;
+
+        private String requiredReplicaSetName;
         private DBDecoderFactory dbDecoderFactory = DefaultDBDecoder.FACTORY;
         private DBEncoderFactory dbEncoderFactory = DefaultDBEncoder.FACTORY;
         private SocketFactory socketFactory = SocketFactory.getDefault();
         private boolean cursorFinalizerEnabled = true;
 
         public Builder() {
-            proxied.heartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000")));
-            proxied.heartbeatConnectRetryFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10")));
-            proxied.heartbeatConnectTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000")));
-            proxied.heartbeatSocketTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")));
-            proxied.acceptableLatencyDifference(Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15")));
+            heartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000")));
+            heartbeatConnectRetryFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10")));
+            heartbeatConnectTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000")));
+            heartbeatSocketTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")));
+            acceptableLatencyDifference(Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15")));
         }
 
         /**
@@ -496,7 +658,7 @@ public class MongoClientOptions {
          * @see com.mongodb.MongoClientOptions#getDescription()
          */
         public Builder description(final String description) {
-            proxied.description(description);
+            this.description = description;
             return this;
         }
 
@@ -510,7 +672,8 @@ public class MongoClientOptions {
          * @since 2.12
          */
         public Builder minConnectionsPerHost(final int minConnectionsPerHost) {
-            proxied.minConnectionPoolSize(minConnectionsPerHost);
+            isTrueArgument("minConnectionsPerHost must be >= 0", minConnectionsPerHost >= 0);
+            this.minConnectionPoolSize = minConnectionsPerHost;
             return this;
         }
 
@@ -523,7 +686,8 @@ public class MongoClientOptions {
          * @see MongoClientOptions#getConnectionsPerHost()
          */
         public Builder connectionsPerHost(final int connectionsPerHost) {
-            proxied.maxConnectionPoolSize(connectionsPerHost);
+            isTrueArgument("connectionPerHost must be > 0", connectionsPerHost > 0);
+            this.maxConnectionPoolSize = connectionsPerHost;
             return this;
         }
 
@@ -536,10 +700,9 @@ public class MongoClientOptions {
          * @throws IllegalArgumentException if {@code threadsAllowedToBlockForConnectionMultiplier < 1}
          * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
          */
-        public Builder threadsAllowedToBlockForConnectionMultiplier(
-                                                                       final int
-                                                                           threadsAllowedToBlockForConnectionMultiplier) {
-            proxied.threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockForConnectionMultiplier);
+        public Builder threadsAllowedToBlockForConnectionMultiplier(final int threadsAllowedToBlockForConnectionMultiplier) {
+            isTrueArgument("threadsAllowedToBlockForConnectionMultiplier must be > 0", threadsAllowedToBlockForConnectionMultiplier > 0);
+            this.threadsAllowedToBlockForConnectionMultiplier = threadsAllowedToBlockForConnectionMultiplier;
             return this;
         }
 
@@ -552,7 +715,7 @@ public class MongoClientOptions {
          * @see MongoClientOptions#getMaxWaitTime()
          */
         public Builder maxWaitTime(final int maxWaitTime) {
-            proxied.maxWaitTime(maxWaitTime);
+            this.maxWaitTime = maxWaitTime;
             return this;
         }
 
@@ -562,11 +725,11 @@ public class MongoClientOptions {
          * @param maxConnectionIdleTime the maximum idle time
          * @return {@code this}
          * @throws IllegalArgumentException if {@code aMaxConnectionIdleTime < 0}
-         * @see com.mongodb.client.MongoClientOptions#getMaxConnectionIdleTime()
+         * @see com.mongodb.MongoClientOptions#getMaxConnectionIdleTime()
          * @since 2.12
          */
         public Builder maxConnectionIdleTime(final int maxConnectionIdleTime) {
-            proxied.maxConnectionIdleTime(maxConnectionIdleTime);
+            this.maxConnectionIdleTime = maxConnectionIdleTime;
             return this;
         }
 
@@ -576,11 +739,11 @@ public class MongoClientOptions {
          * @param maxConnectionLifeTime the maximum life time
          * @return {@code this}
          * @throws IllegalArgumentException if {@code aMaxConnectionIdleTime < 0}
-         * @see com.mongodb.client.MongoClientOptions#getMaxConnectionIdleTime()
+         * @see com.mongodb.MongoClientOptions#getMaxConnectionIdleTime()
          * @since 2.12
          */
         public Builder maxConnectionLifeTime(final int maxConnectionLifeTime) {
-            proxied.maxConnectionLifeTime(maxConnectionLifeTime);
+            this.maxConnectionLifeTime = maxConnectionLifeTime;
             return this;
         }
 
@@ -593,7 +756,8 @@ public class MongoClientOptions {
          * @see com.mongodb.MongoClientOptions#getConnectTimeout()
          */
         public Builder connectTimeout(final int connectTimeout) {
-            proxied.connectTimeout(connectTimeout);
+            isTrueArgument("connectTimeout must be >= 0", connectTimeout >= 0);
+            this.connectTimeout = connectTimeout;
             return this;
         }
 
@@ -605,7 +769,7 @@ public class MongoClientOptions {
          * @see com.mongodb.MongoClientOptions#getSocketTimeout()
          */
         public Builder socketTimeout(final int socketTimeout) {
-            proxied.socketTimeout(socketTimeout);
+            this.socketTimeout = socketTimeout;
             return this;
         }
 
@@ -617,7 +781,7 @@ public class MongoClientOptions {
          * @see com.mongodb.MongoClientOptions#isSocketKeepAlive()
          */
         public Builder socketKeepAlive(final boolean socketKeepAlive) {
-            proxied.socketKeepAlive(socketKeepAlive);
+            this.socketKeepAlive = socketKeepAlive;
             return this;
         }
 
@@ -627,8 +791,8 @@ public class MongoClientOptions {
          * @return {@code this}
          * @see MongoClientOptions#isSSLEnabled()
          */
-        public Builder SSLEnabled(final boolean aSSLEnabled) {
-            proxied.SSLEnabled(aSSLEnabled);
+        public Builder SSLEnabled(final boolean sslEnabled) {
+            this.SSLEnabled = sslEnabled;
             return this;
         }
 
@@ -640,10 +804,7 @@ public class MongoClientOptions {
          * @see MongoClientOptions#getReadPreference()
          */
         public Builder readPreference(final ReadPreference readPreference) {
-            if (readPreference == null) {
-                throw new IllegalArgumentException("null is not a legal value");
-            }
-            proxied.readPreference(readPreference);
+            this.readPreference = notNull("readPreference", readPreference);
             return this;
         }
 
@@ -655,10 +816,7 @@ public class MongoClientOptions {
          * @see MongoClientOptions#getWriteConcern()
          */
         public Builder writeConcern(final WriteConcern writeConcern) {
-            if (writeConcern == null) {
-                throw new IllegalArgumentException("null is not a legal value");
-            }
-            proxied.writeConcern(writeConcern);
+            this.writeConcern = notNull("writeConcern", writeConcern);
             return this;
         }
 
@@ -699,7 +857,7 @@ public class MongoClientOptions {
          * @see MongoClientOptions#isAlwaysUseMBeans()
          */
         public Builder alwaysUseMBeans(final boolean alwaysUseMBeans) {
-            proxied.alwaysUseMBeans(alwaysUseMBeans);
+            this.alwaysUseMBeans = alwaysUseMBeans;
             return this;
         }
 
@@ -743,7 +901,7 @@ public class MongoClientOptions {
          * @since 2.12
          */
         public Builder heartbeatFrequency(final int heartbeatFrequency) {
-            proxied.heartbeatFrequency(heartbeatFrequency);
+            this.heartbeatFrequency = heartbeatFrequency;
             return this;
         }
 
@@ -757,7 +915,7 @@ public class MongoClientOptions {
          * @since 2.12
          */
         public Builder heartbeatConnectRetryFrequency(final int heartbeatConnectFrequency) {
-            proxied.heartbeatConnectRetryFrequency(heartbeatConnectFrequency);
+            this.heartbeatConnectRetryFrequency = heartbeatConnectFrequency;
             return this;
         }
 
@@ -770,7 +928,7 @@ public class MongoClientOptions {
          * @since 2.12
          */
         public Builder heartbeatConnectTimeout(final int connectTimeout) {
-            proxied.heartbeatConnectTimeout(connectTimeout);
+            this.heartbeatConnectTimeout = connectTimeout;
             return this;
         }
 
@@ -783,7 +941,7 @@ public class MongoClientOptions {
          * @since 2.12
          */
         public Builder heartbeatSocketTimeout(final int socketTimeout) {
-            proxied.heartbeatSocketTimeout(socketTimeout);
+            this.heartbeatSocketTimeout = socketTimeout;
             return this;
         }
 
@@ -797,7 +955,7 @@ public class MongoClientOptions {
          * @since 2.12.0
          */
         public Builder heartbeatThreadCount(final int heartbeatThreadCount) {
-            proxied.heartbeatThreadCount(heartbeatThreadCount);
+            this.heartbeatThreadCount = heartbeatThreadCount;
             return this;
         }
 
@@ -811,7 +969,7 @@ public class MongoClientOptions {
          * @since 2.12.0
          */
         public Builder acceptableLatencyDifference(final int acceptableLatencyDifference) {
-            proxied.acceptableLatencyDifference(acceptableLatencyDifference);
+            this.acceptableLatencyDifference = acceptableLatencyDifference;
             return this;
         }
 
@@ -824,7 +982,7 @@ public class MongoClientOptions {
          * @since 2.12
          */
         public Builder requiredReplicaSetName(final String requiredReplicaSetName) {
-            proxied.requiredReplicaSetName(requiredReplicaSetName);
+            this.requiredReplicaSetName = requiredReplicaSetName;
             return this;
         }
 
@@ -835,7 +993,7 @@ public class MongoClientOptions {
          * @see MongoOptions
          */
         public Builder legacyDefaults() {
-            proxied.maxConnectionPoolSize(10).writeConcern(WriteConcern.UNACKNOWLEDGED);
+            this.connectionsPerHost(10).writeConcern(WriteConcern.UNACKNOWLEDGED);
             return this;
         }
 
@@ -848,8 +1006,5 @@ public class MongoClientOptions {
             return new MongoClientOptions(this);
         }
 
-        com.mongodb.client.MongoClientOptions.Builder getProxied() {
-            return proxied;
-        }
     }
 }
