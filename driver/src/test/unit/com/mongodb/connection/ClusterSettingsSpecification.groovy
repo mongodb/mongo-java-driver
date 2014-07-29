@@ -16,6 +16,7 @@
 
 package com.mongodb.connection
 
+import com.mongodb.ConnectionString
 import com.mongodb.ServerAddress
 import com.mongodb.selector.PrimaryServerSelector
 import spock.lang.Specification
@@ -39,6 +40,39 @@ class ClusterSettingsSpecification extends Specification {
         settings.requiredClusterType == ClusterType.REPLICA_SET
         settings.requiredReplicaSetName == 'foo'
         settings.serverSelector == serverSelector
+    }
+
+    def 'when connection string is applied to builder, all properties should be set'() {
+        when:
+        def settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018'))
+                                      .build()
+
+        then:
+        settings.mode == ClusterConnectionMode.SINGLE
+        settings.hosts == [new ServerAddress('example.com:27018')]
+        settings.requiredClusterType == ClusterType.UNKNOWN
+        settings.requiredReplicaSetName == null
+
+        when:
+        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018,' +
+                                                                                        'example.com:27019/?replicaSet=test'))
+                                  .build()
+
+        then:
+        settings.mode == ClusterConnectionMode.MULTIPLE
+        settings.hosts == [new ServerAddress('example.com:27018'), new ServerAddress('example.com:27019')]
+        settings.requiredClusterType == ClusterType.REPLICA_SET
+        settings.requiredReplicaSetName == 'test'
+
+        when:
+        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://example.com:27018,example.com:27019'))
+                                  .build()
+
+        then:
+        settings.mode == ClusterConnectionMode.MULTIPLE
+        settings.hosts == [new ServerAddress('example.com:27018'), new ServerAddress('example.com:27019')]
+        settings.requiredClusterType == ClusterType.UNKNOWN
+        settings.requiredReplicaSetName == null
     }
 
     def 'when cluster type is unknown and replica set name is specified, should set cluster type to ReplicaSet'() {

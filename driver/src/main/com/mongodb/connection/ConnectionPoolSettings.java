@@ -16,6 +16,8 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.ConnectionString;
+
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -93,6 +95,28 @@ public class ConnectionPoolSettings {
 
         public ConnectionPoolSettings build() {
             return new ConnectionPoolSettings(this);
+        }
+
+        public Builder applyConnectionString(final ConnectionString connectionString) {
+            if (connectionString.getMaxConnectionPoolSize() != null) {
+                maxSize(connectionString.getMaxConnectionPoolSize());
+            }
+            if (connectionString.getMinConnectionPoolSize() != null) {
+                minSize(connectionString.getMinConnectionPoolSize());
+            }
+            if (connectionString.getMaxWaitTime() != null) {
+                maxWaitTime(connectionString.getMaxWaitTime(), MILLISECONDS);
+            }
+            if (connectionString.getMaxConnectionIdleTime() != null) {
+                maxConnectionIdleTime(connectionString.getMaxConnectionIdleTime(), MILLISECONDS);
+            }
+            if (connectionString.getMaxConnectionLifeTime() != null) {
+                maxConnectionLifeTime(connectionString.getMaxConnectionLifeTime(), MILLISECONDS);
+            }
+            if (connectionString.getThreadsAllowedToBlockForConnectionMultiplier() != null) {
+                maxWaitQueueSize(connectionString.getThreadsAllowedToBlockForConnectionMultiplier() * maxSize);
+            }
+            return this;
         }
     }
 

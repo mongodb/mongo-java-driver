@@ -26,11 +26,15 @@ import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
+import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.SSLSettings;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.ServerVersion;
+import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.netty.NettyStreamFactory;
@@ -62,6 +66,12 @@ public final class ClusterFixture {
     private static Cluster asyncCluster;
     private static String defaultDatabaseName = "DriverTest-1";
 
+    static {
+        String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+        String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
+                                ? DEFAULT_URI : mongoURIProperty;
+        connectionString = new ConnectionString(mongoURIString);
+    }
 
     private ClusterFixture() {
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
@@ -104,12 +114,6 @@ public final class ClusterFixture {
     }
 
     public static synchronized ConnectionString getConnectionString() {
-        if (connectionString == null) {
-            String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-            String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
-                                    ? DEFAULT_URI : mongoURIProperty;
-            connectionString = new ConnectionString(mongoURIString);
-        }
         return connectionString;
     }
 
@@ -131,46 +135,46 @@ public final class ClusterFixture {
 
     public static Cluster getCluster() {
         if (cluster == null) {
-            cluster = createCluster(MongoClientSettings.builder(getConnectionString()).build(),
-                          new SocketStreamFactory(getSettings().getSocketSettings(), getSettings().getSslSettings()));
+            cluster = createCluster(new SocketStreamFactory(getSocketSettings(), getSSLSettings()));
         }
         return cluster;
     }
 
-    public static StreamFactory getAsyncStreamFactory() {
-        return getAsyncStreamFactory(getSettings());
-    }
-
     public static Cluster getAsyncCluster() {
         if (asyncCluster == null) {
-            asyncCluster = createCluster(getSettings(), getAsyncStreamFactory(getSettings()));
+            asyncCluster = createCluster(getAsyncStreamFactory());
         }
         return asyncCluster;
     }
 
-    public static Cluster createCluster(final MongoClientSettings settings, final StreamFactory streamFactory) {
-        return new DefaultClusterFactory().create(settings.getClusterSettings(), settings.getServerSettings(),
-                                                  settings.getConnectionPoolSettings(),
+    public static Cluster createCluster(final StreamFactory streamFactory) {
+        return new DefaultClusterFactory().create(ClusterSettings.builder().applyConnectionString(getConnectionString()).build(),
+                                                  ServerSettings.builder().build(),
+                                                  ConnectionPoolSettings.builder().applyConnectionString(getConnectionString()).build(),
                                                   streamFactory,
-                                                  new SocketStreamFactory(settings.getHeartbeatSocketSettings(), settings.getSslSettings()),
-                                                  settings.getCredentialList(), null, new JMXConnectionPoolListener(), null);
+                                                  new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+                                                  getConnectionString().getCredentialList(), null, new JMXConnectionPoolListener(), null);
 
     }
 
-    private static StreamFactory getAsyncStreamFactory(final MongoClientSettings settings) {
+    public static StreamFactory getAsyncStreamFactory() {
         String streamType = System.getProperty("org.mongodb.async.type", "nio2");
 
-        if (streamType.equals("netty") || settings.getSslSettings().isEnabled()) {
-            return new NettyStreamFactory(settings.getSocketSettings(), settings.getSslSettings());
+        if (streamType.equals("netty") || getSSLSettings().isEnabled()) {
+            return new NettyStreamFactory(getSocketSettings(), getSSLSettings());
         } else if (streamType.equals("nio2")) {
-            return new AsynchronousSocketChannelStreamFactory(settings.getSocketSettings(), settings.getSslSettings());
+            return new AsynchronousSocketChannelStreamFactory(getSocketSettings(), getSSLSettings());
         } else {
             throw new IllegalArgumentException("Unsupported stream type " + streamType);
         }
     }
 
+    private static SocketSettings getSocketSettings() {
+        return SocketSettings.builder().applyConnectionString(getConnectionString()).build();
+    }
+
     public static SSLSettings getSSLSettings() {
-        return getSettings().getSslSettings();
+        return SSLSettings.builder().applyConnectionString(getConnectionString()).build();
     }
 
     public static ServerAddress getPrimary() throws InterruptedException {
@@ -186,9 +190,6 @@ public final class ClusterFixture {
         return getConnectionString().getCredentialList();
     }
 
-    public static MongoClientSettings getSettings() {
-        return MongoClientSettings.builder(getConnectionString()).build();
-    }
     public static boolean isDiscoverableReplicaSet() {
         return getCluster().getDescription(10, SECONDS).getType() == REPLICA_SET
                && getCluster().getDescription(10, SECONDS).getConnectionMode() == MULTIPLE;

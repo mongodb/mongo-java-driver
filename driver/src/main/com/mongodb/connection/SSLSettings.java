@@ -16,6 +16,8 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.ConnectionString;
+
 public class SSLSettings {
     private final boolean enabled;
 
@@ -26,13 +28,17 @@ public class SSLSettings {
     public static class Builder {
         private boolean enabled;
 
-        // CHECKSTYLE:OFF
         public Builder enabled(final boolean enabled) {
             this.enabled = enabled;
             return this;
         }
-        // CHECKSTYLE:ON
 
+        public Builder applyConnectionString(final ConnectionString connectionString) {
+            if (connectionString.getSslEnabled() != null) {
+                this.enabled = connectionString.getSslEnabled();
+            }
+            return this;
+        }
         public SSLSettings build() {
             return new SSLSettings(this);
         }

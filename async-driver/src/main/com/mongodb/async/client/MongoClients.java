@@ -16,11 +16,14 @@
 
 package com.mongodb.async.client;
 
-import com.mongodb.MongoClientSettings;
+import com.mongodb.ConnectionString;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.Cluster;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.SSLSettings;
+import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.netty.NettyStreamFactory;
@@ -40,6 +43,31 @@ public final class MongoClients {
      */
     public static MongoClient create(final MongoClientSettings settings) {
         return new MongoClientImpl(settings, createCluster(settings, getStreamFactory(settings)));
+    }
+
+    /**
+     * Create a new client with the given connection string.
+     *
+     * @param connectionString the settings
+     * @return the client
+     */
+    public static MongoClient create(final ConnectionString connectionString) {
+        return create(MongoClientSettings.builder()
+                                         .clusterSettings(ClusterSettings.builder()
+                                                                         .applyConnectionString(connectionString)
+                                                                         .build())
+                                         .connectionPoolSettings(ConnectionPoolSettings.builder()
+                                                                                       .applyConnectionString(connectionString)
+                                                                                       .build())
+                                         .serverSettings(ServerSettings.builder().build())
+                                         .credentialList(connectionString.getCredentialList())
+                                         .sslSettings(SSLSettings.builder()
+                                                                 .applyConnectionString(connectionString)
+                                                                 .build())
+                                         .socketSettings(SocketSettings.builder()
+                                                                       .applyConnectionString(connectionString)
+                                                                       .build())
+                                         .build());
     }
 
 

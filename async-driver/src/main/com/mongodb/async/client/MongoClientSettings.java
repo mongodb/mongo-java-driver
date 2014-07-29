@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package com.mongodb;
+package com.mongodb.async.client;
 
+import com.mongodb.MongoCredential;
+import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Immutable;
-import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.SSLSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -61,15 +61,6 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Convenience method to create a Builder.
-     *
-     * @return a builder
-     */
-    public static Builder builder(final ConnectionString connectionString) {
-        return new Builder(connectionString);
-    }
-
-    /**
      * A builder for MongoClientOptions so that MongoClientOptions can be immutable, and to support easier construction through chaining.
      */
     public static final class Builder {
@@ -89,31 +80,6 @@ public final class MongoClientSettings {
         private List<MongoCredential> credentialList = Collections.emptyList();
 
         private Builder() {
-        }
-
-        // TODO: this is not complete yet, nor is it tested
-        private Builder(final ConnectionString connectionString) {
-            ClusterSettings.Builder clusterBuilder = ClusterSettings.builder();
-            if (connectionString.getHosts().size() == 1 && connectionString.getRequiredReplicaSetName() == null) {
-                clusterBuilder.mode(ClusterConnectionMode.SINGLE)
-                       .hosts(Arrays.asList(new ServerAddress(connectionString.getHosts().get(0))));
-            } else {
-                List<ServerAddress> seedList = new ArrayList<ServerAddress>();
-                for (final String cur : connectionString.getHosts()) {
-                    seedList.add(new ServerAddress(cur));
-                }
-                clusterBuilder.mode(ClusterConnectionMode.MULTIPLE).hosts(seedList);
-            }
-            clusterBuilder.requiredReplicaSetName(connectionString.getRequiredReplicaSetName());
-            clusterSettings(clusterBuilder.build());
-
-            SSLSettings.Builder sslSettingsBuilder = SSLSettings.builder();
-            if (connectionString.getSslEnabled() != null) {
-                sslSettingsBuilder.enabled(connectionString.getSslEnabled());
-            }
-            sslSettings(sslSettingsBuilder.build());
-
-            credentialList(connectionString.getCredentialList());
         }
 
         /**
@@ -157,7 +123,7 @@ public final class MongoClientSettings {
          *
          * @param connectionPoolSettings the connection settings
          * @return {@code this}
-         * @see com.mongodb.MongoClientSettings#getConnectionPoolSettings() ()
+         * @see MongoClientSettings#getConnectionPoolSettings() ()
          */
         public Builder connectionPoolSettings(final ConnectionPoolSettings connectionPoolSettings) {
             this.connectionPoolSettings = notNull("connectionPoolSettings", connectionPoolSettings);
@@ -165,13 +131,13 @@ public final class MongoClientSettings {
         }
 
         /**
-         * Sets the socket settings.
+         * Sets the server settings.
          *
          * @param serverSettings the server settings
          * @return {@code this}
-         * @see com.mongodb.MongoClientSettings#getServerSettings() ()
+         * @see MongoClientSettings#getServerSettings() ()
          */
-        public Builder socketSettings(final ServerSettings serverSettings) {
+        public Builder serverSettings(final ServerSettings serverSettings) {
             this.serverSettings = notNull("serverSettings", serverSettings);
             return this;
         }
@@ -181,7 +147,7 @@ public final class MongoClientSettings {
          *
          * @param sslSettings the SSL settings
          * @return {@code this}
-         * @see com.mongodb.MongoClientSettings#getSslSettings() ()
+         * @see MongoClientSettings#getSslSettings() ()
          */
         public Builder sslSettings(final SSLSettings sslSettings) {
             this.sslSettings = notNull("sslSettings", sslSettings);
@@ -194,7 +160,7 @@ public final class MongoClientSettings {
          *
          * @param readPreference read preference
          * @return {@code this}
-         * @see com.mongodb.MongoClientSettings#getReadPreference()
+         * @see MongoClientSettings#getReadPreference()
          */
         public Builder readPreference(final ReadPreference readPreference) {
             this.readPreference = notNull("readPreference", readPreference);
@@ -206,7 +172,7 @@ public final class MongoClientSettings {
          *
          * @param writeConcern the write concern
          * @return {@code this}
-         * @see com.mongodb.MongoClientSettings#getWriteConcern()
+         * @see MongoClientSettings#getWriteConcern()
          */
         public Builder writeConcern(final WriteConcern writeConcern) {
             this.writeConcern = notNull("writeConcern", writeConcern);
@@ -218,7 +184,7 @@ public final class MongoClientSettings {
          *
          * @param credentialList the credential list
          * @return {@code this}
-         * @see com.mongodb.MongoClientSettings#getCredentialList()
+         * @see MongoClientSettings#getCredentialList()
          */
         public Builder credentialList(final List<MongoCredential> credentialList) {
             this.credentialList = Collections.unmodifiableList(notNull("credentialList", credentialList));

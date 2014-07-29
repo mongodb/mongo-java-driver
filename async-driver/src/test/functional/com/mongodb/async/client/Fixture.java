@@ -18,7 +18,6 @@ package com.mongodb.async.client;
 
 import com.mongodb.CommandFailureException;
 import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientSettings;
 import org.mongodb.Document;
 import org.mongodb.MongoNamespace;
 
@@ -38,8 +37,7 @@ public final class Fixture {
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            ConnectionString connectionString = getConnectionString();
-            mongoClient = (MongoClientImpl) MongoClients.create(MongoClientSettings.builder(connectionString).build());
+            mongoClient = (MongoClientImpl) MongoClients.create(getConnectionString());
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;

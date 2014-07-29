@@ -16,6 +16,8 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.ConnectionString;
+
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -63,9 +65,20 @@ public class SocketSettings {
             return this;
         }
 
+        public Builder applyConnectionString(final ConnectionString connectionString) {
+            if (connectionString.getConnectTimeout() != null) {
+                this.connectTimeout(connectionString.getConnectTimeout(), MILLISECONDS);
+            }
+            if (connectionString.getSocketTimeout() != null) {
+                this.readTimeout(connectionString.getSocketTimeout(), MILLISECONDS);
+            }
+            return this;
+        }
+
         public SocketSettings build() {
             return new SocketSettings(this);
         }
+
     }
 
     public int getConnectTimeout(final TimeUnit timeUnit) {

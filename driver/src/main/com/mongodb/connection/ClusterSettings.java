@@ -16,11 +16,13 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.ConnectionString;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.selector.ServerSelector;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -117,6 +119,22 @@ public final class ClusterSettings {
             return this;
         }
 
+        public Builder applyConnectionString(final ConnectionString connectionString) {
+            if (connectionString.getHosts().size() == 1 && connectionString.getRequiredReplicaSetName() == null) {
+                mode(ClusterConnectionMode.SINGLE)
+                              .hosts(Arrays.asList(new ServerAddress(connectionString.getHosts().get(0))));
+            } else {
+                List<ServerAddress> seedList = new ArrayList<ServerAddress>();
+                for (final String cur : connectionString.getHosts()) {
+                    seedList.add(new ServerAddress(cur));
+                }
+                mode(ClusterConnectionMode.MULTIPLE).hosts(seedList);
+            }
+            requiredReplicaSetName(connectionString.getRequiredReplicaSetName());
+
+            return this;
+        }
+
         /**
          * Build the settings from the builder.
          *
@@ -125,7 +143,6 @@ public final class ClusterSettings {
         public ClusterSettings build() {
             return new ClusterSettings(this);
         }
-        // CHECKSTYLE:ON
     }
 
     /**

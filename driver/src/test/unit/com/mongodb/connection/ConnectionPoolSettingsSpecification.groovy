@@ -15,11 +15,9 @@
  */
 
 
-
-
-
 package com.mongodb.connection
 
+import com.mongodb.ConnectionString
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -116,6 +114,22 @@ class ConnectionPoolSettingsSpecification extends Specification {
 
         then:
         settings1.hashCode() == settings2.hashCode()
+    }
+
+    def 'should apply connection string'() {
+        when:
+        def settings = ConnectionPoolSettings.builder().applyConnectionString(
+                new ConnectionString('mongodb://localhost/?waitQueueTimeoutMS=100&minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7&'
+                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300'))
+                                             .build()
+
+        then:
+        settings.getMaxWaitTime(MILLISECONDS) == 100
+        settings.getMaxSize() == 10
+        settings.getMinSize() == 5
+        settings.getMaxConnectionIdleTime(MILLISECONDS) == 200
+        settings.getMaxConnectionLifeTime(MILLISECONDS) == 300
+        settings.getMaxWaitQueueSize() == 70
     }
 
     def 'toString should be overridden'() {
