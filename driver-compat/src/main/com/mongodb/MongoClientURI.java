@@ -236,7 +236,6 @@ public class MongoClientURI {
      * @return the MongoClientOptions based on this URI.
      */
     public MongoClientOptions getOptions() {
-        // TODO: Neither tested nor complete
         MongoClientOptions.Builder builder = MongoClientOptions.builder();
 
         if (proxied.getReadPreference() != null) {
@@ -245,6 +244,37 @@ public class MongoClientURI {
         if (proxied.getWriteConcern() != null) {
             builder.writeConcern(proxied.getWriteConcern());
         }
+        if (proxied.getMaxConnectionPoolSize() != null) {
+            builder.connectionsPerHost(proxied.getMaxConnectionPoolSize());
+        }
+        if (proxied.getMinConnectionPoolSize() != null) {
+            builder.minConnectionsPerHost(proxied.getMinConnectionPoolSize());
+        }
+        if (proxied.getMaxWaitTime() != null) {
+            builder.maxWaitTime(proxied.getMaxWaitTime());
+        }
+        if (proxied.getThreadsAllowedToBlockForConnectionMultiplier() != null) {
+            builder.threadsAllowedToBlockForConnectionMultiplier(proxied.getThreadsAllowedToBlockForConnectionMultiplier());
+        }
+        if (proxied.getMaxConnectionIdleTime() != null) {
+            builder.maxConnectionIdleTime(proxied.getMaxConnectionIdleTime());
+        }
+        if (proxied.getMaxConnectionLifeTime() != null) {
+            builder.maxConnectionLifeTime(proxied.getMaxConnectionLifeTime());
+        }
+        if (proxied.getSocketTimeout() != null) {
+            builder.socketTimeout(proxied.getSocketTimeout());
+        }
+        if (proxied.getConnectTimeout() != null) {
+            builder.connectTimeout(proxied.getConnectTimeout());
+        }
+        if (proxied.getRequiredReplicaSetName() != null) {
+            builder.requiredReplicaSetName(proxied.getRequiredReplicaSetName());
+        }
+        if (proxied.getSslEnabled() != null) {
+            builder.SSLEnabled(proxied.getSslEnabled());
+        }
+
         return builder.build();
     }
 
