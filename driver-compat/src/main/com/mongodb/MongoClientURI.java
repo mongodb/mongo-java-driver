@@ -248,15 +248,6 @@ public class MongoClientURI {
         return builder.build();
     }
 
-    /**
-     * Convert to new representation
-     *
-     * @return the new stuff
-     */
-    public ConnectionString toNew() {
-        return proxied;
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
