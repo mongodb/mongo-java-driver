@@ -19,8 +19,8 @@ package com.mongodb.client;
 import org.junit.Test;
 import org.mongodb.Document;
 
+import static com.mongodb.QueryOperators.TYPE;
 import static com.mongodb.client.QueryBuilder.query;
-import static com.mongodb.client.QueryOperators.TYPE;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 

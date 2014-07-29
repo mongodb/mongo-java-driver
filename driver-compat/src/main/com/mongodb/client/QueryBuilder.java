@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.QueryOperators;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
 

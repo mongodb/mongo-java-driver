@@ -34,8 +34,8 @@ import org.mongodb.MongoCursor;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.QueryOperators.TYPE;
 import static com.mongodb.client.QueryBuilder.query;
-import static com.mongodb.client.QueryOperators.TYPE;
 import static java.util.Arrays.asList;
 import static org.bson.BsonType.INT32;
 import static org.bson.BsonType.INT64;
