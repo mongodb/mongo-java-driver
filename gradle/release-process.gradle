@@ -18,11 +18,11 @@ github {
         from(project(':bson').javadoc.outputs.files) {
             into 'bson/javadoc'
         }
+        from(project(':driver-core').javadoc.outputs.files) {
+            into 'driver-core/javadoc'
+        }
         from(project(':driver').javadoc.outputs.files) {
             into 'driver/javadoc'
-        }
-        from(project(':driver-compat').javadoc.outputs.files) {
-            into 'driver-compat/javadoc'
         }
         into { "javadoc/$project.release.version" }
     }
@@ -46,7 +46,7 @@ release {
     commitMessage = { "Release $project.release.version" }
 
     update {
-        file project('driver-compat').file('src/main/com/mongodb/Mongo.java')
+        file project('driver').file('src/main/com/mongodb/Mongo.java')
         file project.file('build.gradle')
         projects allprojects
     }
@@ -57,8 +57,8 @@ release {
     }
 
     dependsOn subprojects.findAll { it.name != 'util' }*.install
+    dependsOn project('driver-core').uberJar
     dependsOn project('driver').uberJar
-    dependsOn project('driver-compat').uberJar
     dependsOn publishWiki
     dependsOn draftGhRelease
 }

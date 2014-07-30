@@ -118,7 +118,7 @@ project(':driver-core') {
     }
 }
 
-project(':driver-compat') {
+project(':driver') {
 
     archivesBaseName = 'mongo-java-driver'
 

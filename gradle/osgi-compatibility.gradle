@@ -48,7 +48,7 @@ project(':driver-core') {
     }
 }
 
-project(':driver-compat') {
+project(':driver') {
     jar {
         manifest {
             attributes(

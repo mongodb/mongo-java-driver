@@ -300,7 +300,7 @@ project(':async-rxjava-driver') {
     }
 }
 
-project(':driver-compat') {
+project(':driver') {
     apply plugin: 'clirr'
 
     sourceSets {
