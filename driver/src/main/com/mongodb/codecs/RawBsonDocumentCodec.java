@@ -27,7 +27,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicInputBuffer;
-import org.mongodb.BSONDocumentBuffer;
+import org.mongodb.RawBsonDocument;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -37,15 +37,15 @@ import java.io.IOException;
  * contains a single encoded BSON document.
  * <p/>
  */
-public class BSONDocumentBufferCodec implements Codec<BSONDocumentBuffer> {
+public class RawBsonDocumentCodec implements Codec<RawBsonDocument> {
     private final BufferProvider bufferProvider;
 
-    public BSONDocumentBufferCodec(final BufferProvider bufferProvider) {
+    public RawBsonDocumentCodec(final BufferProvider bufferProvider) {
         this.bufferProvider = bufferProvider;
     }
 
     @Override
-    public void encode(final BsonWriter writer, final BSONDocumentBuffer value, final EncoderContext encoderContext) {
+    public void encode(final BsonWriter writer, final RawBsonDocument value, final EncoderContext encoderContext) {
         BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(value.getByteBuffer()), true);
         try {
             writer.pipe(reader);
@@ -55,13 +55,13 @@ public class BSONDocumentBufferCodec implements Codec<BSONDocumentBuffer> {
     }
 
     @Override
-    public BSONDocumentBuffer decode(final BsonReader reader, final DecoderContext decoderContext) {
+    public RawBsonDocument decode(final BsonReader reader, final DecoderContext decoderContext) {
         BsonBinaryWriter writer = new BsonBinaryWriter(new ByteBufferOutputBuffer(bufferProvider), true);
         try {
             writer.pipe(reader);
             BufferExposingByteArrayOutputStream byteArrayOutputStream = new BufferExposingByteArrayOutputStream(writer.getBuffer().size());
             writer.getBuffer().pipe(byteArrayOutputStream);
-            return new BSONDocumentBuffer(byteArrayOutputStream.getInternalBytes());
+            return new RawBsonDocument(byteArrayOutputStream.getInternalBytes());
         } catch (IOException e) {
             // impossible with a byte array output stream
             throw new MongoInternalException("impossible", e);
@@ -71,8 +71,8 @@ public class BSONDocumentBufferCodec implements Codec<BSONDocumentBuffer> {
     }
 
     @Override
-    public Class<BSONDocumentBuffer> getEncoderClass() {
-        return BSONDocumentBuffer.class;
+    public Class<RawBsonDocument> getEncoderClass() {
+        return RawBsonDocument.class;
     }
 
     // Just so we don't have to copy the buffer

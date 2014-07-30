@@ -33,7 +33,7 @@ import java.nio.ByteOrder;
  * A simple wrapper around a byte array that is the representation of a single BSON document.
  */
 // TODO: Add an easy way to iterate over the fields?
-public class BSONDocumentBuffer {
+public class RawBsonDocument {
     private final byte[] bytes;
 
     /**
@@ -43,7 +43,7 @@ public class BSONDocumentBuffer {
      * @param bytes the bytes representing a BSON document.  Note that the byte array is NOT copied, so care must be taken not to modify it
      *              after passing it to this construction, unless of course that is your intention.
      */
-    public BSONDocumentBuffer(final byte[] bytes) {
+    public RawBsonDocument(final byte[] bytes) {
         if (bytes == null) {
             throw new IllegalArgumentException("bytes can not be null");
         }
@@ -56,7 +56,7 @@ public class BSONDocumentBuffer {
      * @param document the document to transform
      * @param codec    the codec to facilitate the transformation
      */
-    public <T> BSONDocumentBuffer(final T document, final Codec<T> codec) {
+    public <T> RawBsonDocument(final T document, final Codec<T> codec) {
         BsonBinaryWriter writer = new BsonBinaryWriter(new BasicOutputBuffer(), true);
         try {
             codec.encode(writer, document, EncoderContext.builder().build());

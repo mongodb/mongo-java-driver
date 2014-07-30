@@ -25,21 +25,21 @@ import org.bson.ByteBufNIO
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.io.BasicInputBuffer
-import org.mongodb.BSONDocumentBuffer
+import org.mongodb.RawBsonDocument
 import org.mongodb.SimpleBufferProvider
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
 
-class BsonDocumentBufferCodecSpecification extends Specification {
+class RawBsonDocumentCodecSpecification extends Specification {
 
-    def codec = new BSONDocumentBufferCodec(new SimpleBufferProvider())
+    def codec = new RawBsonDocumentCodec(new SimpleBufferProvider())
     def document = new BsonDocument([new BsonElement('b1', BsonBoolean.TRUE), new BsonElement('b2', BsonBoolean.FALSE)])
     def documentBytes = [15, 0, 0, 0, 8, 98, 49, 0, 1, 8, 98, 50, 0, 0, 0] as byte[];
 
     def 'should get encoder class'() {
         expect:
-        codec.encoderClass == BSONDocumentBuffer
+        codec.encoderClass == RawBsonDocument
     }
 
     def 'should encode'() {
@@ -48,7 +48,7 @@ class BsonDocumentBufferCodecSpecification extends Specification {
         def writer = new BsonDocumentWriter(document)
 
         when:
-        codec.encode(writer, new BSONDocumentBuffer(documentBytes), EncoderContext.builder().build())
+        codec.encode(writer, new RawBsonDocument(documentBytes), EncoderContext.builder().build())
 
         then:
         document == new BsonDocument([new BsonElement('b1', BsonBoolean.TRUE), new BsonElement('b2', BsonBoolean.FALSE)])
@@ -59,7 +59,7 @@ class BsonDocumentBufferCodecSpecification extends Specification {
         def reader = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(documentBytes))), false)
 
         when:
-        BSONDocumentBuffer buffer = codec.decode(reader, DecoderContext.builder().build())
+        RawBsonDocument buffer = codec.decode(reader, DecoderContext.builder().build())
 
         then:
         buffer.byteBuffer.array() == documentBytes

@@ -22,14 +22,14 @@ import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class BSONDocumentBufferTest {
+public class RawBsonDocumentTest {
     @Test
     public void testRoundTrip() {
         Document document = new Document("a", 1).append("b", 2);
 
         DocumentCodec documentCodec = new DocumentCodec();
 
-        BSONDocumentBuffer buffer = new BSONDocumentBuffer(document, documentCodec);
+        RawBsonDocument buffer = new RawBsonDocument(document, documentCodec);
 
         assertNotNull(buffer.getByteBuffer());
         assertEquals(document, buffer.decode(documentCodec));
