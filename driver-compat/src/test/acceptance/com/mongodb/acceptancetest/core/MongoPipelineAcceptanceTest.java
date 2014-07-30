@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.acceptancetest.core;
+package com.mongodb.acceptancetest.core;
 
 import com.mongodb.Block;
 import com.mongodb.Function;

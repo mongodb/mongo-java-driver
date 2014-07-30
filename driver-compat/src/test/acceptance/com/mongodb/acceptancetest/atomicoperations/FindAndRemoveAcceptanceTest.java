@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.acceptancetest.atomicoperations;
+package com.mongodb.acceptancetest.atomicoperations;
 
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoView;

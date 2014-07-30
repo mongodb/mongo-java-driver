@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.acceptancetest.querying;
+package com.mongodb.acceptancetest.querying;
 
 import com.mongodb.MongoCursor;
 import com.mongodb.client.DatabaseTestCase;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.acceptancetest.crud.pojo;
+package com.mongodb.acceptancetest.crud.pojo;
 
 public class Person {
     private String firstName;

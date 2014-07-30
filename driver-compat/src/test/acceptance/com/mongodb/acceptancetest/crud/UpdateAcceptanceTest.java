@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.acceptancetest.crud;
+package com.mongodb.acceptancetest.crud;
 
 import com.mongodb.client.DatabaseTestCase;
 import org.junit.Test;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.acceptancetest.index;
+package com.mongodb.acceptancetest.index;
 
 import com.mongodb.CommandFailureException;
 import com.mongodb.client.DatabaseTestCase;

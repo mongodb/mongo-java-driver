@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb.acceptancetest.crud.pojo;
+package com.mongodb.acceptancetest.crud.pojo;
 
 public class Address {
     private String addressLineOne;
