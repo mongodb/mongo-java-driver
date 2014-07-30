@@ -14,26 +14,22 @@
  * limitations under the License.
  */
 
-package com.mongodb.codecs
-
+package org.bson.codecs
 import org.bson.BsonBinaryReader
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWriter
 import org.bson.BsonElement
 import org.bson.ByteBufNIO
-import org.bson.codecs.DecoderContext
-import org.bson.codecs.EncoderContext
+import org.bson.RawBsonDocument
 import org.bson.io.BasicInputBuffer
-import org.mongodb.RawBsonDocument
-import org.mongodb.SimpleBufferProvider
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
 
 class RawBsonDocumentCodecSpecification extends Specification {
 
-    def codec = new RawBsonDocumentCodec(new SimpleBufferProvider())
+    def codec = new RawBsonDocumentCodec()
     def document = new BsonDocument([new BsonElement('b1', BsonBoolean.TRUE), new BsonElement('b2', BsonBoolean.FALSE)])
     def documentBytes = [15, 0, 0, 0, 8, 98, 49, 0, 1, 8, 98, 50, 0, 0, 0] as byte[];
 

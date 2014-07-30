@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.bson;
 
-import org.bson.BsonBinaryReader;
-import org.bson.BsonBinaryWriter;
-import org.bson.ByteBuf;
-import org.bson.ByteBufNIO;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
@@ -31,6 +27,8 @@ import java.nio.ByteOrder;
 
 /**
  * A simple wrapper around a byte array that is the representation of a single BSON document.
+ *
+ * @since 3.0
  */
 // TODO: Add an easy way to iterate over the fields?
 public class RawBsonDocument {

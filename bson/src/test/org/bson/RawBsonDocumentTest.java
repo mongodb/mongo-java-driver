@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package org.bson;
 
-import com.mongodb.codecs.DocumentCodec;
+import org.bson.codecs.BsonDocumentCodec;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -25,9 +25,9 @@ import static org.junit.Assert.assertNotNull;
 public class RawBsonDocumentTest {
     @Test
     public void testRoundTrip() {
-        Document document = new Document("a", 1).append("b", 2);
+        BsonDocument document = new BsonDocument("a", new BsonInt32(1)).append("b", new BsonInt32(2));
 
-        DocumentCodec documentCodec = new DocumentCodec();
+        BsonDocumentCodec documentCodec = new BsonDocumentCodec();
 
         RawBsonDocument buffer = new RawBsonDocument(document, documentCodec);
 

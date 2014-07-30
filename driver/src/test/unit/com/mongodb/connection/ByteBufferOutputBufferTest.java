@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.mongodb.io;
+package com.mongodb.connection;
 
-import com.mongodb.connection.ByteBufferOutputBuffer;
 import org.bson.BsonSerializationException;
 import org.junit.Test;
 import org.mongodb.SimpleBufferProvider;

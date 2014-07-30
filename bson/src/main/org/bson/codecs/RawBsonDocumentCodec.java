@@ -14,20 +14,16 @@
  * limitations under the License.
  */
 
-package com.mongodb.codecs;
+package org.bson.codecs;
 
-import com.mongodb.MongoInternalException;
-import com.mongodb.connection.BufferProvider;
-import com.mongodb.connection.ByteBufferOutputBuffer;
+import org.bson.BSONException;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
-import org.bson.codecs.Codec;
-import org.bson.codecs.DecoderContext;
-import org.bson.codecs.EncoderContext;
+import org.bson.RawBsonDocument;
 import org.bson.io.BasicInputBuffer;
-import org.mongodb.RawBsonDocument;
+import org.bson.io.BasicOutputBuffer;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -38,10 +34,8 @@ import java.io.IOException;
  * <p/>
  */
 public class RawBsonDocumentCodec implements Codec<RawBsonDocument> {
-    private final BufferProvider bufferProvider;
 
-    public RawBsonDocumentCodec(final BufferProvider bufferProvider) {
-        this.bufferProvider = bufferProvider;
+    public RawBsonDocumentCodec() {
     }
 
     @Override
@@ -56,7 +50,7 @@ public class RawBsonDocumentCodec implements Codec<RawBsonDocument> {
 
     @Override
     public RawBsonDocument decode(final BsonReader reader, final DecoderContext decoderContext) {
-        BsonBinaryWriter writer = new BsonBinaryWriter(new ByteBufferOutputBuffer(bufferProvider), true);
+        BsonBinaryWriter writer = new BsonBinaryWriter(new BasicOutputBuffer(), true);
         try {
             writer.pipe(reader);
             BufferExposingByteArrayOutputStream byteArrayOutputStream = new BufferExposingByteArrayOutputStream(writer.getBuffer().size());
@@ -64,7 +58,7 @@ public class RawBsonDocumentCodec implements Codec<RawBsonDocument> {
             return new RawBsonDocument(byteArrayOutputStream.getInternalBytes());
         } catch (IOException e) {
             // impossible with a byte array output stream
-            throw new MongoInternalException("impossible", e);
+            throw new BSONException("impossible", e);
         } finally {
             writer.close();
         }
