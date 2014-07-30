@@ -29,13 +29,13 @@ project(':bson') {
     }
 }
 
-project(':driver') {
+project(':driver-core') {
     jar {
         manifest {
             attributes(
                     'Bundle-License': 'http://www.apache.org/licenses/LICENSE-2.0.txt',
                     'Bundle-Name': 'MongoDB Java Driver',
-                    'Bundle-SymbolicName': 'org.mongodb.mongodb-driver',
+                    'Bundle-SymbolicName': 'org.mongodb.mongo-java-driver-core',
                     'Import-Package': 'javax.management, javax.net, javax.net.ssl, javax.security.sasl, javax.security.auth.login, ' +
                                       'javax.security.auth, org.ietf.jgss',
 

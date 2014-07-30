@@ -14,4 +14,6 @@
  * limitations under the License.
  */
 
-include 'util','bson', 'driver', 'async-driver', 'driver-compat', 'async-rxjava-driver'
+include 'util','bson', 'driver-core', 'async-driver', 'driver-compat', 'async-rxjava-driver'
+include 'driver-core'
+

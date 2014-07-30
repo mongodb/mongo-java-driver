@@ -211,7 +211,7 @@ project(':bson') {
         }
     }
 }
-project(':driver') {
+project(':driver-core') {
     sourceSets {
         test {
             groovy { srcDirs = ['src/test/unit', 'src/test/functional'] }
@@ -250,7 +250,7 @@ project(':async-driver') {
 
     dependencies {
         compile project(':bson')
-        compile project(':driver')
+        compile project(':driver-core')
 
         provided "io.netty:netty-all:$nettyVersion"
 
@@ -262,7 +262,7 @@ project(':async-driver') {
     task uberJar(type: Jar) {
         classifier = 'all'
         from project(':bson').sourceSets.main.output
-        from project(':driver').sourceSets.main.output
+        from project(':driver-core').sourceSets.main.output
         from sourceSets.main.output
     }
 }
@@ -277,7 +277,7 @@ project(':async-rxjava-driver') {
 
     dependencies {
         compile project(':bson')
-        compile project(':driver')
+        compile project(':driver-core')
         compile project(':async-driver')
 
         compile "com.netflix.rxjava:rxjava-core:0.17.5"
@@ -294,7 +294,7 @@ project(':async-rxjava-driver') {
     task uberJar(type: Jar) {
         classifier = 'all'
         from project(':bson').sourceSets.main.output
-        from project(':driver').sourceSets.main.output
+        from project(':driver-core').sourceSets.main.output
         from project(':async-driver').sourceSets.main.output
         from sourceSets.main.output
     }
@@ -316,9 +316,9 @@ project(':driver-compat') {
 
     dependencies {
         compile project(':bson')
-        compile project(':driver')
+        compile project(':driver-core')
 
-        testCompile project(':driver').sourceSets.test.output
+        testCompile project(':driver-core').sourceSets.test.output
     }
 
     clirr {
@@ -334,7 +334,7 @@ project(':driver-compat') {
     task uberJar(type: Jar) {
         classifier = 'all'
         from project(':bson').sourceSets.main.output
-        from project(':driver').sourceSets.main.output
+        from project(':driver-core').sourceSets.main.output
         from sourceSets.main.output
     }
 }

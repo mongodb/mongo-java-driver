@@ -105,9 +105,9 @@ project(':bson') {
     }
 }
 
-project(':driver') {
+project(':driver-core') {
 
-    archivesBaseName = 'mongodb-driver'
+    archivesBaseName = 'mongo-java-driver-core'
 
     pom {
         project {
