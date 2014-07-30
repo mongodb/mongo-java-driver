@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb.connection;
 
-import com.mongodb.connection.BufferProvider;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 

@@ -18,6 +18,7 @@ package com.mongodb.protocol;
 
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.ByteBufferOutputBuffer;
+import com.mongodb.connection.SimpleBufferProvider;
 import com.mongodb.operation.InsertRequest;
 import com.mongodb.protocol.message.InsertMessage;
 import com.mongodb.protocol.message.MessageSettings;
@@ -27,7 +28,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.SimpleBufferProvider;
 
 import java.util.Arrays;
 

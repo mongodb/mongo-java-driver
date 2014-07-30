@@ -22,6 +22,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.WriteConcern
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.connection.ByteBufferOutputBuffer
+import com.mongodb.connection.SimpleBufferProvider
 import com.mongodb.operation.InsertRequest
 import com.mongodb.operation.RemoveRequest
 import com.mongodb.operation.ReplaceRequest
@@ -32,7 +33,6 @@ import com.mongodb.protocol.message.ReplaceCommandMessage
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.mongodb.Document
-import org.mongodb.SimpleBufferProvider
 import spock.lang.Specification
 
 class WriteCommandLimitsSpecifications extends Specification {

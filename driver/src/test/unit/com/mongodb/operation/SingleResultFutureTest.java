@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package org.mongodb.impl;
+package com.mongodb.operation;
 
 import com.mongodb.MongoException;
 import com.mongodb.connection.SingleResultCallback;
-import com.mongodb.operation.SingleResultFuture;
 import org.junit.Test;
 
 import java.util.concurrent.CancellationException;

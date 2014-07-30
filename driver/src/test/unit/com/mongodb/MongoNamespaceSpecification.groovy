@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.mongodb
+package com.mongodb
 
-import com.mongodb.MongoNamespace
 import spock.lang.Specification
 
 class MongoNamespaceSpecification extends Specification {

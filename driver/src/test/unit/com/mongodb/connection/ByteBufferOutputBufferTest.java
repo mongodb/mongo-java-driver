@@ -18,7 +18,6 @@ package com.mongodb.connection;
 
 import org.bson.BsonSerializationException;
 import org.junit.Test;
-import org.mongodb.SimpleBufferProvider;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

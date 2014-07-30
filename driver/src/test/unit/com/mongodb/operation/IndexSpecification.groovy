@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package org.mongodb
+package com.mongodb.operation
 
-import com.mongodb.operation.Index
 import org.bson.BsonDocument
 import org.bson.BsonString
 import spock.lang.Specification

@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb.operation;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
-import com.mongodb.operation.GetMore;
 import org.junit.Test;
 
 import java.net.UnknownHostException;

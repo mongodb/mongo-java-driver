@@ -19,7 +19,7 @@
 
 
 package com.mongodb.connection.netty
-import org.mongodb.SimpleBufferProvider
+import com.mongodb.connection.SimpleBufferProvider
 import spock.lang.Specification
 import spock.lang.Unroll
 
