@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.Function;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
@@ -24,7 +25,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonValue;
 import org.mongodb.CommandResult;
-import org.mongodb.Function;
 
 import java.util.ArrayList;
 import java.util.List;

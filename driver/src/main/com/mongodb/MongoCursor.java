@@ -14,10 +14,26 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb;
 
-import org.bson.BsonDocument;
 
-public interface ConvertibleToBsonDocument {
-    BsonDocument toDocument();
+import com.mongodb.annotations.NotThreadSafe;
+
+import java.io.Closeable;
+import java.util.Iterator;
+
+@NotThreadSafe
+public interface MongoCursor<T> extends Iterator<T>, Closeable {
+    @Override
+    void close();
+
+    @Override
+    boolean hasNext();
+
+    @Override
+    T next();
+
+    ServerCursor getServerCursor();
+
+    ServerAddress getServerAddress();
 }

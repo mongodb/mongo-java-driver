@@ -57,9 +57,6 @@ import org.bson.BsonJavaScript;
 import org.bson.codecs.Codec;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
-import org.mongodb.Function;
-import org.mongodb.MongoCursor;
-import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 
 import java.util.ArrayList;

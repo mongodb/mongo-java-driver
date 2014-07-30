@@ -21,7 +21,6 @@ import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
-import org.mongodb.ConvertibleToBsonDocument;
 
 import java.util.List;
 
@@ -31,7 +30,7 @@ import java.util.List;
  * @mongodb.driver.manual core/read-preference  Read Preference
  */
 @Immutable
-public abstract class ReadPreference implements ConvertibleToBsonDocument {
+public abstract class ReadPreference {
 
     ReadPreference() {
     }
@@ -39,6 +38,8 @@ public abstract class ReadPreference implements ConvertibleToBsonDocument {
     public abstract boolean isSlaveOk();
 
     public abstract String getName();
+
+    public abstract BsonDocument toDocument();
 
     public abstract List<ServerDescription> choose(final ClusterDescription clusterDescription);
 
@@ -259,7 +260,6 @@ public abstract class ReadPreference implements ConvertibleToBsonDocument {
             return clusterDescription.getPrimaries();
         }
 
-        @Override
         public BsonDocument toDocument() {
             return new BsonDocument("mode", new BsonString(getName()));
         }

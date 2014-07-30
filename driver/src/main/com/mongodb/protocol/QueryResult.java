@@ -17,8 +17,8 @@
 package com.mongodb.protocol;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.ServerCursor;
 import com.mongodb.protocol.message.ReplyMessage;
-import org.mongodb.ServerCursor;
 
 import java.util.List;
 

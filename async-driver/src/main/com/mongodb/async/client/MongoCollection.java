@@ -17,11 +17,11 @@
 package com.mongodb.async.client;
 
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.async.MongoFuture;
 import org.bson.codecs.Codec;
 import org.mongodb.Document;
-import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 
 import java.util.List;

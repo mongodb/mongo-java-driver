@@ -16,6 +16,7 @@
 
 package com.mongodb.client
 
+import com.mongodb.MongoNamespace
 import com.mongodb.binding.AsyncSingleConnectionBinding
 import com.mongodb.binding.PinnedBinding
 import com.mongodb.client.test.CollectionHelper
@@ -26,7 +27,6 @@ import com.mongodb.connection.ServerHelper
 import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.InsertRequest
 import org.mongodb.Document
-import org.mongodb.MongoNamespace
 import spock.lang.Specification
 
 import static com.mongodb.ClusterFixture.getPrimary

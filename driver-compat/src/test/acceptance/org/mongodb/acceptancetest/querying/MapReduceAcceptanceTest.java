@@ -16,12 +16,12 @@
 
 package org.mongodb.acceptancetest.querying;
 
+import com.mongodb.Function;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoIterable;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.Function;
 
 import java.util.ArrayList;
 import java.util.Collections;

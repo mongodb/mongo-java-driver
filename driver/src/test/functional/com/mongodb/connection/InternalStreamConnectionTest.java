@@ -19,6 +19,8 @@ package com.mongodb.connection;
 import category.Async;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
+import com.mongodb.MongoNamespace;
+import com.mongodb.ServerCursor;
 import com.mongodb.event.ConnectionEvent;
 import com.mongodb.event.ConnectionListener;
 import com.mongodb.event.ConnectionMessageReceivedEvent;
@@ -36,8 +38,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.MongoNamespace;
-import org.mongodb.ServerCursor;
 
 import java.util.Collections;
 import java.util.EnumSet;
@@ -45,8 +45,8 @@ import java.util.concurrent.CountDownLatch;
 
 import static com.mongodb.ClusterFixture.getAsyncStreamFactory;
 import static com.mongodb.ClusterFixture.getPrimary;
+import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static org.junit.Assert.assertEquals;
-import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 
 // This is a Java test so that we can use categories.
 @Category(Async.class)

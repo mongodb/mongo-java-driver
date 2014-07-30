@@ -17,6 +17,7 @@
 package org.mongodb;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.ServerCursor;
 import com.mongodb.operation.GetMore;
 import org.junit.Test;
 

@@ -17,7 +17,9 @@
 package com.mongodb.operation;
 
 import com.mongodb.CommandFailureException;
+import com.mongodb.Function;
 import com.mongodb.MongoException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncConnectionSource;
@@ -37,8 +39,6 @@ import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
-import org.mongodb.Function;
-import org.mongodb.MongoNamespace;
 
 import java.util.EnumSet;
 

@@ -17,8 +17,8 @@
 package com.mongodb.async.client;
 
 import com.mongodb.Block;
+import com.mongodb.Function;
 import com.mongodb.async.MongoFuture;
-import org.mongodb.Function;
 
 import java.util.Collection;
 

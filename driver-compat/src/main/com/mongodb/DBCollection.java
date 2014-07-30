@@ -69,8 +69,6 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.Encoder;
 import org.bson.types.ObjectId;
 import org.mongodb.Document;
-import org.mongodb.MongoCursor;
-import org.mongodb.MongoNamespace;
 
 import java.util.ArrayList;
 import java.util.Arrays;

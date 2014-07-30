@@ -18,8 +18,8 @@ package com.mongodb.async.client;
 
 import com.mongodb.CommandFailureException;
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoNamespace;
 import org.mongodb.Document;
-import org.mongodb.MongoNamespace;
 
 /**
  * Helper class for asynchronous tests.

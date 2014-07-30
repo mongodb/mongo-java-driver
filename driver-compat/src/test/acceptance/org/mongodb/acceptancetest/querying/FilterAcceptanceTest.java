@@ -16,11 +16,11 @@
 
 package org.mongodb.acceptancetest.querying;
 
+import com.mongodb.MongoCursor;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoView;
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.MongoCursor;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;

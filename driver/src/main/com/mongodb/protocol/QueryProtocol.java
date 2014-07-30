@@ -16,6 +16,7 @@
 
 package com.mongodb.protocol;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.ByteBufferOutputBuffer;
@@ -32,7 +33,6 @@ import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 import org.mongodb.Document;
-import org.mongodb.MongoNamespace;
 
 import java.util.EnumSet;
 

@@ -16,12 +16,12 @@
 
 package com.mongodb.client;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
 import org.bson.codecs.Codec;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
-import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 
 import java.util.List;

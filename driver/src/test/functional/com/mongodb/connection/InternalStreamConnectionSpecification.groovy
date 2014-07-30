@@ -17,6 +17,8 @@
 
 package com.mongodb.connection
 
+import com.mongodb.MongoNamespace
+import com.mongodb.ServerCursor
 import com.mongodb.event.ConnectionListener
 import com.mongodb.operation.QueryFlag
 import com.mongodb.protocol.KillCursor
@@ -25,13 +27,11 @@ import com.mongodb.protocol.message.KillCursorsMessage
 import com.mongodb.protocol.message.MessageSettings
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.mongodb.MongoNamespace
-import org.mongodb.ServerCursor
 import spock.lang.Specification
 
+import static MongoNamespace.COMMAND_COLLECTION_NAME
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSSLSettings
-import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME
 
 class InternalStreamConnectionSpecification extends Specification {
     private static final String CLUSTER_ID = '1'

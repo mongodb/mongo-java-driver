@@ -17,6 +17,7 @@
 package com.mongodb.protocol;
 
 import com.mongodb.MongoException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.Connection;
@@ -28,7 +29,6 @@ import com.mongodb.operation.UpdateRequest;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
 import com.mongodb.protocol.message.UpdateMessage;
-import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 
 import java.util.List;

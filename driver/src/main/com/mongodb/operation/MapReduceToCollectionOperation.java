@@ -16,14 +16,14 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.Function;
+import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import org.bson.BsonDocument;
 import org.mongodb.CommandResult;
-import org.mongodb.Function;
-import org.mongodb.MongoNamespace;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandDocuments.createMapReduce;

@@ -17,13 +17,13 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonJavaScript
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.MongoNamespace
 import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getAsyncBinding

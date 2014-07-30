@@ -16,8 +16,8 @@
 
 package com.mongodb.async.rxjava.client
 
+import com.mongodb.MongoNamespace
 import org.mongodb.Document
-import org.mongodb.MongoNamespace
 import spock.lang.Specification
 
 import static Fixture.dropCollection

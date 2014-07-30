@@ -16,6 +16,7 @@
 
 package com.mongodb.protocol.message;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBinaryWriterSettings;
@@ -23,10 +24,9 @@ import org.bson.BsonWriterSettings;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.OutputBuffer;
-import org.mongodb.MongoNamespace;
 
+import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.protocol.message.RequestMessage.OpCode.OP_QUERY;
-import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 
 public abstract class BaseWriteCommandMessage extends RequestMessage {
     // Server allows command document to exceed max document size by 16K, so that it can comfortably fit a stored document inside it

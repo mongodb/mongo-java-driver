@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.protocol.InsertCommandProtocol;
@@ -24,7 +25,6 @@ import com.mongodb.protocol.WriteCommandProtocol;
 import com.mongodb.protocol.WriteProtocol;
 import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
-import org.mongodb.MongoNamespace;
 
 import java.util.List;
 

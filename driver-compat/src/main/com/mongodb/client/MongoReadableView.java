@@ -16,8 +16,8 @@
 
 package com.mongodb.client;
 
+import com.mongodb.MongoCursor;
 import org.mongodb.Document;
-import org.mongodb.MongoCursor;
 
 public interface MongoReadableView<T> {
 

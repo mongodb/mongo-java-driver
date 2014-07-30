@@ -16,14 +16,14 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.Function;
+import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.protocol.QueryProtocol;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
-import org.mongodb.Function;
-import org.mongodb.MongoNamespace;
 
 import java.util.EnumSet;
 import java.util.List;

@@ -16,13 +16,13 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoNamespace;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
-import org.mongodb.MongoNamespace;
 
 import java.util.List;
 

@@ -17,7 +17,9 @@
 package com.mongodb.async.client;
 
 import com.mongodb.Block;
+import com.mongodb.Function;
 import com.mongodb.MongoException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
@@ -44,8 +46,6 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
-import org.mongodb.Function;
-import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 
 import java.util.ArrayList;

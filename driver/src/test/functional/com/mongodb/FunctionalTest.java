@@ -22,7 +22,6 @@ import com.mongodb.connection.ServerHelper;
 import org.junit.After;
 import org.junit.Before;
 import org.mongodb.Document;
-import org.mongodb.MongoNamespace;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getPrimary;

@@ -18,8 +18,6 @@ package com.mongodb;
 
 import com.mongodb.client.MongoIterable;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
-import org.mongodb.Function;
-import org.mongodb.MongoCursor;
 
 import java.util.Collection;
 

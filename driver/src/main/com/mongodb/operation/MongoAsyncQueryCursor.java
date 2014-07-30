@@ -19,6 +19,8 @@ package com.mongodb.operation;
 import com.mongodb.Block;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.MongoNamespace;
+import com.mongodb.ServerCursor;
 import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncConnectionSource;
@@ -33,8 +35,6 @@ import com.mongodb.protocol.KillCursor;
 import com.mongodb.protocol.KillCursorProtocol;
 import com.mongodb.protocol.QueryResult;
 import org.bson.codecs.Decoder;
-import org.mongodb.MongoNamespace;
-import org.mongodb.ServerCursor;
 
 
 class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {

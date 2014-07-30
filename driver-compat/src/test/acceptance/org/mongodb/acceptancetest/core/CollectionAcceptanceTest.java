@@ -16,6 +16,7 @@
 
 package org.mongodb.acceptancetest.core;
 
+import com.mongodb.MongoCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
@@ -29,7 +30,6 @@ import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
-import org.mongodb.MongoCursor;
 
 import java.util.Arrays;
 import java.util.Date;

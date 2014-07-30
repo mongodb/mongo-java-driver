@@ -16,6 +16,7 @@
 
 package org.mongodb
 
+import com.mongodb.MongoNamespace
 import spock.lang.Specification
 
 class MongoNamespaceSpecification extends Specification {

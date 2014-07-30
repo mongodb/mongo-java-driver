@@ -19,6 +19,7 @@ package com.mongodb.operation
 import category.Slow
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ServerCursor
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.protocol.GetMoreProtocol
@@ -30,7 +31,6 @@ import org.bson.BsonDocument
 import org.bson.BsonTimestamp
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.ServerCursor
 
 import java.util.concurrent.CountDownLatch
 

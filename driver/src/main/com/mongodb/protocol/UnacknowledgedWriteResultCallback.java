@@ -17,6 +17,7 @@
 package com.mongodb.protocol;
 
 import com.mongodb.MongoException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.SingleResultCallback;
@@ -24,7 +25,6 @@ import com.mongodb.operation.SingleResultFuture;
 import com.mongodb.operation.SingleResultFutureCallback;
 import com.mongodb.protocol.message.RequestMessage;
 import org.bson.io.OutputBuffer;
-import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED;

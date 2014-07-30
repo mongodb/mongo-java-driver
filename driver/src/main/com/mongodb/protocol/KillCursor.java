@@ -16,7 +16,7 @@
 
 package com.mongodb.protocol;
 
-import org.mongodb.ServerCursor;
+import com.mongodb.ServerCursor;
 
 import java.util.Collections;
 import java.util.List;

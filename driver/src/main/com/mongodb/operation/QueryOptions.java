@@ -20,7 +20,6 @@ package com.mongodb.operation;
 
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.mongodb.ConvertibleToBsonDocument;
 
 import java.util.concurrent.TimeUnit;
 
@@ -138,11 +137,6 @@ public class QueryOptions {
 
     public QueryOptions hint(final BsonDocument index) {
         hint = index;
-        return this;
-    }
-
-    public QueryOptions hint(final ConvertibleToBsonDocument index) {
-        hint = index.toDocument();
         return this;
     }
 

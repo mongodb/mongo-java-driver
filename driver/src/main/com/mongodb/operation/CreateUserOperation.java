@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncWriteBinding;
@@ -26,7 +27,6 @@ import com.mongodb.protocol.Protocol;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.CommandResult;
-import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 
 import static com.mongodb.assertions.Assertions.notNull;

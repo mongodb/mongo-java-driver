@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb;
 
 /**
  * Apply a function to the input object yielding an appropriate result object. A function may variously provide a mapping between types,

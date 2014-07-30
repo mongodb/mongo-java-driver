@@ -22,8 +22,6 @@ import com.mongodb.operation.Find;
 import com.mongodb.operation.QueryFlag;
 import com.mongodb.operation.QueryOperation;
 import org.bson.codecs.Decoder;
-import org.mongodb.MongoCursor;
-import org.mongodb.ServerCursor;
 
 import java.util.ArrayList;
 import java.util.Iterator;

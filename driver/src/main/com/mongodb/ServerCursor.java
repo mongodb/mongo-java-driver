@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb;
-
-import com.mongodb.ServerAddress;
+package com.mongodb;
 
 import java.io.Serializable;
 

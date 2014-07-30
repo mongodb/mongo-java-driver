@@ -17,11 +17,11 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoNamespace
 import com.mongodb.MongoServerException
 import com.mongodb.OperationFunctionalSpecification
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.MongoNamespace
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding

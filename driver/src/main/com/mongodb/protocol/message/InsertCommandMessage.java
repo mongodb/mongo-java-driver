@@ -16,6 +16,7 @@
 
 package com.mongodb.protocol.message;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.operation.InsertRequest;
 import org.bson.BsonBinaryWriter;
@@ -23,7 +24,6 @@ import org.bson.FieldNameValidator;
 import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.OutputBuffer;
-import org.mongodb.MongoNamespace;
 
 import java.util.Collections;
 import java.util.HashMap;

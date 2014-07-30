@@ -15,7 +15,6 @@
  */
 
 package com.mongodb.operation
-
 import category.Async
 import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
@@ -25,7 +24,7 @@ import org.mongodb.Document
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
-import static groovy.util.OrderBy.ASC
+import static com.mongodb.operation.OrderBy.ASC
 
 class DropIndexesOperationSpecification extends OperationFunctionalSpecification {
 

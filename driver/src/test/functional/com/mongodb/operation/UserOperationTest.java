@@ -18,6 +18,7 @@ package com.mongodb.operation;
 
 import com.mongodb.FunctionalTest;
 import com.mongodb.MongoException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.WriteBinding;
@@ -32,7 +33,6 @@ import com.mongodb.connection.SocketStreamFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.MongoNamespace;
 
 import static com.mongodb.ClusterFixture.getBinding;
 import static com.mongodb.ClusterFixture.getPrimary;

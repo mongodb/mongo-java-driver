@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.ServerHelper;
@@ -24,7 +25,6 @@ import org.bson.BsonDocumentWrapper;
 import org.junit.After;
 import org.junit.Before;
 import org.mongodb.Document;
-import org.mongodb.MongoNamespace;
 
 import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;

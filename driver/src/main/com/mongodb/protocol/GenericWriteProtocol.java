@@ -16,10 +16,10 @@
 
 package com.mongodb.protocol;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
-import org.mongodb.MongoNamespace;
 
 class GenericWriteProtocol extends WriteProtocol {
     private final RequestMessage requestMessage;

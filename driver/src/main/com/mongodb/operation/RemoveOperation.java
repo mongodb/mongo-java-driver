@@ -16,13 +16,13 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.protocol.DeleteCommandProtocol;
 import com.mongodb.protocol.DeleteProtocol;
 import com.mongodb.protocol.WriteCommandProtocol;
 import com.mongodb.protocol.WriteProtocol;
 import org.mongodb.BulkWriteResult;
-import org.mongodb.MongoNamespace;
 
 import java.util.List;
 

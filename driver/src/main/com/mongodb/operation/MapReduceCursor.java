@@ -16,7 +16,7 @@
 
 package com.mongodb.operation;
 
-import org.mongodb.MongoCursor;
+import com.mongodb.MongoCursor;
 
 /**
  * Represents the results of a map-reduce operation as a cursor.  Users can iterate over the results and additionally get relevant

@@ -16,8 +16,8 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.Function;
 import org.mongodb.CommandResult;
-import org.mongodb.Function;
 
 final class FindAndModifyHelper {
 

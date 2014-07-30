@@ -26,7 +26,6 @@ import com.mongodb.connection.ServerHelper
 import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.InsertRequest
 import org.mongodb.Document
-import org.mongodb.MongoNamespace
 import spock.lang.Specification
 
 import static com.mongodb.ClusterFixture.getPrimary

@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.operation.CreateIndexesOperation;
@@ -24,7 +25,6 @@ import com.mongodb.operation.DropIndexOperation;
 import com.mongodb.operation.GetIndexesOperation;
 import com.mongodb.operation.Index;
 import org.mongodb.Document;
-import org.mongodb.MongoNamespace;
 
 import java.util.List;
 

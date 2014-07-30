@@ -24,10 +24,10 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.mongodb.CommandResult;
 
+import static com.mongodb.MongoNamespace.asNamespaceString;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.VoidTransformer;
-import static org.mongodb.MongoNamespace.asNamespaceString;
 
 /**
  * An operation that renames the given collection to the new name.  If the new name is the same as an existing collection and dropTarget is

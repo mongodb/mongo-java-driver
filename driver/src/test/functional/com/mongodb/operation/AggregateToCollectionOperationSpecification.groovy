@@ -15,14 +15,15 @@
  */
 
 package com.mongodb.operation
+
 import category.Async
+import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.client.test.CollectionHelper
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.MongoNamespace
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding

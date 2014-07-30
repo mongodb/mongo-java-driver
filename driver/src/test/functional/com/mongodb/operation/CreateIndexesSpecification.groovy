@@ -15,7 +15,6 @@
  */
 
 package com.mongodb.operation
-
 import category.Async
 import com.mongodb.MongoServerException
 import com.mongodb.OperationFunctionalSpecification
@@ -24,7 +23,7 @@ import org.junit.experimental.categories.Category
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
-import static groovy.util.OrderBy.ASC
+import static com.mongodb.operation.OrderBy.ASC
 
 class CreateIndexesSpecification extends OperationFunctionalSpecification {
     def idIndex = ['_id': 1]

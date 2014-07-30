@@ -16,6 +16,7 @@
 
 package org.mongodb.acceptancetest.querying;
 
+import com.mongodb.MongoCursor;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.QueryBuilder;
@@ -29,7 +30,6 @@ import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.MongoCursor;
 
 import java.util.ArrayList;
 import java.util.List;

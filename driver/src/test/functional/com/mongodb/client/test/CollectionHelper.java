@@ -16,6 +16,8 @@
 
 package com.mongodb.client.test;
 
+import com.mongodb.MongoCursor;
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.operation.CountOperation;
@@ -32,8 +34,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
 import org.mongodb.Document;
-import org.mongodb.MongoCursor;
-import org.mongodb.MongoNamespace;
 
 import java.util.ArrayList;
 import java.util.List;

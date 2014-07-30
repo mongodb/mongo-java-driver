@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.CommandFailureException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.operation.QueryFlag;
 import com.mongodb.protocol.message.CommandMessage;
@@ -26,12 +27,11 @@ import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.CommandResult;
-import org.mongodb.MongoNamespace;
 
 import java.util.EnumSet;
 
+import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static java.lang.String.format;
-import static org.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 
 final class CommandHelper {
     static CommandResult executeCommand(final String database, final BsonDocument command, final InternalConnection internalConnection) {

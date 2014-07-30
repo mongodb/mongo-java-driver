@@ -15,7 +15,6 @@
  */
 
 package com.mongodb.operation
-
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
@@ -24,7 +23,7 @@ import org.mongodb.Document
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
-import static groovy.util.OrderBy.ASC
+import static com.mongodb.operation.OrderBy.ASC
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class GetIndexesOperationSpecification extends OperationFunctionalSpecification {

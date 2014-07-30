@@ -16,7 +16,7 @@
 
 package com.mongodb.operation;
 
-import org.mongodb.ServerCursor;
+import com.mongodb.ServerCursor;
 
 public class GetMore {
     private final int limit;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
 

@@ -16,12 +16,12 @@
 
 package com.mongodb.client;
 
+import com.mongodb.Function;
+import com.mongodb.MongoCursor;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.Function;
-import org.mongodb.MongoCursor;
 import org.mongodb.WriteResult;
 
 import java.util.ArrayList;

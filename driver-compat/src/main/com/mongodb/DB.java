@@ -38,8 +38,6 @@ import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.mongodb.Document;
-import org.mongodb.MongoCursor;
-import org.mongodb.MongoNamespace;
 
 import java.util.HashSet;
 import java.util.Set;

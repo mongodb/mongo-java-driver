@@ -17,8 +17,6 @@
 package com.mongodb;
 
 import com.mongodb.client.MongoIterable;
-import org.mongodb.Function;
-import org.mongodb.MongoCursor;
 
 import java.util.Collection;
 

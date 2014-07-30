@@ -16,7 +16,10 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoCursor;
+import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
+import com.mongodb.ServerCursor;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.connection.Connection;
@@ -27,9 +30,6 @@ import com.mongodb.protocol.KillCursor;
 import com.mongodb.protocol.KillCursorProtocol;
 import com.mongodb.protocol.QueryResult;
 import org.bson.codecs.Decoder;
-import org.mongodb.MongoCursor;
-import org.mongodb.MongoNamespace;
-import org.mongodb.ServerCursor;
 
 import java.util.ArrayList;
 import java.util.Collections;

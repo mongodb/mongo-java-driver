@@ -16,7 +16,16 @@
 
 package org.mongodb;
 
-// TODO: This is temporary during the refactoring
+/**
+ * A mix-in for classes that can be converted to Document.
+ *
+ * @since 3.0
+ */
 public interface ConvertibleToDocument {
+    /**
+     * Convert the instance to a Document
+     *
+     * @return the document
+     */
     Document toDocument();
 }

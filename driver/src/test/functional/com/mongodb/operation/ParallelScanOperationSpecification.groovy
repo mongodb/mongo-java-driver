@@ -1,11 +1,11 @@
 package com.mongodb.operation
 
 import com.mongodb.Block
+import com.mongodb.MongoCursor
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.async.MongoAsyncCursor
 import com.mongodb.codecs.DocumentCodec
 import org.mongodb.Document
-import org.mongodb.MongoCursor
 
 import static ParallelScanOptions.builder
 import static com.mongodb.ClusterFixture.getAsyncBinding

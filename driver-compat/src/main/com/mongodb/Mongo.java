@@ -51,7 +51,6 @@ import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.mongodb.Document;
-import org.mongodb.ServerCursor;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
