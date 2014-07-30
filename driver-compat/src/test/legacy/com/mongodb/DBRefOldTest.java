@@ -51,7 +51,7 @@ public class DBRefOldTest extends DatabaseTestCase {
         ObjectId id = new ObjectId("123456789012345678901234");
         DBRef ref = new DBRef(database, "foo.bar", id);
 
-        assertEquals("{\"$ref\":\"foo.bar\",\"$id\":\"123456789012345678901234\"}", ref.toString());
+        assertEquals("{ \"$ref\" : \"foo.bar\", \"$id\" : \"123456789012345678901234\" }", ref.toString());
     }
 
     @Test

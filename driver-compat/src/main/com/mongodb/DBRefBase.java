@@ -18,8 +18,6 @@
 
 package com.mongodb;
 
-import org.mongodb.DBRef;
-
 import java.io.Serializable;
 
 /**
@@ -33,26 +31,20 @@ public class DBRefBase implements Serializable {
     private static final long serialVersionUID = 3031885741395465814L;
 
     private final transient DB db;
-    private final org.mongodb.DBRef proxied;
+    private final Object id;
+    private final String collectionName;
 
     /**
      * Creates a DBRefBase
      *
-     * @param db the database
-     * @param ns the namespace where the object is stored
-     * @param id the object id
+     * @param db        the database
+     * @param collectionName the collection name where the object is stored
+     * @param id        the object id
      */
-    public DBRefBase(final DB db, final String ns, final Object id) {
-        proxied = new DBRef(id, ns);
+    public DBRefBase(final DB db, final String collectionName, final Object id) {
+        this.id = id;
+        this.collectionName = collectionName;
         this.db = db;
-    }
-
-    /**
-     * For use only with serialization framework.
-     */
-    protected DBRefBase() {
-        proxied = null;
-        db = null;
     }
 
     /**
@@ -61,7 +53,7 @@ public class DBRefBase implements Serializable {
      * @return the id of the referenced document
      */
     public Object getId() {
-        return proxied.getId();
+        return id;
     }
 
     /**
@@ -70,7 +62,7 @@ public class DBRefBase implements Serializable {
      * @return the name of the collection in which the reference is stored
      */
     public String getRef() {
-        return proxied.getRef();
+        return collectionName;
     }
 
     /**
@@ -95,7 +87,7 @@ public class DBRefBase implements Serializable {
             throw new MongoInternalException("no db");
         }
 
-        return db.getCollectionFromString(proxied.getRef()).findOne(proxied.getId());
+        return db.getCollectionFromString(collectionName).findOne(id);
     }
 
     @Override
@@ -109,24 +101,26 @@ public class DBRefBase implements Serializable {
 
         DBRefBase dbRefBase = (DBRefBase) o;
 
-        if (proxied != null ? !proxied.equals(dbRefBase.proxied) : dbRefBase.proxied != null) {
+        if (id != null ? !id.equals(dbRefBase.id) : dbRefBase.id != null) {
+            return false;
+        }
+        if (collectionName != null ? !collectionName.equals(dbRefBase.collectionName) : dbRefBase.collectionName != null) {
             return false;
         }
 
         return true;
     }
 
-    DBRef toNew() {
-        return proxied;
-    }
-
     @Override
     public int hashCode() {
-        return proxied.hashCode();
+        int result = id != null ? id.hashCode() : 0;
+        result = 31 * result + (collectionName != null ? collectionName.hashCode() : 0);
+        return result;
     }
 
     @Override
     public String toString() {
-        return String.format("{\"$ref\":\"%s\",\"$id\":\"%s\"}", proxied.getRef(), proxied.getId());
+        return "{ \"$ref\" : \"" + collectionName + "\", \"$id\" : \"" + id + "\" }";
     }
 }
+
