@@ -23,7 +23,6 @@ import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
-import org.mongodb.AggregationOptions
 import org.mongodb.Document
 
 import java.util.concurrent.TimeUnit

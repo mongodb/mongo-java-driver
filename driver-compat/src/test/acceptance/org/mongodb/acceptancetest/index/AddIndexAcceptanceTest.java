@@ -18,22 +18,22 @@ package org.mongodb.acceptancetest.index;
 
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.operation.Index;
+import com.mongodb.operation.OrderBy;
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.Index;
-import org.mongodb.OrderBy;
 
+import static com.mongodb.operation.Index.GeoKey;
+import static com.mongodb.operation.Index.GeoSphereKey;
+import static com.mongodb.operation.Index.OrderedKey;
+import static com.mongodb.operation.OrderBy.ASC;
+import static com.mongodb.operation.OrderBy.DESC;
+import static com.mongodb.operation.OrderBy.fromInt;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Index.GeoKey;
-import static org.mongodb.Index.GeoSphereKey;
-import static org.mongodb.Index.OrderedKey;
-import static org.mongodb.OrderBy.ASC;
-import static org.mongodb.OrderBy.DESC;
-import static org.mongodb.OrderBy.fromInt;
 
 /**
  * Use cases for adding indexes to your MongoDB database via the Java driver.  Documents the index options that are currently supported by

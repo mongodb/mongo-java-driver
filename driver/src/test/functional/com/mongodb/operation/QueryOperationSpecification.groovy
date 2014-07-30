@@ -28,7 +28,6 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Index
 
 import static ClusterFixture.disableMaxTimeFailPoint
 import static ClusterFixture.enableMaxTimeFailPoint

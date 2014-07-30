@@ -17,8 +17,8 @@
 package com.mongodb.async.rxjava.client;
 
 import com.mongodb.async.MongoFuture;
+import com.mongodb.operation.Index;
 import org.mongodb.Document;
-import org.mongodb.Index;
 import rx.Observable;
 import rx.functions.Func1;
 

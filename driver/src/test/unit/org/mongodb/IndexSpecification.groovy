@@ -16,6 +16,7 @@
 
 package org.mongodb
 
+import com.mongodb.operation.Index
 import org.bson.BsonDocument
 import org.bson.BsonString
 import spock.lang.Specification
@@ -30,19 +31,19 @@ class IndexSpecification extends Specification {
         where:
         index                                                       | indexName
         Index.builder().addKey('x').build()                         | 'x_1'
-        Index.builder().addKey('x', OrderBy.ASC).build()            | 'x_1'
-        Index.builder().addKey('x', OrderBy.DESC).build()           | 'x_-1'
+        Index.builder().addKey('x', com.mongodb.operation.OrderBy.ASC).build()            | 'x_1'
+        Index.builder().addKey('x', com.mongodb.operation.OrderBy.DESC).build()           | 'x_-1'
         Index.builder().addKey(new Index.GeoKey('x')).build()       | 'x_2d'
         Index.builder().addKey(new Index.GeoSphereKey('x')).build() | 'x_2dsphere'
 
         Index.builder().addKeys(
-                new Index.OrderedKey('x', OrderBy.ASC),
-                new Index.OrderedKey('y', OrderBy.ASC),
-                new Index.OrderedKey('a', OrderBy.ASC)).build()     | 'x_1_y_1_a_1'
+                new Index.OrderedKey('x', com.mongodb.operation.OrderBy.ASC),
+                new Index.OrderedKey('y', com.mongodb.operation.OrderBy.ASC),
+                new Index.OrderedKey('a', com.mongodb.operation.OrderBy.ASC)).build()     | 'x_1_y_1_a_1'
 
         Index.builder().addKeys(
                 new Index.GeoKey('x'),
-                new Index.OrderedKey('y', OrderBy.DESC)).build()    | 'x_2d_y_-1'
+                new Index.OrderedKey('y', com.mongodb.operation.OrderBy.DESC)).build()    | 'x_2d_y_-1'
 
     }
 

@@ -22,12 +22,11 @@ package org.mongodb
 
 import spock.lang.Specification
 
+import static com.mongodb.operation.AggregationOptions.OutputMode.CURSOR
+import static com.mongodb.operation.AggregationOptions.OutputMode.INLINE
+import static com.mongodb.operation.AggregationOptions.builder
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
-import static org.mongodb.AggregationOptions.OutputMode.CURSOR
-import static org.mongodb.AggregationOptions.OutputMode.INLINE
-import static org.mongodb.AggregationOptions.builder
-
 
 class AggregationOptionsSpecification extends Specification {
 

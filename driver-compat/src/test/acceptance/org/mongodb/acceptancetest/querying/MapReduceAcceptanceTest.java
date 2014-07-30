@@ -33,7 +33,6 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
-import static org.mongodb.Sort.ascending;
 
 public class MapReduceAcceptanceTest extends DatabaseTestCase {
     private void insertLabelData() {
@@ -89,7 +88,7 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
 
         //when
         MongoIterable<Document> results = collection.find(new Document("_id", new Document("$gt", 0))) //find all IDs greater than zero
-                                              .sort(ascending("_id"))   // sort by ID
+                                              .sort(new Document("_id", 1))   // sort by ID
                                               .skip(1)                  // skip the first in the results
                                               .limit(6)                 // limit to 6 of the remaining results
                                               .mapReduce("  function(){ "
@@ -124,7 +123,7 @@ public class MapReduceAcceptanceTest extends DatabaseTestCase {
         //when
         //find all IDs greater than zero
         MongoIterable<Document> results = collection.find(new Document("_id", new Document("$gt", 0)))
-                                              .sort(ascending("_id"))   // sort by ID
+                                              .sort(new Document("_id", 1))   // sort by ID
                                               .skip(1)                  // skip the first in the results
                                               .limit(6)                 // limit to 6 of the remaining results
                                               .mapReduce("  function(){ "

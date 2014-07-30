@@ -21,7 +21,6 @@ import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
-import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
 import org.mongodb.MongoNamespace;
 

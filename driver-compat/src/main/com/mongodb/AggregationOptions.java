@@ -93,8 +93,8 @@ public class AggregationOptions {
         return timeUnit.convert(maxTimeMS, MILLISECONDS);
     }
 
-    org.mongodb.AggregationOptions toNew() {
-        return org.mongodb.AggregationOptions.builder()
+    com.mongodb.operation.AggregationOptions toNew() {
+        return com.mongodb.operation.AggregationOptions.builder()
                           .batchSize(getBatchSize())
                           .allowDiskUse(getAllowDiskUse())
                           .outputMode(outputModeToNew())
@@ -102,12 +102,12 @@ public class AggregationOptions {
                           .build();
     }
 
-    private org.mongodb.AggregationOptions.OutputMode outputModeToNew() {
+    private com.mongodb.operation.AggregationOptions.OutputMode outputModeToNew() {
         switch (getOutputMode()) {
             case INLINE:
-                return org.mongodb.AggregationOptions.OutputMode.INLINE;
+                return com.mongodb.operation.AggregationOptions.OutputMode.INLINE;
             case CURSOR:
-                return org.mongodb.AggregationOptions.OutputMode.CURSOR;
+                return com.mongodb.operation.AggregationOptions.OutputMode.CURSOR;
             default:
                 throw new IllegalArgumentException("Unsupported output mode");
         }

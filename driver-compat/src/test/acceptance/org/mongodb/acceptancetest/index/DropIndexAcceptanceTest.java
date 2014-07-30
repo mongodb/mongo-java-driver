@@ -18,10 +18,10 @@ package org.mongodb.acceptancetest.index;
 
 import com.mongodb.CommandFailureException;
 import com.mongodb.client.DatabaseTestCase;
+import com.mongodb.operation.Index;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
-import org.mongodb.Index;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.core.Is.is;

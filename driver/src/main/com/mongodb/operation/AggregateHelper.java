@@ -22,7 +22,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
-import org.mongodb.AggregationOptions;
 import org.mongodb.MongoNamespace;
 
 import java.util.List;

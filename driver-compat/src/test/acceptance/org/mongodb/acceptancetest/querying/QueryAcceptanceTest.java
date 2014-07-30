@@ -41,8 +41,6 @@ import static org.bson.BsonType.INT32;
 import static org.bson.BsonType.INT64;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
-import static org.mongodb.Sort.ascending;
-import static org.mongodb.Sort.descending;
 
 public class QueryAcceptanceTest extends DatabaseTestCase {
     @Test
@@ -105,7 +103,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         Document filter = new Document("$or", asList(new Document("numTimesOrdered", new Document("$type", INT32.getValue())),
                                                      new Document("numTimesOrdered", new Document("$type", INT64.getValue()))));
         collection.find(filter)
-                  .sort(descending("numTimesOrdered"))
+                  .sort(new Document("numTimesOrdered", -1))
                   .into(results);
 
         assertThat(results.size(), is(3));
@@ -121,7 +119,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         collection.insert(new Document("product", "CD"));
 
         List<Document> results = new ArrayList<Document>();
-        collection.find().sort(ascending("product"))
+        collection.find().sort(new Document("product", 1))
                   .into(results);
 
         assertThat(results.size(), is(3));
@@ -144,7 +142,7 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
                                             .or(query("numTimesOrdered").is(query(TYPE).is(INT64.getValue())))
                                             .toDocument();
         collection.find(filter)
-                  .sort(descending("numTimesOrdered"))
+                  .sort(new Document("numTimesOrdered", -1))
                   .into(results);
 
         assertThat(results.size(), is(3));

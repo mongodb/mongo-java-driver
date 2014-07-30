@@ -21,7 +21,6 @@ import com.mongodb.client.test.CollectionHelper
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
-import org.mongodb.AggregationOptions
 import org.mongodb.Document
 import org.mongodb.MongoNamespace
 

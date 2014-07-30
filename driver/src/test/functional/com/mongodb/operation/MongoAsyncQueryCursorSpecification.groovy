@@ -32,7 +32,6 @@ import com.mongodb.protocol.QueryResult
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonTimestamp
 import org.junit.experimental.categories.Category
-import org.mongodb.CreateCollectionOptions
 import org.mongodb.Document
 import spock.lang.Shared
 

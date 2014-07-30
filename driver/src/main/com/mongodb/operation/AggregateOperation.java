@@ -28,7 +28,6 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.codecs.Decoder;
-import org.mongodb.AggregationOptions;
 import org.mongodb.CommandResult;
 import org.mongodb.Function;
 import org.mongodb.MongoCursor;
@@ -37,12 +36,12 @@ import org.mongodb.MongoNamespace;
 import java.util.List;
 
 import static com.mongodb.operation.AggregateHelper.asCommandDocument;
+import static com.mongodb.operation.AggregationOptions.OutputMode.INLINE;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static org.mongodb.AggregationOptions.OutputMode.INLINE;
 
 /**
  * An operation that executes an aggregation query

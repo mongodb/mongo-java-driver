@@ -20,7 +20,6 @@ import category.Async
 import com.mongodb.MongoServerException
 import com.mongodb.OperationFunctionalSpecification
 import org.junit.experimental.categories.Category
-import org.mongodb.CreateCollectionOptions
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding

@@ -16,12 +16,12 @@
 
 package com.mongodb.async.rxjava.client
 
-import org.mongodb.Index
+import com.mongodb.operation.Index
 
 import static Fixture.get
 import static Fixture.getAsList
 import static Fixture.getMongoClient
-import static org.mongodb.OrderBy.ASC
+import static com.mongodb.operation.OrderBy.ASC
 
 class CollectionAdministrationSpecification extends FunctionalSpecification {
 

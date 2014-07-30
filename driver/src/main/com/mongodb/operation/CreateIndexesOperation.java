@@ -31,7 +31,6 @@ import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.CommandResult;
-import org.mongodb.Index;
 import org.mongodb.MongoNamespace;
 import org.mongodb.WriteResult;
 

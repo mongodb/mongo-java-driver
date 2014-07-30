@@ -21,12 +21,11 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import org.mongodb.Index
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
+import static groovy.util.OrderBy.ASC
 import static java.util.concurrent.TimeUnit.SECONDS
-import static org.mongodb.OrderBy.ASC
 
 class GetIndexesOperationSpecification extends OperationFunctionalSpecification {
     def 'should return default index on Collection that exists'() {

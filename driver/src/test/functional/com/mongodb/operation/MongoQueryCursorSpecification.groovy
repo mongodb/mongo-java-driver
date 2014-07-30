@@ -29,7 +29,6 @@ import com.mongodb.protocol.QueryResult
 import org.bson.BsonDocument
 import org.bson.BsonTimestamp
 import org.junit.experimental.categories.Category
-import org.mongodb.CreateCollectionOptions
 import org.mongodb.Document
 import org.mongodb.ServerCursor
 

@@ -17,7 +17,7 @@
 package com.mongodb.async.rxjava.client;
 
 import com.mongodb.async.MongoFuture;
-import org.mongodb.CreateCollectionOptions;
+import com.mongodb.operation.CreateCollectionOptions;
 import rx.Observable;
 import rx.functions.Func1;
 

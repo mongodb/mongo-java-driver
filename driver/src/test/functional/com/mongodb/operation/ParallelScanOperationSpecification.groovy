@@ -7,6 +7,7 @@ import com.mongodb.codecs.DocumentCodec
 import org.mongodb.Document
 import org.mongodb.MongoCursor
 
+import static ParallelScanOptions.builder
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
@@ -15,7 +16,6 @@ import static java.util.Arrays.asList
 import static org.junit.Assert.assertTrue
 import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
-import static org.mongodb.ParallelScanOptions.builder
 
 class ParallelScanOperationSpecification extends OperationFunctionalSpecification {
     Set<Integer> ids = [] as Set

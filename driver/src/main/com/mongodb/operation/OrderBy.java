@@ -14,11 +14,24 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb.operation;
 
+/**
+ * Enumeration of possible index orders
+ *
+ * @since 3.0
+ */
 public enum OrderBy {
+    /**
+     * Ascending order
+     */
     ASC(1),
+
+    /**
+     * Descending order
+     */
     DESC(-1);
+
     private final int intRepresentation;
 
     OrderBy(final int intRepresentation) {

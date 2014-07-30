@@ -18,10 +18,10 @@ package com.mongodb;
 
 import com.mongodb.client.DatabaseAdministration;
 import com.mongodb.operation.CreateCollectionOperation;
+import com.mongodb.operation.CreateCollectionOptions;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.GetCollectionNamesOperation;
 import com.mongodb.operation.RenameCollectionOperation;
-import org.mongodb.CreateCollectionOptions;
 
 import java.util.List;
 

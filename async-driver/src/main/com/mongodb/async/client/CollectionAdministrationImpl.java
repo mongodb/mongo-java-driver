@@ -22,8 +22,8 @@ import com.mongodb.operation.CreateIndexesOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropIndexOperation;
 import com.mongodb.operation.GetIndexesOperation;
+import com.mongodb.operation.Index;
 import org.mongodb.Document;
-import org.mongodb.Index;
 import org.mongodb.MongoNamespace;
 
 import java.util.List;

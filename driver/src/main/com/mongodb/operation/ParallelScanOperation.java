@@ -35,7 +35,6 @@ import org.mongodb.CommandResult;
 import org.mongodb.Function;
 import org.mongodb.MongoCursor;
 import org.mongodb.MongoNamespace;
-import org.mongodb.ParallelScanOptions;
 
 import java.util.ArrayList;
 import java.util.List;

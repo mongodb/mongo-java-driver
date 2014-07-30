@@ -22,7 +22,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
 import org.mongodb.Function;
-import org.mongodb.Sort;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -100,19 +99,19 @@ public class MongoPipelineAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldSortDocuments() {
-        List<Document> sorted = collection.pipe().sort(Sort.ascending("_id")).into(new ArrayList<Document>());
+        List<Document> sorted = collection.pipe().sort(new Document("_id", 1)).into(new ArrayList<Document>());
         assertEquals(documents, sorted);
     }
 
     @Test
     public void shouldSkipDocuments() {
-        List<Document> skipped = collection.pipe().sort(Sort.ascending("_id")).skip(1).into(new ArrayList<Document>());
+        List<Document> skipped = collection.pipe().sort(new Document("_id", 1)).skip(1).into(new ArrayList<Document>());
         assertEquals(documents.subList(1, 3), skipped);
     }
 
     @Test
     public void shouldLimitDocuments() {
-        List<Document> limited = collection.pipe().sort(Sort.ascending("_id")).limit(2).into(new ArrayList<Document>());
+        List<Document> limited = collection.pipe().sort(new Document("_id", 1)).limit(2).into(new ArrayList<Document>());
         assertEquals(documents.subList(0, 2), limited);
     }
 
@@ -124,14 +123,14 @@ public class MongoPipelineAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldProjectDocuments() {
-        List<Document> sorted = collection.pipe().sort(Sort.ascending("_id")).project(new Document("_id", 0).append("zip", "$_id"))
+        List<Document> sorted = collection.pipe().sort(new Document("_id", 1)).project(new Document("_id", 0).append("zip", "$_id"))
                                           .into(new ArrayList<Document>());
         assertEquals(asList(new Document("zip", "01778"), new Document("zip", "10012"), new Document("zip", "94301")), sorted);
     }
 
     @Test
     public void shouldUnwindDocuments() {
-        List<Document> unwound = collection.pipe().sort(Sort.ascending("_id"))
+        List<Document> unwound = collection.pipe().sort(new Document("_id", 1))
                                            .project(new Document("_id", 0).append("tags", 1))
                                            .unwind("$tags")
                                            .into(new ArrayList<Document>());
@@ -149,11 +148,11 @@ public class MongoPipelineAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldGroupDocuments() {
-        List<Document> grouped = collection.pipe().sort(Sort.ascending("_id"))
+        List<Document> grouped = collection.pipe().sort(new Document("_id", 1))
                                            .project(new Document("_id", 0).append("tags", 1))
                                            .unwind("$tags")
                                            .group(new Document("_id", "$tags"))
-                                           .sort(Sort.ascending("_id"))
+                                           .sort(new Document("_id", 1))
                                            .into(new ArrayList<Document>());
         assertEquals(asList(new Document("_id", "CE"),
                             new Document("_id", "SA"),

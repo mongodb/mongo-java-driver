@@ -16,8 +16,8 @@
 
 package com.mongodb.client;
 
+import com.mongodb.operation.Index;
 import org.mongodb.Document;
-import org.mongodb.Index;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ public interface CollectionAdministration {
     /**
      * @param indexes all the details of the index to add
      * @mongodb.driver.manual reference/method/db.collection.createIndex/ Ensure Index
-     * @see org.mongodb.Index
+     * @see com.mongodb.operation.Index
      */
     void createIndexes(List<Index> indexes);
 

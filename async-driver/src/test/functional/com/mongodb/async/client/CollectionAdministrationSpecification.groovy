@@ -16,9 +16,9 @@
 
 package com.mongodb.async.client
 
-import org.mongodb.Index
+import com.mongodb.operation.Index
 
-import static org.mongodb.OrderBy.ASC
+import static com.mongodb.operation.OrderBy.ASC
 
 class CollectionAdministrationSpecification extends FunctionalSpecification {
 

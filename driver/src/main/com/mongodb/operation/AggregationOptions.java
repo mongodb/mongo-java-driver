@@ -15,7 +15,7 @@
  */
 
 
-package org.mongodb;
+package com.mongodb.operation;
 
 
 import java.util.concurrent.TimeUnit;
@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
+ * Options to determine how an aggregation pipeline is executed.
  *
  * @since 3.0
  */
@@ -54,14 +55,29 @@ public class AggregationOptions {
         return new Builder();
     }
 
-    public Integer getBatchSize() {
-        return batchSize;
-    }
-
+    /**
+     * Gets the output mode, inline or cursor.
+     *
+     * @return the output mode
+     */
     public OutputMode getOutputMode() {
         return outputMode;
     }
 
+    /**
+     * Gets the batch size to apply when a cursor is returned.
+     *
+     * @return the batch size
+     */
+    public Integer getBatchSize() {
+        return batchSize;
+    }
+
+    /**
+     * Gets whether disk use is allowed when executing the pipeline.
+     *
+     * @return is disk use allowed
+     */
     public Boolean getAllowDiskUse() {
         return allowDiskUse;
     }

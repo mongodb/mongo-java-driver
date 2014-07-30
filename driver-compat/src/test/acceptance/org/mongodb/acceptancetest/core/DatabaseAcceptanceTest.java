@@ -21,10 +21,10 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.operation.CreateCollectionOptions;
 import org.bson.BsonDocument;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mongodb.CreateCollectionOptions;
 import org.mongodb.Document;
 
 import java.util.List;

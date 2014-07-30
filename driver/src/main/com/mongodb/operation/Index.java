@@ -15,7 +15,7 @@
  */
 
 
-package org.mongodb;
+package com.mongodb.operation;
 
 
 import org.bson.BsonDocument;
@@ -26,11 +26,13 @@ import org.bson.BsonValue;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static org.mongodb.OrderBy.ASC;
+import static com.mongodb.operation.OrderBy.ASC;
 
 
 /**
  * Represents an index to create on the database.  Used as an argument in createIndexes
+ *
+ * @since 3.0
  */
 public final class Index {
     private final String name;
