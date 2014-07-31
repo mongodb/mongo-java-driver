@@ -7,9 +7,10 @@
         <Bug code="EI,EI2"/>
     </Match>
 
-    <!-- ignore driver-compat for now - this should be addressed after bson/driver warnings fixed -->
     <Match>
-        <Package name="~com\.mongodb.*"/>
+        <Package name="com.mongodb">
+            <Bug pattern="EQ_DOESNT_OVERRIDE_EQUALS"/>  <!-- Deliberately ignoring this, as many BSONObject subclasses don't do it -->
+        </Package>
     </Match>
 
     <!-- these specific issues are deliberate design decisions -->
