@@ -44,7 +44,7 @@ public class GSSAPIAuthenticationTest {
 
     @Test(expected = CommandFailureException.class)
     public void testUnsuccessfulAuthorization() throws InterruptedException, UnknownHostException {
-        MongoClient client = new MongoClient();
+        MongoClient client = new MongoClient(getPrimary());
         MongoCollection<Document> collection = client.getDatabase(getConnectionString().getDatabase()).getCollection("test");
         try {
             collection.find().count();
