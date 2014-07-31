@@ -280,7 +280,7 @@ project(':driver-rx') {
         compile project(':driver-core')
         compile project(':driver-async')
 
-        compile "com.netflix.rxjava:rxjava-core:0.17.5"
+        compile "com.netflix.rxjava:rxjava-core:0.19.6"
 
         provided "io.netty:netty-all:$nettyVersion"
 
