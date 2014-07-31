@@ -267,7 +267,7 @@ project(':async-driver') {
     }
 }
 
-project(':async-rxjava-driver') {
+project(':driver-rx') {
     sourceSets {
         test {
             groovy { srcDirs = ['src/test/functional'] }
