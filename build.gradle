@@ -238,7 +238,7 @@ project(':driver-core') {
     }
 }
 
-project(':async-driver') {
+project(':driver-async') {
     sourceSets {
         test {
             groovy { srcDirs = ['src/test/unit', 'src/test/functional'] }
@@ -278,13 +278,13 @@ project(':driver-rx') {
     dependencies {
         compile project(':bson')
         compile project(':driver-core')
-        compile project(':async-driver')
+        compile project(':driver-async')
 
         compile "com.netflix.rxjava:rxjava-core:0.17.5"
 
         provided "io.netty:netty-all:$nettyVersion"
 
-        testCompile project(':async-driver').sourceSets.test.output
+        testCompile project(':driver-async').sourceSets.test.output
 
         testCompile "io.netty:netty-all:$nettyVersion"
     }
@@ -295,7 +295,7 @@ project(':driver-rx') {
         classifier = 'all'
         from project(':bson').sourceSets.main.output
         from project(':driver-core').sourceSets.main.output
-        from project(':async-driver').sourceSets.main.output
+        from project(':driver-async').sourceSets.main.output
         from sourceSets.main.output
     }
 }
