@@ -16,22 +16,22 @@
 
 package com.mongodb.async.client
 
+import org.mongodb.Document
+
 class DatabaseAdministrationSpecification extends FunctionalSpecification {
 
-    def 'Drop should drop the database'() {
-        when:
+    def 'drop should drop the database'() {
+        given:
         def client = Fixture.getMongoClient()
-        def database = client.getDatabase(databaseName)
-        database.tools().createCollection(collectionName).get()
-
-        then:
-        client.tools().getDatabaseNames().get().contains(databaseName)
+        def databaseToDrop = 'AsyncDatabaseAdministrationSpecificationDatabase'
+        def database = client.getDatabase(databaseToDrop)
+        database.getCollection(collectionName).insert(new Document()).get()
 
         when:
         database.tools().drop().get()
 
         then:
-        !client.tools().getDatabaseNames().get().contains(databaseName)
+        !client.tools().getDatabaseNames().get().contains(databaseToDrop)
     }
 
     def 'rename collection should rename the collection name'() {
