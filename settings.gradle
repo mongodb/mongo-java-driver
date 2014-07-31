@@ -15,5 +15,4 @@
  */
 
 include 'util','bson', 'driver-core', 'async-driver', 'driver', 'async-rxjava-driver'
-include 'driver-core'
 
