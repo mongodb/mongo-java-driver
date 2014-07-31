@@ -330,7 +330,12 @@ public class GridFS {
      * @throws IOException
      */
     public GridFSInputFile createFile(final File f) throws IOException {
-        return createFile(new FileInputStream(f), f.getName(), true);
+        FileInputStream fileInputStream = new FileInputStream(f);
+        try {
+            return createFile(fileInputStream, f.getName(), true);
+        } finally {
+            fileInputStream.close();
+        }
     }
 
     /**
