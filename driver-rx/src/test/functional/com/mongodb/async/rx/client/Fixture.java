@@ -59,10 +59,10 @@ public final class Fixture {
 
 
     public static <T> T get(final Observable<T> observable) {
-        return observable.timeout(1, SECONDS).toBlockingObservable().last();
+        return observable.timeout(5, SECONDS).toBlockingObservable().last();
     }
 
     public static <T> List<T> getAsList(final Observable<T> observable) {
-        return observable.timeout(1, SECONDS).toList().toBlockingObservable().last();
+        return observable.timeout(5, SECONDS).toList().toBlockingObservable().last();
     }
 }
