@@ -288,25 +288,28 @@ public class DBCollection {
     private WriteResult insert(final List<InsertRequest<DBObject>> insertRequestList, final Encoder<DBObject> encoder,
                                final WriteConcern writeConcern) {
         return executeWriteOperation(new InsertOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(), writeConcern,
-                                                                   insertRequestList, encoder),
-                                     writeConcern);
+                                                                   insertRequestList, encoder));
     }
 
-    WriteResult executeWriteOperation(final BaseWriteOperation operation, final WriteConcern writeConcern) {
-        return translateWriteResult(execute(operation), writeConcern);
+    WriteResult executeWriteOperation(final BaseWriteOperation operation) {
+        return translateWriteResult(execute(operation));
     }
 
-    private WriteResult translateWriteResult(final org.mongodb.WriteResult writeResult, final WriteConcern writeConcern) {
+    private WriteResult translateWriteResult(final org.mongodb.WriteResult writeResult) {
         if (!writeResult.wasAcknowledged()) {
             return null;
         }
 
-        Object upsertedId = writeResult.getUpsertedId() == null
+        return translateWriteResult(writeResult.getCount(), writeResult.isUpdateOfExisting(), writeResult.getUpsertedId());
+    }
+
+    private WriteResult translateWriteResult(final int count, final boolean isUpdateOfExisting, final BsonValue upsertedId) {
+        Object newUpsertedId = upsertedId == null
                             ? null
-                            : getObjectCodec().decode(new BsonDocumentReader(new BsonDocument("_id", writeResult.getUpsertedId())),
+                            : getObjectCodec().decode(new BsonDocumentReader(new BsonDocument("_id", upsertedId)),
                                                       DecoderContext.builder().build())
                                               .get("_id");
-        return new WriteResult(writeResult.getCount(), writeResult.isUpdateOfExisting(), upsertedId);
+        return new WriteResult(count, isUpdateOfExisting, newUpsertedId);
     }
 
     /**
@@ -356,8 +359,7 @@ public class DBCollection {
         ReplaceRequest<DBObject> replaceRequest = new ReplaceRequest<DBObject>(wrap(filter), obj).upsert(true);
 
         return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(),
-                                                                    writeConcern, asList(replaceRequest), getObjectCodec()),
-                                     writeConcern);
+                                                                    writeConcern, asList(replaceRequest), getObjectCodec()));
     }
 
     /**
@@ -403,17 +405,29 @@ public class DBCollection {
             throw new IllegalArgumentException("update query can not be null");
         }
 
-        if (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")) {
-            UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, encoder)).upsert(upsert).multi(multi);
+        try {
+            if (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")) {
+                UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, encoder)).upsert(upsert).multi(multi);
 
-            return executeWriteOperation(new UpdateOperation(getNamespace(), !aWriteConcern.getContinueOnError(), aWriteConcern,
-                                                             asList(updateRequest), documentCodec),
-                                         aWriteConcern);
-        } else {
-            ReplaceRequest<DBObject> replaceRequest = new ReplaceRequest<DBObject>(wrap(query), update).upsert(upsert);
-            return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), true, aWriteConcern,
-                                                                        asList(replaceRequest), toEncoder(encoder)),
-                                         aWriteConcern);
+                return executeWriteOperation(new UpdateOperation(getNamespace(), !aWriteConcern.getContinueOnError(), aWriteConcern,
+                                                                 asList(updateRequest), documentCodec));
+            } else {
+                ReplaceRequest<DBObject> replaceRequest = new ReplaceRequest<DBObject>(wrap(query), update).upsert(upsert);
+                return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), true, aWriteConcern,
+                                                                            asList(replaceRequest), toEncoder(encoder)));
+            }
+        } catch (WriteConcernException e) {
+            if (e.getWriteResult().getUpsertedId() != null && e.getWriteResult().getUpsertedId() instanceof BsonValue) {
+                WriteConcernException translatedException =
+                new WriteConcernException(e.getResponse(), e.getServerAddress(),
+                                          translateWriteResult(e.getWriteResult().getN(),
+                                                               e.getWriteResult().isUpdateOfExisting(),
+                                                               (BsonValue) e.getWriteResult().getUpsertedId()));
+                translatedException.setStackTrace(e.getStackTrace());
+                throw translatedException;
+            } else {
+                throw e;
+            }
         }
     }
 
@@ -479,7 +493,7 @@ public class DBCollection {
      */
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
         return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern,
-                                                         asList(new RemoveRequest(wrap(query)))), writeConcern);
+                                                         asList(new RemoveRequest(wrap(query)))));
     }
 
     /**
@@ -496,7 +510,7 @@ public class DBCollection {
         RemoveRequest removeRequest = new RemoveRequest(wrap(query, encoder));
 
         return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern,
-                                                         asList(removeRequest)), writeConcern);
+                                                         asList(removeRequest)));
     }
 
     /**

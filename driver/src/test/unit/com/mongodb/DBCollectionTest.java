@@ -57,6 +57,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
@@ -742,12 +743,29 @@ public class DBCollectionTest extends DatabaseTestCase {
     public void testWriteConcernExceptionOnUpdate() throws UnknownHostException {
         assumeTrue(isDiscoverableReplicaSet());
         ObjectId id = new ObjectId();
+        collection.insert(new BasicDBObject("_id", id));
+        try {
+            WriteResult res = collection.update(new BasicDBObject("_id", id), new BasicDBObject("$set", new BasicDBObject("x", 1)),
+                                                false, false, new WriteConcern(5, 1, false, false));
+            fail("Write should have failed but succeeded with result " + res);
+        } catch (WriteConcernException e) {
+            assertEquals(1, e.getWriteResult().getN());
+            assertTrue(e.getWriteResult().isUpdateOfExisting());
+            assertEquals(null, e.getWriteResult().getUpsertedId());
+        }
+    }
+
+    @Test
+    public void testWriteConcernExceptionOnUpsert() throws UnknownHostException {
+        assumeTrue(isDiscoverableReplicaSet());
+        ObjectId id = new ObjectId();
         try {
             WriteResult res = collection.update(new BasicDBObject("_id", id), new BasicDBObject("$set", new BasicDBObject("x", 1)),
                                                 true, false, new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
         } catch (WriteConcernException e) {
             assertEquals(1, e.getWriteResult().getN());
+            assertFalse(e.getWriteResult().isUpdateOfExisting());
             assertEquals(id, e.getWriteResult().getUpsertedId());
         }
     }
