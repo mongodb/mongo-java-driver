@@ -278,6 +278,14 @@ public class JSONTest {
         _escapeChar("\\");
     }
 
+    // This is not correct behavior, but adding the test here to document it.  It should probably throw a JSONParseException due to the
+    // illegal escape of \m.
+    @Test
+    public void testIllegalEscape() {
+        DBObject obj = (DBObject) JSON.parse("{ 'x' : '\\m' }");
+        assertEquals("m", obj.get("x"));
+    }
+
     @Test
     public void testPattern() {
         String x = "^Hello$";

@@ -435,6 +435,8 @@ class JSONParser {
                     case '\\':
                         special = '\\';
                         break;
+                    default:
+                        break;
                 }
                 //CHECKSTYLE:ON
 
@@ -463,7 +465,7 @@ class JSONParser {
      */
     public Number parseNumber() {
 
-        char current = get();
+        get();
         int start = this.pos;
         boolean isDouble = false;
 
