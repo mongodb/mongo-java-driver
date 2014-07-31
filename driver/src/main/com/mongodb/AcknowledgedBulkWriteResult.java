@@ -91,13 +91,13 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
         if (insertedCount != that.insertedCount) {
             return false;
         }
-        if (modifiedCount != that.modifiedCount) {
+        if (matchedCount != that.matchedCount) {
             return false;
         }
         if (removedCount != that.removedCount) {
             return false;
         }
-        if (matchedCount != that.matchedCount) {
+        if (modifiedCount != null ? !modifiedCount.equals(that.modifiedCount) : that.modifiedCount != null) {
             return false;
         }
         if (!upserts.equals(that.upserts)) {
@@ -109,11 +109,11 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
 
     @Override
     public int hashCode() {
-        int result = upserts.hashCode();
-        result = 31 * result + insertedCount;
+        int result = insertedCount;
         result = 31 * result + matchedCount;
         result = 31 * result + removedCount;
-        result = 31 * result + modifiedCount;
+        result = 31 * result + (modifiedCount != null ? modifiedCount.hashCode() : 0);
+        result = 31 * result + upserts.hashCode();
         return result;
     }
 
