@@ -163,7 +163,7 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         assertEquals(ReadPreference.primary(), options.getReadPreference());
         assertEquals(5, options.getThreadsAllowedToBlockForConnectionMultiplier());
         assertFalse(options.isSocketKeepAlive());
-        assertFalse(options.isSSLEnabled());
+        assertFalse(options.isSslEnabled());
         assertEquals(DefaultDBDecoder.FACTORY, options.getDbDecoderFactory());
         assertEquals(DefaultDBEncoder.FACTORY, options.getDbEncoderFactory());
         assertEquals(0, options.getHeartbeatThreadCount());

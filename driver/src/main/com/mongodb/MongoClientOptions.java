@@ -22,6 +22,7 @@ import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 
 import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocketFactory;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -87,7 +88,7 @@ public class MongoClientOptions {
         socketKeepAlive = builder.socketKeepAlive;
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
-        sslEnabled = builder.SSLEnabled;
+        sslEnabled = builder.sslEnabled;
         alwaysUseMBeans = builder.alwaysUseMBeans;
         heartbeatFrequency = builder.heartbeatFrequency;
         heartbeatConnectRetryFrequency = builder.heartbeatConnectRetryFrequency;
@@ -350,8 +351,9 @@ public class MongoClientOptions {
      * Whether to use SSL. The default is {@code false}.
      *
      * @return true if SSL should be used
+     * @since 3.0
      */
-    public boolean isSSLEnabled() {
+    public boolean isSslEnabled() {
         return sslEnabled;
     }
 
@@ -624,9 +626,7 @@ public class MongoClientOptions {
         private int connectTimeout = 1000 * 10;
         private int socketTimeout = 0;
         private boolean socketKeepAlive = false;
-        //CHECKSTYLE:OFF
-        private boolean SSLEnabled = false;
-        //CHECKSTYLE:ON
+        private boolean sslEnabled = false;
         private boolean alwaysUseMBeans = false;
 
         private int heartbeatFrequency = 10000;
@@ -786,13 +786,16 @@ public class MongoClientOptions {
         }
 
         /**
-         * Sets whether to use SSL.
+         * Sets whether to use SSL.  Setting this to true will also set the socketFactory to {@code SSLSocketFactory.getDefault()} and
+         * setting it to false will set the socketFactory to {@code SocketFactory.getDefault()}
          *
          * @return {@code this}
-         * @see MongoClientOptions#isSSLEnabled()
+         * @see MongoClientOptions#isSslEnabled()
+         * @since 3.0
          */
-        public Builder SSLEnabled(final boolean sslEnabled) {
-            this.SSLEnabled = sslEnabled;
+        public Builder sslEnabled(final boolean sslEnabled) {
+            this.sslEnabled = sslEnabled;
+            this.socketFactory(sslEnabled ? SSLSocketFactory.getDefault() : SocketFactory.getDefault());
             return this;
         }
 

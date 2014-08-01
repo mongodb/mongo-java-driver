@@ -272,7 +272,7 @@ public class MongoClientURI {
             builder.requiredReplicaSetName(proxied.getRequiredReplicaSetName());
         }
         if (proxied.getSslEnabled() != null) {
-            builder.SSLEnabled(proxied.getSslEnabled());
+            builder.sslEnabled(proxied.getSslEnabled());
         }
 
         return builder.build();

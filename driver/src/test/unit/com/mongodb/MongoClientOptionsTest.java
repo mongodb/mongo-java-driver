@@ -19,6 +19,9 @@ package com.mongodb;
 import org.junit.Assert;
 import org.junit.Test;
 
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocketFactory;
+
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -40,7 +43,9 @@ public class MongoClientOptionsTest {
         assertEquals(ReadPreference.primary(), options.getReadPreference());
         assertEquals(5, options.getThreadsAllowedToBlockForConnectionMultiplier());
         assertFalse(options.isSocketKeepAlive());
-        assertFalse(options.isSSLEnabled());
+        assertFalse(options.isSslEnabled());
+        assertTrue(options.getSocketFactory() != null);
+        assertFalse(options.getSocketFactory() instanceof SSLSocketFactory);
         assertEquals(DefaultDBDecoder.FACTORY, options.getDbDecoderFactory());
         assertEquals(DefaultDBEncoder.FACTORY, options.getDbEncoderFactory());
         assertEquals(0, options.getHeartbeatThreadCount());
@@ -119,7 +124,7 @@ public class MongoClientOptionsTest {
         builder.maxConnectionLifeTime(400);
         builder.threadsAllowedToBlockForConnectionMultiplier(1);
         builder.socketKeepAlive(true);
-        builder.SSLEnabled(true);
+        builder.sslEnabled(true);
         builder.dbDecoderFactory(LazyDBDecoder.FACTORY);
         builder.heartbeatFrequency(5);
         builder.heartbeatConnectRetryFrequency(10);
@@ -146,7 +151,7 @@ public class MongoClientOptionsTest {
         assertEquals(100, options.getConnectTimeout());
         assertEquals(1, options.getThreadsAllowedToBlockForConnectionMultiplier());
         assertTrue(options.isSocketKeepAlive());
-        assertTrue(options.isSSLEnabled());
+        assertTrue(options.isSslEnabled());
         assertEquals(LazyDBDecoder.FACTORY, options.getDbDecoderFactory());
         assertEquals(encoderFactory, options.getDbEncoderFactory());
         assertEquals(5, options.getHeartbeatFrequency());
@@ -161,6 +166,21 @@ public class MongoClientOptionsTest {
         assertEquals(5, options.getServerSettings().getHeartbeatFrequency(MILLISECONDS));
         assertEquals(10, options.getServerSettings().getHeartbeatConnectRetryFrequency(MILLISECONDS));
         assertEquals(4, options.getServerSettings().getHeartbeatThreadCount());
+    }
+
+    @Test
+    public void testSocketFactory() {
+        MongoClientOptions.Builder builder = MongoClientOptions.builder();
+        SocketFactory socketFactory = SSLSocketFactory.getDefault();
+        builder.socketFactory(socketFactory);
+        assertTrue(builder.build().getSocketFactory() == socketFactory);
+
+        builder.sslEnabled(false);
+        assertTrue(builder.build().getSocketFactory() != null);
+        assertFalse(builder.build().getSocketFactory() instanceof SSLSocketFactory);
+
+        builder.sslEnabled(true);
+        assertTrue(builder.build().getSocketFactory() instanceof SSLSocketFactory);
     }
 
     private static class MyDBEncoderFactory implements DBEncoderFactory {

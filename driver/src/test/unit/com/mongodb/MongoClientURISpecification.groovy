@@ -106,7 +106,7 @@ class MongoClientURISpecification extends Specification {
         options.getSocketTimeout() == 5500
         options.getConnectTimeout() == 2500
         options.getRequiredReplicaSetName() == 'test'
-        options.isSSLEnabled()
+        options.isSslEnabled()
 
         where:
         options <<
@@ -141,7 +141,7 @@ class MongoClientURISpecification extends Specification {
         options.getDescription() == null;
         options.getReadPreference() == ReadPreference.primary();
         options.getRequiredReplicaSetName() == null
-        !options.isSSLEnabled()
+        !options.isSslEnabled()
     }
 
     @Unroll
