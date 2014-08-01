@@ -18,12 +18,14 @@ package com.mongodb.operation;
 
 import org.bson.BsonDocument;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 public class ReplaceRequest<T> extends BaseUpdateRequest {
     private final T replacement;
 
     public ReplaceRequest(final BsonDocument filter, final T replacement) {
         super(filter);
-        this.replacement = replacement;
+        this.replacement = notNull("replacement", replacement);
     }
 
     public T getReplacement() {

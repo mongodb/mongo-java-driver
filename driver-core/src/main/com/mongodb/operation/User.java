@@ -18,6 +18,8 @@ package com.mongodb.operation;
 
 import com.mongodb.MongoCredential;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * Encapsulates information about a user for the user-related operations.
  *
@@ -34,7 +36,7 @@ public class User {
      * @param readOnly   true if this is a read-only user
      */
     public User(final MongoCredential credential, final boolean readOnly) {
-        this.credential = credential;
+        this.credential = notNull("credential", credential);
         isReadOnly = readOnly;
     }
 

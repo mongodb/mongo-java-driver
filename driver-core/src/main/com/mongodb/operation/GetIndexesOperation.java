@@ -52,7 +52,7 @@ public class GetIndexesOperation<T> implements AsyncReadOperation<List<T>>, Read
      */
     public GetIndexesOperation(final MongoNamespace collectionNamespace, final Decoder<T> decoder) {
         this.collectionNamespace = notNull("collectionNamespace", collectionNamespace);
-        this.decoder = decoder;
+        this.decoder = notNull("decoder", decoder);
     }
 
     @Override

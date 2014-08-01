@@ -28,6 +28,7 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.CommandResult;
 import org.mongodb.WriteResult;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
@@ -50,7 +51,7 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
     private final User user;
 
     public UpdateUserOperation(final User user) {
-        this.user = user;
+        this.user = notNull("user", user);
     }
 
     @Override

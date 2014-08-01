@@ -23,6 +23,8 @@ import org.bson.BsonValue;
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 public class Find extends Query {
     private BsonDocument filter;
     private BsonDocument fields;
@@ -36,7 +38,7 @@ public class Find extends Query {
     }
 
     public Find(final BsonDocument filter) {
-        this.filter = filter;
+        this.filter = notNull("filter", filter);
     }
 
     public Find(final Find from) {

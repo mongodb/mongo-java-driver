@@ -36,6 +36,7 @@ import org.mongodb.WriteResult;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
@@ -57,8 +58,8 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     private final MongoNamespace systemIndexes;
 
     public CreateIndexesOperation(final List<Index> indexes, final MongoNamespace namespace) {
-        this.indexes = indexes;
-        this.namespace = namespace;
+        this.indexes = notNull("indexes", indexes);
+        this.namespace = notNull("namespace", namespace);
         this.systemIndexes = new MongoNamespace(namespace.getDatabaseName(), "system.indexes");
     }
 

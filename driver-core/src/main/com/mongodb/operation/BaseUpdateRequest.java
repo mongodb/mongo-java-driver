@@ -18,13 +18,15 @@ package com.mongodb.operation;
 
 import org.bson.BsonDocument;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 public abstract class BaseUpdateRequest extends WriteRequest {
     private final BsonDocument filter;
     private boolean isUpsert = false;
 
     public BaseUpdateRequest(final BsonDocument filter) {
         super();
-        this.filter = filter;
+        this.filter = notNull("filter", filter);
     }
 
     public BsonDocument getFilter() {

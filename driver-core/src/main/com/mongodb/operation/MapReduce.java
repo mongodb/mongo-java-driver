@@ -21,6 +21,7 @@ import org.bson.BsonJavaScript;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -52,8 +53,8 @@ public class MapReduce {
      * @param output         specifies the location of the result of the map-reduce operation.
      */
     public MapReduce(final BsonJavaScript mapFunction, final BsonJavaScript reduceFunction, final MapReduceOutputOptions output) {
-        this.mapFunction = mapFunction;
-        this.reduceFunction = reduceFunction;
+        this.mapFunction = notNull("mapFunction", mapFunction);
+        this.reduceFunction = notNull("reduceFunction", reduceFunction);
         this.output = output;
         this.inline = output == null;
     }

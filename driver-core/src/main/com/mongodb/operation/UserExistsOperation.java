@@ -48,11 +48,11 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  */
 public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOperation<Boolean> {
 
-    private final String database;
+    private final String databaseName;
     private final String userName;
 
-    public UserExistsOperation(final String source, final String userName) {
-        this.database = notNull("source", source);
+    public UserExistsOperation(final String databaseName, final String userName) {
+        this.databaseName = notNull("databaseName", databaseName);
         this.userName = notNull("userName", userName);
     }
 
@@ -62,7 +62,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
             @Override
             public Boolean call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    return executeWrappedCommandProtocol(database, getCommand(), connection, binding.getReadPreference(),
+                    return executeWrappedCommandProtocol(databaseName, getCommand(), connection, binding.getReadPreference(),
                                                          transformCommandResult());
                 } else {
                     return executeProtocol(getCollectionBasedProtocol(), connection, transformQueryResult());
@@ -77,7 +77,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
             @Override
             public MongoFuture<Boolean> call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    return executeWrappedCommandProtocolAsync(database, getCommand(), connection, transformCommandResult());
+                    return executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, transformCommandResult());
                 } else {
                     return executeProtocolAsync(getCollectionBasedProtocol(), connection, transformQueryResult());
                 }
@@ -104,7 +104,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
     }
 
     private QueryProtocol<BsonDocument> getCollectionBasedProtocol() {
-        MongoNamespace namespace = new MongoNamespace(database, "system.users");
+        MongoNamespace namespace = new MongoNamespace(databaseName, "system.users");
         return new QueryProtocol<BsonDocument>(namespace, EnumSet.noneOf(QueryFlag.class), 0, 1,
                                                new BsonDocument("user", new BsonString(userName)), null, new BsonDocumentCodec());
     }

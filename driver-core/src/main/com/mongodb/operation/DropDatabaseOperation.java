@@ -23,6 +23,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.mongodb.CommandResult;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.VoidTransformer;
@@ -38,7 +39,7 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
     private final String databaseName;
 
     public DropDatabaseOperation(final String databaseName) {
-        this.databaseName = databaseName;
+        this.databaseName = notNull("databaseName", databaseName);
     }
 
     @Override

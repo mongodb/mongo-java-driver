@@ -26,6 +26,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.mongodb.CommandResult;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
@@ -51,9 +52,9 @@ public class DistinctOperation implements AsyncReadOperation<BsonArray>, ReadOpe
      * @param find      the query criteria
      */
     public DistinctOperation(final MongoNamespace namespace, final String fieldName, final Find find) {
-        this.namespace = namespace;
-        this.fieldName = fieldName;
-        this.find = find;
+        this.namespace = notNull("namespace", namespace);
+        this.fieldName = notNull("fieldName", fieldName);
+        this.find = notNull("find", find);
     }
 
     @Override

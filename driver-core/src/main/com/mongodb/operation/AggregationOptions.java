@@ -20,6 +20,7 @@ package com.mongodb.operation;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -45,6 +46,7 @@ public class AggregationOptions {
     private final long maxTimeMS;
 
     public AggregationOptions(final Builder builder) {
+        notNull("builder", builder);
         batchSize = builder.batchSize;
         allowDiskUse = builder.allowDiskUse;
         outputMode = builder.outputMode;

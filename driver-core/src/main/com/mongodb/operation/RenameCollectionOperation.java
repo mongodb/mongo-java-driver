@@ -25,6 +25,7 @@ import org.bson.BsonString;
 import org.mongodb.CommandResult;
 
 import static com.mongodb.MongoNamespace.asNamespaceString;
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.VoidTransformer;
@@ -51,10 +52,10 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
     public RenameCollectionOperation(final String databaseName, final String originalCollectionName, final String newCollectionName,
                                      final boolean dropTarget) {
         super();
-        this.originalCollectionName = originalCollectionName;
-        this.newCollectionName = newCollectionName;
-        this.dropTarget = dropTarget;
-        this.databaseName = databaseName;
+        this.originalCollectionName = notNull("originalCollectionName", originalCollectionName);
+        this.newCollectionName = notNull("newCollectionName", newCollectionName);
+        this.dropTarget = notNull("dropTarget", dropTarget);
+        this.databaseName = notNull("databaseName", databaseName);
     }
 
     /**

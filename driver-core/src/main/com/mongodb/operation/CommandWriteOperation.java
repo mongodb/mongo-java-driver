@@ -22,6 +22,7 @@ import com.mongodb.binding.WriteBinding;
 import org.bson.BsonDocument;
 import org.mongodb.CommandResult;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
@@ -32,20 +33,20 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  */
 public class CommandWriteOperation implements AsyncWriteOperation<CommandResult>, WriteOperation<CommandResult> {
     private final String database;
-    private final BsonDocument commandDocument;
+    private final BsonDocument command;
 
     public CommandWriteOperation(final String database, final BsonDocument command) {
-        this.database = database;
-        this.commandDocument = command;
+        this.database = notNull("database", database);
+        this.command = notNull("command", command);
     }
 
     @Override
     public CommandResult execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(database, commandDocument, binding);
+        return executeWrappedCommandProtocol(database, command, binding);
     }
 
     @Override
     public MongoFuture<CommandResult> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(database, commandDocument, binding);
+        return executeWrappedCommandProtocolAsync(database, command, binding);
     }
 }

@@ -25,6 +25,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.codecs.Decoder;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
@@ -42,9 +43,9 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
     private final Decoder<T> resultDecoder;
 
     public FindAndRemoveOperation(final MongoNamespace namespace, final FindAndRemove<T> findAndRemove, final Decoder<T> resultDecoder) {
-        this.namespace = namespace;
-        this.findAndRemove = findAndRemove;
-        this.resultDecoder = resultDecoder;
+        this.namespace = notNull("namespace", namespace);
+        this.findAndRemove = notNull("findAndRemove", findAndRemove);
+        this.resultDecoder = notNull("resultDecoder", resultDecoder);
     }
 
     @Override

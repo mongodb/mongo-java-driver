@@ -26,6 +26,7 @@ import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.CommandResult;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
@@ -42,8 +43,8 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     private final Find find;
 
     public CountOperation(final MongoNamespace namespace, final Find find) {
-        this.namespace = namespace;
-        this.find = find;
+        this.namespace = notNull("namespace", namespace);
+        this.find = notNull("find", find);
     }
 
 

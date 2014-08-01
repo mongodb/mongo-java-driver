@@ -16,6 +16,8 @@
 
 package com.mongodb.operation;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * Specifies the location of the result of the map-reduce operation. You can output to a collection, output to a collection with an action,
  * or output inline. You may output to a collection when performing map reduce operations on the primary members of the set; on secondary
@@ -42,7 +44,7 @@ public class MapReduceOutputOptions {
      * @param collectionName the name of the collection that you want the map-reduce operation to write its output.
      */
     public MapReduceOutputOptions(final String collectionName) {
-        this.collectionName = collectionName;
+        this.collectionName = notNull("collectionName", collectionName);
         this.action = Action.REPLACE;
     }
 

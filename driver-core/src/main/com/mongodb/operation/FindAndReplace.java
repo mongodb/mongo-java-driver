@@ -20,11 +20,13 @@ import org.bson.BsonDocument;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 public class FindAndReplace<T> extends FindAndModify {
     private final T replacement;
 
     public FindAndReplace(final T replacement) {
-        this.replacement = replacement;
+        this.replacement = notNull("replacement", replacement);
     }
 
     public T getReplacement() {

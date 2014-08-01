@@ -28,6 +28,7 @@ import org.bson.BsonString;
 import org.bson.codecs.Decoder;
 import org.mongodb.CommandResult;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
@@ -52,9 +53,9 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @param group     contains all the arguments for this group command
      */
     public GroupOperation(final MongoNamespace namespace, final Group group, final Decoder<T> decoder) {
-        this.namespace = namespace;
-        this.group = group;
-        this.decoder = decoder;
+        this.namespace = notNull("namespace", namespace);
+        this.group = notNull("group", group);
+        this.decoder = notNull("decoder", decoder);
     }
 
     /**

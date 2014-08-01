@@ -16,6 +16,8 @@
 
 package com.mongodb.operation;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * Options for creating a collection
  *
@@ -73,7 +75,7 @@ public class CreateCollectionOptions {
      */
     public CreateCollectionOptions(final String collectionName, final boolean capped, final long sizeInBytes,
                                    final boolean autoIndex, final long maxDocuments) {
-        this.collectionName = collectionName;
+        this.collectionName = notNull("collectionName", collectionName);
         this.capped = capped;
         this.sizeInBytes = sizeInBytes;
         this.autoIndex = autoIndex;

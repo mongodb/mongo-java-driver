@@ -52,12 +52,13 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
      * @param mapReduce the bean containing all the details of the Map Reduce operation to perform
      */
     public MapReduceToCollectionOperation(final MongoNamespace namespace, final MapReduce mapReduce) {
+        this.namespace = notNull("namespace", namespace);
+        this.mapReduce = notNull("mapReduce", mapReduce);
+
         if (mapReduce.isInline()) {
             throw new IllegalArgumentException("This operation can only be used with map reduce operations that put the results into a "
                                                + "collection.  Invalid MapReduce: " + mapReduce);
         }
-        this.namespace = notNull("namespace", namespace);
-        this.mapReduce = mapReduce;
     }
 
     /**

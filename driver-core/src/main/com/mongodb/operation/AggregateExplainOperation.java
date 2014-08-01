@@ -26,6 +26,7 @@ import org.mongodb.CommandResult;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
@@ -47,9 +48,9 @@ public class AggregateExplainOperation implements AsyncReadOperation<CommandResu
      * @param options   the aggregation options
      */
     public AggregateExplainOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final AggregationOptions options) {
-        this.namespace = namespace;
-        this.pipeline = pipeline;
-        this.options = options;
+        this.namespace = notNull("namespace", namespace);
+        this.pipeline = notNull("pipeline", pipeline);
+        this.options = notNull("options", options);
     }
 
     @Override

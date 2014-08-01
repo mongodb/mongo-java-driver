@@ -35,6 +35,7 @@ import org.mongodb.CommandResult;
 
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.AggregateHelper.asCommandDocument;
 import static com.mongodb.operation.AggregationOptions.OutputMode.INLINE;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
@@ -68,10 +69,10 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      */
     public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
                               final Decoder<T> decoder, final AggregationOptions options) {
-        this.namespace = namespace;
-        this.pipeline = pipeline;
-        this.decoder = decoder;
-        this.options = options;
+        this.namespace = notNull("namespace", namespace);
+        this.pipeline = notNull("pipeline", pipeline);
+        this.decoder = notNull("decoder", decoder);
+        this.options = notNull("options", options);
     }
 
     @Override

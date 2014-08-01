@@ -32,6 +32,7 @@ import org.bson.codecs.Codec;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
@@ -51,9 +52,9 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
     private final Codec<T> codec;
 
     public FindAndReplaceOperation(final MongoNamespace namespace, final FindAndReplace<T> findAndReplace, final Codec<T> codec) {
-        this.namespace = namespace;
-        this.findAndReplace = findAndReplace;
-        this.codec = codec;
+        this.namespace = notNull("namespace", namespace);
+        this.findAndReplace = notNull("findAndReplace", findAndReplace);
+        this.codec = notNull("codec", codec);
     }
 
     @Override

@@ -39,6 +39,7 @@ import org.mongodb.CommandResult;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
@@ -66,9 +67,9 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
      * @param options   the options to apply
      */
     public ParallelScanOperation(final MongoNamespace namespace, final ParallelScanOptions options, final Decoder<T> decoder) {
-        this.namespace = namespace;
-        this.options = options;
-        this.decoder = decoder;
+        this.namespace = notNull("namespace", namespace);
+        this.options = notNull("options", options);
+        this.decoder = notNull("decoder", decoder);
     }
 
     @Override

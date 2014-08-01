@@ -31,6 +31,7 @@ import org.bson.codecs.Decoder;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
@@ -50,9 +51,9 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
     private final Decoder<T> decoder;
 
     public FindAndUpdateOperation(final MongoNamespace namespace, final FindAndUpdate findAndUpdate, final Decoder<T> decoder) {
-        this.namespace = namespace;
-        this.findAndUpdate = findAndUpdate;
-        this.decoder = decoder;
+        this.namespace = notNull("namespace", namespace);
+        this.findAndUpdate = notNull("findAndUpdate", findAndUpdate);
+        this.decoder = notNull("decoder", decoder);
     }
 
     @Override

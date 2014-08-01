@@ -18,6 +18,8 @@ package com.mongodb.operation;
 
 import com.mongodb.ServerCursor;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 public class GetMore {
     private final int limit;
     private final int batchSize;
@@ -25,7 +27,7 @@ public class GetMore {
     private final ServerCursor serverCursor;
 
     public GetMore(final ServerCursor serverCursor, final int limit, final int batchSize, final long numFetchedSoFar) {
-        this.serverCursor = serverCursor;
+        this.serverCursor = notNull("serverCursor", serverCursor);
         this.limit = limit;
         this.batchSize = batchSize;
         this.numFetchedSoFar = numFetchedSoFar;

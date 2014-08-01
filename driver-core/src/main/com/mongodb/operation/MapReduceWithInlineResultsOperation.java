@@ -56,13 +56,14 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
      */
     public MapReduceWithInlineResultsOperation(final MongoNamespace namespace, final MapReduce mapReduce,
                                                final Decoder<T> decoder) {
-        this.decoder = decoder;
+        this.namespace = notNull("namespace", namespace);
+        this.mapReduce = notNull("mapReduce", mapReduce);
+        this.decoder = notNull("decoder", decoder);
+
         if (!mapReduce.isInline()) {
             throw new IllegalArgumentException("This operation can only be used with inline map reduce operations.  Invalid MapReduce: "
                                                + mapReduce);
         }
-        this.namespace = notNull("namespace", namespace);
-        this.mapReduce = mapReduce;
     }
 
     /**
