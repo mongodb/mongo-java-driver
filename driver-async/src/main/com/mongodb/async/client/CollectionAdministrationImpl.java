@@ -50,7 +50,7 @@ public class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public MongoFuture<Void> createIndexes(final List<Index> indexes) {
-        return client.execute(new CreateIndexesOperation(indexes, collectionNamespace));
+        return client.execute(new CreateIndexesOperation(collectionNamespace, indexes));
     }
 
     @Override

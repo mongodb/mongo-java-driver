@@ -53,13 +53,13 @@ import static java.util.Arrays.asList;
  * @since 3.0
  */
 public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private final List<Index> indexes;
     private final MongoNamespace namespace;
+    private final List<Index> indexes;
     private final MongoNamespace systemIndexes;
 
-    public CreateIndexesOperation(final List<Index> indexes, final MongoNamespace namespace) {
-        this.indexes = notNull("indexes", indexes);
+    public CreateIndexesOperation(final MongoNamespace namespace, final List<Index> indexes) {
         this.namespace = notNull("namespace", namespace);
+        this.indexes = notNull("indexes", indexes);
         this.systemIndexes = new MongoNamespace(namespace.getDatabaseName(), "system.indexes");
     }
 

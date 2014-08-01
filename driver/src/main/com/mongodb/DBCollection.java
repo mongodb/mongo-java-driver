@@ -1378,7 +1378,7 @@ public class DBCollection {
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
      */
     public void createIndex(final DBObject keys, final DBObject options) {
-        execute(new CreateIndexesOperation(Arrays.asList(toIndex(keys, options)), getNamespace()));
+        execute(new CreateIndexesOperation(getNamespace(), Arrays.asList(toIndex(keys, options))));
     }
 
     /**

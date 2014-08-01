@@ -138,7 +138,7 @@ class DropIndexesOperationSpecification extends OperationFunctionalSpecification
 
     @SuppressWarnings('FactoryMethodName')
     def createIndexes(Index[] indexes) {
-        new CreateIndexesOperation(indexes.toList(), getNamespace()).execute(getBinding())
+        new CreateIndexesOperation(getNamespace(), indexes.toList()).execute(getBinding())
     }
 
     def getIndexes() {

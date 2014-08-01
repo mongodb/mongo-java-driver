@@ -34,7 +34,7 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
     def 'should be able to create a single index'() {
         given:
         def index = Index.builder().addKey('field', ASC).build()
-        def createIndexesOperation = new CreateIndexesOperation([index], getNamespace())
+        def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index])
 
         when:
         createIndexesOperation.execute(getBinding())
@@ -46,7 +46,7 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
     def 'should be able to create a single index on a nested field'() {
         given:
         def index = Index.builder().addKey('x.y', ASC).build()
-        def createIndexesOperation = new CreateIndexesOperation([index], getNamespace())
+        def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index])
 
         when:
         createIndexesOperation.execute(getBinding())
@@ -60,7 +60,7 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
 
         given:
         def index = Index.builder().addKey('field', ASC).build()
-        def createIndexesOperation = new CreateIndexesOperation([index], getNamespace())
+        def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index])
 
         when:
         createIndexesOperation.executeAsync(getAsyncBinding()).get()
@@ -73,7 +73,7 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
         given:
         def index1 = Index.builder().addKey('field', ASC).build()
         def index2 = Index.builder().addKey('field2', ASC).build()
-        def createIndexesOperation = new CreateIndexesOperation([index1, index2], getNamespace())
+        def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index1, index2])
 
 
         when:
@@ -89,7 +89,7 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
         given:
         def index1 = Index.builder().addKey('field', ASC).build()
         def index2 = Index.builder().addKey('field2', ASC).build()
-        def createIndexesOperation = new CreateIndexesOperation([index1, index2], getNamespace())
+        def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index1, index2])
 
         when:
         createIndexesOperation.executeAsync(getAsyncBinding()).get()
@@ -101,7 +101,7 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
     def 'should be able to handle duplicated indexes'() {
         given:
         def index = Index.builder().addKey('field', ASC).build()
-        def createIndexesOperation = new CreateIndexesOperation([index, index], getNamespace())
+        def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index, index])
 
         when:
         createIndexesOperation.execute(getBinding())
@@ -115,7 +115,7 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
 
         given:
         def index = Index.builder().addKey('field', ASC).build()
-        def createIndexesOperation = new CreateIndexesOperation([index, index], getNamespace())
+        def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index, index])
 
         when:
         createIndexesOperation.executeAsync(getAsyncBinding()).get()
@@ -127,7 +127,7 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
     def 'should throw when trying to build an invalid index'() {
         given:
         def index = Index.builder().build()
-        def createIndexesOperation = new CreateIndexesOperation([index], getNamespace())
+        def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index])
 
         when:
         createIndexesOperation.execute(getBinding())
@@ -140,7 +140,7 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
     def 'should throw when trying to build an invalid index asynchronously'() {
         given:
         def index = Index.builder().build()
-        def createIndexesOperation = new CreateIndexesOperation([index], getNamespace())
+        def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index])
 
         when:
         createIndexesOperation.execute(getBinding())

@@ -115,6 +115,6 @@ public final class CollectionHelper<T> {
     }
 
     public void createIndexes(final List<Index> indexes) {
-        new CreateIndexesOperation(indexes, namespace).execute(getBinding());
+        new CreateIndexesOperation(namespace, indexes).execute(getBinding());
     }
 }
