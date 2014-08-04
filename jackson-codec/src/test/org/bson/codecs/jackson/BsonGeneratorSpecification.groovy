@@ -19,11 +19,6 @@ import org.bson.types.ObjectId
 import spock.lang.Specification
 import java.util.regex.Pattern
 
-
-/**
- * Created by guo on 7/18/14.
- */
-
 class BsonGeneratorSpecification extends Specification {
 
 

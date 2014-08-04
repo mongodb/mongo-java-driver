@@ -11,7 +11,7 @@ import java.io.IOException;
 /**
  * Created by guo on 8/1/14.
  */
-public abstract class JacksonBsonDesrializer<T> extends JsonDeserializer<T> {
+public abstract class JacksonBsonDeserializer<T> extends JsonDeserializer<T> {
     @Override
     public T deserialize(JsonParser jsonParser, DeserializationContext ctxt)
             throws IOException {

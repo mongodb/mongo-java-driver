@@ -141,6 +141,7 @@ public class JacksonBsonParser extends JsonParser {
             case DB_POINTER:
             case INT32:
             case INT64:
+            case SYMBOL:
             case JAVASCRIPT:
             case TIMESTAMP:
                 readerContextDeque.offerFirst(ReaderContext.VALUE_CONTEXT);
@@ -209,11 +210,11 @@ public class JacksonBsonParser extends JsonParser {
                 tokenOfCurValue = JsonToken.VALUE_EMBEDDED_OBJECT;
                 break;
             case JAVASCRIPT:
-                curValue = reader.readJavaScript();
+                curValue = new BsonJavaScript(reader.readJavaScript());
                 tokenOfCurValue = JsonToken.VALUE_EMBEDDED_OBJECT;
                 break;
             case SYMBOL:
-                curValue = reader.readSymbol();
+                curValue = new BsonSymbol(reader.readSymbol());
                 tokenOfCurValue = JsonToken.VALUE_EMBEDDED_OBJECT;
                 break;
             case JAVASCRIPT_WITH_SCOPE:

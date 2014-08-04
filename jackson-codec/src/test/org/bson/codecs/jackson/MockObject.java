@@ -15,6 +15,10 @@ package org.bson.codecs.jackson;/*
  * limitations under the License.
  */
 
+import org.bson.BsonJavaScript;
+import org.bson.BsonRegularExpression;
+import org.bson.BsonSymbol;
+import org.bson.BsonTimestamp;
 import org.bson.types.ObjectId;
 
 import java.math.BigDecimal;
@@ -22,18 +26,23 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
  * Test object with one of each field
  */
 public class MockObject {
 
+    public BsonJavaScript js;
+    public BsonSymbol symbol;
+    public BsonTimestamp ts;
+    public Date date;
     public ObjectId oid;
     public String _id;
+    public Pattern regex;
     public MockObject obj;
     public String string;
     public Object nulls;
-
     //    public String utf8String;
     public Integer integer;
     public Long longs;
@@ -44,42 +53,33 @@ public class MockObject {
     public Boolean booleans;
 //    public Date date;
     public ArrayList<Object> arrays;
-    public Object Test;
-
     public MockObject() {
         doubles = -4.0;
     }
 
     public MockObject(boolean mockFields) {
         if (mockFields) {
+            js = new BsonJavaScript("var a = 1;");
+            symbol = new BsonSymbol("someSymbol");
+            ts = new BsonTimestamp(10,20);
             _id = "this is an unique ID";
             obj = new MockObject();
             string = "this is a string";
-//            utf8String = "this is (not) a utf8 string (yet)";
             integer = -1;
             longs = -2L;
             doubles = -3.0;
-//            bigInteger = BigInteger.TEN;
-//            bigDecimal = BigDecimal.TEN;
             booleans = true;
+
             arrays = new ArrayList<Object>();
             arrays.add(10);
             arrays.add(null);
             arrays.add(new ArrayList<Integer>());
             arrays.add("this is a string in an array");
+
+//            bigInteger = BigInteger.TEN;
+//            bigDecimal = BigDecimal.TEN;
+//            utf8String = "this is (not) a utf8 string (yet)";
         }
-    }
-
-
-    public MockObject(String _id, String string, Integer integer) {
-        this._id = _id;
-        this.string = string;
-        this.integer = integer;
-    }
-
-    public MockObject(String string, Integer integer) {
-        this.string = string;
-        this.integer = integer;
     }
 
     @Override
@@ -96,8 +96,9 @@ public class MockObject {
 //                ", bigDecimal=" + bigDecimal +
                 ", booleans=" + booleans +
                 ", obj=" + obj +
-//                ", date=" + date +
+                ", date=" + date +
                 ", arrays=" +  arrays +
+                ", regex=" + regex +
                 '}';
     }
 
@@ -116,6 +117,9 @@ public class MockObject {
             return false;
         }
         if (oid != null ? !oid.equals(that.oid) : that.oid != null) {
+            return false;
+        }
+        if (regex.pattern() != null ? !regex.pattern().equals(that.regex.pattern()) : that.regex.pattern() != null) {
             return false;
         }
 //        if (bigDecimal != null ? !bigDecimal.equals(that.bigDecimal) : that.bigDecimal != null) {
@@ -139,9 +143,9 @@ public class MockObject {
         if (longs != null ? !longs.equals(that.longs) : that.longs != null) {
             return false;
         }
-//        if (date != null ? !date.equals(that.date) : that.date != null) {
-//            return false;
-//        }
+        if (date != null ? !date.equals(that.date) : that.date != null) {
+            return false;
+        }
         if (arrays != null ? !arrays.equals(that.arrays) : that.arrays != null) {
             return false;
         }
@@ -164,8 +168,9 @@ public class MockObject {
         result = 31 * result + (doubles != null ? doubles.hashCode() : 0);
 //        result = 31 * result + (bigDecimal != null ? bigDecimal.hashCode() : 0);
         result = 31 * result + (booleans != null ? booleans.hashCode() : 0);
-//        result = 31 * result + (date != null ? date.hashCode() : 0);
+        result = 31 * result + (date != null ? date.hashCode() : 0);
         result = 31 * result + (arrays != null ? arrays.hashCode() : 0);
+        result = 31 * result + (regex != null ? regex.hashCode() : 0);
         return result;
     }
 }
