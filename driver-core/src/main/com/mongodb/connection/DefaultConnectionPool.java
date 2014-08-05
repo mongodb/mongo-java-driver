@@ -264,13 +264,13 @@ class DefaultConnectionPool implements ConnectionPool {
         @Override
         public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
             isTrue("open", wrapped != null);
-            wrapped.sendMessageAsync(byteBuffers, lastRequestId, callback);      // TODO: handle async exceptions
+            wrapped.sendMessageAsync(byteBuffers, lastRequestId, callback);
         }
 
         @Override
         public void receiveMessageAsync(final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", wrapped != null);
-            wrapped.receiveMessageAsync(callback);                // TODO: handle async exceptions
+            wrapped.receiveMessageAsync(callback);
         }
 
         @Override
