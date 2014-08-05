@@ -2,7 +2,6 @@ package org.bson.codecs.jackson;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 
@@ -13,14 +12,14 @@ import java.io.IOException;
  */
 abstract class JacksonBsonSerializer<T> extends JsonSerializer<T> {
     @Override
-    public void serialize(T t, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
+    public void serialize(T t, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException {
         if (!(jsonGenerator instanceof JacksonBsonGenerator)) {
             throw new JsonGenerationException("JacksonBsonSerializer can " +
                     "only be used with JacksonBsonGenerator");
         }
-        serialize(t, (JacksonBsonGenerator) jsonGenerator, serializerProvider);
+        serialize(t, (JacksonBsonGenerator<T>) jsonGenerator, serializerProvider);
     }
 
-    public abstract void serialize(T t, JacksonBsonGenerator generator, SerializerProvider provider)
-            throws IOException, JsonProcessingException;
+    public abstract void serialize(T t, JacksonBsonGenerator<T> generator, SerializerProvider provider)
+            throws IOException;
 }

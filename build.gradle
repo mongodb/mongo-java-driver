@@ -76,7 +76,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
     idea {
         module {
             // include 'provided' dependencies on the classpath
-            scopes.PROVIDED.plus += configurations.provided
+            scopes.PROVIDED.plus += [configurations.provided]
         }
     }
 
@@ -246,7 +246,7 @@ project(':driver-core') {
         testCompile "io.netty:netty-all:$nettyVersion"
     }
 
-    sourceSets.main.compileClasspath += configurations.provided
+    sourceSets.main.compileClasspath += [configurations.provided]
 
     task uberJar(type: Jar) {
         classifier = 'all'
@@ -274,7 +274,7 @@ project(':driver-async') {
         testCompile "io.netty:netty-all:$nettyVersion"
     }
 
-    sourceSets.main.compileClasspath += configurations.provided
+    sourceSets.main.compileClasspath += [configurations.provided]
 
     task uberJar(type: Jar) {
         classifier = 'all'
@@ -306,7 +306,7 @@ project(':driver-rx') {
         testCompile "io.netty:netty-all:$nettyVersion"
     }
 
-    sourceSets.main.compileClasspath += configurations.provided
+    sourceSets.main.compileClasspath += [configurations.provided]
 
     task uberJar(type: Jar) {
         classifier = 'all'

@@ -1,7 +1,18 @@
 package org.bson.codecs.jackson;
 
-import com.fasterxml.jackson.core.*;
-import org.bson.*;
+import com.fasterxml.jackson.core.Base64Variant;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonStreamContext;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.core.SerializableString;
+import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.core.Version;
+import org.bson.BsonBinary;
+import org.bson.BsonJavaScript;
+import org.bson.BsonRegularExpression;
+import org.bson.BsonSymbol;
+import org.bson.BsonTimestamp;
+import org.bson.BsonWriter;
 import org.bson.types.ObjectId;
 
 import java.io.IOException;
@@ -13,17 +24,25 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.regex.Pattern;
 
+er;
+
 /**
  * Created by guo on 7/18/14.
  */
 public class JacksonBsonGenerator<T> extends JsonGenerator {
 
     private BsonWriter writer;
+    private Class<T> clazz;
 
     //TODO figure out if this is necessary or if isClosed should always returne false
     private boolean isClosed = false;
 
-    public JacksonBsonGenerator(BsonWriter writer) {
+    public JacksonBsonGenerator(final BsonWriter writer) {
+        this.writer = writer;
+    }
+
+    public JacksonBsonGenerator(BsonWriter writer, Class<T> clazz) {
+        this.clazz = clazz;
         this.writer = writer;
     }
 

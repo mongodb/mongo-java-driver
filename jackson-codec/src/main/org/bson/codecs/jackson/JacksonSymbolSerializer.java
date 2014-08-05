@@ -1,6 +1,5 @@
 package org.bson.codecs.jackson;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.bson.BsonSymbol;
 
@@ -12,7 +11,7 @@ import java.io.IOException;
 class JacksonSymbolSerializer extends JacksonBsonSerializer<BsonSymbol> {
 
     @Override
-    public void serialize(BsonSymbol value, JacksonBsonGenerator generator, SerializerProvider provider) throws IOException, JsonProcessingException {
+    public void serialize(BsonSymbol value, JacksonBsonGenerator<BsonSymbol> generator, SerializerProvider provider) throws IOException {
         if (value == null) {
             provider.defaultSerializeNull(generator);
         } else {

@@ -1,6 +1,5 @@
 package org.bson.codecs.jackson;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.bson.types.ObjectId;
 
@@ -13,7 +12,7 @@ public class JacksonObjectIdSerializer extends JacksonBsonSerializer<ObjectId> {
 
 
     @Override
-    public void serialize(ObjectId value, JacksonBsonGenerator generator, SerializerProvider provider) throws IOException, JsonProcessingException {
+    public void serialize(ObjectId value, JacksonBsonGenerator<ObjectId> generator, SerializerProvider provider) throws IOException {
         if (value == null) {
             provider.defaultSerializeNull(generator);
         } else {

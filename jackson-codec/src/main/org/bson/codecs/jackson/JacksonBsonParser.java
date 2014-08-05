@@ -1,7 +1,22 @@
 package org.bson.codecs.jackson;
 
-import com.fasterxml.jackson.core.*;
-import org.bson.*;
+import com.fasterxml.jackson.core.Base64Variant;
+import com.fasterxml.jackson.core.JsonLocation;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonStreamContext;
+import com.fasterxml.jackson.core.JsonToken;
+import com.fasterxml.jackson.core.JsonTokenId;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.core.Version;
+import org.bson.BSONException;
+import org.bson.BsonBinary;
+import org.bson.BsonDbPointer;
+import org.bson.BsonJavaScript;
+import org.bson.BsonReader;
+import org.bson.BsonRegularExpression;
+import org.bson.BsonSymbol;
+import org.bson.BsonTimestamp;
+import org.bson.BsonType;
 import org.bson.types.ObjectId;
 
 import java.io.IOException;
@@ -96,11 +111,11 @@ public class JacksonBsonParser extends JsonParser {
                 // reached the end of the documents, no more tokens available
                 // does not throw an error per BsonParser
                 return null;
+            case ARRAY_CONTEXT:
+            case DOCUMENT_CONTEXT:
             case VALUE_CONTEXT:
                 curValue = null;
                 readerContextDeque.pollFirst();
-            case ARRAY_CONTEXT:
-            case DOCUMENT_CONTEXT:
                 break;
             default:
                 throw new BSONException(format("Unexpected ContextType %s.", readerContextDeque.peekFirst()));

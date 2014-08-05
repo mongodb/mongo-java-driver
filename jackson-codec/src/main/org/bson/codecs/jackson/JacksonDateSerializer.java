@@ -1,6 +1,5 @@
 package org.bson.codecs.jackson;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
 
 import java.io.IOException;
@@ -11,7 +10,7 @@ import java.util.Date;
  */
 class JacksonDateSerializer extends JacksonBsonSerializer<Date> {
     @Override
-    public void serialize(Date value, JacksonBsonGenerator generator, SerializerProvider provider) throws IOException, JsonProcessingException {
+    public void serialize(Date value, JacksonBsonGenerator<Date> generator, SerializerProvider provider) throws IOException {
         if (value == null) {
             provider.defaultSerializeNull(generator);
         } else {

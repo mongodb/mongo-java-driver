@@ -1,6 +1,5 @@
 package org.bson.codecs.jackson;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.bson.BsonJavaScript;
 
@@ -12,7 +11,7 @@ import java.io.IOException;
 class JacksonJavascriptSerializer extends JacksonBsonSerializer<BsonJavaScript> {
 
     @Override
-    public void serialize(BsonJavaScript bsonJavaScript, JacksonBsonGenerator generator, SerializerProvider provider) throws IOException, JsonProcessingException {
+    public void serialize(BsonJavaScript bsonJavaScript, JacksonBsonGenerator<BsonJavaScript> generator, SerializerProvider provider) throws IOException {
         if (bsonJavaScript == null) {
             provider.defaultSerializeNull(generator);
         } else {

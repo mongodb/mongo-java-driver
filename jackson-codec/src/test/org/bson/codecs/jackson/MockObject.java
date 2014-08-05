@@ -86,8 +86,8 @@ public class MockObject {
                 "js='" + js + "'" +
                 ", symbol='" + symbol + "'" +
                 ", ts='" + ts + "'" +
-                ", regex=" + regex.pattern() +
-                ", date=" + date +
+                ", regex='" + regex.pattern() + "'" +
+                ", date=" + date + "'" +
                 ", oid='" + oid + "'" +
                 ", _id='" + _id + "'" +
                 ", string='" + string + "'" +
