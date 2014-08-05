@@ -1,4 +1,4 @@
-package org.bson.codecs.jackson.serializers;
+package org.bson.codecs.jackson;
 
 /**
  * Created by guo on 7/28/14.
@@ -16,7 +16,7 @@ import java.util.Date;
 import java.util.regex.Pattern;
 
 
-public class JacksonBsonSerializers extends SimpleSerializers {
+class JacksonBsonSerializers extends SimpleSerializers {
     private static final long serialVersionUID = -1327629614239143170L;
 
     /**

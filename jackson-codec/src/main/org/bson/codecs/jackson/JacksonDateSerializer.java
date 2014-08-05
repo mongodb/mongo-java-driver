@@ -1,4 +1,4 @@
-package org.bson.codecs.jackson.serializers;
+package org.bson.codecs.jackson;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -7,19 +7,18 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import org.bson.codecs.jackson.JacksonBsonGenerator;
 
 import java.io.IOException;
-import java.util.regex.Pattern;
+import java.util.Date;
 
 /**
  * Created by guo on 7/30/14.
  */
-public class JacksonRegexSerializer extends JacksonBsonSerializer<Pattern> {
-
+class JacksonDateSerializer extends JacksonBsonSerializer<Date> {
     @Override
-    public void serialize(Pattern value, JacksonBsonGenerator generator, SerializerProvider provider) throws IOException, JsonProcessingException {
+    public void serialize(Date value, JacksonBsonGenerator generator, SerializerProvider provider) throws IOException, JsonProcessingException {
         if (value == null) {
             provider.defaultSerializeNull(generator);
         } else {
-            generator.writeRegex(value);
+            generator.writeDate(value);
         }
     }
 }

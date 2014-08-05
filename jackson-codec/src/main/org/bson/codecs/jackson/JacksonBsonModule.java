@@ -2,8 +2,6 @@ package org.bson.codecs.jackson;
 
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.Module;
-import org.bson.codecs.jackson.deserializers.JacksonBsonDeserializers;
-import org.bson.codecs.jackson.serializers.JacksonBsonSerializers;
 
 /**
  * Created by guo on 7/28/14.

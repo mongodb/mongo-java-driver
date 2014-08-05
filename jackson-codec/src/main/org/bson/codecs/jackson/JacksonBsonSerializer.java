@@ -1,4 +1,4 @@
-package org.bson.codecs.jackson.serializers;
+package org.bson.codecs.jackson;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -12,7 +12,7 @@ import java.io.IOException;
 /**
  * Created by guo on 7/31/14.
  */
-public abstract class JacksonBsonSerializer<T> extends JsonSerializer<T> {
+abstract class JacksonBsonSerializer<T> extends JsonSerializer<T> {
     @Override
     public void serialize(T t, JsonGenerator jsonGenerator, SerializerProvider serializerProvider) throws IOException, JsonProcessingException {
         if (!(jsonGenerator instanceof JacksonBsonGenerator)) {

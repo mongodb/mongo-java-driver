@@ -1,9 +1,8 @@
-package org.bson.codecs.jackson.deserializers;
+package org.bson.codecs.jackson;
 
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import org.bson.BsonType;
-import org.bson.codecs.jackson.JacksonBsonParser;
 
 import java.io.IOException;
 import java.util.Date;
@@ -11,7 +10,7 @@ import java.util.Date;
 /**
  * Created by guo on 7/30/14.
  */
-public class JacksonDateDeserializer extends JacksonBsonDeserializer<Date> {
+class JacksonDateDeserializer extends JacksonBsonDeserializer<Date> {
 
     @Override
     public Date deserialize(JacksonBsonParser parser, DeserializationContext ctxt)
