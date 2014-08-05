@@ -39,20 +39,26 @@ class DatabaseAdministrationSpecification extends FunctionalSpecification {
     }
 
     def 'rename collection should rename the collection name'() {
+        given:
+        def newCollectionName = 'NewCollection1234'
+
         when:
         def client = getMongoClient()
-        def database = client.getDatabase(databaseName)
+        def database = client.getDatabase('RxDatabaseAdministrationSpecificationDatabase')
         get(database.tools().createCollection(collectionName))
 
         then:
         getAsList(database.tools().getCollectionNames()).contains(collectionName)
 
         when:
-        get(database.tools().renameCollection(collectionName, 'NewCollection1234'))
+        get(database.tools().renameCollection(collectionName, newCollectionName))
 
         then:
         !getAsList(database.tools().getCollectionNames()).contains(collectionName)
-        getAsList(database.tools().getCollectionNames()).contains('NewCollection1234')
+        getAsList(database.tools().getCollectionNames()).contains(newCollectionName)
+
+        cleanup:
+        get(database.getCollection(newCollectionName).tools().drop(), 20, SECONDS)
     }
 
 }
