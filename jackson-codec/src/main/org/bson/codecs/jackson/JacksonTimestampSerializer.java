@@ -3,7 +3,6 @@ package org.bson.codecs.jackson;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.bson.BsonTimestamp;
-import org.bson.codecs.jackson.JacksonBsonGenerator;
 
 import java.io.IOException;
 

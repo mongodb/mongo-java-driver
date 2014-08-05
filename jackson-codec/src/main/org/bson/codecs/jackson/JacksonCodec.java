@@ -1,12 +1,9 @@
 package org.bson.codecs.jackson;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import org.bson.BsonDocumentReader;
 import org.bson.BsonReader;
+import org.bson.BsonSerializationException;
 import org.bson.BsonWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
@@ -15,7 +12,7 @@ import org.bson.codecs.EncoderContext;
 import java.io.IOException;
 
 /**
- * A codec for BsonArray instances.
+ * A codec for  instances.
  *
  * @since 3.0
  */
@@ -45,7 +42,7 @@ public class JacksonCodec<T> implements Codec<T> {
             return decodedObject;
 
         } catch (IOException e) {
-
+            throw new BsonSerializationException(e)
         };
 
         return null;
@@ -60,8 +57,6 @@ public class JacksonCodec<T> implements Codec<T> {
             w.writeValue(generator, value);
             generator.close();
 
-        } catch (JsonGenerationException e) {
-            System.out.println(e);
         } catch (IOException e) {
             System.out.println(e);
         }

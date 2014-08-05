@@ -5,14 +5,11 @@ package org.bson.codecs.jackson;
  */
 
 import com.fasterxml.jackson.databind.module.SimpleSerializers;
-import com.sun.tools.corba.se.idl.constExpr.Times;
 import org.bson.BsonJavaScript;
 import org.bson.BsonSymbol;
 import org.bson.BsonTimestamp;
 import org.bson.types.ObjectId;
-import org.bson.types.Symbol;
 
-import java.security.Timestamp;
 import java.util.Date;
 import java.util.regex.Pattern;
 

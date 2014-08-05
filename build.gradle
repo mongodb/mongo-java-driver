@@ -222,7 +222,6 @@ project(':jackson-codec') {
 
     dependencies {
         compile project(':bson')
-        compile project(':driver-core')
         compile "com.fasterxml.jackson.core:jackson-core:2.4.1.1"
         compile "com.fasterxml.jackson.core:jackson-databind:2.4.1.3"
     }

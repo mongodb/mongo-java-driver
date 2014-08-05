@@ -2,16 +2,13 @@ package org.bson.codecs.jackson;
 
 import com.fasterxml.jackson.core.*;
 import org.bson.*;
-import org.bson.codecs.Codec;
 import org.bson.types.ObjectId;
-import org.bson.types.Symbol;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.CharBuffer;
-import java.security.Timestamp;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.regex.Pattern;

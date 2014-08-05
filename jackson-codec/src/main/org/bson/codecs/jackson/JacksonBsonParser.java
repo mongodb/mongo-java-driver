@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.*;
 import org.bson.*;
 import org.bson.types.ObjectId;
 
-import javax.xml.crypto.dom.DOMCryptoContext;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;

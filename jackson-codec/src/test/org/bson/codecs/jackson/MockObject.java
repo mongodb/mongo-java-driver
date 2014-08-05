@@ -16,16 +16,12 @@ package org.bson.codecs.jackson;/*
  */
 
 import org.bson.BsonJavaScript;
-import org.bson.BsonRegularExpression;
 import org.bson.BsonSymbol;
 import org.bson.BsonTimestamp;
 import org.bson.types.ObjectId;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.regex.Pattern;
 
 /**
