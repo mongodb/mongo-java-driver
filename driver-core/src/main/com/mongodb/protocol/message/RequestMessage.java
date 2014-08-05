@@ -32,7 +32,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class RequestMessage {
 
-    // TODO: is rollover a problem
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
 
     // Allow an extra 16K to the maximum allowed size of a query or command document, so that, for example,
