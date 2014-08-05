@@ -482,12 +482,15 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * creates a copy of this cursor object that can be iterated. Note: - you can iterate the DBCursor itself without calling this method -
+     * Creates a copy of this cursor object that can be iterated. Note: - you can iterate the DBCursor itself without calling this method -
      * no actual data is getting copied.
+     * <p>
+     * Note that use of this method does not let you call close the underlying cursor in the case of either an exception or an early
+     * break.  The preferred method of iteration is to use DBCursor as an Iterator, so that you can call close() on it in a finally block.
+     * </p>
      *
      * @return an iterator
      */
-    // TODO: document the dangerousness of this method, regarding close...
     public Iterator<DBObject> iterator() {
         return this.copy();
     }
@@ -525,7 +528,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     public int count() {
         return (int) collection.getCount(getQuery(), getKeysWanted(), 0, 0, getReadPreference(),
                                          find.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
-        // TODO: dangerous cast.  Throw exception instead?
     }
 
     /**
@@ -577,7 +579,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     public int size() {
         return (int) collection.getCount(getQuery(), getKeysWanted(), find.getLimit(), find.getSkip(), getReadPreference(),
                                          find.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
-        // TODO: dangerous cast.  Throw exception instead?
     }
 
     /**
