@@ -31,16 +31,6 @@ public class ClientAdministrationImpl implements ClientAdministration {
     }
 
     @Override
-    public Observable<Double> ping() {
-        return Observable.create(new OnSubscribeAdapter<Double>(new OnSubscribeAdapter.FutureFunction<Double>() {
-            @Override
-            public MongoFuture<Double> apply() {
-                return wrapped.ping();
-            }
-        }));
-    }
-
-    @Override
     public Observable<String> getDatabaseNames() {
         return Observable.concat(
             Observable.create(

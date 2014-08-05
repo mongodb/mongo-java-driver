@@ -20,14 +20,6 @@ import org.mongodb.Document
 
 class ClientAdministrationSpecification extends FunctionalSpecification {
 
-    def 'ping should be greater than 0'() {
-        when:
-        def client = Fixture.getMongoClient()
-
-        then:
-        client.tools().ping().get() > 0.0
-    }
-
     def 'should return the database name in getDatabaseNames'() {
         when:
         collection.insert(['_id': 1] as Document)

@@ -17,19 +17,10 @@
 package com.mongodb.async.rx.client
 import org.mongodb.Document
 
-import static Fixture.get
 import static Fixture.getAsList
 import static Fixture.getMongoClient
 
 class ClientAdministrationSpecification extends FunctionalSpecification {
-
-    def 'ping should be greater than 0'() {
-        when:
-        def client = getMongoClient()
-
-        then:
-        get(client.tools().ping()) > 0.0
-    }
 
     def 'should return the database name in getDatabaseNames'() {
         when:

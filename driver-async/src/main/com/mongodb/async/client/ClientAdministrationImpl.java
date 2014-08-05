@@ -18,7 +18,6 @@ package com.mongodb.async.client;
 
 import com.mongodb.async.MongoFuture;
 import com.mongodb.operation.GetDatabaseNamesOperation;
-import com.mongodb.operation.PingOperation;
 
 import java.util.List;
 
@@ -30,11 +29,6 @@ public class ClientAdministrationImpl implements ClientAdministration {
 
     ClientAdministrationImpl(final MongoClientImpl client) {
         this.client = client;
-    }
-
-    @Override
-    public MongoFuture<Double> ping() {
-        return client.execute(new PingOperation(), primary());
     }
 
     @Override

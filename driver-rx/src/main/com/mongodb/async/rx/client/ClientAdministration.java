@@ -25,12 +25,6 @@ import rx.Observable;
  */
 public interface ClientAdministration {
     /**
-     * @return a non-null number if the server is reachable.
-     * @mongodb.driver.manual reference/commands/ping Ping
-     */
-    Observable<Double> ping();
-
-    /**
      * @return an Observable containing the names of all the databases on the server
      * @mongodb.driver.manual reference/commands/listDatabases List Databases
      */

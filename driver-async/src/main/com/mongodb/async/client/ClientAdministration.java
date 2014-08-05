@@ -26,11 +26,6 @@ import java.util.List;
  * @since 3.0
  */
 public interface ClientAdministration {
-    /**
-     * @return a non-null number if the server is reachable.
-     * @mongodb.driver.manual reference/commands/ping Ping
-     */
-    MongoFuture<Double> ping();
 
     /**
      * @return a List of the names of all the databases on the server
