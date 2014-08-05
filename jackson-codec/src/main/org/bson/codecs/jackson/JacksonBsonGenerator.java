@@ -252,7 +252,7 @@ public class JacksonBsonGenerator<T> extends JsonGenerator {
         writer.writeDateTime(date.getTime());
     }
 
-    public void writeSymbol(Symbol symbol) throws IOException {
+    public void writeSymbol(BsonSymbol symbol) throws IOException {
         writer.writeSymbol(symbol.getSymbol());
     }
 

@@ -7,6 +7,7 @@ package org.bson.codecs.jackson;
 import com.fasterxml.jackson.databind.module.SimpleSerializers;
 import com.sun.tools.corba.se.idl.constExpr.Times;
 import org.bson.BsonJavaScript;
+import org.bson.BsonSymbol;
 import org.bson.BsonTimestamp;
 import org.bson.types.ObjectId;
 import org.bson.types.Symbol;
@@ -26,7 +27,7 @@ class JacksonBsonSerializers extends SimpleSerializers {
         addSerializer(Date.class, new JacksonDateSerializer());
         addSerializer(Pattern.class, new JacksonRegexSerializer());
         addSerializer(ObjectId.class, new JacksonObjectIdSerializer());
-        addSerializer(Symbol.class, new JacksonSymbolSerializer());
+        addSerializer(BsonSymbol.class, new JacksonSymbolSerializer());
         addSerializer(BsonTimestamp.class, new JacksonTimestampSerializer());
         addSerializer(BsonJavaScript.class, new JacksonJavascriptSerializer());
 

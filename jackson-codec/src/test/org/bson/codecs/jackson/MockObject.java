@@ -36,23 +36,24 @@ public class MockObject {
     public BsonJavaScript js;
     public BsonSymbol symbol;
     public BsonTimestamp ts;
+    public Pattern regex;
     public Date date;
     public ObjectId oid;
     public String _id;
-    public Pattern regex;
-    public MockObject obj;
     public String string;
     public Object nulls;
-    //    public String utf8String;
     public Integer integer;
     public Long longs;
+//    public String utf8String;
 //    public BigInteger bigInteger;
 //    public Float floats;
-    public Double doubles;
 //    public BigDecimal bigDecimal;
+    public Double doubles;
     public Boolean booleans;
-//    public Date date;
     public ArrayList<Object> arrays;
+    public MockObject obj;
+
+
     public MockObject() {
         doubles = -4.0;
     }
@@ -62,6 +63,7 @@ public class MockObject {
             js = new BsonJavaScript("var a = 1;");
             symbol = new BsonSymbol("someSymbol");
             ts = new BsonTimestamp(10,20);
+            regex = Pattern.compile("pattern");
             _id = "this is an unique ID";
             obj = new MockObject();
             string = "this is a string";
@@ -69,7 +71,7 @@ public class MockObject {
             longs = -2L;
             doubles = -3.0;
             booleans = true;
-
+            nulls = null;
             arrays = new ArrayList<Object>();
             arrays.add(10);
             arrays.add(null);
@@ -85,8 +87,13 @@ public class MockObject {
     @Override
     public String toString() {
         return "org.bson.codecs.jackson.MockObject{" +
-                "_id='" + _id + "'" +
+                "js='" + js + "'" +
+                ", symbol='" + symbol + "'" +
+                ", ts='" + ts + "'" +
+                ", regex=" + regex.pattern() +
+                ", date=" + date +
                 ", oid='" + oid + "'" +
+                ", _id='" + _id + "'" +
                 ", string='" + string + "'" +
                 ", integer=" + integer +
                 ", longs=" + longs +
@@ -95,10 +102,8 @@ public class MockObject {
                 ", doubles=" + doubles +
 //                ", bigDecimal=" + bigDecimal +
                 ", booleans=" + booleans +
-                ", obj=" + obj +
-                ", date=" + date +
                 ", arrays=" +  arrays +
-                ", regex=" + regex +
+                ", obj=" + obj +
                 '}';
     }
 

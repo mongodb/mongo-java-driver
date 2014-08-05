@@ -210,7 +210,7 @@ public class JacksonBsonParser extends JsonParser {
                 tokenOfCurValue = JsonToken.VALUE_EMBEDDED_OBJECT;
                 break;
             case JAVASCRIPT:
-                curValue = new BsonJavaScript(reader.readJavaScript());
+                curValue = reader.readJavaScript();
                 tokenOfCurValue = JsonToken.VALUE_EMBEDDED_OBJECT;
                 break;
             case SYMBOL:
@@ -341,7 +341,6 @@ public class JacksonBsonParser extends JsonParser {
 
     public JsonParser.NumberType getNumberType() throws IOException {
         //TODO: figure out when this gets called
-        System.out.println("getNumberType");
         return null;
     }
 

@@ -45,7 +45,7 @@ public class JacksonCodec<T> implements Codec<T> {
             return decodedObject;
 
         } catch (IOException e) {
-            System.out.println(e);
+
         };
 
         return null;
