@@ -17,11 +17,18 @@
 package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.annotations.Immutable;
 
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+/**
+ * An immutable class representing socket settings used for connections to a MongoDB server.
+ *
+ * @since 3.0
+ */
+@Immutable
 public class SocketSettings {
     private final long connectTimeoutMS;
     private final long readTimeoutMS;
@@ -29,42 +36,89 @@ public class SocketSettings {
     private final int receiveBufferSize;
     private final int sendBufferSize;
 
+    /**
+     * Gets a builder for an instance of {@code SocketSettings}.
+     * @return the builder
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * A builder for an instance of {@code SocketSettings}.
+     */
     public static class Builder {
-        private long connectTimeoutMS = 10000;    // TODO: not the right place to default this
+        private long connectTimeoutMS = 10000;
         private long readTimeoutMS;
         private boolean keepAlive;
         private int receiveBufferSize;
         private int sendBufferSize;
 
+        /**
+         * Sets the socket connect timeout.
+         *
+         * @param connectTimeout the connect timeout
+         * @param timeUnit the time unit
+         * @return this
+         */
         public Builder connectTimeout(final int connectTimeout, final TimeUnit timeUnit) {
             this.connectTimeoutMS = MILLISECONDS.convert(connectTimeout, timeUnit);
             return this;
         }
 
+        /**
+         * Sets the socket read timeout.
+         *
+         * @param readTimeout the read timeout
+         * @param timeUnit the time unit
+         * @return this
+         */
         public Builder readTimeout(final int readTimeout, final TimeUnit timeUnit) {
             this.readTimeoutMS = MILLISECONDS.convert(readTimeout, timeUnit);
             return this;
         }
 
+        /**
+         * Sets keep-alive.
+         *
+         * @param keepAlive true if keep-alive should be enabled
+         * @return this
+         */
         public Builder keepAlive(final boolean keepAlive) {
             this.keepAlive = keepAlive;
             return this;
         }
 
+        /**
+         * Sets the receive buffer size.
+         *
+         * @param receiveBufferSize the receive buffer size
+         * @return this
+         */
         public Builder receiveBufferSize(final int receiveBufferSize) {
             this.receiveBufferSize = receiveBufferSize;
             return this;
         }
 
+        /**
+         * Sets the send buffer size.
+         *
+         * @param sendBufferSize the send buffer size
+         * @return this
+         */
         public Builder sendBufferSize(final int sendBufferSize) {
             this.sendBufferSize = sendBufferSize;
             return this;
         }
 
+        /**
+         * Apply any socket settings specified in the connection string to this builder.
+         *
+         * @param connectionString the connection string
+         * @return this
+         * @see com.mongodb.ConnectionString#getConnectTimeout()
+         * @see com.mongodb.ConnectionString#getSocketTimeout()
+         */
         public Builder applyConnectionString(final ConnectionString connectionString) {
             if (connectionString.getConnectTimeout() != null) {
                 this.connectTimeout(connectionString.getConnectTimeout(), MILLISECONDS);
@@ -75,28 +129,57 @@ public class SocketSettings {
             return this;
         }
 
+        /**
+         * Build an instance of {@code SocketSettings}.
+         * @return the socket settings for this builder
+         */
         public SocketSettings build() {
             return new SocketSettings(this);
         }
-
     }
 
+    /**
+     * Gets the timeout for socket connect.  Defaults to 10 seconds.
+     *
+     * @param timeUnit the time unit to get the timeout in
+     * @return the connect timeout in the requested time unit.
+     */
     public int getConnectTimeout(final TimeUnit timeUnit) {
         return (int) timeUnit.convert(connectTimeoutMS, MILLISECONDS);
     }
 
+    /**
+     * Gets the timeout for socket reads.  Defaults to 0, which indicates no timeout
+     *
+     * @param timeUnit the time unit to get the timeout in
+     * @return the read timeout in the requested time unit, or 0 if there is no timeout
+     */
     public int getReadTimeout(final TimeUnit timeUnit) {
         return (int) timeUnit.convert(readTimeoutMS, MILLISECONDS);
     }
 
+    /**
+     * Gets whether keep-alive is enabled. Defaults to false.
+     *
+     * @return true if keep-alive is enabled.
+     */
     public boolean isKeepAlive() {
         return keepAlive;
     }
 
+    /**
+     * Gets the receive buffer size. Defaults to the operating system default.
+     * @return the receive buffer size
+     */
     public int getReceiveBufferSize() {
         return receiveBufferSize;
     }
 
+    /**
+     * Gets the send buffer size.  Defaults to the operating system default.
+     *
+     * @return the send buffer size
+     */
     public int getSendBufferSize() {
         return sendBufferSize;
     }
