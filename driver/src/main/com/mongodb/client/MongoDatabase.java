@@ -43,10 +43,5 @@ public interface MongoDatabase {
 
     <T> MongoCollection<T> getCollection(String name, Codec<T> codec, MongoCollectionOptions options);
 
-    //TODO: still need to come up with a sensible name for this
     DatabaseAdministration tools();
-
-    //    MongoDatabase withClient(MongoClient client);
-    //
-    //    MongoDatabase withWriteConcern(WriteConcern writeConcern);
 }
