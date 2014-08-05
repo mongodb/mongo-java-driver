@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * TODO Documentation
+ * An implementation of DBDecoder
  */
 public class DefaultDBDecoder extends BasicBSONDecoder implements DBDecoder {
 

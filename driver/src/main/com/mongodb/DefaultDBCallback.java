@@ -25,7 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 
 /**
- * TODO Documentation.
+ * An implementation of DBCallback that decodes into a DBObject.
  */
 public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
 
