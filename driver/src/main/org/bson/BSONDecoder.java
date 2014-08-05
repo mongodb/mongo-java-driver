@@ -20,15 +20,42 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * TODO Documentation
+ * An interface for decoders of BSON documents.
  */
 public interface BSONDecoder {
 
+    /**
+     * Read a single BSON object from the given bytes.
+     *
+     * @param bytes the bytes in BSON format
+     * @return the BSON object for the given bytes
+     */
     BSONObject readObject(byte[] bytes);
 
+    /**
+     * Read a single BSON object from the given input stream.
+     *
+     * @param in the input stream in BSON format
+     * @return the BSON object for the given bytes
+     */
     BSONObject readObject(InputStream in) throws IOException;
 
+    /**
+     * Decode a single BSON object into the given callback from the given byte array.
+     *
+     * @param bytes the bytes in BSON format
+     * @param callback the callback
+     * @return the number of bytes in the BSON object
+     */
     int decode(byte[] bytes, BSONCallback callback);
 
+    /**
+     * Decode a single BSON object into the given callback from the given input stream.
+     *
+     * @param in the input stream in BSON format
+     * @param callback the callback
+     * @return the number of bytes read from the input tream
+     * @throws IOException
+     */
     int decode(InputStream in, BSONCallback callback) throws IOException;
 }

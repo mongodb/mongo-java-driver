@@ -21,7 +21,7 @@ package org.bson;
 import org.bson.types.ObjectId;
 
 /**
- * TODO Documentation
+ * A callback interface for describing the structure of a BSON document.
  */
 public interface BSONCallback {
 

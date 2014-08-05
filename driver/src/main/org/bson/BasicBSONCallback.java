@@ -34,7 +34,7 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 /**
- * TODO Documentation
+ * An implementation of {@code BsonCallback} that creates an instance of BSONObject.
  */
 public class BasicBSONCallback implements BSONCallback {
 
