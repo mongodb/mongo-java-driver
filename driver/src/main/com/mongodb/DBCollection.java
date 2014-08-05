@@ -1010,7 +1010,6 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/group/ Group Command
      */
     public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
-        //TODO: test read preference
         MongoCursor<DBObject> cursor = execute(new GroupOperation<DBObject>(getNamespace(), cmd.toNew(getDefaultDBObjectCodec()),
                                                                             getDefaultDBObjectCodec()),
                                                readPreference);
