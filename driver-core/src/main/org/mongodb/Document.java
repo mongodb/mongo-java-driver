@@ -17,18 +17,11 @@
 package org.mongodb;
 
 import com.mongodb.codecs.DocumentCodec;
-import org.bson.BsonWriter;
-import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
-import org.bson.codecs.EncoderContext;
-import org.bson.json.JsonMode;
 import org.bson.json.JsonReader;
-import org.bson.json.JsonWriter;
-import org.bson.json.JsonWriterSettings;
 import org.bson.types.ObjectId;
 
 import java.io.Serializable;
-import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -239,20 +232,10 @@ public class Document implements Map<String, Object>, Serializable {
         return documentAsMap.hashCode();
     }
 
-    /**
-     * Returns a String object representing this Document's in a <a href="http://www.json.org/">JSON RFC</a> format.
-     *
-     * @return a json representation of the document.
-     */
     @Override
     public String toString() {
-        //TODO: WARNING - this toString will not work if the Document contains any non-standard types,
-        // i.e. anything that requires a custom codec, like POJOs or custom CollectibleCodecs for generic Collections
-        StringWriter writer = new StringWriter();
-        BsonWriter bsonWriter = new JsonWriter(writer, new JsonWriterSettings(JsonMode.STRICT));
-        Codec<Document> codec = new DocumentCodec();
-        codec.encode(bsonWriter, this, EncoderContext.builder().build());
-
-        return writer.toString();
+        return "Document{"
+               + documentAsMap
+               + '}';
     }
 }

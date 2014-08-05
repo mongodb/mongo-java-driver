@@ -77,10 +77,4 @@ class DocumentSpecification extends Specification {
         then:
         thrown(JsonParseException)
     }
-
-    def 'should produce nice JSON when calling toString'() {
-        expect:
-        new Document('int', 1).append('string', 'abc').toString() == '{ "int" : 1, "string" : "abc" }';
-    }
-
 }
