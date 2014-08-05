@@ -161,7 +161,7 @@ class DefaultServer implements ClusterableServer {
         @Override
         public ServerDescription getServerDescription() {
             isTrue("open", getCount() > 0);
-            return getDescription();  // TODO: get a new one for each connection, so that it's immutable
+            return getDescription();
         }
 
         @Override
