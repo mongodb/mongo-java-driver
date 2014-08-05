@@ -48,6 +48,10 @@ public class JacksonBsonGenerator<T> extends JsonGenerator {
     private BsonWriter writer;
     private Class<T> clazz;
 
+    public Class<T> getClazz() {
+        return clazz;
+    }
+
     //TODO figure out if this is necessary or if isClosed should always returne false
     private boolean isClosed = false;
 
@@ -55,13 +59,13 @@ public class JacksonBsonGenerator<T> extends JsonGenerator {
         this.writer = writer;
     }
 
-    public JacksonBsonGenerator(BsonWriter writer, Class<T> clazz) {
+    public JacksonBsonGenerator(final BsonWriter writer, final Class<T> clazz) {
         this.clazz = clazz;
         this.writer = writer;
     }
 
     @Override
-    public JsonGenerator setCodec(ObjectCodec objectCodec) {
+    public JsonGenerator setCodec(final ObjectCodec objectCodec) {
         //TODO: is this used?
         return null;
     }
@@ -79,19 +83,19 @@ public class JacksonBsonGenerator<T> extends JsonGenerator {
     }
 
     @Override
-    public JsonGenerator enable(Feature feature) {
+    public JsonGenerator enable(final Feature feature) {
         //TODO
         return this;
     }
 
     @Override
-    public JsonGenerator disable(Feature feature) {
+    public JsonGenerator disable(final Feature feature) {
         //TODO
         return this;
     }
 
     @Override
-    public boolean isEnabled(Feature feature) {
+    public boolean isEnabled(final Feature feature) {
         //: TODO
         return false;
     }
@@ -103,7 +107,7 @@ public class JacksonBsonGenerator<T> extends JsonGenerator {
     }
 
     @Override
-    public JsonGenerator setFeatureMask(int i) {
+    public JsonGenerator setFeatureMask(final int i) {
         //TODO
         return null;
     }
@@ -137,128 +141,128 @@ public class JacksonBsonGenerator<T> extends JsonGenerator {
     }
 
     @Override
-    public void writeFieldName(String s) throws IOException {
+    public void writeFieldName(final String s) throws IOException {
         writer.writeName(s);
     }
 
     @Override
-    public void writeFieldName(SerializableString serializableString) throws IOException {
+    public void writeFieldName(final SerializableString serializableString) throws IOException {
 
         writer.writeName(serializableString.getValue());
     }
 
     @Override
-    public void writeString(String s) throws IOException {
+    public void writeString(final String s) throws IOException {
         writer.writeString(s);
     }
 
     @Override
-    public void writeString(char[] chars, int i, int i1) throws IOException {
+    public void writeString(final char[] chars, final int i, final int i1) throws IOException {
         writer.writeString(new String(Arrays.copyOfRange(chars,i,i1)));
     }
 
     @Override
-    public void writeString(SerializableString serializableString) throws IOException {
+    public void writeString(final SerializableString serializableString) throws IOException {
         writer.writeString(serializableString.getValue());
     }
 
     @Override
-    public void writeRawUTF8String(byte[] bytes, int i, int i1) throws IOException {
+    public void writeRawUTF8String(final byte[] bytes, final int i, final int i1) throws IOException {
         writer.writeBinaryData(new BsonBinary(Arrays.copyOfRange(bytes, i, i1)));
     }
 
     @Override
-    public void writeUTF8String(byte[] bytes, int i, int i1) throws IOException {
+    public void writeUTF8String(final byte[] bytes, final int i, final int i1) throws IOException {
         writer.writeString(new String(bytes, "UTF8"));
     }
 
     @Override
-    public void writeRaw(String s) throws IOException {
+    public void writeRaw(final String s) throws IOException {
         writer.writeBinaryData(new BsonBinary(s.getBytes()));
     }
 
     @Override
-    public void writeRaw(String s, int i, int i1) throws IOException {
+    public void writeRaw(final String s, final int i, final int i1) throws IOException {
         writer.writeBinaryData(new BsonBinary(s.substring(i,i1).getBytes()));
     }
 
     @Override
-    public void writeRaw(char[] chars, int i, int i1) throws IOException {
+    public void writeRaw(final char[] chars, final int i, final int i1) throws IOException {
         writer.writeString(CharBuffer.wrap(chars).toString().substring(i, i1));
     }
 
     @Override
-    public void writeRaw(char c) throws IOException {
+    public void writeRaw(final char c) throws IOException {
         writer.writeString(Character.toString(c));
     }
 
     @Override
-    public void writeRawValue(String s) throws IOException {
+    public void writeRawValue(final String s) throws IOException {
         writer.writeString(s );
     }
 
     @Override
-    public void writeRawValue(String s, int i, int i1) throws IOException {
+    public void writeRawValue(final String s, final int i, final int i1) throws IOException {
         writer.writeString(s.substring(i,i1));
     }
 
     @Override
-    public void writeRawValue(char[] chars, int i, int i1) throws IOException {
+    public void writeRawValue(final char[] chars, final int i, final int i1) throws IOException {
         writer.writeString(CharBuffer.wrap(chars).toString().substring(i, i1));
     }
 
     @Override
-    public void writeBinary(Base64Variant base64Variant, byte[] bytes, int i, int i1) throws IOException {
+    public void writeBinary(final Base64Variant base64Variant, final byte[] bytes, final int i, final int i1) throws IOException {
         writer.writeBinaryData(new BsonBinary(base64Variant.encode(bytes).getBytes()));
     }
 
     @Override
-    public void writeBinary(byte[] data) throws IOException {
+    public void writeBinary(final byte[] data) throws IOException {
         writer.writeBinaryData(new BsonBinary(data));
     }
 
     @Override
-    public int writeBinary(Base64Variant base64Variant, InputStream inputStream, int i) throws IOException {
+    public int writeBinary(final Base64Variant base64Variant, final InputStream inputStream, final int i) throws IOException {
         //TODO: inputStream
         return 0;
     }
 
     @Override
-    public void writeNumber(int i) throws IOException {
+    public void writeNumber(final int i) throws IOException {
         writer.writeInt32(i);
     }
 
     @Override
-    public void writeNumber(long l) throws IOException {
+    public void writeNumber(final long l) throws IOException {
         writer.writeInt64(l);
     }
 
     @Override
-    public void writeNumber(BigInteger bigInteger) throws IOException {
+    public void writeNumber(final BigInteger bigInteger) throws IOException {
         writer.writeString(bigInteger.toString());
     }
 
-    public void writeNumber(double v) throws IOException {
+    public void writeNumber(final double v) throws IOException {
         writer.writeDouble(v);
     }
 
     @Override
-    public void writeNumber(float v) throws IOException {
+    public void writeNumber(final float v) throws IOException {
         writer.writeDouble((double)v);
     }
 
     @Override
-    public void writeNumber(BigDecimal bigDecimal) throws IOException {
+    public void writeNumber(final BigDecimal bigDecimal) throws IOException {
         writer.writeString(bigDecimal.toString());
     }
 
     @Override
-    public void writeNumber(String s) throws IOException {
+    public void writeNumber(final String s) throws IOException {
         writer.writeString(s);
     }
 
     @Override
-    public void writeBoolean(boolean b) throws IOException {
+    public void writeBoolean(final boolean b) throws IOException {
         writer.writeBoolean(b);
     }
 
@@ -269,36 +273,36 @@ public class JacksonBsonGenerator<T> extends JsonGenerator {
     }
 
     @Override
-    public void writeObject(Object o) throws IOException {
+    public void writeObject(final Object o) throws IOException {
         super._writeSimpleObject(o);
     }
 
     @Override
-    public void writeTree(TreeNode treeNode) throws IOException {
+    public void writeTree(final TreeNode treeNode) throws IOException {
         //TODO: tree
     }
 
-    public void writeDate(Date date) throws IOException {
+    public void writeDate(final Date date) throws IOException {
         writer.writeDateTime(date.getTime());
     }
 
-    public void writeSymbol(BsonSymbol symbol) throws IOException {
+    public void writeSymbol(final BsonSymbol symbol) throws IOException {
         writer.writeSymbol(symbol.getSymbol());
     }
 
-    public void writeTimestamp(BsonTimestamp timestamp) throws IOException{
+    public void writeTimestamp(final BsonTimestamp timestamp) throws IOException{
        writer.writeTimestamp(timestamp);
     }
 
-    public void writeJavascript(BsonJavaScript javascript) throws IOException {
+    public void writeJavascript(final BsonJavaScript javascript) throws IOException {
         writer.writeJavaScript(javascript.getCode());
     }
 
-    public void writeRegex(Pattern regex) throws IOException {
+    public void writeRegex(final Pattern regex) throws IOException {
         writer.writeRegularExpression(new BsonRegularExpression(regex.pattern(), regex.flags()+""));
     }
 
-    public void writeObjectId(ObjectId id) throws IOException {
+    public void writeObjectId(final ObjectId id) throws IOException {
         writer.writeObjectId(id);
     }
 
