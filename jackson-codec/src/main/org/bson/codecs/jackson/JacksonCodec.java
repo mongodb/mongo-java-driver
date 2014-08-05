@@ -38,14 +38,12 @@ public class JacksonCodec<T> implements Codec<T> {
 
         try {
             JacksonBsonParser p = new JacksonBsonParser(reader);
-            T decodedObject = objectMapper.readValue(p,clazz);
-            return decodedObject;
+            return objectMapper.readValue(p,clazz);
 
         } catch (IOException e) {
-            throw new BsonSerializationException(e)
-        };
+            throw new BsonSerializationException("error reading value", e);
+        }
 
-        return null;
     }
 
     public void encode(final BsonWriter writer, final T value, final EncoderContext encoderContext) {
@@ -58,7 +56,7 @@ public class JacksonCodec<T> implements Codec<T> {
             generator.close();
 
         } catch (IOException e) {
-            System.out.println(e);
+            throw new BsonSerializationException("error writing value " + value, e);
         }
     }
     public Class<T> getEncoderClass() {

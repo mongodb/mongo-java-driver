@@ -209,7 +209,7 @@ public class JacksonBsonParser extends JsonParser {
                 tokenOfCurValue = JsonToken.VALUE_EMBEDDED_OBJECT;
                 break;
             case JAVASCRIPT:
-                curValue = reader.readJavaScript();
+                curValue = new BsonJavaScript(reader.readJavaScript());
                 tokenOfCurValue = JsonToken.VALUE_EMBEDDED_OBJECT;
                 break;
             case SYMBOL:
@@ -392,7 +392,7 @@ public class JacksonBsonParser extends JsonParser {
     }
 
     public BsonJavaScript getJavascriptValue() {
-        return new BsonJavaScript((String)curValue);
+        return (BsonJavaScript)curValue;
     }
 
     public float getFloatValue() throws IOException {
