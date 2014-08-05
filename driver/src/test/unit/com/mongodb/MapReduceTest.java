@@ -163,12 +163,13 @@ public class MapReduceTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testDropOutputCollection() {
+    public void testOutputCollection() {
         String anotherCollectionName = "anotherCollection" + System.nanoTime();
         MapReduceOutput output = collection.mapReduce(DEFAULT_MAP,
                                                       DEFAULT_REDUCE,
                                                       anotherCollectionName, null);
 
+        assertEquals(database.getCollection(anotherCollectionName).getFullName(), output.getOutputCollection().getFullName());
         assertTrue(database.collectionExists(anotherCollectionName));
 
         output.drop();

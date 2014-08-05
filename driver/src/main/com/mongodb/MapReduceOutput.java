@@ -96,7 +96,6 @@ public class MapReduceOutput {
      * @return the collection or null
      */
     public DBCollection getOutputCollection() {
-        //TODO: test this
         return collection;
     }
 
