@@ -21,7 +21,7 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.operation.SingleResultFuture;
 
 class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
-    private final SingleResultFuture<T> future;   // TODO: Move Future classes to org.mongodb
+    private final SingleResultFuture<T> future;
 
     public FutureAsyncCompletionHandler(final SingleResultFuture<T> future) {
         this.future = future;
