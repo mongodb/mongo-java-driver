@@ -21,7 +21,6 @@ import java.util.EnumSet;
 /**
  * An enumeration of all query options supported by the OP_QUERY wire protocol message.
  *
- * @mongodb.driver.manual Wire Protocol   // TODO: fix this link
  * @since 3.0
  */
 public enum QueryFlag {
