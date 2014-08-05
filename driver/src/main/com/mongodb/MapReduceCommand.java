@@ -387,8 +387,6 @@ public class MapReduceCommand {
                 default:
                     throw new IllegalArgumentException("Unexpected action on target collection");
             }
-            //TODO: sharded?
-            //TODO: non-atomic?
             mapReduce = new MapReduce(new BsonJavaScript(map), new BsonJavaScript(reduce), output);
         }
 
@@ -414,7 +412,6 @@ public class MapReduceCommand {
         if (verbose) {
             mapReduce.verbose();
         }
-        //TODO: jsMode?
         return mapReduce;
     }
 }

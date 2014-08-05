@@ -354,7 +354,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public WriteResult save(final T document) {
             if (!(codec instanceof CollectibleCodec)) {
-                throw new UnsupportedOperationException();  // TODO: support this
+                throw new UnsupportedOperationException();
             }
             CollectibleCodec<T> collectibleCodec = (CollectibleCodec<T>) codec;
             if (!collectibleCodec.documentHasId(document)) {
