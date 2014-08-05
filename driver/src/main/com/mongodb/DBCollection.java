@@ -909,7 +909,6 @@ public class DBCollection {
             throw new IllegalArgumentException("skip is too large: " + skip);
         }
 
-        // TODO: investigate case of int to long for skip
         Find find = new Find(wrapAllowNull(query)).limit((int) limit).skip((int) skip).maxTime(maxTime, maxTimeUnit);
 
         return execute(new CountOperation(getNamespace(), find), readPreference);
