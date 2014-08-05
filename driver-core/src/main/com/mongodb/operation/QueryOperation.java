@@ -168,7 +168,6 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
             document.put("$maxScan", new BsonInt32(maxScan));
         }
 
-        // TODO: special
         return document;
     }
 

@@ -70,7 +70,6 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         this.bsonTypeClassMap = bsonTypeClassMap;
     }
 
-    //TODO: what about BSON Exceptions?
     @Override
     public void encode(final BsonWriter writer, final DBObject document, final EncoderContext encoderContext) {
         writer.writeStartDocument();
