@@ -26,7 +26,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
-//TODO: this is a basic conversion of the old QueryBuilder, but I believe it needs to be a) easier to use and b) a lot better documented
 public class QueryBuilder implements ConvertibleToDocument {
     private final Document query;
     private String currentKey;
