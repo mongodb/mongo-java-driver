@@ -147,10 +147,6 @@ public class Bytes extends BSON {
             return NULL;
         }
 
-        // TODO: Should we remove DBPointer class?
-        //        if ( o instanceof DBPointer )
-        //            return REF;
-
         if (o instanceof Integer
             || o instanceof Short
             || o instanceof Byte
