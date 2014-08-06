@@ -21,6 +21,7 @@ import org.mongodb.Document;
 
 import static com.mongodb.QueryOperators.TYPE;
 import static com.mongodb.client.QueryBuilder.query;
+import static java.util.Arrays.asList;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -32,9 +33,9 @@ public class QueryBuilderTest {
     public void shouldCreateValidBSONDocumentForOrWithDocumentVarargsOperands() {
         QueryBuilder queryBuilder = query().or(new Document("name", "first"), new Document("age", 43));
 
-        String expectedQuery = "{ \"$or\" : [{ \"name\" : \"first\" }, { \"age\" : 43 }] }";
+        Document expectedQuery = new Document("$or", asList(new Document("name", "first"), new Document("age", 43)));
 
-        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+        assertThat(queryBuilder.toDocument(), is(expectedQuery));
     }
 
     /**
@@ -45,9 +46,9 @@ public class QueryBuilderTest {
         QueryBuilder queryBuilder = query().or(new Document("name", "first"))
                                                 .or(new Document("age", 43));
 
-        String expectedQuery = "{ \"$or\" : [{ \"name\" : \"first\" }, { \"age\" : 43 }] }";
+        Document expectedQuery = new Document("$or", asList(new Document("name", "first"), new Document("age", 43)));
 
-        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+        assertThat(queryBuilder.toDocument(), is(expectedQuery));
     }
 
     /**
@@ -58,62 +59,62 @@ public class QueryBuilderTest {
         QueryBuilder queryBuilder = query().or(query("name").is("first"))
                                                 .or(query("age").is(43));
 
-        String expectedQuery = "{ \"$or\" : [{ \"name\" : \"first\" }, { \"age\" : 43 }] }";
+        Document expectedQuery = new Document("$or", asList(new Document("name", "first"), new Document("age", 43)));
 
-        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+        assertThat(queryBuilder.toDocument(), is(expectedQuery));
     }
 
     @Test
     public void shouldCreateValidBSONDocumentToTestForValue() {
         QueryBuilder queryBuilder = query("name").is("first");
 
-        String expectedQuery = "{ \"name\" : \"first\" }";
+        Document expectedQuery = new Document("name", "first");
 
-        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+        assertThat(queryBuilder.toDocument(), is(expectedQuery));
     }
 
     @Test
     public void shouldCreateValidBSONDocumentToTestForQueryBuilderValue() {
         QueryBuilder queryBuilder = query("numericValue").is(query(TYPE).is(16));
 
-        String expectedQuery = "{ \"numericValue\" : { \"$type\" : 16 } }";
+        Document expectedQuery = new Document("numericValue", new Document("$type", 16));
 
-        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+        assertThat(queryBuilder.toDocument(), is(expectedQuery));
     }
 
     @Test
     public void shouldCreateValidBSONDocumentToTestForText() {
         QueryBuilder queryBuilder = query().text("dolor");
 
-        String expectedQuery = "{ \"$text\" : { \"$search\" : \"dolor\" } }";
+        Document expectedQuery = new Document("$text", new Document("$search", "dolor"));
 
-        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+        assertThat(queryBuilder.toDocument(), is(expectedQuery));
     }
 
     @Test
     public void shouldCreateValidBSONDocumentToTestForTextWithLanguage() {
         QueryBuilder queryBuilder = query().text("dolor", "latin");
 
-        String expectedQuery = "{ \"$text\" : { \"$search\" : \"dolor\", \"$language\" : \"latin\" } }";
+        Document expectedQuery = new Document("$text", new Document("$search", "dolor").append("$language", "latin"));
 
-        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+        assertThat(queryBuilder.toDocument(), is(expectedQuery));
     }
 
     @Test
     public void shouldCreateCorrectNearQueryWhenMaxDistanceIsSpecified() {
-        QueryBuilder queryBuilder = query("loc").near(45.0, 45.0, 0.5);
+        QueryBuilder queryBuilder = query("loc").near(45.0, 46.0, 0.5);
 
-        String expectedQuery = "{ \"loc\" : { \"$near\" : [45.0, 45.0], \"$maxDistance\" : 0.5 } }";
+        Document expectedQuery = new Document("loc", new Document("$near", asList(45.0, 46.0)).append("$maxDistance", 0.5));
 
-        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+        assertThat(queryBuilder.toDocument(), is(expectedQuery));
     }
 
     @Test
     public void shouldCreateCorrectNearSphereQueryWhenMaxDistanceIsSpecified() {
-        QueryBuilder queryBuilder = query("loc").nearSphere(45.0, 45.0, 0.5);
+        QueryBuilder queryBuilder = query("loc").nearSphere(45.0, 46.0, 0.5);
 
-        String expectedQuery = "{ \"loc\" : { \"$nearSphere\" : [45.0, 45.0], \"$maxDistance\" : 0.5 } }";
+        Document expectedQuery = new Document("loc", new Document("$nearSphere", asList(45.0, 46.0)).append("$maxDistance", 0.5));
 
-        assertThat(queryBuilder.toDocument().toString(), is(expectedQuery));
+        assertThat(queryBuilder.toDocument(), is(expectedQuery));
     }
 }
