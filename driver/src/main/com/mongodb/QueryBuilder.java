@@ -332,7 +332,7 @@ public class QueryBuilder {
     @SuppressWarnings("unchecked")
     public QueryBuilder withinBox(final double x, final double y, final double x2, final double y2) {
         addOperand(QueryOperators.WITHIN,
-                   new BasicDBObject(QueryOperators.BOX, asList(asList(x, y), asList(x2, y2))));
+                   new BasicDBObject(QueryOperators.BOX, new Object[]{new Double[]{x, y}, new Double[]{x2, y2}}));
         return this;
     }
 
