@@ -27,7 +27,9 @@ public class CommandFailureException extends MongoException {
      * Construct a new instance with the CommandResult from a failed command
      *
      * @param commandResult the result
+     * @deprecated for internal use only
      */
+    @Deprecated
     public CommandFailureException(CommandResult commandResult){
         super(ServerError.getCode(commandResult), commandResult.toString());
         this.commandResult = commandResult;
