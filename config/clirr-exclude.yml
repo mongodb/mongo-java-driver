@@ -185,12 +185,13 @@ members:
   - isLazy()
 
   com.mongodb.WriteConcern:                       # JAVA-893 Deprecate classes that will be excluded from 3.x (Generic)
+  - ERRORS_IGNORED
+  - NONE
   - setWObject(java.lang.Object)                  # JAVA-893
   - continueOnErrorForInsert(boolean)             # JAVA-939
   - getContinueOnErrorForInsert()                 # JAVA-939
-  - ERRORS_IGNORED
-  - NONE
   - raiseNetworkErrors()
+  - getCommand()                                  # JAVA-1335
 
   com.mongodb.MapReduceOutput:
   - getCommandResult()                                          # JAVA-1042
