@@ -273,6 +273,16 @@ members:
   - SECONDARY
   - withTags(java.util.Map)                                     # old ones
   - withTags(com.mongodb.DBObject)                              # old ones
+  - nearest(com.mongodb.DBObject, com.mongodb.DBObject[])
+  - primaryPreferred(com.mongodb.DBObject, com.mongodb.DBObject[])
+  - secondary(com.mongodb.DBObject, com.mongodb.DBObject[])
+  - secondaryPreferred(com.mongodb.DBObject, com.mongodb.DBObject[])
+  - valueOf(java.lang.String, com.mongodb.DBObject, com.mongodb.DBObject[])
+  - toDBObject()
+
+  com.mongodb.TaggableReadPreference:
+  - getTagSets()
+  - toDBObject()
 
   com.mongodb.QueryOperators:
   - QueryOperators()                                            # JAVA-893 Deprecate classes that will be excluded from 3.x (Generic)
