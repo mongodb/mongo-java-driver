@@ -274,4 +274,7 @@ members:
   com.mongodb.QueryOperators:
   - QueryOperators()                                            # JAVA-893 Deprecate classes that will be excluded from 3.x (Generic)
 
+  com.mongodb.WriteConcernException:
+  - getCommandResult()
+  - WriteConcernException(com.mongodb.CommandResult)
 
