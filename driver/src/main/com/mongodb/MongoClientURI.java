@@ -137,6 +137,7 @@ import java.util.List;
  */
 public class MongoClientURI {
     private final ConnectionString proxied;
+    private final MongoClientOptions.Builder builder;
 
     /**
      * Creates a MongoURI from the given string.
@@ -156,6 +157,7 @@ public class MongoClientURI {
      * @since 2.11.0
      */
     public MongoClientURI(final String uri, final MongoClientOptions.Builder builder) {
+        this.builder = builder;
         proxied = new ConnectionString(uri);
     }
 
@@ -236,8 +238,6 @@ public class MongoClientURI {
      * @return the MongoClientOptions based on this URI.
      */
     public MongoClientOptions getOptions() {
-        MongoClientOptions.Builder builder = MongoClientOptions.builder();
-
         if (proxied.getReadPreference() != null) {
             builder.readPreference(proxied.getReadPreference());
         }
