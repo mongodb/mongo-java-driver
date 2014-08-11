@@ -29,7 +29,9 @@ public class WriteConcernException extends MongoException {
      * Construct a new instance with the CommandResult from getlasterror command
      *
      * @param commandResult the command result
+     * @deprecated for internal use only, this constructor will be removed in the next major release
      */
+    @Deprecated
     public WriteConcernException(final CommandResult commandResult) {
         this(commandResult.getCode(), commandResult);
     }
@@ -43,7 +45,9 @@ public class WriteConcernException extends MongoException {
      * Gets the getlasterror command result document.
      *
      * @return the command result
+     * @deprecated use the exception message to get details of the exception
      */
+    @Deprecated
     public CommandResult getCommandResult() {
         return commandResult;
     }
