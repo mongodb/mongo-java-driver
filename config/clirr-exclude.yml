@@ -278,3 +278,6 @@ members:
   - getCommandResult()
   - WriteConcernException(com.mongodb.CommandResult)
 
+  com.mongodb.CommandResult:
+  - getServerUsed()
+
