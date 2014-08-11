@@ -19,7 +19,9 @@ package com.mongodb;
 /**
  *
  * @since 2.12.0
+ * @deprecated No longer thrown.  Catch MongoTimeoutException instead
  */
+@Deprecated
 public class MongoServerSelectionException extends MongoClientException {
     private static final long serialVersionUID = -1497309903649297430L;
 
