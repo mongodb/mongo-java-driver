@@ -285,3 +285,7 @@ members:
   com.mongodb.MongoInterruptedException:
   - MongoInterruptedException(java.lang.InterruptedException)
   - MongoInterruptedException(java.lang.String, java.lang.InterruptedException)
+
+  com.mongodb.CommandFailureException:
+  - getCommandResult()                                         # JAVA-
+  - CommandFailureException(com.mongodb.CommandResult)         # JAVA-
