@@ -21,8 +21,10 @@ package com.mongodb;
 import org.bson.BSONObject;
 
 /**
- * Represents a server error
+ * Represents a server error.
+ * @deprecated This is an internal class, and will likely be removed in the next major release.
  */
+@Deprecated
 public class ServerError {
     
     ServerError( DBObject o ){
