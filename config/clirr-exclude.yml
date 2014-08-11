@@ -294,3 +294,6 @@ members:
 
   com.mongodb.MongoException:
   - MongoException(org.bson.BSONObject)                        # JAVA-
+
+  com.mongodb.MongoException$DuplicateKey:
+  - MongoException$DuplicateKey(com.mongodb.CommandResult)     # JAVA-
