@@ -40,7 +40,19 @@ class MultiServerClusterSpecification extends Specification {
 
     private final TestClusterableServerFactory factory = new TestClusterableServerFactory()
 
-    def 'should correct report description when the cluster first starts'() {
+    def 'should timeout waiting for description if no servers connect'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(Multiple).hosts([firstServer]).build(), factory,
+                                             CLUSTER_LISTENER)
+
+        when:
+        cluster.getDescription(1, MILLISECONDS)
+
+        then:
+        thrown(MongoTimeoutException)
+    }
+
+    def 'should correct report description when connected to a primary'() {
         given:
         def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(Multiple).hosts([firstServer]).build(), factory,
                                              CLUSTER_LISTENER)
@@ -49,10 +61,8 @@ class MultiServerClusterSpecification extends Specification {
         sendNotification(firstServer, ReplicaSetPrimary)
 
         then:
-        getClusterDescription(cluster).with {
-            type == ReplicaSet
-            connectionMode == Multiple
-        }
+        cluster.getDescription(1, SECONDS).type == ReplicaSet
+        cluster.getDescription(1, SECONDS).connectionMode == Multiple
     }
 
     def 'should not get server when closed'() {
@@ -198,6 +208,41 @@ class MultiServerClusterSpecification extends Specification {
             type == ReplicaSet
             all == getServerDescriptions(firstServer, thirdServer)
         }
+    }
+
+    def 'should not set cluster type when connected to a standalone when seed list size is greater than one'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID,
+                                             ClusterSettings.builder().mode(Multiple).hosts([firstServer, secondServer]).build(),
+                                             factory, CLUSTER_LISTENER)
+
+        when:
+        sendNotification(firstServer, StandAlone)
+        cluster.getDescription(1, MILLISECONDS)
+
+        then:
+        thrown(MongoTimeoutException)
+    }
+
+    def 'should not set cluster type when connected to a replica set ghost until a valid replica set member connects'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID,
+                                             ClusterSettings.builder().mode(Multiple).hosts([firstServer, secondServer]).build(),
+                                             factory, CLUSTER_LISTENER)
+
+        when:
+        sendNotification(firstServer, ReplicaSetGhost)
+        cluster.getDescription(1, MILLISECONDS)
+
+        then:
+        thrown(MongoTimeoutException)
+
+        when:
+        sendNotification(secondServer, ReplicaSetPrimary)
+
+        then:
+        cluster.getDescription(1, SECONDS).type == ReplicaSet
+        cluster.getDescription(1, SECONDS).all == getServerDescriptions(firstServer, secondServer, thirdServer)
     }
 
     def 'should invalidate existing primary when a new primary notifies'() {

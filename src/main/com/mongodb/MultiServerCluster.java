@@ -125,7 +125,7 @@ final class MultiServerCluster extends BaseCluster {
             }
 
             if (event.getNewValue().isOk()) {
-                if (clusterType == Unknown) {
+                if (clusterType == Unknown && newDescription.getType() != ReplicaSetGhost) {
                     clusterType = newDescription.getClusterType();
                     LOGGER.info(format("Discovered cluster type of %s", clusterType));
                 }
