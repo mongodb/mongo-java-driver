@@ -73,6 +73,7 @@ classes:
 - com.mongodb.util.MyAsserts$MyAssert
 - com.mongodb.util.SimplePool
 - com.mongodb.ConnectionPoolStatisticsMBean
+- com.mongodb.MongoServerSelectionException
 
 members:
   com.mongodb.gridfs.GridFS:
