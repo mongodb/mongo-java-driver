@@ -289,3 +289,6 @@ members:
   com.mongodb.CommandFailureException:
   - getCommandResult()                                         # JAVA-
   - CommandFailureException(com.mongodb.CommandResult)         # JAVA-
+
+  com.mongodb.MongoException:
+  - MongoException(org.bson.BSONObject)                        # JAVA-
