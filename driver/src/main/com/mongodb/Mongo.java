@@ -24,7 +24,6 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.SingleServerBinding;
 import com.mongodb.binding.WriteBinding;
-import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -45,7 +44,6 @@ import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.MongosHAServerSelector;
 import com.mongodb.selector.ServerSelector;
-import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -125,13 +123,13 @@ public class Mongo {
 
     private volatile WriteConcern writeConcern;
     private volatile ReadPreference readPreference;
+    private volatile CodecRegistry codecRegistry;
 
     private final MongoClientOptions options;
     private final List<MongoCredential> credentialsList;
 
     private final Bytes.OptionHolder optionHolder;
 
-    private final Codec<Document> documentCodec;
     private final Cluster cluster;
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
@@ -139,7 +137,8 @@ public class Mongo {
     private final ConcurrentLinkedQueue<ServerCursor> orphanedCursors = new ConcurrentLinkedQueue<ServerCursor>();
     private final ExecutorService cursorCleaningService;
 
-    private final CodecRegistry codecRegistry = new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider()));
+    // legacy codec registry for DBObjects
+    private final CodecRegistry dbObjectCodecRegistry = new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider()));
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
@@ -343,10 +342,10 @@ public class Mongo {
 
     Mongo(final Cluster cluster, final MongoClientOptions options, final List<MongoCredential> credentialsList) {
         this.cluster = cluster;
-        this.documentCodec = new DocumentCodec();
         this.options = options;
         this.readPreference = options.getReadPreference() != null ? options.getReadPreference() : primary();
         this.writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : WriteConcern.UNACKNOWLEDGED;
+        this.codecRegistry = options.getCodecRegistry();
         this.optionHolder = new Bytes.OptionHolder(null);
         this.credentialsList = unmodifiableList(credentialsList);
         cursorCleaningService = options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
@@ -388,6 +387,10 @@ public class Mongo {
      */
     public ReadPreference getReadPreference() {
         return readPreference;
+    }
+
+    public CodecRegistry getCodecRegistry() {
+        return codecRegistry;
     }
 
     /**
@@ -488,7 +491,7 @@ public class Mongo {
             return db;
         }
 
-        db = new DB(this, dbName, documentCodec);
+        db = new DB(this, dbName, codecRegistry.get(Document.class));
         DB temp = dbCache.putIfAbsent(dbName, db);
         if (temp != null) {
             return temp;
@@ -814,8 +817,8 @@ public class Mongo {
         }
     }
 
-    CodecRegistry getCodecRegistry() {
-        return codecRegistry;
+    CodecRegistry getDbObjectCodecRegistry() {
+        return dbObjectCodecRegistry;
     }
 
     private ExecutorService createCursorCleaningService() {
