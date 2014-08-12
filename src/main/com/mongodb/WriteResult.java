@@ -66,7 +66,9 @@ public class WriteResult {
      * Gets the last {@link WriteConcern} used when calling getLastError().
      *
      * @return the write concern that was applied to the write operation
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     public WriteConcern getLastConcern(){
     	return _lastConcern;
     	
@@ -199,7 +201,7 @@ public class WriteResult {
     /**
      * Returns whether or not the result is lazy, meaning that getLastError was not called automatically
      * @return true if the result is lazy
-     * @deprecated Call {@code WriteResult.getLastConcern().isAcknowledged()} instead
+     * @deprecated there is no replacement for this method
      */
     @Deprecated
     public boolean isLazy(){
