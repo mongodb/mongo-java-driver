@@ -278,6 +278,7 @@ public class MongoClient extends Mongo {
         return new MongoDatabaseImpl(databaseName, this, MongoDatabaseOptions.builder()
                                                                              .writeConcern(getWriteConcern())
                                                                              .readPreference(getReadPreference())
+                                                                             .codecRegistry(getCodecRegistry())
                                                                              .build());
     }
 }
