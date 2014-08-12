@@ -83,4 +83,11 @@ class ServerAddressSpecification extends Specification {
         then:
         thrown(IllegalArgumentException);
     }
+
+    def 'uri missing port should throw an exception'() {
+        when:
+        new ServerAddress('mongodb://somewhere/')
+        then:
+        thrown(MongoException);
+    }
 }

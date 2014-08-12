@@ -116,7 +116,11 @@ public class ServerAddress implements Serializable {
                 if (port != defaultPort()) {
                     throw new IllegalArgumentException("can't specify port in construct and via host");
                 }
-                portToUse = Integer.parseInt(hostToUse.substring(idx + 1));
+                try {
+                    portToUse = Integer.parseInt(hostToUse.substring(idx + 1));
+                } catch (NumberFormatException e) {
+                    throw new MongoException("host and port should be specified in host:port format");
+                }
                 hostToUse = hostToUse.substring(0, idx).trim();
             }
         }
