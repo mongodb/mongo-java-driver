@@ -314,7 +314,9 @@ public class WriteConcern implements Serializable {
      * Gets the getlasterror command for this write concern.
      *
      * @return getlasterror command, even if <code>w <= 0</code>
+     * @deprecated This will be removed in 3.0
      */
+    @Deprecated
     public BasicDBObject getCommand() {
         BasicDBObject command = new BasicDBObject("getlasterror", 1);
 
