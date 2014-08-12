@@ -20,7 +20,6 @@ package com.mongodb;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 
@@ -30,6 +29,7 @@ import static com.mongodb.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static com.mongodb.ServerType.ReplicaSetPrimary;
 import static com.mongodb.ServerType.Unknown;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -75,7 +75,7 @@ public class ServerDescriptionTest {
 
         assertNull(serverDescription.getPrimary());
         assertEquals(Collections.<String>emptySet(), serverDescription.getHosts());
-        assertEquals(Tags.freeze(new Tags()), serverDescription.getTags());
+        assertEquals(new TagSet(), serverDescription.getTagSet());
         assertEquals(Collections.<String>emptySet(), serverDescription.getHosts());
         assertEquals(Collections.<String>emptySet(), serverDescription.getPassives());
         assertNull(serverDescription.getSetName());
@@ -89,19 +89,19 @@ public class ServerDescriptionTest {
         ServerDescription.Builder builder = ServerDescription.builder()
                                                              .address(new ServerAddress())
                                                              .type(ServerType.ShardRouter)
-                                                             .tags(new Tags("dc", "ny"))
+                                                             .tagSet(new TagSet(new Tag("dc", "ny")))
                                                              .setName("test")
                                                              .maxDocumentSize(100)
                                                              .maxMessageSize(200)
                                                              .maxWriteBatchSize(1024)
                                                              .averageLatency(50000, java.util.concurrent.TimeUnit.NANOSECONDS)
                                                              .primary("localhost:27017")
-                                                             .hosts(new HashSet<String>(Arrays.asList("localhost:27017",
-                                                                                                      "localhost:27018")))
-                                                             .passives(new HashSet<String>(Arrays.asList("localhost:27019")))
+                                                             .hosts(new HashSet<String>(asList("localhost:27017",
+                                                                                               "localhost:27018")))
+                                                             .passives(new HashSet<String>(asList("localhost:27019")))
                                                              .ok(true)
                                                              .state(Connected)
-                                                             .version(new ServerVersion(Arrays.asList(2, 4, 1)))
+                                                             .version(new ServerVersion(asList(2, 4, 1)))
                                                              .minWireVersion(1)
                                                              .maxWireVersion(2);
         assertEquals(builder.build(), builder.build());
@@ -165,7 +165,7 @@ public class ServerDescriptionTest {
                                                                .ok(false)
                                                                .state(Connected)
                                                                .build();
-        assertFalse(serverDescription.hasTags(new Tags("dc", "ny")));
+        assertFalse(serverDescription.hasTags(new TagSet(new Tag("dc", "ny"))));
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
@@ -173,7 +173,7 @@ public class ServerDescriptionTest {
                                              .ok(true)
                                              .state(Connected)
                                              .build();
-        assertTrue(serverDescription.hasTags(new Tags("dc", "ny")));
+        assertTrue(serverDescription.hasTags(new TagSet(new Tag("dc", "ny"))));
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
@@ -181,7 +181,7 @@ public class ServerDescriptionTest {
                                              .ok(true)
                                              .state(Connected)
                                              .build();
-        assertTrue(serverDescription.hasTags(new Tags("dc", "ny")));
+        assertTrue(serverDescription.hasTags(new TagSet(new Tag("dc", "ny"))));
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
@@ -189,34 +189,34 @@ public class ServerDescriptionTest {
                                              .ok(true)
                                              .state(Connected)
                                              .build();
-        assertTrue(serverDescription.hasTags(new Tags()));
+        assertTrue(serverDescription.hasTags(new TagSet()));
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
                                              .type(ReplicaSetPrimary)
                                              .ok(true)
-                                             .tags(new Tags("rack", "1"))
+                                             .tagSet(new TagSet(new Tag("rack", "1")))
                                              .state(Connected)
                                              .build();
-        assertFalse(serverDescription.hasTags(new Tags("dc", "ny")));
+        assertFalse(serverDescription.hasTags(new TagSet(new Tag("dc", "ny"))));
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
                                              .type(ReplicaSetPrimary)
                                              .ok(true)
-                                             .tags(new Tags("rack", "1"))
+                                             .tagSet(new TagSet(new Tag("rack", "1")))
                                              .state(Connected)
                                              .build();
-        assertFalse(serverDescription.hasTags(new Tags("rack", "2")));
+        assertFalse(serverDescription.hasTags(new TagSet(new Tag("rack", "2"))));
 
         serverDescription = ServerDescription.builder()
                                              .address(new ServerAddress())
                                              .type(ReplicaSetPrimary)
                                              .ok(true)
-                                             .tags(new Tags("rack", "1"))
+                                             .tagSet(new TagSet(new Tag("rack", "1")))
                                              .state(Connected)
                                              .build();
-        assertTrue(serverDescription.hasTags(new Tags("rack", "1")));
+        assertTrue(serverDescription.hasTags(new TagSet(new Tag("rack", "1"))));
     }
 
     @Test

@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Arrays.asList;
+
 
 /**
  * An abstract class that represents preferred replica set members to which a query or command can be sent.
@@ -38,7 +40,9 @@ public abstract class ReadPreference {
 
     /**
      * @return <code>DBObject</code> representation of this preference
+     * @deprecated for internal use only
      */
+    @Deprecated
     public abstract DBObject toDBObject();
 
     /**
@@ -111,7 +115,7 @@ public abstract class ReadPreference {
             }
             _tags = new BasicDBObject(tags);
             List<DBObject> maps = splitMapIntoMultipleMaps(_tags);
-            _pref = new TaggableReadPreference.SecondaryReadPreference(maps.get(0), getRemainingMaps(maps));
+            _pref = new TaggableReadPreference.SecondaryReadPreference(toTagsList(maps.get(0), getRemainingMaps(maps)));
 
         }
 
@@ -121,7 +125,7 @@ public abstract class ReadPreference {
             }
             _tags = tags;
             List<DBObject> maps = splitMapIntoMultipleMaps(_tags);
-            _pref = new TaggableReadPreference.SecondaryReadPreference(maps.get(0), getRemainingMaps(maps));
+            _pref = new TaggableReadPreference.SecondaryReadPreference(toTagsList(maps.get(0), getRemainingMaps(maps)));
         }
 
         public DBObject getTags() {
@@ -187,24 +191,10 @@ public abstract class ReadPreference {
     }
 
     /**
-     * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
-     */
-    public static TaggableReadPreference primaryPreferred(DBObject firstTagSet, DBObject... remainingTagSets) {
-        return new TaggableReadPreference.PrimaryPreferredReadPreference(firstTagSet, remainingTagSets);
-    }
-
-    /**
      * @return ReadPreference which reads secondary.
      */
     public static ReadPreference secondary() {
         return _SECONDARY;
-    }
-
-    /**
-     * @return ReadPreference which reads secondary respective of tags.
-     */
-    public static TaggableReadPreference secondary(DBObject firstTagSet, DBObject... remainingTagSets) {
-        return new TaggableReadPreference.SecondaryReadPreference(firstTagSet, remainingTagSets);
     }
 
     /**
@@ -215,19 +205,142 @@ public abstract class ReadPreference {
     }
 
     /**
-     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
-     */
-    public static TaggableReadPreference secondaryPreferred(DBObject firstTagSet, DBObject... remainingTagSets) {
-        return new TaggableReadPreference.SecondaryPreferredReadPreference(firstTagSet, remainingTagSets);
-    }
-
-    /**
      * @return ReadPreference which reads nearest node.
      */
     public static ReadPreference nearest() {
         return _NEAREST;
     }
 
+    /**
+     * Return a primary preferred read preference with the given tag set.
+     *
+     * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
+     * @since 2.13
+     */
+    public static TaggableReadPreference primaryPreferred(TagSet tagSet) {
+        return primaryPreferred(asList(tagSet));
+    }
+
+    /**
+     * Return a secondary read preference with the given tag set.
+     *
+     * * @return ReadPreference which reads secondary respective of tags.
+     * @since 2.13
+     */
+    public static TaggableReadPreference secondary(TagSet tagSet) {
+        return secondary(asList(tagSet));
+    }
+
+    /**
+     * Return a secondary preferred read preference with the given tag set.
+     *
+     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
+     * @since 2.13
+     */
+    public static TaggableReadPreference secondaryPreferred(TagSet tagSet) {
+        return secondaryPreferred(asList(tagSet));
+    }
+
+    /**
+     * Return a nearest read preference with the given tag set.
+     *
+     * @return ReadPreference which reads nearest respective of tags
+     * @since 2.13
+     */
+    public static TaggableReadPreference nearest(TagSet tagSet) {
+        return nearest(asList(tagSet));
+    }
+
+    /**
+     * Return a primary preferred read preference with the given list of tag sets.
+     *
+     * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
+     * @since 2.13
+     */
+    public static TaggableReadPreference primaryPreferred(List<TagSet> tagSetList) {
+        return new TaggableReadPreference.PrimaryPreferredReadPreference(tagSetList);
+    }
+
+    /**
+     * Return a secondary read preference with the given list of tag sets.
+     *
+     * @return ReadPreference which reads secondary respective of tags.
+     * @since 2.13
+     */
+    public static TaggableReadPreference secondary(List<TagSet> tagSetList) {
+        return new TaggableReadPreference.SecondaryReadPreference(tagSetList);
+    }
+
+    /**
+     * Return a secondary preferred read preference with the given list of tag sets.
+     *
+     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
+     * @since 2.13
+     */
+    public static TaggableReadPreference secondaryPreferred(List<TagSet> tagSetList) {
+        return new TaggableReadPreference.SecondaryPreferredReadPreference(tagSetList);
+    }
+
+    /**
+     * Return a nearest read preference with the given list of tag sets.
+     *
+     * @return ReadPreference which reads nearest respective of tags
+     * @since 2.13
+     */
+    public static TaggableReadPreference nearest(List<TagSet> tagSetList) {
+        return new TaggableReadPreference.NearestReadPreference(tagSetList);
+    }
+
+    /**
+     * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
+     * @deprecated use factory methods that take {@code TagSet} instead
+     * @see com.mongodb.ReadPreference#primaryPreferred(TagSet)
+     * @see com.mongodb.ReadPreference#primaryPreferred(java.util.List)
+     */
+    @Deprecated
+    public static TaggableReadPreference primaryPreferred(DBObject firstTagSet, DBObject... remainingTagSets) {
+        return new TaggableReadPreference.PrimaryPreferredReadPreference(toTagsList(firstTagSet, remainingTagSets));
+    }
+
+    /**
+     * @return ReadPreference which reads secondary respective of tags.
+     * @deprecated use factory methods that take {@code TagSet} instead
+     * @see com.mongodb.ReadPreference#secondary(TagSet)
+     * @see com.mongodb.ReadPreference#secondary(java.util.List)
+     */
+    @Deprecated
+    public static TaggableReadPreference secondary(DBObject firstTagSet, DBObject... remainingTagSets) {
+        return new TaggableReadPreference.SecondaryReadPreference(toTagsList(firstTagSet, remainingTagSets));
+    }
+
+    /**
+     * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
+     * @deprecated use factory methods that take {@code TagSet} instead
+     * @see com.mongodb.ReadPreference#secondaryPreferred(TagSet)
+     * @see com.mongodb.ReadPreference#secondaryPreferred(java.util.List)
+     */
+    @Deprecated
+    public static TaggableReadPreference secondaryPreferred(DBObject firstTagSet, DBObject... remainingTagSets) {
+        return new TaggableReadPreference.SecondaryPreferredReadPreference(toTagsList(firstTagSet, remainingTagSets));
+    }
+
+    /**
+     * @return ReadPreference which reads nearest node respective of tags.
+     * @deprecated use factory methods that take {@code TagSet} instead
+     * @see com.mongodb.ReadPreference#nearest(TagSet)
+     * @see com.mongodb.ReadPreference#nearest(java.util.List)
+     */
+    @Deprecated
+    public static TaggableReadPreference nearest(DBObject firstTagSet, DBObject... remainingTagSets) {
+        return new TaggableReadPreference.NearestReadPreference(toTagsList(firstTagSet, remainingTagSets));
+    }
+
+    /**
+     * Creates a read preference from the given read preference name.
+     *
+     * @param name the name of the read preference
+     * @return the read preference
+     */
     public static ReadPreference valueOf(String name) {
         if (name == null) {
             throw new IllegalArgumentException();
@@ -254,7 +367,14 @@ public abstract class ReadPreference {
         throw new IllegalArgumentException("No match for read preference of " + name);
     }
 
-    public static TaggableReadPreference valueOf(String name, DBObject firstTagSet, final DBObject... remainingTagSets) {
+    /**
+     * Creates a taggable read preference from the given read preference name and list of tag sets.
+     *
+     * @param name the name of the read preference
+     * @param tagSetList the list of tag sets
+     * @return the taggable read preference
+     */
+    public static TaggableReadPreference valueOf(String name, List<TagSet> tagSetList) {
         if (name == null) {
             throw new IllegalArgumentException();
         }
@@ -262,26 +382,33 @@ public abstract class ReadPreference {
         name = name.toLowerCase();
 
         if (name.equals(_SECONDARY.getName().toLowerCase())) {
-            return new TaggableReadPreference.SecondaryReadPreference(firstTagSet, remainingTagSets);
+            return secondary(tagSetList);
         }
         if (name.equals(_SECONDARY_PREFERRED.getName().toLowerCase())) {
-            return new TaggableReadPreference.SecondaryPreferredReadPreference(firstTagSet, remainingTagSets);
+            return secondaryPreferred(tagSetList);
         }
         if (name.equals(_PRIMARY_PREFERRED.getName().toLowerCase())) {
-            return new TaggableReadPreference.PrimaryPreferredReadPreference(firstTagSet, remainingTagSets);
+            return primaryPreferred(tagSetList);
         }
         if (name.equals(_NEAREST.getName().toLowerCase())) {
-            return new TaggableReadPreference.NearestReadPreference(firstTagSet, remainingTagSets);
+            return nearest(tagSetList);
         }
 
         throw new IllegalArgumentException("No match for read preference of " + name);
     }
 
     /**
-     * @return ReadPreference which reads nearest node respective of tags.
+     * Creates a taggable read preference from the given read preference name and list of tag sets.
+     *
+     * @param name the name of the read preference
+     * @param firstTagSet the first set of tags
+     * @param remainingTagSets the remaining set of tags
+     * @return the taggable read preference
+     * @deprecated use method that takes a {@code List<TagSet>}
      */
-    public static TaggableReadPreference nearest(DBObject firstTagSet, DBObject... remainingTagSets) {
-        return new TaggableReadPreference.NearestReadPreference(firstTagSet, remainingTagSets);
+    @Deprecated
+    public static TaggableReadPreference valueOf(String name, DBObject firstTagSet, final DBObject... remainingTagSets) {
+        return valueOf(name, toTagsList(firstTagSet, remainingTagSets));
     }
 
     /**
@@ -330,6 +457,24 @@ public abstract class ReadPreference {
     private static final ReadPreference _SECONDARY_PREFERRED;
     private static final ReadPreference _PRIMARY_PREFERRED;
     private static final ReadPreference _NEAREST;
+
+    private static List<TagSet> toTagsList(DBObject firstTagSet, DBObject... remainingTagSets) {
+        List<TagSet> tagsList = new ArrayList<TagSet>(remainingTagSets.length + 1);
+        tagsList.add(toTags(firstTagSet));
+        for (DBObject cur : remainingTagSets) {
+            tagsList.add(toTags(cur));
+        }
+
+        return tagsList;
+    }
+
+    private static TagSet toTags(final DBObject tagsDocument) {
+        List<Tag> tagList = new ArrayList<Tag>();
+        for (String key : tagsDocument.keySet()) {
+            tagList.add(new Tag(key, tagsDocument.get(key).toString()));
+        }
+        return new TagSet(tagList);
+    }
 
     static {
         _PRIMARY = new PrimaryReadPreference();

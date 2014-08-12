@@ -115,7 +115,7 @@ class ClusterDescription {
         });
     }
 
-    public List<ServerDescription> getSecondaries(final Tags tags) {
+    public List<ServerDescription> getSecondaries(final TagSet tags) {
         return getServersByPredicate(new Predicate() {
             public boolean apply(final ServerDescription serverDescription) {
                 return serverDescription.isSecondary() && serverDescription.hasTags(tags);
@@ -139,7 +139,7 @@ class ClusterDescription {
         });
     }
 
-    public List<ServerDescription> getAnyPrimaryOrSecondary(final Tags tags) {
+    public List<ServerDescription> getAnyPrimaryOrSecondary(final TagSet tags) {
         return getServersByPredicate(new Predicate() {
             public boolean apply(final ServerDescription serverDescription) {
                 return (serverDescription.isPrimary() || serverDescription.isSecondary()) && serverDescription.hasTags(tags);

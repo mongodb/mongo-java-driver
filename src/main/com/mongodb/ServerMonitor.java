@@ -19,6 +19,7 @@ package com.mongodb;
 import org.bson.util.annotations.ThreadSafe;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -253,7 +254,7 @@ class ServerMonitor {
                                 .maxMessageSize(commandResult.getInt("maxMessageSizeBytes", ServerDescription.getDefaultMaxMessageSize()))
                                 .maxWriteBatchSize(commandResult.getInt("maxWriteBatchSize",
                                                                         ServerDescription.getDefaultMaxWriteBatchSize()))
-                                .tags(getTagsFromDocument((DBObject) commandResult.get("tags")))
+                                .tagSet(getTagSetFromDocument((DBObject) commandResult.get("tags")))
                                 .setName(commandResult.getString("setName"))
                                 .minWireVersion(commandResult.getInt("minWireVersion", ServerDescription.getDefaultMinWireVersion()))
                                 .maxWireVersion(commandResult.getInt("maxWireVersion", ServerDescription.getDefaultMaxWireVersion()))
@@ -306,15 +307,15 @@ class ServerMonitor {
         return isMasterResult.containsKey("setName") || isMasterResult.getBoolean("isreplicaset", false);
     }
 
-    private static Tags getTagsFromDocument(final DBObject tagsDocuments) {
-        if (tagsDocuments == null) {
-            return new Tags();
+    private static TagSet getTagSetFromDocument(final DBObject tagsDocument) {
+        if (tagsDocument == null) {
+            return new TagSet();
         }
-        final Tags tags = new Tags();
-        for (final String key : tagsDocuments.keySet()) {
-            tags.put(key, tagsDocuments.get(key).toString());
+        List<Tag> tagList = new ArrayList<Tag>();
+        for (final String key : tagsDocument.keySet()) {
+            tagList.add(new Tag(key, tagsDocument.get(key).toString()));
         }
-        return tags;
+        return new TagSet(tagList);
     }
 
     private ServerDescription getConnectingServerDescription() {

@@ -21,7 +21,6 @@ import org.bson.util.annotations.Immutable;
 import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -62,7 +61,7 @@ class ServerDescription {
     private final int maxWriteBatchSize;
 
     private final int maxMessageSize;
-    private final Tags tags;
+    private final TagSet tagSet;
     private final String setName;
     private final long averageLatencyNanos;
     private final boolean ok;
@@ -82,7 +81,7 @@ class ServerDescription {
         private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
         private int maxWriteBatchSize = DEFAULT_MAX_WRITE_BATCH_SIZE;
-        private Tags tags = Tags.freeze(new Tags());
+        private TagSet tags = new TagSet();
         private String setName;
         private long averageLatency;
         private boolean ok;
@@ -137,8 +136,8 @@ class ServerDescription {
             return this;
         }
 
-        public Builder tags(final Tags tags) {
-            this.tags = tags == null ? Tags.freeze(new Tags()) : Tags.freeze(tags);
+        public Builder tagSet(final TagSet tags) {
+            this.tags = tags == null ? new TagSet() : tags;
             return this;
         }
 
@@ -283,8 +282,8 @@ class ServerDescription {
         return maxWriteBatchSize;
     }
 
-    public Tags getTags() {
-        return tags;
+    public TagSet getTagSet() {
+        return tagSet;
     }
 
     public int getMinWireVersion() {
@@ -303,7 +302,7 @@ class ServerDescription {
      * @param desiredTags the tags
      * @return true if this server has the given tags
      */
-    public boolean hasTags(final Tags desiredTags) {
+    public boolean hasTags(final TagSet desiredTags) {
         if (!ok) {
             return false;
         }
@@ -312,12 +311,7 @@ class ServerDescription {
             return true;
         }
 
-        for (Map.Entry<String, String> tag : desiredTags.entrySet()) {
-            if (!tag.getValue().equals(getTags().get(tag.getKey()))) {
-                return false;
-            }
-        }
-        return true;
+        return tagSet.containsAll(desiredTags);
     }
 
 
@@ -399,7 +393,7 @@ class ServerDescription {
         if (state != that.state) {
             return false;
         }
-        if (!tags.equals(that.tags)) {
+        if (!tagSet.equals(that.tagSet)) {
             return false;
         }
         if (type != that.type) {
@@ -430,7 +424,7 @@ class ServerDescription {
         result = 31 * result + maxDocumentSize;
         result = 31 * result + maxMessageSize;
         result = 31 * result + maxWriteBatchSize;
-        result = 31 * result + tags.hashCode();
+        result = 31 * result + tagSet.hashCode();
         result = 31 * result + (setName != null ? setName.hashCode() : 0);
         result = 31 * result + (ok ? 1 : 0);
         result = 31 * result + state.hashCode();
@@ -452,7 +446,7 @@ class ServerDescription {
                + ", maxDocumentSize=" + maxDocumentSize
                + ", maxMessageSize=" + maxMessageSize
                + ", maxWriteBatchSize=" + maxWriteBatchSize
-               + ", tags=" + tags
+               + ", tagSet=" + tagSet
                + ", setName='" + setName + '\''
                + ", averageLatencyNanos=" + averageLatencyNanos
                + ", ok=" + ok
@@ -467,7 +461,7 @@ class ServerDescription {
         return "{"
                + "address=" + address
                + ", type=" + type
-               + (tags.isEmpty() ? "" : tags)
+               + (tagSet.iterator().hasNext() ? "" : tagSet)
                + (state == Connected ? (", averageLatency=" + getAverageLatencyFormattedInMilliseconds() + " ms") : "")
                + ", state=" + state
                + '}';
@@ -489,7 +483,7 @@ class ServerDescription {
         maxDocumentSize = builder.maxDocumentSize;
         maxMessageSize = builder.maxMessageSize;
         maxWriteBatchSize = builder.maxWriteBatchSize;
-        tags = builder.tags;
+        tagSet = builder.tags;
         setName = builder.setName;
         averageLatencyNanos = builder.averageLatency;
         ok = builder.ok;

@@ -26,19 +26,12 @@ import java.util.List;
  * @author breinero
  */
 public abstract class TaggableReadPreference extends ReadPreference {
-    private final static List<DBObject> EMPTY = new ArrayList<DBObject>();
-
     TaggableReadPreference() {
-        _tags = EMPTY;
+        tagSetList = Collections.emptyList();
     }
 
-    TaggableReadPreference(DBObject firstTagSet, DBObject... remainingTagSets) {
-        if (firstTagSet == null) {
-            throw new IllegalArgumentException("Must have at least one tag set");
-        }
-        _tags = new ArrayList<DBObject>();
-        _tags.add(firstTagSet);
-        Collections.addAll(_tags, remainingTagSets);
+    TaggableReadPreference(List<TagSet> tagSetList) {
+        this.tagSetList = Collections.unmodifiableList(new ArrayList<TagSet>(tagSetList));
     }
 
     @Override
@@ -46,21 +39,58 @@ public abstract class TaggableReadPreference extends ReadPreference {
         return true;
     }
 
+    /**
+     *
+     * @return <code>DBObject</code> representation of this preference
+     *
+     * @deprecated for internal use only
+     */
+    @Deprecated
     @Override
     public DBObject toDBObject() {
         DBObject readPrefObject = new BasicDBObject("mode", getName());
 
-        if (!_tags.isEmpty())
-            readPrefObject.put("tags", _tags);
+        if (!tagSetList.isEmpty()) {
+            List<DBObject> tagSetDocumentList = new ArrayList<DBObject>();
+            for (TagSet tagSet : tagSetList) {
+                DBObject tagSetDocument = new BasicDBObject();
+                for (Tag tag : tagSet) {
+                    tagSetDocument.put(tag.getName(), tag.getValue());
+                }
+                tagSetDocumentList.add(tagSetDocument);
+            }
+            readPrefObject.put("tags", tagSetDocumentList);
+        }
 
         return readPrefObject;
     }
 
+    /**
+     * Gets the list of tag sets as a list of {@code TagSet} instances.
+     *
+     * @return the list of tag sets
+     * @since 2.13
+     */
+    public List<TagSet> getTagSetList() {
+        return tagSetList;
+    }
 
+    /**
+     * Gets the list of tag sets as a list of DBObject, one for each tag set
+     *
+     * @return the list of tag sets
+     * @deprecated use the {@code getTagSetList} method instead
+     * @see TaggableReadPreference#getTagSetList()
+     */
+    @Deprecated
     public List<DBObject> getTagSets() {
         List<DBObject> tags = new ArrayList<DBObject>();
-        for (DBObject tagSet : _tags) {
-            tags.add(tagSet);
+        for (TagSet curTags: tagSetList) {
+            BasicDBObject tagsDocument = new BasicDBObject();
+            for (Tag curTag : curTags) {
+                tagsDocument.put(curTag.getName(), curTag.getValue());
+            }
+            tags.add(tagsDocument);
         }
         return tags;
     }
@@ -77,25 +107,24 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
         final TaggableReadPreference that = (TaggableReadPreference) o;
 
-        if (!_tags.equals(that._tags)) return false;
+        if (!tagSetList.equals(that.tagSetList)) return false;
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        int result = _tags.hashCode();
+        int result = tagSetList.hashCode();
         result = 31 * result + getName().hashCode();
         return result;
     }
 
     @Override
     List<ServerDescription> choose(final ClusterDescription clusterDescription) {
-        if (_tags.isEmpty()) {
+        if (tagSetList.isEmpty()) {
             return getServers(clusterDescription);
         }
-        for (DBObject curTagSet : _tags) {
-            Tags tags = getTagsFromDBObject(curTagSet);
+        for (TagSet tags : tagSetList) {
             List<ServerDescription> taggedServers = getServersForTags(clusterDescription, tags);
             if (!taggedServers.isEmpty()) {
                 return taggedServers;
@@ -106,22 +135,13 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     abstract List<ServerDescription> getServers(final ClusterDescription clusterDescription);
 
-    abstract List<ServerDescription> getServersForTags(final ClusterDescription clusterDescription, final Tags tags);
+    abstract List<ServerDescription> getServersForTags(final ClusterDescription clusterDescription, final TagSet tags);
 
     String printTags() {
-        return (_tags.isEmpty() ? "" :  " : " + new BasicDBObject("tags", _tags));
+        return tagSetList.isEmpty() ? "" :  " : " + tagSetList;
     }
 
-    // TODO
-    private static Tags getTagsFromDBObject(final DBObject curTagSet) {
-        Tags tags = new Tags();
-        for (String key : curTagSet.keySet()) {
-            tags.append(key, curTagSet.get(key).toString());
-        }
-        return tags;
-    }
-
-    final List<DBObject> _tags;
+    final List<TagSet> tagSetList;
 
     /**
      * Read from secondary
@@ -132,8 +152,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
         SecondaryReadPreference() {
         }
 
-        SecondaryReadPreference(DBObject firstTagSet, DBObject... remainingTagSets) {
-            super(firstTagSet, remainingTagSets);
+        SecondaryReadPreference(List<TagSet> tagsList) {
+            super(tagsList);
         }
 
         @Override
@@ -147,7 +167,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        List<ServerDescription> getServersForTags(final ClusterDescription clusterDescription, final Tags tags) {
+        List<ServerDescription> getServersForTags(final ClusterDescription clusterDescription, final TagSet tags) {
             return clusterDescription.getSecondaries(tags);
         }
     }
@@ -161,8 +181,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
         SecondaryPreferredReadPreference() {
         }
 
-        SecondaryPreferredReadPreference(DBObject firstTagSet, DBObject... remainingTagSets) {
-            super(firstTagSet, remainingTagSets);
+        SecondaryPreferredReadPreference(List<TagSet> tagsList) {
+            super(tagsList);
         }
 
         @Override
@@ -186,10 +206,9 @@ public abstract class TaggableReadPreference extends ReadPreference {
         NearestReadPreference() {
         }
 
-        NearestReadPreference(DBObject firstTagSet, DBObject... remainingTagSets) {
-            super(firstTagSet, remainingTagSets);
+        NearestReadPreference(List<TagSet> tagsList) {
+            super(tagsList);
         }
-
 
         @Override
         public String getName() {
@@ -202,7 +221,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        List<ServerDescription> getServersForTags(final ClusterDescription clusterDescription, final Tags tags) {
+        List<ServerDescription> getServersForTags(final ClusterDescription clusterDescription, final TagSet tags) {
             return clusterDescription.getAnyPrimaryOrSecondary(tags);
         }
     }
@@ -215,8 +234,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
     static class PrimaryPreferredReadPreference extends SecondaryReadPreference {
         PrimaryPreferredReadPreference() {}
 
-        PrimaryPreferredReadPreference(DBObject firstTagSet, DBObject... remainingTagSets) {
-            super(firstTagSet, remainingTagSets);
+        PrimaryPreferredReadPreference(List<TagSet> tagsList) {
+            super(tagsList);
         }
 
         @Override
