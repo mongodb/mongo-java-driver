@@ -20,7 +20,6 @@ import org.mongodb.Document
 import static Fixture.get
 import static Fixture.getAsList
 import static Fixture.getMongoClient
-import static java.util.concurrent.TimeUnit.SECONDS
 
 class DatabaseAdministrationSpecification extends FunctionalSpecification {
 
@@ -32,7 +31,7 @@ class DatabaseAdministrationSpecification extends FunctionalSpecification {
         get(database.getCollection('DatabaseAdministrationSpecificationCollection').insert(new Document()))
 
         when:
-        get(database.tools().drop(), 30, SECONDS)
+        get(database.tools().drop())
 
         then:
         !getAsList(client.tools().getDatabaseNames()).contains(databaseToDrop)
@@ -58,7 +57,7 @@ class DatabaseAdministrationSpecification extends FunctionalSpecification {
         getAsList(database.tools().getCollectionNames()).contains(newCollectionName)
 
         cleanup:
-        get(database.getCollection(newCollectionName).tools().drop(), 30, SECONDS)
+        get(database.getCollection(newCollectionName).tools().drop())
     }
 
 }

@@ -21,7 +21,6 @@ import org.mongodb.Document;
 import rx.Observable;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -60,14 +59,10 @@ public final class Fixture {
 
 
     public static <T> T get(final Observable<T> observable) {
-        return get(observable, 5, SECONDS);
-    }
-
-    public static <T> T get(final Observable<T> observable, final long waitTime, final TimeUnit timeUnit) {
-        return observable.timeout(waitTime, timeUnit).toBlocking().last();
+        return observable.timeout(90, SECONDS).toBlocking().first();
     }
 
     public static <T> List<T> getAsList(final Observable<T> observable) {
-        return observable.timeout(5, SECONDS).toList().toBlocking().last();
+        return observable.timeout(90, SECONDS).toList().toBlocking().first();
     }
 }
