@@ -41,6 +41,18 @@ public final class MongoCollectionOptions extends MongoDatabaseOptions {
             return new MongoCollectionOptions(writeConcern, readPreference, documentCodec);
         }
 
+        @Override
+        public Builder writeConcern(final WriteConcern writeConcern) {
+            super.writeConcern(writeConcern);
+            return this;
+        }
+
+        @Override
+        public Builder readPreference(final ReadPreference readPreference) {
+            super.readPreference(readPreference);
+            return this;
+        }
+
         private Builder() {
         }
     }

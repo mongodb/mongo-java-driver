@@ -185,4 +185,26 @@ class MongoClientURISpecification extends Specification {
                                                                                        new Tags('dc', 'ny'),
                                                                                        new Tags()])
     }
+
+    def 'should respect MongoClientOptions builder'() {
+        given:
+        def uri = new MongoClientURI('mongodb://localhost/', MongoClientOptions.builder().connectionsPerHost(200))
+
+        when:
+        def options = uri.getOptions()
+
+        then:
+        options.getConnectionsPerHost() == 200
+    }
+
+    def 'should override MongoClientOptions builder'() {
+        given:
+        def uri = new MongoClientURI('mongodb://localhost/?maxPoolSize=250', MongoClientOptions.builder().connectionsPerHost(200))
+
+        when:
+        def options = uri.getOptions()
+
+        then:
+        options.getConnectionsPerHost() == 250
+    }
 }
