@@ -37,7 +37,9 @@ public class CommandFailureException extends MongoException {
      * Gets the getlasterror command result document.
      *
      * @return the command result
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     public CommandResult getCommandResult() {
         return commandResult;
     }
