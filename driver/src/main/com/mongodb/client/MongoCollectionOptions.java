@@ -19,26 +19,25 @@ package com.mongodb.client;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Immutable;
-import org.bson.codecs.Codec;
-import org.mongodb.Document;
+import org.bson.codecs.configuration.CodecRegistry;
 
 @Immutable
 public final class MongoCollectionOptions extends MongoDatabaseOptions {
     public static Builder builder() {
         return new Builder();
     }
-
+/**/
     public MongoCollectionOptions withDefaults(final MongoDatabaseOptions options) {
         Builder builder = new Builder();
-        builder.writeConcern = getWriteConcern() != null ? getWriteConcern() : options.getWriteConcern();
-        builder.readPreference = getReadPreference() != null ? getReadPreference() : options.getReadPreference();
-        builder.documentCodec = getDocumentCodec() != null ? getDocumentCodec() : options.getDocumentCodec();
+        builder.writeConcern(getWriteConcern() != null ? getWriteConcern() : options.getWriteConcern());
+        builder.readPreference(getReadPreference() != null ? getReadPreference() : options.getReadPreference());
+        builder.codecRegistry(getCodecRegistry() != null ? getCodecRegistry() : options.getCodecRegistry());
         return builder.build();
     }
 
     public static final class Builder extends MongoDatabaseOptions.Builder {
         public MongoCollectionOptions build() {
-            return new MongoCollectionOptions(writeConcern, readPreference, documentCodec);
+            return new MongoCollectionOptions(getWriteConcern(), getReadPreference(), getCodecRegistry());
         }
 
         @Override
@@ -53,12 +52,18 @@ public final class MongoCollectionOptions extends MongoDatabaseOptions {
             return this;
         }
 
+        @Override
+        public Builder codecRegistry(final CodecRegistry codecRegistry) {
+            super.codecRegistry(codecRegistry);
+            return this;
+        }
+
         private Builder() {
         }
     }
 
     private MongoCollectionOptions(final WriteConcern writeConcern, final ReadPreference readPreference,
-                                   final Codec<Document> documentCodec) {
-        super(writeConcern, readPreference, documentCodec);
+                                   final CodecRegistry codecRegistry) {
+        super(writeConcern, readPreference, codecRegistry);
     }
 }

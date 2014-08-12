@@ -17,12 +17,19 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.codecs.DocumentCodecProvider;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.RootCodecRegistry;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
+
+import java.util.Arrays;
+import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -43,6 +50,7 @@ public class MongoClientOptions {
     private final String description;
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
+    private final CodecRegistry codecRegistry;
 
     private final int minConnectionPoolSize;
     private final int maxConnectionPoolSize;
@@ -88,6 +96,7 @@ public class MongoClientOptions {
         socketKeepAlive = builder.socketKeepAlive;
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
+        codecRegistry = builder.codecRegistry;
         sslEnabled = builder.sslEnabled;
         alwaysUseMBeans = builder.alwaysUseMBeans;
         heartbeatFrequency = builder.heartbeatFrequency;
@@ -534,6 +543,9 @@ public class MongoClientOptions {
         if (!readPreference.equals(that.readPreference)) {
             return false;
         }
+        if (!codecRegistry.equals(that.codecRegistry)) {
+            return false;
+        }
         if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
                                            : that.requiredReplicaSetName != null) {
             return false;
@@ -547,6 +559,7 @@ public class MongoClientOptions {
         int result = description != null ? description.hashCode() : 0;
         result = 31 * result + readPreference.hashCode();
         result = 31 * result + writeConcern.hashCode();
+        result = 31 * result + codecRegistry.hashCode();
         result = 31 * result + minConnectionPoolSize;
         result = 31 * result + maxConnectionPoolSize;
         result = 31 * result + threadsAllowedToBlockForConnectionMultiplier;
@@ -578,6 +591,7 @@ public class MongoClientOptions {
                + "description='" + description + '\''
                + ", readPreference=" + readPreference
                + ", writeConcern=" + writeConcern
+               + ", codecRegistry=" + codecRegistry
                + ", minConnectionPoolSize=" + minConnectionPoolSize
                + ", maxConnectionPoolSize=" + maxConnectionPoolSize
                + ", threadsAllowedToBlockForConnectionMultiplier=" + threadsAllowedToBlockForConnectionMultiplier
@@ -616,6 +630,8 @@ public class MongoClientOptions {
         private String description;
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
+        List<CodecProvider> codecProviders = Arrays.<CodecProvider>asList(new DocumentCodecProvider());
+        private CodecRegistry codecRegistry = new RootCodecRegistry(codecProviders);
 
         private int minConnectionPoolSize;
         private int maxConnectionPoolSize = 100;

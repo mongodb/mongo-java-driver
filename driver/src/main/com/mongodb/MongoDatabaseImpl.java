@@ -20,12 +20,10 @@ import com.mongodb.client.DatabaseAdministration;
 import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoDatabaseOptions;
-import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
-import org.bson.codecs.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 
@@ -56,20 +54,20 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public MongoCollectionImpl<Document> getCollection(final String collectionName,
                                                        final MongoCollectionOptions operationOptions) {
-        return getCollection(collectionName, new DocumentCodec(), operationOptions);
+        return getCollection(collectionName, Document.class, operationOptions);
     }
 
     @Override
     public <T> MongoCollectionImpl<T> getCollection(final String collectionName,
-                                                    final Codec<T> codec) {
-        return getCollection(collectionName, codec, MongoCollectionOptions.builder().build().withDefaults(options));
+                                                    final Class<T> clazz) {
+        return getCollection(collectionName, clazz, MongoCollectionOptions.builder().build().withDefaults(options));
     }
 
     @Override
     public <T> MongoCollectionImpl<T> getCollection(final String collectionName,
-                                                    final Codec<T> codec,
+                                                    final Class<T> clazz,
                                                     final MongoCollectionOptions operationOptions) {
-        return new MongoCollectionImpl<T>(collectionName, this, codec, operationOptions.withDefaults(options), client);
+        return new MongoCollectionImpl<T>(collectionName, this, clazz, operationOptions.withDefaults(options), client);
     }
 
     @Override
@@ -95,6 +93,6 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     private BsonDocument wrap(final Document command) {
-        return new BsonDocumentWrapper<Document>(command, options.getDocumentCodec());
+        return new BsonDocumentWrapper<Document>(command, options.getCodecRegistry().get(Document.class));
     }
 }

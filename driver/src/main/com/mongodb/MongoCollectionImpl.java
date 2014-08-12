@@ -76,10 +76,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final Codec<T> codec;
 
     public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
-                               final Codec<T> codec, final MongoCollectionOptions options,
+                               final Class<T> clazz, final MongoCollectionOptions options,
                                final MongoClient client) {
 
-        this.codec = codec;
+        this.codec = options.getCodecRegistry().get(clazz);
         this.name = name;
         this.database = database;
         this.options = options;
@@ -133,7 +133,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private Codec<Document> getDocumentCodec() {
-        return getOptions().getDocumentCodec();
+        return getOptions().getCodecRegistry().get(Document.class);
     }
 
     @Override
@@ -170,7 +170,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private BsonDocument wrap(final Document command) {
-        return new BsonDocumentWrapper<Document>(command, options.getDocumentCodec());
+        return new BsonDocumentWrapper<Document>(command, options.getCodecRegistry().get(Document.class));
     }
 
     private final class MongoCollectionView implements MongoView<T> {

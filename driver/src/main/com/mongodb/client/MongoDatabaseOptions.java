@@ -19,9 +19,7 @@ package com.mongodb.client;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Immutable;
-import com.mongodb.codecs.DocumentCodec;
-import org.bson.codecs.Codec;
-import org.mongodb.Document;
+import org.bson.codecs.configuration.CodecRegistry;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -29,7 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class MongoDatabaseOptions {
     private final WriteConcern writeConcern;
     private final ReadPreference readPreference;
-    private final Codec<Document> documentCodec;
+    private final CodecRegistry codecRegistry;
 
     public static Builder builder() {
         return new Builder();
@@ -43,36 +41,56 @@ public class MongoDatabaseOptions {
         return readPreference;
     }
 
-    public Codec<Document> getDocumentCodec() {
-        return documentCodec;
+    public CodecRegistry getCodecRegistry() {
+        return codecRegistry;
     }
 
     public static class Builder {
-        WriteConcern writeConcern;
-        ReadPreference readPreference;
-        Codec<Document> documentCodec = new DocumentCodec();
+        private WriteConcern writeConcern;
+        private ReadPreference readPreference;
+        private CodecRegistry codecRegistry;
+
+        public WriteConcern getWriteConcern() {
+            return writeConcern;
+        }
+
+        public ReadPreference getReadPreference() {
+            return readPreference;
+        }
+
+        public CodecRegistry getCodecRegistry() {
+            return codecRegistry;
+        }
 
         public Builder writeConcern(final WriteConcern writeConcern) {
-            this.writeConcern = notNull("writeConcern", writeConcern);;
+            this.writeConcern = notNull("writeConcern", writeConcern);
             return this;
         }
 
         public Builder readPreference(final ReadPreference readPreference) {
-            this.readPreference = notNull("readPreference", readPreference);;
+            this.readPreference = notNull("readPreference", readPreference);
+            return this;
+        }
+
+        public Builder codecRegistry(final CodecRegistry codecRegistry) {
+            this.codecRegistry = notNull("codecRegistry", codecRegistry);
             return this;
         }
 
         public MongoDatabaseOptions build() {
-            return new MongoDatabaseOptions(writeConcern, readPreference, documentCodec);
+            return new MongoDatabaseOptions(writeConcern, readPreference, codecRegistry);
         }
 
         Builder() {
         }
     }
 
-    MongoDatabaseOptions(final WriteConcern writeConcern, final ReadPreference readPreference, final Codec<Document> documentCodec) {
+    MongoDatabaseOptions(final WriteConcern writeConcern,
+                         final ReadPreference readPreference,
+                         final CodecRegistry codecRegistry) {
+
         this.writeConcern = writeConcern;
         this.readPreference = readPreference;
-        this.documentCodec = documentCodec;
+        this.codecRegistry = codecRegistry;
     }
 }

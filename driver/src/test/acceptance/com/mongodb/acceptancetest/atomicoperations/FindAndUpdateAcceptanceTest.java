@@ -18,13 +18,19 @@ package com.mongodb.acceptancetest.atomicoperations;
 
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.test.Worker;
-import com.mongodb.client.test.WorkerCodec;
+import com.mongodb.client.test.WorkerCodecProvider;
+import com.mongodb.codecs.DocumentCodecProvider;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.mongodb.Document;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -68,7 +74,10 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldFindAndReplaceWithDocumentRequiringACustomEncoder() {
         Worker pat = new Worker(new ObjectId(), "Pat", "Sales", new Date(), 7);
-        MongoCollection<Worker> collection = database.getCollection(getCollectionName(), new WorkerCodec());
+        List<CodecProvider> codecs = Arrays.asList(new DocumentCodecProvider(), new WorkerCodecProvider());
+        MongoCollectionOptions options =
+                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
+        MongoCollection<Worker> collection = database.getCollection(getCollectionName(), Worker.class, options);
         collection.insert(pat);
 
         assertThat(collection.find().count(), is(1L));
