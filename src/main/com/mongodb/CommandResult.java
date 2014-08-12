@@ -132,8 +132,12 @@ public class CommandResult extends BasicDBObject {
         }
     }
 
+    /**
+     * @deprecated there is no replacement for this method
+     */
+    @Deprecated
     public ServerAddress getServerUsed() {
-	return _host;
+        return _host;
     }
 
     private final ServerAddress _host;
