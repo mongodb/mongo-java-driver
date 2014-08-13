@@ -257,14 +257,33 @@ public class MapReduceCommand {
     }
 
     /**
+     * Gets the (optional) JavaScript mode
+     *
+     * @return The JavaScript mode
+     * @since 2.13
+     */
+    public Boolean getJsMode(){
+        return _jsMode;
+    }
+
+    /**
+     * Sets the (optional) JavaScript Mode
+     *
+     * @param jsMode Specifies whether to convert intermediate data into BSON format between the execution of the
+     *               map and reduce functions.
+     * @since 2.13
+     */
+    public void setJsMode(boolean jsMode ){
+        _jsMode = jsMode;
+    }
+
+    /**
      * Sets the (optional) database name where the output collection should reside
      * @param outputDB
      */
     public void setOutputDB(String outputDB) {
         this._outputDB = outputDB;
     }
-
-    
 
     public DBObject toDBObject() {
         BasicDBObject cmd = new BasicDBObject();
@@ -307,6 +326,9 @@ public class MapReduceCommand {
 
         if (_scope != null)
             cmd.put("scope", _scope);
+
+        if (_jsMode)
+            cmd.put("jsMode", _jsMode);
 
         if (_extra != null) {
             cmd.putAll(_extra);
@@ -368,4 +390,5 @@ public class MapReduceCommand {
     Boolean _verbose = true;
     DBObject _extra;
     private long _maxTimeMS;
+    Boolean _jsMode = false;
 }
