@@ -253,7 +253,14 @@ public class WriteConcern implements Serializable {
      * @param fsync whether or not to fsync
      * @param j whether writes should wait for a journaling group commit
      * @param continueOnError if batch writes should continue after the first error
+     * @deprecated the preferred way to specify continueOnError is to use write methods that explicitly specify the value of this
+     * property
+     * @see #WriteConcern(int, int, boolean)
+     * @see DBCollection#insert(java.util.List, InsertOptions)
+     * @see InsertOptions#continueOnError(boolean)
+     * @see DBCollection#initializeUnorderedBulkOperation()
      */
+    @Deprecated
     public WriteConcern( int w , int wtimeout , boolean fsync , boolean j, boolean continueOnError) {
         _w = w;
         _wtimeout = wtimeout;
@@ -296,8 +303,14 @@ public class WriteConcern implements Serializable {
      * @param fsync whether or not to fsync
      * @param j whether writes should wait for a journaling group commit
      * @param continueOnError if batched writes should continue after the first error
-     * @return
+     * @deprecated the preferred way to specify continueOnError is to use write methods that explicitly specify the value of this
+     * property
+     * @see #WriteConcern(String, int, boolean, boolean)
+     * @see DBCollection#insert(java.util.List, InsertOptions)
+     * @see InsertOptions#continueOnError(boolean)
+     * @see DBCollection#initializeUnorderedBulkOperation()
      */
+    @Deprecated
     public WriteConcern( String w , int wtimeout , boolean fsync, boolean j, boolean continueOnError ){
         if (w == null) {
             throw new IllegalArgumentException("w can not be null");
@@ -531,8 +544,13 @@ public class WriteConcern implements Serializable {
      * be thrown in the client.
      * This will return a new instance of WriteConcern with your preferred continueOnInsert value
      *
-     * @param continueOnError
+     * @param continueOnError whether to continue on error after a failure
+     * @deprecated the preferred way to specify this is to use write methods that explicitly specify the value of this property
+     * @see DBCollection#insert(java.util.List, InsertOptions)
+     * @see InsertOptions#continueOnError(boolean)
+     * @see DBCollection#initializeUnorderedBulkOperation()
      */
+    @Deprecated
     public WriteConcern continueOnError(boolean continueOnError) {
         if ( _w instanceof Integer )
             return new WriteConcern((Integer) _w, _wtimeout, _fsync, _j, continueOnError);
@@ -546,7 +564,12 @@ public class WriteConcern implements Serializable {
      * Gets the "continue inserts on error" mode
      *
      * @return the continue on error mode
+     * @deprecated the preferred way to specify this is to use write methods that explicitly specify the value of this property
+     * @see DBCollection#insert(java.util.List, InsertOptions)
+     * @see InsertOptions#isContinueOnError()
+     * @see DBCollection#initializeUnorderedBulkOperation()
      */
+    @Deprecated
     public boolean getContinueOnError() {
         return _continueOnError;
     }
@@ -557,8 +580,11 @@ public class WriteConcern implements Serializable {
      * be thrown in the client.
      * This will return a new instance of WriteConcern with your preferred continueOnInsert value
      *
-     * @param continueOnErrorForInsert
-     * @deprecated Use continueOnError instead
+     * @param continueOnErrorForInsert whether to continue on error after a failure
+     * @deprecated the preferred way to specify this is to use write methods that explicitly specify the value of this property
+     * @see DBCollection#insert(java.util.List, InsertOptions)
+     * @see InsertOptions#continueOnError(boolean)
+     * @see DBCollection#initializeUnorderedBulkOperation()
      */
     @Deprecated
     public WriteConcern continueOnErrorForInsert(boolean continueOnErrorForInsert) {
@@ -566,9 +592,13 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Gets the "continue inserts on error" mode
-     * @return
-     * @deprecated Use getContinueOnError instead
+     * Gets the "continue inserts on error" mode.
+     *
+     * @return whether to continue on error after a failure
+     * @deprecated the preferred way to specify this is to use write methods that explicitly specify the value of this property
+     * @see DBCollection#insert(java.util.List, InsertOptions)
+     * @see InsertOptions#isContinueOnError()
+     * @see DBCollection#initializeUnorderedBulkOperation()
      */
     @Deprecated
     public boolean getContinueOnErrorForInsert() {
