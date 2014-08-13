@@ -244,7 +244,7 @@ class ServerMonitor {
                                 .state(ServerConnectionState.Connected)
                                 .version(getVersion(buildInfoResult))
                                 .address(commandResult.getServerUsed())
-                                .type(getServerType(commandResult))
+                                .type(ServerType.getServerType(commandResult))
                                 .hosts(listToSet((List<String>) commandResult.get("hosts")))
                                 .passives(listToSet((List<String>) commandResult.get("passives")))
                                 .arbiters(listToSet((List<String>) commandResult.get("arbiters")))
@@ -272,38 +272,6 @@ class ServerMonitor {
         } else {
             return new HashSet<String>(list);
         }
-    }
-
-    private static ServerType getServerType(final BasicDBObject isMasterResult) {
-        if (isReplicaSetMember(isMasterResult)) {
-            if (isMasterResult.getBoolean("ismaster", false)) {
-                return ServerType.ReplicaSetPrimary;
-            }
-
-            if (isMasterResult.getBoolean("secondary", false)) {
-                return ServerType.ReplicaSetSecondary;
-            }
-
-            if (isMasterResult.getBoolean("arbiterOnly", false)) {
-                return ServerType.ReplicaSetArbiter;
-            }
-
-            if (isMasterResult.containsKey("setName") && isMasterResult.containsField("hosts")) {
-                return ServerType.ReplicaSetOther;
-            }
-
-            return ServerType.ReplicaSetGhost;
-        }
-
-        if (isMasterResult.containsKey("msg") && isMasterResult.get("msg").equals("isdbgrid")) {
-            return ServerType.ShardRouter;
-        }
-
-        return ServerType.StandAlone;
-    }
-
-    private static boolean isReplicaSetMember(final BasicDBObject isMasterResult) {
-        return isMasterResult.containsKey("setName") || isMasterResult.getBoolean("isreplicaset", false);
     }
 
     private static Tags getTagsFromDocument(final DBObject tagsDocuments) {
