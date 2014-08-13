@@ -179,7 +179,7 @@ members:
   com.mongodb.WriteResult:
   - getLastError()                                # JAVA-900
   - getLastError(com.mongodb.WriteConcern)        # JAVA-900
-  - getLastConcern()                              # JAVA-
+  - getLastConcern()                              # JAVA-1381
   - getCachedLastError()
   - getError()
   - getField(java.lang.String)
@@ -273,37 +273,37 @@ members:
   - SECONDARY
   - withTags(java.util.Map)                                     # old ones
   - withTags(com.mongodb.DBObject)                              # old ones
-  - nearest(com.mongodb.DBObject, com.mongodb.DBObject[])
-  - primaryPreferred(com.mongodb.DBObject, com.mongodb.DBObject[])
-  - secondary(com.mongodb.DBObject, com.mongodb.DBObject[])
-  - secondaryPreferred(com.mongodb.DBObject, com.mongodb.DBObject[])
-  - valueOf(java.lang.String, com.mongodb.DBObject, com.mongodb.DBObject[])
+  - nearest(com.mongodb.DBObject, com.mongodb.DBObject[])                     # JAVA-1380
+  - primaryPreferred(com.mongodb.DBObject, com.mongodb.DBObject[])            # JAVA-1380
+  - secondary(com.mongodb.DBObject, com.mongodb.DBObject[])                   # JAVA-1380
+  - secondaryPreferred(com.mongodb.DBObject, com.mongodb.DBObject[])          # JAVA-1380
+  - valueOf(java.lang.String, com.mongodb.DBObject, com.mongodb.DBObject[])   # JAVA-1380
   - toDBObject()
 
-  com.mongodb.TaggableReadPreference:
-  - getTagSets()
+  com.mongodb.TaggableReadPreference:                                         # JAVA-1380
+  - getTagSets()                                                              # JAVA-1380
   - toDBObject()
 
   com.mongodb.QueryOperators:
   - QueryOperators()                                            # JAVA-893 Deprecate classes that will be excluded from 3.x (Generic)
 
   com.mongodb.WriteConcernException:
-  - getCommandResult()
-  - WriteConcernException(com.mongodb.CommandResult)
+  - getCommandResult()                                                           # JAVA-1372
+  - WriteConcernException(com.mongodb.CommandResult)                             # JAVA-1372
 
   com.mongodb.CommandResult:
-  - getServerUsed()
+  - getServerUsed()                                                              # JAVA-1373
 
   com.mongodb.MongoInterruptedException:
-  - MongoInterruptedException(java.lang.InterruptedException)
-  - MongoInterruptedException(java.lang.String, java.lang.InterruptedException)
+  - MongoInterruptedException(java.lang.InterruptedException)                    # JAVA-1374
+  - MongoInterruptedException(java.lang.String, java.lang.InterruptedException)  # JAVA-1374
 
   com.mongodb.CommandFailureException:
-  - getCommandResult()                                         # JAVA-
-  - CommandFailureException(com.mongodb.CommandResult)         # JAVA-
+  - getCommandResult()                                         # JAVA-1375
+  - CommandFailureException(com.mongodb.CommandResult)         # JAVA-1375
 
   com.mongodb.MongoException:
-  - MongoException(org.bson.BSONObject)                        # JAVA-
+  - MongoException(org.bson.BSONObject)                        # JAVA-1376
 
   com.mongodb.MongoException$DuplicateKey:
-  - MongoException$DuplicateKey(com.mongodb.CommandResult)     # JAVA-
+  - MongoException$DuplicateKey(com.mongodb.CommandResult)     # JAVA-1379
