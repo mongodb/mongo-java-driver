@@ -240,8 +240,8 @@ public abstract class DBCollection {
     }
 
     /**
-     * Modify an existing document or documents in collection. By default the method updates a single document. The query parameter employs
-     * the same query selectors, as used in {@link DBCollection#find()}.  Calls {@link DBCollection#update(com.mongodb.DBObject,
+     * Modify documents in collection. The query parameter employs the same query selectors, as used in
+     * {@link DBCollection#find()}.  Calls {@link DBCollection#update(com.mongodb.DBObject,
      * com.mongodb.DBObject, boolean, boolean)} with upsert=false and multi=true
      *
      * @param q the selection criteria for the update
