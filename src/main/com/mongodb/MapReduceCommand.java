@@ -257,6 +257,34 @@ public class MapReduceCommand {
     }
 
     /**
+     * Gets the (optional) JavaScript mode
+     *
+     * @return The JavaScript mode
+     * @since 2.13
+     */
+    public Boolean getJsMode(){
+        return _jsMode;
+    }
+
+    /**
+     * Sets the (optional) JavaScript Mode
+     *
+     * @param jsMode Specifies whether to convert intermediate data into BSON format between the execution of the
+     *               map and reduce functions.
+     * @since 2.13
+     */
+    public void setJsMode(Boolean jsMode ){
+        _jsMode = jsMode;
+    }
+
+    /**
+     * Gets the (optional) database name where the output collection should reside
+     */
+    public String getOutputDB() {
+        return this._outputDB;
+    }
+
+    /**
      * Sets the (optional) database name where the output collection should reside
      * @param outputDB
      */
@@ -264,15 +292,15 @@ public class MapReduceCommand {
         this._outputDB = outputDB;
     }
 
-    
-
     public DBObject toDBObject() {
         BasicDBObject cmd = new BasicDBObject();
 
         cmd.put("mapreduce", _input);
         cmd.put("map", _map);
         cmd.put("reduce", _reduce);
-        cmd.put("verbose", _verbose);
+
+        if (_verbose != null)
+            cmd.put("verbose", _verbose);
 
         BasicDBObject out = new BasicDBObject();
         switch(_outputType) {
@@ -308,6 +336,9 @@ public class MapReduceCommand {
         if (_scope != null)
             cmd.put("scope", _scope);
 
+        if (_jsMode != null)
+            cmd.put("jsMode", _jsMode);
+
         if (_extra != null) {
             cmd.putAll(_extra);
         }
@@ -319,12 +350,20 @@ public class MapReduceCommand {
         return cmd;
     }
 
+    /**
+     * @deprecated use the specific setter methods
+     */
+    @Deprecated
     public void addExtraOption(String name, Object value) {
         if (_extra == null)
             _extra = new BasicDBObject();
         _extra.put(name, value);
     }
-    
+
+    /**
+     * @deprecated use the specific field getter methods
+     */
+    @Deprecated
     public DBObject getExtraOptions() {
         return _extra;
     }
@@ -368,4 +407,5 @@ public class MapReduceCommand {
     Boolean _verbose = true;
     DBObject _extra;
     private long _maxTimeMS;
+    Boolean _jsMode;
 }
