@@ -178,6 +178,7 @@ members:
   com.mongodb.WriteResult:
   - getLastError()                                # JAVA-900
   - getLastError(com.mongodb.WriteConcern)        # JAVA-900
+  - getLastConcern()                              # JAVA-
   - getCachedLastError()
   - getError()
   - getField(java.lang.String)
