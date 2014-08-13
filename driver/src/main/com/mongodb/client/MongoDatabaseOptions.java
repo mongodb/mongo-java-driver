@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.MongoClientOptions;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Immutable;
@@ -31,6 +32,14 @@ public class MongoDatabaseOptions {
 
     public static Builder builder() {
         return new Builder();
+    }
+
+    public MongoDatabaseOptions withDefaults(final MongoClientOptions options) {
+        Builder builder = new Builder();
+        builder.writeConcern(getWriteConcern() != null ? getWriteConcern() : options.getWriteConcern());
+        builder.readPreference(getReadPreference() != null ? getReadPreference() : options.getReadPreference());
+        builder.codecRegistry(getCodecRegistry() != null ? getCodecRegistry() : options.getCodecRegistry());
+        return builder.build();
     }
 
     public WriteConcern getWriteConcern() {

@@ -123,7 +123,6 @@ public class Mongo {
 
     private volatile WriteConcern writeConcern;
     private volatile ReadPreference readPreference;
-    private volatile CodecRegistry codecRegistry;
 
     private final MongoClientOptions options;
     private final List<MongoCredential> credentialsList;
@@ -345,7 +344,6 @@ public class Mongo {
         this.options = options;
         this.readPreference = options.getReadPreference() != null ? options.getReadPreference() : primary();
         this.writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : WriteConcern.UNACKNOWLEDGED;
-        this.codecRegistry = options.getCodecRegistry();
         this.optionHolder = new Bytes.OptionHolder(null);
         this.credentialsList = unmodifiableList(credentialsList);
         cursorCleaningService = options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
@@ -387,10 +385,6 @@ public class Mongo {
      */
     public ReadPreference getReadPreference() {
         return readPreference;
-    }
-
-    public CodecRegistry getCodecRegistry() {
-        return codecRegistry;
     }
 
     /**
@@ -491,7 +485,7 @@ public class Mongo {
             return db;
         }
 
-        db = new DB(this, dbName, codecRegistry.get(Document.class));
+        db = new DB(this, dbName, options.getCodecRegistry().get(Document.class));
         DB temp = dbCache.putIfAbsent(dbName, db);
         if (temp != null) {
             return temp;

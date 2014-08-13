@@ -170,7 +170,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private BsonDocument wrap(final Document command) {
-        return new BsonDocumentWrapper<Document>(command, options.getCodecRegistry().get(Document.class));
+        return new BsonDocumentWrapper<Document>(command, getDocumentCodec());
     }
 
     private final class MongoCollectionView implements MongoView<T> {

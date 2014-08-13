@@ -276,9 +276,18 @@ public class MongoClient extends Mongo {
      */
     public MongoDatabase getDatabase(final String databaseName) {
         return new MongoDatabaseImpl(databaseName, this, MongoDatabaseOptions.builder()
-                                                                             .writeConcern(getWriteConcern())
-                                                                             .readPreference(getReadPreference())
-                                                                             .codecRegistry(getCodecRegistry())
-                                                                             .build());
+                .writeConcern(getWriteConcern())
+                .readPreference(getReadPreference())
+                .codecRegistry(getMongoClientOptions().getCodecRegistry())
+                .build());
+    }
+
+    /**
+     * @param databaseName the name of the database to retrieve
+     * @param options the database options
+     * @return a MongoDatabse representing the specified database
+     */
+    public MongoDatabase getDatabase(final String databaseName, final MongoDatabaseOptions options) {
+        return new MongoDatabaseImpl(databaseName, this, options);
     }
 }

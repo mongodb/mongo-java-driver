@@ -19,18 +19,12 @@ package com.mongodb.client;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.codecs.DocumentCodec;
-import com.mongodb.codecs.DocumentCodecProvider;
 import com.mongodb.connection.ServerHelper;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
-import org.bson.codecs.configuration.CodecProvider;
-import org.bson.codecs.configuration.RootCodecRegistry;
 import org.junit.After;
 import org.junit.Before;
 import org.mongodb.Document;
-
-import java.util.Arrays;
-import java.util.List;
 
 import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;
@@ -46,10 +40,7 @@ public class DatabaseTestCase {
     @Before
     public void setUp() {
         database = getMongoClient().getDatabase(getDefaultDatabaseName());
-        List<CodecProvider> codecs = Arrays.<CodecProvider>asList(new DocumentCodecProvider());
-        MongoCollectionOptions options =
-                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
-        collection = database.getCollection(getClass().getName(), options);
+        collection = database.getCollection(getClass().getName());
         collection.tools().drop();
     }
 
