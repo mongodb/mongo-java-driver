@@ -19,7 +19,7 @@ package com.mongodb;
 /**
  * The type of the server.
  */
-enum ServerType {
+public enum ServerType {
     /**
      * A standalone mongod server.
      */
@@ -106,4 +106,52 @@ enum ServerType {
      * @return the cluster type
      */
     public abstract ClusterType getClusterType();
+
+
+    static boolean isReplicaSetMember(final BasicDBObject isMasterResult) {
+        return isMasterResult.containsKey("setName") || isMasterResult.getBoolean("isreplicaset", false);
+    }
+
+    static ServerType getServerType(final BasicDBObject isMasterResult) {
+        if (isReplicaSetMember(isMasterResult)) {
+            if (isMasterResult.getBoolean("ismaster", false)) {
+                return ServerType.ReplicaSetPrimary;
+            }
+
+            if (isMasterResult.getBoolean("secondary", false)) {
+                return ServerType.ReplicaSetSecondary;
+            }
+
+            if (isMasterResult.getBoolean("arbiterOnly", false)) {
+                return ServerType.ReplicaSetArbiter;
+            }
+
+            if (isMasterResult.containsKey("setName") && isMasterResult.containsField("hosts")) {
+                return ServerType.ReplicaSetOther;
+            }
+
+            return ServerType.ReplicaSetGhost;
+        }
+
+        if (isMasterResult.containsKey("msg") && isMasterResult.get("msg").equals("isdbgrid")) {
+            return ServerType.ShardRouter;
+        }
+
+        return ServerType.StandAlone;
+    }
+
+    /**
+     * Determine the server type from a DB.
+     */
+    public static ServerType getServerType(DB db){
+        CommandResult ismaster = db.command("ismaster");
+        return getServerType(ismaster);
+    }
+
+    /**
+     * Determine the server type from a MongoClient connection.
+     */
+    public static ServerType getServerType(MongoClient mongo){
+        return getServerType(mongo.getDB("admin"));
+    }
 }

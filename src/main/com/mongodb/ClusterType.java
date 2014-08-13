@@ -19,7 +19,7 @@ package com.mongodb;
 /**
  * An enumeration of all possible cluster types.
  */
-enum ClusterType {
+public enum ClusterType {
     /**
      * A standalone mongod server.  A cluster of one.
      */
