@@ -391,8 +391,16 @@ public class MongoClientOptions {
     }
 
     /**
+     * The codec registry to use.  By default, a {@code MongoClient} will be able to
+     * encode and decode instances of {@code Document}.
+     * <p>
+     * Note that instances of {@code DB} and {@code DBCollection} do not use the
+     * registry, so it's not necessary to include a codec for DBObject in the registry.
      *
-     * @return
+     * Default is {@code RootCodecRegistry}
+     *
+     * @return the codec registry
+     * @see MongoClient#getDatabase
      * @since 3.0
      */
     public CodecRegistry getCodecRegistry() {
@@ -845,6 +853,19 @@ public class MongoClientOptions {
          */
         public Builder writeConcern(final WriteConcern writeConcern) {
             this.writeConcern = notNull("writeConcern", writeConcern);
+            return this;
+        }
+
+        /**
+         * Sets the codec registry
+         *
+         * @param codecRegistry the codec registry
+         * @return {@code this}
+         * @see MongoClientOptions#getCodecRegistry()
+         * @since 3.0
+         */
+        public Builder codecRegistry(final CodecRegistry codecRegistry) {
+            this.codecRegistry = notNull("codecRegistry", codecRegistry);
             return this;
         }
 

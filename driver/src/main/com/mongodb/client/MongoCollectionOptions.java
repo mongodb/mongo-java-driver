@@ -26,7 +26,7 @@ public final class MongoCollectionOptions extends MongoDatabaseOptions {
     public static Builder builder() {
         return new Builder();
     }
-/**/
+
     public MongoCollectionOptions withDefaults(final MongoDatabaseOptions options) {
         Builder builder = new Builder();
         builder.writeConcern(getWriteConcern() != null ? getWriteConcern() : options.getWriteConcern());
