@@ -281,3 +281,6 @@ members:
   com.mongodb.CommandResult:
   - getServerUsed()
 
+  com.mongodb.MongoInterruptedException:
+  - MongoInterruptedException(java.lang.InterruptedException)
+  - MongoInterruptedException(java.lang.String, java.lang.InterruptedException)

@@ -25,10 +25,12 @@ package com.mongodb;
 public class MongoInterruptedException extends MongoException {
     private static final long serialVersionUID = -4110417867718417860L;
 
-    public MongoInterruptedException(final InterruptedException e) {
-        super("A driver operation has been interrupted", e);
-    }
-
+    /**
+     * Construct a new instance.
+     *
+     * @param message the message
+     * @param e the cause
+     */
     public MongoInterruptedException(final String message, final Exception e) {
         super(message, e);
     }
