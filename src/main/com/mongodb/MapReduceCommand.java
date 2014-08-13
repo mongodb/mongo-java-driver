@@ -341,12 +341,20 @@ public class MapReduceCommand {
         return cmd;
     }
 
+    /**
+     * @deprecated use the specific setter methods
+     */
+    @Deprecated
     public void addExtraOption(String name, Object value) {
         if (_extra == null)
             _extra = new BasicDBObject();
         _extra.put(name, value);
     }
-    
+
+    /**
+     * @deprecated use the specific field getter methods
+     */
+    @Deprecated
     public DBObject getExtraOptions() {
         return _extra;
     }
