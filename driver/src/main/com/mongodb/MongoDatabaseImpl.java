@@ -66,8 +66,8 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public <T> MongoCollectionImpl<T> getCollection(final String collectionName,
                                                     final Class<T> clazz,
-                                                    final MongoCollectionOptions operationOptions) {
-        return new MongoCollectionImpl<T>(collectionName, this, clazz, operationOptions.withDefaults(options), client);
+                                                    final MongoCollectionOptions options) {
+        return new MongoCollectionImpl<T>(collectionName, this, clazz, options.withDefaults(this.options), client);
     }
 
     @Override

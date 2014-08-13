@@ -18,8 +18,52 @@
 
 package com.mongodb
 
+import com.mongodb.client.ConcreteCodecProvider
+import com.mongodb.client.MongoDatabase
+import com.mongodb.client.MongoDatabaseOptions
+import org.bson.codecs.configuration.RootCodecRegistry
+import spock.lang.Specification
+
+import static com.mongodb.Fixture.getDefaultDatabaseName;
+import static com.mongodb.Fixture.getMongoClient;
 /**
  *
  */
-class MongoDatabaseOptionsSpecification {
+class MongoDatabaseOptionsSpecification extends Specification {
+
+    def 'should return default value inherited from MongoClientOptions'() {
+        given:
+        MongoClient client = getMongoClient()
+        MongoDatabase db = client.getDatabase(getDefaultDatabaseName())
+
+        when:
+        MongoDatabaseOptions options = db.getOptions()
+
+        then:
+        options.getCodecRegistry() == client.getMongoClientOptions().getCodecRegistry()
+        options.getReadPreference() == client.getMongoClientOptions().getReadPreference()
+        options.getWriteConcern() == client.getMongoClientOptions().getWriteConcern()
+    }
+
+    def 'should override inherited values'() {
+        given:
+        MongoClient client = getMongoClient()
+        MongoDatabaseOptions o1 = MongoDatabaseOptions.builder()
+                .writeConcern(WriteConcern.MAJORITY)
+                .readPreference(ReadPreference.primaryPreferred())
+                .codecRegistry(new RootCodecRegistry(Arrays.asList(new ConcreteCodecProvider())))
+                .build()
+
+        MongoDatabase db = client.getDatabase(getDefaultDatabaseName(), o1)
+
+        when:
+        MongoDatabaseOptions o2 = db.getOptions()
+
+        then:
+        o1.getCodecRegistry() == o2.getCodecRegistry()
+        o1.getReadPreference() == o2.getReadPreference()
+        o1.getWriteConcern() == o2.getWriteConcern()
+    }
+
+
 }

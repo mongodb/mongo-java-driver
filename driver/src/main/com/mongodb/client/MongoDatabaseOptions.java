@@ -34,11 +34,11 @@ public class MongoDatabaseOptions {
         return new Builder();
     }
 
-    public MongoDatabaseOptions withDefaults(final MongoClientOptions options) {
+    public MongoDatabaseOptions withDefaults(final MongoClientOptions defaultOptions) {
         Builder builder = new Builder();
-        builder.writeConcern(getWriteConcern() != null ? getWriteConcern() : options.getWriteConcern());
-        builder.readPreference(getReadPreference() != null ? getReadPreference() : options.getReadPreference());
-        builder.codecRegistry(getCodecRegistry() != null ? getCodecRegistry() : options.getCodecRegistry());
+        builder.writeConcern(getWriteConcern() != null ? getWriteConcern() : defaultOptions.getWriteConcern());
+        builder.readPreference(getReadPreference() != null ? getReadPreference() : defaultOptions.getReadPreference());
+        builder.codecRegistry(getCodecRegistry() != null ? getCodecRegistry() : defaultOptions.getCodecRegistry());
         return builder.build();
     }
 
