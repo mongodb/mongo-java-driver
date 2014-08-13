@@ -28,8 +28,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -373,24 +373,27 @@ public class DBCollectionTest extends TestCase {
 
     @Test
     public void testMultiInsertNoContinue() {
-        collection.setWriteConcern(WriteConcern.NORMAL);
+        DBObject obj = collection.findOne();
+        assertEquals(obj, null);
+
+        List<DBObject> documents = Arrays.<DBObject>asList(new BasicDBObject("_id", 1).append("x", 1).append("y", 2),
+                                                           new BasicDBObject("_id", 1).append("x", 3).append("y", 4),
+                                                           new BasicDBObject("x", 5).append("y", 6));
+        try {
+            collection.insert(documents, WriteConcern.ACKNOWLEDGED);
+            fail("Insert should have failed");
+        } catch (MongoException e) {
+            assertEquals(11000, e.getCode());
+        }
+        assertEquals(1, collection.count());
 
         try {
-            DBObject obj = collection.findOne();
-            assertEquals(obj, null);
-
-            ObjectId id = new ObjectId();
-            DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x",1).add("y",2).get();
-            DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x",3).add("y",4).get();
-            DBObject inserted3 = BasicDBObjectBuilder.start().add("x",5).add("y",6).get();
-            WriteResult r = collection.insert(inserted1, inserted2, inserted3);
-            assertEquals(1, collection.count());
-            assertFalse(collection.getWriteConcern().getContinueOnErrorForInsert());
-
-            assertEquals(collection.count(), 1);
-        } finally {
-            collection.setWriteConcern(WriteConcern.ACKNOWLEDGED);
+            collection.insert(documents, new InsertOptions());
+            fail("Insert should have failed");
+        } catch (MongoException e) {
+            assertEquals(11000, e.getCode());
         }
+        assertEquals(1, collection.count());
     }
 
     @Test
@@ -402,18 +405,36 @@ public class DBCollectionTest extends TestCase {
         DBObject obj = collection.findOne();
         assertEquals(obj, null);
 
-        ObjectId id = new ObjectId();
-        DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x",1).add("y",2).get();
-        DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x",3).add("y",4).get();
-        DBObject inserted3 = BasicDBObjectBuilder.start().add("x",5).add("y",6).get();
-        WriteConcern newWC = WriteConcern.SAFE.continueOnError(true);
+        List<DBObject> documents = Arrays.<DBObject>asList(new BasicDBObject("_id", 1).append("x", 1).append("y", 2),
+                                                           new BasicDBObject("_id", 1).append("x", 3).append("y", 4),
+                                                           new BasicDBObject("x", 5).append("y", 6));
+        WriteConcern writeConcernWithContinueOnError = WriteConcern.SAFE.continueOnError(true);
+
         try {
-            collection.insert(newWC, inserted1, inserted2, inserted3);
+            collection.insert(documents, writeConcernWithContinueOnError);
             fail("Insert should have failed");
         } catch (MongoException e) {
             assertEquals(11000, e.getCode());
         }
-        assertEquals( collection.count(), 2 );
+        assertEquals(collection.count(), 2);
+
+        collection.drop();
+        try {
+            collection.insert(documents, new InsertOptions().writeConcern(WriteConcern.ACKNOWLEDGED).continueOnError(true));
+            fail("Insert should have failed");
+        } catch (MongoException e) {
+            assertEquals(11000, e.getCode());
+        }
+        assertEquals(collection.count(), 2);
+
+        collection.drop();
+        try {
+            collection.insert(documents, new InsertOptions().writeConcern(writeConcernWithContinueOnError));
+            fail("Insert should have failed");
+        } catch (MongoException e) {
+            assertEquals(11000, e.getCode());
+        }
+        assertEquals(collection.count(), 2);
     }
 
     @Test( expected =  IllegalArgumentException.class )
@@ -525,7 +546,7 @@ public class DBCollectionTest extends TestCase {
     @Test
     public void testWriteConcernExceptionOnInsert() throws UnknownHostException {
         assumeTrue(isReplicaSet(getMongoClient()));
-        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
+        MongoClient mongoClient = new MongoClient(asList(new ServerAddress()));
         try {
             DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
             WriteResult writeResult = localCollection.insert(new BasicDBObject(), new WriteConcern(5, 1, false, false));
@@ -541,7 +562,7 @@ public class DBCollectionTest extends TestCase {
     @Test
     public void testWriteConcernExceptionOnUpdate() throws UnknownHostException {
         assumeTrue(isReplicaSet(getMongoClient()));
-        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
+        MongoClient mongoClient = new MongoClient(asList(new ServerAddress()));
         ObjectId id = new ObjectId();
         try {
             DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
@@ -562,7 +583,7 @@ public class DBCollectionTest extends TestCase {
     @Test
     public void testWriteConcernExceptionOnRemove() throws UnknownHostException {
         assumeTrue(isReplicaSet(getMongoClient()));
-        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
+        MongoClient mongoClient = new MongoClient(asList(new ServerAddress()));
         try {
             DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
             localCollection.insert(new BasicDBObject());
@@ -578,7 +599,7 @@ public class DBCollectionTest extends TestCase {
     @Test
     public void testBulkWriteConcernException() throws UnknownHostException {
         assumeTrue(isReplicaSet(getMongoClient()));
-        MongoClient mongoClient = new MongoClient(Arrays.asList(new ServerAddress()));
+        MongoClient mongoClient = new MongoClient(asList(new ServerAddress()));
         try {
             DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
             BulkWriteOperation bulkWriteOperation = localCollection.initializeUnorderedBulkOperation();

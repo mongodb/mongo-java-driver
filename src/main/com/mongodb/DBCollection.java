@@ -175,6 +175,30 @@ public abstract class DBCollection {
     public abstract WriteResult insert(List<DBObject> list, WriteConcern concern, DBEncoder encoder);
 
     /**
+     * Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
+     * does not contain an '_id' field, it will be added.
+     * <p>
+     * If the value of the continueOnError property of the given {@code InsertOptions} is true, that value will override the value of the
+     * continueOnError property of the given {@code WriteConcern}.  Otherwise, the value of the
+     * continueOnError property of the given {@code WriteConcern} will take effect.
+     * </p>
+     *
+     * @param list    a list of {@code DBObject}'s to be inserted
+     * @param insertOptions the options to use for the insert
+     * @return the result of the operation
+     * @throws MongoException if the operation fails
+     * @mongodb.driver.manual tutorial/insert-documents/ Insert
+     */
+    public WriteResult insert(List<DBObject> list, InsertOptions insertOptions) {
+        WriteConcern writeConcern = insertOptions.getWriteConcern() != null ? insertOptions.getWriteConcern() : getWriteConcern();
+        if (insertOptions.isContinueOnError()) {
+            writeConcern = writeConcern.continueOnError(true);
+        }
+        DBEncoder dbEncoder = insertOptions.getDbEncoder() != null ? insertOptions.getDbEncoder() : getDBEncoder();
+        return insert(list, writeConcern, dbEncoder);
+    }
+
+    /**
      * Modify an existing document or documents in collection. By default the method updates a single document. The query parameter employs
      * the same query selectors, as used in {@link DBCollection#find(DBObject)}.
      *
