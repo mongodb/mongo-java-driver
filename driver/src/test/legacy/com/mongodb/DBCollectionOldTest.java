@@ -20,6 +20,9 @@ import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.List;
+
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -346,43 +349,38 @@ public class DBCollectionOldTest extends DatabaseTestCase {
 
     @Test
     public void testMultiInsertNoContinue() {
-        DBCollection c = collection;
-        c.setWriteConcern(WriteConcern.NORMAL);
-
-        DBObject obj = c.findOne();
-        assertEquals(obj, null);
-
-        ObjectId id = new ObjectId();
-        DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x", 1).add("y", 2).get();
-        DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x", 3).add("y", 4).get();
-        DBObject inserted3 = BasicDBObjectBuilder.start().add("x", 5).add("y", 6).get();
-        c.insert(inserted1, inserted2, inserted3);
-        assertEquals(1, c.count());
-        assertFalse(c.getWriteConcern().getContinueOnError());
-
-        assertEquals(c.count(), 1);
-    }
-
-    @Test
-    public void testMultiInsertWithContinue() {
-
-        DBCollection c = collection;
-
-        DBObject obj = c.findOne();
-        assertEquals(obj, null);
-
-        ObjectId id = new ObjectId();
-        DBObject inserted1 = BasicDBObjectBuilder.start("_id", id).add("x", 1).add("y", 2).get();
-        DBObject inserted2 = BasicDBObjectBuilder.start("_id", id).add("x", 3).add("y", 4).get();
-        DBObject inserted3 = BasicDBObjectBuilder.start().add("x", 5).add("y", 6).get();
-        WriteConcern newWC = WriteConcern.SAFE.continueOnError(true);
+        List<DBObject> documents = Arrays.<DBObject>asList(new BasicDBObject("_id", 1).append("x", 1).append("y", 2),
+                                                           new BasicDBObject("_id", 1).append("x", 3).append("y", 4),
+                                                           new BasicDBObject("x", 5).append("y", 6));
         try {
-            c.insert(newWC, inserted1, inserted2, inserted3);
+            collection.insert(documents, WriteConcern.ACKNOWLEDGED);
             fail("Insert should have failed");
         } catch (MongoException e) {
             assertEquals(11000, e.getCode());
         }
-        assertEquals(c.count(), 2);
+        assertEquals(1, collection.count());
+
+        try {
+            collection.insert(documents, new InsertOptions());
+            fail("Insert should have failed");
+        } catch (MongoException e) {
+            assertEquals(11000, e.getCode());
+        }
+        assertEquals(1, collection.count());
+    }
+
+    @Test
+    public void testMultiInsertWithContinue() {
+        List<DBObject> documents = Arrays.<DBObject>asList(new BasicDBObject("_id", 1).append("x", 1).append("y", 2),
+                                                           new BasicDBObject("_id", 1).append("x", 3).append("y", 4),
+                                                           new BasicDBObject("x", 5).append("y", 6));
+        try {
+            collection.insert(documents, new InsertOptions().continueOnError(true));
+            fail("Insert should have failed");
+        } catch (MongoException e) {
+            assertEquals(11000, e.getCode());
+        }
+        assertEquals(collection.count(), 2);
     }
 
     @Test(expected = IllegalArgumentException.class)

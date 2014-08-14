@@ -269,7 +269,27 @@ public class DBCollection {
      * @mongodb.driver.manual tutorial/insert-documents/ Insert
      */
     public WriteResult insert(final List<DBObject> documents, final WriteConcern aWriteConcern, final DBEncoder dbEncoder) {
-        Encoder<DBObject> encoder = toEncoder(dbEncoder);
+        return insert(documents, new InsertOptions().writeConcern(aWriteConcern).dbEncoder(dbEncoder));
+    }
+
+    /**
+     * Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
+     * does not contain an '_id' field, it will be added.
+     * <p>
+     * If the value of the continueOnError property of the given {@code InsertOptions} is true, that value will override the value of the
+     * continueOnError property of the given {@code WriteConcern}.  Otherwise, the value of the
+     * continueOnError property of the given {@code WriteConcern} will take effect.
+     * </p>
+     *
+     * @param documents    a list of {@code DBObject}'s to be inserted
+     * @param insertOptions the options to use for the insert
+     * @return the result of the operation
+     * @throws MongoException if the operation fails
+     * @mongodb.driver.manual tutorial/insert-documents/ Insert
+     */
+    public WriteResult insert(final List<DBObject> documents, final InsertOptions insertOptions) {
+        WriteConcern writeConcern = insertOptions.getWriteConcern() != null ? insertOptions.getWriteConcern() : getWriteConcern();
+        Encoder<DBObject> encoder = toEncoder(insertOptions.getDbEncoder());
 
         List<InsertRequest<DBObject>> insertRequestList = new ArrayList<InsertRequest<DBObject>>(documents.size());
         for (DBObject cur : documents) {
@@ -278,7 +298,7 @@ public class DBCollection {
             }
             insertRequestList.add(new InsertRequest<DBObject>(cur));
         }
-        return insert(insertRequestList, encoder, aWriteConcern);
+        return insert(insertRequestList, encoder, writeConcern, insertOptions.isContinueOnError());
     }
 
     private Encoder<DBObject> toEncoder(final DBEncoder dbEncoder) {
@@ -286,9 +306,9 @@ public class DBCollection {
     }
 
     private WriteResult insert(final List<InsertRequest<DBObject>> insertRequestList, final Encoder<DBObject> encoder,
-                               final WriteConcern writeConcern) {
-        return executeWriteOperation(new InsertOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(), writeConcern,
-                                                                   insertRequestList, encoder));
+                               final WriteConcern writeConcern, final boolean continueOnError) {
+        return executeWriteOperation(new InsertOperation<DBObject>(getNamespace(), !continueOnError, writeConcern, insertRequestList,
+                                                                   encoder));
     }
 
     WriteResult executeWriteOperation(final BaseWriteOperation operation) {
@@ -358,8 +378,8 @@ public class DBCollection {
 
         ReplaceRequest<DBObject> replaceRequest = new ReplaceRequest<DBObject>(wrap(filter), obj).upsert(true);
 
-        return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), !writeConcern.getContinueOnError(),
-                                                                    writeConcern, asList(replaceRequest), getObjectCodec()));
+        return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), false, writeConcern, asList(replaceRequest),
+                                                                    getObjectCodec()));
     }
 
     /**
@@ -409,8 +429,8 @@ public class DBCollection {
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")) {
                 UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, encoder)).upsert(upsert).multi(multi);
 
-                return executeWriteOperation(new UpdateOperation(getNamespace(), !aWriteConcern.getContinueOnError(), aWriteConcern,
-                                                                 asList(updateRequest), documentCodec));
+                return executeWriteOperation(new UpdateOperation(getNamespace(), false, aWriteConcern, asList(updateRequest),
+                                                                 documentCodec));
             } else {
                 ReplaceRequest<DBObject> replaceRequest = new ReplaceRequest<DBObject>(wrap(query), update).upsert(upsert);
                 return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), true, aWriteConcern,
@@ -492,8 +512,7 @@ public class DBCollection {
      * @mongodb.driver.manual tutorial/remove-documents/ Remove
      */
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern) {
-        return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern,
-                                                         asList(new RemoveRequest(wrap(query)))));
+        return executeWriteOperation(new RemoveOperation(getNamespace(), false, writeConcern, asList(new RemoveRequest(wrap(query)))));
     }
 
     /**
@@ -509,8 +528,7 @@ public class DBCollection {
     public WriteResult remove(final DBObject query, final WriteConcern writeConcern, final DBEncoder encoder) {
         RemoveRequest removeRequest = new RemoveRequest(wrap(query, encoder));
 
-        return executeWriteOperation(new RemoveOperation(getNamespace(), !writeConcern.getContinueOnError(), writeConcern,
-                                                         asList(removeRequest)));
+        return executeWriteOperation(new RemoveOperation(getNamespace(), false, writeConcern, asList(removeRequest)));
     }
 
     /**
