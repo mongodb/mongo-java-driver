@@ -378,7 +378,7 @@ public class ConnectionString {
 
     private ReadPreference createReadPreference(final Map<String, List<String>> optionsMap) {
         String readPreferenceType = null;
-        List<Tags> tagsList = new ArrayList<Tags>();
+        List<TagSet> tagSetList = new ArrayList<TagSet>();
 
         for (final String key : READ_PREFERENCE_KEYS) {
             String value = getLastValue(optionsMap, key);
@@ -390,12 +390,12 @@ public class ConnectionString {
                 readPreferenceType = value;
             } else if (key.equals("readpreferencetags")) {
                 for (final String cur : optionsMap.get(key)) {
-                    Tags tags = getTags(cur.trim());
-                    tagsList.add(tags);
+                    TagSet tagSet = getTags(cur.trim());
+                    tagSetList.add(tagSet);
                 }
             }
         }
-        return buildReadPreference(readPreferenceType, tagsList);
+        return buildReadPreference(readPreferenceType, tagSetList);
     }
 
     private MongoCredential createCredentials(final Map<String, List<String>> optionsMap, final String userName,
@@ -472,12 +472,12 @@ public class ConnectionString {
     }
 
     private ReadPreference buildReadPreference(final String readPreferenceType,
-                                               final List<Tags> tagsList) {
+                                               final List<TagSet> tagSetList) {
         if (readPreferenceType != null) {
-            if (tagsList.isEmpty()) {
+            if (tagSetList.isEmpty()) {
                 return ReadPreference.valueOf(readPreferenceType);
             }
-            return ReadPreference.valueOf(readPreferenceType, tagsList);
+            return ReadPreference.valueOf(readPreferenceType, tagSetList);
         }
         return null;
     }
@@ -504,18 +504,18 @@ public class ConnectionString {
         return null;
     }
 
-    private Tags getTags(final String tagSetString) {
-        Tags tags = new Tags();
+    private TagSet getTags(final String tagSetString) {
+        List<Tag> tagList = new ArrayList<Tag>();
         if (tagSetString.length() > 0) {
             for (final String tag : tagSetString.split(",")) {
                 String[] tagKeyValuePair = tag.split(":");
                 if (tagKeyValuePair.length != 2) {
                     throw new IllegalArgumentException("Bad read preference tags: " + tagSetString);
                 }
-                tags.put(tagKeyValuePair[0].trim(), tagKeyValuePair[1].trim());
+                tagList.add(new Tag(tagKeyValuePair[0].trim(), tagKeyValuePair[1].trim()));
             }
         }
-        return tags;
+        return new TagSet(tagList);
     }
 
     boolean parseBoolean(final String input) {

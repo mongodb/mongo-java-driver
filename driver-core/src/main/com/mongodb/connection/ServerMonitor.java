@@ -18,7 +18,8 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerAddress;
-import com.mongodb.Tags;
+import com.mongodb.Tag;
+import com.mongodb.TagSet;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
@@ -30,6 +31,7 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.mongodb.CommandResult;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -269,7 +271,7 @@ class ServerMonitor {
                                 .maxWriteBatchSize(commandResult.getResponse().getInt32("maxWriteBatchSize",
                                                                                         new BsonInt32(getDefaultMaxWriteBatchSize()))
                                                                 .getValue())
-                                .tags(getTagsFromDocument(commandResult.getResponse().getDocument("tags", new BsonDocument())))
+                                .tagSet(getTagSetFromDocument(commandResult.getResponse().getDocument("tags", new BsonDocument())))
                                 .setName(getString(commandResult.getResponse(), "setName"))
                                 .minWireVersion(commandResult.getResponse().getInt32("minWireVersion",
                                                                                      new BsonInt32(getDefaultMinWireVersion())).getValue())
@@ -340,15 +342,15 @@ class ServerMonitor {
         return isMasterResult.containsKey("setName") || isMasterResult.getBoolean("isreplicaset", BsonBoolean.FALSE).getValue();
     }
 
-    private static Tags getTagsFromDocument(final BsonDocument tagsDocuments) {
+    private static TagSet getTagSetFromDocument(final BsonDocument tagsDocuments) {
         if (tagsDocuments == null) {
-            return new Tags();
+            return new TagSet();
         }
-        Tags tags = new Tags();
+        List<Tag> tagList = new ArrayList<Tag>();
         for (final Map.Entry<String, BsonValue> curEntry : tagsDocuments.entrySet()) {
-            tags.put(curEntry.getKey(), curEntry.getValue().toString());
+            tagList.add(new Tag(curEntry.getKey(), curEntry.getValue().toString()));
         }
-        return tags;
+        return new TagSet(tagList);
     }
 
     private ServerDescription getConnectingServerDescription() {

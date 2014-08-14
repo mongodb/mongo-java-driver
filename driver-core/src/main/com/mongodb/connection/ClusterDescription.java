@@ -17,7 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
-import com.mongodb.Tags;
+import com.mongodb.TagSet;
 import com.mongodb.annotations.Immutable;
 
 import java.util.ArrayList;
@@ -120,10 +120,10 @@ public class ClusterDescription {
         });
     }
 
-    public List<ServerDescription> getSecondaries(final Tags tags) {
+    public List<ServerDescription> getSecondaries(final TagSet tagSet) {
         return getServersByPredicate(new Predicate() {
             public boolean apply(final ServerDescription serverDescription) {
-                return serverDescription.isSecondary() && serverDescription.hasTags(tags);
+                return serverDescription.isSecondary() && serverDescription.hasTags(tagSet);
             }
         });
     }
@@ -144,10 +144,10 @@ public class ClusterDescription {
         });
     }
 
-    public List<ServerDescription> getAnyPrimaryOrSecondary(final Tags tags) {
+    public List<ServerDescription> getAnyPrimaryOrSecondary(final TagSet tagSet) {
         return getServersByPredicate(new Predicate() {
             public boolean apply(final ServerDescription serverDescription) {
-                return (serverDescription.isPrimary() || serverDescription.isSecondary()) && serverDescription.hasTags(tags);
+                return (serverDescription.isPrimary() || serverDescription.isSecondary()) && serverDescription.hasTags(tagSet);
             }
         });
     }

@@ -15,6 +15,7 @@
  */
 
 package com.mongodb
+
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -24,6 +25,7 @@ import static com.mongodb.MongoCredential.createMongoX509Credential
 import static com.mongodb.MongoCredential.createPlainCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.ReadPreference.secondaryPreferred
+import static java.util.Arrays.asList
 
 class MongoClientURISpecification extends Specification {
     def 'should throw Exception if URI does not have a trailing slash'() {
@@ -177,16 +179,17 @@ class MongoClientURISpecification extends Specification {
         uri.getOptions().getReadPreference() == readPreference;
 
         where:
-        uri                                                              | readPreference
+        uri                                                      | readPreference
         new MongoClientURI('mongodb://localhost/' +
-                           '?readPreference=secondaryPreferred') | ReadPreference.secondaryPreferred()
+                           '?readPreference=secondaryPreferred') | secondaryPreferred()
         new MongoClientURI('mongodb://localhost/' +
                            '?readPreference=secondaryPreferred' +
                            '&readPreferenceTags=dc:ny,rack:1' +
                            '&readPreferenceTags=dc:ny' +
-                           '&readPreferenceTags=')               | secondaryPreferred([new Tags('dc', 'ny').append('rack', '1'),
-                                                                                       new Tags('dc', 'ny'),
-                                                                                       new Tags()])
+                           '&readPreferenceTags=')               | secondaryPreferred([new TagSet(asList(new Tag('dc', 'ny'),
+                                                                                                         new Tag('rack', '1'))),
+                                                                                       new TagSet(asList(new Tag('dc', 'ny'))),
+                                                                                       new TagSet()])
     }
 
     def 'should respect MongoClientOptions builder'() {

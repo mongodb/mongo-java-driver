@@ -15,10 +15,13 @@
  */
 
 package com.mongodb
+
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonString
 import spock.lang.Specification
+
+import static java.util.Arrays.asList
 
 @SuppressWarnings(['DuplicateMapLiteral', 'LineLength'])
 class ReadPreferenceSpecification extends Specification {
@@ -45,48 +48,114 @@ class ReadPreferenceSpecification extends Specification {
         ReadPreference.nearest() == ReadPreference.valueOf('nearest')
     }
 
-    def 'should have correct valueOf with tags'() {
-        def tags = [new Tags('dy', 'ny').append('rack', '1'), new Tags('dy', 'ca').append('rack', '2')];
+    def 'valueOf should throw with null name'() {
+        when:
+        ReadPreference.valueOf(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        ReadPreference.valueOf(null, asList(new TagSet(new Tag('dc', 'ny'))))
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'valueOf should throw with unexpected name'() {
+        when:
+        ReadPreference.valueOf('unknown')
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        ReadPreference.valueOf(null, asList(new TagSet(new Tag('dc', 'ny'))))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        ReadPreference.valueOf('primary', asList(new TagSet(new Tag('dc', 'ny'))))
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'should have correct valueOf with tag set list'() {
+        def tags = [new TagSet([new Tag('dy', 'ny'), new Tag('rack', '1')]), new TagSet([new Tag('dy', 'ca'), new Tag('rack', '2')])]
+
         expect:
-        ReadPreference.secondary(tags) ==  ReadPreference.valueOf('secondary', tags)
+        ReadPreference.secondary(tags) == ReadPreference.valueOf('secondary', tags)
         ReadPreference.primaryPreferred(tags) == ReadPreference.valueOf('primaryPreferred', tags)
         ReadPreference.secondaryPreferred(tags) == ReadPreference.valueOf('secondaryPreferred', tags)
         ReadPreference.nearest(tags) == ReadPreference.valueOf('nearest', tags)
-
     }
 
-    def 'should convert to correct documents'() {
+    def 'should convert read preferences with a single tag set to correct documents'() {
         expect:
         readPreference.toDocument() == document
 
         where:
-        readPreference                                      | document
-        ReadPreference.primary()                            | new BsonDocument('mode', new BsonString('primary'))
-        ReadPreference.primaryPreferred()                   | new BsonDocument('mode', new BsonString('primaryPreferred'))
-        ReadPreference.secondary()                          | new BsonDocument('mode', new BsonString('secondary'))
-        ReadPreference.secondaryPreferred()                 | new BsonDocument('mode', new BsonString('secondaryPreferred'))
-        ReadPreference.nearest()                            | new BsonDocument('mode', new BsonString('nearest'))
+        readPreference                                                     | document
+        ReadPreference.primary()                                           | new BsonDocument('mode', new BsonString('primary'))
+        ReadPreference.primaryPreferred()                                  | new BsonDocument('mode', new BsonString('primaryPreferred'))
+        ReadPreference.secondary()                                         | new BsonDocument('mode', new BsonString('secondary'))
+        ReadPreference.secondaryPreferred()                                | new BsonDocument('mode', new BsonString('secondaryPreferred'))
+        ReadPreference.nearest()                                           | new BsonDocument('mode', new BsonString('nearest'))
         ReadPreference.primaryPreferred(
-                [new Tags('dc', 'ny').append('rack', '1')]) | new BsonDocument('mode', new BsonString('primaryPreferred'))
+                new TagSet([new Tag('dc', 'ny'), new Tag('rack', '1')])) | new BsonDocument('mode', new BsonString('primaryPreferred'))
                 .append('tags', new BsonArray([new BsonDocument('dc', new BsonString('ny')).append('rack', new BsonString('1'))]))
 
         ReadPreference.secondary(
-                [new Tags('dc', 'ny').append('rack', '1')]) | new BsonDocument('mode', new BsonString('secondary'))
+                new TagSet([new Tag('dc', 'ny'), new Tag('rack', '1')])) | new BsonDocument('mode', new BsonString('secondary'))
                 .append('tags', new BsonArray([new BsonDocument('dc', new BsonString('ny')).append('rack', new BsonString('1'))]))
 
         ReadPreference.secondaryPreferred(
-                [new Tags('dc', 'ny').append('rack', '1')]) | new BsonDocument('mode', new BsonString('secondaryPreferred'))
+                new TagSet([new Tag('dc', 'ny'), new Tag('rack', '1')])) | new BsonDocument('mode', new BsonString('secondaryPreferred'))
                 .append('tags', new BsonArray([new BsonDocument('dc', new BsonString('ny')).append('rack', new BsonString('1'))]))
 
         ReadPreference.nearest(
-                [new Tags('dc', 'ny').append('rack', '1')]) | new BsonDocument('mode', new BsonString('nearest'))
+                new TagSet([new Tag('dc', 'ny'), new Tag('rack', '1')])) | new BsonDocument('mode', new BsonString('nearest'))
                 .append('tags', new BsonArray([new BsonDocument('dc', new BsonString('ny')).append('rack', new BsonString('1'))]))
 
         ReadPreference.nearest(
-                [new Tags('dc', 'ny').append('rack', '1'),
-                 new Tags('dc', 'ca').append('rack', '2')]) | new BsonDocument('mode', new BsonString('nearest'))
+                new TagSet([new Tag('dc', 'ny'), new Tag('rack', '1')])) | new BsonDocument('mode', new BsonString('nearest'))
+                .append('tags', new BsonArray([new BsonDocument('dc', new BsonString('ny')).append('rack', new BsonString('1'))]))
+    }
+
+
+    def 'should convert read preferences with a tag set list to correct documents'() {
+        expect:
+        readPreference.toDocument() == document
+
+        where:
+        readPreference                                                     | document
+        ReadPreference.primary()                                           | new BsonDocument('mode', new BsonString('primary'))
+        ReadPreference.primaryPreferred()                                  | new BsonDocument('mode', new BsonString('primaryPreferred'))
+        ReadPreference.secondary()                                         | new BsonDocument('mode', new BsonString('secondary'))
+        ReadPreference.secondaryPreferred()                                | new BsonDocument('mode', new BsonString('secondaryPreferred'))
+        ReadPreference.nearest()                                           | new BsonDocument('mode', new BsonString('nearest'))
+        ReadPreference.primaryPreferred(
+                [new TagSet([new Tag('dc', 'ny'), new Tag('rack', '1')])]) | new BsonDocument('mode', new BsonString('primaryPreferred'))
+                .append('tags', new BsonArray([new BsonDocument('dc', new BsonString('ny')).append('rack', new BsonString('1'))]))
+
+        ReadPreference.secondary(
+                [new TagSet([new Tag('dc', 'ny'), new Tag('rack', '1')])]) | new BsonDocument('mode', new BsonString('secondary'))
+                .append('tags', new BsonArray([new BsonDocument('dc', new BsonString('ny')).append('rack', new BsonString('1'))]))
+
+        ReadPreference.secondaryPreferred(
+                [new TagSet([new Tag('dc', 'ny'), new Tag('rack', '1')])]) | new BsonDocument('mode', new BsonString('secondaryPreferred'))
+                .append('tags', new BsonArray([new BsonDocument('dc', new BsonString('ny')).append('rack', new BsonString('1'))]))
+
+        ReadPreference.nearest(
+                [new TagSet([new Tag('dc', 'ny'), new Tag('rack', '1')])]) | new BsonDocument('mode', new BsonString('nearest'))
+                .append('tags', new BsonArray([new BsonDocument('dc', new BsonString('ny')).append('rack', new BsonString('1'))]))
+
+        ReadPreference.nearest(
+                [new TagSet([new Tag('dc', 'ny'), new Tag('rack', '1')]),
+                 new TagSet([new Tag('dc', 'ca'), new Tag('rack', '2')])]) | new BsonDocument('mode', new BsonString('nearest'))
                 .append('tags', new BsonArray([new BsonDocument('dc', new BsonString('ny')).append('rack', new BsonString('1')),
                                                new BsonDocument('dc', new BsonString('ca')).append('rack', new BsonString('2'))]))
     }
-
 }

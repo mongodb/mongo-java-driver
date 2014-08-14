@@ -27,23 +27,27 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * Abstract class for all preference which can be combined with tags
  */
 @Immutable
 public abstract class TaggableReadPreference extends ReadPreference {
-    private final List<Tags> tagsList = new ArrayList<Tags>();
+    private final List<TagSet> tagSetList = new ArrayList<TagSet>();
 
     TaggableReadPreference() {
     }
 
-    TaggableReadPreference(final Tags tags) {
-        tagsList.add(Tags.freeze(tags));
+    TaggableReadPreference(final TagSet tagSet) {
+        tagSetList.add(tagSet);
     }
 
-    TaggableReadPreference(final List<Tags> tagsList) {
-        for (final Tags tags : tagsList) {
-            this.tagsList.add(Tags.freeze(tags));
+    TaggableReadPreference(final List<TagSet> tagSetList) {
+        notNull("tagSetList", tagSetList);
+
+        for (final TagSet tagSet : tagSetList) {
+            this.tagSetList.add(tagSet);
         }
     }
 
@@ -55,20 +59,26 @@ public abstract class TaggableReadPreference extends ReadPreference {
     public BsonDocument toDocument() {
         BsonDocument readPrefObject = new BsonDocument("mode", new BsonString(getName()));
 
-        if (!tagsList.isEmpty()) {
+        if (!tagSetList.isEmpty()) {
             readPrefObject.put("tags", tagsListToBsonArray());
         }
 
         return readPrefObject;
     }
 
-    public List<Tags> getTagsList() {
-        return Collections.unmodifiableList(tagsList);
+    /**
+     * Gets the list of tag sets as a list of {@code TagSet} instances.
+     *
+     * @return the list of tag sets
+     * @since 2.13
+     */
+    public List<TagSet> getTagSetList() {
+        return Collections.unmodifiableList(tagSetList);
     }
 
     @Override
     public String toString() {
-        return getName() + (tagsList.isEmpty() ? "" : ": " + tagsList);
+        return getName() + (tagSetList.isEmpty() ? "" : ": " + tagSetList);
     }
 
     @Override
@@ -82,12 +92,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
         TaggableReadPreference that = (TaggableReadPreference) o;
 
-        return tagsList.equals(that.tagsList);
+        return tagSetList.equals(that.tagSetList);
     }
 
     @Override
     public int hashCode() {
-        int result = tagsList.hashCode();
+        int result = tagSetList.hashCode();
         result = 31 * result + getName().hashCode();
         return result;
     }
@@ -99,12 +109,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
         SecondaryReadPreference() {
         }
 
-        SecondaryReadPreference(final Tags tags) {
-            super(tags);
+        SecondaryReadPreference(final TagSet tagSet) {
+            super(tagSet);
         }
 
-        SecondaryReadPreference(final List<Tags> tagsList) {
-            super(tagsList);
+        SecondaryReadPreference(final List<TagSet> tagSetList) {
+            super(tagSetList);
         }
 
         @Override
@@ -115,12 +125,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
         @Override
         public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
 
-            if (getTagsList().isEmpty()) {
+            if (getTagSetList().isEmpty()) {
                 return clusterDescription.getSecondaries();
             }
 
-            for (final Tags tags : getTagsList()) {
-                List<ServerDescription> servers = clusterDescription.getSecondaries(tags);
+            for (final TagSet tagSet : getTagSetList()) {
+                List<ServerDescription> servers = clusterDescription.getSecondaries(tagSet);
                 if (!servers.isEmpty()) {
                     return servers;
                 }
@@ -139,12 +149,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
         SecondaryPreferredReadPreference() {
         }
 
-        SecondaryPreferredReadPreference(final Tags tags) {
-            super(tags);
+        SecondaryPreferredReadPreference(final TagSet tagSet) {
+            super(tagSet);
         }
 
-        SecondaryPreferredReadPreference(final List<Tags> tagsList) {
-            super(tagsList);
+        SecondaryPreferredReadPreference(final List<TagSet> tagSetList) {
+            super(tagSetList);
         }
 
         @Override
@@ -166,12 +176,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
         NearestReadPreference() {
         }
 
-        NearestReadPreference(final Tags tags) {
-            super(tags);
+        NearestReadPreference(final TagSet tagSet) {
+            super(tagSet);
         }
 
-        NearestReadPreference(final List<Tags> tagsList) {
-            super(tagsList);
+        NearestReadPreference(final List<TagSet> tagSetList) {
+            super(tagSetList);
         }
 
 
@@ -184,12 +194,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
         @Override
         public List<ServerDescription> choose(final ClusterDescription clusterDescription) {
 
-            if (getTagsList().isEmpty()) {
+            if (getTagSetList().isEmpty()) {
                 return clusterDescription.getAnyPrimaryOrSecondary();
             }
 
-            for (final Tags tags : getTagsList()) {
-                List<ServerDescription> servers = clusterDescription.getAnyPrimaryOrSecondary(tags);
+            for (final TagSet tagSet : getTagSetList()) {
+                List<ServerDescription> servers = clusterDescription.getAnyPrimaryOrSecondary(tagSet);
                 if (!servers.isEmpty()) {
                     return servers;
                 }
@@ -205,12 +215,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
         PrimaryPreferredReadPreference() {
         }
 
-        PrimaryPreferredReadPreference(final Tags tags) {
-            super(tags);
+        PrimaryPreferredReadPreference(final TagSet tagSet) {
+            super(tagSet);
         }
 
-        PrimaryPreferredReadPreference(final List<Tags> tagsList) {
-            super(tagsList);
+        PrimaryPreferredReadPreference(final List<TagSet> tagSetList) {
+            super(tagSetList);
         }
 
         @Override
@@ -227,9 +237,20 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     private BsonArray tagsListToBsonArray() {
         BsonArray bsonArray = new BsonArray();
-        for (Tags tags : tagsList) {
-            bsonArray.add(tags.toDocument());
+        for (TagSet tagSet : tagSetList) {
+            bsonArray.add(toDocument(tagSet));
         }
         return bsonArray;
     }
+
+    private BsonDocument toDocument(final TagSet tagSet) {
+        BsonDocument document = new BsonDocument();
+
+        for (Tag tag : tagSet) {
+            document.put(tag.getName(), new BsonString(tag.getValue()));
+        }
+
+        return document;
+    }
+
 }

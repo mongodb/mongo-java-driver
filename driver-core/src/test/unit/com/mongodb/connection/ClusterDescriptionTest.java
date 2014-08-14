@@ -17,7 +17,8 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
-import com.mongodb.Tags;
+import com.mongodb.Tag;
+import com.mongodb.TagSet;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,23 +51,29 @@ public class ClusterDescriptionTest {
 
     @Before
     public void setUp() throws IOException {
-        Tags tags1 = new Tags("foo", "1").append("bar", "2").append("baz", "1");
-        Tags tags2 = new Tags("foo", "1").append("bar", "2").append("baz", "2");
-        Tags tags3 = new Tags("foo", "1").append("bar", "3").append("baz", "3");
+        TagSet tags1 = new TagSet(asList(new Tag("foo", "1"),
+                                         new Tag("bar", "2"),
+                                         new Tag("baz", "1")));
+        TagSet tags2 = new TagSet(asList(new Tag("foo", "1"),
+                                         new Tag("bar", "2"),
+                                         new Tag("baz", "2")));
+        TagSet tags3 = new TagSet(asList(new Tag("foo", "1"),
+                                         new Tag("bar", "3"),
+                                         new Tag("baz", "3")));
 
         primary = builder()
                   .state(CONNECTED).address(new ServerAddress("localhost", 27017)).ok(true)
-                  .type(REPLICA_SET_PRIMARY).tags(tags1)
+                  .type(REPLICA_SET_PRIMARY).tagSet(tags1)
                   .build();
 
         secondary = builder()
                     .state(CONNECTED).address(new ServerAddress("localhost", 27018)).ok(true)
-                    .type(REPLICA_SET_SECONDARY).tags(tags2)
+                    .type(REPLICA_SET_SECONDARY).tagSet(tags2)
                     .build();
 
         otherSecondary = builder()
                          .state(CONNECTED).address(new ServerAddress("localhost", 27019)).ok(true)
-                         .type(REPLICA_SET_SECONDARY).tags(tags3)
+                         .type(REPLICA_SET_SECONDARY).tagSet(tags3)
                          .build();
         uninitiatedMember = builder()
                             .state(CONNECTED).address(new ServerAddress("localhost", 27020)).ok(true)
@@ -103,7 +110,8 @@ public class ClusterDescriptionTest {
     @Test
     public void testPrimaryOrSecondary() throws UnknownHostException {
         assertEquals(asList(primary, secondary, otherSecondary), cluster.getAnyPrimaryOrSecondary());
-        assertEquals(asList(primary, secondary), cluster.getAnyPrimaryOrSecondary(new Tags("foo", "1").append("bar", "2")));
+        assertEquals(asList(primary, secondary), cluster.getAnyPrimaryOrSecondary(new TagSet(asList(new Tag("foo", "1"),
+                                                                                                    new Tag("bar", "2")))));
     }
 
     @Test

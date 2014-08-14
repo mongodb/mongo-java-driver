@@ -17,13 +17,12 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
-import com.mongodb.Tags;
+import com.mongodb.TagSet;
 import com.mongodb.annotations.Immutable;
 
 import java.text.DecimalFormat;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -60,7 +59,7 @@ public class ServerDescription {
     private final int maxWriteBatchSize;
 
     private final int maxMessageSize;
-    private final Tags tags;
+    private final TagSet tagSet;
     private final String setName;
     private final long roundTripTimeNanos;
     private final boolean ok;
@@ -80,7 +79,7 @@ public class ServerDescription {
         private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
         private int maxWriteBatchSize = DEFAULT_MAX_WRITE_BATCH_SIZE;
-        private Tags tags = Tags.freeze(new Tags());
+        private TagSet tagSet = new TagSet();
         private String setName;
         private long roundTripTimeNanos;
         private boolean ok;
@@ -135,8 +134,8 @@ public class ServerDescription {
             return this;
         }
 
-        public Builder tags(final Tags tags) {
-            this.tags = tags == null ? Tags.freeze(new Tags()) : Tags.freeze(tags);
+        public Builder tagSet(final TagSet tagSet) {
+            this.tagSet = tagSet == null ? new TagSet() : tagSet;
             return this;
         }
 
@@ -280,8 +279,8 @@ public class ServerDescription {
         return maxWriteBatchSize;
     }
 
-    public Tags getTags() {
-        return tags;
+    public TagSet getTagSet() {
+        return tagSet;
     }
 
     public int getMinWireVersion() {
@@ -300,7 +299,7 @@ public class ServerDescription {
      * @param desiredTags the tags
      * @return true if this server has the given tags
      */
-    public boolean hasTags(final Tags desiredTags) {
+    public boolean hasTags(final TagSet desiredTags) {
         if (!ok) {
             return false;
         }
@@ -309,12 +308,7 @@ public class ServerDescription {
             return true;
         }
 
-        for (final Map.Entry<String, String> tag : desiredTags.entrySet()) {
-            if (!tag.getValue().equals(getTags().get(tag.getKey()))) {
-                return false;
-            }
-        }
-        return true;
+        return tagSet.containsAll(desiredTags);
     }
 
 
@@ -396,7 +390,7 @@ public class ServerDescription {
         if (state != that.state) {
             return false;
         }
-        if (!tags.equals(that.tags)) {
+        if (!tagSet.equals(that.tagSet)) {
             return false;
         }
         if (type != that.type) {
@@ -426,7 +420,7 @@ public class ServerDescription {
         result = 31 * result + maxDocumentSize;
         result = 31 * result + maxMessageSize;
         result = 31 * result + maxWriteBatchSize;
-        result = 31 * result + tags.hashCode();
+        result = 31 * result + tagSet.hashCode();
         result = 31 * result + (setName != null ? setName.hashCode() : 0);
         result = 31 * result + (ok ? 1 : 0);
         result = 31 * result + state.hashCode();
@@ -460,7 +454,7 @@ public class ServerDescription {
                   + ", passives=" + passives
                   + ", arbiters=" + arbiters
                   + ", primary='" + primary + '\''
-                  + ", tags=" + tags
+                  + ", tagSet=" + tagSet
                   : "")
                + '}';
     }
@@ -469,7 +463,7 @@ public class ServerDescription {
         return "{"
                + "address=" + address
                + ", type=" + type
-               + (tags.isEmpty() ? "" : tags)
+               + (tagSet.iterator().hasNext() ? "" : tagSet)
                + (state == CONNECTED ? (", roundTripTime=" + getRoundTripFormattedInMilliseconds() + " ms") : "")
                + ", state=" + state
                + '}';
@@ -491,7 +485,7 @@ public class ServerDescription {
         maxDocumentSize = builder.maxDocumentSize;
         maxMessageSize = builder.maxMessageSize;
         maxWriteBatchSize = builder.maxWriteBatchSize;
-        tags = builder.tags;
+        tagSet = builder.tagSet;
         setName = builder.setName;
         roundTripTimeNanos = builder.roundTripTimeNanos;
         ok = builder.ok;

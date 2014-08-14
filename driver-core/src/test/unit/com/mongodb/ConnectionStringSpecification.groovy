@@ -178,13 +178,14 @@ class ConnectionStringSpecification extends Specification {
         where:
         uri                                                              | readPreference
         new ConnectionString('mongodb://localhost/' +
-                                   '?readPreference=secondaryPreferred') | ReadPreference.secondaryPreferred()
+                                   '?readPreference=secondaryPreferred') | secondaryPreferred()
         new ConnectionString('mongodb://localhost/' +
                                    '?readPreference=secondaryPreferred' +
                                    '&readPreferenceTags=dc:ny,rack:1' +
                                    '&readPreferenceTags=dc:ny' +
-                                   '&readPreferenceTags=')               | secondaryPreferred([new Tags('dc', 'ny').append('rack', '1'),
-                                                                                               new Tags('dc', 'ny'),
-                                                                                               new Tags()])
+                                   '&readPreferenceTags=')               | secondaryPreferred([new TagSet(asList(new Tag('dc', 'ny'),
+                                                                                                                 new Tag('rack', '1'))),
+                                                                                               new TagSet(asList(new Tag('dc', 'ny'))),
+                                                                                               new TagSet()])
     }
 }
