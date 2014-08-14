@@ -27,7 +27,7 @@ import java.util.Map;
  * Represents credentials to authenticate to a mongo server, as well as the source of the credentials and
  * the authentication mechanism to use.
  *
- * @since 2.11.0
+ * @since 2.11
  */
 @Immutable
 public final class MongoCredential {
@@ -47,6 +47,7 @@ public final class MongoCredential {
     /**
      * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
      *
+     * @since 2.12
      * @mongodb.server.release 2.6
      */
     public static final String PLAIN_MECHANISM = "PLAIN";
@@ -54,6 +55,7 @@ public final class MongoCredential {
     /**
      * The SCRAM-SHA-1 mechanism. See the <a href="http://tools.ietf.org/html/rfc5802">RFC</a>.
      *
+     * @since 2.13
      * @mongodb.server.release 2.8
      */
     public static final String SCRAM_SHA_1_MECHANISM = "SCRAM-SHA-1";
@@ -62,6 +64,7 @@ public final class MongoCredential {
     /**
      * The MongoDB X.509
      *
+     * @since 2.12
      * @mongodb.server.release 2.6
      */
     public static final String MONGODB_X509_MECHANISM = "MONGODB-X509";
@@ -105,6 +108,7 @@ public final class MongoCredential {
      * @param userName the user name
      * @return the credential
      *
+     * @since 2.12
      * @mongodb.server.release 2.6
      */
     public static MongoCredential createMongoX509Credential(String userName) {
@@ -119,6 +123,7 @@ public final class MongoCredential {
      * @param password the non-null user password
      * @return the credential
      *
+     * @since 2.12
      * @mongodb.server.release 2.6
      */
     public static MongoCredential createPlainCredential(final String userName, final String source, final char[] password) {
@@ -133,6 +138,7 @@ public final class MongoCredential {
      * @param password the non-null user password
      * @return the credential
      *
+     * @since 2.13
      * @mongodb.server.release 2.8
      */
     public static MongoCredential createScramSha1Credential(final String userName, final String source, final char[] password) {
@@ -146,6 +152,7 @@ public final class MongoCredential {
      * @param value the value of the property
      * @param <T> the property type
      * @return the credential
+     * @since 2.12
      */
     public <T> MongoCredential withMechanismProperty(String key, T value) {
         return new MongoCredential(this, key, value);
@@ -248,6 +255,7 @@ public final class MongoCredential {
      * @param defaultValue the default value, if no mapping exists
      * @param <T> the value type
      * @return the mechanism property value
+     * @since 2.12
      */
     @SuppressWarnings("unchecked")
     public <T> T getMechanismProperty(String key, T defaultValue) {
