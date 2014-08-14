@@ -278,6 +278,13 @@ public class MapReduceCommand {
     }
 
     /**
+     * Gets the (optional) database name where the output collection should reside
+     */
+    public String getOutputDB() {
+        return this._outputDB;
+    }
+
+    /**
      * Sets the (optional) database name where the output collection should reside
      * @param outputDB
      */
