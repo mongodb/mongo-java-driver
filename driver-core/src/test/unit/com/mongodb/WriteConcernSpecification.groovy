@@ -167,7 +167,6 @@ class WriteConcernSpecification extends Specification {
             getWtimeout() == 0
             !getFsync()
             !getJ()
-            !getContinueOnError()
         }
 
         new WriteConcern.Majority(10, true, true).with {
@@ -175,7 +174,6 @@ class WriteConcernSpecification extends Specification {
             getWtimeout() == 10
             getFsync()
             getJ()
-            !getContinueOnError()
         }
     }
 }

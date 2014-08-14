@@ -70,8 +70,6 @@ public class WriteConcern implements Serializable {
     // map of the constants from above for use by fromString
     private static final Map<String, WriteConcern> NAMED_CONCERNS;
 
-    private final boolean continueOnError;
-
     private final Object w;
 
     private final int wtimeout;
@@ -238,28 +236,11 @@ public class WriteConcern implements Serializable {
      * @param j        whether writes should wait for a journaling group commit
      */
     public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j) {
-        this(w, wtimeout, fsync, j, false);
-    }
-
-    /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
-     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
-     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
-     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
-     *
-     * @param w               number of writes
-     * @param wtimeout        timeout for write operation
-     * @param fsync           whether or not to fsync
-     * @param j               whether writes should wait for a journaling group commit
-     * @param continueOnError if batch writes should continue after the first error
-     */
-    public WriteConcern(final int w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnError) {
         isTrueArgument("w >= 0", w >= 0);
         this.w = w;
         this.wtimeout = wtimeout;
         this.fsync = fsync;
         this.j = j;
-        this.continueOnError = continueOnError;
     }
 
     /**
@@ -274,42 +255,10 @@ public class WriteConcern implements Serializable {
      * @param j        whether writes should wait for a journaling group commit
      */
     public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j) {
-        this(w, wtimeout, fsync, j, false);
-    }
-
-    /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
-     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
-     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
-     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
-     *
-     * @param w               number of writes
-     * @param wtimeout        timeout for write operation
-     * @param fsync           whether or not to fsync
-     * @param j               whether writes should wait for a journaling group commit
-     * @param continueOnError if batch writes should continue after the first error
-     */
-    public WriteConcern(final String w, final int wtimeout, final boolean fsync, final boolean j, final boolean continueOnError) {
         this.w = notNull("w", w);
         this.wtimeout = wtimeout;
         this.fsync = fsync;
         this.j = j;
-        this.continueOnError = continueOnError;
-    }
-
-    /**
-     * Creates a WriteConcern based on an instance of org.mongodb.WriteConcern.
-     *
-     * @param from the write concern to copy
-     * @param continueOnError if batch writes should continue after the first error
-     *
-     */
-    private WriteConcern(final WriteConcern from, final boolean continueOnError) {
-        this.w = from.getWObject();
-        this.wtimeout = from.getWtimeout();
-        this.fsync = from.getFsync();
-        this.j = from.getJ();
-        this.continueOnError = continueOnError;
     }
 
     /**
@@ -477,15 +426,6 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Gets the "continue on error" mode
-     *
-     * @return true if set to continue on error
-     */
-    public boolean getContinueOnError() {
-        return continueOnError;
-    }
-
-    /**
      * @param w an int representation of the write concern
      * @return the WriteConcern matching the given w value
      */
@@ -523,17 +463,6 @@ public class WriteConcern implements Serializable {
         } else {
             return new WriteConcern(getWString(), getWtimeout(), getFsync(), j);
         }
-    }
-
-    /**
-     * Toggles the "continue inserts on error" mode. This only applies to server side errors. If there is a document which does not validate
-     * in the client, an exception will still be thrown in the client. This will return a new WriteConcern instance with the specified
-     * continueOnInsert value.
-     *
-     * @param continueOnError true if the operation should continue when the server continues an error
-     */
-    public WriteConcern continueOnError(final boolean continueOnError) {
-        return new WriteConcern(this, continueOnError);
     }
 
     private void addW(final BsonDocument document) {
