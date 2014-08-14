@@ -131,6 +131,9 @@ public class ReadPreferenceServerSelectionTest {
 
         pref = ReadPreference.secondary(new BasicDBObject("madeup", "1"));
         assertTrue(pref.choose(set).isEmpty());
+
+        pref = ReadPreference.secondary(asList(new TagSet(new Tag("unknown", "1")), new TagSet(new Tag("baz", "2"))));
+        assertTrue(pref.choose(set).get(0).equals(secondary));
     }
 
     @Test

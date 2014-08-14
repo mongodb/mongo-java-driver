@@ -101,7 +101,7 @@ public final class TagSet implements Iterable<Tag> {
     @Override
     public String toString() {
         return "TagSet{"
-               + "wrapped=" + wrapped
+               + wrapped
                + '}';
     }
 }

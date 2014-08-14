@@ -1,5 +1,4 @@
 package com.mongodb
-
 import spock.lang.Specification
 
 @SuppressWarnings(['DuplicateMapLiteral', 'LineLength'])
@@ -53,6 +52,12 @@ class ReadPreferenceSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+
+        when:
+        ReadPreference.valueOf('primary', new BasicDBObject('dc', 'ny'))
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should have correct valueOf with tag set list'() {
@@ -61,11 +66,6 @@ class ReadPreferenceSpecification extends Specification {
         def secondTagSetDocument = new BasicDBObject('dy', 'ca').append('rack', '2')
 
         expect:
-        ReadPreference.secondary(tags) == ReadPreference.valueOf('secondary', tags)
-        ReadPreference.primaryPreferred(tags) == ReadPreference.valueOf('primaryPreferred', tags)
-        ReadPreference.secondaryPreferred(tags) == ReadPreference.valueOf('secondaryPreferred', tags)
-        ReadPreference.nearest(tags) == ReadPreference.valueOf('nearest', tags)
-
         ReadPreference.secondary(tags) == ReadPreference.valueOf('secondary', firstTagSetDocument, secondTagSetDocument)
         ReadPreference.primaryPreferred(tags) == ReadPreference.valueOf('primaryPreferred', firstTagSetDocument, secondTagSetDocument)
         ReadPreference.secondaryPreferred(tags) == ReadPreference.valueOf('secondaryPreferred', firstTagSetDocument, secondTagSetDocument)

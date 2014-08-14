@@ -177,6 +177,8 @@ public abstract class ReadPreference {
     }
 
     /**
+     * Gets a read preference that forces read to the primary.
+     *
      * @return ReadPreference which reads from primary only
      */
     public static ReadPreference primary() {
@@ -184,6 +186,8 @@ public abstract class ReadPreference {
     }
 
     /**
+     * Gets a read preference that forces reads to the primary if available, otherwise to a secondary.
+     *
      * @return ReadPreference which reads primary if available.
      */
     public static ReadPreference primaryPreferred() {
@@ -191,6 +195,8 @@ public abstract class ReadPreference {
     }
 
     /**
+     * Gets a read preference that forces reads to a secondary.
+     *
      * @return ReadPreference which reads secondary.
      */
     public static ReadPreference secondary() {
@@ -198,6 +204,8 @@ public abstract class ReadPreference {
     }
 
     /**
+     * Gets a read preference that forces reads to a secondary if one is available, otherwise to the primary.
+     *
      * @return ReadPreference which reads secondary if available, otherwise from primary.
      */
     public static ReadPreference secondaryPreferred() {
@@ -205,16 +213,19 @@ public abstract class ReadPreference {
     }
 
     /**
-     * @return ReadPreference which reads nearest node.
+     * Gets a read preference that forces reads to a primary or a secondary.
+     *
+     * @return ReadPreference which reads nearest
      */
     public static ReadPreference nearest() {
         return _NEAREST;
     }
 
     /**
-     * Return a primary preferred read preference with the given tag set.
+     * Gets a read preference that forces reads to the primary if available, otherwise to a secondary with the given set of tags.
      *
-     * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
+     * @param tagSet the set of tags to limit the list of secondaries to.
+     * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.\
      * @since 2.13
      */
     public static TaggableReadPreference primaryPreferred(TagSet tagSet) {
@@ -222,9 +233,10 @@ public abstract class ReadPreference {
     }
 
     /**
-     * Return a secondary read preference with the given tag set.
+     * Gets a read preference that forces reads to a secondary with the given set of tags.
      *
-     * * @return ReadPreference which reads secondary respective of tags.
+     * @param tagSet the set of tags to limit the list of secondaries to
+     * @return ReadPreference which reads secondary respective of tags.
      * @since 2.13
      */
     public static TaggableReadPreference secondary(TagSet tagSet) {
@@ -232,8 +244,9 @@ public abstract class ReadPreference {
     }
 
     /**
-     * Return a secondary preferred read preference with the given tag set.
+     * Gets a read preference that forces reads to a secondary with the given set of tags, or the primary is none are available.
      *
+     * @param tagSet the set of tags to limit the list of secondaries to
      * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
      * @since 2.13
      */
@@ -242,9 +255,10 @@ public abstract class ReadPreference {
     }
 
     /**
-     * Return a nearest read preference with the given tag set.
+     * Gets a read preference that forces reads to the primary or a secondary with the given set of tags.
      *
-     * @return ReadPreference which reads nearest respective of tags
+     * @param tagSet the set of tags to limit the list of secondaries to
+     * @return ReadPreference which reads nearest node respective of tags.
      * @since 2.13
      */
     public static TaggableReadPreference nearest(TagSet tagSet) {
@@ -252,8 +266,11 @@ public abstract class ReadPreference {
     }
 
     /**
-     * Return a primary preferred read preference with the given list of tag sets.
+     * Gets a read preference that forces reads to the primary if available, otherwise to a secondary with one of the given sets of tags.
+     * The driver will look for a secondary with each tag set in the given list, stopping after one is found,
+     * or failing if no secondary can be found that matches any of the tag sets in the list.
      *
+     * @param tagSetList the list of tag sets to limit the list of secondaries to
      * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
      * @since 2.13
      */
@@ -262,8 +279,11 @@ public abstract class ReadPreference {
     }
 
     /**
-     * Return a secondary read preference with the given list of tag sets.
+     * Gets a read preference that forces reads to a secondary with one of the given sets of tags.
+     * The driver will look for a secondary with each tag set in the given list, stopping after one is found,
+     * or failing if no secondary can be found that matches any of the tag sets in the list.
      *
+     * @param tagSetList the list of tag sets to limit the list of secondaries to
      * @return ReadPreference which reads secondary respective of tags.
      * @since 2.13
      */
@@ -272,8 +292,11 @@ public abstract class ReadPreference {
     }
 
     /**
-     * Return a secondary preferred read preference with the given list of tag sets.
+     * Gets a read preference that forces reads to a secondary with one of the given sets of tags.
+     * The driver will look for a secondary with each tag set in the given list, stopping after one is found,
+     * or the primary if none are available.
      *
+     * @param tagSetList the list of tag sets to limit the list of secondaries to
      * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
      * @since 2.13
      */
@@ -282,9 +305,12 @@ public abstract class ReadPreference {
     }
 
     /**
-     * Return a nearest read preference with the given list of tag sets.
+     * Gets a read preference that forces reads to the primary or a secondary with one of the given sets of tags.
+     * The driver will look for a secondary with each tag set in the given list, stopping after one is found,
+     * or the primary if none are available.
      *
-     * @return ReadPreference which reads nearest respective of tags
+     * @param tagSetList the list of tag sets to limit the list of secondaries to
+     * @return ReadPreference which reads nearest node respective of tags.
      * @since 2.13
      */
     public static TaggableReadPreference nearest(List<TagSet> tagSetList) {
@@ -373,6 +399,7 @@ public abstract class ReadPreference {
      * @param name the name of the read preference
      * @param tagSetList the list of tag sets
      * @return the taggable read preference
+     * @since 2.13
      */
     public static TaggableReadPreference valueOf(String name, List<TagSet> tagSetList) {
         if (name == null) {
@@ -380,6 +407,10 @@ public abstract class ReadPreference {
         }
 
         name = name.toLowerCase();
+
+        if (name.equals(PRIMARY.getName().toLowerCase())) {
+            throw new IllegalArgumentException("Primary read preference can not also specify tag sets");
+        }
 
         if (name.equals(_SECONDARY.getName().toLowerCase())) {
             return secondary(tagSetList);
