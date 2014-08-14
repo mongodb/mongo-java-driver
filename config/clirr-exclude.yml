@@ -193,6 +193,10 @@ members:
   - getContinueOnErrorForInsert()                 # JAVA-939
   - raiseNetworkErrors()
   - getCommand()                                  # JAVA-1335
+  - getContinueOnError()                                               # JAVA-1363
+  - continueOnError(boolean)                                           # JAVA-1363
+  - WriteConcern(int,int,boolean,boolean,boolean)                      # JAVA-1363
+  - WriteConcern(java.lang.String,int,boolean,boolean,boolean)         # JAVA-1363
 
   com.mongodb.MapReduceOutput:
   - getCommandResult()                                          # JAVA-1042
@@ -308,8 +312,3 @@ members:
   com.mongodb.MongoException$DuplicateKey:
   - MongoException$DuplicateKey(com.mongodb.CommandResult)     # JAVA-1379
 
-  com.mongodb.WriteConcern:
-  - getContinueOnError()                                               # JAVA-1363
-  - continueOnError(boolean)                                           # JAVA-1363
-  - WriteConcern(int, int, boolean, boolean, boolean) {                # JAVA-1363
-  - WriteConcern(java.lang.String, int, boolean, boolean, boolean)     # JAVA-1363
