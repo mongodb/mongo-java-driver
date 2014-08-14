@@ -33,7 +33,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * Represents credentials to authenticate to a mongo server,as well as the source of the credentials and the authentication mechanism to
  * use.
  *
- * @since 2.11.0
+ * @since 2.11
  */
 @Immutable
 public final class MongoCredential {
@@ -59,6 +59,7 @@ public final class MongoCredential {
     /**
      * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
      *
+     * @since 2.12
      * @mongodb.server.release 2.6
      */
     public static final String PLAIN_MECHANISM = AuthenticationMechanism.PLAIN.getMechanismName();
@@ -66,6 +67,7 @@ public final class MongoCredential {
     /**
      * The MongoDB X.509
      *
+     * @since 2.12
      * @mongodb.server.release 2.6
      */
     public static final String MONGODB_X509_MECHANISM = AuthenticationMechanism.MONGODB_X509.getMechanismName();
@@ -88,6 +90,7 @@ public final class MongoCredential {
      * @param userName the user name
      * @return the credential
      *
+     * @since 2.12
      * @mongodb.server.release 2.6
      */
     public static MongoCredential createMongoX509Credential(final String userName) {
@@ -102,6 +105,7 @@ public final class MongoCredential {
      * @param password the non-null user password
      * @return the credential
      *
+     * @since 2.12
      * @mongodb.server.release 2.6
      */
     public static MongoCredential createPlainCredential(final String userName, final String source, final char[] password) {
@@ -131,6 +135,7 @@ public final class MongoCredential {
      * @param value the value of the property
      * @param <T>   the property type
      * @return the credential
+     * @since 2.12
      */
     public <T> MongoCredential withMechanismProperty(final String key, final T value) {
         return new MongoCredential(this, key, value);
@@ -193,6 +198,7 @@ public final class MongoCredential {
      * Gets the mechanism
      *
      * @return the mechanism.
+     * @since 3.0
      */
     public AuthenticationMechanism getAuthenticationMechanism() {
         return mechanism;
@@ -235,6 +241,7 @@ public final class MongoCredential {
      * @param defaultValue the default value, if no mapping exists
      * @param <T>          the value type
      * @return the mechanism property value
+     * @since 2.12
      */
     @SuppressWarnings("unchecked")
     public <T> T getMechanismProperty(final String key, final T defaultValue) {
