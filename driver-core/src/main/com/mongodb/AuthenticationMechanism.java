@@ -43,7 +43,12 @@ public enum AuthenticationMechanism {
     /**
      * The MongoDB Challenge Response mechanism.
      */
-    MONGODB_CR("MONGODB-CR");
+    MONGODB_CR("MONGODB-CR"),
+
+    /**
+     * The SCRAM-SHA-1 mechanism.  See the <a href="http://tools.ietf.org/html/rfc5802">RFC</a>.
+     */
+    SCRAM_SHA_1("SCRAM-SHA-1");
 
     private static final Map<String, AuthenticationMechanism> AUTH_MAP = new HashMap<String, AuthenticationMechanism>();
     private final String mechanismName;

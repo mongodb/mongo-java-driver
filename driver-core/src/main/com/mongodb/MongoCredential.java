@@ -27,6 +27,7 @@ import static com.mongodb.AuthenticationMechanism.GSSAPI;
 import static com.mongodb.AuthenticationMechanism.MONGODB_CR;
 import static com.mongodb.AuthenticationMechanism.MONGODB_X509;
 import static com.mongodb.AuthenticationMechanism.PLAIN;
+import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -73,6 +74,14 @@ public final class MongoCredential {
     public static final String MONGODB_X509_MECHANISM = AuthenticationMechanism.MONGODB_X509.getMechanismName();
 
     /**
+     * The SCRAM-SHA-1 Mechanism.
+     *
+     * @since 2.13
+     * @mongodb.server.release 2.8
+     */
+    public static final String SCRAM_SHA_1_MECHANISM = AuthenticationMechanism.SCRAM_SHA_1.getMechanismName();
+
+    /**
      * Creates a MongoCredential instance for the MongoDB Challenge Response protocol.
      *
      * @param userName the user name
@@ -112,7 +121,6 @@ public final class MongoCredential {
         return new MongoCredential(PLAIN, userName, source, password);
     }
 
-
     /**
      * Creates a MongoCredential instance for the GSSAPI SASL mechanism.  To override the default service name of {@code "mongodb"}, add a
      * mechanism property with the name {@code "SERVICE_NAME"}. To force canonicalization of the host name prior to authentication, add a
@@ -126,6 +134,21 @@ public final class MongoCredential {
      */
     public static MongoCredential createGSSAPICredential(final String userName) {
         return new MongoCredential(GSSAPI, userName, "$external", null);
+    }
+
+    /**
+     * Creates a MongoCredential instance for the SCRAM-SHA-1 SASL mechanism.
+     *
+     * @param userName the user name
+     * @param database the database where the user is defined
+     * @param password the user's password
+     * @return the credential
+     *
+     * @since 2.13
+     * @mongodb.server.release 2.8
+     */
+    public static MongoCredential createScramSha1Credential(final String userName, final String database, final char[] password) {
+        return new MongoCredential(SCRAM_SHA_1, userName, database, password);
     }
 
     /**
@@ -154,7 +177,7 @@ public final class MongoCredential {
         this.userName = notNull("userName", userName);
         this.source = notNull("source", source);
 
-        if ((mechanism == PLAIN || mechanism == MONGODB_CR) && password == null) {
+        if ((mechanism == PLAIN || mechanism == MONGODB_CR || mechanism == SCRAM_SHA_1) && password == null) {
             throw new IllegalArgumentException("Password can not be null for " + mechanism + " mechanism");
         }
 

@@ -65,6 +65,10 @@ public abstract class RequestMessage {
         buffer.writeInt(opCode.getValue());
     }
 
+    public static int getCurrentGlobalId() {
+        return REQUEST_ID.get();
+    }
+
     public int getId() {
         return id;
     }

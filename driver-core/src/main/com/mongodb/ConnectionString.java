@@ -35,6 +35,7 @@ import static com.mongodb.AuthenticationMechanism.GSSAPI;
 import static com.mongodb.AuthenticationMechanism.MONGODB_CR;
 import static com.mongodb.AuthenticationMechanism.MONGODB_X509;
 import static com.mongodb.AuthenticationMechanism.PLAIN;
+import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
 import static java.lang.String.format;
 
 
@@ -435,6 +436,8 @@ public class ConnectionString {
             return MongoCredential.createMongoCRCredential(userName, authSource, password);
         } else if (mechanism == MONGODB_X509) {
             return MongoCredential.createMongoX509Credential(userName);
+        } else if (mechanism == SCRAM_SHA_1) {
+            return MongoCredential.createScramSha1Credential(userName, authSource, password);
         } else {
             throw new UnsupportedOperationException("Unsupported authentication mechanism in the URI: " + mechanism);
         }

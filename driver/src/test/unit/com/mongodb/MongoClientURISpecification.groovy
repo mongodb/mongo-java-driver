@@ -22,6 +22,7 @@ import static com.mongodb.MongoCredential.createGSSAPICredential
 import static com.mongodb.MongoCredential.createMongoCRCredential
 import static com.mongodb.MongoCredential.createMongoX509Credential
 import static com.mongodb.MongoCredential.createPlainCredential
+import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.ReadPreference.secondaryPreferred
 
 class MongoClientURISpecification extends Specification {
@@ -166,6 +167,8 @@ class MongoClientURISpecification extends Specification {
         new MongoClientURI('mongodb://jeff@localhost/?' +
                            'authMechanism=GSSAPI' +
                            '&gssapiServiceName=foo')          | createGSSAPICredential('jeff').withMechanismProperty('SERVICE_NAME', 'foo')
+        new MongoClientURI('mongodb://jeff:123@localhost/?' +
+                           'authMechanism=SCRAM-SHA-1')       | createScramSha1Credential('jeff', 'admin', '123'.toCharArray())
     }
 
     @Unroll

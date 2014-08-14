@@ -241,6 +241,8 @@ class InternalStreamConnection implements InternalConnection {
                 return new PlainAuthenticator(credential, this);
             case MONGODB_X509:
                 return new X509Authenticator(credential, this);
+            case SCRAM_SHA_1:
+                return new ScramSha1Authenticator(credential, this);
             default:
                 throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());
         }

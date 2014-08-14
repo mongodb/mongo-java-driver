@@ -22,6 +22,7 @@ import spock.lang.Specification
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_CR
 import static com.mongodb.AuthenticationMechanism.PLAIN
+import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1
 
 class MongoCredentialSpecification extends Specification {
     def 'creating a challenge-response credential should populate correct fields'() {
@@ -90,6 +91,41 @@ class MongoCredentialSpecification extends Specification {
 
         when:
         MongoCredential.createPlainCredential('user', null, 'pwd'.toCharArray());
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'creating a SCRAM_SHA_1 credential should populate all required fields'() {
+        given:
+        AuthenticationMechanism mechanism = SCRAM_SHA_1;
+        String userName = 'user';
+        String source = 'admin';
+        char[] password = 'pwd'.toCharArray();
+
+        when:
+        MongoCredential credential = MongoCredential.createScramSha1Credential(userName, source, password);
+
+        then:
+        userName == credential.getUserName()
+        source == credential.getSource()
+        password == credential.getPassword()
+        mechanism == credential.getAuthenticationMechanism()
+        MongoCredential.SCRAM_SHA_1_MECHANISM == credential.getMechanism()
+    }
+
+    def 'should throw IllegalArgumentException when a required field is not passed in for the SCRAM_SHA_1 mechanism'() {
+        when:
+        MongoCredential.createScramSha1Credential(null, 'admin', 'pwd'.toCharArray());
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        MongoCredential.createScramSha1Credential('user', 'admin', null);
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        MongoCredential.createScramSha1Credential('user', null, 'pwd'.toCharArray());
         then:
         thrown(IllegalArgumentException)
     }
