@@ -19,9 +19,20 @@ package org.bson
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DecoderContext
 import org.bson.types.ObjectId
+import spock.lang.Shared
 import spock.lang.Specification
 
 class BsonDocumentReaderSpecification extends Specification {
+
+    @Shared BsonDocument nullDoc
+
+    def setup() {
+        nullDoc = new BsonDocument([
+                new BsonElement('null', new BsonNull())
+        ])
+    }
+
+
     def 'should read all types'() {
         given:
         def doc = new BsonDocument(
@@ -50,12 +61,38 @@ class BsonDocumentReaderSpecification extends Specification {
                         new BsonElement('document', new BsonDocument('a', new BsonInt32(1)))
                 ])
 
-
         when:
         def decodedDoc = new BsonDocumentCodec().decode(new BsonDocumentReader(doc), DecoderContext.builder().build())
 
         then:
         decodedDoc == doc
+    }
+
+    def 'should fail, ReadBSONType can only be called when State is TYPE, not VALUE'() {
+        given:
+        def reader = new BsonDocumentReader(nullDoc)
+
+        when:
+        reader.readStartDocument()
+        reader.readBsonType()
+        reader.readName()
+        reader.readBsonType()
+
+        then:
+        thrown(BsonInvalidOperationException)
+    }
+
+    def 'should fail, ReadBSONType can only be called when State is TYPE, not NAME'() {
+        given:
+        def reader = new BsonDocumentReader(nullDoc)
+
+        when:
+        reader.readStartDocument()
+        reader.readBsonType()
+        reader.readBsonType()
+
+        then:
+        thrown(BsonInvalidOperationException)
     }
 
 

@@ -169,6 +169,10 @@ public class BsonDocumentReader extends AbstractBsonReader {
             return getCurrentBsonType();
         }
 
+        if (getState() != State.TYPE) {
+            throwInvalidState("ReadBSONType", State.TYPE);
+        }
+
         switch (getContext().getContextType()) {
             case ARRAY:
                 currentValue = getContext().getNextValue();
