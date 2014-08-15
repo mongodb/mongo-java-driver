@@ -19,7 +19,6 @@ package com.mongodb.connection;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
-import com.mongodb.protocol.message.RequestMessage;
 import org.bson.io.InputBuffer;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,9 +43,7 @@ public class X509AuthenticatorUnitTest {
 
     @Test
     public void testFailedAuthentication() {
-        int currentRequestId = RequestMessage.getCurrentGlobalId();
         ResponseBuffers authenticateReply = MessageHelper.buildSuccessfulReply(
-                currentRequestId,
                 "{ok: 0}");
 
         connection.enqueueReply(authenticateReply);
@@ -61,9 +58,7 @@ public class X509AuthenticatorUnitTest {
 
     @Test
     public void testSuccessfulAuthentication() {
-        int currentRequestId = RequestMessage.getCurrentGlobalId();
         ResponseBuffers authenticateReply = MessageHelper.buildSuccessfulReply(
-                currentRequestId,
                 "{ok: 1}");
 
         connection.enqueueReply(authenticateReply);

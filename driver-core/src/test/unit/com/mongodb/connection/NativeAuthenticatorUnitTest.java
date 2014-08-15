@@ -19,7 +19,6 @@ package com.mongodb.connection;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
-import com.mongodb.protocol.message.RequestMessage;
 import org.bson.io.InputBuffer;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,12 +42,9 @@ public class NativeAuthenticatorUnitTest {
 
     @Test
     public void testFailedAuthentication() {
-        int currentRequestId = RequestMessage.getCurrentGlobalId();
         ResponseBuffers nonceReply = MessageHelper.buildSuccessfulReply(
-                currentRequestId,
                 "{nonce: \"2375531c32080ae8\", ok: 1}");
         ResponseBuffers authenticateReply = MessageHelper.buildSuccessfulReply(
-                currentRequestId + 1,
                 "{ok: 0}");
 
         connection.enqueueReply(nonceReply);
@@ -64,12 +60,9 @@ public class NativeAuthenticatorUnitTest {
 
     @Test
     public void testSuccessfulAuthentication() {
-        int currentRequestId = RequestMessage.getCurrentGlobalId();
         ResponseBuffers nonceReply = MessageHelper.buildSuccessfulReply(
-                currentRequestId,
                 "{nonce: \"2375531c32080ae8\", ok: 1}");
         ResponseBuffers authenticateReply = MessageHelper.buildSuccessfulReply(
-                currentRequestId + 1,
                 "{ok: 1}");
 
         connection.enqueueReply(nonceReply);

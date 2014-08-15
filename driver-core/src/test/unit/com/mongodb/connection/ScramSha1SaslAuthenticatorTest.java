@@ -19,7 +19,6 @@ package com.mongodb.connection;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
-import com.mongodb.protocol.message.RequestMessage;
 import org.bson.io.InputBuffer;
 import org.junit.Before;
 import org.junit.Test;
@@ -50,7 +49,6 @@ public class ScramSha1SaslAuthenticatorTest {
     @Test
     public void testAuthenticateThrowsWhenServerProvidesAnInvalidRValue() {
         ResponseBuffers invalidRValueReply = MessageHelper.buildSuccessfulReply(
-                RequestMessage.getCurrentGlobalId(),
                 "{conversationId: 1, "
                         + "payload: BinData(0,cj1meWtvLWQybGJiRmdPTlJ2OXFreGRhd0xIbytWZ2s3cXZVT0t"
                         + "Vd3VXTElXZzRsLzlTcmFHTUhFRSxzPXJROVpZM01udEJldVAzRTFURFZDNHc9PSxpPTEwMDAw), "
@@ -68,16 +66,13 @@ public class ScramSha1SaslAuthenticatorTest {
 
     @Test
     public void testAuthenticateThrowsWhenServerProvidesInvalidServerSignature() {
-        int currentRequestId = RequestMessage.getCurrentGlobalId();
         ResponseBuffers firstReply = MessageHelper.buildSuccessfulReply(
-                currentRequestId,
                 "{conversationId: 1, "
                         + "payload: BinData(0,cj1meWtvK2QybGJiRmdPTlJ2OXFreGRhd0xIbytWZ2s3cXZVT0tVd3"
                         + "VXTElXZzRsLzlTcmFHTUhFRSxzPXJROVpZM01udEJldVAzRTFURFZDNHc9PSxpPTEwMDAw), "
                         + "done: false, "
                         + "ok: 1}");
         ResponseBuffers invalidServerSignatureReply = MessageHelper.buildSuccessfulReply(
-                currentRequestId + 1,
                 "{conversationId: 1, "
                         + "payload: BinData(0,dj1VTVdlSTI1SkQxeU5ZWlJNcFo0Vkh2aFo5ZTBh), "
                         + "done: false, "
@@ -96,22 +91,18 @@ public class ScramSha1SaslAuthenticatorTest {
 
     @Test
     public void testSuccessfulAuthentication() {
-        int currentRequestId = RequestMessage.getCurrentGlobalId();
         ResponseBuffers firstReply = MessageHelper.buildSuccessfulReply(
-                currentRequestId,
                 "{conversationId: 1, "
                         + "payload: BinData(0,cj1meWtvK2QybGJiRmdPTlJ2OXFreGRhd0xIbytWZ2s3cXZVT0tVd3VXTE"
                         + "lXZzRsLzlTcmFHTUhFRSxzPXJROVpZM01udEJldVAzRTFURFZDNHc9PSxpPTEwMDAw), "
                         + "done: false, "
                         + "ok: 1}");
         ResponseBuffers secondReply = MessageHelper.buildSuccessfulReply(
-                currentRequestId + 1,
                 "{conversationId: 1, "
                         + "payload: BinData(0,dj1VTVdlSTI1SkQxeU5ZWlJNcFo0Vkh2aFo5ZTA9), "
                         + "done: false, "
                         + "ok: 1}");
         ResponseBuffers thirdReply = MessageHelper.buildSuccessfulReply(
-                currentRequestId + 2,
                 "{conversationId: 1, "
                         + "done: true, "
                         + "ok: 1}");

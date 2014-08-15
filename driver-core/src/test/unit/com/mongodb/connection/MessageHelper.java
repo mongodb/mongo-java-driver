@@ -24,6 +24,10 @@ final class MessageHelper {
     private MessageHelper() {
     }
 
+    public static ResponseBuffers buildSuccessfulReply(final String json) {
+        return buildSuccessfulReply(0, json);
+    }
+
     public static ResponseBuffers buildSuccessfulReply(final int responseTo, final String json) {
         ByteBuf body = encodeJson(json);
         body.flip();

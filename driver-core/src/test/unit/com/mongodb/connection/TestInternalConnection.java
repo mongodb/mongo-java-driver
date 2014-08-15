@@ -24,15 +24,16 @@ import org.bson.io.BasicInputBuffer;
 import org.bson.io.InputBuffer;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 class TestInternalConnection implements InternalConnection {
     private final ServerAddress address;
     private final BufferProvider bufferProvider;
     private final String id;
-    private final Queue<ResponseBuffers> replies;
+    private final Deque<ResponseBuffers> replies;
     private final List<InputBuffer> sent;
 
     public TestInternalConnection(final String id, final ServerAddress address) {
@@ -76,7 +77,29 @@ class TestInternalConnection implements InternalConnection {
         }
 
         combined.flip();
+
+        ResponseBuffers nextToReceive = replies.removeFirst();
+        ReplyHeader header = replaceResponseTo(nextToReceive.getReplyHeader(), lastRequestId);
+        replies.addFirst(new ResponseBuffers(header, nextToReceive.getBodyByteBuffer()));
+
         sent.add(new BasicInputBuffer(new ByteBufNIO(combined)));
+    }
+
+    private ReplyHeader replaceResponseTo(final ReplyHeader header, final int responseTo) {
+        ByteBuffer headerByteBuffer = ByteBuffer.allocate(36);
+        headerByteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        headerByteBuffer.putInt(header.getMessageLength());
+        headerByteBuffer.putInt(header.getRequestId());
+        headerByteBuffer.putInt(responseTo);
+        headerByteBuffer.putInt(1);
+        headerByteBuffer.putInt(header.getResponseFlags());
+        headerByteBuffer.putLong(header.getCursorId());
+        headerByteBuffer.putInt(header.getStartingFrom());
+        headerByteBuffer.putInt(header.getNumberReturned());
+        headerByteBuffer.flip();
+
+        BasicInputBuffer headerInputBuffer = new BasicInputBuffer(new ByteBufNIO(headerByteBuffer));
+        return new ReplyHeader(headerInputBuffer);
     }
 
     @Override
@@ -84,6 +107,7 @@ class TestInternalConnection implements InternalConnection {
         if (this.replies.isEmpty()) {
             throw new MongoException("Test was not setup properly as too many calls to receiveMessage occured.");
         }
+
         return this.replies.remove();
     }
 

@@ -18,7 +18,6 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
-import com.mongodb.protocol.message.RequestMessage;
 import org.bson.io.InputBuffer;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,9 +40,7 @@ public class PlainAuthenticatorUnitTest {
 
     @Test
     public void testSuccessfulAuthentication() {
-        int currentRequestId = RequestMessage.getCurrentGlobalId();
         ResponseBuffers reply = MessageHelper.buildSuccessfulReply(
-                currentRequestId,
                 "{conversationId: 1, "
                         + "done: true, "
                         + "ok: 1}");
