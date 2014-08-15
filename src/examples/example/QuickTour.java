@@ -48,11 +48,14 @@ public class QuickTour {
         // connect to the local database server
         MongoClient mongoClient = new MongoClient();
 
+        /*
+        // Authenticate - optional
+        MongoCredential credential = MongoCredential.createMongoCRCredential(userName, database, password);
+        MongoClient mongoClient = new MongoClient(new ServerAddress(), Arrays.asList(credential));
+        */
+
         // get handle to "mydb"
         DB db = mongoClient.getDB("mydb");
-
-        // Authenticate - optional
-        // boolean auth = db.authenticate("foo", "bar");
 
         // get a list of the collections in this database and print them out
         Set<String> collectionNames = db.getCollectionNames();

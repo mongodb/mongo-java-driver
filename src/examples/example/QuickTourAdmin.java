@@ -32,8 +32,11 @@ public class QuickTourAdmin {
         // connect to the local database server 
         MongoClient mongoClient = new MongoClient();
 
+        /*
         // Authenticate - optional
-        // boolean auth = db.authenticate("foo", "bar");
+        MongoCredential credential = MongoCredential.createMongoCRCredential(userName, database, password);
+        MongoClient mongoClient = new MongoClient(new ServerAddress(), Arrays.asList(credential));
+        */
 
         // get db names
         for (String s : mongoClient.getDatabaseNames()) {
