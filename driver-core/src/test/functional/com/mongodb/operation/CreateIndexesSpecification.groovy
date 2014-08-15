@@ -16,10 +16,12 @@
 
 package com.mongodb.operation
 import category.Async
+import com.mongodb.DuplicateKeyException
 import com.mongodb.MongoServerException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
+import org.mongodb.Document
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
@@ -27,6 +29,7 @@ import static com.mongodb.operation.OrderBy.ASC
 
 class CreateIndexesSpecification extends OperationFunctionalSpecification {
     def idIndex = ['_id': 1]
+    def x1 = ['x': 1]
     def field1Index = ['field': 1]
     def field2Index = ['field2': 1]
     def xyIndex = ['x.y': 1]
@@ -98,7 +101,7 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
         getIndexes()*.get('key') containsAll(idIndex, field1Index, field2Index)
     }
 
-    def 'should be able to handle duplicated indexes'() {
+    def 'should be able to handle duplicated indexes in the same array'() {
         given:
         def index = Index.builder().addKey('field', ASC).build()
         def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index, index])
@@ -111,8 +114,7 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    def 'should be able to handle duplicated indexes asynchronously'() {
-
+    def 'should be able to handle duplicated indexes asynchronously in the same array'() {
         given:
         def index = Index.builder().addKey('field', ASC).build()
         def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index, index])
@@ -122,6 +124,33 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
 
         then:
         getIndexes()*.get('key') containsAll(idIndex, field1Index)
+    }
+
+    def 'should be able to handle duplicate key errors when indexing'() {
+        given:
+        getCollectionHelper().insertDocuments(x1 as Document, x1 as Document)
+        def index = Index.builder().addKey('field', ASC).unique().build()
+        def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index])
+
+        when:
+        createIndexesOperation.execute(getBinding())
+
+        then:
+        thrown(DuplicateKeyException)
+    }
+
+    @Category(Async)
+    def 'should be able to handle duplicate key errors when indexing asynchronously'() {
+        given:
+        getCollectionHelper().insertDocuments(x1 as Document, x1 as Document)
+        def index = Index.builder().addKey('field', ASC).unique().build()
+        def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index])
+
+        when:
+        createIndexesOperation.executeAsync(getAsyncBinding()).get()
+
+        then:
+        thrown(DuplicateKeyException)
     }
 
     def 'should throw when trying to build an invalid index'() {
