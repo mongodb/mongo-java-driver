@@ -301,6 +301,59 @@ public class DBCollectionTest extends TestCase {
     }
 
     @Test
+    public void testCreateIndexByName() {
+        DBCollection c = collection;
+
+        c.save(new BasicDBObject("x", 1));
+        assertEquals(1, c.getIndexInfo().size());
+
+        c.createIndex("x");
+        assertEquals( 2 , c.getIndexInfo().size() );
+        DBObject indexInfo = c.getIndexInfo().get(1);
+        assertEquals("x_1", indexInfo.get("name"));
+    }
+
+    @Test
+    public void testCreateIndexByKeys() {
+        DBCollection c = collection;
+
+        c.save(new BasicDBObject("x", 1));
+        assertEquals(1, c.getIndexInfo().size());
+
+        c.createIndex(new BasicDBObject("x", 1));
+        assertEquals( 2 , c.getIndexInfo().size() );
+        DBObject indexInfo = c.getIndexInfo().get(1);
+        assertEquals("x_1", indexInfo.get("name"));
+    }
+
+    @Test
+    public void testCreateIndexByKeysName() {
+        DBCollection c = collection;
+
+        c.save(new BasicDBObject("x", 1));
+        assertEquals(1, c.getIndexInfo().size());
+
+        c.createIndex(new BasicDBObject("x", 1), "zulu");
+        assertEquals( 2 , c.getIndexInfo().size() );
+        DBObject indexInfo = c.getIndexInfo().get(1);
+        assertEquals("zulu", indexInfo.get("name"));
+    }
+
+    @Test
+    public void testCreateIndexByKeysNameUnique() {
+        DBCollection c = collection;
+
+        c.save(new BasicDBObject("x", 1));
+        assertEquals(1, c.getIndexInfo().size());
+
+        c.createIndex(new BasicDBObject("x", 1), "zulu", true);
+        assertEquals( 2 , c.getIndexInfo().size() );
+        DBObject indexInfo = c.getIndexInfo().get(1);
+        assertEquals("zulu", indexInfo.get("name"));
+        assertTrue((Boolean) indexInfo.get("unique"));
+    }
+
+    @Test
     public void testEnsureIndex(){
         DBCollection c = collection;
 

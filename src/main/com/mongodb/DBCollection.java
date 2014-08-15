@@ -551,7 +551,7 @@ public abstract class DBCollection {
 
     /**
      * Atomically modify and return a single document. By default, the returned document does not include the modifications made on the
-     * update.  Ccalls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean,
+     * update.  Calls {@link DBCollection#findAndModify(com.mongodb.DBObject, com.mongodb.DBObject, com.mongodb.DBObject, boolean,
      * com.mongodb.DBObject, boolean, boolean)} with fields=null, sort=null, remove=true, returnNew=false, upsert=false
      *
      * @param query specifies the selection criteria for the modification
@@ -566,7 +566,18 @@ public abstract class DBCollection {
     // --- START INDEX CODE ---
 
     /**
-     * Calls {@link DBCollection#createIndex(com.mongodb.DBObject, com.mongodb.DBObject)} with default index options
+     * Forces creation of an ascending index on a field with the default options.
+     *
+     * @param name name of field to index on
+     * @throws MongoException
+     * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
+     */
+    public void createIndex( final String name ){
+        createIndex( new BasicDBObject( name , 1 ) );
+    }
+
+    /**
+     * Forces creation of an index on a set of fields with the default options, if one does not already exist.
      *
      * @param keys a document that contains pairs with the name of the field or fields to index and order of the index
      * @throws MongoException
@@ -591,6 +602,36 @@ public abstract class DBCollection {
     /**
      * Forces creation of an index on a set of fields, if one does not already exist.
      *
+     * @param keys   a document that contains pairs with the name of the field or fields to index and order of the index
+     * @param name   an identifier for the index. If null or empty, the default name will be used.
+     * @throws MongoException
+     * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
+     */
+    public void createIndex( DBObject keys , String name ){
+        createIndex( keys , name,  false);
+    }
+
+    /**
+     * Forces creation of an index on a set of fields, if one does not already exist.
+     *
+     * @param keys   a document that contains pairs with the name of the field or fields to index and order of the index
+     * @param name   an identifier for the index. If null or empty, the default name will be used.
+     * @param unique if the index should be unique
+     * @throws MongoException
+     * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
+     */
+    public void createIndex( DBObject keys , String name , boolean unique ){
+        DBObject options = defaultOptions( keys );
+        if (name != null && name.length()>0)
+            options.put( "name" , name );
+        if ( unique )
+            options.put( "unique" , Boolean.TRUE );
+        createIndex( keys , options );
+    }
+
+    /**
+     * Forces creation of an index on a set of fields, if one does not already exist.
+     *
      * @param keys    a document that contains pairs with the name of the field or fields to index and order of the index
      * @param options a document that controls the creation of the index.
      * @param encoder specifies the encoder that used during operation
@@ -607,7 +648,7 @@ public abstract class DBCollection {
      * @param name name of field to index on
      * @throws MongoException
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
-     * @deprecated use {@link DBCollection#createIndex(DBObject)} instead
+     * @deprecated use {@link DBCollection#createIndex(String)} instead
      */
     @Deprecated
     public void ensureIndex( final String name ){
@@ -649,7 +690,7 @@ public abstract class DBCollection {
      * @param unique if the index should be unique
      * @throws MongoException
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
-     * @deprecated use {@link DBCollection#createIndex(DBObject, DBObject)} instead
+     * @deprecated use {@link DBCollection#createIndex(DBObject, String, boolean)} instead
      */
     @Deprecated
     public void ensureIndex( DBObject keys , String name , boolean unique ){
