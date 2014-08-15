@@ -273,7 +273,7 @@ public class MapReduceCommand {
      *               map and reduce functions.
      * @since 2.13
      */
-    public void setJsMode(boolean jsMode ){
+    public void setJsMode(Boolean jsMode ){
         _jsMode = jsMode;
     }
 
@@ -298,7 +298,9 @@ public class MapReduceCommand {
         cmd.put("mapreduce", _input);
         cmd.put("map", _map);
         cmd.put("reduce", _reduce);
-        cmd.put("verbose", _verbose);
+
+        if (_verbose != null)
+            cmd.put("verbose", _verbose);
 
         BasicDBObject out = new BasicDBObject();
         switch(_outputType) {
@@ -334,7 +336,7 @@ public class MapReduceCommand {
         if (_scope != null)
             cmd.put("scope", _scope);
 
-        if (_jsMode)
+        if (_jsMode != null)
             cmd.put("jsMode", _jsMode);
 
         if (_extra != null) {
@@ -405,5 +407,5 @@ public class MapReduceCommand {
     Boolean _verbose = true;
     DBObject _extra;
     private long _maxTimeMS;
-    Boolean _jsMode = false;
+    Boolean _jsMode;
 }

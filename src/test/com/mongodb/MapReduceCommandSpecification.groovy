@@ -46,7 +46,7 @@ class MapReduceCommandSpecification extends FunctionalSpecification {
         field               | value                     | expected
         'finalize'          | cmd.getFinalize()         | null
         'input'             | cmd.getInput()            | getClass().getName()
-        'jsMode'            | cmd.getJsMode()           | false
+        'jsMode'            | cmd.getJsMode()           | null
         'limit'             | cmd.getLimit()            | 0
         'map'               | cmd.getMap()              | 'map'
         'maxTime'           | cmd.getMaxTime(SECONDS)   | 0
