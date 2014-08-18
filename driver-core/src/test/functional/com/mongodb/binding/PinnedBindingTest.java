@@ -64,10 +64,14 @@ public class PinnedBindingTest {
 
         readConnectionSource = binding.getReadConnectionSource();
         connection = readConnectionSource.getConnection();
-        assertEquals(serverAddress, connection.getServerAddress());
-        connection.release();
-        readConnectionSource.release();
+        try {
+            assertEquals(serverAddress, connection.getServerAddress());
+        } finally {
+            connection.release();
+            readConnectionSource.release();
+        }
     }
+
     @Test
     public void shouldPinReadsToSameConnectionAsAPreviousWrite() throws InterruptedException {
         ConnectionSource writeSource = binding.getWriteConnectionSource();
@@ -75,12 +79,14 @@ public class PinnedBindingTest {
 
         ConnectionSource readSource = binding.getReadConnectionSource();
         Connection readConnection = readSource.getConnection();
-        assertEquals(writeConnection.getId(), readConnection.getId());
-
-        writeConnection.release();
-        readConnection.release();
-        writeSource.release();
-        readSource.release();
+        try {
+            assertEquals(writeConnection.getId(), readConnection.getId());
+        } finally {
+            writeConnection.release();
+            readConnection.release();
+            writeSource.release();
+            readSource.release();
+        }
     }
 
     @Test
