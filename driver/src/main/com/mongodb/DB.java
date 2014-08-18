@@ -463,7 +463,9 @@ public class DB {
      * @return the result of executing this operation
      * @throws MongoException
      * @mongodb.driver.manual administration/security-access-control/  Access Control
-     * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
+     * @mongodb.driver.manual reference/command/createUser createUser
+     * @mongodb.driver.manual reference/command/updateUser updateUser
+     * @deprecated Use {@code DB.command} to call either the createUser or updateUser command
      */
     @Deprecated
     public WriteResult addUser(final String userName, final char[] password) {
@@ -479,7 +481,9 @@ public class DB {
      * @return the result of executing this operation
      * @throws MongoException
      * @mongodb.driver.manual administration/security-access-control/  Access Control
-     * @deprecated Use {@code DB.command} to call either the addUser or updateUser command
+     * @mongodb.driver.manual reference/command/createUser createUser
+     * @mongodb.driver.manual reference/command/updateUser updateUser
+     * @deprecated Use {@code DB.command} to call either the createUser or updateUser command
      */
     @Deprecated
     public WriteResult addUser(final String userName, final char[] password, final boolean readOnly) {
