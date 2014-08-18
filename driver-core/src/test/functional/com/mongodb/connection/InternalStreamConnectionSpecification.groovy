@@ -39,6 +39,7 @@ import org.bson.io.BasicOutputBuffer
 import org.bson.io.OutputBuffer
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions
 
@@ -606,6 +607,7 @@ class InternalStreamConnectionSpecification extends Specification {
         pool.shutdown()
     }
 
+    @IgnoreIf({ javaVersion < 1.7 })
     @Category([Async, Slow])
     def 'the connection pipelining should be thread safe asynchronously'() {
         given:
@@ -629,13 +631,18 @@ class InternalStreamConnectionSpecification extends Specification {
 
         then:
         (1..100000).each { n ->
+            def conds = new AsyncConditions()
             def (buffers, messageId, sndCallbck, rcvdCallbck, fSndResult, fRespBuffers) = helper.isMasterAsync(new CountDownLatch(1),
                                                                                                                new CountDownLatch(1))
 
             pool.submit( { connection.sendMessageAsync(buffers, messageId, sndCallbck) } as Runnable )
-            pool.submit( { connection.receiveMessageAsync(messageId, rcvdCallbck) } as Runnable )
-
-            assert fRespBuffers.get().replyHeader.responseTo == messageId
+            pool.submit( {
+                connection.receiveMessageAsync(messageId, rcvdCallbck)
+                conds.evaluate {
+                    assert fRespBuffers.get().replyHeader.responseTo == messageId
+                }
+                } as Runnable )
+            conds.await(10)
         }
 
         cleanup:
