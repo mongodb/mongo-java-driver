@@ -67,11 +67,7 @@ public class MapReduce {
      * @param reduceFunction a JavaScript function that “reduces” to a single object all the values associated with a particular key.
      */
     public MapReduce(final BsonJavaScript mapFunction, final BsonJavaScript reduceFunction) {
-        this.mapFunction = mapFunction;
-        this.reduceFunction = reduceFunction;
-        this.inline = true;
-
-        this.output = null;
+        this(mapFunction, reduceFunction, null);
     }
 
     /**
@@ -231,4 +227,74 @@ public class MapReduce {
                + ", maxTimeMS" + maxTimeMS
                + '}';
     }
+
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final MapReduce mapReduce = (MapReduce) o;
+
+        if (inline != mapReduce.inline) {
+            return false;
+        }
+        if (jsMode != mapReduce.jsMode) {
+            return false;
+        }
+        if (limit != mapReduce.limit) {
+            return false;
+        }
+        if (maxTimeMS != mapReduce.maxTimeMS) {
+            return false;
+        }
+        if (verbose != mapReduce.verbose) {
+            return false;
+        }
+        if (filter != null ? !filter.equals(mapReduce.filter) : mapReduce.filter != null) {
+            return false;
+        }
+        if (finalizeFunction != null ? !finalizeFunction.equals(mapReduce.finalizeFunction) : mapReduce.finalizeFunction != null) {
+            return false;
+        }
+        if (mapFunction != null ? !mapFunction.equals(mapReduce.mapFunction) : mapReduce.mapFunction != null) {
+            return false;
+        }
+        if (output != null ? !output.equals(mapReduce.output) : mapReduce.output != null) {
+            return false;
+        }
+        if (reduceFunction != null ? !reduceFunction.equals(mapReduce.reduceFunction) : mapReduce.reduceFunction != null) {
+            return false;
+        }
+        if (scope != null ? !scope.equals(mapReduce.scope) : mapReduce.scope != null) {
+            return false;
+        }
+        if (sortCriteria != null ? !sortCriteria.equals(mapReduce.sortCriteria) : mapReduce.sortCriteria != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = mapFunction != null ? mapFunction.hashCode() : 0;
+        result = 31 * result + (reduceFunction != null ? reduceFunction.hashCode() : 0);
+        result = 31 * result + (output != null ? output.hashCode() : 0);
+        result = 31 * result + (inline ? 1 : 0);
+        result = 31 * result + (finalizeFunction != null ? finalizeFunction.hashCode() : 0);
+        result = 31 * result + (scope != null ? scope.hashCode() : 0);
+        result = 31 * result + (filter != null ? filter.hashCode() : 0);
+        result = 31 * result + (sortCriteria != null ? sortCriteria.hashCode() : 0);
+        result = 31 * result + limit;
+        result = 31 * result + (jsMode ? 1 : 0);
+        result = 31 * result + (verbose ? 1 : 0);
+        result = 31 * result + (int) (maxTimeMS ^ (maxTimeMS >>> 32));
+        return result;
+    }
+
 }

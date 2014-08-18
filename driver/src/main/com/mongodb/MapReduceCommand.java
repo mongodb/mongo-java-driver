@@ -46,8 +46,8 @@ public class MapReduceCommand {
     private int limit;
     private long maxTimeMS;
     private Map<String, Object> scope;
+    private Boolean jsMode;
     private Boolean verbose;
-    private DBObject extraOptions;
 
     /**
      * Represents the command for a map reduce operation Runs the command in REPLACE output type to a named collection
@@ -245,6 +245,31 @@ public class MapReduceCommand {
     }
 
     /**
+     * Gets the (optional) JavaScript mode
+     *
+     * @return The JavaScript mode
+     */
+    public Boolean getJsMode(){
+        return jsMode;
+    }
+
+    /**
+     * Sets the (optional) JavaScript Mode
+     *
+     * @param jsMode Specifies whether to convert intermediate data into BSON format between the execution of the map and reduce functions
+     */
+    public void setJsMode(final Boolean jsMode){
+        this.jsMode = jsMode;
+    }
+
+    /**
+     * Gets the (optional) database name where the output collection should reside
+     */
+    public String getOutputDB() {
+        return this.outputDB;
+    }
+
+    /**
      * Sets the (optional) database name where the output collection should reside
      *
      * @param outputDB the name of the database to send the Map Reduce output to
@@ -259,7 +284,10 @@ public class MapReduceCommand {
         cmd.put("mapreduce", mapReduce);
         cmd.put("map", map);
         cmd.put("reduce", reduce);
-        cmd.put("verbose", verbose);
+
+        if (verbose != null) {
+            cmd.put("verbose", verbose);
+        }
 
         BasicDBObject out = new BasicDBObject();
         switch (outputType) {
@@ -303,22 +331,15 @@ public class MapReduceCommand {
             cmd.put("scope", scope);
         }
 
-        if (extraOptions != null) {
-            cmd.putAll(extraOptions);
+        if (jsMode != null) {
+            cmd.put("jsMode", jsMode);
+        }
+
+        if (maxTimeMS != 0) {
+            cmd.put("maxTimeMS", maxTimeMS);
         }
 
         return cmd;
-    }
-
-    public void addExtraOption(final String name, final Object value) {
-        if (extraOptions == null) {
-            extraOptions = new BasicDBObject();
-        }
-        extraOptions.put(name, value);
-    }
-
-    public DBObject getExtraOptions() {
-        return extraOptions;
     }
 
     /**
@@ -400,6 +421,10 @@ public class MapReduceCommand {
 
         if (sort != null) {
             mapReduce.sort(new BsonDocumentWrapper<DBObject>(sort, codec));
+        }
+
+        if (jsMode != null) {
+            mapReduce.jsMode();
         }
 
         mapReduce.limit(limit);

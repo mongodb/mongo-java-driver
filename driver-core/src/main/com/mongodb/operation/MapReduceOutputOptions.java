@@ -132,6 +132,46 @@ public class MapReduceOutputOptions {
         return nonAtomic;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final MapReduceOutputOptions that = (MapReduceOutputOptions) o;
+
+        if (nonAtomic != that.nonAtomic) {
+            return false;
+        }
+        if (sharded != that.sharded) {
+            return false;
+        }
+        if (action != that.action) {
+            return false;
+        }
+        if (!collectionName.equals(that.collectionName)) {
+            return false;
+        }
+        if (databaseName != null ? !databaseName.equals(that.databaseName) : that.databaseName != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = collectionName.hashCode();
+        result = 31 * result + action.hashCode();
+        result = 31 * result + (databaseName != null ? databaseName.hashCode() : 0);
+        result = 31 * result + (sharded ? 1 : 0);
+        result = 31 * result + (nonAtomic ? 1 : 0);
+        return result;
+    }
+
     /**
      * This option is only available when passing out a collection that already exists. This option is not available on secondary members of
      * replica sets.  The Enum values dictate what to do with the output collection if it already exists when the map reduce is run.
