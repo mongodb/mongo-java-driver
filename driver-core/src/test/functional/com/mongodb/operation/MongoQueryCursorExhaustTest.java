@@ -49,6 +49,8 @@ public class MongoQueryCursorExhaustTest extends FunctionalTest {
 
     @Before
     public void setUp() {
+        assumeFalse(isSharded());
+
         super.setUp();
 
         for (int i = 0; i < 1000; i++) {
@@ -65,15 +67,17 @@ public class MongoQueryCursorExhaustTest extends FunctionalTest {
 
     @After
     public void tearDown() {
-        exhaustConnection.release();
-        readConnectionSource.release();
+        if (exhaustConnection != null) {
+            exhaustConnection.release();
+        }
+        if (readConnectionSource != null) {
+            readConnectionSource.release();
+        }
         super.tearDown();
     }
 
     @Test
     public void testExhaustReadAllDocuments() {
-        assumeFalse(isSharded());
-
         MongoQueryCursor<Document> cursor = new MongoQueryCursor<Document>(getNamespace(), firstBatch, 0, 0,
                                                                            new DocumentCodec(), exhaustConnection);
 
@@ -88,7 +92,6 @@ public class MongoQueryCursorExhaustTest extends FunctionalTest {
 
     @Test
     public void testExhaustCloseBeforeReadingAllDocuments() {
-        assumeFalse(isSharded());
         SingleConnectionBinding singleConnectionBinding = new SingleConnectionBinding(exhaustConnection);
         ConnectionSource source = singleConnectionBinding.getReadConnectionSource();
         Connection connection = source.getConnection();

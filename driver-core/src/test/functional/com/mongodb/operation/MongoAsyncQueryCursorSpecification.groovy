@@ -117,7 +117,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         documentResultList == documentList
 
         cleanup:
-        connection.release()
+        connection?.release()
     }
 
     def 'Cursor should support Exhaust and limit'() {
@@ -137,7 +137,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         documentResultList == documentList[0..4]
 
         cleanup:
-        connection.release()
+        connection?.release()
     }
 
     def 'Cursor should support Exhaust and Discard'() {
@@ -159,11 +159,11 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         [[_id: 1]] == docs
 
         cleanup:
-        connection.release()
-        readConnectionSource.release()
+        connection?.release()
+        readConnectionSource?.release()
     }
 
-    def 'Cursor should support early termination'() {
+    def 'exhaust cursor should support early termination'() {
         assumeFalse(isSharded())
 
         setup:
@@ -183,8 +183,8 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         block.getIterations() == 1
 
         cleanup:
-        connection.release()
-        source.release()
+        connection?.release()
+        source?.release()
     }
 
     @Category(Slow)
@@ -224,7 +224,9 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         source.release()
     }
 
-    def 'should get Exceptions for operations on the cursor after closing'() throws InterruptedException {
+    def 'should get Exceptions for operations on the exhause cursor after closing'() throws InterruptedException {
+        assumeFalse(isSharded())
+
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = source.getConnection().get()
@@ -242,8 +244,8 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         thrown(IllegalStateException)
 
         cleanup:
-        connection.release()
-        source.release()
+        connection?.release()
+        source?.release()
     }
 
     private static Document getOrderedByIdQuery() {
