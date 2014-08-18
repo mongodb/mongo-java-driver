@@ -623,9 +623,8 @@ class InternalStreamConnectionSpecification extends Specification {
 
         then:
         (1..100000).each { n ->
-            def sndLatch = new CountDownLatch(1)
-            def rcvdLatch = new CountDownLatch(1)
-            def (buffers, messageId, sndCallbck, rcvdCallbck, fSndResult, fRespBuffers) = helper.isMasterAsync(sndLatch, rcvdLatch)
+            def (buffers, messageId, sndCallbck, rcvdCallbck, fSndResult, fRespBuffers) = helper.isMasterAsync(new CountDownLatch(1),
+                                                                                                               new CountDownLatch(1))
 
             pool.submit( { connection.sendMessageAsync(buffers, messageId, sndCallbck) } as Runnable )
             pool.submit( { connection.receiveMessageAsync(messageId, rcvdCallbck) } as Runnable )

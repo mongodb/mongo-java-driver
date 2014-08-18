@@ -284,6 +284,12 @@ class StreamPipeline {
         }
 
         private void onSuccess(final ResponseBuffers responseBuffers) {
+
+            if (responseBuffers == null) {
+                callback.onResult(null, new MongoException("Unexpected empty response buffers"));
+                return;
+            }
+
             try {
                 connectionListener.messageReceived(new ConnectionMessageReceivedEvent(clusterId,
                                                                                       stream.getAddress(),
