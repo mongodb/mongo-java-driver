@@ -51,6 +51,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 import static MongoNamespace.COMMAND_COLLECTION_NAME
+import static java.util.concurrent.TimeUnit.SECONDS
 
 @SuppressWarnings(['UnusedVariable'])
 class InternalStreamConnectionSpecification extends Specification {
@@ -225,13 +226,13 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.sendMessageAsync(buffers3, messageId3, sndCallbck3)
 
         then:
-        sndLatch.await()
+        sndLatch.await(10, SECONDS)
 
         when:
         connection.receiveMessageAsync(messageId3, rcvdCallbck3)
         connection.receiveMessageAsync(messageId2, rcvdCallbck2)
         connection.receiveMessageAsync(messageId1, rcvdCallbck1)
-        rcvdLatch.await()
+        rcvdLatch.await(10, SECONDS)
 
         then:
         fRespBuffers1.get().replyHeader.responseTo == messageId1
@@ -272,13 +273,13 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.sendMessage(buffers3, messageId3)
 
         then:
-        sndLatch.await()
+        sndLatch.await(10, SECONDS)
 
         when:
         connection.receiveMessageAsync(messageId3, rcvdCallbck3)
         ResponseBuffers responseBuffers2 = connection.receiveMessage(messageId2)
         connection.receiveMessageAsync(messageId1, rcvdCallbck1)
-        rcvdLatch.await()
+        rcvdLatch.await(10, SECONDS)
 
         then:
         fRespBuffers1.get().replyHeader.responseTo == messageId1
@@ -334,19 +335,19 @@ class InternalStreamConnectionSpecification extends Specification {
         when:
         connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
         connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
-        sndLatch.await()
+        sndLatch.await(10, SECONDS)
 
         then:
         connection.isClosed()
 
         when:
-        fSndResult1.get()
+        fSndResult1.get(10, SECONDS)
 
         then:
         thrown MongoInternalException
 
         when:
-        fSndResult2.get()
+        fSndResult2.get(10, SECONDS)
 
         then:
         thrown MongoSocketClosedException
@@ -405,19 +406,19 @@ class InternalStreamConnectionSpecification extends Specification {
         when:
         connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
         connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
-        sndLatch.await()
+        sndLatch.await(10, SECONDS)
 
         then:
         connection.isClosed()
 
         when:
-        fSndResult1.get()
+        fSndResult1.get(10, SECONDS)
 
         then:
         thrown MongoSocketWriteException
 
         when:
-        fSndResult2.get()
+        fSndResult2.get(10, SECONDS)
 
         then:
         thrown MongoSocketClosedException
@@ -483,24 +484,24 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
 
         then:
-        sndLatch.await()
+        sndLatch.await(10, SECONDS)
 
         when:
         connection.receiveMessageAsync(messageId1, rcvdCallbck1)
         connection.receiveMessageAsync(messageId2, rcvdCallbck2)
-        rcvdLatch.await()
+        rcvdLatch.await(10, SECONDS)
 
         then:
         connection.isClosed()
 
         when:
-        fRespBuffers1.get()
+        fRespBuffers1.get(10, SECONDS)
 
         then:
         thrown MongoSocketReadException
 
         when:
-        fRespBuffers2.get()
+        fRespBuffers2.get(10, SECONDS)
 
         then:
         thrown MongoSocketClosedException
@@ -564,7 +565,7 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
 
         then:
-        sndLatch.await()
+        sndLatch.await(10, SECONDS)
 
         when:
         connection.receiveMessageAsync(messageId1, rcvdCallbck1)
@@ -575,13 +576,13 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.isClosed()
 
         when:
-        fRespBuffers1.get()
+        fRespBuffers1.get(10, SECONDS)
 
         then:
         thrown MongoSocketReadException
 
         when:
-        fRespBuffers2.get()
+        fRespBuffers2.get(10, SECONDS)
 
         then:
         thrown MongoSocketClosedException
