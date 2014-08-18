@@ -26,14 +26,14 @@ import java.util.EventListener;
 public interface ConnectionListener extends EventListener {
 
     /**
-     * Publish a connection message received event.
+     * Publish a connection opened event.
      *
      * @param event the event
      */
     void connectionOpened(ConnectionEvent event);
 
     /**
-     * Publish a connection message received event.
+     * Publish a connection message closed event.
      *
      * @param event the event
      */

@@ -40,8 +40,10 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
 
     @Override
     public InternalConnection create(final ServerAddress serverAddress) {
-        return new InternalStreamConnection(clusterId, streamFactory.create(serverAddress), credentialList,
-                                            connectionListener);
+        Stream stream = streamFactory.create(serverAddress);
+        ConnectionInitializer connectionInitializer = new PipelinedConnectionInitializer(clusterId, stream, credentialList,
+                                                                                         connectionListener);
+        return new InternalStreamConnection(clusterId, stream, connectionInitializer, connectionListener);
     }
 
 }

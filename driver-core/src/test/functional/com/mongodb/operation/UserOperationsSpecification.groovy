@@ -17,16 +17,24 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoNamespace
 import com.mongodb.MongoSecurityException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.connection.ClusterSettings
+import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionPoolSettings
 import com.mongodb.connection.DefaultClusterFactory
 import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SocketStreamFactory
+import com.mongodb.protocol.message.CommandMessage
+import com.mongodb.protocol.message.MessageSettings
 import com.mongodb.selector.PrimaryServerSelector
+import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.io.BasicOutputBuffer
+import org.bson.io.OutputBuffer
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 
@@ -35,6 +43,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSSLSettings
 import static com.mongodb.MongoCredential.createMongoCRCredential
+import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -87,6 +96,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         when:
         def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
         def connection = server.getConnection()
+        sendMessage(connection)
 
         then:
         connection
@@ -106,6 +116,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         when:
         def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
         def connection = server.getConnection()
+        sendMessage(connection)
 
         then:
         connection
@@ -124,7 +135,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
 
         when:
         def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
-        server.getConnection()
+        sendMessage(server.getConnection())
 
         then:
         thrown(MongoSecurityException)
@@ -142,7 +153,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
 
         when:
         def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
-        server.getConnection()
+        sendMessage(server.getConnection())
 
         then:
         thrown(MongoSecurityException)
@@ -162,6 +173,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         when:
         def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
         def connection = server.getConnection()
+        sendMessage(connection)
 
         then:
         connection
@@ -184,6 +196,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         when:
         def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
         def connection = server.getConnection()
+        sendMessage(connection)
 
         then:
         connection
@@ -262,5 +275,15 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
                 ServerSettings.builder().build(),
                 ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
                 streamFactory, streamFactory, asList(user.credential), null, null, null)
+    }
+
+    def sendMessage(Connection connection) {
+        def command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME).getFullName(),
+                                         new BsonDocument('ismaster', new BsonInt32(1)),
+                                         EnumSet.noneOf(QueryFlag),
+                                         MessageSettings.builder().build());
+        OutputBuffer buffer = new BasicOutputBuffer();
+        command.encode(buffer);
+        connection.sendMessage(buffer.byteBuffers, command.getId())
     }
 }

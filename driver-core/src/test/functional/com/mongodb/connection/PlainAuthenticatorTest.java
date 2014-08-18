@@ -42,9 +42,8 @@ public class PlainAuthenticatorTest {
         userName = System.getProperty("org.mongodb.test.userName");
         source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
-        internalConnection = new InternalStreamConnection("1", streamFactory.create(new ServerAddress(host)),
-                                                          Collections.<MongoCredential>emptyList(),
-                                                          new NoOpConnectionListener());
+        internalConnection = new InternalStreamConnectionFactory("1", streamFactory, Collections.<MongoCredential>emptyList(),
+                                                                 new NoOpConnectionListener()).create(new ServerAddress(host));
     }
 
     @After
@@ -56,8 +55,7 @@ public class PlainAuthenticatorTest {
     public void testSuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(MongoCredential.createPlainCredential(userName, source,
                                                                                                         password.toCharArray()),
-                                                                  internalConnection
-        );
+                                                                                                        internalConnection);
         authenticator.authenticate();
     }
 
@@ -65,8 +63,7 @@ public class PlainAuthenticatorTest {
     public void testUnsuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(MongoCredential.createPlainCredential(userName, source,
                                                                                                         "wrong".toCharArray()),
-                                                                  internalConnection
-        );
+                                                                                                         internalConnection);
         authenticator.authenticate();
     }
 }

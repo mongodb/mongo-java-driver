@@ -179,7 +179,7 @@ class DefaultServer implements ClusterableServer {
         public ResponseBuffers receiveMessage(final int responseTo) {
             isTrue("open", getCount() > 0);
             try {
-                ResponseBuffers responseBuffers = wrapped.receiveMessage();
+                ResponseBuffers responseBuffers = wrapped.receiveMessage(responseTo);
                 if (responseBuffers.getReplyHeader().getResponseTo() != responseTo) {
                     throw new MongoInternalException(format("The responseTo (%d) in the reply message does not match the "
                                                             + "requestId (%d) in the request message",
@@ -201,7 +201,7 @@ class DefaultServer implements ClusterableServer {
         @Override
         public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
             isTrue("open", getCount() > 0);
-            wrapped.receiveMessageAsync(callback);
+            wrapped.receiveMessageAsync(responseTo, callback);
         }
 
         @Override

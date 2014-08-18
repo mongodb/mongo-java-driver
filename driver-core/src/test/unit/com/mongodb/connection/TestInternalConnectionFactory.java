@@ -58,7 +58,7 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         }
 
         @Override
-        public ResponseBuffers receiveMessage() {
+        public ResponseBuffers receiveMessage(final int responseTo) {
             return null;
         }
 
@@ -67,7 +67,7 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         }
 
         @Override
-        public void receiveMessageAsync(final SingleResultCallback<ResponseBuffers> callback) {
+        public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
         }
 
         @Override

@@ -103,7 +103,7 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
-    public ResponseBuffers receiveMessage() {
+    public ResponseBuffers receiveMessage(final int responseTo) {
         if (this.replies.isEmpty()) {
             throw new MongoException("Test was not setup properly as too many calls to receiveMessage occured.");
         }
@@ -118,9 +118,9 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
-    public void receiveMessageAsync(final SingleResultCallback<ResponseBuffers> callback) {
+    public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
         try {
-            ResponseBuffers buffers = receiveMessage();
+            ResponseBuffers buffers = receiveMessage(responseTo);
             callback.onResult(buffers, null);
         } catch (MongoException ex) {
             callback.onResult(null, ex);

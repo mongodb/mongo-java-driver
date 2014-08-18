@@ -69,9 +69,9 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
-    public ResponseBuffers receiveMessage() {
+    public ResponseBuffers receiveMessage(final int responseTo) {
         isTrue("open", !isClosed());
-        ResponseBuffers responseBuffers = wrapped.receiveMessage();
+        ResponseBuffers responseBuffers = wrapped.receiveMessage(responseTo);
         lastUsedAt = System.currentTimeMillis();
         return responseBuffers;
     }
@@ -84,10 +84,10 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
-    public void receiveMessageAsync(final SingleResultCallback<ResponseBuffers> callback) {
+    public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
         isTrue("open", !isClosed());
         lastUsedAt = System.currentTimeMillis();
-        wrapped.receiveMessageAsync(callback);
+        wrapped.receiveMessageAsync(responseTo, callback);
     }
 
     @Override

@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
 package com.mongodb.connection
 
 import com.mongodb.ServerAddress
@@ -66,7 +62,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
 
         when:
-        connection.receiveMessage()
+        connection.receiveMessage(1)
 
         then:
         connection.lastUsedAt <= System.currentTimeMillis()
