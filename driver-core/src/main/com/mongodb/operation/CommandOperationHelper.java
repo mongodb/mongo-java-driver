@@ -402,7 +402,7 @@ final class CommandOperationHelper {
 
     static void rethrowIfNotNamespaceError(final CommandFailureException e) {
         String message = e.getErrorMessage();
-        if (!message.startsWith("ns not found") && !(message.matches("Collection \\[(.*)\\] not found."))) {
+        if (!message.contains("ns not found")) {
             throw e;
         }
     }
