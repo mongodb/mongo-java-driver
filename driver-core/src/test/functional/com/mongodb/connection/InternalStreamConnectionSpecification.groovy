@@ -98,6 +98,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
+    @IgnoreIf( { javaVersion < 1.7 } )
     def 'should fire message sent event asynchronously'() {
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
@@ -137,6 +138,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
+    @IgnoreIf( { javaVersion < 1.7 } )
     def 'should fire message received event asynchronously'() {
         given:
         stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
@@ -191,6 +193,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
+    @IgnoreIf( { javaVersion < 1.7 } )
     def 'should handle out of order messages on the stream asynchronously'() {
         // Connect then: SendAsync(1), SendAsync(2), SendAsync(3), ReceiveAsync(3), ReceiveAsync(2), ReceiveAsync(1)
         given:
@@ -239,6 +242,8 @@ class InternalStreamConnectionSpecification extends Specification {
         ordered << [true, false]
     }
 
+    @Category(Async)
+    @IgnoreIf( { javaVersion < 1.7 } )
     def 'should handle out of order messages on the stream mixed synchronicity'() {
         // Connect then: Send(1), SendAsync(2), Send(3), ReceiveAsync(3), Receive(2), ReceiveAsync(1)
         given:
@@ -304,6 +309,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
+    @IgnoreIf( { javaVersion < 1.7 } )
     def 'failed initialization should close the connection and fail asynchronously'() {
         given:
         stream.writeAsync(_, _) >>  { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
@@ -369,6 +375,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
+    @IgnoreIf( { javaVersion < 1.7 } )
     def 'failed writes should close the connection and fail asynchronously'() {
         given:
         int seen = 0
@@ -442,6 +449,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
+    @IgnoreIf( { javaVersion < 1.7 } )
     def 'failed reads (header) should close the stream and fail asynchronously'() {
         given:
         int seen = 0
@@ -524,6 +532,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
+    @IgnoreIf( { javaVersion < 1.7 } )
     def 'failed reads (body) should close the stream and fail asynchronously'() {
         given:
         int seen = 0
@@ -607,8 +616,8 @@ class InternalStreamConnectionSpecification extends Specification {
         pool.shutdown()
     }
 
-    @IgnoreIf({ javaVersion < 1.7 })
     @Category([Async, Slow])
+    @IgnoreIf( { javaVersion < 1.7 } )
     def 'the connection pipelining should be thread safe asynchronously'() {
         given:
         int threads = 10
@@ -631,17 +640,19 @@ class InternalStreamConnectionSpecification extends Specification {
 
         then:
         (1..100000).each { n ->
+            def sndLatch = new CountDownLatch(1)
+            def rcvLatch = new CountDownLatch(1)
             def conds = new AsyncConditions()
-            def (buffers, messageId, sndCallbck, rcvdCallbck, fSndResult, fRespBuffers) = helper.isMasterAsync(new CountDownLatch(1),
-                                                                                                               new CountDownLatch(1))
+            def (buffers, messageId, sndCallbck, rcvdCallbck, fSndResult, fRespBuffers) = helper.isMasterAsync(sndLatch, rcvLatch)
 
             pool.submit( { connection.sendMessageAsync(buffers, messageId, sndCallbck) } as Runnable )
             pool.submit( {
-                connection.receiveMessageAsync(messageId, rcvdCallbck)
-                conds.evaluate {
-                    assert fRespBuffers.get().replyHeader.responseTo == messageId
-                }
-                } as Runnable )
+                            connection.receiveMessageAsync(messageId, rcvdCallbck)
+                            conds.evaluate {
+                                assert fRespBuffers.get().replyHeader.responseTo == messageId
+                            }
+                        } as Runnable
+            )
             conds.await(10)
         }
 
