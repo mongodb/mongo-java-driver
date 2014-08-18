@@ -333,6 +333,8 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testSettingACommentInsertsCommentIntoProfileCollectionWhenProfilingIsTurnedOn() {
+        assumeFalse(isSharded());
+
         // given
         database.command(new BasicDBObject("profile", 2));
         String expectedComment = "test comment";
