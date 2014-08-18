@@ -96,6 +96,7 @@ class InternalStreamConnectionSpecification extends Specification {
         1 * listener.messagesSent(_)
     }
 
+    @Category(Async)
     def 'should fire message sent event asynchronously'() {
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
@@ -188,6 +189,7 @@ class InternalStreamConnectionSpecification extends Specification {
         ordered << [true, false]
     }
 
+    @Category(Async)
     def 'should handle out of order messages on the stream asynchronously'() {
         // Connect then: SendAsync(1), SendAsync(2), SendAsync(3), ReceiveAsync(3), ReceiveAsync(2), ReceiveAsync(1)
         given:
@@ -300,6 +302,7 @@ class InternalStreamConnectionSpecification extends Specification {
         thrown MongoSocketClosedException
     }
 
+    @Category(Async)
     def 'failed initialization should close the connection and fail asynchronously'() {
         given:
         stream.writeAsync(_, _) >>  { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
@@ -364,6 +367,7 @@ class InternalStreamConnectionSpecification extends Specification {
         thrown MongoSocketClosedException
     }
 
+    @Category(Async)
     def 'failed writes should close the connection and fail asynchronously'() {
         given:
         int seen = 0
@@ -436,6 +440,7 @@ class InternalStreamConnectionSpecification extends Specification {
         thrown MongoSocketClosedException
     }
 
+    @Category(Async)
     def 'failed reads (header) should close the stream and fail asynchronously'() {
         given:
         int seen = 0
@@ -517,6 +522,7 @@ class InternalStreamConnectionSpecification extends Specification {
         thrown MongoSocketClosedException
     }
 
+    @Category(Async)
     def 'failed reads (body) should close the stream and fail asynchronously'() {
         given:
         int seen = 0
@@ -600,7 +606,7 @@ class InternalStreamConnectionSpecification extends Specification {
         pool.shutdown()
     }
 
-    @Category(Slow)
+    @Category([Async, Slow])
     def 'the connection pipelining should be thread safe asynchronously'() {
         given:
         int threads = 10
