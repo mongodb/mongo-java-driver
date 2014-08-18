@@ -26,19 +26,19 @@ final class MapReduceHelper {
     }
 
     private static int getInputCount(final CommandResult commandResult) {
-        return commandResult.getResponse().getDocument("counts").getInt32("input").getValue();
+        return commandResult.getResponse().getDocument("counts").getNumber("input").intValue();
     }
 
     private static int getOutputCount(final CommandResult commandResult) {
-        return commandResult.getResponse().getDocument("counts").getInt32("output").getValue();
+        return commandResult.getResponse().getDocument("counts").getNumber("output").intValue();
     }
 
     private static int getEmitCount(final CommandResult commandResult) {
-        return commandResult.getResponse().getDocument("counts").getInt32("emit").getValue();
+        return commandResult.getResponse().getDocument("counts").getNumber("emit").intValue();
     }
 
     private static int getDuration(final CommandResult commandResult) {
-        return commandResult.getResponse().getInt32("timeMillis").getValue();
+        return commandResult.getResponse().getNumber("timeMillis").intValue();
     }
 
     private MapReduceHelper() {
