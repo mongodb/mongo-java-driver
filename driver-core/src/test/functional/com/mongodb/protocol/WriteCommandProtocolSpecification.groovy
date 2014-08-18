@@ -29,7 +29,6 @@ import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
 
 import static com.mongodb.ClusterFixture.getCluster
-import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
@@ -88,7 +87,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
 
         then:
         def e = thrown(BulkWriteException)
-        e.serverAddress == getPrimary()
+        e.serverAddress == connection.getServerAddress()
         e.writeErrors.size() == 2
         e.writeResult != null
         e.writeResult.insertedCount == 0;
@@ -200,7 +199,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
 
         then:
         def e = thrown(BulkWriteException)
-        e.serverAddress == getPrimary()
+        e.serverAddress == connection.getServerAddress()
         e.writeErrors.size() == 3
         e.writeErrors[0].index == 0
         e.writeErrors[1].index == 2
