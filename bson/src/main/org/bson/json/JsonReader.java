@@ -960,8 +960,8 @@ public class JsonReader extends AbstractBsonReader {
     private Long visitNumberLongExtendedJson() {
         verifyToken(":");
         JsonToken nameToken = popToken();
-        if (nameToken.getType() != JsonTokenType.STRING) {
-            throw new JsonParseException("JSON reader expected a string but found '%s'.", nameToken.getValue());
+        if (nameToken.getType() != JsonTokenType.INT32 && nameToken.getType() != JsonTokenType.INT64) {
+            throw new JsonParseException("JSON reader expected an int32 or int64 but found '%s'.", nameToken.getValue());
         }
         verifyToken("}");
         return nameToken.getValue(Long.class);
