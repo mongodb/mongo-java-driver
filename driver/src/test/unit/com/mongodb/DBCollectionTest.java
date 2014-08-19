@@ -230,11 +230,21 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testCreateIndexAsAscending() {
-        DBObject index = new BasicDBObject("x", 1);
-        collection.createIndex(index);
+    public void testCreateIndexByName() {
+        collection.createIndex("x");
+        assertEquals(2, collection.getIndexInfo().size());
+        DBObject indexInfo = collection.getIndexInfo().get(1);
 
-        assertThat(collection.getIndexInfo(), notNullValue());
+        assertEquals("x_1", indexInfo.get("name"));
+    }
+
+    @Test
+    public void testCreateIndexAsAscending() {
+        collection.createIndex(new BasicDBObject("x", 1));
+        assertEquals(2, collection.getIndexInfo().size());
+        DBObject indexInfo = collection.getIndexInfo().get(1);
+
+        assertEquals("x_1", indexInfo.get("name"));
     }
 
     @Test
@@ -242,7 +252,27 @@ public class DBCollectionTest extends DatabaseTestCase {
         DBObject index = new BasicDBObject("x", -1);
         collection.createIndex(index);
 
-        assertThat(collection.getIndexInfo(), notNullValue());
+        DBObject indexInfo = collection.getIndexInfo().get(1);
+        assertEquals(indexInfo.get("key"), index);
+    }
+
+    @Test
+    public void testCreateIndexByKeysName() {
+        collection.createIndex(new BasicDBObject("x", 1), "zulu");
+        assertEquals(2, collection.getIndexInfo().size());
+        DBObject indexInfo = collection.getIndexInfo().get(1);
+
+        assertEquals("zulu", indexInfo.get("name"));
+    }
+
+    @Test
+    public void testCreateIndexByKeysNameUnique() {
+        collection.createIndex(new BasicDBObject("x", 1), "zulu", true);
+        assertEquals(2, collection.getIndexInfo().size());
+        DBObject indexInfo = collection.getIndexInfo().get(1);
+
+        assertEquals("zulu", indexInfo.get("name"));
+        assertTrue((Boolean) indexInfo.get("unique"));
     }
 
     @Test
@@ -250,17 +280,20 @@ public class DBCollectionTest extends DatabaseTestCase {
         DBObject index = new BasicDBObject("x", "2d");
         collection.createIndex(index);
 
-        assertThat(collection.getIndexInfo(), notNullValue());
+        DBObject indexInfo = collection.getIndexInfo().get(1);
+        assertEquals(indexInfo.get("key"), index);
     }
 
     @Test
     public void testCreateIndexAs2dsphere() {
+        assumeTrue(serverVersionAtLeast(asList(2, 4, 0)));
         // when
         DBObject index = new BasicDBObject("x", "2dsphere");
         collection.createIndex(index);
 
         // then
-        assertThat(collection.getIndexInfo(), notNullValue());
+        DBObject indexInfo = collection.getIndexInfo().get(1);
+        assertEquals(indexInfo.get("key"), index);
     }
 
     @Test
@@ -269,7 +302,9 @@ public class DBCollectionTest extends DatabaseTestCase {
         DBObject index = new BasicDBObject("x", "text");
         collection.createIndex(index);
 
-        assertThat(collection.getIndexInfo(), notNullValue());
+        DBObject indexInfo = collection.getIndexInfo().get(1);
+        assertEquals(indexInfo.get("name"), "x_text");
+        assertThat(indexInfo.get("weights"), notNullValue());
     }
 
     @Test

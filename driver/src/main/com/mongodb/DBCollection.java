@@ -1377,13 +1377,56 @@ public class DBCollection {
     }
 
     /**
+     * Forces creation of an ascending index on a field with the default options.
+     *
+     * @param name name of field to index on
+     * @throws MongoException
+     * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
+     */
+    public void createIndex(final String name) {
+        createIndex(new BasicDBObject(name, 1));
+    }
+
+    /**
+     * Forces creation of an index on a set of fields, if one does not already exist.
+     *
+     * @param keys a document that contains pairs with the name of the field or fields to index and order of the index
+     * @param name an identifier for the index. If null or empty, the default name will be used.
+     * @throws MongoException
+     * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
+     */
+    public void createIndex(final DBObject keys, final String name) {
+        createIndex(keys, name, false);
+    }
+
+    /**
+     * Forces creation of an index on a set of fields, if one does not already exist.
+     *
+     * @param keys   a document that contains pairs with the name of the field or fields to index and order of the index
+     * @param name   an identifier for the index. If null or empty, the default name will be used.
+     * @param unique if the index should be unique
+     * @throws MongoException
+     * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
+     */
+    public void createIndex(final DBObject keys, final String name, final boolean unique) {
+        DBObject options = new BasicDBObject();
+        if (name != null && name.length() > 0) {
+            options.put("name", name);
+        }
+        if (unique) {
+            options.put("unique", Boolean.TRUE);
+        }
+        createIndex(keys, options);
+    }
+
+    /**
      * Creates an index on the field specified, if that index does not already exist.
      *
      * @param keys a document that contains pairs with the name of the field or fields to index and order of the index
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
      */
     public void createIndex(final DBObject keys) {
-        createIndex(keys, null);
+        createIndex(keys, new BasicDBObject());
     }
 
     /**
