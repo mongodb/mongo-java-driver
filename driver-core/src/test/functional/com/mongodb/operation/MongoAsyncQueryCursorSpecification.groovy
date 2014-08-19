@@ -15,7 +15,6 @@
  */
 
 package com.mongodb.operation
-
 import category.Async
 import category.Slow
 import com.mongodb.Block
@@ -33,6 +32,7 @@ import org.bson.BsonDocumentWrapper
 import org.bson.BsonTimestamp
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
@@ -42,7 +42,6 @@ import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.operation.QueryFlag.Exhaust
 import static java.util.concurrent.TimeUnit.SECONDS
-import static org.junit.Assume.assumeFalse
 
 @Category(Async)
 class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecification {
@@ -98,9 +97,8 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         documentResultList == documentList[0..99]
     }
 
+    @IgnoreIf( { isSharded() } )
     def 'Cursor should support Exhaust'() {
-        assumeFalse(isSharded())
-
         setup:
         Connection connection = source.getConnection().get()
         QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(),
@@ -120,9 +118,8 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         connection?.release()
     }
 
+    @IgnoreIf( { isSharded() } )
     def 'Cursor should support Exhaust and limit'() {
-        assumeFalse(isSharded())
-
         setup:
         Connection connection = source.getConnection().get()
         QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(Exhaust), connection)
@@ -140,9 +137,8 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         connection?.release()
     }
 
+    @IgnoreIf( { isSharded() } )
     def 'Cursor should support Exhaust and Discard'() {
-        assumeFalse(isSharded())
-
         setup:
         AsyncConnectionSource readConnectionSource = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = readConnectionSource.getConnection().get()
@@ -163,9 +159,8 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         readConnectionSource?.release()
     }
 
+    @IgnoreIf( { isSharded() } )
     def 'exhaust cursor should support early termination'() {
-        assumeFalse(isSharded())
-
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = source.getConnection().get()
@@ -224,9 +219,8 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         source.release()
     }
 
+    @IgnoreIf( { isSharded() } )
     def 'should get Exceptions for operations on the exhause cursor after closing'() throws InterruptedException {
-        assumeFalse(isSharded())
-
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = source.getConnection().get()

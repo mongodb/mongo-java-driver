@@ -15,7 +15,6 @@
  */
 
 package com.mongodb.operation
-
 import category.Async
 import category.Slow
 import com.mongodb.ClusterFixture
@@ -33,6 +32,7 @@ import org.junit.experimental.categories.Category
 import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 
 import static ClusterFixture.getAsyncBinding
 import static ClusterFixture.getAsyncSingleConnectionBinding
@@ -41,7 +41,6 @@ import static WriteConcern.ACKNOWLEDGED
 import static WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.operation.WriteRequest.Type.REMOVE
 import static com.mongodb.operation.WriteRequest.Type.UPDATE
-import static org.junit.Assume.assumeTrue
 
 @Category(Async)
 class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpecification {
@@ -521,8 +520,8 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
     }
 
     // using w = 5 to force a timeout
+    @IgnoreIf( { !ClusterFixture.isDiscoverableReplicaSet() } )
     def 'should throw bulk write exception with a write concern error when wtimeout is exceeded'() {
-        assumeTrue(ClusterFixture.isDiscoverableReplicaSet())
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new InsertRequest<Document>(new Document('_id', 1))],
@@ -536,9 +535,8 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         ex.getWriteConcernError() != null
     }
 
+    @IgnoreIf( { !ClusterFixture.isDiscoverableReplicaSet() } )
     def 'when there is a duplicate key error and a write concern error, both should be reported'() {
-        assumeTrue(ClusterFixture.isDiscoverableReplicaSet())
-
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
         def op = new MixedBulkWriteOperation(getNamespace(),

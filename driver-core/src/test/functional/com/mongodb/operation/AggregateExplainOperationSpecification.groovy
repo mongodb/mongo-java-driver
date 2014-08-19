@@ -21,17 +21,17 @@ import org.bson.BsonDocument
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
-import static org.junit.Assume.assumeTrue
 
 class AggregateExplainOperationSpecification extends OperationFunctionalSpecification {
 
+    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should be able to explain an empty pipeline'() {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
 
         given:
         AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [], aggregateOptions)
@@ -49,8 +49,8 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
     }
 
     @Category(Async)
+    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should be able to explain an empty pipeline asynchronously'() {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
 
         given:
         AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [], aggregateOptions)
@@ -67,8 +67,8 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
                 AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.CURSOR).build()]
     }
 
+    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should be able to explain a pipeline'() {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
 
         given:
         def match = new BsonDocument('job', new BsonString('plumber'))
@@ -91,8 +91,8 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
     }
 
     @Category(Async)
+    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should be able to explain a pipeline asynchronously'() {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
 
         given:
         def match = new BsonDocument('job', new BsonString('plumber'))

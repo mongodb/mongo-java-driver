@@ -15,13 +15,13 @@
  */
 
 package com.mongodb.operation
-
 import category.Async
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
@@ -31,7 +31,6 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
-import static org.junit.Assume.assumeTrue
 
 class CountOperationSpecification extends OperationFunctionalSpecification {
 
@@ -63,10 +62,8 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         insertDocumentList.size()
     }
 
-
+    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should throw execution timeout exception from execute'() {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
-
         given:
         def find = new Find().maxTime(1, SECONDS)
         def countOperation = new CountOperation(getNamespace(), find)
@@ -83,9 +80,8 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
+    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should throw execution timeout exception from executeAsync'() {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
-
         given:
         def find = new Find().maxTime(1, SECONDS)
         def countOperation = new CountOperation(getNamespace(), find)

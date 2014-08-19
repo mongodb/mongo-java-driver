@@ -22,6 +22,7 @@ import com.mongodb.operation.CommandReadOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.mongodb.CommandResult
+import spock.lang.IgnoreIf
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -34,8 +35,6 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerMonitor.exceptionHasChanged
 import static com.mongodb.connection.ServerMonitor.stateHasChanged
 import static java.util.Arrays.asList
-import static org.junit.Assume.assumeFalse
-import static org.junit.Assume.assumeTrue
 
 class ServerMonitorSpecification extends OperationFunctionalSpecification {
     ServerDescription newDescription
@@ -90,9 +89,8 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
         serverMonitor.close()
     }
 
+    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should set max wire batch size when provided by server'() {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 5)))
-
         given:
         CommandResult commandResult = new CommandReadOperation('admin', new BsonDocument('ismaster', new BsonInt32(1)))
                 .execute(getBinding())
@@ -105,9 +103,8 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
         newDescription.maxWriteBatchSize == expected
     }
 
+    @IgnoreIf( { serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should set default max wire batch size when not provided by server'() {
-        assumeFalse(serverVersionAtLeast(asList(2, 5, 5)))
-
         when:
         latch.await()
 

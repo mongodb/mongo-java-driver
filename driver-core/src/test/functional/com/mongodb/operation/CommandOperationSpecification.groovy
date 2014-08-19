@@ -16,7 +16,6 @@
 
 
 package com.mongodb.operation
-
 import category.Async
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
@@ -25,6 +24,7 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
+import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
@@ -33,8 +33,6 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
-import static org.junit.Assume.assumeFalse
-import static org.junit.Assume.assumeTrue
 
 class CommandOperationSpecification extends OperationFunctionalSpecification {
 
@@ -78,10 +76,8 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
 
     }
 
+    @IgnoreIf( { isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should throw execution timeout exception from execute'() {
-        assumeFalse(isSharded())
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
-
         given:
         def commandOperation = new CommandReadOperation(getNamespace().databaseName,
                                                         new BsonDocument('count', new BsonString(getCollectionName()))
@@ -100,10 +96,8 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
+    @IgnoreIf( { isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should throw execution timeout exception from executeAsync'() {
-        assumeFalse(isSharded())
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
-
         given:
         def commandOperation = new CommandReadOperation(getNamespace().databaseName,
                                                         new BsonDocument('count', new BsonString(getCollectionName()))

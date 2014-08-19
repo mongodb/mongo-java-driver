@@ -16,20 +16,18 @@
 
 package com.mongodb.async.rx.client
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 
 import static Fixture.get
 import static Fixture.getAsList
 import static Fixture.getMongoClient
-
-import static org.junit.Assume.assumeFalse
-import static com.mongodb.async.client.Fixture.isSharded
 import static com.mongodb.async.client.Fixture.dropDatabase
+import static com.mongodb.async.client.Fixture.isSharded
 
+@IgnoreIf( { isSharded() } )
 class DatabaseAdministrationSpecification extends FunctionalSpecification {
 
     def 'drop should drop the database'() {
-        assumeFalse(isSharded())
-
         given:
         def client = getMongoClient()
         def databaseToDrop = 'RxDatabaseAdministrationSpecificationDatabase'
@@ -47,7 +45,6 @@ class DatabaseAdministrationSpecification extends FunctionalSpecification {
     }
 
     def 'rename collection should rename the collection name'() {
-        assumeFalse(isSharded())
 
         given:
         def newCollectionName = 'NewCollection1234'

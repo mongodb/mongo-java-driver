@@ -15,22 +15,20 @@
  */
 
 package com.mongodb.operation
-
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
-import static org.junit.Assume.assumeFalse
 
 class DropDatabaseOperationSpecification extends OperationFunctionalSpecification {
 
+    @IgnoreIf( { isSharded() } )
     def 'should drop a database that exists'() {
-        assumeFalse(isSharded())
-
         given:
         getCollectionHelper().insertDocuments(new Document('documentTo', 'createTheCollection'))
         assert databaseNameExists(databaseName)
@@ -43,9 +41,8 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
     }
 
     @Category(Async)
+    @IgnoreIf( { isSharded() } )
     def 'should drop a database that exists asynchronously'() {
-        assumeFalse(isSharded())
-
         given:
         getCollectionHelper().insertDocuments(new Document('documentTo', 'createTheCollection'))
         assert databaseNameExists(databaseName)

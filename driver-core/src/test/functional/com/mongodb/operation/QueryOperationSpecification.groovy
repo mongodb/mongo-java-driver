@@ -15,7 +15,6 @@
  */
 
 package com.mongodb.operation
-
 import category.Async
 import com.mongodb.Block
 import com.mongodb.ClusterFixture
@@ -28,6 +27,7 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 
 import static ClusterFixture.disableMaxTimeFailPoint
 import static ClusterFixture.enableMaxTimeFailPoint
@@ -39,8 +39,6 @@ import static ClusterFixture.serverVersionAtLeast
 import static com.mongodb.operation.QueryFlag.Exhaust
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
-import static org.junit.Assume.assumeFalse
-import static org.junit.Assume.assumeTrue
 
 class QueryOperationSpecification extends OperationFunctionalSpecification {
 
@@ -56,10 +54,8 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         cursor.next() == document
     }
 
+    @IgnoreIf( { isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should throw execution timeout exception from execute'() {
-        assumeFalse(isSharded())
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
-
         given:
         getCollectionHelper().insertDocuments(new Document())
         def find = new Find().maxTime(1, SECONDS)
@@ -77,10 +73,8 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
+    @IgnoreIf( { isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should throw execution timeout exception from executeAsync'() {
-        assumeFalse(isSharded())
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)))
-
         given:
         getCollectionHelper().insertDocuments(new Document())
         def find = new Find().maxTime(1, SECONDS)
@@ -191,8 +185,8 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         found
     }
 
+    @IgnoreIf( { !ClusterFixture.isDiscoverableReplicaSet() } )
     def 'should read from a secondary'() {
-        assumeTrue(ClusterFixture.isDiscoverableReplicaSet())
         collectionHelper.insertDocuments(new Document())
         def find = new Find()
         def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
@@ -202,9 +196,8 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         queryOperation.execute(binding) != null // if it didn't throw, the query was executed
     }
 
+    @IgnoreIf( { isSharded() } )
     def 'should exhaust'() {
-        assumeFalse(isSharded())
-
         for (i in 1..500) {
             collectionHelper.insertDocuments(new Document('_id', i))
         }
@@ -229,9 +222,9 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
+    @IgnoreIf( { isSharded() } )
     def 'should iterate asynchronously'() {
-        assumeFalse(isSharded())
-
+        given:
         for (i in 1..500) {
             collectionHelper.insertDocuments(new Document('_id', i))
         }
@@ -253,9 +246,8 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
+    @IgnoreIf( { isSharded() } )
     def 'should exhaust asynchronously'() {
-        assumeFalse(isSharded())
-
         for (i in 1..500) {
             collectionHelper.insertDocuments(new Document('_id', i))
         }

@@ -15,7 +15,6 @@
  */
 
 package com.mongodb.operation
-
 import category.Async
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
@@ -24,12 +23,12 @@ import org.bson.BsonDocument
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
-import static org.junit.Assume.assumeTrue
 
 class AggregateToCollectionOperationSpecification extends OperationFunctionalSpecification {
 
@@ -63,8 +62,8 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         thrown(IllegalArgumentException)
     }
 
+    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should be able to output to a collection'() {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
 
         when:
         AggregateToCollectionOperation op =
@@ -78,8 +77,8 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
     }
 
     @Category(Async)
+    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should be able to output to a collection asynchronously'() {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
         when:
         AggregateToCollectionOperation op =
                 new AggregateToCollectionOperation(getNamespace(),
@@ -91,8 +90,8 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         getCollectionHelper(aggregateCollectionNamespace).count() == 3
     }
 
+    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should be able to match then output to a collection'() {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
 
         when:
         AggregateToCollectionOperation op =
@@ -107,9 +106,8 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
     }
 
     @Category(Async)
+    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
     def 'should be able to match then output to a collection asynchronously'() {
-        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)))
-
         when:
         AggregateToCollectionOperation op =
                 new AggregateToCollectionOperation(getNamespace(),

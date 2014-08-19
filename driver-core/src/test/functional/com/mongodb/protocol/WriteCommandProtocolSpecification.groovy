@@ -27,22 +27,19 @@ import org.bson.types.Binary
 import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
-import static org.junit.Assume.assumeTrue
 
+@IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
 class WriteCommandProtocolSpecification extends OperationFunctionalSpecification {
 
     def server = getCluster().selectServer(new PrimaryServerSelector(), 1, SECONDS)
     def connection = server.connection
-
-    def setup() {
-        assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
-    }
 
     def cleanup() {
         connection?.release()
