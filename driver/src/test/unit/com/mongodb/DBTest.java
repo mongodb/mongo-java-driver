@@ -324,6 +324,8 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldReturnFailureWithErrorMessageWhenExecutingInvalidCommand() {
+        assumeTrue(serverVersionAtLeast(asList(2, 4, 0)) || !isSharded());
+
         // When
         CommandResult commandResult = database.command(new BasicDBObject("NotRealCommandName", 1));
 
