@@ -15,7 +15,6 @@
  */
 
 package com.mongodb.operation
-
 import category.Slow
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.OperationFunctionalSpecification
@@ -31,10 +30,13 @@ import org.bson.BsonDocument
 import org.bson.BsonTimestamp
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 
 import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isSharded
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
@@ -296,6 +298,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
         !success.isEmpty()
     }
 
+    @IgnoreIf( { isSharded() && !serverVersionAtLeast([2, 4, 0]) } ) // 2.2 does not properly detect cursor not found, so ignoring
     def 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
         given:
         def firstBatch = executeQuery(5)
@@ -314,6 +317,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
         thrown(MongoCursorNotFoundException)
     }
 
+    @IgnoreIf( { isSharded() && !serverVersionAtLeast([2, 4, 0]) } ) // 2.2 does not properly detect cursor not found, so ignoring
     def 'should kill cursor if limit is reached on get more'() throws InterruptedException {
         given:
         def firstBatch = executeQuery(3)
@@ -417,6 +421,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
         thrown(NoSuchElementException)
     }
 
+    @IgnoreIf( { isSharded() && !serverVersionAtLeast([2, 4, 0]) } ) // 2.2 does not properly detect cursor not found, so ignoring
     def 'should throw cursor not found exception'() {
         given:
         def firstBatch = executeQuery(2)
