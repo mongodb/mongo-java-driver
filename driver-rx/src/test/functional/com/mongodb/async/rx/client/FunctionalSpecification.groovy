@@ -20,17 +20,17 @@ import org.mongodb.Document
 import spock.lang.Specification
 
 import static Fixture.getDefaultDatabase
-import static Fixture.getDefaultDatabaseName
 import static Fixture.initializeCollection
 import static com.mongodb.async.client.Fixture.drop
 import static com.mongodb.async.client.Fixture.dropDatabase
-
+import static com.mongodb.async.client.Fixture.getDefaultDatabaseName
 
 class FunctionalSpecification extends Specification {
     protected MongoDatabase database;
     protected MongoCollection<Document> collection;
 
     def setupSpec() {
+        Runtime.getRuntime().addShutdownHook { dropDatabase(getDefaultDatabaseName()) }
         dropDatabase(getDefaultDatabaseName())
     }
 

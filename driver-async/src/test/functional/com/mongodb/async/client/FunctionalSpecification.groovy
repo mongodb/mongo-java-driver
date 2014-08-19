@@ -19,19 +19,18 @@ import com.mongodb.MongoNamespace
 import org.mongodb.Document
 import spock.lang.Specification
 
-
+import static Fixture.drop
+import static Fixture.dropDatabase
 import static Fixture.getDefaultDatabase
 import static Fixture.getDefaultDatabaseName
 import static Fixture.initializeCollection
-import static Fixture.drop
-import static Fixture.dropDatabase
-
 
 class FunctionalSpecification extends Specification {
     protected MongoDatabase database;
     protected MongoCollection<Document> collection;
 
     def setupSpec() {
+        Runtime.getRuntime().addShutdownHook { dropDatabase(getDefaultDatabaseName()) }
         dropDatabase(getDefaultDatabaseName())
     }
 
