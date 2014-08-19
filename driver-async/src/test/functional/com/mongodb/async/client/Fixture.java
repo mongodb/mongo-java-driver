@@ -85,6 +85,9 @@ public final class Fixture {
     }
 
     public static void dropDatabase(final String name) {
+        if (name == null) {
+            return;
+        }
         try {
             getMongoClient().getDatabase(name)
                             .executeCommand(new Document("dropDatabase", 1)).get();

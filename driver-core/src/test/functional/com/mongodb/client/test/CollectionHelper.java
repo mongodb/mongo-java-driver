@@ -51,8 +51,11 @@ public final class CollectionHelper<T> {
         new DropCollectionOperation(namespace).execute(getBinding());
     }
 
-    public static void dropDatabase(final String database) {
-        new DropDatabaseOperation(database).execute(getBinding());
+    public static void dropDatabase(final String name) {
+        if (name == null) {
+            return;
+        }
+        new DropDatabaseOperation(name).execute(getBinding());
     }
 
     public void create(final CreateCollectionOptions options) {
