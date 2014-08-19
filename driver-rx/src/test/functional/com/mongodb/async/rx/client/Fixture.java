@@ -16,6 +16,7 @@
 
 package com.mongodb.async.rx.client;
 
+import com.mongodb.CommandFailureException;
 import com.mongodb.MongoNamespace;
 import org.mongodb.Document;
 import rx.Observable;
@@ -29,7 +30,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public final class Fixture {
     private static MongoClientImpl mongoClient;
-    private static String defaultDatabaseName;
+    private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
 
     private Fixture() {
     }
@@ -37,16 +38,13 @@ public final class Fixture {
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
             mongoClient = new MongoClientImpl(com.mongodb.async.client.Fixture.getMongoClient());
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
     }
 
-
     public static synchronized String getDefaultDatabaseName() {
-        if (defaultDatabaseName == null) {
-            defaultDatabaseName = "DriverTest-" + System.nanoTime();
-        }
-        return defaultDatabaseName;
+        return DEFAULT_DATABASE_NAME;
     }
 
     public static MongoDatabase getDefaultDatabase() {
@@ -58,11 +56,36 @@ public final class Fixture {
         return getMongoClient().getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName());
     }
 
+    public static void dropDatabase(final String name) {
+        com.mongodb.async.client.Fixture.dropDatabase(name);
+    }
+
+    public static void drop(final MongoNamespace namespace) {
+        com.mongodb.async.client.Fixture.drop(namespace);
+    }
+
     public static <T> T get(final Observable<T> observable) {
         return observable.timeout(90, SECONDS).toBlocking().first();
     }
 
     public static <T> List<T> getAsList(final Observable<T> observable) {
         return observable.timeout(90, SECONDS).toList().toBlocking().first();
+    }
+
+    static class ShutdownHook extends Thread {
+        @Override
+        public void run() {
+            if (mongoClient != null) {
+                if (mongoClient != null) {
+                    try {
+                        dropDatabase(getDefaultDatabaseName());
+                    } catch (CommandFailureException e) {
+                        // ignore
+                    }
+                }
+                mongoClient.close();
+                mongoClient = null;
+            }
+        }
     }
 }

@@ -60,11 +60,11 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class ClusterFixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
+    private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
 
     private static ConnectionString connectionString;
     private static Cluster cluster;
     private static Cluster asyncCluster;
-    private static String defaultDatabaseName = "DriverTest-1";
 
     static {
         String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
@@ -78,7 +78,7 @@ public final class ClusterFixture {
     }
 
     public static String getDefaultDatabaseName() {
-        return defaultDatabaseName;
+        return DEFAULT_DATABASE_NAME;
     }
 
     public static boolean clusterIsType(final ClusterType clusterType) {
@@ -107,7 +107,7 @@ public final class ClusterFixture {
         @Override
         public void run() {
             if (cluster != null) {
-                new DropDatabaseOperation(defaultDatabaseName).execute(getBinding());
+                new DropDatabaseOperation(getDefaultDatabaseName()).execute(getBinding());
                 cluster.close();
             }
         }

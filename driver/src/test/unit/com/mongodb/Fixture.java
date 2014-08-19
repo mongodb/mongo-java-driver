@@ -28,11 +28,11 @@ import java.util.concurrent.TimeUnit;
 public final class Fixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
+    private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
 
     private static MongoClient mongoClient;
     private static MongoClientURI mongoClientURI;
     private static DB defaultDatabase;
-    private static String defaultDatabaseName = "DriverTest-" + System.nanoTime();
 
     private Fixture() {
     }
@@ -52,13 +52,13 @@ public final class Fixture {
 
     public static synchronized DB getDefaultDatabase() {
         if (defaultDatabase == null) {
-            defaultDatabase = getMongoClient().getDB(defaultDatabaseName);
+            defaultDatabase = getMongoClient().getDB(getDefaultDatabaseName());
         }
         return defaultDatabase;
     }
 
-    public static synchronized String getDefaultDatabaseName() {
-        return defaultDatabaseName;
+    public static String getDefaultDatabaseName() {
+        return DEFAULT_DATABASE_NAME;
     }
 
     static class ShutdownHook extends Thread {

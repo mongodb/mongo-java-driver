@@ -16,6 +16,7 @@
 
 package com.mongodb.client.test;
 
+import com.mongodb.CommandFailureException;
 import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
@@ -55,7 +56,13 @@ public final class CollectionHelper<T> {
         if (name == null) {
             return;
         }
-        new DropDatabaseOperation(name).execute(getBinding());
+        try {
+            new DropDatabaseOperation(name).execute(getBinding());
+        } catch (CommandFailureException e) {
+            if (!e.getErrorMessage().contains("ns not found")) {
+                throw e;
+            }
+        }
     }
 
     public void create(final CreateCollectionOptions options) {

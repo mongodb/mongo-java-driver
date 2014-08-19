@@ -38,8 +38,10 @@ class ForEachSpecification extends FunctionalSpecification {
 
     def 'should call onNext for each document and then complete'() {
         given:
+
         def documents = [new Document(), new Document()]
         get(collection.insert(documents[0]))
+        sleep(1000)
         get(collection.insert(documents[1]))
 
         expect:

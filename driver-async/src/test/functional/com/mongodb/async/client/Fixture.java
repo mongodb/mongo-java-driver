@@ -30,10 +30,11 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class Fixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
+    private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
 
     private static ConnectionString connectionString;
     private static MongoClientImpl mongoClient;
-    private static String defaultDatabaseName;
+
 
     private Fixture() {
     }
@@ -56,11 +57,8 @@ public final class Fixture {
         return connectionString;
     }
 
-    public static synchronized String getDefaultDatabaseName() {
-        if (defaultDatabaseName == null) {
-            defaultDatabaseName = "DriverTest-" + System.nanoTime();
-        }
-        return defaultDatabaseName;
+    public static String getDefaultDatabaseName() {
+        return DEFAULT_DATABASE_NAME;
     }
 
     public static MongoDatabase getDefaultDatabase() {
@@ -103,7 +101,7 @@ public final class Fixture {
             getMongoClient().getDatabase(namespace.getDatabaseName())
                             .executeCommand(new Document("drop", namespace.getCollectionName())).get();
         } catch (CommandFailureException e) {
-            if (!e.getErrorMessage().startsWith("ns not found")) {
+            if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;
             }
         }
@@ -113,7 +111,7 @@ public final class Fixture {
         @Override
         public void run() {
             if (mongoClient != null) {
-                if (defaultDatabaseName != null) {
+                if (mongoClient != null) {
                     try {
                         dropDatabase(getDefaultDatabaseName());
                     } catch (CommandFailureException e) {
