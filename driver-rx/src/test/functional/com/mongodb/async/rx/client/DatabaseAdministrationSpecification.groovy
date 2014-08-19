@@ -68,7 +68,7 @@ class DatabaseAdministrationSpecification extends FunctionalSpecification {
         getAsList(database.tools().getCollectionNames()).contains(newCollectionName)
 
         cleanup:
-        dropDatabase(database.getName())
+        if (database) { dropDatabase(database.getName()) }
     }
 
 }
