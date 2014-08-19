@@ -61,6 +61,10 @@ class MongoClientImpl implements MongoClient {
         return new ClientAdministrationImpl(this);
     }
 
+    Cluster getCluster() {
+        return cluster;
+    }
+
     <V> MongoFuture<V> execute(final AsyncWriteOperation<V> writeOperation) {
         final SingleResultFuture<V> future = new SingleResultFuture<V>();
         final AsyncWriteBinding binding = getWriteBinding();

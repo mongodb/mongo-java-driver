@@ -18,9 +18,14 @@ package com.mongodb.async.client
 
 import org.mongodb.Document
 
+import static com.mongodb.async.client.Fixture.isSharded
+import static org.junit.Assume.assumeFalse
+
 class DatabaseAdministrationSpecification extends FunctionalSpecification {
 
     def 'drop should drop the database'() {
+        assumeFalse(isSharded())
+
         given:
         def client = Fixture.getMongoClient()
         def databaseToDrop = 'AsyncDatabaseAdministrationSpecificationDatabase'
@@ -35,6 +40,8 @@ class DatabaseAdministrationSpecification extends FunctionalSpecification {
     }
 
     def 'rename collection should rename the collection name'() {
+        assumeFalse(isSharded())
+
         given:
         def newCollectionName = 'NewCollection1234'
 
@@ -53,7 +60,8 @@ class DatabaseAdministrationSpecification extends FunctionalSpecification {
         database.tools().getCollectionNames().get().contains(newCollectionName)
 
         cleanup:
-        database.getCollection(newCollectionName).tools().drop().get()
+        if (database != null) {
+            database.getCollection(newCollectionName).tools().drop().get()
+        }
     }
-
 }

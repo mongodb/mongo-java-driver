@@ -21,6 +21,9 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoNamespace;
 import org.mongodb.Document;
 
+import static com.mongodb.connection.ClusterType.SHARDED;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 /**
  * Helper class for asynchronous tests.
  */
@@ -71,6 +74,12 @@ public final class Fixture {
         }
         return database.getCollection(namespace.getCollectionName());
     }
+
+    public static boolean isSharded() {
+        getMongoClient();
+        return mongoClient.getCluster().getDescription(10, SECONDS).getType() == SHARDED;
+    }
+
 
     public static void dropCollection(final MongoNamespace namespace) {
         try {

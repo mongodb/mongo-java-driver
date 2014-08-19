@@ -23,10 +23,14 @@ import org.mongodb.Document
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isSharded
+import static org.junit.Assume.assumeFalse
 
 class DropDatabaseOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should drop a database that exists'() {
+        assumeFalse(isSharded())
+
         given:
         getCollectionHelper().insertDocuments(new Document('documentTo', 'createTheCollection'))
         assert databaseNameExists(databaseName)
@@ -40,6 +44,8 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
 
     @Category(Async)
     def 'should drop a database that exists asynchronously'() {
+        assumeFalse(isSharded())
+
         given:
         getCollectionHelper().insertDocuments(new Document('documentTo', 'createTheCollection'))
         assert databaseNameExists(databaseName)
