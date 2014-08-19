@@ -20,6 +20,7 @@ import org.mongodb.Document
 
 import static com.mongodb.async.client.Fixture.isSharded
 import static org.junit.Assume.assumeFalse
+import static com.mongodb.async.client.Fixture.dropDatabase
 
 class DatabaseAdministrationSpecification extends FunctionalSpecification {
 
@@ -37,6 +38,9 @@ class DatabaseAdministrationSpecification extends FunctionalSpecification {
 
         then:
         !client.tools().getDatabaseNames().get().contains(databaseToDrop)
+
+        cleanup:
+        dropDatabase(databaseToDrop)
     }
 
     def 'rename collection should rename the collection name'() {
@@ -60,8 +64,6 @@ class DatabaseAdministrationSpecification extends FunctionalSpecification {
         database.tools().getCollectionNames().get().contains(newCollectionName)
 
         cleanup:
-        if (database != null) {
-            database.getCollection(newCollectionName).tools().drop().get()
-        }
+        dropDatabase(database.getName())
     }
 }

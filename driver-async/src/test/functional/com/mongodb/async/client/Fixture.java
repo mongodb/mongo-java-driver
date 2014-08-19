@@ -33,7 +33,7 @@ public final class Fixture {
 
     private static ConnectionString connectionString;
     private static MongoClientImpl mongoClient;
-    private static MongoDatabase defaultDatabase;
+    private static String defaultDatabaseName;
 
     private Fixture() {
     }
@@ -56,11 +56,15 @@ public final class Fixture {
         return connectionString;
     }
 
-    public static synchronized MongoDatabase getDefaultDatabase() {
-        if (defaultDatabase == null) {
-            defaultDatabase = getMongoClient().getDatabase("DriverTest-" + System.nanoTime());
+    public static synchronized String getDefaultDatabaseName() {
+        if (defaultDatabaseName == null) {
+            defaultDatabaseName = "DriverTest-" + System.nanoTime();
         }
-        return defaultDatabase;
+        return defaultDatabaseName;
+    }
+
+    public static MongoDatabase getDefaultDatabase() {
+        return getMongoClient().getDatabase(getDefaultDatabaseName());
     }
 
     public static MongoCollection<Document> initializeCollection(final MongoNamespace namespace) {
@@ -80,8 +84,18 @@ public final class Fixture {
         return mongoClient.getCluster().getDescription(10, SECONDS).getType() == SHARDED;
     }
 
+    public static void dropDatabase(final String name) {
+        try {
+            getMongoClient().getDatabase(name)
+                            .executeCommand(new Document("dropDatabase", 1)).get();
+        } catch (CommandFailureException e) {
+            if (!e.getErrorMessage().startsWith("ns not found")) {
+                throw e;
+            }
+        }
+    }
 
-    public static void dropCollection(final MongoNamespace namespace) {
+    public static void drop(final MongoNamespace namespace) {
         try {
             getMongoClient().getDatabase(namespace.getDatabaseName())
                             .executeCommand(new Document("drop", namespace.getCollectionName())).get();
@@ -96,9 +110,9 @@ public final class Fixture {
         @Override
         public void run() {
             if (mongoClient != null) {
-                if (defaultDatabase != null) {
+                if (defaultDatabaseName != null) {
                     try {
-                        defaultDatabase.executeCommand(new Document("dropDatabase", defaultDatabase.getName())).get();
+                        dropDatabase(getDefaultDatabaseName());
                     } catch (CommandFailureException e) {
                         // ignore
                     }

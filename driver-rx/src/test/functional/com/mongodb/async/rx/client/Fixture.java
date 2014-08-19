@@ -29,7 +29,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  */
 public final class Fixture {
     private static MongoClientImpl mongoClient;
-    private static MongoDatabase defaultDatabase;
+    private static String defaultDatabaseName;
 
     private Fixture() {
     }
@@ -41,22 +41,22 @@ public final class Fixture {
         return mongoClient;
     }
 
-    public static synchronized MongoDatabase getDefaultDatabase() {
-        if (defaultDatabase == null) {
-            defaultDatabase = getMongoClient().getDatabase(com.mongodb.async.client.Fixture.getDefaultDatabase().getName());
+
+    public static synchronized String getDefaultDatabaseName() {
+        if (defaultDatabaseName == null) {
+            defaultDatabaseName = "DriverTest-" + System.nanoTime();
         }
-        return defaultDatabase;
+        return defaultDatabaseName;
+    }
+
+    public static MongoDatabase getDefaultDatabase() {
+        return getMongoClient().getDatabase(getDefaultDatabaseName());
     }
 
     public static MongoCollection<Document> initializeCollection(final MongoNamespace namespace) {
         com.mongodb.async.client.Fixture.initializeCollection(namespace);
         return getMongoClient().getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName());
     }
-
-    public static void dropCollection(final MongoNamespace namespace) {
-        com.mongodb.async.client.Fixture.dropCollection(namespace);
-    }
-
 
     public static <T> T get(final Observable<T> observable) {
         return observable.timeout(90, SECONDS).toBlocking().first();

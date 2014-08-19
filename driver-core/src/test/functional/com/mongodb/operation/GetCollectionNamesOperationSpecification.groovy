@@ -26,27 +26,35 @@ import static com.mongodb.ClusterFixture.getBinding
 
 class GetCollectionNamesOperationSpecification extends OperationFunctionalSpecification {
 
+    def madeUpDatabase = 'MadeUpDatabase'
+
     def 'should return empty set if database does not exist'() {
         given:
-        def operation = new GetCollectionNamesOperation('MadeUpDatabase')
+        def operation = new GetCollectionNamesOperation(madeUpDatabase)
 
         when:
         List<String> names = operation.execute(getBinding())
 
         then:
         names.isEmpty()
+
+        cleanup:
+        collectionHelper.dropDatabase(madeUpDatabase)
     }
 
     @Category(Async)
     def 'should return empty set if database does not exist asynchronously'() {
         given:
-        def operation = new GetCollectionNamesOperation('MadeUpDatabase')
+        def operation = new GetCollectionNamesOperation(madeUpDatabase)
 
         when:
         List<String> names = operation.executeAsync(getAsyncBinding()).get()
 
         then:
         names.isEmpty()
+
+        cleanup:
+        collectionHelper.dropDatabase(madeUpDatabase)
     }
 
     def 'should return default system.index and collection names if a Collection exists'() {

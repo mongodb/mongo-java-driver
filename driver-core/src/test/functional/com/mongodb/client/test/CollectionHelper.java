@@ -25,6 +25,7 @@ import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateCollectionOptions;
 import com.mongodb.operation.CreateIndexesOperation;
 import com.mongodb.operation.DropCollectionOperation;
+import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.Find;
 import com.mongodb.operation.Index;
 import com.mongodb.operation.InsertOperation;
@@ -48,6 +49,10 @@ public final class CollectionHelper<T> {
 
     public static void drop(final MongoNamespace namespace) {
         new DropCollectionOperation(namespace).execute(getBinding());
+    }
+
+    public static void dropDatabase(final String database) {
+        new DropDatabaseOperation(database).execute(getBinding());
     }
 
     public void create(final CreateCollectionOptions options) {

@@ -25,15 +25,23 @@ class FunctionalSpecification extends Specification {
     protected DB database;
     protected DBCollection collection;
 
+    def setupSpec() {
+        getMongoClient().getDB(getDefaultDatabaseName()).dropDatabase()
+    }
+
+    def cleanupSpec() {
+        getMongoClient().getDB(getDefaultDatabaseName()).dropDatabase()
+    }
+
     def setup() {
-        database = getMongoClient().getDB(getDefaultDatabaseName());
-        collection = database.getCollection(getClass().getName());
+        database = getMongoClient().getDB(getDefaultDatabaseName())
+        collection = database.getCollection(getClass().getName())
         collection.drop();
     }
 
     def cleanup() {
         if (collection != null) {
-            collection.drop();
+            collection.drop()
         }
     }
 
@@ -42,6 +50,6 @@ class FunctionalSpecification extends Specification {
     }
 
     String getCollectionName() {
-        collection.getName();
+        collection.getName()
     }
 }
