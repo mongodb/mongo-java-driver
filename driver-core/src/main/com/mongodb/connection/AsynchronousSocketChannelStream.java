@@ -19,7 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
-import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.async.SingleResultFuture;
 import org.bson.ByteBuf;
 
 import java.io.IOException;

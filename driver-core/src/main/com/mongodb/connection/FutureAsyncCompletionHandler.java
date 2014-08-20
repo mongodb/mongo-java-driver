@@ -18,7 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.async.SingleResultFuture;
 
 class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
     private final SingleResultFuture<T> future;

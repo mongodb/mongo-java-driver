@@ -25,7 +25,7 @@ import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.operation.RemoveRequest;
-import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.operation.WriteRequest;
 import com.mongodb.protocol.message.DeleteCommandMessage;
 import com.mongodb.protocol.message.MessageSettings;

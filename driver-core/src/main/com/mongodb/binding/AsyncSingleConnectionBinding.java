@@ -21,7 +21,7 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
-import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 
 import java.util.concurrent.TimeUnit;

@@ -24,7 +24,7 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.operation.UpdateRequest;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;

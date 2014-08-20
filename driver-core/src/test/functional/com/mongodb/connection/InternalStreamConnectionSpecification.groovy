@@ -26,7 +26,7 @@ import com.mongodb.MongoSocketWriteException
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.event.ConnectionListener
 import com.mongodb.operation.QueryFlag
-import com.mongodb.operation.SingleResultFuture
+import com.mongodb.async.SingleResultFuture
 import com.mongodb.protocol.message.CommandMessage
 import com.mongodb.protocol.message.MessageSettings
 import org.bson.BsonBinaryWriter

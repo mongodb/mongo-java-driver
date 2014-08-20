@@ -26,7 +26,7 @@ import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.operation.GetMore;
-import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.operation.SingleResultFutureCallback;
 import com.mongodb.protocol.message.GetMoreMessage;
 import com.mongodb.protocol.message.ReplyMessage;

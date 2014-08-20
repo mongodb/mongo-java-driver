@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-package com.mongodb.operation;
+package com.mongodb.async;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.SingleResultCallback;
 
 import java.util.ArrayList;

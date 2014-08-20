@@ -20,6 +20,7 @@ import com.mongodb.Block;
 import com.mongodb.MongoInternalException;
 import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultFuture;
 
 import java.util.Iterator;
 import java.util.List;

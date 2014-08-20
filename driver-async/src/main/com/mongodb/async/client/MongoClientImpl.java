@@ -27,7 +27,7 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.SingleResultCallback;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
-import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.async.SingleResultFuture;
 
 import java.util.concurrent.TimeUnit;
 

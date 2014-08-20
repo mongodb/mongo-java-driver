@@ -23,6 +23,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ServerCursor;
 import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.SingleResultCallback;

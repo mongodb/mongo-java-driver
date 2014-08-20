@@ -21,6 +21,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;

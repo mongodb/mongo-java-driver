@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.operation;
+package com.mongodb.async;
 
 import com.mongodb.MongoException;
 import com.mongodb.connection.SingleResultCallback;

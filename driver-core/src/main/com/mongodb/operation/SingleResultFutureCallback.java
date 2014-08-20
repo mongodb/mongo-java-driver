@@ -17,6 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoException;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.SingleResultCallback;
 
 // TODO: should this be public?

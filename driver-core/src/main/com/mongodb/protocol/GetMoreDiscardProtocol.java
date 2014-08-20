@@ -21,7 +21,7 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.connection.SingleResultCallback;
-import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.async.SingleResultFuture;
 
 public class GetMoreDiscardProtocol implements Protocol<Void> {
     private final long cursorId;

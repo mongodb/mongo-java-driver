@@ -19,6 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncWriteBinding;

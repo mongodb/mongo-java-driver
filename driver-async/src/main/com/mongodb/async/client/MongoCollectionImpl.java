@@ -38,7 +38,7 @@ import com.mongodb.operation.RemoveOperation;
 import com.mongodb.operation.RemoveRequest;
 import com.mongodb.operation.ReplaceOperation;
 import com.mongodb.operation.ReplaceRequest;
-import com.mongodb.operation.SingleResultFuture;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.operation.UpdateOperation;
 import com.mongodb.operation.UpdateRequest;
 import org.bson.BsonDocument;
