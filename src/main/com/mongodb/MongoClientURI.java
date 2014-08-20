@@ -284,7 +284,7 @@ public class MongoClientURI {
 
         writeConcernKeys.add("safe");
         writeConcernKeys.add("w");
-        writeConcernKeys.add("wtimeout");
+        writeConcernKeys.add("wtimeoutms");
         writeConcernKeys.add("fsync");
         writeConcernKeys.add("j");
 
@@ -370,7 +370,7 @@ public class MongoClientURI {
                 safe = _parseBoolean(value);
             } else if (key.equals("w")) {
                 w = value;
-            } else if (key.equals("wtimeout")) {
+            } else if (key.equals("wtimeoutms")) {
                 wTimeout = Integer.parseInt(value);
             } else if (key.equals("fsync")) {
                 fsync = _parseBoolean(value);
@@ -488,6 +488,11 @@ public class MongoClientURI {
                 valueList.add(value);
                 optionsMap.put(key, valueList);
             }
+        }
+
+        // JAVA-943 handle legacy wtimeout settings
+        if (optionsMap.containsKey("wtimeout") && !optionsMap.containsKey("wtimeoutms")) {
+            optionsMap.put("wtimeoutms", optionsMap.remove("wtimeout"));
         }
 
         return optionsMap;

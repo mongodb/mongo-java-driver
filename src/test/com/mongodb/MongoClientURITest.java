@@ -168,7 +168,7 @@ public class MongoClientURITest {
         MongoClientURI uri = new MongoClientURI("mongodb://localhost");
         assertEquals(WriteConcern.ACKNOWLEDGED, uri.getOptions().getWriteConcern());
 
-        uri = new MongoClientURI("mongodb://localhost/?wTimeout=5");
+        uri = new MongoClientURI("mongodb://localhost/?wtimeoutMS=5");
         assertEquals(new WriteConcern(1, 5, false, false), uri.getOptions().getWriteConcern());
 
         uri = new MongoClientURI("mongodb://localhost/?fsync=true");
@@ -177,10 +177,10 @@ public class MongoClientURITest {
         uri = new MongoClientURI("mongodb://localhost/?j=true");
         assertEquals(new WriteConcern(1, 0, false, true), uri.getOptions().getWriteConcern());
 
-        uri = new MongoClientURI("mongodb://localhost/?w=2&wtimeout=5&fsync=true&j=true");
+        uri = new MongoClientURI("mongodb://localhost/?w=2&wtimeoutMS=5&fsync=true&j=true");
         assertEquals(new WriteConcern(2, 5, true, true), uri.getOptions().getWriteConcern());
 
-        uri = new MongoClientURI("mongodb://localhost/?w=majority&wtimeout=5&fsync=true&j=true");
+        uri = new MongoClientURI("mongodb://localhost/?w=majority&wtimeoutMS=5&fsync=true&j=true");
         assertEquals(new WriteConcern("majority", 5, true, true), uri.getOptions().getWriteConcern());
 
         uri = new MongoClientURI("mongodb://localhost/?safe=true");
@@ -188,7 +188,24 @@ public class MongoClientURITest {
 
         uri = new MongoClientURI("mongodb://localhost/?safe=false");
         assertEquals(WriteConcern.UNACKNOWLEDGED, uri.getOptions().getWriteConcern());
+    }
 
+    @Test()
+    public void testWriteConcernLegacyWtimeout() {
+        MongoClientURI uri = new MongoClientURI("mongodb://localhost");
+        assertEquals(WriteConcern.ACKNOWLEDGED, uri.getOptions().getWriteConcern());
+
+        uri = new MongoClientURI("mongodb://localhost/?wtimeout=5");
+        assertEquals(new WriteConcern(1, 5, false, false), uri.getOptions().getWriteConcern());
+
+        uri = new MongoClientURI("mongodb://localhost/?wtimeout=1&wtimeoutms=5");
+        assertEquals(new WriteConcern(1, 5, false, false), uri.getOptions().getWriteConcern());
+
+        uri = new MongoClientURI("mongodb://localhost/?w=2&wtimeout=5&fsync=true&j=true");
+        assertEquals(new WriteConcern(2, 5, true, true), uri.getOptions().getWriteConcern());
+
+        uri = new MongoClientURI("mongodb://localhost/?w=majority&wtimeout=5&fsync=true&j=true");
+        assertEquals(new WriteConcern("majority", 5, true, true), uri.getOptions().getWriteConcern());
     }
 
     @Test
