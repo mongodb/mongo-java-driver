@@ -20,6 +20,8 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.Server;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.selector.ServerAddressSelector;
 
 import java.util.concurrent.TimeUnit;
@@ -71,8 +73,16 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
     }
 
     private final class MyConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
+        private final Server server;
+
         private MyConnectionSource() {
             SingleServerBinding.this.retain();
+            server = cluster.selectServer(new ServerAddressSelector(serverAddress), maxWaitTimeMS, MILLISECONDS);
+        }
+
+        @Override
+        public ServerDescription getServerDescription() {
+            return server.getDescription();
         }
 
         @Override

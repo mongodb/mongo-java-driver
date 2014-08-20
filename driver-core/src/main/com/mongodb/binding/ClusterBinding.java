@@ -20,6 +20,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.selector.PrimaryServerSelector;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.ServerSelector;
@@ -72,6 +73,11 @@ public class ClusterBinding extends AbstractReferenceCounted implements ReadWrit
         private MyConnectionSource(final ServerSelector serverSelector) {
             this.server = cluster.selectServer(serverSelector, maxWaitTimeMS, MILLISECONDS);
             ClusterBinding.this.retain();
+        }
+
+        @Override
+        public ServerDescription getServerDescription() {
+            return server.getDescription();
         }
 
         @Override

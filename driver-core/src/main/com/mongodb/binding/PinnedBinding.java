@@ -21,6 +21,7 @@ import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.selector.PrimaryServerSelector;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 
@@ -97,13 +98,11 @@ public class PinnedBinding extends AbstractReferenceCounted implements ReadWrite
             serverForReads = cluster.selectServer(new ReadPreferenceServerSelector(readPreference), maxWaitTimeMS, MILLISECONDS);
             connectionForReads = serverForReads.getConnection();
         }
-        Connection connectionToUse;
         if (serverForWrites != null && serverForReads.getDescription().getAddress().equals(serverForWrites.getDescription().getAddress())) {
-            connectionToUse = connectionForWrites;
+            return new MyConnectionSource(serverForWrites, connectionForWrites);
         } else {
-            connectionToUse = connectionForReads;
+            return new MyConnectionSource(serverForReads, connectionForReads);
         }
-        return new MyConnectionSource(connectionToUse);
     }
 
     @Override
@@ -113,14 +112,21 @@ public class PinnedBinding extends AbstractReferenceCounted implements ReadWrite
             serverForWrites = cluster.selectServer(new PrimaryServerSelector(), maxWaitTimeMS, MILLISECONDS);
             connectionForWrites = serverForWrites.getConnection();
         }
-        return new MyConnectionSource(connectionForWrites);
+        return new MyConnectionSource(serverForWrites, connectionForWrites);
     }
 
     private static final class MyConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
         private final Connection connection;
+        private final Server server;
 
-        public MyConnectionSource(final Connection connection) {
+        public MyConnectionSource(final Server server, final Connection connection) {
+            this.server = server;
             this.connection = connection.retain();
+        }
+
+        @Override
+        public ServerDescription getServerDescription() {
+            return server.getDescription();
         }
 
         @Override

@@ -22,6 +22,7 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.async.SingleResultFuture;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 
 import java.util.concurrent.TimeUnit;
@@ -89,6 +90,11 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
         private MyConnectionSource(final Connection connection) {
             this.connection = connection.retain();
+        }
+
+        @Override
+        public ServerDescription getServerDescription() {
+            return connection.getServerDescription();
         }
 
         @Override

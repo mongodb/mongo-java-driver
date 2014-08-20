@@ -22,6 +22,7 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.async.SingleResultFuture;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.selector.PrimaryServerSelector;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.ServerSelector;
@@ -76,6 +77,11 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
         private MyConnectionSource(final ServerSelector serverSelector) {
             this.server = cluster.selectServer(serverSelector, maxWaitTimeMS, MILLISECONDS);
             AsyncClusterBinding.this.retain();
+        }
+
+        @Override
+        public ServerDescription getServerDescription() {
+            return server.getDescription();
         }
 
         @Override

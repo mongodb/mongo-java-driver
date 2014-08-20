@@ -22,6 +22,7 @@ import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.protocol.QueryProtocol;
 import com.mongodb.protocol.QueryResult;
 import org.bson.BsonDocument;
@@ -92,7 +93,7 @@ public class MongoQueryCursorExhaustTest extends FunctionalTest {
 
     @Test
     public void testExhaustCloseBeforeReadingAllDocuments() {
-        SingleConnectionBinding singleConnectionBinding = new SingleConnectionBinding(exhaustConnection);
+        SingleConnectionBinding singleConnectionBinding = new SingleConnectionBinding(readConnectionSource, exhaustConnection);
         ConnectionSource source = singleConnectionBinding.getReadConnectionSource();
         Connection connection = source.getConnection();
         try {
@@ -116,9 +117,11 @@ public class MongoQueryCursorExhaustTest extends FunctionalTest {
 
     private static class SingleConnectionBinding implements ReadBinding {
         private final Connection connection;
+        private final ConnectionSource readConnectionSource;
         private int referenceCount = 1;
 
-        public SingleConnectionBinding(final Connection connection) {
+        public SingleConnectionBinding(final ConnectionSource readConnectionSource, final Connection connection) {
+            this.readConnectionSource = readConnectionSource;
             this.connection = connection.retain();
         }
 
@@ -135,6 +138,11 @@ public class MongoQueryCursorExhaustTest extends FunctionalTest {
         @Override
         public ConnectionSource getReadConnectionSource() {
             return new ConnectionSource() {
+                @Override
+                public ServerDescription getServerDescription() {
+                    return readConnectionSource.getServerDescription();
+                }
+
                 @Override
                 public Connection getConnection() {
                     return connection.retain();

@@ -18,6 +18,7 @@ package com.mongodb.binding;
 
 import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.ServerDescription;
 
 /**
  * A source of connections to a single MongoDB server.
@@ -25,6 +26,12 @@ import com.mongodb.connection.Connection;
  * @since 3.0
  */
 public interface AsyncConnectionSource extends ReferenceCounted {
+
+    /**
+     * Gets the current description of this source.
+     */
+    ServerDescription getServerDescription();
+
     /**
      * Gets a connection from this source.
      * @return the connection
