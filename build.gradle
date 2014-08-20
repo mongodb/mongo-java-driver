@@ -20,7 +20,6 @@ buildscript {
     repositories {
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
         mavenCentral()
-        jcenter()
     }
     dependencies {
         classpath 'me.trnl:clirr-gradle-plugin:0.4'
@@ -39,7 +38,6 @@ configure(subprojects.findAll { it.name != 'util' }) {
     apply plugin: 'eclipse'
     apply plugin: 'groovy'
     apply plugin: 'codenarc'
-    apply plugin: 'idea'
 
     evaluationDependsOn(':util')
 
@@ -62,7 +60,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
         provided 'org.slf4j:slf4j-api:1.7.6'
 
         testCompile 'junit:junit:4.11'
-        testCompile 'org.codehaus.groovy:groovy-all:2.0.8'
+        testCompile 'org.codehaus.groovy:groovy-all:2.3.6'
         testCompile('org.spockframework:spock-core:0.7-groovy-2.0') {
             exclude group: 'junit', module: 'junit-dep'
         }
@@ -73,20 +71,16 @@ configure(subprojects.findAll { it.name != 'util' }) {
         testCompile project(':util') //Adding categories to classpath
     }
 
-    idea {
-        module {
-            // include 'provided' dependencies on the classpath
-            scopes.PROVIDED.plus += configurations.provided
-        }
-    }
-
     javadoc {
         classpath += configurations.provided
     }
 
     sourceSets {
         main { java.srcDirs = ['src/main'] }
-        test { java.srcDirs = ['src/test'] }
+        test {
+            java { srcDirs = ['src/test'] }
+            groovy { srcDirs = ['src/test'] }
+        }
     }
 
     /* Compiling */
@@ -113,10 +107,9 @@ configure(subprojects.findAll { it.name != 'util' }) {
                 'org.mongodb.async.type': System.getProperty('org.mongodb.async.type', 'nio2'),
 
                 'javax.net.ssl.trustStore': System.getProperty('javax.net.ssl.trustStore', "${System.getProperty('user.home')}/.keystore"),
-       	        'javax.net.ssl.keyStore': System.getProperty('javax.net.ssl.keyStore', "${System.getProperty('user.home')}/.keystore"),
+                'javax.net.ssl.keyStore': System.getProperty('javax.net.ssl.keyStore', "${System.getProperty('user.home')}/.keystore"),
                 'javax.net.ssl.keyStorePassword': System.getProperty('javax.net.ssl.keyStorePassword', 'changeit'),
                 'javax.net.ssl.trustStorePassword': System.getProperty('javax.net.ssl.trustStorePassword', 'changeit')
-            
         )
 
         if (project.buildingWith('ssl.enabled')) {
@@ -136,7 +129,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
                     'java.security.krb5.kdc': project.getProperty('krb5.kdc'),
                     'java.security.krb5.realm': project.getProperty('krb5.realm'),
                     'java.security.auth.login.config': project.getProperty('auth.login.config'),
-            )
+                    )
         }
 
         useJUnit {
@@ -168,6 +161,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
     findbugs {
         excludeFilter = new File("$configDir/findbugs-exclude.xml")
         sourceSets = [sourceSets.main]
+        toolVersion = '3.0.0'
     }
 
     codenarc {
@@ -203,14 +197,6 @@ configure(subprojects.findAll { it.name != 'util' }) {
 
 def nettyVersion = '4.0.19.Final'
 
-project(':bson') {
-    sourceSets {
-        test {
-            groovy { srcDirs = ['src/test'] }
-            java { srcDirs = ['src/test'] }
-        }
-    }
-}
 project(':driver-core') {
     sourceSets {
         test {
@@ -219,7 +205,6 @@ project(':driver-core') {
             java { srcDirs = ['src/test/unit', 'src/test/functional'] }
         }
     }
-
 
     dependencies {
         compile project(':bson')
@@ -241,12 +226,10 @@ project(':driver-core') {
 project(':driver-async') {
     sourceSets {
         test {
-            groovy { srcDirs = ['src/test/unit', 'src/test/functional'] }
-            //Note: no groovy/spock tests in acceptance, these are Java tests
-            java { srcDirs = ['src/test/unit', 'src/test/functional'] }
+            groovy { srcDirs = ['src/test/functional'] }
+            java { srcDirs = ['src/test/functional'] }
         }
     }
-
 
     dependencies {
         compile project(':bson')
@@ -306,7 +289,7 @@ project(':driver') {
     sourceSets {
         test {
             groovy.srcDirs = ['src/test/unit']
-            java.srcDirs = [ 'src/test/functional', 'src/test/acceptance', 'src/test/unit', 'src/test/legacy', 'src/examples']
+            java.srcDirs = ['src/test/functional', 'src/test/acceptance', 'src/test/unit', 'src/test/legacy', 'src/examples']
         }
     }
 
@@ -343,7 +326,7 @@ project(':driver') {
 // Root project configuration           //
 //////////////////////////////////////////
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.11'
+    gradleVersion = '2.0'
 }
 
 gradle.buildFinished { BuildResult result ->
@@ -353,7 +336,5 @@ gradle.buildFinished { BuildResult result ->
     }
 }
 
-
 apply from: 'gradle/maven-deployment.gradle'
 apply from: 'gradle/osgi-compatibility.gradle'
-//apply from: 'gradle/release-process.gradle'
