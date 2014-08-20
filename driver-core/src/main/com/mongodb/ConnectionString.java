@@ -292,7 +292,7 @@ public class ConnectionString {
 
         WRITE_CONCERN_KEYS.add("safe");
         WRITE_CONCERN_KEYS.add("w");
-        WRITE_CONCERN_KEYS.add("wtimeout");
+        WRITE_CONCERN_KEYS.add("wtimeoutms");
         WRITE_CONCERN_KEYS.add("fsync");
         WRITE_CONCERN_KEYS.add("j");
 
@@ -365,7 +365,7 @@ public class ConnectionString {
                 safe = parseBoolean(value);
             } else if (key.equals("w")) {
                 w = value;
-            } else if (key.equals("wtimeout")) {
+            } else if (key.equals("wtimeoutms")) {
                 wTimeout = Integer.parseInt(value);
             } else if (key.equals("fsync")) {
                 fsync = parseBoolean(value);
@@ -466,6 +466,11 @@ public class ConnectionString {
                 valueList.add(value);
                 optionsMap.put(key, valueList);
             }
+        }
+
+        // JAVA-943 handle legacy wtimeout settings
+        if (optionsMap.containsKey("wtimeout") && !optionsMap.containsKey("wtimeoutms")) {
+            optionsMap.put("wtimeoutms", optionsMap.remove("wtimeout"));
         }
 
         return optionsMap;

@@ -28,12 +28,21 @@ import static com.mongodb.ReadPreference.secondaryPreferred
 import static java.util.Arrays.asList
 
 class MongoClientURISpecification extends Specification {
+
     def 'should throw Exception if URI does not have a trailing slash'() {
         when:
-        new MongoClientURI('mongodb://localhost?wTimeout=5');
+        new MongoClientURI('mongodb://localhost?wtimeoutMS=5');
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def 'should not throw an Exception if URI contains an unknown option'() {
+        when:
+        new MongoClientURI('mongodb://localhost/?unknownOption=5');
+
+        then:
+        notThrown(IllegalArgumentException)
     }
 
     @Unroll
@@ -84,15 +93,29 @@ class MongoClientURISpecification extends Specification {
         uri.getOptions().getWriteConcern() == writeConcern;
 
         where:
+        uri                                                                                  | writeConcern
+        new MongoClientURI('mongodb://localhost')                                            | WriteConcern.ACKNOWLEDGED
+        new MongoClientURI('mongodb://localhost/?safe=true')                                 | WriteConcern.ACKNOWLEDGED
+        new MongoClientURI('mongodb://localhost/?safe=false')                                | WriteConcern.UNACKNOWLEDGED
+        new MongoClientURI('mongodb://localhost/?wtimeoutMS=5')                              | new WriteConcern(1, 5, false, false)
+        new MongoClientURI('mongodb://localhost/?fsync=true')                                | new WriteConcern(1, 0, true, false)
+        new MongoClientURI('mongodb://localhost/?j=true')                                    | new WriteConcern(1, 0, false, true)
+        new MongoClientURI('mongodb://localhost/?w=2&wtimeoutMS=5&fsync=true&j=true')        | new WriteConcern(2, 5, true, true)
+        new MongoClientURI('mongodb://localhost/?w=majority&wtimeoutMS=5&fsync=true&j=true') | new WriteConcern('majority', 5, true, true)
+    }
+
+    def 'should correctly parse legacy wtimeout write concerns'() {
+        expect:
+        uri.getOptions().getWriteConcern() == writeConcern;
+
+        where:
         uri                                                                                | writeConcern
         new MongoClientURI('mongodb://localhost')                                          | WriteConcern.ACKNOWLEDGED
-        new MongoClientURI('mongodb://localhost/?safe=true')                               | WriteConcern.ACKNOWLEDGED
-        new MongoClientURI('mongodb://localhost/?safe=false')                              | WriteConcern.UNACKNOWLEDGED
         new MongoClientURI('mongodb://localhost/?wTimeout=5')                              | new WriteConcern(1, 5, false, false)
-        new MongoClientURI('mongodb://localhost/?fsync=true')                              | new WriteConcern(1, 0, true, false)
-        new MongoClientURI('mongodb://localhost/?j=true')                                  | new WriteConcern(1, 0, false, true)
         new MongoClientURI('mongodb://localhost/?w=2&wtimeout=5&fsync=true&j=true')        | new WriteConcern(2, 5, true, true)
         new MongoClientURI('mongodb://localhost/?w=majority&wtimeout=5&fsync=true&j=true') | new WriteConcern('majority', 5, true, true)
+        new MongoClientURI('mongodb://localhost/?wTimeout=1&wtimeoutMS=5')                 | new WriteConcern(1, 5, false, false)
+
     }
 
     @Unroll
