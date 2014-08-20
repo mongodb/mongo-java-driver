@@ -274,13 +274,13 @@ public class JsonWriterTest {
 
     @Test
     public void testInt64Strict() {
-        List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE, "\"-9223372036854775808\""),
-                                            new TestData<Long>(Integer.MIN_VALUE - 1L, "\"-2147483649\""),
-                                            new TestData<Long>(Integer.MIN_VALUE - 0L, "\"-2147483648\""),
-                                            new TestData<Long>(0L, "\"0\""),
-                                            new TestData<Long>(Integer.MAX_VALUE + 0L, "\"2147483647\""),
-                                            new TestData<Long>(Integer.MAX_VALUE + 1L, "\"2147483648\""),
-                                            new TestData<Long>(Long.MAX_VALUE, "\"9223372036854775807\""));
+        List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE, "-9223372036854775808"),
+                                            new TestData<Long>(Integer.MIN_VALUE - 1L, "-2147483649"),
+                                            new TestData<Long>(Integer.MIN_VALUE - 0L, "-2147483648"),
+                                            new TestData<Long>(0L, "0"),
+                                            new TestData<Long>(Integer.MAX_VALUE + 0L, "2147483647"),
+                                            new TestData<Long>(Integer.MAX_VALUE + 1L, "2147483648"),
+                                            new TestData<Long>(Long.MAX_VALUE, "9223372036854775807"));
 
         for (final TestData<Long> cur : tests) {
             stringWriter = new StringWriter();
@@ -288,7 +288,7 @@ public class JsonWriterTest {
             writer.writeStartDocument();
             writer.writeInt64("l", cur.value);
             writer.writeEndDocument();
-            String expected = "{ \"l\" : { \"$numberLong\" : " + cur.expected + " } }";
+            String expected = "{ \"l\" : { \"$numberLong\" : \"" + cur.expected + "\" } }";
             assertEquals(expected, stringWriter.toString());
         }
     }
