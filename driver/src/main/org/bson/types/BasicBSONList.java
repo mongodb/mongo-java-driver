@@ -31,7 +31,7 @@ import java.util.Set;
  * Utility class to allow array {@code DBObject}s to be created. <p> Note: MongoDB will also create arrays from {@code java.util.List}s.
  * </p> <p>
  * <blockquote><pre>
- * DBObject obj = new BasicBSONList();
+ * BSONObject obj = new BasicBSONList();
  * obj.put( "0", value1 );
  * obj.put( "4", value2 );
  * obj.put( 2, value3 );

@@ -18,6 +18,7 @@ package org.bson.util;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 public class StringRangeSet implements Set<String> {
@@ -51,6 +52,9 @@ public class StringRangeSet implements Set<String> {
             }
 
             public String next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
                 if (index < NUMSTR_LEN) {
                     return NUMSTRS[index++];
                 }
@@ -96,7 +100,7 @@ public class StringRangeSet implements Set<String> {
 
     @Override
     public boolean isEmpty() {
-        return false;
+        return size() == 0;
     }
 
     @Override
