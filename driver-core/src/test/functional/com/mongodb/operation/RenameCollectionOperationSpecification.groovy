@@ -22,10 +22,13 @@ import com.mongodb.MongoServerException
 import com.mongodb.OperationFunctionalSpecification
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isSharded
 
+@IgnoreIf( { isSharded() } )  // these tests don't reliably pass against mongos
 class RenameCollectionOperationSpecification extends OperationFunctionalSpecification {
 
     def cleanup() {
