@@ -261,6 +261,15 @@ public class JsonReaderTest {
     }
 
     @Test
+    public void testNumberLongExtendedJson() {
+        String json = "{\"$numberLong\":\"123\"}";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.INT64, bsonReader.readBsonType());
+        assertEquals(123, bsonReader.readInt64());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
     public void testNumberLongWithNew() {
         String json = "new NumberLong(123)";
         bsonReader = new JsonReader(json);

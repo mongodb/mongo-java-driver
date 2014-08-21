@@ -288,7 +288,7 @@ public class JsonWriterTest {
             writer.writeStartDocument();
             writer.writeInt64("l", cur.value);
             writer.writeEndDocument();
-            String expected = "{ \"l\" : { \"$numberLong\" : " + cur.expected + " } }";
+            String expected = "{ \"l\" : { \"$numberLong\" : \"" + cur.expected + "\" } }";
             assertEquals(expected, stringWriter.toString());
         }
     }
