@@ -176,7 +176,7 @@ public class DB {
     }
 
     /**
-     * Gets a collection with a given name. If the collection does not exist, a new collection is created.
+     * Gets a collection with a given name.
      *
      * @param name the name of the collection to return
      * @return the collection
