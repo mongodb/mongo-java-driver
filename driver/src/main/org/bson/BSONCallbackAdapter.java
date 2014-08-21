@@ -20,7 +20,7 @@ import org.bson.types.ObjectId;
 
 import static org.bson.io.Bits.readLong;
 
-class BsonCallbackAdapter extends AbstractBsonWriter {
+class BSONCallbackAdapter extends AbstractBsonWriter {
 
     private BSONCallback bsonCallback;
 
@@ -30,7 +30,7 @@ class BsonCallbackAdapter extends AbstractBsonWriter {
      * @param settings     The writer settings.
      * @param bsonCallback The callback to inform of operations on this writer
      */
-    protected BsonCallbackAdapter(final BsonWriterSettings settings, final BSONCallback bsonCallback) {
+    protected BSONCallbackAdapter(final BsonWriterSettings settings, final BSONCallback bsonCallback) {
         super(settings);
         this.bsonCallback = bsonCallback;
     }
