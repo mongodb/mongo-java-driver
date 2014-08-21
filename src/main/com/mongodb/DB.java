@@ -155,7 +155,6 @@ public abstract class DB {
 
     /**
      * Gets a collection with a given name.
-     * If the collection does not exist, a new collection is created.
      *
      * @param name the name of the collection to return
      * @return the collection
