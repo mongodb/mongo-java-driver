@@ -21,7 +21,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.client.MongoCollectionOptions;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.operation.QueryFlag;
 import org.bson.codecs.Codec;
 import org.mongodb.ConvertibleToDocument;

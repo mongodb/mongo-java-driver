@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.async.SingleResultCallback;
 import org.bson.ByteBuf;
 
 import java.util.ArrayList;

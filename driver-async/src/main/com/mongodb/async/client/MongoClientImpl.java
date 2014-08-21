@@ -24,7 +24,7 @@ import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.connection.Cluster;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.async.SingleResultFuture;

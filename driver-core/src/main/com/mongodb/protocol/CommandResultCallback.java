@@ -18,7 +18,7 @@ package com.mongodb.protocol;
 
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import org.bson.BsonDocument;

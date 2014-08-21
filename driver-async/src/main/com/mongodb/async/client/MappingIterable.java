@@ -20,7 +20,7 @@ import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 
 import java.util.Collection;

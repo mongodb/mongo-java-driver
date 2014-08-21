@@ -21,7 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.Connection;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.operation.UpdateRequest;

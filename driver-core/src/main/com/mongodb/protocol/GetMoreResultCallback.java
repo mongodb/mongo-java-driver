@@ -21,7 +21,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ResponseBuffers;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.protocol.message.ReplyMessage;

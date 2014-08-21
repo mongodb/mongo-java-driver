@@ -21,7 +21,7 @@ import com.mongodb.ServerCursor;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.ByteBufferOutputBuffer;
 import com.mongodb.connection.Connection;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.async.SingleResultFuture;

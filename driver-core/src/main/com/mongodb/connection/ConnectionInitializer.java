@@ -16,6 +16,8 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.async.SingleResultCallback;
+
 interface ConnectionInitializer {
 
     /**

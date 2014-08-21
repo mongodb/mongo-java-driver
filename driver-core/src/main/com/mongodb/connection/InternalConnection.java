@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.async.SingleResultCallback;
 import org.bson.ByteBuf;
 
 import java.util.List;

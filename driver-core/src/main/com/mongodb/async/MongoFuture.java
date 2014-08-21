@@ -16,8 +16,6 @@
 
 package com.mongodb.async;
 
-import com.mongodb.connection.SingleResultCallback;
-
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;

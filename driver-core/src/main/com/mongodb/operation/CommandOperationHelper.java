@@ -31,7 +31,7 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.protocol.CommandProtocol;
 import com.mongodb.protocol.Protocol;
 import com.mongodb.protocol.message.NoOpFieldNameValidator;

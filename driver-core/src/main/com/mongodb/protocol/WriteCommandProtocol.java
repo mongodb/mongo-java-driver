@@ -23,7 +23,7 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.ByteBufferOutputBuffer;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.operation.SingleResultFutureCallback;
 import com.mongodb.operation.WriteRequest;

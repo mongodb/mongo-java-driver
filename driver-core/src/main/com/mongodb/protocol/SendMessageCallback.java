@@ -19,7 +19,7 @@ package com.mongodb.protocol;
 import com.mongodb.MongoException;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import org.bson.io.OutputBuffer;
 

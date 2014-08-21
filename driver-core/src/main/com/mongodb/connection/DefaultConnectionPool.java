@@ -21,6 +21,7 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoWaitQueueFullException;
 import com.mongodb.ServerAddress;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.event.ConnectionEvent;

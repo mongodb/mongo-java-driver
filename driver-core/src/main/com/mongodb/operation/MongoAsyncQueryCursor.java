@@ -26,7 +26,7 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.connection.Connection;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.protocol.GetMoreDiscardProtocol;

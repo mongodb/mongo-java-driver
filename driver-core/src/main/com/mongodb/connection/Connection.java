@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.ReferenceCounted;
 import org.bson.ByteBuf;
 

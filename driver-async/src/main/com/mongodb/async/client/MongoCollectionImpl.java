@@ -25,7 +25,7 @@ import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.codecs.DocumentCodec;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.operation.CountOperation;

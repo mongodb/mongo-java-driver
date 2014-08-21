@@ -23,6 +23,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.MongoSocketClosedException
 import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketWriteException
+import com.mongodb.async.SingleResultCallback
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.event.ConnectionListener
 import com.mongodb.operation.QueryFlag

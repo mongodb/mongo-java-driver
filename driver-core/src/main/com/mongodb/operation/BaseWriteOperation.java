@@ -25,7 +25,7 @@ import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.protocol.AcknowledgedWriteResult;
 import com.mongodb.protocol.WriteCommandProtocol;
 import com.mongodb.protocol.WriteProtocol;

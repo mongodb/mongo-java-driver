@@ -28,7 +28,7 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerVersion;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.protocol.Protocol;
 
 import java.util.Arrays;

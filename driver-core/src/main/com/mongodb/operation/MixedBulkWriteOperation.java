@@ -29,7 +29,7 @@ import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerVersion;
-import com.mongodb.connection.SingleResultCallback;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.protocol.AcknowledgedBulkWriteResult;
 import com.mongodb.protocol.BulkWriteBatchCombiner;
 import com.mongodb.protocol.DeleteCommandProtocol;
