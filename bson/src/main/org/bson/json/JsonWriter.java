@@ -215,7 +215,7 @@ public class JsonWriter extends AbstractBsonWriter {
                 case STRICT:
                     writeStartDocument();
                     writeNameHelper("$numberLong");
-                    writer.write(Long.toString(value));
+                    writer.write(String.format("\"%d\"", value));
                     writeEndDocument();
                     break;
                 case SHELL:
