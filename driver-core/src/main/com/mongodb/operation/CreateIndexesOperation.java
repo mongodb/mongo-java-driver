@@ -21,18 +21,17 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
-import com.mongodb.async.SingleResultCallback;
 import com.mongodb.protocol.InsertProtocol;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
-import org.mongodb.CommandResult;
 import org.mongodb.WriteResult;
 
 import java.util.List;
@@ -93,9 +92,9 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
                 final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     executeWrappedCommandProtocolAsync(namespace, getCommand(), connection)
-                    .register(new SingleResultCallback<CommandResult>() {
+                    .register(new SingleResultCallback<BsonDocument>() {
                         @Override
-                        public void onResult(final CommandResult result, final MongoException e) {
+                        public void onResult(final BsonDocument result, final MongoException e) {
                             future.init(null, translateException(e));
                         }
                     });

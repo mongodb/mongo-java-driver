@@ -568,11 +568,14 @@ public class DB {
     }
 
     CommandResult executeCommand(final BsonDocument commandDocument) {
-        return new CommandResult(getMongo().execute(new CommandWriteOperation(getName(), commandDocument)).getResponse());
+        return new CommandResult(getMongo().execute(new CommandWriteOperation<BsonDocument>(getName(), commandDocument,
+                                                                                            new BsonDocumentCodec())));
     }
 
     CommandResult executeCommand(final BsonDocument commandDocument, final ReadPreference readPreference) {
-        return new CommandResult(getMongo().execute(new CommandReadOperation(getName(), commandDocument), readPreference).getResponse());
+        return new CommandResult(getMongo().execute(new CommandReadOperation<BsonDocument>(getName(), commandDocument,
+                                                                                           new BsonDocumentCodec()),
+                                                    readPreference));
     }
 
     Bytes.OptionHolder getOptionHolder() {

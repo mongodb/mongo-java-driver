@@ -24,7 +24,6 @@ import com.mongodb.binding.ReadBinding;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
-import org.mongodb.CommandResult;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
@@ -59,11 +58,11 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
                                                   binding, transformer());
     }
 
-    private Function<CommandResult, Long> transformer() {
-        return new Function<CommandResult, Long>() {
+    private Function<BsonDocument, Long> transformer() {
+        return new Function<BsonDocument, Long>() {
             @Override
-            public Long apply(final CommandResult result) {
-                return (result.getResponse().getNumber("n")).longValue();
+            public Long apply(final BsonDocument result) {
+                return (result.getNumber("n")).longValue();
             }
         };
     }

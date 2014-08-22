@@ -41,7 +41,9 @@ import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.management.JMXConnectionPoolListener;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.DropDatabaseOperation;
+import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.Document;
 
 import java.util.List;
@@ -205,20 +207,23 @@ public final class ClusterFixture {
 
     public static void enableMaxTimeFailPoint() {
         org.junit.Assume.assumeFalse(isSharded());
-        new CommandWriteOperation("admin",
-                                  new BsonDocumentWrapper<Document>(new Document("configureFailPoint", "maxTimeAlwaysTimeOut")
-                                                                   .append("mode", "alwaysOn"),
-                                                                    new DocumentCodec()))
-                                  .execute(getBinding());
+        new CommandWriteOperation<BsonDocument>("admin",
+                                                new BsonDocumentWrapper<Document>(new Document("configureFailPoint", "maxTimeAlwaysTimeOut")
+                                                                                  .append("mode", "alwaysOn"),
+                                                                                  new DocumentCodec()),
+                                                new BsonDocumentCodec())
+        .execute(getBinding());
     }
 
     public static void disableMaxTimeFailPoint() {
         org.junit.Assume.assumeFalse(isSharded());
         if (serverVersionAtLeast(asList(2, 5, 3)) && !isSharded()) {
-            new CommandWriteOperation("admin",
-                                      new BsonDocumentWrapper<Document>(new Document("configureFailPoint", "maxTimeAlwaysTimeOut")
-                                                                        .append("mode", "off"),
-                                                                        new DocumentCodec()))
+            new CommandWriteOperation<BsonDocument>("admin",
+                                                    new BsonDocumentWrapper<Document>(new Document("configureFailPoint",
+                                                                                                   "maxTimeAlwaysTimeOut")
+                                                                                      .append("mode", "off"),
+                                                                                      new DocumentCodec()),
+                                                    new BsonDocumentCodec())
             .execute(getBinding());
         }
     }

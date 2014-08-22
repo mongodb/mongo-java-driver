@@ -22,7 +22,6 @@ import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.operation.CreateCollectionOptions;
-import org.bson.BsonDocument;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
@@ -59,8 +58,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
         MongoCollection<Document> collection = database.getCollection(getCollectionName());
         Document collStatsCommand = new Document("collStats", getCollectionName());
-        Boolean isCapped = database.executeCommand(collStatsCommand, ReadPreference.primary())
-                                   .getResponse().getBoolean("capped").getValue();
+        Boolean isCapped = database.executeCommand(collStatsCommand, ReadPreference.primary()).getBoolean("capped");
         assertThat(isCapped, is(true));
 
         assertThat("Should have the default index on _id", collection.tools().getIndexes().size(), is(1));
@@ -75,8 +73,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
         MongoCollection<Document> collection = database.getCollection(getCollectionName());
         Document collStatsCommand = new Document("collStats", getCollectionName());
-        Boolean isCapped = database.executeCommand(collStatsCommand, ReadPreference.primary())
-                                   .getResponse().getBoolean("capped").getValue();
+        Boolean isCapped = database.executeCommand(collStatsCommand, ReadPreference.primary()).getBoolean("capped");
         assertThat(isCapped, is(true));
 
         assertThat("Should NOT have the default index on _id", collection.tools().getIndexes().size(), is(0));
@@ -95,8 +92,8 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         assertThat(collections.contains(getCollectionName()), is(true));
 
         Document collStatsCommand = new Document("collStats", getCollectionName());
-        BsonDocument collectionStatistics = database.executeCommand(collStatsCommand, ReadPreference.primary()).getResponse();
-        assertThat("max is set correctly in collection statistics", collectionStatistics.getInt32("max").getValue(), is(maxDocuments));
+        Document collectionStatistics = database.executeCommand(collStatsCommand, ReadPreference.primary());
+        assertThat("max is set correctly in collection statistics", collectionStatistics.getInteger("max"), is(maxDocuments));
     }
 
     @Test

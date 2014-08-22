@@ -19,25 +19,26 @@ package com.mongodb.operation;
 import com.mongodb.Function;
 import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.connection.Connection;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.codecs.Decoder;
-import org.mongodb.CommandResult;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
  * Groups documents in a collection by the specified key and performs simple aggregation functions, such as computing counts and sums. The
  * command is analogous to a SELECT <...> GROUP BY statement in SQL.
  *
  * @param <T> the type for each document
- *
  * @mongodb.driver.manual reference/command/group Group Command
  * @since 3.0
  */
@@ -67,8 +68,14 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     @Override
     @SuppressWarnings("unchecked")
     public MongoCursor<T> execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "retval"), binding,
-                                             transformer());
+        return withConnection(binding, new OperationHelper.CallableWithConnection<MongoCursor<T>>() {
+            @Override
+            public MongoCursor<T> call(final Connection connection) {
+                return executeWrappedCommandProtocol(namespace, getCommand(),
+                                                     CommandResultDocumentCodec.create(decoder, "retval"),
+                                                     connection, transformer(connection.getServerAddress()));
+            }
+        });
     }
 
     /**
@@ -80,27 +87,30 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     @Override
     @SuppressWarnings("unchecked")
     public MongoFuture<MongoAsyncCursor<T>> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "retval"), binding,
+        return executeWrappedCommandProtocolAsync(namespace,
+                                                  getCommand(),
+                                                  CommandResultDocumentCodec.create(decoder, "retval"),
+                                                  binding,
                                                   asyncTransformer());
     }
 
-    private Function<CommandResult, MongoCursor<T>> transformer() {
-        return new Function<CommandResult, MongoCursor<T>>() {
+    private Function<BsonDocument, MongoCursor<T>> transformer(final ServerAddress serverAddress) {
+        return new Function<BsonDocument, MongoCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MongoCursor<T> apply(final CommandResult result) {
-                return new InlineMongoCursor<T>(result.getAddress(),
-                                                BsonDocumentWrapperHelper.<T>toList(result.getResponse().getArray("retval")));
+            public MongoCursor<T> apply(final BsonDocument result) {
+                return new InlineMongoCursor<T>(serverAddress,
+                                                BsonDocumentWrapperHelper.<T>toList(result.getArray("retval")));
             }
         };
     }
 
-    private Function<CommandResult, MongoAsyncCursor<T>> asyncTransformer() {
-        return new Function<CommandResult, MongoAsyncCursor<T>>() {
+    private Function<BsonDocument, MongoAsyncCursor<T>> asyncTransformer() {
+        return new Function<BsonDocument, MongoAsyncCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MongoAsyncCursor<T> apply(final CommandResult result) {
-                return new InlineMongoAsyncCursor<T>(BsonDocumentWrapperHelper.<T>toList(result.getResponse().getArray("retval")));
+            public MongoAsyncCursor<T> apply(final BsonDocument result) {
+                return new InlineMongoAsyncCursor<T>(BsonDocumentWrapperHelper.<T>toList(result.getArray("retval")));
             }
         };
     }

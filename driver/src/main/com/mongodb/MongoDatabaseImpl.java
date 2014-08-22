@@ -24,7 +24,6 @@ import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
-import org.mongodb.CommandResult;
 import org.mongodb.Document;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -76,14 +75,15 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public CommandResult executeCommand(final Document command) {
-        return client.execute(new CommandWriteOperation(getName(), wrap(command)));
+    public Document executeCommand(final Document command) {
+        return client.execute(new CommandWriteOperation<Document>(getName(), wrap(command),
+                                                                  options.getCodecRegistry().get(Document.class)));
     }
 
     @Override
-    public CommandResult executeCommand(final Document command, final ReadPreference readPreference) {
+    public Document executeCommand(final Document command, final ReadPreference readPreference) {
         notNull("readPreference", readPreference);
-        return client.execute(new CommandReadOperation(getName(), wrap(command)),
+        return client.execute(new CommandReadOperation<Document>(getName(), wrap(command), options.getCodecRegistry().get(Document.class)),
                               readPreference);
     }
 

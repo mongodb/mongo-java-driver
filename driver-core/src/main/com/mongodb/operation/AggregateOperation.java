@@ -19,6 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.Function;
 import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncConnectionSource;
@@ -31,7 +32,6 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.codecs.Decoder;
-import org.mongodb.CommandResult;
 
 import java.util.List;
 
@@ -109,27 +109,27 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
     }
 
     @SuppressWarnings("unchecked")
-    private QueryResult<T> createQueryResult(final CommandResult result) {
+    private QueryResult<T> createQueryResult(final BsonDocument result, final ServerAddress serverAddress) {
         long cursorId;
         BsonArray results;
         if (isInline()) {
             cursorId = 0;
-            results = result.getResponse().getArray(RESULT);
+            results = result.getArray(RESULT);
         } else {
-            BsonDocument cursor = result.getResponse().getDocument("cursor");
+            BsonDocument cursor = result.getDocument("cursor");
             cursorId = ((BsonInt64) cursor.get("id")).getValue();
             results = cursor.getArray(FIRST_BATCH);
         }
-        return new QueryResult<T>(BsonDocumentWrapperHelper.<T>toList(results), cursorId, result.getAddress(), 0);
+        return new QueryResult<T>(BsonDocumentWrapperHelper.<T>toList(results), cursorId, serverAddress, 0);
     }
 
-    private Function<CommandResult, MongoCursor<T>> transformer(final ConnectionSource source) {
-        return new Function<CommandResult, MongoCursor<T>>() {
+    private Function<BsonDocument, MongoCursor<T>> transformer(final ConnectionSource source) {
+        return new Function<BsonDocument, MongoCursor<T>>() {
             @Override
-            public MongoCursor<T> apply(final CommandResult result) {
-                QueryResult<T> queryResult = createQueryResult(result);
+            public MongoCursor<T> apply(final BsonDocument result) {
+                QueryResult<T> queryResult = createQueryResult(result, source.getServerDescription().getAddress());
                 if (isInline()) {
-                    return new InlineMongoCursor<T>(result.getAddress(), queryResult.getResults());
+                    return new InlineMongoCursor<T>(source.getServerDescription().getAddress(), queryResult.getResults());
                 } else {
                     int batchSize = options.getBatchSize() == null ? 0 : options.getBatchSize();
                     return new MongoQueryCursor<T>(namespace, queryResult, 0, batchSize, decoder, source);
@@ -138,12 +138,12 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
         };
     }
 
-    private Function<CommandResult, MongoAsyncCursor<T>> asyncTransformer(final AsyncConnectionSource source) {
-        return new Function<CommandResult, MongoAsyncCursor<T>>() {
+    private Function<BsonDocument, MongoAsyncCursor<T>> asyncTransformer(final AsyncConnectionSource source) {
+        return new Function<BsonDocument, MongoAsyncCursor<T>>() {
 
             @Override
-            public MongoAsyncCursor<T> apply(final CommandResult result) {
-                QueryResult<T> queryResult = createQueryResult(result);
+            public MongoAsyncCursor<T> apply(final BsonDocument result) {
+                QueryResult<T> queryResult = createQueryResult(result, source.getServerDescription().getAddress());
                 if (isInline()) {
                     return new InlineMongoAsyncCursor<T>(queryResult.getResults());
                 } else {

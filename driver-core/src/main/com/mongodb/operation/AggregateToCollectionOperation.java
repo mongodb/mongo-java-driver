@@ -22,7 +22,6 @@ import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
-import org.mongodb.CommandResult;
 
 import java.util.List;
 
@@ -66,7 +65,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     @Override
     public Void execute(final WriteBinding binding) {
         executeWrappedCommandProtocol(namespace, asCommandDocument(namespace, pipeline, options),
-                                      new BsonDocumentCodec(), binding, new VoidTransformer<CommandResult>());
+                                      new BsonDocumentCodec(), binding, new VoidTransformer<BsonDocument>());
 
         return null;
     }
@@ -75,6 +74,6 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
         return executeWrappedCommandProtocolAsync(namespace, asCommandDocument(namespace, pipeline, options),
                                                   new BsonDocumentCodec(), binding,
-                                                  new VoidTransformer<CommandResult>());
+                                                  new VoidTransformer<BsonDocument>());
     }
 }

@@ -20,14 +20,12 @@ import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.protocol.message.ReplyMessage;
-import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
-import org.mongodb.CommandResult;
 
-abstract class CommandResultBaseCallback extends ResponseCallback {
-    private final Decoder<BsonDocument> decoder;
+abstract class CommandResultBaseCallback<T> extends ResponseCallback {
+    private final Decoder<T> decoder;
 
-    public CommandResultBaseCallback(final Decoder<BsonDocument> decoder, final long requestId, final ServerAddress serverAddress) {
+    public CommandResultBaseCallback(final Decoder<T> decoder, final long requestId, final ServerAddress serverAddress) {
         super(requestId, serverAddress);
         this.decoder = decoder;
     }
@@ -35,11 +33,10 @@ abstract class CommandResultBaseCallback extends ResponseCallback {
     protected boolean callCallback(final ResponseBuffers responseBuffers, final MongoException e) {
         try {
             if (e != null || responseBuffers == null) {
-                return callCallback((CommandResult) null, e);
+                return callCallback((T) null, e);
             } else {
-                ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, decoder, getRequestId());
-                return callCallback(new CommandResult(getServerAddress(), replyMessage.getDocuments().get(0)
-                ), null);
+                ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, decoder, getRequestId());
+                return callCallback(replyMessage.getDocuments().get(0), null);
             }
         } finally {
             if (responseBuffers != null) {
@@ -48,5 +45,5 @@ abstract class CommandResultBaseCallback extends ResponseCallback {
         }
     }
 
-    protected abstract boolean callCallback(CommandResult commandResult, MongoException e);
+    protected abstract boolean callCallback(T response, MongoException e);
 }

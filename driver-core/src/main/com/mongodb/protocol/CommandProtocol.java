@@ -19,54 +19,64 @@ package com.mongodb.protocol;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.ByteBufferOutputBuffer;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.operation.QueryFlag;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.operation.SingleResultFutureCallback;
 import com.mongodb.protocol.message.CommandMessage;
 import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentReader;
 import org.bson.FieldNameValidator;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
-import org.mongodb.CommandResult;
+import org.bson.codecs.DecoderContext;
 
 import java.util.EnumSet;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
 import static com.mongodb.protocol.ProtocolHelper.getCommandFailureException;
 import static com.mongodb.protocol.ProtocolHelper.getMessageSettings;
 import static java.lang.String.format;
 
-public class CommandProtocol implements Protocol<CommandResult> {
+/**
+ * A protocol for executing a command against a MongoDB server.
+ *
+ * @param <T> the type returned from execution
+ * @since 3.0
+ */
+public class CommandProtocol<T> implements Protocol<T> {
 
     public static final Logger LOGGER = Loggers.getLogger("protocol.command");
 
     private final MongoNamespace namespace;
     private final BsonDocument command;
-    private final Decoder<BsonDocument> commandResultDecoder;
+    private final Decoder<T> commandResultDecoder;
     private final EnumSet<QueryFlag> queryFlags;
     private final FieldNameValidator fieldNameValidator;
 
     public CommandProtocol(final String database, final BsonDocument command, final EnumSet<QueryFlag> queryFlags,
-                           final FieldNameValidator fieldNameValidator, final Decoder<BsonDocument> commandResultDecoder) {
-        this.queryFlags = queryFlags;
-        this.fieldNameValidator = fieldNameValidator;
+                           final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder) {
+        notNull("database", database);
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
-        this.command = command;
-        this.commandResultDecoder = commandResultDecoder;
+        this.command = notNull("command", command);
+        this.commandResultDecoder = notNull("commandResultDecoder", commandResultDecoder);
+        this.queryFlags = notNull("queryFlags", queryFlags);
+        this.fieldNameValidator = notNull("fieldNameValidator", fieldNameValidator);
     }
 
-    public CommandResult execute(final Connection connection) {
+    public T execute(final Connection connection) {
         LOGGER.debug(format("Sending command {%s : %s} to database %s on connection [%s] to server %s",
                             command.keySet().iterator().next(), command.values().iterator().next(),
                             namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
-        CommandResult commandResult = receiveMessage(connection, sendMessage(connection).getId());
-        LOGGER.debug("Command execution completed with status " + commandResult.isOk());
-        return commandResult;
+        T retval = receiveMessage(connection, sendMessage(connection).getId());
+        LOGGER.debug("Command execution completed");
+        return retval;
     }
 
     private CommandMessage sendMessage(final Connection connection) {
@@ -82,43 +92,43 @@ public class CommandProtocol implements Protocol<CommandResult> {
         }
     }
 
-    private CommandResult receiveMessage(final Connection connection, final int messageId) {
+    private T receiveMessage(final Connection connection, final int messageId) {
         ResponseBuffers responseBuffers = connection.receiveMessage(messageId);
         try {
-            ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, commandResultDecoder, messageId);
+            ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(), messageId);
             return createCommandResult(replyMessage, connection.getServerAddress());
         } finally {
             responseBuffers.close();
         }
     }
 
-    public MongoFuture<CommandResult> executeAsync(final Connection connection) {
+    public MongoFuture<T> executeAsync(final Connection connection) {
         LOGGER.debug(format("Asynchronously sending command {%s : %s} to database %s on connection [%s] to server %s",
                             command.keySet().iterator().next(), command.values().iterator().next(),
                             namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
-        SingleResultFuture<CommandResult> retVal = new SingleResultFuture<CommandResult>();
+        SingleResultFuture<T> retVal = new SingleResultFuture<T>();
 
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags, fieldNameValidator,
                                                     getMessageSettings(connection.getServerDescription()));
         encodeMessageToBuffer(message, buffer);
 
-        CommandResultCallback receiveCallback = new CommandResultCallback(new SingleResultFutureCallback<CommandResult>(retVal),
-                                                                          commandResultDecoder,
-                                                                          message.getId(),
-                                                                          connection.getServerAddress());
+        CommandResultCallback<T> receiveCallback = new CommandResultCallback<T>(new SingleResultFutureCallback<T>(retVal),
+                                                                                commandResultDecoder,
+                                                                                message.getId(),
+                                                                                connection.getServerAddress());
         connection.sendMessageAsync(buffer.getByteBuffers(),
                                     message.getId(),
-                                    new SendMessageCallback<CommandResult>(connection, buffer, message.getId(), retVal, receiveCallback));
+                                    new SendMessageCallback<T>(connection, buffer, message.getId(), retVal, receiveCallback));
         return retVal;
     }
 
-    private CommandResult createCommandResult(final ReplyMessage<BsonDocument> replyMessage, final ServerAddress serverAddress) {
-        CommandResult commandResult = new CommandResult(serverAddress, replyMessage.getDocuments().get(0));
-        if (!commandResult.isOk()) {
-            throw getCommandFailureException(commandResult);
+    private T createCommandResult(final ReplyMessage<BsonDocument> replyMessage, final ServerAddress serverAddress) {
+        BsonDocument response = replyMessage.getDocuments().get(0);
+        if (!ProtocolHelper.isCommandOk(response)) {
+            throw getCommandFailureException(response, serverAddress);
         }
 
-        return commandResult;
+        return commandResultDecoder.decode(new BsonDocumentReader(response), DecoderContext.builder().build());
     }
 }

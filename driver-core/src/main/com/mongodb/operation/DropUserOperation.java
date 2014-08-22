@@ -25,7 +25,6 @@ import com.mongodb.connection.Connection;
 import com.mongodb.protocol.DeleteProtocol;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
-import org.mongodb.CommandResult;
 import org.mongodb.WriteResult;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -74,7 +73,7 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
             @Override
             public MongoFuture<Void> call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    return executeWrappedCommandProtocolAsync(database, getCommand(), connection, new VoidTransformer<CommandResult>());
+                    return executeWrappedCommandProtocolAsync(database, getCommand(), connection, new VoidTransformer<BsonDocument>());
                 } else {
                     return executeProtocolAsync(getCollectionBasedProtocol(), connection, new VoidTransformer<WriteResult>());
                 }

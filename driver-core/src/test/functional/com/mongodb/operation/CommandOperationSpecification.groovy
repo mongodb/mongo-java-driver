@@ -16,6 +16,7 @@
 
 
 package com.mongodb.operation
+
 import category.Async
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
@@ -23,6 +24,7 @@ import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
+import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
@@ -38,51 +40,52 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should execute command'() {
         given:
-        def commandOperation = new CommandReadOperation(getNamespace().databaseName,
-                                                        new BsonDocument('count', new BsonString(getCollectionName()))
-        )
+        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
+                                                                      new BsonDocument('count', new BsonString(getCollectionName())),
+                                                                      new BsonDocumentCodec())
         when:
         def result = commandOperation.execute(getBinding())
 
         then:
-        result.response.getNumber('n').intValue() == 0
+        result.getNumber('n').intValue() == 0
     }
 
     def 'should execute command larger than 16MB'() {
         when:
-        def result = new CommandReadOperation(getNamespace().databaseName,
-                                              new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
-                                                      .append('query', new BsonDocument('_id', new BsonInt32(42)))
-                                                      .append('update',
-                                                              new BsonDocument('_id', new BsonInt32(42))
-                                                                      .append('b', new BsonBinary(new byte[16 * 1024 * 1024 - 30])))
-        )
+        def result = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
+                                                            new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
+                                                                    .append('query', new BsonDocument('_id', new BsonInt32(42)))
+                                                                    .append('update',
+                                                                            new BsonDocument('_id', new BsonInt32(42))
+                                                                                    .append('b', new BsonBinary(
+                                                                                    new byte[16 * 1024 * 1024 - 30]))),
+                                                            new BsonDocumentCodec())
                 .execute(getBinding())
 
         then:
-        result.response.containsKey('value')
+        result.containsKey('value')
     }
 
     def 'should execute command asynchronously'() {
         given:
-        def commandOperation = new CommandReadOperation(getNamespace().databaseName,
-                                                        new BsonDocument('count', new BsonString(getCollectionName()))
-        )
+        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
+                                                                      new BsonDocument('count', new BsonString(getCollectionName())),
+                                                                      new BsonDocumentCodec())
         when:
         def result = commandOperation.executeAsync(getAsyncBinding()).get()
 
         then:
-        result.response.getNumber('n').intValue() == 0
+        result.getNumber('n').intValue() == 0
 
     }
 
-    @IgnoreIf( { isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw execution timeout exception from execute'() {
         given:
-        def commandOperation = new CommandReadOperation(getNamespace().databaseName,
-                                                        new BsonDocument('count', new BsonString(getCollectionName()))
-                                                                .append('maxTimeMS', new BsonInt32(1))
-        )
+        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
+                                                                      new BsonDocument('count', new BsonString(getCollectionName()))
+                                                                              .append('maxTimeMS', new BsonInt32(1)),
+                                                                      new BsonDocumentCodec())
         enableMaxTimeFailPoint()
 
         when:
@@ -96,13 +99,13 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf( { isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
-        def commandOperation = new CommandReadOperation(getNamespace().databaseName,
-                                                        new BsonDocument('count', new BsonString(getCollectionName()))
-                                                                .append('maxTimeMS', new BsonInt32(1))
-        )
+        def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
+                                                                      new BsonDocument('count', new BsonString(getCollectionName()))
+                                                                              .append('maxTimeMS', new BsonInt32(1)),
+                                                                      new BsonDocumentCodec())
         enableMaxTimeFailPoint()
 
         when:

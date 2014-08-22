@@ -22,6 +22,7 @@ import com.mongodb.binding.WriteBinding;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.codecs.BsonDocumentCodec;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
@@ -40,13 +41,13 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
 
     @Override
     public Void execute(final WriteBinding binding) {
-        executeWrappedCommandProtocol(databaseName, asDocument(), binding);
+        executeWrappedCommandProtocol(databaseName, asDocument(), new BsonDocumentCodec(), binding);
         return null;
     }
 
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return ignoreResult(executeWrappedCommandProtocolAsync(databaseName, asDocument(), binding));
+        return ignoreResult(executeWrappedCommandProtocolAsync(databaseName, asDocument(), new BsonDocumentCodec(), binding));
     }
 
     private BsonDocument asDocument() {

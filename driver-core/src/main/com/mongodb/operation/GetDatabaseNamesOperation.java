@@ -24,7 +24,6 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonValue;
-import org.mongodb.CommandResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,12 +58,12 @@ public class GetDatabaseNamesOperation implements AsyncReadOperation<List<String
         return executeWrappedCommandProtocolAsync("admin", getCommand(), binding, transformer());
     }
 
-    private Function<CommandResult, List<String>> transformer() {
-        return new Function<CommandResult, List<String>>() {
+    private Function<BsonDocument, List<String>> transformer() {
+        return new Function<BsonDocument, List<String>>() {
             @SuppressWarnings("unchecked")
             @Override
-            public List<String> apply(final CommandResult result) {
-                BsonArray databases = result.getResponse().getArray("databases");
+            public List<String> apply(final BsonDocument result) {
+                BsonArray databases = result.getArray("databases");
 
                 List<String> databaseNames = new ArrayList<String>();
                 for (final BsonValue database : databases) {

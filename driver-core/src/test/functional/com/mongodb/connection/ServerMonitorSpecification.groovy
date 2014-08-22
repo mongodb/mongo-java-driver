@@ -15,13 +15,14 @@
  */
 
 package com.mongodb.connection
+
 import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerAddress
 import com.mongodb.operation.CommandReadOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.mongodb.CommandResult
+import org.bson.codecs.BsonDocumentCodec
 import spock.lang.IgnoreIf
 
 import java.util.concurrent.CountDownLatch
@@ -74,10 +75,10 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
 
     def 'should return server version'() {
         given:
-        CommandResult commandResult = new CommandReadOperation('admin', new BsonDocument('buildinfo', new BsonInt32(1)))
+        def commandResult = new CommandReadOperation<BsonDocument>('admin', new BsonDocument('buildinfo', new BsonInt32(1)),
+                                                                   new BsonDocumentCodec())
                 .execute(getBinding())
-        def expectedVersion = new ServerVersion(commandResult.getResponse().getArray('versionArray')
-                                                             .subList(0, 3)*.getValue() as List<Integer>)
+        def expectedVersion = new ServerVersion(commandResult.getArray('versionArray').subList(0, 3)*.getValue() as List<Integer>)
 
         when:
         latch.await()
@@ -89,12 +90,12 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
         serverMonitor.close()
     }
 
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should set max wire batch size when provided by server'() {
         given:
-        CommandResult commandResult = new CommandReadOperation('admin', new BsonDocument('ismaster', new BsonInt32(1)))
-                .execute(getBinding())
-        def expected = commandResult.response.getInt32('maxWriteBatchSize').getValue()
+        def commandResult = new CommandReadOperation<BsonDocument>('admin', new BsonDocument('ismaster', new BsonInt32(1)),
+                                                                   new BsonDocumentCodec()).execute(getBinding())
+        def expected = commandResult.getNumber('maxWriteBatchSize').intValue()
 
         when:
         latch.await()
@@ -103,7 +104,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
         newDescription.maxWriteBatchSize == expected
     }
 
-    @IgnoreIf( { serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should set default max wire batch size when not provided by server'() {
         when:
         latch.await()

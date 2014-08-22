@@ -18,7 +18,6 @@ package com.mongodb.client;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.annotations.ThreadSafe;
-import org.mongodb.CommandResult;
 import org.mongodb.Document;
 
 /**
@@ -28,9 +27,9 @@ import org.mongodb.Document;
 public interface MongoDatabase {
     String getName();
 
-    CommandResult executeCommand(Document command);
+    Document executeCommand(Document command);
 
-    CommandResult executeCommand(final Document command, final ReadPreference readPreference);
+    Document executeCommand(final Document command, final ReadPreference readPreference);
 
     MongoDatabaseOptions getOptions();
 

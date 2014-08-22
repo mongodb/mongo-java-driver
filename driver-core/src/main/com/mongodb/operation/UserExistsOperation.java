@@ -27,7 +27,6 @@ import com.mongodb.protocol.QueryResult;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
-import org.mongodb.CommandResult;
 
 import java.util.EnumSet;
 
@@ -63,7 +62,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
             public Boolean call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     return executeWrappedCommandProtocol(databaseName, getCommand(), connection, binding.getReadPreference(),
-                                                         transformCommandResult());
+                                                         transformer());
                 } else {
                     return executeProtocol(getCollectionBasedProtocol(), connection, transformQueryResult());
                 }
@@ -77,7 +76,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
             @Override
             public MongoFuture<Boolean> call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    return executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, transformCommandResult());
+                    return executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, transformer());
                 } else {
                     return executeProtocolAsync(getCollectionBasedProtocol(), connection, transformQueryResult());
                 }
@@ -85,11 +84,11 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
         });
     }
 
-    private Function<CommandResult, Boolean> transformCommandResult() {
-        return new Function<CommandResult, Boolean>() {
+    private Function<BsonDocument, Boolean> transformer() {
+        return new Function<BsonDocument, Boolean>() {
             @Override
-            public Boolean apply(final CommandResult result) {
-                return result.getResponse().get("users").isArray() && !result.getResponse().getArray("users").isEmpty();
+            public Boolean apply(final BsonDocument result) {
+                return result.get("users").isArray() && !result.getArray("users").isEmpty();
             }
         };
     }

@@ -22,7 +22,6 @@ import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.mongodb.CommandResult;
 
 import java.util.List;
 
@@ -35,7 +34,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  *
  * @since 3.0
  */
-public class AggregateExplainOperation implements AsyncReadOperation<CommandResult>, ReadOperation<CommandResult> {
+public class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, ReadOperation<BsonDocument> {
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final AggregationOptions options;
@@ -54,12 +53,12 @@ public class AggregateExplainOperation implements AsyncReadOperation<CommandResu
     }
 
     @Override
-    public CommandResult execute(final ReadBinding binding) {
+    public BsonDocument execute(final ReadBinding binding) {
         return executeWrappedCommandProtocol(namespace, getCommand(), binding);
     }
 
     @Override
-    public MongoFuture<CommandResult> executeAsync(final AsyncReadBinding binding) {
+    public MongoFuture<BsonDocument> executeAsync(final AsyncReadBinding binding) {
         return executeWrappedCommandProtocolAsync(namespace, getCommand(), binding);
     }
 

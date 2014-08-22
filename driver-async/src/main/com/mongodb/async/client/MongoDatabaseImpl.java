@@ -22,7 +22,6 @@ import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.operation.CommandWriteOperation;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
-import org.mongodb.CommandResult;
 import org.mongodb.Document;
 
 class MongoDatabaseImpl implements MongoDatabase {
@@ -59,10 +58,10 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public MongoFuture<CommandResult> executeCommand(final Document commandDocument) {
-        return client.execute(new CommandWriteOperation(name, new BsonDocumentWrapper<Document>(commandDocument,
-                                                                                                options.getDocumentCodec())
-        ));
+    public MongoFuture<Document> executeCommand(final Document commandDocument) {
+        return client.execute(new CommandWriteOperation<Document>(name, new BsonDocumentWrapper<Document>(commandDocument,
+                                                                                                          options.getDocumentCodec()),
+                                                                  new DocumentCodec()));
     }
 
     @Override

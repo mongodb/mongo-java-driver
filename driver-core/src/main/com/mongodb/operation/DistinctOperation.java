@@ -24,7 +24,6 @@ import com.mongodb.binding.ReadBinding;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
-import org.mongodb.CommandResult;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
@@ -64,25 +63,15 @@ public class DistinctOperation implements AsyncReadOperation<BsonArray>, ReadOpe
 
     @Override
     public MongoFuture<BsonArray> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), binding, asyncTransformer());
+        return executeWrappedCommandProtocolAsync(namespace, getCommand(), binding, transformer());
     }
 
     @SuppressWarnings("unchecked")
-    private Function<CommandResult, BsonArray> transformer() {
-        return new Function<CommandResult, BsonArray>() {
+    private Function<BsonDocument, BsonArray> transformer() {
+        return new Function<BsonDocument, BsonArray>() {
             @Override
-            public BsonArray apply(final CommandResult result) {
-                return result.getResponse().getArray("values");
-            }
-        };
-    }
-
-    private Function<CommandResult, BsonArray> asyncTransformer() {
-        return new Function<CommandResult, BsonArray>() {
-            @SuppressWarnings("unchecked")
-            @Override
-            public BsonArray apply(final CommandResult result) {
-                return result.getResponse().getArray("values");
+            public BsonArray apply(final BsonDocument result) {
+                return result.getArray("values");
             }
         };
     }

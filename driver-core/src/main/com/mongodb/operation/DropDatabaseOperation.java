@@ -21,7 +21,6 @@ import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.mongodb.CommandResult;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
@@ -44,11 +43,11 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(databaseName, DROP_DATABASE, binding, new VoidTransformer<CommandResult>());
+        return executeWrappedCommandProtocol(databaseName, DROP_DATABASE, binding, new VoidTransformer<BsonDocument>());
     }
 
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(databaseName, DROP_DATABASE, binding, new VoidTransformer<CommandResult>());
+        return executeWrappedCommandProtocolAsync(databaseName, DROP_DATABASE, binding, new VoidTransformer<BsonDocument>());
     }
 }

@@ -19,7 +19,6 @@ package com.mongodb.async.rx.client;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.client.MongoCollectionOptions;
 import org.bson.codecs.Codec;
-import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import rx.Observable;
 
@@ -51,13 +50,13 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public Observable<CommandResult> executeCommand(final Document commandDocument) {
-         return Observable.create(new OnSubscribeAdapter<CommandResult>(new OnSubscribeAdapter.FutureFunction<CommandResult>() {
-             @Override
-             public MongoFuture<CommandResult> apply() {
-                 return wrapped.executeCommand(commandDocument);
-             }
-         }));
+    public Observable<Document> executeCommand(final Document commandDocument) {
+        return Observable.create(new OnSubscribeAdapter<Document>(new OnSubscribeAdapter.FutureFunction<Document>() {
+            @Override
+            public MongoFuture<Document> apply() {
+                return wrapped.executeCommand(commandDocument);
+            }
+        }));
     }
 
     @Override

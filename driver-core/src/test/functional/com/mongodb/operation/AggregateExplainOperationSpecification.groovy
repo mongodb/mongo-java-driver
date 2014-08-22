@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.operation
+
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonDocument
@@ -30,7 +31,7 @@ import static java.util.Arrays.asList
 
 class AggregateExplainOperationSpecification extends OperationFunctionalSpecification {
 
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should be able to explain an empty pipeline'() {
 
         given:
@@ -40,7 +41,7 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
         def result = op.execute(getBinding());
 
         then:
-        result.getResponse().containsKey('stages')
+        result.containsKey('stages')
 
         where:
         aggregateOptions << [
@@ -49,7 +50,7 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
     }
 
     @Category(Async)
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should be able to explain an empty pipeline asynchronously'() {
 
         given:
@@ -59,7 +60,7 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
         def result = op.executeAsync(getAsyncBinding()).get();
 
         then:
-        result.getResponse().containsKey('stages')
+        result.containsKey('stages')
 
         where:
         aggregateOptions << [
@@ -67,7 +68,7 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
                 AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.CURSOR).build()]
     }
 
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should be able to explain a pipeline'() {
 
         given:
@@ -80,8 +81,8 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
         def result = op.execute(getBinding());
 
         then:
-        result.getResponse().containsKey('stages')
-        Document stage = (Document) result.getResponse().get('stages').first()
+        result.containsKey('stages')
+        Document stage = (Document) result.get('stages').first()
         stage.'$cursor'.'query' == match
 
         where:
@@ -91,7 +92,7 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
     }
 
     @Category(Async)
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should be able to explain a pipeline asynchronously'() {
 
         given:
@@ -103,8 +104,8 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
         def result = op.executeAsync(getAsyncBinding()).get();
 
         then:
-        result.getResponse().containsKey('stages')
-        Document stage = (Document) result.getResponse().get('stages').first()
+        result.containsKey('stages')
+        Document stage = (Document) result.get('stages').first()
         stage.'$cursor'.'query' == match
 
         where:

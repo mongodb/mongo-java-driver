@@ -18,12 +18,10 @@ package com.mongodb.operation;
 
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
-import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import org.bson.BsonDocument;
-import org.mongodb.CommandResult;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandDocuments.createMapReduce;
@@ -43,7 +41,6 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
     private final MapReduce mapReduce;
     private final MongoNamespace namespace;
-    private ServerAddress serverUsed;
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute
@@ -77,21 +74,11 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
         return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding, transformer());
     }
 
-    /**
-     * Returns the server that the map reduce operation ran against.
-     *
-     * @return the server that the results of the map reduce were obtained from
-     */
-    public ServerAddress getServerUsed() {
-        return serverUsed;
-    }
-
-    private Function<CommandResult, MapReduceStatistics> transformer() {
-        return new Function<CommandResult, MapReduceStatistics>() {
+    private Function<BsonDocument, MapReduceStatistics> transformer() {
+        return new Function<BsonDocument, MapReduceStatistics>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MapReduceStatistics apply(final CommandResult result) {
-                serverUsed = result.getAddress();
+            public MapReduceStatistics apply(final BsonDocument result) {
                 return MapReduceHelper.createStatistics(result);
             }
         };

@@ -19,12 +19,12 @@ package com.mongodb.protocol;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.ByteBufferOutputBuffer;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.operation.QueryFlag;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.protocol.message.CommandMessage;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.ReplyMessage;
@@ -32,7 +32,6 @@ import com.mongodb.protocol.message.RequestMessage;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
-import org.mongodb.CommandResult;
 import org.mongodb.WriteResult;
 
 import java.util.EnumSet;
@@ -144,8 +143,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
         try {
             ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
                                                                                      requestMessage.getId());
-            return ProtocolHelper.getWriteResult(new CommandResult(connection.getServerAddress(), replyMessage.getDocuments().get(0)
-            ));
+            return ProtocolHelper.getWriteResult(replyMessage.getDocuments().get(0), connection.getServerAddress());
         } finally {
             responseBuffers.close();
         }

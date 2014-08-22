@@ -19,7 +19,6 @@ package com.mongodb.async.rx.client;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.async.client.MongoCollectionOptions;
 import org.bson.codecs.Codec;
-import org.mongodb.CommandResult;
 import org.mongodb.Document;
 import rx.Observable;
 
@@ -77,7 +76,7 @@ public interface MongoDatabase {
      * @return an Observable representing the completion of the command. It will report exactly one event when the command completes
      * successfully.
      */
-    Observable<CommandResult> executeCommand(Document commandDocument);
+    Observable<Document> executeCommand(Document commandDocument);
 
     /**
      * @return the DatabaseAdministration that provides admin methods that can be performed

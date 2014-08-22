@@ -17,19 +17,19 @@
 package com.mongodb.operation;
 
 import com.mongodb.Function;
-import org.mongodb.CommandResult;
+import org.bson.BsonDocument;
 
 final class FindAndModifyHelper {
 
-    static <T> Function<CommandResult, T> transformer() {
-        return new Function<CommandResult, T>() {
+    static <T> Function<BsonDocument, T> transformer() {
+        return new Function<BsonDocument, T>() {
             @SuppressWarnings("unchecked")
             @Override
-            public T apply(final CommandResult result) {
-                if (!result.getResponse().isDocument("value")) {
+            public T apply(final BsonDocument result) {
+                if (!result.isDocument("value")) {
                     return null;
                 }
-                return BsonDocumentWrapperHelper.toDocument(result.getResponse().getDocument("value", null));
+                return BsonDocumentWrapperHelper.toDocument(result.getDocument("value", null));
             }
         };
     }

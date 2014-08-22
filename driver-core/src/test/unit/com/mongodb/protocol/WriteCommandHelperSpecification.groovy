@@ -24,7 +24,6 @@ import org.bson.BsonInt32
 import org.bson.BsonString
 import org.mongodb.BulkWriteError
 import org.mongodb.BulkWriteUpsert
-import org.mongodb.CommandResult
 import org.mongodb.WriteConcernError
 import spock.lang.Specification
 
@@ -40,69 +39,68 @@ class WriteCommandHelperSpecification extends Specification {
 
     def 'should get bulk write result from with a count matching the n field'() {
         expect:
-        getBulkWriteResult(INSERT, getCommandResult(new BsonDocument('n', new BsonInt32(1)))) ==
-        new AcknowledgedBulkWriteResult(INSERT, 1, [])
+        getBulkWriteResult(INSERT, new BsonDocument('n', new BsonInt32(1))) == new AcknowledgedBulkWriteResult(INSERT, 1, [])
     }
 
 
     def 'should get bulk write result with upserts matching the upserted field'() {
         expect:
         [new BulkWriteUpsert(0, new BsonString('id1')), new BulkWriteUpsert(2, new BsonString('id2'))] ==
-        getBulkWriteResult(UPDATE, getCommandResult(new BsonDocument('n', new BsonInt32(1))
-                                                            .append('upserted', new BsonArray([new BsonDocument('index', new BsonInt32(0))
-                                                                                                       .
-                                                                                                       append('_id', new BsonString('id1')),
-                                                                                               new BsonDocument('index', new BsonInt32(2))
-                                                                                                       .append('_id',
-                                                                                                               new BsonString('id2'))]))))
+        getBulkWriteResult(UPDATE, new BsonDocument('n', new BsonInt32(1))
+                .append('upserted', new BsonArray([new BsonDocument('index', new BsonInt32(0))
+                                                           .
+                                                           append('_id', new BsonString('id1')),
+                                                   new BsonDocument('index', new BsonInt32(2))
+                                                           .append('_id',
+                                                                   new BsonString('id2'))])))
                 .getUpserts()
     }
 
 
     def 'should not have modified count for update with no nModified field in the result'() {
         expect:
-        !getBulkWriteResult(UPDATE, getCommandResult(new BsonDocument('n', new BsonInt32(1)))).isModifiedCountAvailable()
+        !getBulkWriteResult(UPDATE, new BsonDocument('n', new BsonInt32(1))).isModifiedCountAvailable()
     }
 
     def 'should not have modified count for replace with no nModified field in the result'() {
         expect:
-        !getBulkWriteResult(REPLACE, getCommandResult(new BsonDocument('n', new BsonInt32(1)))).isModifiedCountAvailable()
+        !getBulkWriteResult(REPLACE, new BsonDocument('n', new BsonInt32(1))).isModifiedCountAvailable()
     }
 
     def 'should have modified count of 0 for insert with no nModified field in the result'() {
         expect:
-        0 == getBulkWriteResult(INSERT, getCommandResult(new BsonDocument('n', new BsonInt32(1)))).getModifiedCount()
+        0 == getBulkWriteResult(INSERT, new BsonDocument('n', new BsonInt32(1))).getModifiedCount()
     }
 
     def 'should have modified count of 0 for remove with no nModified field in the result'() {
         expect:
-        0 == getBulkWriteResult(REMOVE, getCommandResult(new BsonDocument('n', new BsonInt32(1)))).getModifiedCount()
+        0 == getBulkWriteResult(REMOVE, new BsonDocument('n', new BsonInt32(1))).getModifiedCount()
     }
 
     def 'should not have error if writeErrors is empty and writeConcernError is missing'() {
         expect:
-        !hasError(getCommandResult(new BsonDocument()));
+        !hasError(new BsonDocument());
     }
 
     def 'should have error if writeErrors is not empty'() {
         expect:
-        hasError(getCommandResult(new BsonDocument('writeErrors',
-                                                   new BsonArray([new BsonDocument('index', new BsonInt32(3))
-                                                                          .append('code', new BsonInt32(100))
-                                                                          .append('errmsg', new BsonString('some error'))]))));
+        hasError(new BsonDocument('writeErrors',
+                                  new BsonArray([new BsonDocument('index', new BsonInt32(3))
+                                                         .append('code', new BsonInt32(100))
+                                                         .append('errmsg', new BsonString('some error'))])));
     }
 
     def 'should have error if writeConcernError is present'() {
         expect:
-        hasError(getCommandResult(new BsonDocument('writeConcernError',
-                                                   new BsonDocument('code', new BsonInt32(75))
-                                                           .append('errmsg', new BsonString('wtimeout'))
-                                                           .append('errInfo', new BsonDocument('wtimeout', new BsonString('0'))))))
+        hasError(new BsonDocument('writeConcernError',
+                                  new BsonDocument('code', new BsonInt32(75))
+                                          .append('errmsg', new BsonString('wtimeout'))
+                                          .append('errInfo', new BsonDocument('wtimeout', new BsonString('0')))))
     }
 
     def 'getting bulk write exception should throw if there are no errors'() {
         when:
-        getBulkWriteException(INSERT, getCommandResult(new BsonDocument()))
+        getBulkWriteException(INSERT, new BsonDocument(), new ServerAddress())
 
         then:
         thrown(MongoInternalException)
@@ -112,11 +110,11 @@ class WriteCommandHelperSpecification extends Specification {
         expect:
         [new BulkWriteError(100, 'some error', new BsonDocument(), 3),
          new BulkWriteError(11000, 'duplicate key', new BsonDocument('_id', new BsonString('id1')), 5)] ==
-        getBulkWriteException(INSERT, getCommandResult(new BsonDocument('ok', new BsonInt32(0))
-                                                               .append('n', new BsonInt32(1))
-                                                               .append('code', new BsonInt32(65))
-                                                               .append('errmsg', new BsonString('bulk op errors'))
-                                                               .append('writeErrors', new BsonArray(
+        getBulkWriteException(INSERT, new BsonDocument('ok', new BsonInt32(0))
+                .append('n', new BsonInt32(1))
+                .append('code', new BsonInt32(65))
+                .append('errmsg', new BsonString('bulk op errors'))
+                .append('writeErrors', new BsonArray(
                 [new BsonDocument('index', new BsonInt32(3))
                          .append('code', new BsonInt32(100))
                          .append('errmsg', new BsonString('some error')),
@@ -125,7 +123,8 @@ class WriteCommandHelperSpecification extends Specification {
                          .append('errmsg', new BsonString('duplicate key'))
                          .append('errInfo',
                                  new BsonDocument('_id',
-                                                  new BsonString('id1')))]))))
+                                                  new BsonString('id1')))])),
+                              new ServerAddress())
                 .writeErrors
 
     }
@@ -133,17 +132,13 @@ class WriteCommandHelperSpecification extends Specification {
     def 'should get write concern error from writeConcernError field'() {
         expect:
         new WriteConcernError(75, 'wtimeout', new BsonDocument('wtimeout', new BsonString('0'))) ==
-        getBulkWriteException(INSERT, getCommandResult(new BsonDocument('n', new BsonInt32(1))
-                                                               .append('writeConcernError',
-                                                                       new BsonDocument('code', new BsonInt32(75))
-                                                                               .append('errmsg', new BsonString('wtimeout'))
-                                                                               .append('errInfo', new BsonDocument('wtimeout',
-                                                                                                                   new BsonString('0'))))))
+        getBulkWriteException(INSERT, new BsonDocument('n', new BsonInt32(1))
+                .append('writeConcernError',
+                        new BsonDocument('code', new BsonInt32(75))
+                                .append('errmsg', new BsonString('wtimeout'))
+                                .append('errInfo', new BsonDocument('wtimeout',
+                                                                    new BsonString('0')))),
+                              new ServerAddress())
                 .writeConcernError
-    }
-
-
-    def getCommandResult(BsonDocument document) {
-        new CommandResult(new ServerAddress(), document)
     }
 }

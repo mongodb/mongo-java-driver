@@ -63,7 +63,6 @@ class MapReduceToCollectionOperationFunctionalSpecification extends OperationFun
 
         when:
         MapReduceStatistics results = operation.execute(getBinding())
-        def serverUsed = operation.getServerUsed()
 
         then:
         results.emitCount == 3
@@ -71,7 +70,6 @@ class MapReduceToCollectionOperationFunctionalSpecification extends OperationFun
         results.outputCount == 2
         helper.count() == 2
         helper.find() == expectedResults
-        serverUsed != null
     }
 
     @Category(Async)
@@ -82,7 +80,6 @@ class MapReduceToCollectionOperationFunctionalSpecification extends OperationFun
 
         when:
         MapReduceStatistics results = operation.executeAsync(getAsyncBinding()).get()
-        def serverUsed = operation.getServerUsed()
 
         then:
         results.emitCount == 3
@@ -90,7 +87,6 @@ class MapReduceToCollectionOperationFunctionalSpecification extends OperationFun
         results.outputCount == 2
         helper.count() == 2
         helper.find() == expectedResults
-        serverUsed != null
     }
 
 }

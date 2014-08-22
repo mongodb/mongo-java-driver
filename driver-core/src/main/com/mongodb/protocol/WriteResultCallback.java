@@ -20,16 +20,15 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.connection.Connection;
 import com.mongodb.async.SingleResultFuture;
+import com.mongodb.connection.Connection;
 import com.mongodb.operation.SingleResultFutureCallback;
 import com.mongodb.protocol.message.RequestMessage;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
-import org.mongodb.CommandResult;
 import org.mongodb.WriteResult;
 
-class WriteResultCallback extends CommandResultBaseCallback {
+class WriteResultCallback extends CommandResultBaseCallback<BsonDocument> {
     private final SingleResultFuture<WriteResult> future;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
@@ -53,13 +52,13 @@ class WriteResultCallback extends CommandResultBaseCallback {
     }
 
     @Override
-    protected boolean callCallback(final CommandResult commandResult, final MongoException e) {
+    protected boolean callCallback(final BsonDocument result, final MongoException e) {
         boolean done = true;
         if (e != null) {
             future.init(null, e);
         } else {
             try {
-                WriteResult writeResult = ProtocolHelper.getWriteResult(commandResult);
+                WriteResult writeResult = ProtocolHelper.getWriteResult(result, connection.getServerAddress());
                 if (nextMessage != null) {
                     MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace, nextMessage, ordered, writeConcern)
                                                          .executeAsync(connection);

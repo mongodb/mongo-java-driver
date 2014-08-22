@@ -22,14 +22,15 @@ import com.mongodb.async.MapReduceAsyncCursor;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.connection.Connection;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
-import org.mongodb.CommandResult;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandDocuments.createMapReduce;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
  * Operation that runs a Map Reduce against a MongoDB instance.  This operation only supports "inline" results, i.e. the results will be
@@ -75,8 +76,13 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     @Override
     @SuppressWarnings("unchecked")
     public MapReduceCursor<T> execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "results"),
-                                             binding, transformer());
+        return withConnection(binding, new OperationHelper.CallableWithConnection<MapReduceCursor<T>>() {
+            @Override
+            public MapReduceCursor<T> call(final Connection connection) {
+                return executeWrappedCommandProtocol(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "results"),
+                                                     connection, transformer(connection));
+            }
+        });
     }
 
     @Override
@@ -85,24 +91,23 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
                                                   binding, asyncTransformer());
     }
 
-    private Function<CommandResult, MapReduceCursor<T>> transformer() {
-        return new Function<CommandResult, MapReduceCursor<T>>() {
+    private Function<BsonDocument, MapReduceCursor<T>> transformer(final Connection connection) {
+        return new Function<BsonDocument, MapReduceCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MapReduceCursor<T> apply(final CommandResult result) {
-                return new MapReduceInlineResultsCursor<T>(BsonDocumentWrapperHelper.<T>toList(result.getResponse().getArray("results")),
-                                                           MapReduceHelper.createStatistics(result), result.getAddress());
+            public MapReduceCursor<T> apply(final BsonDocument result) {
+                return new MapReduceInlineResultsCursor<T>(BsonDocumentWrapperHelper.<T>toList(result.getArray("results")),
+                                                           MapReduceHelper.createStatistics(result), connection.getServerAddress());
             }
         };
     }
 
-    private Function<CommandResult, MapReduceAsyncCursor<T>> asyncTransformer() {
-        return new Function<CommandResult, MapReduceAsyncCursor<T>>() {
+    private Function<BsonDocument, MapReduceAsyncCursor<T>> asyncTransformer() {
+        return new Function<BsonDocument, MapReduceAsyncCursor<T>>() {
             @SuppressWarnings("unchecked")
             @Override
-            public MapReduceAsyncCursor<T> apply(final CommandResult result) {
-                return new MapReduceInlineResultsAsyncCursor<T>(BsonDocumentWrapperHelper.<T>toList(result.getResponse()
-                                                                                                          .getArray("results")),
+            public MapReduceAsyncCursor<T> apply(final BsonDocument result) {
+                return new MapReduceInlineResultsAsyncCursor<T>(BsonDocumentWrapperHelper.<T>toList(result.getArray("results")),
                                                                 MapReduceHelper.createStatistics(result));
             }
         };

@@ -16,29 +16,29 @@
 
 package com.mongodb.operation;
 
-import org.mongodb.CommandResult;
+import org.bson.BsonDocument;
 
 final class MapReduceHelper {
 
-    static MapReduceStatistics createStatistics(final CommandResult commandResult) {
-        return new MapReduceStatistics(getInputCount(commandResult), getOutputCount(commandResult), getEmitCount(commandResult),
-                                       getDuration(commandResult));
+    static MapReduceStatistics createStatistics(final BsonDocument result) {
+        return new MapReduceStatistics(getInputCount(result), getOutputCount(result), getEmitCount(result),
+                                       getDuration(result));
     }
 
-    private static int getInputCount(final CommandResult commandResult) {
-        return commandResult.getResponse().getDocument("counts").getNumber("input").intValue();
+    private static int getInputCount(final BsonDocument result) {
+        return result.getDocument("counts").getNumber("input").intValue();
     }
 
-    private static int getOutputCount(final CommandResult commandResult) {
-        return commandResult.getResponse().getDocument("counts").getNumber("output").intValue();
+    private static int getOutputCount(final BsonDocument result) {
+        return result.getDocument("counts").getNumber("output").intValue();
     }
 
-    private static int getEmitCount(final CommandResult commandResult) {
-        return commandResult.getResponse().getDocument("counts").getNumber("emit").intValue();
+    private static int getEmitCount(final BsonDocument result) {
+        return result.getDocument("counts").getNumber("emit").intValue();
     }
 
-    private static int getDuration(final CommandResult commandResult) {
-        return commandResult.getResponse().getNumber("timeMillis").intValue();
+    private static int getDuration(final BsonDocument result) {
+        return result.getNumber("timeMillis").intValue();
     }
 
     private MapReduceHelper() {

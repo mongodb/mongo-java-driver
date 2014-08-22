@@ -22,7 +22,6 @@ import com.mongodb.binding.WriteBinding;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
-import org.mongodb.CommandResult;
 
 import static com.mongodb.MongoNamespace.asNamespaceString;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -67,7 +66,7 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
      */
     @Override
     public Void execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol("admin", getCommand(), binding, new VoidTransformer<CommandResult>());
+        return executeWrappedCommandProtocol("admin", getCommand(), binding, new VoidTransformer<BsonDocument>());
     }
 
     /**
@@ -79,7 +78,7 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
      */
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync("admin", getCommand(), binding, new VoidTransformer<CommandResult>());
+        return executeWrappedCommandProtocolAsync("admin", getCommand(), binding, new VoidTransformer<BsonDocument>());
     }
 
     private BsonDocument getCommand() {

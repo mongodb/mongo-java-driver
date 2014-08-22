@@ -22,30 +22,34 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentReader;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
-import org.mongodb.CommandResult;
+import org.bson.codecs.DecoderContext;
 
-class CommandResultCallback extends CommandResultBaseCallback {
+class CommandResultCallback<T> extends CommandResultBaseCallback<BsonDocument> {
     public static final Logger LOGGER = Loggers.getLogger("protocol.command");
 
-    private final SingleResultCallback<CommandResult> callback;
+    private final SingleResultCallback<T> callback;
+    private final Decoder<T> decoder;
 
-    public CommandResultCallback(final SingleResultCallback<CommandResult> callback, final Decoder<BsonDocument> decoder,
+    public CommandResultCallback(final SingleResultCallback<T> callback, final Decoder<T> decoder,
                                  final long requestId, final ServerAddress serverAddress) {
-        super(decoder, requestId, serverAddress);
+        super(new BsonDocumentCodec(), requestId, serverAddress);
         this.callback = callback;
+        this.decoder = decoder;
     }
 
     @Override
-    protected boolean callCallback(final CommandResult commandResult, final MongoException e) {
+    protected boolean callCallback(final BsonDocument response, final MongoException e) {
         if (e != null) {
             callback.onResult(null, e);
         } else {
-            LOGGER.debug("Command execution completed with status " + commandResult.isOk());
-            if (!commandResult.isOk()) {
-                callback.onResult(null, ProtocolHelper.getCommandFailureException(commandResult));
+            LOGGER.debug("Command execution completed with status " + ProtocolHelper.isCommandOk(response));
+            if (!ProtocolHelper.isCommandOk(response)) {
+                callback.onResult(null, ProtocolHelper.getCommandFailureException(response, getServerAddress()));
             } else {
-                callback.onResult(commandResult, null);
+                callback.onResult(decoder.decode(new BsonDocumentReader(response), DecoderContext.builder().build()), null);
             }
         }
         return true;

@@ -19,15 +19,12 @@ package com.mongodb.async.client;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.async.MongoFuture;
 import org.bson.codecs.Codec;
-import org.mongodb.CommandResult;
 import org.mongodb.Document;
 
 /**
- * A representation of a logical MongoDB database, which contains zero or more collections.  Instances of this class serve as factories
- * for representations of MongoDB collections contained in this database.
- * <p>
- * All methods on this class either complete immediately (without any I/O) or else execute asynchronously.
- * </p>
+ * A representation of a logical MongoDB database, which contains zero or more collections.  Instances of this class serve as factories for
+ * representations of MongoDB collections contained in this database. <p> All methods on this class either complete immediately (without any
+ * I/O) or else execute asynchronously. </p>
  *
  * @since 3.0
  */
@@ -51,7 +48,7 @@ public interface MongoDatabase {
     /**
      * Gets a collection with the given name and options
      *
-     * @param name the collection name
+     * @param name    the collection name
      * @param options the options to apply
      * @return the collection
      */
@@ -60,10 +57,10 @@ public interface MongoDatabase {
     /**
      * Gets a collection with the given name, codec, and options.
      *
-     * @param name the collection name
-     * @param codec the codec to use to encode and decode documents in the collection
+     * @param name    the collection name
+     * @param codec   the codec to use to encode and decode documents in the collection
      * @param options the options to apply
-     * @param <T> the document type
+     * @param <T>     the document type
      * @return the collection
      */
     <T> MongoCollection<T> getCollection(String name, Codec<T> codec, MongoCollectionOptions options);
@@ -74,7 +71,7 @@ public interface MongoDatabase {
      * @param commandDocument the document describing the command to execute.
      * @return a future representation the completion of the command
      */
-    MongoFuture<CommandResult> executeCommand(Document commandDocument);
+    MongoFuture<Document> executeCommand(Document commandDocument);
 
     /**
      * @return the DatabaseAdministration that provides admin methods that can be performed
