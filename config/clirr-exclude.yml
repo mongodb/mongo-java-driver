@@ -206,6 +206,7 @@ members:
   - getCommandResult()                                          # JAVA-1042
   - getRaw()                                                    # JAVA-404 Deprecated when inline map-reduce introduced
   - MapReduceOutput(com.mongodb.DBCollection,com.mongodb.DBObject,com.mongodb.CommandResult) # JAVA-1042
+  - getServerUsed()                                             # JAVA-1402
 
   org.bson.io.OutputBuffer:                       # JAVA-880 Fix up org.bson.io.{OutputBuffer, BasicOutputBuffer}
   - asString()                                    # JAVA-880

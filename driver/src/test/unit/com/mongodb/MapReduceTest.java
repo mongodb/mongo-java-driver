@@ -54,7 +54,7 @@ public class MapReduceTest extends DatabaseTestCase {
     private static final String DEFAULT_COLLECTION = "jmr1_out";
     private static final String DEFAULT_MAP = "function(){ for ( var i=0; i<this.x.length; i++ ){ emit( this.x[i] , 1 ); } }";
     private static final String DEFAULT_REDUCE
-        = "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}";
+    = "function(key,values){ var sum=0; for( var i=0; i<values.length; i++ ) sum += values[i]; return sum;}";
 
     @Override
     public void setUp() {
@@ -280,19 +280,6 @@ public class MapReduceTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testServerUsed() {
-        MapReduceCommand command = new MapReduceCommand(collection,
-                                                        DEFAULT_MAP,
-                                                        DEFAULT_REDUCE,
-                                                        DEFAULT_COLLECTION,
-                                                        MapReduceCommand.OutputType.REPLACE,
-                                                        new BasicDBObject());
-        MapReduceOutput output = collection.mapReduce(command);
-
-        assertNotNull(output.getServerUsed());
-    }
-
-    @Test
     public void shouldReturnStatisticsForInlineMapReduce() {
         MapReduceCommand command = new MapReduceCommand(collection,
                                                         DEFAULT_MAP,
@@ -306,7 +293,7 @@ public class MapReduceTest extends DatabaseTestCase {
 
         //then
         //duration is not working on the unstable server version
-//        assertThat(output.getDuration(), is(greaterThan(0)));
+        //        assertThat(output.getDuration(), is(greaterThan(0)));
         assertThat(output.getEmitCount(), is(6));
         assertThat(output.getInputCount(), is(3));
         assertThat(output.getOutputCount(), is(4));

@@ -30,7 +30,6 @@ public class MapReduceOutput {
 
     private final DBCollection collection;
     private final DBObject command;
-    private final ServerAddress serverAddress;
     private final List<DBObject> inlineResults;
     private final MapReduceStatistics mapReduceStatistics;
     private final DBCursor resultsFromCollection;
@@ -38,13 +37,11 @@ public class MapReduceOutput {
     /**
      * Constructor for use with inline map reduce.  Collection will always be null.
      */
-    MapReduceOutput(final DBObject command, final MapReduceCursor<DBObject> results,
-                    final ServerAddress serverAddress) {
+    MapReduceOutput(final DBObject command, final MapReduceCursor<DBObject> results) {
 
         this.command = command;
         this.mapReduceStatistics = results.getStatistics();
 
-        this.serverAddress = serverAddress;
         this.collection = null;
         this.resultsFromCollection = null;
         this.inlineResults = new ArrayList<DBObject>();
@@ -57,14 +54,13 @@ public class MapReduceOutput {
      * Constructor for use when the map reduce output was put into a collection
      */
     MapReduceOutput(final DBObject command, final DBCursor resultsFromCollection, final MapReduceStatistics mapReduceStatistics,
-                    final DBCollection outputCollection, final ServerAddress serverAddress) {
+                    final DBCollection outputCollection) {
         this.command = command;
         this.inlineResults = null;
         this.mapReduceStatistics = mapReduceStatistics;
 
         this.collection = outputCollection;
         this.resultsFromCollection = resultsFromCollection;
-        this.serverAddress = serverAddress;
     }
 
     /**
@@ -108,21 +104,11 @@ public class MapReduceOutput {
         return command;
     }
 
-    /**
-     * Get the server that the map reduce command was run on.
-     *
-     * @return a ServerAddress of the server that the command ran against.
-     */
-    public ServerAddress getServerUsed() {
-        return serverAddress;
-    }
-
     @Override
     public String toString() {
         return "MapReduceOutput{"
                + "collection=" + collection
                + ", command=" + command
-               + ", serverAddress=" + serverAddress
                + ", inlineResults=" + inlineResults
                + ", resultsFromCollection=" + resultsFromCollection
                + '}';
