@@ -198,6 +198,10 @@ members:
   - WriteConcern(int,int,boolean,boolean,boolean)                      # JAVA-1363
   - WriteConcern(java.lang.String,int,boolean,boolean,boolean)         # JAVA-1363
 
+  com.mongodb.MapReduceCommand:                                        # JAVA-1349
+  - addExtraOption(java.lang.String,java.lang.Object)
+  - getExtraOptions()
+
   com.mongodb.MapReduceOutput:
   - getCommandResult()                                          # JAVA-1042
   - getRaw()                                                    # JAVA-404 Deprecated when inline map-reduce introduced
