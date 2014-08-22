@@ -29,7 +29,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.mongodb.CommandResult;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -242,43 +241,43 @@ class ServerMonitor {
     private ServerDescription lookupServerDescription(final InternalConnection connection) {
         LOGGER.debug(format("Checking status of %s", serverAddress));
         long start = System.nanoTime();
-        CommandResult isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
+        BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
         count++;
         roundTripTimeSum += System.nanoTime() - start;
 
-        CommandResult buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
+        BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
         return createDescription(isMasterResult, buildInfoResult, roundTripTimeSum / count);
     }
 
     @SuppressWarnings("unchecked")
-    private ServerDescription createDescription(final CommandResult commandResult, final CommandResult buildInfoResult,
+    private ServerDescription createDescription(final BsonDocument isMasterResult, final BsonDocument buildInfoResult,
                                                 final long roundTripTime) {
         return ServerDescription.builder()
                                 .state(CONNECTED)
                                 .version(getVersion(buildInfoResult))
-                                .address(commandResult.getAddress())
-                                .type(getServerType(commandResult.getResponse()))
-                                .hosts(listToSet(commandResult.getResponse().getArray("hosts", new BsonArray())))
-                                .passives(listToSet(commandResult.getResponse().getArray("passives", new BsonArray())))
-                                .arbiters(listToSet(commandResult.getResponse().getArray("arbiters", new BsonArray())))
-                                .primary(getString(commandResult.getResponse(), "primary"))
-                                .maxDocumentSize(commandResult.getResponse().getInt32("maxBsonObjectSize",
-                                                                                      new BsonInt32(getDefaultMaxDocumentSize()))
+                                .address(serverAddress)
+                                .type(getServerType(isMasterResult))
+                                .hosts(listToSet(isMasterResult.getArray("hosts", new BsonArray())))
+                                .passives(listToSet(isMasterResult.getArray("passives", new BsonArray())))
+                                .arbiters(listToSet(isMasterResult.getArray("arbiters", new BsonArray())))
+                                .primary(getString(isMasterResult, "primary"))
+                                .maxDocumentSize(isMasterResult.getInt32("maxBsonObjectSize",
+                                                                         new BsonInt32(getDefaultMaxDocumentSize()))
                                                               .getValue())
-                                .maxMessageSize(commandResult.getResponse().getInt32("maxMessageSizeBytes",
-                                                                                     new BsonInt32(getDefaultMaxMessageSize()))
+                                .maxMessageSize(isMasterResult.getInt32("maxMessageSizeBytes",
+                                                                        new BsonInt32(getDefaultMaxMessageSize()))
                                                              .getValue())
-                                .maxWriteBatchSize(commandResult.getResponse().getInt32("maxWriteBatchSize",
-                                                                                        new BsonInt32(getDefaultMaxWriteBatchSize()))
+                                .maxWriteBatchSize(isMasterResult.getInt32("maxWriteBatchSize",
+                                                                           new BsonInt32(getDefaultMaxWriteBatchSize()))
                                                                 .getValue())
-                                .tagSet(getTagSetFromDocument(commandResult.getResponse().getDocument("tags", new BsonDocument())))
-                                .setName(getString(commandResult.getResponse(), "setName"))
-                                .minWireVersion(commandResult.getResponse().getInt32("minWireVersion",
-                                                                                     new BsonInt32(getDefaultMinWireVersion())).getValue())
-                                .maxWireVersion(commandResult.getResponse().getInt32("maxWireVersion",
-                                                                                     new BsonInt32(getDefaultMaxWireVersion())).getValue())
+                                .tagSet(getTagSetFromDocument(isMasterResult.getDocument("tags", new BsonDocument())))
+                                .setName(getString(isMasterResult, "setName"))
+                                .minWireVersion(isMasterResult.getInt32("minWireVersion",
+                                                                        new BsonInt32(getDefaultMinWireVersion())).getValue())
+                                .maxWireVersion(isMasterResult.getInt32("maxWireVersion",
+                                                                        new BsonInt32(getDefaultMaxWireVersion())).getValue())
                                 .roundTripTime(roundTripTime, NANOSECONDS)
-                                .ok(commandResult.isOk()).build();
+                                .ok(true).build();
     }
 
     private String getString(final BsonDocument response, final String key) {
@@ -290,8 +289,8 @@ class ServerMonitor {
     }
 
     @SuppressWarnings("unchecked")
-    private static ServerVersion getVersion(final CommandResult buildInfoResult) {
-        List<BsonValue> versionArray = buildInfoResult.getResponse().getArray("versionArray").subList(0, 3);
+    private static ServerVersion getVersion(final BsonDocument buildInfoResult) {
+        List<BsonValue> versionArray = buildInfoResult.getArray("versionArray").subList(0, 3);
 
         return new ServerVersion(asList(versionArray.get(0).asInt32().getValue(),
                                         versionArray.get(1).asInt32().getValue(),

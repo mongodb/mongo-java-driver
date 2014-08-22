@@ -21,7 +21,6 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
-import org.mongodb.CommandResult;
 
 import static com.mongodb.connection.CommandHelper.executeCommand;
 import static com.mongodb.connection.NativeAuthenticationHelper.getAuthCommand;
@@ -34,13 +33,13 @@ class NativeAuthenticator extends Authenticator {
     @Override
     public void authenticate() {
         try {
-            CommandResult nonceResponse = executeCommand(getCredential().getSource(),
+            BsonDocument nonceResponse = executeCommand(getCredential().getSource(),
                                                          NativeAuthenticationHelper.getNonceCommand(),
                                                          getInternalConnection());
 
             BsonDocument authCommand = getAuthCommand(getCredential().getUserName(),
                                                       getCredential().getPassword(),
-                                                      ((BsonString) nonceResponse.getResponse().get("nonce")).getValue());
+                                                      ((BsonString) nonceResponse.get("nonce")).getValue());
             executeCommand(getCredential().getSource(), authCommand, getInternalConnection());
         } catch (CommandFailureException e) {
             throw new MongoSecurityException(getCredential(), "Exception authenticating", e);

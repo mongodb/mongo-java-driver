@@ -19,14 +19,13 @@ package com.mongodb.connection;
 import com.mongodb.CommandFailureException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.ServerAddress;
 import com.mongodb.operation.QueryFlag;
 import com.mongodb.protocol.message.CommandMessage;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.BsonDocument;
+import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
-import org.mongodb.CommandResult;
 
 import java.util.EnumSet;
 
@@ -34,7 +33,7 @@ import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static java.lang.String.format;
 
 final class CommandHelper {
-    static CommandResult executeCommand(final String database, final BsonDocument command, final InternalConnection internalConnection) {
+    static BsonDocument executeCommand(final String database, final BsonDocument command, final InternalConnection internalConnection) {
         return receiveCommandResult(internalConnection, sendMessage(database, command, internalConnection));
     }
 
@@ -57,8 +56,13 @@ final class CommandHelper {
         }
     }
 
-    private static CommandResult receiveCommandResult(final InternalConnection internalConnection, final CommandMessage message) {
-        return createCommandResult(receiveReply(internalConnection, message), internalConnection.getServerAddress());
+    private static BsonDocument receiveCommandResult(final InternalConnection internalConnection, final CommandMessage message) {
+        BsonDocument result = receiveReply(internalConnection, message).getDocuments().get(0);
+        if (!isCommandOk(result)) {
+            throw new CommandFailureException(result, internalConnection.getServerAddress());
+        }
+
+        return result;
     }
 
     private static BsonDocument receiveCommandDocument(final InternalConnection internalConnection, final CommandMessage message) {
@@ -77,16 +81,16 @@ final class CommandHelper {
         }
     }
 
-    private static CommandResult createCommandResult(final ReplyMessage<BsonDocument> replyMessage, final ServerAddress serverAddress) {
-        CommandResult commandResult = new CommandResult(serverAddress, replyMessage.getDocuments().get(0)
-        );
-        if (!commandResult.isOk()) {
-            throw new CommandFailureException(commandResult.getResponse(), commandResult.getAddress());
+    private static boolean isCommandOk(final BsonDocument response) {
+        BsonValue okValue = response.get("ok");
+        if (okValue.isBoolean()) {
+            return okValue.asBoolean().getValue();
+        } else if (okValue.isNumber()) {
+            return okValue.asNumber().intValue() == 1;
+        } else {
+            return false;
         }
-
-        return commandResult;
     }
-
 
     private CommandHelper() {
     }
