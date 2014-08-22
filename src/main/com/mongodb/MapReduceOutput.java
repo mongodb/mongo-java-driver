@@ -136,7 +136,10 @@ public class MapReduceOutput {
      * Get the server that the map reduce command was run on.
      *
      * @return a ServerAddress of the server that the command ran against.
+     * @deprecated this method will be removed in the next major release
      */
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public ServerAddress getServerUsed() {
         return _commandResult.getServerUsed();
     }
