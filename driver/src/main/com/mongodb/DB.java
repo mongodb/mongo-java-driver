@@ -233,7 +233,7 @@ public class DB {
      * @return the names of collections in this database
      * @throws MongoException
      */
-    public Set<String> getCollectionNames() {
+        public Set<String> getCollectionNames() {
         MongoCursor<BsonDocument> cursor = execute(new QueryOperation<BsonDocument>(new MongoNamespace(name, "system.namespaces"),
                                                                                     new Find(), new BsonDocumentCodec()), primary());
         HashSet<String> collections = new HashSet<String>();

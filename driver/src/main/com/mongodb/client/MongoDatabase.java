@@ -41,5 +41,7 @@ public interface MongoDatabase {
 
     <T> MongoCollection<T> getCollection(String name, Class<T> clazz, MongoCollectionOptions options);
 
+    <T> NewMongoCollection<T> getNewCollection(String name, Class<T> clazz, MongoCollectionOptions options);
+
     DatabaseAdministration tools();
 }

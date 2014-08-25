@@ -1,0 +1,263 @@
+/*
+ * Copyright (c) 2008-2014 MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.mongodb.client.model;
+
+import org.mongodb.Document;
+
+import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.assertions.Assertions.notNull;
+
+/**
+ * A model describing a find operation (also commonly referred to as a query).
+ *
+ * @since 3.0
+ * @mongodb.driver.manual manual/tutorial/query-documents/ Find
+ */
+public final class FindModel implements ExplainableModel {
+    private final Object filter;
+    private Integer batchSize;
+    private Integer limit;
+    private Object modifiers;
+    private Object projection;
+    private Long maxTimeMS;
+    private Integer skip;
+    private Object sort;
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter a document describing the query filter, which may be null. This can be of any type for which a
+     * {@code Codec} is registered
+     */
+    public FindModel(final Object filter) {
+        this.filter = notNull("filter", filter);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter a document describing the query filter, which may be null.
+     */
+    public FindModel(final Document filter) {
+        this((Object) filter);
+    }
+
+    /**
+     * Gets the query filter.
+     *
+     * @return the query filter
+     */
+    public Object getFilter() {
+        return filter;
+    }
+
+    /**
+     * Gets the limit to apply.  The default is null.
+     *
+     * @return the limit
+     */
+    public Integer getLimit() {
+        return limit;
+    }
+
+    /**
+     * Sets the limit to apply.
+     *
+     * @param limit the limit, which may be null
+     * @return this
+     */
+    public FindModel limit(final Integer limit) {
+        this.limit = limit;
+        return this;
+    }
+
+    /**
+     * Gets the number of documents to skip.  The default is null.
+     *
+     * @return the number of documents to skip, which may be null
+     */
+    public Integer getSkip() {
+        return skip;
+    }
+
+    /**
+     * Sets the number of documents to skip.
+     *
+     * @param skip the number of documents to skip, which may be null
+     * @return this
+     */
+    public FindModel skip(final Integer skip) {
+        this.skip = skip;
+        return this;
+    }
+
+    /**
+     * Gets the maximum execution time on the server for this operation.  The default is null, which places no limit on the execution time.
+     *
+     * @param timeUnit the time unit to return the result in
+     * @return the maximum execution time in the given time unit
+     */
+    public Long getMaxTime(final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Sets the maximum execution time on the server for this operation.
+     *
+     * @param maxTime the max time, which may be null
+     * @param timeUnit the time unit, which may only be null if maxTime is
+     * @return this
+     */
+    public FindModel maxTimeMS(final Long maxTime, final TimeUnit timeUnit) {
+        if (maxTime == null) {
+            maxTimeMS = null;
+        } else {
+            notNull("timeUnit", timeUnit);
+            this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        }
+        return this;
+    }
+
+    /**
+     * Gets the number of documents to return per batch.  Default to null, which indicates that the server chooses an appropriate batch
+     * size.
+     *
+     * @return the batch size, which may be null
+     */
+    public Integer getBatchSize() {
+        return batchSize;
+    }
+
+    /**
+     * Sets the number of documents to return per batch
+     * @param batchSize the batch size, which may be null
+     * @return this
+     */
+    public FindModel batchSize(final Integer batchSize) {
+        this.batchSize = batchSize;
+        return this;
+    }
+
+    /**
+     * Gets the query modifiers to apply to this operation.  The default is not to apply any modifiers.
+     *
+     * @return the query modifiers, which may be null
+     * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
+     */
+    public Object getModifiers() {
+        return modifiers;
+    }
+
+    /**
+     * Sets the query modifiers to apply to this operation.
+     *
+     * @param modifiers the query modifiers to apply, which may be null. This can be of any type for which a
+     * {@code Codec} is registered
+     * @return this
+     * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
+     */
+    public FindModel modifiers(final Object modifiers) {
+        this.modifiers = modifiers;
+        return this;
+    }
+
+    /**
+     * Sets the query modifiers to apply to this operation.
+     *
+     * @param modifiers the query modifiers to apply, which may be null.
+     * @return this
+     * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
+     */
+    public FindModel modifiers(final Document modifiers) {
+        this.modifiers = modifiers;
+        return this;
+    }
+
+    /**
+     * Gets a document describing the fields to return for all matching documents.
+     *
+     * @return the project document, which may be null
+     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
+     */
+    public Object getProjection() {
+        return projection;
+    }
+
+    /**
+     * Sets a document describing the fields to return for all matching documents.
+     *
+     * @param projection the project document, which may be null. This can be of any type for which a
+     * {@code Codec} is registered
+     * @return this
+     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
+     */
+    public FindModel projection(final Object projection) {
+        this.projection = projection;
+        return this;
+    }
+
+    /**
+     * Sets a document describing the fields to return for all matching documents.
+     *
+     * @param projection the project document, which may be null. This can be of any type for which a
+     * {@code Codec} is registered
+     * @return this
+     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
+     */
+    public FindModel projection(final Document projection) {
+        this.projection = projection;
+        return this;
+    }
+
+    /**
+     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
+     * order.
+     *
+     * @return a document describing the sort criteria
+     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     */
+    public Object getSort() {
+        return sort;
+    }
+
+    /**
+     * Sets the sort criteria to apply to the query.
+     *
+     * @param sort the sort criteria, which may be null. This can be of any type for which a
+     * {@code Codec} is registered
+     * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     */
+    public FindModel sort(final Object sort) {
+        this.sort = sort;
+        return this;
+    }
+
+    /**
+     * Sets the sort criteria to apply to the query.
+     *
+     * @param sort the sort criteria, which may be null.
+     * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     */
+    public FindModel sort(final Document sort) {
+        this.sort = sort;
+        return this;
+    }
+}
