@@ -160,6 +160,14 @@ class WriteConcernSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
+    def 'should throw ClassCastException if w is not an integer and getW is called'() {
+        when:
+        new WriteConcern("MyTag").getW()
+        
+        then:
+        thrown(ClassCastException)
+    }
+
     def 'majority write concern'() {
         expect:
         new WriteConcern.Majority().with {

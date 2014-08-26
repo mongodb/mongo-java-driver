@@ -111,20 +111,20 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(2);
 
     /**
-     * Write operations that use this write concern will return as soon as the message is written to the socket. Exceptions are raised for
-     * network issues, but not server errors.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.UNACKNOWLEDGED}, and may be deprecated in a future release.
+     * <p>Write operations that use this write concern will return as soon as the message is written to the socket. Exceptions are raised
+     * for network issues, but not server errors.</p>
+     *
+     * <p>This field has been superseded by {@code WriteConcern.UNACKNOWLEDGED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#UNACKNOWLEDGED
      */
     public static final WriteConcern NORMAL = UNACKNOWLEDGED;
 
     /**
-     * Write operations that use this write concern will wait for acknowledgement from the primary server before returning. Exceptions are
-     * raised for network issues, and server errors.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.ACKNOWLEDGED}, and may be deprecated in a future release.
+     * <p>Write operations that use this write concern will wait for acknowledgement from the primary server before returning. Exceptions
+     * are raised for network issues, and server errors.</p>
+     *
+     * <p>This field has been superseded by {@code WriteConcern.ACKNOWLEDGED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#ACKNOWLEDGED
      */
@@ -136,28 +136,29 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern MAJORITY = new WriteConcern("majority");
 
     /**
-     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush the data to disk.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.FSYNCED}, and may be deprecated in a future release.
+     * <p>Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush the data to
+     * disk.</p>
+     *
+     * <p>This field has been superseded by {@code WriteConcern.FSYNCED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#FSYNCED
      */
     public static final WriteConcern FSYNC_SAFE = FSYNCED;
 
     /**
-     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to group commit to the journal
-     * file on disk.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.JOURNALED}, and may be deprecated in a future release.
+     * <p>Exceptions are raised for network issues, and server errors; the write operation waits for the server to group commit to the
+     * journal file on disk. </p>
+     *
+     * <p>This field has been superseded by {@code WriteConcern.JOURNALED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#JOURNALED
      */
     public static final WriteConcern JOURNAL_SAFE = JOURNALED;
 
     /**
-     * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.REPLICA_ACKNOWLEDGED}, and may be deprecated in a future release.
+     * <p>Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.</p>
+     *
+     * <p>This field has been superseded by {@code WriteConcern.REPLICA_ACKNOWLEDGED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#REPLICA_ACKNOWLEDGED
      */
@@ -498,19 +499,34 @@ public class WriteConcern implements Serializable {
      * @param wtimeout timeout for write operation
      * @param fsync    whether or not to fsync
      * @param j        whether writes should wait for a journal group commit
+     * @return Majority, a subclass of WriteConcern that represents the write concern requiring most servers to acknowkledge the write
      */
     public static Majority majorityWriteConcern(final int wtimeout, final boolean fsync, final boolean j) {
         return new Majority(wtimeout, fsync, j);
     }
 
+    /**
+     * A subclass of WriteConcern that creates a configuration that waits for the write operation to complete on a majority of the replica
+     * set members before returning.
+     */
     public static class Majority extends WriteConcern {
 
         private static final long serialVersionUID = -4128295115883875212L;
 
+        /**
+         * Create a new Majority WriteConcern.
+         */
         public Majority() {
             this(0, false, false);
         }
 
+        /**
+         * Create a new WriteConcern with the given configuration.
+         *
+         * @param wtimeout timeout for write operation
+         * @param fsync    whether or not to fsync
+         * @param j        whether writes should wait for a journaling group commit
+         */
         public Majority(final int wtimeout, final boolean fsync, final boolean j) {
             super("majority", wtimeout, fsync, j);
         }

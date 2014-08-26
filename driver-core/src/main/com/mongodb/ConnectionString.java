@@ -60,11 +60,10 @@ import static java.lang.String.format;
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated.</li>
  * </ul>
- * <p>
- * The following options are supported (case insensitive):
- * <p>
- * Replica set configuration:
- * </p>
+ *
+ * <p>The following options are supported (case insensitive):</p>
+ * 
+ * <p>Replica set configuration:</p>
  * <ul>
  * <li>{@code replicaSet=name}: Implies that the hosts given are a seed list, and the driver will attempt to find
  * all members of the set.</li>
@@ -148,7 +147,7 @@ import static java.lang.String.format;
  * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name.
  * </li>
  * <ul>
- * <p/>
+ * </p>
  *
  * @mongodb.driver.manual reference/connection-string Connection String URI Format
  * @since 3.0.0
