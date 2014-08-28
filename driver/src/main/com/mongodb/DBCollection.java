@@ -1904,7 +1904,7 @@ public class DBCollection {
     }
 
     <T> T execute(final WriteOperation<T> operation) {
-        return getDB().getMongo().execute(operation, getObjectCodec());
+        return getDB().getMongo().execute(operation);
     }
 
     <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {

@@ -44,7 +44,6 @@ import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.MongosHAServerSelector;
 import com.mongodb.selector.ServerSelector;
-import org.bson.codecs.Decoder;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
@@ -763,10 +762,6 @@ public class Mongo {
 
 
     <T> T execute(final WriteOperation<T> operation) {
-        return execute(operation, DBObjects.codec);
-    }
-
-    <T> T execute(final WriteOperation<T> operation, final Decoder<DBObject> decoder) {
         WriteBinding binding = getWriteBinding();
         try {
             return operation.execute(binding);
