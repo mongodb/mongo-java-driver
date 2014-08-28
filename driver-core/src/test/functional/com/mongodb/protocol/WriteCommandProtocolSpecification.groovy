@@ -208,8 +208,8 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
                                                           .upsert(true),
                                                   new UpdateRequest(new BsonDocument('_id', new BsonInt32(2)),
                                                                     new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))))
-                                                          .upsert(true)],
-                                                 new DocumentCodec());
+                                                          .upsert(true)]
+        );
 
         when:
         def result = protocol.execute(connection);

@@ -382,8 +382,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public WriteResult update(final Document updateOperations) {
             UpdateRequest update = new UpdateRequest(findOp.getFilter(), wrap(updateOperations)).upsert(upsert)
                                                                                                 .multi(getMultiFromLimit());
-            return execute(new UpdateOperation(getNamespace(), true, writeConcern, asList(update),
-                                               getDocumentCodec()));
+            return execute(new UpdateOperation(getNamespace(), true, writeConcern, asList(update)
+            ));
         }
 
         @Override
@@ -394,7 +394,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public WriteResult updateOne(final Document updateOperations) {
             UpdateRequest update = new UpdateRequest(findOp.getFilter(), wrap(updateOperations)).upsert(upsert).multi(false);
-            return execute(new UpdateOperation(getNamespace(), true, writeConcern, asList(update), getDocumentCodec()));
+            return execute(new UpdateOperation(getNamespace(), true, writeConcern, asList(update)));
         }
 
         @Override

@@ -26,7 +26,6 @@ import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.codecs.CollectibleCodec;
-import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerVersion;
@@ -460,7 +459,7 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new UpdateCommandProtocol(namespace, ordered, writeConcern, updates, new DocumentCodec());
+                    return new UpdateCommandProtocol(namespace, ordered, writeConcern, updates);
                 }
 
                 @Override
