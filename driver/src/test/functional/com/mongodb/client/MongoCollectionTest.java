@@ -18,6 +18,9 @@ package com.mongodb.client;
 
 import com.mongodb.Function;
 import com.mongodb.MongoCursor;
+import com.mongodb.codecs.DocumentCodecProvider;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -25,6 +28,7 @@ import org.mongodb.Document;
 import org.mongodb.WriteResult;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -200,7 +204,10 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testFindAndUpdateWithGenerics() {
-        MongoCollection<Concrete> collection = database.getCollection(getCollectionName(), new ConcreteCodec());
+        List<CodecProvider> codecs = Arrays.asList(new DocumentCodecProvider(), new ConcreteCodecProvider());
+        MongoCollectionOptions options =
+                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
+        MongoCollection<Concrete> collection = database.getCollection(getCollectionName(), Concrete.class, options);
 
         Concrete doc = new Concrete(new ObjectId(), "str", 5, 10L, 4.0, 3290482390480L);
         collection.insert(doc);
@@ -215,7 +222,10 @@ public class MongoCollectionTest extends DatabaseTestCase {
     @Test
     public void shouldBeAbleToQueryTypedCollectionAndMapResultsIntoTypedLists() {
         // given
-        MongoCollection<Concrete> concreteCollection = database.getCollection(getCollectionName(), new ConcreteCodec());
+        List<CodecProvider> codecs = Arrays.asList(new DocumentCodecProvider(), new ConcreteCodecProvider());
+        MongoCollectionOptions options =
+                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
+        MongoCollection<Concrete> concreteCollection = database.getCollection(getCollectionName(), Concrete.class, options);
 
         Concrete firstItem = new Concrete("first", 1, 2L, 3.0, 5L);
         concreteCollection.insert(firstItem);

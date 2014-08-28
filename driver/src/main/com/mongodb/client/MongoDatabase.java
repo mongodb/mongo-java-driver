@@ -18,7 +18,6 @@ package com.mongodb.client;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.annotations.ThreadSafe;
-import org.bson.codecs.Codec;
 import org.mongodb.CommandResult;
 import org.mongodb.Document;
 
@@ -39,9 +38,9 @@ public interface MongoDatabase {
 
     MongoCollection<Document> getCollection(String name, MongoCollectionOptions options);
 
-    <T> MongoCollection<T> getCollection(String name, Codec<T> codec);
+    <T> MongoCollection<T> getCollection(String name, Class<T> clazz);
 
-    <T> MongoCollection<T> getCollection(String name, Codec<T> codec, MongoCollectionOptions options);
+    <T> MongoCollection<T> getCollection(String name, Class<T> clazz, MongoCollectionOptions options);
 
     DatabaseAdministration tools();
 }

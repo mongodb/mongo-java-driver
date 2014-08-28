@@ -1913,7 +1913,7 @@ public class DBCollection {
     }
 
     DBObjectCodec getDefaultDBObjectCodec() {
-        return new DBObjectCodec(getDB(), getObjectFactory(), getDB().getMongo().getCodecRegistry(),
+        return new DBObjectCodec(getDB(), getObjectFactory(), getDB().getMongo().getDbObjectCodecRegistry(),
                                  DBObjectCodecProvider.getDefaultBsonTypeClassMap());
     }
 
