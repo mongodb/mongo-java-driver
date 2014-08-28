@@ -78,8 +78,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
         def commandResult = new CommandReadOperation<BsonDocument>('admin', new BsonDocument('buildinfo', new BsonInt32(1)),
                                                                    new BsonDocumentCodec())
                 .execute(getBinding())
-        def expectedVersion = new ServerVersion(commandResult.getArray('versionArray').subList(0, 3)*.getValue() as List<Integer>)
-
+        def expectedVersion = new ServerVersion(commandResult.getArray('versionArray')[0..2]*.value)
         when:
         latch.await()
 
