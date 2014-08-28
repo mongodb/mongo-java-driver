@@ -19,19 +19,26 @@ package com.mongodb.acceptancetest.querying;
 import com.mongodb.MongoCursor;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.QueryBuilder;
 import com.mongodb.codecs.CollectibleCodec;
+import com.mongodb.codecs.DocumentCodecProvider;
 import org.bson.BsonObjectId;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
+import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.mongodb.QueryOperators.TYPE;
@@ -65,7 +72,10 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldBeAbleToQueryTypedCollectionWithDocument() {
-        MongoCollection<Person> personCollection = database.getCollection(getCollectionName(), new PersonCodec());
+        List<CodecProvider> codecs = Arrays.asList(new DocumentCodecProvider(), new PersonCodecProvider());
+        MongoCollectionOptions options =
+                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
+        MongoCollection<Person> personCollection = database.getCollection(getCollectionName(), Person.class, options);
         personCollection.insert(new Person("Bob"));
 
         MongoCursor<Person> results = personCollection.find(new Document("name", "Bob")).get();
@@ -155,6 +165,19 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
     @Test
     @Ignore("JSON stuff not implemented")
     public void shouldBeAbleToQueryWithJSON() {
+    }
+
+    private class PersonCodecProvider implements CodecProvider {
+
+        @Override
+        @SuppressWarnings("unchecked")
+        public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+            if (clazz.equals(Person.class)) {
+                return (Codec<T>) new PersonCodec();
+            }
+
+            return null;
+        }
     }
 
     private class PersonCodec implements CollectibleCodec<Person> {
