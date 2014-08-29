@@ -33,18 +33,25 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * An iterator over database results. Doing a {@code find()} query on a collection returns a {@code DBCursor} thus
- * <p/>
- * {@code DBCursor cursor = collection.find( query ); if( cursor.hasNext() ) DBObject obj = cursor.next(); }
- * <p/>
+ * <p>An iterator over database results. Doing a {@code find()} query on a collection returns a {@code DBCursor} thus</p>
+ * <pre>
+ *     {@code
+ *     DBCursor cursor = collection.find(query);
+ *    if(cursor.hasNext()) {
+ *       DBObject obj = cursor.next();
+ *    }
+ * }
+ * </pre>
  * <p><b>Warning:</b> Calling {@code toArray} or {@code length} on a DBCursor will irrevocably turn it into an array.  This means that, if
  * the cursor was iterating over ten million results (which it was lazily fetching from the database), suddenly there will be a ten-million
  * element array in memory.  Before converting to an array, make sure that there are a reasonable number of results using {@code skip()} and
- * {@code limit()}. <p>For example, to get an array of the 1000-1100th elements of a cursor, use
- * <p/>
- * <blockquote><pre>
- * List<DBObject> obj = collection.find( query ).skip( 1000 ).limit( 100 ).toArray();
- * </pre></blockquote>
+ * {@code limit()}.
+ *
+ * <p>For example, to get an array of the 1000-1100th elements of a cursor, use</p>
+ *
+ * <pre>
+ *     {@code List<DBObject> obj = collection.find(query).skip(1000).limit(100).toArray(); }
+ * </pre>
  *
  * @mongodb.driver.manual core/read-operations Read Operations
  */
@@ -62,11 +69,12 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private final List<DBObject> all = new ArrayList<DBObject>();
     private MongoCursor<DBObject> cursor;
     // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
-    private final OptionalFinalizer optionalFinalizer; // IDEs will say it can be converted to a local variable, resist the urge
+    @SuppressWarnings("UnusedDeclaration")// IDEs will say it can be converted to a local variable, resist the urge
+    private final OptionalFinalizer optionalFinalizer;
 
 
     /**
-     * Initializes a new database cursor
+     * Initializes a new database cursor.
      *
      * @param collection     collection to use
      * @param query          query to perform
@@ -106,8 +114,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return new DBCursor(collection, find, readPreference);
     }
 
+    @Override
     public boolean hasNext() {
-
         if (closed) {
             throw new IllegalStateException("Cursor has been closed");
         }
@@ -120,6 +128,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return cursor.hasNext();
     }
 
+    @Override
     public DBObject next() {
         checkCursorType(CursorType.ITERATOR);
         if (!hasNext()) {
@@ -144,10 +153,11 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Adds a query option - see Bytes.QUERYOPTION_* for list.
+     * Adds a query option. See Bytes.QUERYOPTION_* for list.
      *
      * @param option the option to be added
      * @return {@code this}
+     * @see Bytes
      */
     public DBCursor addOption(final int option) {
         find.addFlags(QueryFlag.toSet(option));
@@ -159,6 +169,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      *
      * @param options the bitmask of options
      * @return {@code this}
+     * @see Bytes
      */
     public DBCursor setOptions(final int options) {
         find.flags(QueryFlag.toSet(options));
@@ -185,38 +196,43 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * adds a special operator like $maxScan or $returnKey e.g. addSpecial( "$returnKey" , 1 ) e.g. addSpecial( "$maxScan" , 100 )
+     * Adds a special operator like $maxScan or $returnKey. For example:
+     * <pre>
+     *     {@code
+     *     addSpecial("$returnKey", 1)
+     *    addSpecial("$maxScan", 100)
+     * }</pre>
      *
-     * @param name the name of the special query operator
-     * @param o    the value of the special query operator
-     * @return this
+     * @param name  the name of the special query operator
+     * @param value the value of the special query operator
+     * @return {@code this} so calls can be chained
      * @mongodb.driver.manual reference/operator Special Operators
      */
-    public DBCursor addSpecial(final String name, final Object o) {
-        if (name == null || o == null) {
+    public DBCursor addSpecial(final String name, final Object value) {
+        if (name == null || value == null) {
             return this;
         }
 
         if ("$comment".equals(name)) {
-            comment(o.toString());
+            comment(value.toString());
         } else if ("$explain".equals(name)) {
             find.explain();
         } else if ("$hint".equals(name)) {
-            if (o instanceof String) {
-                hint((String) o);
+            if (value instanceof String) {
+                hint((String) value);
             } else {
-                hint((DBObject) o);
+                hint((DBObject) value);
             }
         } else if ("$maxScan".equals(name)) {
-            maxScan(((Number) o).intValue());
+            maxScan(((Number) value).intValue());
         } else if ("$maxTimeMS".equals(name)) {
-            maxTime(((Number) o).longValue(), MILLISECONDS);
+            maxTime(((Number) value).longValue(), MILLISECONDS);
         } else if ("$max".equals(name)) {
-            max((DBObject) o);
+            max((DBObject) value);
         } else if ("$min".equals(name)) {
-            min((DBObject) o);
+            min((DBObject) value);
         } else if ("$orderby".equals(name)) {
-            sort((DBObject) o);
+            sort((DBObject) value);
         } else if ("$returnKey".equals(name)) {
             returnKey();
         } else if ("$showDiskLoc".equals(name)) {
@@ -224,7 +240,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         } else if ("$snapshot".equals(name)) {
             snapshot();
         } else if ("$natural".equals(name)) {
-            sort(new BasicDBObject("$natural", ((Number) o).intValue()));
+            sort(new BasicDBObject("$natural", ((Number) value).intValue()));
         } else {
             throw new IllegalArgumentException(name + "is not a supported modifier");
         }
@@ -234,6 +250,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Adds a comment to the query to identify queries in the database profiler output.
      *
+     * @param comment the comment that is to appear in the profiler output
+     * @return {@code this} so calls can be chained
      * @mongodb.driver.manual reference/operator/meta/comment/ $comment
      * @since 2.12
      */
@@ -246,6 +264,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Limits the number of documents a cursor will return for a query.
      *
+     * @param max the maximum number of documents to return
+     * @return {@code this} so calls can be chained
      * @mongodb.driver.manual reference/operator/meta/maxScan/ $maxScan
      * @see #limit(int)
      * @since 2.12
@@ -259,6 +279,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Specifies an <em>exclusive</em> upper limit for the index to use in a query.
      *
+     * @param max a document specifying the fields, and the upper bound values for those fields
+     * @return {@code this} so calls can be chained
      * @mongodb.driver.manual reference/operator/meta/max/ $max
      * @since 2.12
      */
@@ -270,6 +292,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Specifies an <em>inclusive</em> lower limit for the index to use in a query.
      *
+     * @param min a document specifying the fields, and the lower bound values for those fields
+     * @return {@code this} so calls can be chained
      * @mongodb.driver.manual reference/operator/meta/min/ $min
      * @since 2.12
      */
@@ -281,6 +305,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Forces the cursor to only return fields included in the index.
      *
+     * @return {@code this} so calls can be chained
      * @mongodb.driver.manual reference/operator/meta/returnKey/ $returnKey
      * @since 2.12
      */
@@ -294,6 +319,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * Modifies the documents returned to include references to the on-disk location of each document.  The location will be returned in a
      * property named {@code $diskLoc}
      *
+     * @return {@code this} so calls can be chained
      * @mongodb.driver.manual reference/operator/meta/showDiskLoc/ $showDiskLoc
      * @since 2.12
      */
@@ -346,7 +372,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * returned, even with snapshot mode). Note that short query responses (less than 1MB) are always effectively snapshot. Currently,
      * snapshot mode may not be used with sorting or explicit hints.
      *
-     * @return this
+     * @return {@code this} so calls can be chained
      */
     public DBCursor snapshot() {
         find.snapshot();
@@ -354,10 +380,14 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Returns an object containing basic information about the execution of the query that created this cursor This creates a {@code
-     * DBObject} with a number of fields, including but not limited to: cursor : cursor type nScanned number of records examined by the
-     * database for this query n : the number of records that the database returned millis : how long it took the database to execute the
-     * query
+     * Returns an object containing basic information about the execution of the query that created this cursor. This creates a {@code
+     * DBObject} with a number of fields, including but not limited to: 
+     * <ul>
+     *     <li><i>cursor:</i> cursor type</li>
+     *     <li><i>nScanned:</i> number of records examined by the database for this query </li>
+     *     <li><i>n:</i> the number of records that the database returned</li>
+     *     <li><i>millis:</i> how long it took the database to execute the query</li>
+     * </ul>
      *
      * @return a {@code DBObject} containing the explain output for this DBCursor's query
      * @throws MongoException
@@ -388,56 +418,54 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Limits the number of elements returned. Note: parameter <tt>n</tt> should be positive, although a negative value is supported for
-     * legacy reason. Passing a negative value will call {@link DBCursor#batchSize(int)} which is the preferred method.
+     * Limits the number of elements returned. Note: parameter {@code numberOfElements} should be positive, although a negative value is
+     * supported for legacy reason. Passing a negative value will call {@link DBCursor#batchSize(int)} which is the preferred method.
      *
-     * @param n the number of elements to return
+     * @param numberOfElements the number of elements to return
      * @return a cursor to iterate the results
      * @mongodb.driver.manual reference/method/cursor.limit Limit
      */
-    public DBCursor limit(final int n) {
-        find.limit(n);
+    public DBCursor limit(final int numberOfElements) {
+        find.limit(numberOfElements);
         return this;
     }
 
     /**
-     * Limits the number of elements returned in one batch. A cursor typically fetches a batch of result objects and store them locally.
-     * <p/>
-     * If <tt>batchSize</tt> is positive, it represents the size of each batch of objects retrieved. It can be adjusted to optimize
-     * performance and limit data transfer.
-     * <p/>
-     * If <tt>batchSize</tt> is negative, it will limit of number objects returned, that fit within the max batch size limit (usually 4MB),
-     * and cursor will be closed. For example if <tt>batchSize</tt> is -10, then the server will return a maximum of 10 documents and as
-     * many as can fit in 4MB, then close the cursor. Note that this feature is different from limit() in that documents must fit within a
-     * maximum size, and it removes the need to send a request to close the cursor server-side.
-     * <p/>
-     * The batch size can be changed even after a cursor is iterated, in which case the setting will apply on the next batch retrieval.
+     * <p>Limits the number of elements returned in one batch. A cursor typically fetches a batch of result objects and store them
+     * locally.</p>
      *
-     * @param n the number of elements to return in a batch
-     * @return {@code this}
+     * <p>If {@code batchSize} is positive, it represents the size of each batch of objects retrieved. It can be adjusted to optimize
+     * performance and limit data transfer.</p>
+     *
+     * <p>If {@code batchSize} is negative, it will limit of number objects returned, that fit within the max batch size limit (usually
+     * 4MB), and cursor will be closed. For example if {@code batchSize} is -10, then the server will return a maximum of 10 documents and
+     * as many as can fit in 4MB, then close the cursor. Note that this feature is different from limit() in that documents must fit within
+     * a maximum size, and it removes the need to send a request to close the cursor server-side.</p>
+     *
+     * <p>The batch size can be changed even after a cursor is iterated, in which case the setting will apply on the next batch
+     * retrieval.</p>
+     *
+     * @param numberOfElements the number of elements to return in a batch
+     * @return {@code this} so calls can be chained
      */
-    public DBCursor batchSize(final int n) {
-        find.getOptions().batchSize(n);
+    public DBCursor batchSize(final int numberOfElements) {
+        find.getOptions().batchSize(numberOfElements);
         return this;
     }
 
     /**
      * Discards a given number of elements at the beginning of the cursor.
      *
-     * @param n the number of elements to skip
+     * @param numberOfElements the number of elements to skip
      * @return a cursor pointing to the new first element of the results
      * @throws IllegalStateException if the cursor has started to be iterated through
      */
-    public DBCursor skip(final int n) {
-        find.skip(n);
+    public DBCursor skip(final int numberOfElements) {
+        find.skip(numberOfElements);
         return this;
     }
 
-    /**
-     * gets the cursor id.
-     *
-     * @return the cursor id, or 0 if there is no active cursor.
-     */
+    @Override
     public long getCursorId() {
         if (cursor != null) {
             return cursor.getServerCursor().getId();
@@ -455,9 +483,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return numSeen;
     }
 
-    /**
-     * kills the current cursor on the server.
-     */
     @Override
     public void close() {
         closed = true;
@@ -470,11 +495,11 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * makes this query ok to run on a slave node
+     * Declare that this query can run on a secondary server.
      *
      * @return a copy of the same cursor (for chaining)
      * @see ReadPreference#secondaryPreferred()
-     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
+     * @deprecated Replaced with {@link com.mongodb.ReadPreference#secondaryPreferred()}
      */
     @Deprecated
     public DBCursor slaveOk() {
@@ -482,15 +507,16 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Creates a copy of this cursor object that can be iterated. Note: - you can iterate the DBCursor itself without calling this method -
-     * no actual data is getting copied.
-     * <p>
-     * Note that use of this method does not let you call close the underlying cursor in the case of either an exception or an early
-     * break.  The preferred method of iteration is to use DBCursor as an Iterator, so that you can call close() on it in a finally block.
-     * </p>
+     * <p>Creates a copy of this cursor object that can be iterated. Note: - you can iterate the DBCursor itself without calling this method
+     * - no actual data is getting copied.</p>
+     *
+     * <p>Note that use of this method does not let you call close the underlying cursor in the case of either an exception or an early
+     * break.  The preferred method of iteration is to use DBCursor as an Iterator, so that you can call close() on it in a finally
+     * block.</p>
      *
      * @return an iterator
      */
+    @Override
     public Iterator<DBObject> iterator() {
         return this.copy();
     }
@@ -519,7 +545,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Counts the number of objects matching the query This does not take limit/skip into consideration
+     * Counts the number of objects matching the query. This does not take limit/skip into consideration, and does initiate a call to the
+     * server.
      *
      * @return the number of objects
      * @throws MongoException
@@ -539,7 +566,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * pulls back all items into an array and returns the number of objects. Note: this can be resource intensive
+     * Pulls back all items into an array and returns the number of objects. Note: this can be resource intensive.
      *
      * @return the number of elements in the array
      * @throws MongoException
@@ -553,7 +580,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * for testing only! Iterates cursor and counts objects
+     * For testing only! Iterates cursor and counts objects
      *
      * @return num objects
      * @throws MongoException
@@ -608,12 +635,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return collection;
     }
 
-    /**
-     * Gets the Server Address of the server that data is pulled from. Note that this information may not be available until hasNext() or
-     * next() is called.
-     *
-     * @return the address of the server that data is pulled from
-     */
+    @Override
     public ServerAddress getServerAddress() {
         if (cursor != null) {
             return cursor.getServerAddress();
@@ -623,9 +645,10 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Sets the read preference for this cursor. See the * documentation for {@link ReadPreference} for more information.
+     * Sets the read preference for this cursor. See the documentation for {@link ReadPreference} for more information.
      *
      * @param readPreference read preference to use
+     * @return {@code this} so calls can be chained
      */
     public DBCursor setReadPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
@@ -712,9 +735,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return null;
     }
 
-    /**
-     * Types of cursors: iterator or array.
-     */
     private static enum CursorType {
         ITERATOR,
         ARRAY

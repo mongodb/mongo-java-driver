@@ -18,6 +18,9 @@ package com.mongodb;
 
 import org.bson.BSONObject;
 
+/**
+ * This interface adds some specific behaviour to {@link org.bson.BSONObject} for MongoDB documents.
+ */
 public interface DBObject extends BSONObject {
     /**
      * If this object was retrieved with only some fields (using a field filter) this method will be called to mark it as such.
@@ -25,7 +28,9 @@ public interface DBObject extends BSONObject {
     void markAsPartialObject();
 
     /**
-     * Whether markAsPartialObject was ever called only matters if you are going to upsert and do not want to risk losing fields
+     * Whether {@link #markAsPartialObject} was ever called only matters if you are going to upsert and do not want to risk losing fields.
+     *
+     * @return true if this has been marked as a partial object
      */
     boolean isPartialObject();
 }

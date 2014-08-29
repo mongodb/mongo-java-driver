@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.Cluster;
 import com.mongodb.operation.CommandReadOperation;
@@ -91,7 +92,7 @@ public class DB {
      * @param name  the database name - must not be empty and cannot contain spaces
      */
     public DB(final Mongo mongo, final String name) {
-        this(mongo, name, new com.mongodb.codecs.DocumentCodec());
+        this(mongo, name, new DocumentCodec());
     }
 
     /**
@@ -164,9 +165,9 @@ public class DB {
     }
 
     /**
-     * Gets a collection with a given name. If the collection does not exist, a new collection is created.
-     * <p/>
-     * This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
+     * <p>Gets a collection with a given name. If the collection does not exist, a new collection is created.</p> 
+     * 
+     * <p>This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.</p>
      *
      * @param name the name of the collection
      * @return the collection
@@ -210,11 +211,11 @@ public class DB {
     /**
      * Returns a collection matching a given string.
      *
-     * @param s the name of the collection
+     * @param collectionName the name of the collection
      * @return the collection
      */
-    public DBCollection getCollectionFromString(final String s) {
-        return getCollection(s);
+    public DBCollection getCollectionFromString(final String collectionName) {
+        return getCollection(collectionName);
     }
 
     /**
@@ -248,17 +249,20 @@ public class DB {
     }
 
     /**
-     * Creates a collection with a given name and options. If the collection does not exist, a new collection is created.
-     * <p/>
-     * Possible options: <ul> <li> <b>capped</b> ({@code boolean}) - Enables a collection cap. False by default. If enabled, you must
-     * specify a size parameter. </li> <li> <b>size</b> ({@code int}) - If capped is true, size specifies a maximum size in bytes for the
-     * capped collection. When capped is false, you may use size to preallocate space. </li> <li> <b>max</b> ({@code int}) -   Optional.
-     * Specifies a maximum "cap" in number of documents for capped collections. You must also specify size when specifying max. </li>
-     * <p/>
+     * <p>Creates a collection with a given name and options. If the collection does not exist, a new collection is created.</p>
+     * 
+     * <p>Possible options:</p>
+     * <ul> 
+     *     <li> <b>capped</b> ({@code boolean}) - Enables a collection cap. False by default. If enabled, 
+     *     you must specify a size parameter. </li> 
+     *     <li> <b>size</b> ({@code int}) - If capped is true, size specifies a maximum size in bytes for the capped collection. When 
+     *     capped is false, you may use size to preallocate space. </li> 
+     *     <li> <b>max</b> ({@code int}) -   Optional. Specifies a maximum "cap" in number of documents for capped collections. You must
+     *     also specify size when specifying max. </li>
      * </ul>
-     * <p/>
-     * Note that if the {@code options} parameter is {@code null}, the creation will be deferred to when the collection is written to.
-     *
+     * <p>Note that if the {@code options} parameter is {@code null}, the creation will be deferred to when the collection is written
+     * to.</p>
+     * 
      * @param collectionName the name of the collection to return
      * @param options        options
      * @return the collection
@@ -303,58 +307,58 @@ public class DB {
     }
 
     /**
-     * Executes a database command. This method constructs a simple DBObject using cmd as the field name and {@code true} as its value, and
-     * calls {@link DB#command(com.mongodb.DBObject, com.mongodb.ReadPreference) } with the default read preference for the database.
+     * Executes a database command. This method constructs a simple DBObject using {@code command} as the field name and {@code true} as its
+     * value, and calls {@link DB#command(DBObject, ReadPreference) } with the default read preference for the database.
      *
-     * @param cmd command to execute
+     * @param command command to execute
      * @return result of command from the database
      * @throws MongoException
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
-    public CommandResult command(final String cmd) {
-        return command(new BasicDBObject(cmd, Boolean.TRUE), getReadPreference());
+    public CommandResult command(final String command) {
+        return command(new BasicDBObject(command, Boolean.TRUE), getReadPreference());
     }
 
     /**
      * Executes a database command. This method calls {@link DB#command(DBObject, ReadPreference) } with the default read preference for the
      * database.
      *
-     * @param cmd {@code DBObject} representation of the command to be executed
+     * @param command {@code DBObject} representation of the command to be executed
      * @return result of the command execution
-     * @throws MongoException§
+     * @throws MongoException
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
-    public CommandResult command(final DBObject cmd) {
-        return command(cmd, getReadPreference());
+    public CommandResult command(final DBObject command) {
+        return command(command, getReadPreference());
     }
 
     /**
      * Executes a database command. This method calls {@link DB#command(DBObject, ReadPreference, DBEncoder) } with the default read
      * preference for the database.
      *
-     * @param cmd     {@code DBObject} representation of the command to be executed
+     * @param command {@code DBObject} representation of the command to be executed
      * @param encoder {@link DBEncoder} to be used for command encoding
      * @return result of the command execution
      * @throws MongoException
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
-    public CommandResult command(final DBObject cmd, final DBEncoder encoder) {
-        return command(cmd, getReadPreference(), encoder);
+    public CommandResult command(final DBObject command, final DBEncoder encoder) {
+        return command(command, getReadPreference(), encoder);
     }
 
     /**
      * Executes a database command with the selected readPreference, and encodes the command using the given encoder.
      *
-     * @param cmd            The {@code DBObject} representation the command to be executed
+     * @param command        The {@code DBObject} representation the command to be executed
      * @param readPreference Where to execute the command - this will only be applied for a subset of commands
-     * @param encoder        The DBEncoder that knows how to serialise the cmd
+     * @param encoder        The DBEncoder that knows how to serialise the command
      * @return The result of executing the command, success or failure
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      * @since 2.12
      */
-    public CommandResult command(final DBObject cmd, final ReadPreference readPreference, final DBEncoder encoder) {
+    public CommandResult command(final DBObject command, final ReadPreference readPreference, final DBEncoder encoder) {
         try {
-            return executeCommand(wrap(cmd, encoder), readPreference);
+            return executeCommand(wrap(command, encoder), readPreference);
         } catch (CommandFailureException ex) {
             return new CommandResult(ex.getResponse(), ex.getServerAddress());
         }
@@ -363,29 +367,29 @@ public class DB {
     /**
      * Executes the command against the database with the given read preference.
      *
-     * @param cmd            The {@code DBObject} representation the command to be executed
+     * @param command        The {@code DBObject} representation the command to be executed
      * @param readPreference Where to execute the command - this will only be applied for a subset of commands
      * @return The result of executing the command, success or failure
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      * @since 2.12
      */
-    public CommandResult command(final DBObject cmd, final ReadPreference readPreference) {
-        return command(cmd, readPreference, null);
+    public CommandResult command(final DBObject command, final ReadPreference readPreference) {
+        return command(command, readPreference, null);
     }
 
     /**
-     * Executes a database command. This method constructs a simple {@link DBObject} and calls {@link DB#command(com.mongodb.DBObject,
-     * com.mongodb.ReadPreference)  }.
+     * Executes a database command. This method constructs a simple {@link DBObject} and calls {@link DB#command(DBObject, ReadPreference)
+     * }.
      *
-     * @param cmd            The name of the command to be executed
+     * @param command        The name of the command to be executed
      * @param readPreference Where to execute the command - this will only be applied for a subset of commands
      * @return The result of the command execution
      * @throws MongoException
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      * @since 2.12
      */
-    public CommandResult command(final String cmd, final ReadPreference readPreference) {
-        return command(new BasicDBObject(cmd, Boolean.TRUE), readPreference);
+    public CommandResult command(final String command, final ReadPreference readPreference) {
+        return command(new BasicDBObject(command, true), readPreference);
     }
 
     /**

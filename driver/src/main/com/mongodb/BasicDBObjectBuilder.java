@@ -21,13 +21,16 @@ import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * utility for building complex objects example: BasicDBObjectBuilder.start().add( "name" , "eliot" ).add( "number" , 17 ).get()
+ * <p>Utility for building complex objects. For example:</p>
+ * <pre>
+ *   {@code BasicDBObjectBuilder.start().add( "name" , "eliot").add("number" , 17).get()}
+ * </pre>
  */
 @SuppressWarnings("rawtypes")
 public class BasicDBObjectBuilder {
 
     /**
-     * creates an empty object
+     * Creates a builder intialized with an empty document.
      */
     public BasicDBObjectBuilder() {
         _stack = new LinkedList<DBObject>();
@@ -35,7 +38,7 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * Creates an empty object
+     * Creates a builder intialized with an empty document.
      *
      * @return The new empty builder
      */
@@ -44,30 +47,31 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * creates an object with the given key/value
+     * Creates a builder initialized with the given key/value.
      *
      * @param k   The field name
      * @param val The value
+     * @return this
      */
     public static BasicDBObjectBuilder start(final String k, final Object val) {
         return (new BasicDBObjectBuilder()).add(k, val);
     }
 
     /**
-     * Creates an object builder from an existing map.
+     * Creates an object builder from an existing map of key value pairs.
      *
-     * @param m map to use
+     * @param documentAsMap a document in Map form.
      * @return the new builder
      */
     @SuppressWarnings("unchecked")
-    public static BasicDBObjectBuilder start(final Map m) {
-        BasicDBObjectBuilder b = new BasicDBObjectBuilder();
-        Iterator<Map.Entry> i = m.entrySet().iterator();
+    public static BasicDBObjectBuilder start(final Map documentAsMap) {
+        BasicDBObjectBuilder builder = new BasicDBObjectBuilder();
+        Iterator<Map.Entry> i = documentAsMap.entrySet().iterator();
         while (i.hasNext()) {
             Map.Entry entry = i.next();
-            b.add(entry.getKey().toString(), entry.getValue());
+            builder.add(entry.getKey().toString(), entry.getValue());
         }
-        return b;
+        return builder;
     }
 
     /**
@@ -75,20 +79,19 @@ public class BasicDBObjectBuilder {
      *
      * @param key the field name
      * @param val the value of the field
-     * @return returns itself so you can chain
+     * @return this so you can chain
      */
     public BasicDBObjectBuilder append(final String key, final Object val) {
         _cur().put(key, val);
         return this;
     }
 
-
     /**
      * Same as append
      *
      * @param key the field name
      * @param val the value of the field
-     * @return returns itself so you can chain
+     * @return this so you can chain
      * @see #append(String, Object)
      */
     public BasicDBObjectBuilder add(final String key, final Object val) {
@@ -99,7 +102,7 @@ public class BasicDBObjectBuilder {
      * Creates an new empty object and inserts it into the current object with the given key. The new child object becomes the active one.
      *
      * @param key the field name
-     * @return returns itself so you can chain
+     * @return this so you can chain
      */
     public BasicDBObjectBuilder push(final String key) {
         BasicDBObject o = new BasicDBObject();
@@ -109,9 +112,9 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * pops the active object, which means that the parent object becomes active
+     * Pops the active object, which means that the parent object becomes active
      *
-     * @return returns itself so you can chain
+     * @return this so you can chain
      */
     public BasicDBObjectBuilder pop() {
         if (_stack.size() <= 1) {
@@ -122,7 +125,7 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * gets the base object
+     * Gets the top level document.
      *
      * @return The base object
      */
@@ -131,9 +134,9 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * returns true if no key/value was inserted into base object
+     * Returns true if no key/value was inserted into the top level document.
      *
-     * @return True if empty
+     * @return true if empty
      */
     public boolean isEmpty() {
         return ((BasicDBObject) _stack.getFirst()).size() == 0;
