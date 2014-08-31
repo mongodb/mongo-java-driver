@@ -16,9 +16,7 @@
 
 package com.mongodb.client;
 
-import com.mongodb.BulkWriteResult;
 import com.mongodb.ExplainVerbosity;
-import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.model.BulkWriteModel;
@@ -36,7 +34,7 @@ import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.RemoveResult;
 import com.mongodb.client.result.ReplaceOneResult;
 import com.mongodb.client.result.UpdateResult;
-import org.bson.BsonValue;
+import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
 
 import java.util.List;
@@ -56,17 +54,45 @@ public interface NewMongoCollection<T> {
 
     // READ
 
+    MongoIterable<Document> aggregate(List<?> pipeline);
+
+    <D> MongoIterable<D> aggregate(List<?> pipeline, Class<D> clazz);
+
+    /**
+     *
+     * @return
+     */
     long count();
 
+    /**
+     *
+     * @param model
+     * @return
+     */
     long count(CountModel model);
 
-    MongoCursor<BsonValue> distinct(String fieldName);
+    /**
+     *
+     * @param fieldName
+     * @return
+     */
+    List<Object> distinct(String fieldName);
 
-    MongoCursor<BsonValue> distinct(DistinctModel model);
+    /**
+     *
+     * @param model
+     * @return
+     */
+    List<Object> distinct(DistinctModel model);
 
-    MongoCursor<T> find(Object filter);
+    /**
+     *
+     * @param model
+     * @return
+     */
+    MongoIterable<T> find(FindModel model);
 
-    MongoCursor<T> find(FindModel model);
+    <D> MongoIterable<D> find(FindModel model, Class<D> clazz);
 
     // WRITE
 
@@ -144,19 +170,61 @@ public interface NewMongoCollection<T> {
      */
     RemoveResult removeMany(Object filter);
 
+    /**
+     *
+     * @param filter
+     * @param replacement
+     * @return
+     */
     ReplaceOneResult replaceOne(Object filter, T replacement);
 
+    /**
+     *
+     * @param model
+     * @return
+     */
     ReplaceOneResult replaceOne(ReplaceOneModel<T> model);
 
-
+    /**
+     *
+     * @param filter
+     * @param update
+     * @return
+     */
     UpdateResult updateOne(Object filter, Object update);
 
+    /**
+     *
+     * @param model
+     * @return
+     */
     UpdateResult updateOne(UpdateOneModel<T> model);
 
-
+    /**
+     *
+     * @param filter
+     * @param update
+     * @return
+     */
     UpdateResult updateMany(Object filter, Object update);
 
+    /**
+     *
+     * @param model
+     * @return
+     */
     UpdateResult updateMany(UpdateManyModel<T> model);
 
+
+
+    // explain
+
+    /**
+     *
+     * @param explainableModel
+     * @param verbosity
+     * @return
+     * @mongodb.server.release 2.8
+     */
     Document explain(ExplainableModel explainableModel, ExplainVerbosity verbosity);
 }
