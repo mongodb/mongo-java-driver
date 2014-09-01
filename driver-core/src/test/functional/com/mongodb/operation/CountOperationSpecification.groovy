@@ -20,6 +20,8 @@ import com.mongodb.MongoException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import spock.lang.IgnoreIf
@@ -37,6 +39,8 @@ import static java.util.concurrent.TimeUnit.SECONDS
 class CountOperationSpecification extends OperationFunctionalSpecification {
 
     private List<InsertRequest<Document>> insertDocumentList;
+
+    def findWithBadHint = new Find( new BsonDocument('a', new BsonInt32(1))).hintIndex('BAD HINT')
 
     def setup() {
         insertDocumentList = [
@@ -163,11 +167,10 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         countOperation.executeAsync(getAsyncBinding()).get() == serverVersionAtLeast(asList(2, 6, 0)) ? 1 : insertDocumentList.size()
     }
 
-    @IgnoreIf( { serverVersionAtLeast(asList(2, 6, 0)) } )
-    def 'should ignore bad hints with mongod 2.6+'() {
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should throw with bad hint with mongod 2.6+'() {
         given:
-        def find = new Find().hintIndex('BAD HINT')
-        def countOperation = new CountOperation(getNamespace(), find)
+        def countOperation = new CountOperation(getNamespace(), findWithBadHint)
 
         when:
         countOperation.execute(getBinding())
@@ -177,24 +180,22 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf( { serverVersionAtLeast(asList(2, 6, 0)) } )
-    def 'should ignore bad hints with mongod 2.6+ asynchronously'() {
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should throw with bad hint with mongod 2.6+ asynchronously'() {
         given:
-        def find = new Find().hintIndex('BAD HINT')
-        def countOperation = new CountOperation(getNamespace(), find)
+        def countOperation = new CountOperation(getNamespace(), findWithBadHint)
 
         when:
-        countOperation.executeAsync(getAsyncBinding())
+        countOperation.executeAsync(getAsyncBinding()).get()
 
         then:
         thrown(MongoException)
     }
 
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
-    def 'should throw with bad hint with mongod < 2.6'() {
+    @IgnoreIf({ serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should ignore with bad hint with mongod < 2.6'() {
         given:
-        def find = new Find().hintIndex('BAD HINT')
-        def countOperation = new CountOperation(getNamespace(), find)
+        def countOperation = new CountOperation(getNamespace(), findWithBadHint)
 
         when:
         countOperation.execute(getBinding())
@@ -204,14 +205,13 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
-    def 'should throw with bad hint with mongod < 2.6 asynchronously'() {
+    @IgnoreIf({ serverVersionAtLeast(asList(2, 6, 0))} )
+    def 'should ignore with bad hint with mongod < 2.6 asynchronously'() {
         given:
-        def find = new Find().hintIndex('BAD HINT')
-        def countOperation = new CountOperation(getNamespace(), find)
+        def countOperation = new CountOperation(getNamespace(), findWithBadHint)
 
         when:
-        countOperation.executeAsync(getAsyncBinding())
+        countOperation.executeAsync(getAsyncBinding()).get()
 
         then:
         notThrown(MongoException)
