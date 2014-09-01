@@ -41,6 +41,13 @@ public class ClusterDescription {
     private final ClusterType type;
     private final Set<ServerDescription> all;
 
+    /**
+     * Creates a new ClusterDescription.
+     *
+     * @param connectionMode     whether to connect directly to a single server or to multiple servers
+     * @param type               what sort of cluster this is
+     * @param serverDescriptions the descriptions of all the servers currently in this cluster
+     */
     public ClusterDescription(final ClusterConnectionMode connectionMode, final ClusterType type,
                               final List<ServerDescription> serverDescriptions) {
         notNull("all", serverDescriptions);
@@ -71,10 +78,20 @@ public class ClusterDescription {
         return true;
     }
 
+    /**
+     * Gets whether this cluster is connecting to single servers or multiple servers.
+     *
+     * @return the ClusterConnectionMode for this cluster
+     */
     public ClusterConnectionMode getConnectionMode() {
         return connectionMode;
     }
 
+    /**
+     * Gets the specific type of this cluster
+     *
+     * @return a ClusterType enum representing the type of this cluster
+     */
     public ClusterType getType() {
         return type;
     }
@@ -88,7 +105,12 @@ public class ClusterDescription {
         return all;
     }
 
-
+    /**
+     * Returns the ServerDescription for the server at the given address
+     *
+     * @param serverAddress the ServerAddress for a server in this cluster
+     * @return the ServerDescription for this server
+     */
     public ServerDescription getByServerAddress(final ServerAddress serverAddress) {
         for (final ServerDescription cur : getAll()) {
             if (cur.getAddress().equals(serverAddress)) {
@@ -99,10 +121,10 @@ public class ClusterDescription {
     }
 
     /**
-     * While it may seem counter-intuitive that a MongoDb cluster can have more than one primary, it can in the case where the client's view
+     * While it may seem counter-intuitive that a MongoDB cluster can have more than one primary, it can in the case where the client's view
      * of the cluster is a set of mongos servers, any of which can serve as the primary.
      *
-     * @return a list of servers that can act as primaries\
+     * @return a list of servers that can act as primaries
      */
     public List<ServerDescription> getPrimaries() {
         return getServersByPredicate(new Predicate() {
@@ -112,6 +134,11 @@ public class ClusterDescription {
         });
     }
 
+    /**
+     * Get a list of all the secondaries in this cluster
+     *
+     * @return a List of ServerDescriptions of all the secondaries this cluster is currently aware of
+     */
     public List<ServerDescription> getSecondaries() {
         return getServersByPredicate(new Predicate() {
             public boolean apply(final ServerDescription serverDescription) {
@@ -120,6 +147,12 @@ public class ClusterDescription {
         });
     }
 
+    /**
+     * Get a list of all the secondaries in this cluster that match a given TagSet
+     *
+     * @param tagSet a Set of replica set tags
+     * @return a List of ServerDescriptions of all the secondaries this cluster that match all of the given tags
+     */
     public List<ServerDescription> getSecondaries(final TagSet tagSet) {
         return getServersByPredicate(new Predicate() {
             public boolean apply(final ServerDescription serverDescription) {
@@ -128,6 +161,11 @@ public class ClusterDescription {
         });
     }
 
+    /**
+     * Gets a list of ServerDescriptions for all the servers in this cluster which are currently accessible.
+     *
+     * @return a List of ServerDescriptions for all servers that have a status of OK
+     */
     public List<ServerDescription> getAny() {
         return getServersByPredicate(new Predicate() {
             public boolean apply(final ServerDescription serverDescription) {
@@ -136,6 +174,11 @@ public class ClusterDescription {
         });
     }
 
+    /**
+     * Gets a list of all the primaries and secondaries in this cluster.
+     *
+     * @return a list of ServerDescriptions for all primary and secondary servers
+     */
     public List<ServerDescription> getAnyPrimaryOrSecondary() {
         return getServersByPredicate(new Predicate() {
             public boolean apply(final ServerDescription serverDescription) {
@@ -144,6 +187,12 @@ public class ClusterDescription {
         });
     }
 
+    /**
+     * Gets a list of all the primaries and secondaries in this cluster that match the given replica set tags.
+     *
+     * @param tagSet a Set of replica set tags
+     * @return a list of ServerDescriptions for all primary and secondary servers that contain all of the given tags
+     */
     public List<ServerDescription> getAnyPrimaryOrSecondary(final TagSet tagSet) {
         return getServersByPredicate(new Predicate() {
             public boolean apply(final ServerDescription serverDescription) {
@@ -189,6 +238,11 @@ public class ClusterDescription {
                + '}';
     }
 
+    /**
+     * Gets a pretty string describing this cluster.
+     *
+     * @return a String describing this cluster.
+     */
     public String getShortDescription() {
         StringBuilder serverDescriptions = new StringBuilder();
         String delimiter = "";

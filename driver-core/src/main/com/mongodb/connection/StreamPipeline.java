@@ -168,7 +168,7 @@ class StreamPipeline {
                     reading.release();
                 }
             }
-            final Response response = messages.remove(responseTo);
+            Response response = messages.remove(responseTo);
             if (response.hasError()) {
                 throw response.getError();
             }
@@ -352,7 +352,7 @@ class StreamPipeline {
                 try {
                     while (it.hasNext()) {
                         Map.Entry<Integer, SingleResultCallback<ResponseBuffers>> pairs = it.next();
-                        final SingleResultCallback<ResponseBuffers> callback = pairs.getValue();
+                        SingleResultCallback<ResponseBuffers> callback = pairs.getValue();
                         it.remove();
                         try {
                             callback.onResult(null, new MongoSocketClosedException("Cannot read from a closed stream", getServerAddress()));
@@ -391,7 +391,7 @@ class StreamPipeline {
             if (isClosed()) {
                 try {
                     while (!writeQueue.isEmpty()) {
-                        final SendMessageAsync message = writeQueue.poll();
+                        SendMessageAsync message = writeQueue.poll();
                         try {
                             message.callback.onResult(null, new MongoSocketClosedException("Cannot write to a closed stream",
                                                                                            getServerAddress()));
@@ -445,8 +445,8 @@ class StreamPipeline {
         Iterator<Map.Entry<Integer, Response>> it = messages.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<Integer, Response> pairs = it.next();
-            final int messageId = pairs.getKey();
-            final SingleResultCallback<ResponseBuffers> callback = readQueue.remove(messageId);
+            int messageId = pairs.getKey();
+            SingleResultCallback<ResponseBuffers> callback = readQueue.remove(messageId);
             if (callback != null) {
                 if (pairs.getValue().getError() != null) {
                     try {
@@ -472,7 +472,7 @@ class StreamPipeline {
         Iterator<Map.Entry<Integer, SingleResultCallback<ResponseBuffers>>> it = readQueue.entrySet().iterator();
         while (it.hasNext()) {
             Map.Entry<Integer, SingleResultCallback<ResponseBuffers>> pairs = it.next();
-            final SingleResultCallback<ResponseBuffers> callback = pairs.getValue();
+            SingleResultCallback<ResponseBuffers> callback = pairs.getValue();
             it.remove();
             try {
                 callback.onResult(null, e);

@@ -23,7 +23,7 @@ interface ConnectionPool extends Closeable {
 
     InternalConnection get();
 
-    InternalConnection get(final long timeout, final TimeUnit timeUnit);
+    InternalConnection get(long timeout, TimeUnit timeUnit);
 
     void invalidate();
 

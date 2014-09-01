@@ -162,7 +162,7 @@ class WriteConcernSpecification extends Specification {
 
     def 'should throw ClassCastException if w is not an integer and getW is called'() {
         when:
-        new WriteConcern("MyTag").getW()
+        new WriteConcern('MyTag').getW()
         
         then:
         thrown(ClassCastException)

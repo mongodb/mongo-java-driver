@@ -32,10 +32,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class DefaultClusterFactory implements ClusterFactory {
     private static final AtomicInteger NEXT_CLUSTER_ID = new AtomicInteger(1);
 
-    public DefaultClusterFactory() {
-    }
-
-    // CHECKSTYLE:OFF
     @Override
     public Cluster create(final ClusterSettings settings, final ServerSettings serverSettings,
                           final ConnectionPoolSettings connectionPoolSettings, final StreamFactory streamFactory,
@@ -66,5 +62,4 @@ public final class DefaultClusterFactory implements ClusterFactory {
             throw new UnsupportedOperationException("Unsupported cluster mode: " + settings.getMode());
         }
     }
-    // CHECKSTYLE:ON
 }

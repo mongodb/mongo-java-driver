@@ -23,18 +23,35 @@ import javax.net.ssl.SSLSocketFactory;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ * Factory for creating SocketStreams.
+ *
+ * @since 3.0
+ */
 public class SocketStreamFactory implements StreamFactory {
     private final SocketSettings settings;
     private final SSLSettings sslSettings;
     private final SocketFactory socketFactory;
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
+    /**
+     * Creates a new factory with the given settings for connecting to servers and the given SSL settings
+     *
+     * @param settings    the SocketSettings for connecting to a MongoDB server
+     * @param sslSettings whether SSL is enabled.
+     */
     public SocketStreamFactory(final SocketSettings settings, final SSLSettings sslSettings) {
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
         this.socketFactory = null;
     }
 
+    /**
+     * Creates a new factory with the given settings for connecting to servers and a factory for creating connections.
+     *
+     * @param settings      the SocketSettings for connecting to a MongoDB server
+     * @param socketFactory a SocketFactory for creating connections to servers.
+     */
     public SocketStreamFactory(final SocketSettings settings, final SocketFactory socketFactory) {
         this.settings = notNull("settings", settings);
         this.sslSettings = null;

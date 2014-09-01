@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 interface Pool<T> {
     T get();
 
-    T get(long timeout, final TimeUnit timeUnit);
+    T get(long timeout, TimeUnit timeUnit);
 
     void release(T t);
 

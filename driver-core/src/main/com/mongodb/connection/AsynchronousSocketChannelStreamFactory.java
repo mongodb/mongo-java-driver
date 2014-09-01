@@ -21,6 +21,9 @@ import com.mongodb.ServerAddress;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
+ * Factory to create a Stream that's an AsynchronousSocketChannelStream. Performs validation such as ensuring SSL settings are defined and
+ * SSL is enabled.
+ *
  * @since 3.0
  */
 public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
@@ -28,6 +31,11 @@ public class AsynchronousSocketChannelStreamFactory implements StreamFactory {
     private final SSLSettings sslSettings;
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
+    /**
+     * Create a new factory.
+     * @param settings the settings for the connection to a MongoDB server
+     * @param sslSettings the settings for connecting via SSL
+     */
     public AsynchronousSocketChannelStreamFactory(final SocketSettings settings, final SSLSettings sslSettings) {
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
