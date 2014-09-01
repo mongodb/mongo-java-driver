@@ -16,10 +16,10 @@
 
 package com.mongodb.protocol
 
+import com.mongodb.CursorFlag
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
 import com.mongodb.operation.InsertRequest
-import com.mongodb.operation.QueryFlag
 import org.bson.BsonArray
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
@@ -85,7 +85,7 @@ class InsertProtocolSpecification extends OperationFunctionalSpecification {
 
 
         then:
-        new QueryProtocol<BsonDocument>(getNamespace(), EnumSet.noneOf(QueryFlag), 0, 1, new BsonDocument(), new BsonDocument(),
+        new QueryProtocol<BsonDocument>(getNamespace(), EnumSet.noneOf(CursorFlag), 0, 1, new BsonDocument(), new BsonDocument(),
                                         new BsonDocumentCodec()).execute(connection).getResults()[0]
 
         cleanup:

@@ -19,7 +19,6 @@ package com.mongodb;
 
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.operation.Find;
-import com.mongodb.operation.QueryFlag;
 import com.mongodb.operation.QueryOperation;
 import org.bson.codecs.Decoder;
 
@@ -85,7 +84,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
              .where(collection.wrapAllowNull(query))
              .select(collection.wrapAllowNull(fields))
              .hintIndex(collection.wrapAllowNull(lookupSuitableHints(query, collection.getHintFields())))
-             .addFlags(QueryFlag.toSet(collection.getOptions())),
+             .addFlags(CursorFlag.toSet(collection.getOptions())),
              readPreference
             );
     }
@@ -158,7 +157,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @see Bytes
      */
     public DBCursor addOption(final int option) {
-        find.addFlags(QueryFlag.toSet(option));
+        find.addFlags(CursorFlag.toSet(option));
         return this;
     }
 
@@ -170,7 +169,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @see Bytes
      */
     public DBCursor setOptions(final int options) {
-        find.flags(QueryFlag.toSet(options));
+        find.flags(CursorFlag.toSet(options));
         return this;
     }
 
@@ -180,7 +179,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return {@code this} so calls can be chained
      */
     public DBCursor resetOptions() {
-        find.flags(QueryFlag.toSet(collection.getOptions()));
+        find.flags(CursorFlag.toSet(collection.getOptions()));
         return this;
     }
 
@@ -190,7 +189,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the bitmask of options
      */
     public int getOptions() {
-        return QueryFlag.fromSet(find.getFlags(readPreference));
+        return CursorFlag.fromSet(find.getFlags(readPreference));
     }
 
     /**

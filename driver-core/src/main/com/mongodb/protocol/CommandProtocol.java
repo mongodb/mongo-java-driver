@@ -16,6 +16,7 @@
 
 package com.mongodb.protocol;
 
+import com.mongodb.CursorFlag;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoFuture;
@@ -25,7 +26,6 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.operation.QueryFlag;
 import com.mongodb.protocol.message.CommandMessage;
 import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.BsonDocument;
@@ -56,16 +56,16 @@ public class CommandProtocol<T> implements Protocol<T> {
     private final MongoNamespace namespace;
     private final BsonDocument command;
     private final Decoder<T> commandResultDecoder;
-    private final EnumSet<QueryFlag> queryFlags;
+    private final EnumSet<CursorFlag> cursorFlags;
     private final FieldNameValidator fieldNameValidator;
 
-    public CommandProtocol(final String database, final BsonDocument command, final EnumSet<QueryFlag> queryFlags,
+    public CommandProtocol(final String database, final BsonDocument command, final EnumSet<CursorFlag> cursorFlags,
                            final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder) {
         notNull("database", database);
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = notNull("command", command);
         this.commandResultDecoder = notNull("commandResultDecoder", commandResultDecoder);
-        this.queryFlags = notNull("queryFlags", queryFlags);
+        this.cursorFlags = notNull("cursorFlags", cursorFlags);
         this.fieldNameValidator = notNull("fieldNameValidator", fieldNameValidator);
     }
 
@@ -81,7 +81,7 @@ public class CommandProtocol<T> implements Protocol<T> {
     private CommandMessage sendMessage(final Connection connection) {
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
         try {
-            CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags, fieldNameValidator,
+            CommandMessage message = new CommandMessage(namespace.getFullName(), command, cursorFlags, fieldNameValidator,
                                                         getMessageSettings(connection.getServerDescription()));
             message.encode(buffer);
             connection.sendMessage(buffer.getByteBuffers(), message.getId());
@@ -108,7 +108,7 @@ public class CommandProtocol<T> implements Protocol<T> {
         SingleResultFuture<T> retVal = new SingleResultFuture<T>();
 
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
-        CommandMessage message = new CommandMessage(namespace.getFullName(), command, queryFlags, fieldNameValidator,
+        CommandMessage message = new CommandMessage(namespace.getFullName(), command, cursorFlags, fieldNameValidator,
                                                     getMessageSettings(connection.getServerDescription()));
         encodeMessageToBuffer(message, buffer);
 

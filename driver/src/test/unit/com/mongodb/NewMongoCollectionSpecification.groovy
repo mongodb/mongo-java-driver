@@ -15,12 +15,15 @@
  */
 
 package com.mongodb
-
 import com.mongodb.client.MongoCollectionOptions
+import com.mongodb.client.model.FindModel
 import com.mongodb.codecs.DocumentCodecProvider
 import com.mongodb.operation.OperationExecutor
+import com.mongodb.operation.QueryOperation
 import com.mongodb.operation.ReadOperation
 import com.mongodb.operation.WriteOperation
+import org.bson.BsonBoolean
+import org.bson.BsonDocument
 import org.bson.codecs.configuration.RootCodecRegistry
 import org.mongodb.Document
 import spock.lang.Specification
@@ -45,6 +48,19 @@ class NewMongoCollectionSpecification extends Specification {
         then:
         !result.insertedId
         result.insertedCount == 1
+    }
+
+    def 'should find'() {
+        given:
+        def executor = new TestOperationExecutor(Stub(MongoCursor))
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        def result = collection.find(new FindModel(new Document('cold', true))).into([])
+
+        then:
+        def operation = executor.getReadOperation() as QueryOperation
+        operation.getCriteria() == new BsonDocument('cold', BsonBoolean.TRUE)
     }
 
 
@@ -88,11 +104,11 @@ class NewMongoCollectionSpecification extends Specification {
 //
 //        // reads
 //        long count = animals.count();
-//        count = animals.count(new CountModel().filter(new Document("type", "Mammal")));
+//        count = animals.count(new CountModel().criteria(new Document("type", "Mammal")));
 //
 //        MongoCursor<BsonValue> distinctValues = animals.distinct("type");
 //        distinctValues = animals.distinct(new DistinctModel("type")
-//                                                  .filter(new Document("color", "blue")));
+//                                                  .criteria(new Document("color", "blue")));
 //
 //        MongoCursor<Animal> animalCursor = animals.find(new Document("type", "Mammal"));
 //        animalCursor = animals.find(new FindModel(new Document("type", "Mammal"))
@@ -120,7 +136,7 @@ class NewMongoCollectionSpecification extends Specification {
 //
 //        Document explainPlan = animals.explain(new FindModel(new Document("type", "Mammal")),
 //                                               ExplainVerbosity.QUERY_PLANNER);
-//        explainPlan = animals.explain(new CountModel().filter(new Document("type", "Mammal")),
+//        explainPlan = animals.explain(new CountModel().criteria(new Document("type", "Mammal")),
 //                                      ExplainVerbosity.QUERY_PLANNER);
 //
 //    }
@@ -128,7 +144,7 @@ class NewMongoCollectionSpecification extends Specification {
     class TestOperationExecutor<T> implements OperationExecutor {
 
         private final T response
-        private final ReadPreference readPreference
+        private ReadPreference readPreference
         private ReadOperation<T> readOperation;
         private WriteOperation<T> writeOperation;
 
@@ -143,10 +159,8 @@ class NewMongoCollectionSpecification extends Specification {
 
         @Override
         def <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-            if (this.readPreference == null) {
-                throw new IllegalStateException()
-            }
             this.readOperation = operation
+            this.readPreference = readPreference
             response;
         }
 
@@ -161,6 +175,10 @@ class NewMongoCollectionSpecification extends Specification {
 
         ReadOperation<T> getReadOperation() {
             readOperation
+        }
+
+        ReadPreference getReadPreference() {
+            return readPreference
         }
 
         WriteOperation<T> getWriteOperation() {

@@ -18,6 +18,7 @@ package com.mongodb.connection
 
 import category.Async
 import category.Slow
+import com.mongodb.CursorFlag
 import com.mongodb.MongoException
 import com.mongodb.MongoInternalException
 import com.mongodb.MongoNamespace
@@ -25,10 +26,9 @@ import com.mongodb.MongoSocketClosedException
 import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.async.SingleResultFuture
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.event.ConnectionListener
-import com.mongodb.operation.QueryFlag
+import com.mongodb.async.SingleResultFuture
 import com.mongodb.protocol.message.CommandMessage
 import com.mongodb.protocol.message.MessageSettings
 import org.bson.BsonBinaryWriter
@@ -716,7 +716,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def isMaster() {
             def command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME).getFullName(),
                                              new BsonDocument('ismaster', new BsonInt32(1)),
-                                             EnumSet.noneOf(QueryFlag),
+                                             EnumSet.noneOf(CursorFlag),
                                              MessageSettings.builder().build());
             OutputBuffer buffer = new BasicOutputBuffer();
             command.encode(buffer);

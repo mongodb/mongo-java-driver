@@ -17,12 +17,12 @@
 package com.mongodb.async.rx.client;
 
 import com.mongodb.Block;
+import com.mongodb.CursorFlag;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.async.client.MongoCollectionOptions;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.operation.QueryFlag;
+import com.mongodb.async.client.MongoCollectionOptions;
 import org.bson.codecs.Codec;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
@@ -111,7 +111,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoView<T> cursorFlags(final EnumSet<QueryFlag> flags) {
+        public MongoView<T> cursorFlags(final EnumSet<CursorFlag> flags) {
             wrappedView.cursorFlags(flags);
             return this;
         }

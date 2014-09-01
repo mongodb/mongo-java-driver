@@ -16,8 +16,10 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.CursorFlag;
 import org.mongodb.Document;
 
+import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -29,11 +31,12 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual manual/tutorial/query-documents/ Find
  */
 public final class FindModel implements ExplainableModel {
-    private final Object filter;
+    private final Object criteria;
     private Integer batchSize;
     private Integer limit;
     private Object modifiers;
     private Object projection;
+    private EnumSet<CursorFlag> cursorFlags = EnumSet.noneOf(CursorFlag.class);
     private Long maxTimeMS;
     private Integer skip;
     private Object sort;
@@ -41,29 +44,29 @@ public final class FindModel implements ExplainableModel {
     /**
      * Construct a new instance.
      *
-     * @param filter a document describing the query filter, which may be null. This can be of any type for which a
+     * @param criteria a document describing the query criteria, which may be null. This can be of any type for which a
      * {@code Codec} is registered
      */
-    public FindModel(final Object filter) {
-        this.filter = notNull("filter", filter);
+    public FindModel(final Object criteria) {
+        this.criteria = notNull("criteria", criteria);
     }
 
     /**
      * Construct a new instance.
      *
-     * @param filter a document describing the query filter, which may be null.
+     * @param criteria a document describing the query criteria, which may be null.
      */
-    public FindModel(final Document filter) {
-        this((Object) filter);
+    public FindModel(final Document criteria) {
+        this((Object) criteria);
     }
 
     /**
-     * Gets the query filter.
+     * Gets the query criteria.
      *
-     * @return the query filter
+     * @return the query criteria
      */
-    public Object getFilter() {
-        return filter;
+    public Object getCriteria() {
+        return criteria;
     }
 
     /**
@@ -107,12 +110,35 @@ public final class FindModel implements ExplainableModel {
     }
 
     /**
+     * Gets the cursor flags.
+     *
+     * @return the cursor flags
+     */
+    public EnumSet<CursorFlag> getCursorFlags() {
+        return cursorFlags;
+    }
+
+    /**
+     * Sets the cursor flags.
+     *
+     * @param cursorFlags the cursor flags
+     * @return this
+     */
+    public FindModel cursorFlags(final EnumSet<CursorFlag> cursorFlags) {
+        this.cursorFlags = cursorFlags;
+        return this;
+    }
+
+    /**
      * Gets the maximum execution time on the server for this operation.  The default is null, which places no limit on the execution time.
      *
      * @param timeUnit the time unit to return the result in
      * @return the maximum execution time in the given time unit
      */
     public Long getMaxTime(final TimeUnit timeUnit) {
+        if (maxTimeMS == null) {
+            return null;
+        }
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
     }

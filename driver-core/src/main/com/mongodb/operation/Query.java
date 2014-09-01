@@ -18,6 +18,7 @@
 package com.mongodb.operation;
 
 
+import com.mongodb.CursorFlag;
 import com.mongodb.ReadPreference;
 
 import java.util.EnumSet;
@@ -33,7 +34,7 @@ public abstract class Query {
     private int skip;
     private int limit;
     private QueryOptions options = new QueryOptions();
-    private EnumSet<QueryFlag> flags = EnumSet.noneOf(QueryFlag.class);
+    private EnumSet<CursorFlag> flags = EnumSet.noneOf(CursorFlag.class);
 
     /**
      * Creates a new Query with the default settings.
@@ -97,12 +98,12 @@ public abstract class Query {
      * @return {@code this} so calls can be chained
      * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
-    public Query addFlags(final EnumSet<QueryFlag> flags) {
+    public Query addFlags(final EnumSet<CursorFlag> flags) {
         if (flags == null) {
             throw new IllegalArgumentException();
         }
-        if (flags.contains(QueryFlag.Tailable)) {
-            flags.add(QueryFlag.AwaitData);
+        if (flags.contains(CursorFlag.Tailable)) {
+            flags.add(CursorFlag.AWAIT_DATA);
         }
         this.flags.addAll(flags);
         return this;
@@ -115,7 +116,7 @@ public abstract class Query {
      * @return {@code this} so calls can be chained
      * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
-    public Query flags(final EnumSet<QueryFlag> flags) {
+    public Query flags(final EnumSet<CursorFlag> flags) {
         if (flags == null) {
             throw new IllegalArgumentException();
         }
@@ -153,6 +154,7 @@ public abstract class Query {
         return this;
     }
 
+
     /**
      * Gets the flags that have been set on this query.
      *
@@ -160,10 +162,10 @@ public abstract class Query {
      * @return a set of all the OP_QUERY query options for this query.
      * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
      */
-    public EnumSet<QueryFlag> getFlags(final ReadPreference readPreference) {
+    public EnumSet<CursorFlag> getFlags(final ReadPreference readPreference) {
         if (readPreference.isSlaveOk()) {
-            EnumSet<QueryFlag> retVal = EnumSet.copyOf(flags);
-            retVal.add(QueryFlag.SlaveOk);
+            EnumSet<CursorFlag> retVal = EnumSet.copyOf(flags);
+            retVal.add(CursorFlag.SLAVE_OK);
             return retVal;
         } else {
             return flags;

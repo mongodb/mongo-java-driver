@@ -16,8 +16,10 @@
 
 package com.mongodb.protocol;
 
+import com.mongodb.CursorFlag;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.ByteBufferOutputBuffer;
 import com.mongodb.connection.Connection;
@@ -25,8 +27,6 @@ import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.operation.QueryFlag;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.protocol.message.QueryMessage;
 import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.BsonDocument;
@@ -44,7 +44,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
 
     public static final Logger LOGGER = Loggers.getLogger("protocol.query");
 
-    private final EnumSet<QueryFlag> queryFlags;
+    private final EnumSet<CursorFlag> cursorFlags;
     private final int skip;
     private final int numberToReturn;
     private final BsonDocument queryDocument;
@@ -52,11 +52,11 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     private final Decoder<T> resultDecoder;
     private final MongoNamespace namespace;
 
-    public QueryProtocol(final MongoNamespace namespace, final EnumSet<QueryFlag> queryFlags, final int skip,
+    public QueryProtocol(final MongoNamespace namespace, final EnumSet<CursorFlag> cursorFlags, final int skip,
                          final int numberToReturn, final BsonDocument queryDocument,
                          final BsonDocument fields, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
-        this.queryFlags = queryFlags;
+        this.cursorFlags = cursorFlags;
         this.skip = skip;
         this.numberToReturn = numberToReturn;
         this.queryDocument = queryDocument;
@@ -94,7 +94,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     private QueryMessage createQueryMessage(final ServerDescription serverDescription) {
-        return new QueryMessage(namespace.getFullName(), queryFlags, skip, numberToReturn, queryDocument, fields,
+        return new QueryMessage(namespace.getFullName(), cursorFlags, skip, numberToReturn, queryDocument, fields,
                                 getMessageSettings(serverDescription));
     }
 

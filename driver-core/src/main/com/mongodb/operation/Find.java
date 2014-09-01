@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.CursorFlag;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
@@ -109,7 +110,7 @@ public class Find extends Query {
     }
 
     @Override
-    public Find addFlags(final EnumSet<QueryFlag> flags) {
+    public Find addFlags(final EnumSet<CursorFlag> flags) {
         super.addFlags(flags);
         return this;
     }

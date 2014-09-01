@@ -40,7 +40,6 @@ import com.mongodb.operation.InsertRequest;
 import com.mongodb.operation.MapReduce;
 import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
-import com.mongodb.operation.QueryFlag;
 import com.mongodb.operation.QueryOperation;
 import com.mongodb.operation.QueryOptions;
 import com.mongodb.operation.ReadOperation;
@@ -192,7 +191,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoView<T> cursorFlags(final  EnumSet<QueryFlag> flags) {
+        public MongoView<T> cursorFlags(final  EnumSet<CursorFlag> flags) {
             findOp.addFlags(flags);
             return this;
         }

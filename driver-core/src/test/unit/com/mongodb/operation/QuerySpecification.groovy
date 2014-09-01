@@ -16,17 +16,18 @@
 
 package com.mongodb.operation
 
+import com.mongodb.CursorFlag
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import spock.lang.Specification
 
+import static CursorFlag.AWAIT_DATA
+import static CursorFlag.EXHAUST
+import static CursorFlag.SLAVE_OK
+import static CursorFlag.Tailable
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.operation.QueryFlag.AwaitData
-import static com.mongodb.operation.QueryFlag.Exhaust
-import static com.mongodb.operation.QueryFlag.SlaveOk
-import static com.mongodb.operation.QueryFlag.Tailable
 
 class QuerySpecification extends Specification {
     def 'should return #numberToReturn as numberToReturn for #query'() {
@@ -51,12 +52,12 @@ class QuerySpecification extends Specification {
 
         where:
         query                                                                         | flags
-        new Find()                                                                    | EnumSet.noneOf(QueryFlag)
-        new Find().addFlags(EnumSet.of(Tailable))                                     | EnumSet.of(Tailable, AwaitData)
-        new Find().addFlags(EnumSet.of(SlaveOk))                                      | EnumSet.of(SlaveOk)
-        new Find().addFlags(EnumSet.of(Tailable, SlaveOk))                            | EnumSet.of(Tailable, AwaitData, SlaveOk)
-        new Find().flags(EnumSet.of(Exhaust))                                         | EnumSet.of(Exhaust)
-        new Find().addFlags(EnumSet.of(Tailable, SlaveOk)).flags(EnumSet.of(Exhaust)) | EnumSet.of(Exhaust)
+        new Find()                                                                    | EnumSet.noneOf(CursorFlag)
+        new Find().addFlags(EnumSet.of(Tailable))                                     | EnumSet.of(Tailable, AWAIT_DATA)
+        new Find().addFlags(EnumSet.of(SLAVE_OK))                                      | EnumSet.of(SLAVE_OK)
+        new Find().addFlags(EnumSet.of(Tailable, SLAVE_OK))                            | EnumSet.of(Tailable, AWAIT_DATA, SLAVE_OK)
+        new Find().flags(EnumSet.of(EXHAUST))                                         | EnumSet.of(EXHAUST)
+        new Find().addFlags(EnumSet.of(Tailable, SLAVE_OK)).flags(EnumSet.of(EXHAUST)) | EnumSet.of(EXHAUST)
     }
 
     def 'test flags with secondary'() {
@@ -65,9 +66,9 @@ class QuerySpecification extends Specification {
 
         where:
         query                                    | flags
-        new Find()                               | EnumSet.of(SlaveOk)
-        new Find().addFlags(EnumSet.of(SlaveOk)) | EnumSet.of(SlaveOk)
-        new Find().flags(EnumSet.of(Exhaust))    | EnumSet.of(Exhaust, SlaveOk)
+        new Find()                               | EnumSet.of(SLAVE_OK)
+        new Find().addFlags(EnumSet.of(SLAVE_OK)) | EnumSet.of(SLAVE_OK)
+        new Find().flags(EnumSet.of(EXHAUST))    | EnumSet.of(EXHAUST, SLAVE_OK)
     }
 
     def 'should throw an exception if options given are null'() {
@@ -84,7 +85,7 @@ class QuerySpecification extends Specification {
 
     def 'testCopyConstructor'() {
         given:
-        EnumSet<QueryFlag> flags = EnumSet.allOf(QueryFlag)
+        EnumSet<CursorFlag> flags = EnumSet.allOf(CursorFlag)
         BsonDocument hint = new BsonDocument('a', new BsonInt32(1))
         int batchSize = 2
         int limit = 5

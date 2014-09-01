@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Slow
+import com.mongodb.CursorFlag
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerCursor
@@ -224,7 +225,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
 
         collectionHelper.insertDocuments(new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2,
-                                      EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData))
+                                      EnumSet.of(CursorFlag.Tailable, CursorFlag.AWAIT_DATA))
 
         when:
         cursor = new MongoQueryCursor<Document>(getNamespace(),
@@ -267,7 +268,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
         collectionHelper.insertDocuments(new Document('_id', 1))
 
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2,
-                                      EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData))
+                                      EnumSet.of(CursorFlag.Tailable, CursorFlag.AWAIT_DATA))
 
         when:
         cursor = new MongoQueryCursor<Document>(getNamespace(),
@@ -456,10 +457,10 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
     }
 
     private QueryResult<Document> executeQuery(int numToReturn) {
-        executeQuery(new BsonDocument(), numToReturn, EnumSet.noneOf(QueryFlag))
+        executeQuery(new BsonDocument(), numToReturn, EnumSet.noneOf(CursorFlag))
     }
 
-    private QueryResult<Document> executeQuery(BsonDocument query, int numberToReturn, EnumSet<QueryFlag> queryFlag) {
+    private QueryResult<Document> executeQuery(BsonDocument query, int numberToReturn, EnumSet<CursorFlag> queryFlag) {
         def connection = connectionSource.getConnection()
         try {
             new QueryProtocol<Document>(getNamespace(), queryFlag, 0, numberToReturn, query, null, new DocumentCodec())

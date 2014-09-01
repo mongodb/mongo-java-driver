@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.CursorFlag;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncReadBinding;
@@ -74,7 +75,7 @@ public class GetIndexesOperation<T> implements AsyncReadOperation<List<T>>, Read
     }
 
     private QueryProtocol<T> getProtocol() {
-        return new QueryProtocol<T>(getIndexNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, asQueryDocument(), null, decoder);
+        return new QueryProtocol<T>(getIndexNamespace(), EnumSet.noneOf(CursorFlag.class), 0, 0, asQueryDocument(), null, decoder);
     }
 
 }
