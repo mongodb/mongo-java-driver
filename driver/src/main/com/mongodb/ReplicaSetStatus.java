@@ -24,6 +24,9 @@ import com.mongodb.connection.ServerDescription;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Keeps replica set status.
+ */
 public class ReplicaSetStatus {
 
     private final Cluster cluster;
@@ -32,12 +35,19 @@ public class ReplicaSetStatus {
         this.cluster = cluster;
     }
 
+    /**
+     * Get the name of the Replica Set.
+     *
+     * @return the name of the replica set.
+     */
     public String getName() {
         List<ServerDescription> any = getClusterDescription().getAnyPrimaryOrSecondary();
         return any.isEmpty() ? null : any.get(0).getSetName();
     }
 
     /**
+     * Gets the ServerAddress of the master server in this replica set.
+     *
      * @return master or null if don't have one
      * @throws MongoException
      */
@@ -47,9 +57,10 @@ public class ReplicaSetStatus {
     }
 
     /**
+     * Checks to see if a given server is the primary server in this replica set.
+     *
      * @param serverAddress the server to compare
-     * @return indication if the ServerAddress is the current Master/Primary
-     * @throws MongoException
+     * @return true if the given ServerAddress is the current Master/Primary
      */
     public boolean isMaster(final ServerAddress serverAddress) {
         return getMaster().equals(serverAddress);

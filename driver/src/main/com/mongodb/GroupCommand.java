@@ -26,16 +26,26 @@ import org.bson.BsonJavaScript;
  * @mongodb.driver.manual reference/command/group/ Group
  */
 public class GroupCommand {
-    private final String input;
+    private final String collectionName;
     private final DBObject keys;
     private final DBObject condition;
     private final DBObject initial;
     private final String reduce;
     private final String finalize;
 
-    public GroupCommand(final DBCollection input, final DBObject keys, final DBObject condition,
+    /**
+     * Creates a new group command.
+     *
+     * @param collection the collection from which to perform the group by operation.
+     * @param keys       the field or fields to group.
+     * @param condition  optional - a filter to determine which documents in the collection to process.
+     * @param initial    the initial state of the aggregation result document.
+     * @param reduce     a JavaScript aggregation function that operates on the documents during the grouping operation.
+     * @param finalize   optional - a JavaScript function that runs each item in the result set before group returns the final value.
+     */
+    public GroupCommand(final DBCollection collection, final DBObject keys, final DBObject condition,
                         final DBObject initial, final String reduce, final String finalize) {
-        this.input = input.getName();
+        this.collectionName = collection.getName();
         this.keys = keys;
         this.condition = condition;
         this.initial = initial;
@@ -43,11 +53,16 @@ public class GroupCommand {
         this.finalize = finalize;
     }
 
+    /**
+     * Turns this group command into the DBObject format of the command.
+     *
+     * @return a DBObject containing the group command as a MongoDB document
+     */
     public DBObject toDBObject() {
-        DBObject args = new BasicDBObject("ns", input).append("key", keys)
-                                                      .append("cond", condition)
-                                                      .append("$reduce", reduce)
-                                                      .append("initial", initial);
+        DBObject args = new BasicDBObject("ns", collectionName).append("key", keys)
+                                                               .append("cond", condition)
+                                                               .append("$reduce", reduce)
+                                                               .append("initial", initial);
         if (finalize != null) {
             args.put("finalize", finalize);
         }
