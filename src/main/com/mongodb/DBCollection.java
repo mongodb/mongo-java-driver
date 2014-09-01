@@ -1219,30 +1219,19 @@ public abstract class DBCollection {
         return getCount(query, fields, limit, skip, readPrefs, 0, MILLISECONDS);
     }
 
-    /**
-     * Get the count of documents in collection that would match a criteria.
-     *
-     * @param query       specifies the selection criteria
-     * @param fields      this is ignored
-     * @param limit       limit the count to this value
-     * @param skip        number of documents to skip
-     * @param readPrefs   {@link ReadPreference} to be used for this operation
-     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it
-     * @param maxTimeUnit the unit that maxTime is specified in
-     * @return the number of documents that matches selection criteria
-     * @throws MongoException
-     * @mongodb.driver.manual reference/command/count/ Count
-     * @since 2.12
-     */
     long getCount(final DBObject query, final DBObject fields, final long limit, final long skip,
                   final ReadPreference readPrefs, final long maxTime, final TimeUnit maxTimeUnit) {
+        return getCount(query, fields, limit, skip, readPrefs, maxTime, maxTimeUnit, null);
+    }
+
+    long getCount(final DBObject query, final DBObject fields, final long limit, final long skip,
+        final ReadPreference readPrefs, final long maxTime, final TimeUnit maxTimeUnit, final Object hint) {
         BasicDBObject cmd = new BasicDBObject();
         cmd.put("count", getName());
         cmd.put("query", query);
         if (fields != null) {
             cmd.put("fields", fields);
         }
-
         if ( limit > 0 )
             cmd.put( "limit" , limit );
         if ( skip > 0 )
@@ -1250,8 +1239,11 @@ public abstract class DBCollection {
         if (maxTime > 0) {
             cmd.put("maxTimeMS", MILLISECONDS.convert(maxTime, maxTimeUnit));
         }
+        if (hint != null) {
+            cmd.put("hint", hint);
+        }
 
-        CommandResult res = _db.command(cmd,getOptions(),readPrefs);
+        CommandResult res = _db.command(cmd, getOptions(), readPrefs);
         if ( ! res.ok() ){
             String errmsg = res.getErrorMessage();
 

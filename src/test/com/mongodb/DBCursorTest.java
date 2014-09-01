@@ -90,18 +90,70 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testCount() {
-        try {
-            DBCollection c = collection;
+        DBCollection c = collection;
 
-            assertEquals(c.find().count(), 0);
+        assertEquals(c.find().count(), 0);
 
-            BasicDBObject obj = new BasicDBObject();
-            obj.put("x", "foo");
-            c.insert(obj);
+        c.insert(new BasicDBObject("i", 1));
+        c.insert(new BasicDBObject("i", 2));
 
-            assertEquals(c.find().count(), 1);
-        } catch (MongoException e) {
-            assertTrue(false);
+        assertEquals(2, c.find().count());
+
+        assertEquals(1, c.find(new BasicDBObject("i", 1)).count());
+    }
+
+    @Test
+    public void testCountAndHint() {
+        DBCollection c = collection;
+
+        c.insert(new BasicDBObject("i", 1));
+        c.insert(new BasicDBObject("i", 2));
+
+        assertEquals(2, c.find().count());
+
+        c.createIndex(new BasicDBObject("i", 1));
+
+        assertEquals(1, c.find(new BasicDBObject("i", 1)).hint( "_id_" ).count());
+        assertEquals(2, c.find().hint( "_id_" ).count());
+
+        if (serverIsAtLeastVersion(2.6)) {
+            try {
+                c.find(new BasicDBObject("i", 1)).hint( "BAD HINT" ).count();
+                fail("Show have thrown");
+            } catch (MongoException e) {
+                // good
+            }
+        } else {
+            assertEquals(1, c.find(new BasicDBObject("i", 1)).hint( "BAD HINT" ).count());
+        }
+
+        c.createIndex(new BasicDBObject("x", 1), new BasicDBObject("sparse", true));
+
+        if (serverIsAtLeastVersion(2.6)) {
+            assertEquals(0, c.find(new BasicDBObject("i", 1)).hint( "x_1" ).count());
+        } else {
+            assertEquals(1, c.find(new BasicDBObject("i", 1)).hint( "x_1" ).count());
+        }
+        assertEquals( 2, collection.find().hint( "x_1" ).count());
+    }
+
+    @Test
+    public void testCountAndHintViaAddSpecial() {
+        DBCollection c = collection;
+
+        c.insert(new BasicDBObject("i", 1));
+        c.insert(new BasicDBObject("i", 2));
+
+        assertEquals(2, c.find().count());
+
+        c.createIndex(new BasicDBObject("i", 1));
+        c.createIndex(new BasicDBObject("x", 1), new BasicDBObject("sparse", true));
+
+        assertEquals(1, c.find(new BasicDBObject("i", 1)).addSpecial("$hint", "_id_").count());
+        if (serverIsAtLeastVersion(2.6)) {
+            assertEquals(0, c.find(new BasicDBObject("i", 1)).addSpecial("$hint", "x_1").count());
+        } else {
+            assertEquals(1, c.find(new BasicDBObject("i", 1)).addSpecial("$hint", "x_1").count());
         }
     }
 

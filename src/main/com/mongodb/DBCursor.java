@@ -665,7 +665,12 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @throws MongoException
      */
     public int count() {
-        return (int)_collection.getCount(this._query, this._keysWanted, 0, 0, getReadPreference(), _maxTimeMS, MILLISECONDS);
+        Object hint = _hint != null ? _hint : _hintDBObj;
+        if (hint == null && _specialFields != null && _specialFields.containsField("$hint")) {
+            hint = _specialFields.get("$hint");
+        }
+        return (int) _collection.getCount(this._query, this._keysWanted, 0, 0, getReadPreference(), _maxTimeMS,
+                                         MILLISECONDS, hint);
     }
 
     /**
