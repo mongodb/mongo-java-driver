@@ -36,6 +36,8 @@ import static com.mongodb.connection.ServerType.UNKNOWN;
 
 /**
  * Immutable snapshot state of a server.
+ *
+ * @since 3.0
  */
 @Immutable
 public class ServerDescription {
@@ -69,6 +71,18 @@ public class ServerDescription {
     private final int minWireVersion;
     private final int maxWireVersion;
 
+    /**
+     * Gets a Builder for creating a new ServerDescription instance.
+     *
+     * @return a new Builder for ServerDescription.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * A builder for creating ServerDescription.
+     */
     public static class Builder {
         private ServerAddress address;
         private ServerType type = UNKNOWN;
@@ -88,97 +102,209 @@ public class ServerDescription {
         private int minWireVersion = 0;
         private int maxWireVersion = 0;
 
-        // CHECKSTYLE:OFF
+        /**
+         * Sets the address of the server.
+         *
+         * @param address the address of the server
+         * @return this
+         */
         public Builder address(final ServerAddress address) {
             this.address = address;
             return this;
         }
 
+        /**
+         * Sets the type of the server, for example whether it's a standalone or in a replica set.
+         *
+         * @param type the Server type
+         * @return this
+         */
         public Builder type(final ServerType type) {
             this.type = notNull("type", type);
             return this;
         }
 
+        /**
+         * Sets all members of the replica set that are neither hidden, passive, nor arbiters.
+         *
+         * @param hosts A Set of strings in the format of "[hostname]:[port]" that contains all members of the replica set that are neither
+         *              hidden, passive, nor arbiters.
+         * @return this
+         */
         public Builder hosts(final Set<String> hosts) {
             this.hosts = hosts == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(new HashSet<String>(hosts));
             return this;
         }
 
+        /**
+         * Sets the passive members of the replica set.
+         *
+         * @param passives A Set of strings in the format of "[hostname]:[port]" listing all members of the replica set which have a
+         *                 priority of 0.
+         * @return this
+         */
         public Builder passives(final Set<String> passives) {
             this.passives = passives == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(new HashSet<String>(passives));
             return this;
         }
 
+        /**
+         * Sets the arbiters in the replica set
+         *
+         * @param arbiters A Set of strings in the format of "[hostname]:[port]" containing all members of the replica set that are
+         *                 arbiters.
+         * @return this
+         */
         public Builder arbiters(final Set<String> arbiters) {
             this.arbiters = arbiters == null ? Collections.<String>emptySet() : Collections.unmodifiableSet(new HashSet<String>(arbiters));
             return this;
         }
 
+        /**
+         * Sets the address of the current primary in the replica set
+         *
+         * @param primary A string in the format of "[hostname]:[port]" listing the current primary member of the replica set.
+         * @return this
+         */
         public Builder primary(final String primary) {
             this.primary = primary;
             return this;
         }
 
+        /**
+         * The maximum permitted size of a BSON object in bytes for this mongod process. Defaults to 16MB.
+         *
+         * @param maxBSONObjectSize the maximum size a document can be
+         * @return this
+         */
         public Builder maxDocumentSize(final int maxBSONObjectSize) {
             this.maxDocumentSize = maxBSONObjectSize;
             return this;
         }
 
+        /**
+         * The maximum permitted size of a BSON wire protocol message. Defaults to 32MB
+         *
+         * @param maxMessageSize the maximum size of a message in bytes.
+         * @return this
+         * @mongodb.server.release 2.4
+         */
         public Builder maxMessageSize(final int maxMessageSize) {
             this.maxMessageSize = maxMessageSize;
             return this;
         }
 
+        /**
+         * Sets the maximum size of the write batch.
+         *
+         * @param maxWriteBatchSize the maximum size of a batch write
+         * @return this
+         */
         public Builder maxWriteBatchSize(final int maxWriteBatchSize) {
             this.maxWriteBatchSize = maxWriteBatchSize;
             return this;
         }
 
+        /**
+         * A set of any tags assigned to this member.
+         *
+         * @param tagSet a TagSet with all the tags for this server.
+         * @return this
+         */
         public Builder tagSet(final TagSet tagSet) {
             this.tagSet = tagSet == null ? new TagSet() : tagSet;
             return this;
         }
 
+        /**
+         * Set the time it took to make the round trip for requesting this information from the server
+         *
+         * @param roundTripTime the time taken
+         * @param timeUnit      the units of the time taken
+         * @return this
+         */
         public Builder roundTripTime(final long roundTripTime, final TimeUnit timeUnit) {
             this.roundTripTimeNanos = timeUnit.toNanos(roundTripTime);
             return this;
         }
 
+        /**
+         * Sets the name of the replica set
+         *
+         * @param setName the name of the replica set
+         * @return this
+         */
         public Builder setName(final String setName) {
             this.setName = setName;
             return this;
         }
 
+        /**
+         * The isOK() result from requesting this information from MongoDB
+         *
+         * @param ok true if the request executed correctly
+         * @return this
+         */
         public Builder ok(final boolean ok) {
             this.ok = ok;
             return this;
         }
 
+        /**
+         * The current state of the connection to the server.
+         *
+         * @param state ServerConnectionState representing whether the server has been successfully connected to
+         * @return this
+         */
         public Builder state(final ServerConnectionState state) {
             this.state = state;
             return this;
         }
 
+        /**
+         * Sets the server version
+         *
+         * @param version a ServerVersion representing which version of MongoDB is running on this server
+         * @return this
+         */
         public Builder version(final ServerVersion version) {
             notNull("version", version);
             this.version = version;
             return this;
         }
 
+        /**
+         * The earliest version of the wire protocol that this MongoDB server is capable of using to communicate with clients.
+         *
+         * @param minWireVersion the minimum protocol version supported by this server
+         * @return this
+         * @mongodb.server.release 2.6
+         */
         public Builder minWireVersion(final int minWireVersion) {
             this.minWireVersion = minWireVersion;
             return this;
         }
 
+        /**
+         * The latest version of the wire protocol that this MongoDB server is capable of using to communicate with clients.
+         *
+         * @param maxWireVersion the maximum protocol version supported by this server
+         * @return this
+         * @mongodb.server.release 2.6
+         */
         public Builder maxWireVersion(final int maxWireVersion) {
             this.maxWireVersion = maxWireVersion;
             return this;
         }
 
+        /**
+         * Create a new ServerDescription from the settings in this builder.
+         *
+         * @return a new server description
+         */
         public ServerDescription build() {
             return new ServerDescription(this);
         }
-        // CHECKSTYLE:ON
     }
 
     /**
@@ -203,90 +329,196 @@ public class ServerDescription {
         return true;
     }
 
+    /**
+     * Get the default maximum document size.
+     *
+     * @return the default maximum document size
+     */
     public static int getDefaultMaxDocumentSize() {
         return DEFAULT_MAX_DOCUMENT_SIZE;
     }
 
+    /**
+     * Get the default maximum size for documents.
+     *
+     * @return the default maximum document size
+     */
     public static int getDefaultMaxMessageSize() {
         return DEFAULT_MAX_MESSAGE_SIZE;
     }
 
+    /**
+     * Get the default minimum wire version
+     *
+     * @return the default minimum wire version
+     */
     public static int getDefaultMinWireVersion() {
         return 0;
     }
 
+    /**
+     * Get the default maximum wire version
+     *
+     * @return the default maximum wire version
+     */
     public static int getDefaultMaxWireVersion() {
         return 0;
     }
+
+    /**
+     * Get the default maximum size for write batches
+     *
+     * @return the default maximum batch write size
+     */
 
     public static int getDefaultMaxWriteBatchSize() {
         return DEFAULT_MAX_WRITE_BATCH_SIZE;
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
+    /**
+     * Gets the address of this server
+     *
+     * @return a ServerAddress containing the details of the address of this server.
+     */
     public ServerAddress getAddress() {
         return address;
     }
 
+    /**
+     * Gets whether this server is a replica set member.
+     *
+     * @return true if this server is part of a replica set
+     */
     public boolean isReplicaSetMember() {
         return type.getClusterType() == ClusterType.REPLICA_SET;
     }
 
+    /**
+     * Gets whether this is a server that is the entry point to a sharded instance of MongoDB.
+     *
+     * @return true if this server is a mongos instance
+     */
     public boolean isShardRouter() {
         return type == SHARD_ROUTER;
     }
 
+    /**
+     * Gets whether this is part of a replica set/sharded system, or is a single server.
+     *
+     * @return true if this is a single server
+     */
     public boolean isStandAlone() {
         return type == STANDALONE;
     }
 
+    /**
+     * Returns whether this can be treated as a primary server.
+     *
+     * @return true if this server is the primary in a replica set, is a mongos, or is a single standalone server
+     */
     public boolean isPrimary() {
         return ok && (type == REPLICA_SET_PRIMARY || type == SHARD_ROUTER || type == STANDALONE);
     }
 
+    /**
+     * Returns whether this can be treated as a secondary server.
+     *
+     * @return true if this server is a secondary in a replica set, is a mongos, or is a single standalone server
+     */
     public boolean isSecondary() {
         return ok && (type == REPLICA_SET_SECONDARY || type == SHARD_ROUTER || type == STANDALONE);
     }
 
+    /**
+     * Get a Set of strings in the format of "[hostname]:[port]" that contains all members of the replica set that are neither hidden,
+     * passive, nor arbiters.
+     *
+     * @return all members of the replica set that are neither hidden, passive, nor arbiters.
+     */
     public Set<String> getHosts() {
         return hosts;
     }
 
+    /**
+     * Gets the passive members of the replica set.
+     *
+     * @return A set of strings in the format of "[hostname]:[port]" listing all members of the replica set which have a priority of 0.
+     */
     public Set<String> getPassives() {
         return passives;
     }
 
+    /**
+     * Gets the arbiters in the replica set
+     *
+     * @return A Set of strings in the format of "[hostname]:[port]" containing all members of the replica set that are arbiters.
+     */
     public Set<String> getArbiters() {
         return arbiters;
     }
 
+    /**
+     * Gets the address of the current primary in the replica set
+     *
+     * @return A string in the format of "[hostname]:[port]" listing the current primary member of the replica set.
+     */
     public String getPrimary() {
         return primary;
     }
 
+    /**
+     * The maximum permitted size of a BSON object in bytes for this mongod process. Defaults to 16MB.
+     *
+     * @return the maximum size a document can be
+     */
     public int getMaxDocumentSize() {
         return maxDocumentSize;
     }
 
+    /**
+     * The maximum permitted size of a BSON wire protocol message. Defaults to 32MB
+     *
+     * @return the maximum size of a message in bytes.
+     * @mongodb.server.release 2.4
+     */
     public int getMaxMessageSize() {
         return maxMessageSize;
     }
 
+    /**
+     * Sets the maximum size of the write batch.
+     *
+     * @return the maximum size of a batch write
+     */
     public int getMaxWriteBatchSize() {
         return maxWriteBatchSize;
     }
 
+    /**
+     * A set of all tags assigned to this member.
+     *
+     * @return a TagSet with all the tags for this server.
+     */
     public TagSet getTagSet() {
         return tagSet;
     }
 
+    /**
+     * The earliest version of the wire protocol that this MongoDB server is capable of using to communicate with clients.
+     *
+     * @return the minimum protocol version supported by this server
+     * @mongodb.server.release 2.6
+     */
     public int getMinWireVersion() {
         return minWireVersion;
     }
 
+    /**
+     * The latest version of the wire protocol that this MongoDB server is capable of using to communicate with clients.
+     *
+     * @return the maximum protocol version supported by this server
+     * @mongodb.server.release 2.6
+     */
     public int getMaxWireVersion() {
         return maxWireVersion;
     }
@@ -311,31 +543,64 @@ public class ServerDescription {
         return tagSet.containsAll(desiredTags);
     }
 
-
+    /**
+     * Gets the name of the replica set
+     *
+     * @return the name of the replica set
+     */
     public String getSetName() {
         return setName;
     }
 
+    /**
+     * The isOK() result from requesting this information from the server
+     *
+     * @return true if the request executed correctly
+     */
     public boolean isOk() {
         return ok;
     }
 
+    /**
+     * Gets the current state of the connection to the server.
+     *
+     * @return ServerConnectionState representing whether the server has been successfully connected to
+     */
     public ServerConnectionState getState() {
         return state;
     }
 
+    /**
+     * Gets the type of the server, for example whether it's a standalone or in a replica set.
+     *
+     * @return the server type
+     */
     public ServerType getType() {
         return type;
     }
 
+    /**
+     * Gets the type of the cluster this server is in (for example, replica set).
+     * @return a ClusterType representing the type of the cluster this server is in
+     */
     public ClusterType getClusterType() {
         return type.getClusterType();
     }
 
+    /**
+     * Gets the server version
+     *
+     * @return a ServerVersion representing which version of MongoDB is running on this server
+     */
     public ServerVersion getVersion() {
         return version;
     }
 
+    /**
+     * Get the time it took to make the round trip for requesting this information from the server in nanoseconds.
+     *
+     * @return the time taken to request the information, in nano seconds
+     */
     public long getRoundTripTimeNanos() {
         return roundTripTimeNanos;
     }
@@ -459,6 +724,11 @@ public class ServerDescription {
                + '}';
     }
 
+    /**
+     * Returns a short, pretty description for this ServerDescription.
+     *
+     * @return a String containing the most pertinent information about this ServerDescription
+     */
     public String getShortDescription() {
         return "{"
                + "address=" + address

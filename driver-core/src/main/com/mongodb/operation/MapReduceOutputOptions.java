@@ -72,8 +72,10 @@ public class MapReduceOutputOptions {
     }
 
     /**
-     * Add a 'sharded' flag. <p/> If specified and you have enabled sharding on output database, the map-reduce operation will shard the
-     * output collection using the _id field as the shard key.
+     * <p>Add a 'sharded' flag.</p>
+     * 
+     * <p>If specified and you have enabled sharding on output database, the map-reduce operation will shard the
+     * output collection using the _id field as the shard key.</p>
      *
      * @return the same {@code MapReduceOutput} instance as used for the method invocation for chaining
      */
@@ -84,9 +86,11 @@ public class MapReduceOutputOptions {
 
 
     /**
-     * Add a 'nonAtomic' flag. Valid only together with {@code Action.MERGE} and {@code Action.REDUCE} <p/> If specified the post-processing
-     * step will prevent MongoDB from locking the database; however, other clients will be able to read intermediate states of the output
-     * collection. Otherwise the map reduce operation must lock the database during post-processing.
+     * <p>Add a 'nonAtomic' flag. Valid only together with {@code Action.MERGE} and {@code Action.REDUCE}</p>
+     * 
+     * <p>If specified the post-processing step will prevent MongoDB from locking the database; however, 
+     * other clients will be able to read intermediate states of the output collection. Otherwise the map reduce operation must lock the
+     * database during post-processing.</p>
      *
      * @return the same {@code MapReduceOutput} instance as used for the method invocation for chaining
      */

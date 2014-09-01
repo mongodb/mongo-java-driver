@@ -18,37 +18,73 @@ package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
 
+/**
+ * Settings for connecting to MongoDB via SSL.
+ *
+ * @since 3.0
+ */
 public class SSLSettings {
     private final boolean enabled;
 
+    /**
+     * Gets a Builder for creating a new SSLSettings instance.
+     *
+     * @return a new Builder for SSLSettings.
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * A builder for creating SSLSettings.
+     */
     public static class Builder {
         private boolean enabled;
 
+        /**
+         * Define whether SSL should be enabled.
+         *
+         * @param enabled should be true if SSL is to be enabled.
+         * @return this
+         */
         public Builder enabled(final boolean enabled) {
             this.enabled = enabled;
             return this;
         }
 
+        /**
+         * Take the settings from the given ConnectionString and set them in this builder.
+         *
+         * @param connectionString a URI with details on how to connect to MongoDB.
+         * @return this
+         */
         public Builder applyConnectionString(final ConnectionString connectionString) {
             if (connectionString.getSslEnabled() != null) {
                 this.enabled = connectionString.getSslEnabled();
             }
             return this;
         }
+
+        /**
+         * Create a new SSLSettings from the settings in this builder.
+         *
+         * @return a new SSL settings
+         */
         public SSLSettings build() {
             return new SSLSettings(this);
         }
     }
 
+    /**
+     * Returns whether SSL is enabled.
+     *
+     * @return true if SSL is enabled.
+     */
     public boolean isEnabled() {
         return enabled;
     }
 
-    public SSLSettings(final Builder builder) {
+    SSLSettings(final Builder builder) {
         enabled = builder.enabled;
     }
 
