@@ -79,7 +79,7 @@ public class ClusterDescription {
     }
 
     /**
-     * Gets whether this cluster is connecting to single servers or multiple servers.
+     * Gets whether this cluster is connecting to a single server or multiple servers.
      *
      * @return the ClusterConnectionMode for this cluster
      */

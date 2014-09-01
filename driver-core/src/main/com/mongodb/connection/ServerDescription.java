@@ -339,9 +339,9 @@ public class ServerDescription {
     }
 
     /**
-     * Get the default maximum size for documents.
+     * Get the maximum size of a wire protocol message
      *
-     * @return the default maximum document size
+     * @return the default maximum message size
      */
     public static int getDefaultMaxMessageSize() {
         return DEFAULT_MAX_MESSAGE_SIZE;
@@ -581,6 +581,7 @@ public class ServerDescription {
 
     /**
      * Gets the type of the cluster this server is in (for example, replica set).
+     *
      * @return a ClusterType representing the type of the cluster this server is in
      */
     public ClusterType getClusterType() {

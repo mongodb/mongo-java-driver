@@ -22,7 +22,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * Represents some sort of change in the system
  *
  * @param <T> the type of the value that changed.
- * @since 2.12
+ * @since 3.0
  */
 public class ChangeEvent<T> {
     private final T oldValue;

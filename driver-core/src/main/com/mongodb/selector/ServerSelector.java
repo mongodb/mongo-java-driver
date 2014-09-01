@@ -34,11 +34,10 @@ import java.util.List;
 @ThreadSafe
 public interface ServerSelector {
     /**
-     * Implementors of this method will return a list of ServerDescriptions that match the criteria of the implementing ServerSelector, from
-     * those available in the given ClusterDescription.
+     * Select a list of server descriptions from the given cluster description according to some criteria.
      *
      * @param clusterDescription the cluster of servers to select from
-     * @return a list of ServerDescriptions that meet the requirements of this ServerSelector
+     * @return a non-null list of ServerDescriptions that meet the requirements of this ServerSelector. This may be empty.
      */
     List<ServerDescription> select(ClusterDescription clusterDescription);
 }

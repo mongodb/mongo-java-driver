@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Represents a cluster of MongoDB servers.  Implementations can define the behaviour depending upon the type of cluster.
  *
- * @since 2.12
+ * @since 3.0
  */
 public interface Cluster {
 
@@ -48,7 +48,7 @@ public interface Cluster {
     Server selectServer(ServerSelector serverSelector, long maxWaitTime, TimeUnit timeUnit);
 
     /**
-     * Calls close on all the servers in this cluster.
+     * Closes connections to the servers in the cluster.  After this is called, this cluster instance can no longer be used.
      */
     void close();
 

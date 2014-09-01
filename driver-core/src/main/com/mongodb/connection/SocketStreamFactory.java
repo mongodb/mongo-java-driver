@@ -24,7 +24,7 @@ import javax.net.ssl.SSLSocketFactory;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * Factory for creating SocketStreams.
+ * Factory for creating instances of {@code SocketStream}.
  *
  * @since 3.0
  */

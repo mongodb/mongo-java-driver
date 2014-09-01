@@ -25,7 +25,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
- * All settings that relate to the pool of connections to MongoDB servers.
+ * All settings that relate to the pool of connections to a MongoDB server.
  *
  * @since 3.0
  */
@@ -90,8 +90,8 @@ public class ConnectionPoolSettings {
         }
 
         /**
-         * <p>This is the maximum number of threads that may be waiting for a connection to become available from the pool. All further
-         * threads will get an exception immediately.</p>
+         * <p>This is the maximum number of waiters for a connection to become available from the pool. All further threads will get an
+         * exception immediately.</p>
          *
          * <p>Default is 500.</p>
          *

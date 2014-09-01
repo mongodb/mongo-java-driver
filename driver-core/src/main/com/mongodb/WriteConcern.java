@@ -506,8 +506,7 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * A subclass of WriteConcern that creates a configuration that waits for the write operation to complete on a majority of the replica
-     * set members before returning.
+     * A write concern that blocks acknowledgement of a write operation until a majority of replica set members have applied it.
      */
     public static class Majority extends WriteConcern {
 
