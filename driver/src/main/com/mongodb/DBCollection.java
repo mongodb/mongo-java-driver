@@ -898,24 +898,15 @@ public class DBCollection {
         return getCount(query, projection, limit, skip, readPreference, 0, MILLISECONDS);
     }
 
-    /**
-     * Get the count of documents in collection that would match a criteria.
-     *
-     * @param query          specifies the selection criteria
-     * @param projection     this is ignored
-     * @param limit          limit the count to this value
-     * @param skip           number of documents to skip
-     * @param readPreference {@link ReadPreference} to be used for this operation
-     * @param maxTime        the maximum time that the server will allow this operation to execute before killing it
-     * @param maxTimeUnit    the unit that maxTime is specified in
-     * @return the number of documents that matches selection criteria
-     * @throws MongoException
-     * @mongodb.driver.manual reference/command/count/ Count
-     * @since 2.12
-     */
-    @SuppressWarnings("UnusedParameters")
     long getCount(final DBObject query, final DBObject projection, final long limit, final long skip,
                   final ReadPreference readPreference, final long maxTime, final TimeUnit maxTimeUnit) {
+        return getCount(query, projection, limit, skip, readPreference, maxTime, maxTimeUnit, null);
+    }
+
+    long getCount(final DBObject query, final DBObject projection, final long limit, final long skip,
+                  final ReadPreference readPreference, final long maxTime, final TimeUnit maxTimeUnit,
+                  final BsonValue hint) {
+
         if (limit > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("limit is too large: " + limit);
         }
@@ -925,6 +916,14 @@ public class DBCollection {
         }
 
         Find find = new Find(wrapAllowNull(query)).limit((int) limit).skip((int) skip).maxTime(maxTime, maxTimeUnit);
+
+        if (hint != null) {
+            if (hint instanceof BsonString) {
+                find.hintIndex(((BsonString) hint).getValue());
+            } else if (hint instanceof BsonDocument) {
+                find.hintIndex((BsonDocument) hint);
+            }
+        }
 
         return execute(new CountOperation(getNamespace(), find), readPreference);
     }

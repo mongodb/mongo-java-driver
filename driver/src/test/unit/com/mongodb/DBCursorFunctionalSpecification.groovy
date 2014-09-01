@@ -102,16 +102,16 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.find().hint('a_1').count() == 2
     }
 
-    @IgnoreIf( { serverVersionAtLeast(asList(2, 6, 0)) } )
-    def 'should ignore bad hints with mongod 2.6+'() {
+    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+    def 'should throw with bad hint with mongod 2.6+'() {
         when:
         collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').count()
         then:
         thrown(MongoException)
     }
 
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
-    def 'should throw with bad hint with mongod < 2.6'() {
+    @IgnoreIf( { serverVersionAtLeast(asList(2, 6, 0)) } )
+    def 'should ignore bad hints with mongod < 2.6'() {
         when:
         collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').count()
         then:

@@ -527,7 +527,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public int count() {
         return (int) collection.getCount(getQuery(), getKeysWanted(), 0, 0, getReadPreference(),
-                                         find.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
+                                         find.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS, find.getHint());
     }
 
     /**
