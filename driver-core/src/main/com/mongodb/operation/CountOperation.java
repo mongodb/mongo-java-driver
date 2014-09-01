@@ -73,6 +73,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         putIfNotNull(document, "query", find.getFilter());
         putIfNotZero(document, "limit", find.getLimit());
         putIfNotZero(document, "skip", find.getSkip());
+        putIfNotNull(document, "hint", find.getHint());
         putIfNotZero(document, "maxTimeMS", find.getOptions().getMaxTime(MILLISECONDS));
         return document;
     }

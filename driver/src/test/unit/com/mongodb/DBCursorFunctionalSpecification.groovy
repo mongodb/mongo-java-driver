@@ -16,7 +16,11 @@
 
 package com.mongodb
 
+import spock.lang.IgnoreIf
 import spock.lang.Subject
+
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static java.util.Arrays.asList
 
 class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
@@ -76,6 +80,64 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
     }
 
+    def 'should use provided hints for count'() {
+        when:
+        collection.insert(new BasicDBObject('a', 2))
+
+        then:
+        collection.find().count() == 2
+
+        when:
+        collection.createIndex(new BasicDBObject('a', 1));
+
+        then:
+        collection.find(new BasicDBObject('a', 1)).hint('_id_').count() == 1
+        collection.find().hint('_id_').count() == 2
+
+        when:
+        collection.createIndex(new BasicDBObject('x', 1), new BasicDBObject('sparse', true));
+
+        then:
+        collection.find(new BasicDBObject('a', 1)).hint('x_1').count() == serverVersionAtLeast(asList(2, 6, 0)) ? 0 : 1
+        collection.find().hint('a_1').count() == 2
+    }
+
+    @IgnoreIf( { serverVersionAtLeast(asList(2, 6, 0)) } )
+    def 'should ignore bad hints with mongod 2.6+'() {
+        when:
+        collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').count()
+        then:
+        thrown(MongoException)
+    }
+
+    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+    def 'should throw with bad hint with mongod < 2.6'() {
+        when:
+        collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').count()
+        then:
+        notThrown(MongoException)
+    }
+
+    def 'should be able to use addSpecial with count'() {
+        when:
+        collection.insert(new BasicDBObject('a', 2));
+
+        then:
+        collection.find().count() == 2
+
+        when:
+        collection.createIndex(new BasicDBObject('a', 1));
+        collection.createIndex(new BasicDBObject('x', 1), new BasicDBObject('sparse', true));
+
+        then:
+        collection.find(new BasicDBObject('a', 1)).addSpecial('$hint', '_id_').count() == 1
+
+        when:
+        def countWithHint = collection.find(new BasicDBObject('a', 1)).addSpecial('$hint', 'x_1').count()
+
+        then:
+        countWithHint == serverVersionAtLeast(asList(2, 6, 0)) ? 0 : 1
+    }
 
     def 'should be able to use addSpecial with $explain'() {
         given:
