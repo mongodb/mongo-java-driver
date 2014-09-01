@@ -19,10 +19,12 @@ package com.mongodb.management;
 import com.mongodb.management.jmx.JMXMBeanServer;
 
 /**
- * This class is NOT part of the public API.  It may change at any time without notification.
- * <p/>
- * This class is used to insulate the rest of the driver from the possibility that JMX is not available, as currently is the case on Android
- * VM
+ * <p>This class is NOT part of the public API.  It may change at any time without notification.</p>
+ *
+ * <p>This class is used to insulate the rest of the driver from the possibility that JMX is not available, as currently is the case on
+ * Android VM.</p>
+ *
+ * @since 2.9
  */
 public final class MBeanServerFactory {
     private MBeanServerFactory() {
@@ -39,6 +41,12 @@ public final class MBeanServerFactory {
         M_BEAN_SERVER = tmp;
     }
 
+    /**
+     * Gets the MBeanServer for registering or unregistering MBeans.  This returns a no-op server if JMX is not available (for example, in
+     * Android).
+     *
+     * @return the MBean server.
+     */
     public static MBeanServer getMBeanServer() {
         return M_BEAN_SERVER;
     }

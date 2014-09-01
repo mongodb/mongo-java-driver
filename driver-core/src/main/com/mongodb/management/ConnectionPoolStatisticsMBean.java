@@ -17,9 +17,11 @@
 package com.mongodb.management;
 
 /**
- * A standard MXBean interface for a Mongo connection pool, for use on Java 6 and above virtual machines.
- * <p/>
- * This interface is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
+ * <p>A standard MXBean interface for a Mongo connection pool, for use on Java 6 and above virtual machines.</p>
+ *
+ * <p>This interface is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.</p>
+ *
+ * @since 2.12
  */
 public interface ConnectionPoolStatisticsMBean {
 

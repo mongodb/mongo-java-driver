@@ -19,16 +19,17 @@ package com.mongodb.operation;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * Specifies the location of the result of the map-reduce operation. You can output to a collection, output to a collection with an action,
- * or output inline. You may output to a collection when performing map reduce operations on the primary members of the set; on secondary
- * members you may only use the <b>inline</b> output.
- * <p/>
- * This class defines all the options if the output is not inline.  For results that are returned inline, a MapReduceOutput is not
- * required.
- * <p/>
- * This class follows a builder pattern.
+ * <p>Specifies the location of the result of the map-reduce operation. You can output to a collection, output to a collection with an
+ * action, or output inline. You may output to a collection when performing map reduce operations on the primary members of the set; on
+ * secondary members you may only use the <b>inline</b> output.</p>
+ *
+ * <p>This class defines all the options if the output is not inline.  For results that are returned inline, a MapReduceOutput is not
+ * required.</p>
+ *
+ * <p>This class follows a builder pattern.</p>
  *
  * @mongodb.driver.manual reference/command/mapReduce/#out-options Out Options for Map-Reduce
+ * @since 3.0
  */
 public class MapReduceOutputOptions {
 
@@ -71,10 +72,8 @@ public class MapReduceOutputOptions {
     }
 
     /**
-     * Add a 'sharded' flag.
-     * <p/>
-     * If specified and you have enabled sharding on output database, the map-reduce operation will shard the output collection using the
-     * _id field as the shard key.
+     * Add a 'sharded' flag. <p/> If specified and you have enabled sharding on output database, the map-reduce operation will shard the
+     * output collection using the _id field as the shard key.
      *
      * @return the same {@code MapReduceOutput} instance as used for the method invocation for chaining
      */
@@ -85,10 +84,9 @@ public class MapReduceOutputOptions {
 
 
     /**
-     * Add a 'nonAtomic' flag. Valid only together with {@code Action.MERGE} and {@code Action.REDUCE}
-     * <p/>
-     * If specified the post-processing step will prevent MongoDB from locking the database; however, other clients will be able to read
-     * intermediate states of the output collection. Otherwise the map reduce operation must lock the database during post-processing.
+     * Add a 'nonAtomic' flag. Valid only together with {@code Action.MERGE} and {@code Action.REDUCE} <p/> If specified the post-processing
+     * step will prevent MongoDB from locking the database; however, other clients will be able to read intermediate states of the output
+     * collection. Otherwise the map reduce operation must lock the database during post-processing.
      *
      * @return the same {@code MapReduceOutput} instance as used for the method invocation for chaining
      */
@@ -141,7 +139,7 @@ public class MapReduceOutputOptions {
             return false;
         }
 
-        final MapReduceOutputOptions that = (MapReduceOutputOptions) o;
+        MapReduceOutputOptions that = (MapReduceOutputOptions) o;
 
         if (nonAtomic != that.nonAtomic) {
             return false;

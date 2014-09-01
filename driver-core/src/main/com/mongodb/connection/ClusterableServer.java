@@ -41,8 +41,8 @@ interface ClusterableServer extends Server {
 
     /**
      * Returns true if the server is closed, false otherwise.
-     * <p/>
-     * * @return whether the server is closed
+     *
+     * @return whether the server is closed
      */
     boolean isClosed();
 
