@@ -155,7 +155,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<T> one() {
             final SingleResultFuture<T> retVal = new SingleResultFuture<T>();
-            execute(new QueryOperation<T>(getNamespace(), find.batchSize(-1), getCodec()), readPreference)
+            execute(new QueryOperation<T, Document>(getNamespace(), find.batchSize(-1), getCodec()), readPreference)
             .register(new
                       SingleResultCallback<MongoAsyncCursor<T>>() {
                           @Override
@@ -246,7 +246,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<Void> forEach(final Block<? super T> block) {
             final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
-            execute(new QueryOperation<T>(getNamespace(), find, getCodec()), readPreference)
+            execute(new QueryOperation<T, Document>(getNamespace(), find, getCodec()), readPreference)
             .register(new
                       SingleResultCallback<MongoAsyncCursor<T>>() {
                           @Override

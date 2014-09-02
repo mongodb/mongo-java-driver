@@ -118,7 +118,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
 
         if (cursor == null) {
-            cursor = collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), find,
+            cursor = collection.execute(new QueryOperation<DBObject, DBObject>(collection.getNamespace(), find,
                                                                      resultDecoder), getReadPreference());
         }
 
@@ -397,7 +397,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             copy.batchSize(copy.getLimit() * -1);
             copy.limit(0);
         }
-        return collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), copy, collection.getObjectCodec()),
+        return collection.execute(new QueryOperation<DBObject, DBObject>(collection.getNamespace(), copy, collection.getObjectCodec()),
                                   getReadPreference())
                          .next();
     }

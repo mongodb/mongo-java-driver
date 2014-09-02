@@ -143,14 +143,14 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public MongoIterable<T> find(final FindModel model) {
-        return new OperationIterable<T>(new QueryOperation<T>(namespace, model, options.getCodecRegistry(), getCodec()),
+    public <F> MongoIterable<T> find(final FindModel<F> model) {
+        return new OperationIterable<T>(new QueryOperation<T, F>(namespace, model, options.getCodecRegistry(), getCodec()),
                                         options.getReadPreference());
     }
 
     @Override
-    public <D> MongoIterable<D> find(final FindModel model, Class<D> clazz) {
-        return new OperationIterable<D>(new QueryOperation<D>(namespace, model, options.getCodecRegistry(),
+    public <F, D> MongoIterable<D> find(final FindModel<F> model, Class<D> clazz) {
+        return new OperationIterable<D>(new QueryOperation<D, F>(namespace, model, options.getCodecRegistry(),
                                                               options.getCodecRegistry().get(clazz)),
                                         options.getReadPreference());
     }

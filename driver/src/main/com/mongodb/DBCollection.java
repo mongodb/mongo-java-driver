@@ -699,7 +699,7 @@ public class DBCollection {
                               .batchSize(-1)
                               .maxTime(maxTime, maxTimeUnit);
 
-        MongoCursor<DBObject> cursor = execute(new QueryOperation<DBObject>(getNamespace(), find, objectCodec),
+        MongoCursor<DBObject> cursor = execute(new QueryOperation<DBObject, DBObject>(getNamespace(), find, objectCodec),
                                                readPreference);
 
         return cursor.hasNext() ? cursor.next() : null;
