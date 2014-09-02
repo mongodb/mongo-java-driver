@@ -249,7 +249,8 @@ public class DB {
     }
 
     /**
-     * <p>Creates a collection with a given name and options. If the collection does not exist, a new collection is created.</p>
+     * <p>Creates a collection with a given name and options. If the collection already exists, 
+     * this throws a {@code CommandFailedException}.</p>
      * 
      * <p>Possible options:</p>
      * <ul> 

@@ -46,21 +46,6 @@ public class DBCollectionOldTest extends DatabaseTestCase {
         Assert.assertThat(collection.count(), is(2L));
     }
 
-    @Test
-    public void testCappedCollection() {
-        String collectionName = "testCapped";
-        int collectionSize = 1000;
-
-        DBCollection c = collection;
-        c.drop();
-
-        DBObject options = new BasicDBObject("capped", true);
-        options.put("size", collectionSize);
-        c = database.createCollection(collectionName, options);
-
-        assertEquals(true, c.isCapped());
-    }
-
     @Test(expected = DuplicateKeyException.class)
     public void testDuplicateKeyException() {
         DBCollection c = collection;

@@ -110,6 +110,15 @@ public class DBTest extends DatabaseTestCase {
         assertTrue(database.getCollection(collectionName).isCapped());
     }
 
+    @Test(expected = CommandFailureException.class)
+    public void shouldErrorIfCreatingACollectionThatAlreadyExists() {
+        // given
+        database.createCollection(collectionName, new BasicDBObject());
+
+        // when
+        database.createCollection(collectionName, new BasicDBObject());
+    }
+
     @Test
     public void shouldCreateCappedCollectionWithMaxNumberOfDocuments() {
         collection.drop();
