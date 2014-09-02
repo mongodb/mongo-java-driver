@@ -16,8 +16,6 @@
 
 package com.mongodb.client.model;
 
-import org.mongodb.Document;
-
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -28,9 +26,10 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/count/ Count
  */
-public class CountModel implements ExplainableModel {
-    private Object filter;
-    private Object hint;
+public class CountModel<D> implements ExplainableModel {
+    private D filter;
+    private D hint;
+    private String hintString;
     private Long limit;
     private Long maxTimeMS;
     private Long skip;
@@ -42,18 +41,7 @@ public class CountModel implements ExplainableModel {
      * {@code Codec} is registered
      * @return this
      */
-    public CountModel filter(final Object filter) {
-        this.filter = filter;
-        return this;
-    }
-
-    /**
-     * Set the query filter to apply.
-     *
-     * @param filter a document describing the query filter, which may be null
-     * @return this
-     */
-    public CountModel filter(final Document filter) {
+    public CountModel filter(final D filter) {
         this.filter = filter;
         return this;
     }
@@ -63,7 +51,7 @@ public class CountModel implements ExplainableModel {
      *
      * @return the query filter
      */
-    public Object getFilter() {
+    public D getFilter() {
         return filter;
     }
 
@@ -72,8 +60,17 @@ public class CountModel implements ExplainableModel {
      *
      * @return the hint
      */
-    public Object getHint() {
+    public D getHint() {
         return hint;
+    }
+
+    /**
+     * Gets the hint to apply.
+     *
+     * @return the hint
+     */
+    public String getHintString() {
+        return hintString;
     }
 
     /**
@@ -83,18 +80,7 @@ public class CountModel implements ExplainableModel {
      * {@code Codec} is registered}
      * @return this
      */
-    public CountModel hint(final Object hint) {
-        this.hint = hint;
-        return this;
-    }
-
-    /**
-     * Sets the hint to apply.
-     *
-     * @param hint a document describing the index which should be used for this operation.
-     * @return  this
-     */
-    public CountModel hint(final Document hint) {
+    public CountModel hint(final D hint) {
         this.hint = hint;
         return this;
     }
@@ -106,7 +92,7 @@ public class CountModel implements ExplainableModel {
      * @return  this
      */
     public CountModel hint(final String hint) {
-        this.hint = hint;
+        this.hintString = hint;
         return this;
     }
 

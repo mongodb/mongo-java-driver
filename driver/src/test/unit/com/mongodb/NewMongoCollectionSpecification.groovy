@@ -52,6 +52,20 @@ class NewMongoCollectionSpecification extends Specification {
         result.insertedCount == 1
     }
 
+    def 'should replace'() {
+        given:
+        def executor = new TestOperationExecutor(new WriteResult(1, false, null))
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        def result = collection.replaceOne()
+
+        then:
+        def operation = executor.getWriteOperation() as InsertOperation
+        !result.insertedId
+        result.insertedCount == 1
+    }
+
     def 'should find'() {
         given:
         def document = new Document('_id', 1)

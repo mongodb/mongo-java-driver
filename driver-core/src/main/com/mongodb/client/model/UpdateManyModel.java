@@ -16,8 +16,6 @@
 
 package com.mongodb.client.model;
 
-import org.mongodb.Document;
-
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -30,9 +28,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
  * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
  */
-public final class UpdateManyModel<T> extends WriteModel<T> {
-    private final Object filter;
-    private final Object update;
+public final class UpdateManyModel<T, D> extends WriteModel<T, D> {
+    private final D filter;
+    private final D update;
     private boolean upsert;
 
     /**
@@ -43,20 +41,9 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
      */
-    public UpdateManyModel(final Object filter, final Object update) {
+    public UpdateManyModel(final D filter, final D update) {
         this.filter = notNull("filter", filter);
         this.update = notNull("update", update);
-    }
-
-    /**
-     * Construct a new instance.
-     *
-     * @param filter a document describing the query filter, which may not be null.
-     * @param update a document describing the update, which may not be null. The update to apply must include only update
-     * operators.
-     */
-    public UpdateManyModel(final Document filter, final Document update) {
-        this((Object) filter, update);
     }
 
     /**
@@ -64,7 +51,7 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
      *
      * @return the query filter
      */
-    public Object getFilter() {
+    public D getFilter() {
         return filter;
     }
 
@@ -74,7 +61,7 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
      *
      * @return the document specifying the updates to apply
      */
-    public Object getUpdate() {
+    public D getUpdate() {
         return update;
     }
 
@@ -93,7 +80,7 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
      * @param upsert true if a new document should be inserted if there are no matches to the query filter
      * @return this
      */
-    public UpdateManyModel<T> upsert(final boolean upsert) {
+    public UpdateManyModel<T, D> upsert(final boolean upsert) {
         this.upsert = upsert;
         return this;
     }

@@ -25,10 +25,11 @@ import com.mongodb.client.model.DistinctModel;
 import com.mongodb.client.model.ExplainableModel;
 import com.mongodb.client.model.FindModel;
 import com.mongodb.client.model.InsertManyModel;
+import com.mongodb.client.model.RemoveManyModel;
+import com.mongodb.client.model.RemoveOneModel;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.InsertManyResult;
 import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.RemoveResult;
@@ -54,56 +55,35 @@ public interface NewMongoCollection<T> {
 
     // READ
 
-    MongoIterable<Document> aggregate(List<?> pipeline);
-
-    <D> MongoIterable<D> aggregate(List<?> pipeline, Class<D> clazz);
-
     /**
+     * Counts the number of documents in the collection according to the given model.
      *
-     * @return
+     * @param model the model describing the count
+     * @return the number of documents in the collection
      */
-    long count();
+    <D> long count(CountModel<D> model);
 
     /**
      *
      * @param model
      * @return
      */
-    long count(CountModel model);
+    <D> List<Object> distinct(DistinctModel<D> model);
 
     /**
      *
-     * @param fieldName
-     * @return
-     */
-    List<Object> distinct(String fieldName);
-
-    /**
-     *
-     * @param model
-     * @return
-     */
-    List<Object> distinct(DistinctModel model);
-
-    /**
-     *
-     * @param model
-     * @return
+     * @param model the model describing the find operation
+     * @return an iterable containing the result of the find operation
      */
     <F> MongoIterable<T> find(FindModel<F> model);
 
     <F, D> MongoIterable<D> find(FindModel<F> model, Class<D> clazz);
 
-    // WRITE
+    MongoIterable<Document> aggregate(List<?> pipeline);
 
-    /**
-     *
-     * @param operations the write operations
-     * @throws com.mongodb.BulkWriteException
-     * @throws com.mongodb.MongoException
-     * @return the result of the bulk write
-     */
-    BulkWriteResult bulkWrite(List<? extends WriteModel<? extends T>> operations);
+    <D> MongoIterable<D> aggregate(List<?> pipeline, Class<D> clazz);
+
+    // WRITE
 
     /**
      *
@@ -112,14 +92,14 @@ public interface NewMongoCollection<T> {
      * @throws com.mongodb.MongoException
      * @return the result of the bulk write
      */
-    BulkWriteResult bulkWrite(BulkWriteModel<? extends T> model);
+    <D> BulkWriteResult bulkWrite(BulkWriteModel<? extends T, D> model);
 
     /**
      * Inserts the provided document. If the document is missing an identifier,
      * the driver should generate one.
      *
      * @param document the document to insert
-     * @return the result of the insertion
+     * @return the result of the insert one operation
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
      */
@@ -131,23 +111,10 @@ public interface NewMongoCollection<T> {
      * a server < 2.6, using this method will be faster due to constraints
      * in the bulk API related to error handling.
      *
-     * @param documents the documents to insert
-     * @throws com.mongodb.DuplicateKeyException
-     * @throws com.mongodb.MongoException
-     * @return the result of the insertion
-     */
-    InsertManyResult insertMany(List<? extends T> documents);
-
-    /**
-     * Inserts a batch of documents. The preferred way to perform bulk
-     * inserts is to use the BulkWrite API. However, when talking with
-     * a server < 2.6, using this method will be faster due to constraints
-     * in the bulk API related to error handling.
-     *
      * @param model the model describing the insert
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
-     * @return the result of the insertion
+     * @return the result of the insert many operation
      */
     InsertManyResult insertMany(InsertManyModel<T> model);
 
@@ -155,65 +122,41 @@ public interface NewMongoCollection<T> {
      * Removes at most one document from the collection that matches the given query filter.  If no documents match,
      * the collection is not modified.
      *
-     * @param filter the query filter to apply
-     * @return the result of the removal
+     * @param model the model describing the remove
+     * @return the result of the remove one operation
      * @throws com.mongodb.MongoException
      */
-    RemoveResult removeOne(Object filter);
+    <D> RemoveResult removeOne(RemoveOneModel<T, D> model);
 
     /**
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
-     * @param filter the query filter to apply
-     * @return the result of the removal
+     * @param model the model describing the remove
+     * @return the result of the remove many operation
      * @throws com.mongodb.MongoException
      */
-    RemoveResult removeMany(Object filter);
-
-    /**
-     *
-     * @param filter
-     * @param replacement
-     * @return
-     */
-    ReplaceOneResult replaceOne(Object filter, T replacement);
+    <D> RemoveResult removeMany(RemoveManyModel<T, D> model);
 
     /**
      *
      * @param model
-     * @return
+     * @return the result of the replace one operation
      */
-    ReplaceOneResult replaceOne(ReplaceOneModel<T> model);
-
-    /**
-     *
-     * @param filter
-     * @param update
-     * @return
-     */
-    UpdateResult updateOne(Object filter, Object update);
+    <D> ReplaceOneResult replaceOne(ReplaceOneModel<T, D> model);
 
     /**
      *
      * @param model
-     * @return
+     * @return the result of the update one operation
      */
-    UpdateResult updateOne(UpdateOneModel<T> model);
-
-    /**
-     *
-     * @param filter
-     * @param update
-     * @return
-     */
-    UpdateResult updateMany(Object filter, Object update);
+    <D> UpdateResult updateOne(UpdateOneModel<T, D> model);
 
     /**
      *
      * @param model
-     * @return
+     * @return the result of the update many operation
      */
-    UpdateResult updateMany(UpdateManyModel<T> model);
+    <D> UpdateResult updateMany(UpdateManyModel<T, D> model);
 
 
 

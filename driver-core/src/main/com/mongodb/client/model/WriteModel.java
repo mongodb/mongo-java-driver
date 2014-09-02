@@ -19,10 +19,11 @@ package com.mongodb.client.model;
 /**
  * A base class for models that can be used in a bulk write operations.
  *
- * @param <T> the document type
+ * @param <T> the document type for storage
+ * @param <D> the document type for other documents describing the write, such as criteria, update, etc
  * @see BulkWriteModel
  */
-public abstract class WriteModel<T> {
+public abstract class WriteModel<T, D> {
     WriteModel() {
     }
 }
