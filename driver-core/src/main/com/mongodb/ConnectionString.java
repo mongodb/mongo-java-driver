@@ -145,9 +145,8 @@ import static java.lang.String.format;
  * If the database is specified in neither place, the default value is "admin".  This option is only respected when using the MONGO-CR
  * mechanism (the default).
  * </li>
- * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name.
- * </li>
- * <ul>
+ * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name. </li>
+ * </ul>
  *
  * @mongodb.driver.manual reference/connection-string Connection String URI Format
  * @since 3.0.0

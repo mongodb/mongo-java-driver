@@ -33,10 +33,10 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
- * Operation that runs a Map Reduce against a MongoDB instance.  This operation only supports "inline" results, i.e. the results will be
- * returned as a result of running this operation.
- * <p/>
- * To run a map reduce operation into a given collection, use {@code MapReduceToCollectionOperation}.
+ * <p>Operation that runs a Map Reduce against a MongoDB instance.  This operation only supports "inline" results, i.e. the results will be
+ * returned as a result of running this operation.</p>
+ *
+ * <p>To run a map reduce operation into a given collection, use {@code MapReduceToCollectionOperation}.</p>
  *
  * @param <T> the type contained in the collection
  * @mongodb.driver.manual core/map-reduce Map-Reduce

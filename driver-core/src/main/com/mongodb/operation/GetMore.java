@@ -20,12 +20,28 @@ import com.mongodb.ServerCursor;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ * Operation to fetch more results from the server for a cursor.
+ *
+ * @mongodb.driver.manual manual/reference/method/db.currentOp/#currentOp.op getmore
+ * @since 3.0
+ */
 public class GetMore {
     private final int limit;
     private final int batchSize;
     private final long numFetchedSoFar;
     private final ServerCursor serverCursor;
 
+    /**
+     * Creates a new GetMore operation.
+     *
+     * @param serverCursor    the cursor that this command is fetching additional results for
+     * @param limit           the maximum number of documents the cursor will return
+     * @param batchSize       the number of documents to return per batch. Do not use a batch size of 1
+     * @param numFetchedSoFar the number of documents already retrieved by this cursor
+     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize batchSize
+     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit limit
+     */
     public GetMore(final ServerCursor serverCursor, final int limit, final int batchSize, final long numFetchedSoFar) {
         this.serverCursor = notNull("serverCursor", serverCursor);
         this.limit = limit;
@@ -33,30 +49,51 @@ public class GetMore {
         this.numFetchedSoFar = numFetchedSoFar;
     }
 
+    /**
+     * Get the limit value for this operation.
+     *
+     * @return the maximum number of documents the cursor will return
+     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit limit
+     */
     public int getLimit() {
         return limit;
     }
 
+    /**
+     * Get the batch size for this operation.
+     *
+     * @return the number of documents to return per batch.
+     */
     public int getBatchSize() {
         return batchSize;
     }
 
+    /**
+     * Get the number of documents already fetched by the cursor.
+     *
+     * @return the number of documents already retrieved by this cursor
+     */
     public long getNumFetchedSoFar() {
         return numFetchedSoFar;
     }
 
+    /**
+     * Get the cursor for this operation.
+     *
+     * @return the cursor that this command is fetching additional results for
+     */
     public ServerCursor getServerCursor() {
         return serverCursor;
     }
 
     /**
-     * Gets the limit of the number of documents in the OP_REPLY response to the get more request. A value of zero tells the server to use
-     * the default size. A negative value tells the server to return no more than that number and immediately close the cursor. Otherwise,
-     * the server will return no more than that number and return the same cursorId to allow the rest of the documents to be fetched, if it
-     * turns out there are more documents.
-     * <p/>
-     * The value returned by this method is based on the limit, the batch size, both of which can be positive, negative, or zero, and the
-     * number of documents fetched so far.
+     * <p>Gets the limit of the number of documents in the OP_REPLY response to the get more request. A value of zero tells the server to
+     * use the default size. A negative value tells the server to return no more than that number and immediately close the cursor.
+     * Otherwise, the server will return no more than that number and return the same cursorId to allow the rest of the documents to be
+     * fetched, if it turns out there are more documents.</p>
+     *
+     * <p>The value returned by this method is based on the limit, the batch size, both of which can be positive, negative, or zero, and the
+     * number of documents fetched so far.</p>
      *
      * @return the value for numberToReturn in the OP_GET_MORE wire protocol message.
      * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-get-more OP_GET_MORE

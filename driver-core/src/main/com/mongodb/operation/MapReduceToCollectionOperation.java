@@ -29,11 +29,11 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
 /**
- * Operation that runs a Map Reduce against a MongoDB instance.  This operation does not support "inline" results, i.e. the results will be
- * output into the collection represented by the MongoNamespace provided.
- * <p/>
- * To run a map reduce operation and receive the results inline (i.e. as a response to running the command) use {@code
- * MapReduceWithInlineResultsOperation}.
+ * <p>Operation that runs a Map Reduce against a MongoDB instance.  This operation does not support "inline" results, i.e. the results will
+ * be output into the collection represented by the MongoNamespace provided.</p>
+ *
+ * <p>To run a map reduce operation and receive the results inline (i.e. as a response to running the command) use {@code
+ * MapReduceWithInlineResultsOperation}.</p>
  *
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0

@@ -180,7 +180,7 @@ public class MapReduceOutputOptions {
      */
     public static enum Action {
         /**
-         * Replace the contents of the <collectionName> if the collection with the <collectionName> exists.
+         * Replace the contents of the {@code collectionName} if the collection with the {@code collectionName} exists.
          */
         REPLACE("replace"),
 

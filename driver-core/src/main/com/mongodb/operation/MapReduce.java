@@ -25,11 +25,12 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * A class that groups arguments for a map-reduce operation.
- * <p/>
- * This class follows a builder pattern.
+ * <p>A class that groups arguments for a map-reduce operation.</p>
+ *
+ * <p>This class follows a builder pattern.</p>
  *
  * @mongodb.driver.manual core/map-reduce Map-Reduce
+ * @since 3.0
  */
 public class MapReduce {
     private final BsonJavaScript mapFunction;
@@ -71,15 +72,18 @@ public class MapReduce {
     }
 
     /**
-     * Add a finalize function to the command.
-     * <p/>
-     * The finalize function receives as its arguments a key value and the reducedValue from the reduce function. Be aware that: <ul>
-     * <li>The finalize function should not access the database for any reason.</li> <li>The finalize function should be pure, or have no
-     * impact outside of the function (i.e. side effects.)</li> <li>The finalize function can access the variables defined in the scope
-     * parameter.</li> </ul>
+     * <p>Add a finalize function to the command.</p>
+     *
+     * <p>The finalize function receives as its arguments a key value and the reducedValue from the reduce function. Be aware that:</p> 
+     * <ul>
+     *     <li>The finalize function should not access the database for any reason.</li> 
+     *     <li>The finalize function should be pure, or have no impact outside of the function (i.e. side effects.)</li> 
+     *     <li>The finalize function can access the variables defined in the scope parameter.</li> 
+     * </ul>
      *
      * @param finalize a JavaScript function
-     * @return the same {@code MapReduce} instance as used for the method invocation for chaining
+     * @return {@code this} so calls can be chained
+     * @mongodb.driver.manual manual/reference/command/mapReduce/#mapreduce-finalize-cmd Requirements for the finalize function
      */
     public MapReduce finalize(final BsonJavaScript finalize) {
         this.finalizeFunction = finalize;
@@ -91,7 +95,7 @@ public class MapReduce {
      * function.
      *
      * @param filter the selection criteria document.
-     * @return the same {@code MapReduce} instance as used for the method invocation for chaining
+     * @return {@code this} so calls can be chained
      */
     public MapReduce filter(final BsonDocument filter) {
         this.filter = filter;
@@ -103,7 +107,7 @@ public class MapReduce {
      * so that there are fewer reduce operations. The sort key must be in an existing index for this collection.
      *
      * @param sortCriteria sort criteria document
-     * @return the same {@code MapReduce} instance as used for the method invocation for chaining
+     * @return {@code this} so calls can be chained
      */
     public MapReduce sort(final BsonDocument sortCriteria) {
         this.sortCriteria = sortCriteria;
@@ -114,7 +118,7 @@ public class MapReduce {
      * Add global variables that will be accessible in the map, reduce and the finalize functions.
      *
      * @param scope scope document
-     * @return the same {@code MapReduce} instance as used for the method invocation for chaining
+     * @return {@code this} so calls can be chained
      */
     public MapReduce scope(final BsonDocument scope) {
         this.scope = scope;
@@ -125,7 +129,7 @@ public class MapReduce {
      * Specify a maximum number of documents to return from the input collection.
      *
      * @param limit limit value
-     * @return the same {@code MapReduce} instance as used for the method invocation for chaining
+     * @return {@code this} so calls can be chained
      */
     public MapReduce limit(final int limit) {
         this.limit = limit;
@@ -133,11 +137,12 @@ public class MapReduce {
     }
 
     /**
-     * Add a 'jsMode' flag to the command.
-     * <p/>
-     * This flag specifies whether to convert intermediate data into BSON format between the execution of the map and reduce functions
+     * <p>Add a 'jsMode' flag to the command.</p>
      *
-     * @return the same {@code MapReduce} instance as used for the method invocation for chaining
+     * <p>If set, internally the JavaScript objects emitted during map function remain as JavaScript objects. There will be no need to
+     * convert the objects for the reduce function, which can result in faster execution.</p>
+     *
+     * @return {@code this} so calls can be chained
      */
     public MapReduce jsMode() {
         this.jsMode = true;
@@ -145,67 +150,140 @@ public class MapReduce {
     }
 
     /**
-     * Add a 'verbose' flag to the command.
-     * <p/>
-     * This flag specifies whether to include the timing information in the result information.
+     * <p>Add a 'verbose' flag to the command.</p>
      *
-     * @return the same {@code MapReduce} instance as used for the method invocation for chaining
+     * <p>This flag specifies whether to include the timing information in the result information.</p>
+     *
+     * @return {@code this} so calls can be chained
      */
     public MapReduce verbose() {
         this.verbose = true;
         return this;
     }
 
+    /**
+     * This specifies a cumulative time limit for processing operations on the cursor. MongoDB interrupts the operation at the earliest
+     * following interrupt point.
+     *
+     * @param maxTime  the time limit for processing the map reduce operation
+     * @param timeUnit the TimeUnit for this limit
+     * @return {@code this} so calls can be chained
+     * @mongodb.driver.manual manual/reference/operator/meta/maxTimeMS/ $maxTimeMS
+     * @mongodb.server.release 2.6
+     */
     public MapReduce maxTime(final long maxTime, final TimeUnit timeUnit) {
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
-
+    /**
+     * Gets the map function for this map reduce operation.
+     *
+     * @return a JavaScript function that associates or “maps” a value with a key and emits the key and value pair.
+     */
     public BsonJavaScript getMapFunction() {
         return mapFunction;
     }
 
+    /**
+     * Gets the reduce function for this map reduce operation.
+     *
+     * @return a JavaScript function that “reduces” to a single object all the values associated with a particular key.
+     */
     public BsonJavaScript getReduceFunction() {
         return reduceFunction;
     }
 
+    /**
+     * Gets the finalize function for this map reduce operation
+     *
+     * @return a JavaScript function
+     * @mongodb.driver.manual manual/reference/command/mapReduce/#mapreduce-finalize-cmd Requirements for the finalize function
+     */
     public BsonJavaScript getFinalizeFunction() {
         return finalizeFunction;
     }
 
+    /**
+     * Gets the filter criteria for this map reduce operation.
+     *
+     * @return the selection criteria document.
+     */
     public BsonDocument getFilter() {
         return filter;
     }
 
+    /**
+     * Gets the criteria by which the data is sorted.
+     *
+     * @return sortCriteria sort criteria document
+     */
     public BsonDocument getSortCriteria() {
         return sortCriteria;
     }
 
+    /**
+     * Gets the scope document for this map reduce operation.
+     *
+     * @return a document containing the variables that will be accessible in the map, reduce and the finalize functions.
+     */
     public BsonDocument getScope() {
         return scope;
     }
 
+    /**
+     * Gets a MapReduceOutputOptions containing details of where the output of this map reduce operation will be.
+     *
+     * @return the location of the result of the map-reduce operation.
+     */
     public MapReduceOutputOptions getOutput() {
         return output;
     }
 
+    /**
+     * Gets the limit value.
+     *
+     * @return the maximum number of documents to return from the input collection.
+     */
     public int getLimit() {
         return limit;
     }
 
+    /**
+     * Gets whether to convert intermediate data into BSON format or keep in JavaScript format between the execution of the map and reduce
+     * functions.
+     *
+     * @return true if the JavaScript objects emitted during map function are to remain as JavaScript objects
+     */
     public boolean isJsMode() {
         return jsMode;
     }
 
+    /**
+     * Gets whether the verbose flag is set or not.
+     *
+     * @return true if including the timing information in the result information.
+     */
     public boolean isVerbose() {
         return verbose;
     }
 
+    /**
+     * Gets whether the results are inline or not.
+     *
+     * @return true if the map-reduce operation is performed in memory and the result returned.
+     */
     public boolean isInline() {
         return inline;
     }
 
+    /**
+     * Gets the max execution time for this map reduce command, in the given time unit.
+     *
+     * @param timeUnit the time unit to return the value in.
+     * @return the maximum execution time
+     * @mongodb.server.release 2.6
+     */
     public long getMaxTime(final TimeUnit timeUnit) {
         return timeUnit.convert(maxTimeMS, MILLISECONDS);
     }
@@ -238,7 +316,7 @@ public class MapReduce {
             return false;
         }
 
-        final MapReduce mapReduce = (MapReduce) o;
+        MapReduce mapReduce = (MapReduce) o;
 
         if (inline != mapReduce.inline) {
             return false;

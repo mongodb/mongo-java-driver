@@ -36,7 +36,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
  * Groups documents in a collection by the specified key and performs simple aggregation functions, such as computing counts and sums. The
- * command is analogous to a SELECT <...> GROUP BY statement in SQL.
+ * command is analogous to a SELECT ... GROUP BY statement in SQL.
  *
  * @param <T> the type for each document
  * @mongodb.driver.manual reference/command/group Group Command
@@ -52,6 +52,7 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      *
      * @param namespace the database and collection to run the operation against
      * @param group     contains all the arguments for this group command
+     * @param decoder   the decoder to use to turn the results into type {@code T}
      */
     public GroupOperation(final MongoNamespace namespace, final Group group, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
