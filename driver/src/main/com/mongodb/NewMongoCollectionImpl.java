@@ -68,7 +68,6 @@ import org.mongodb.WriteResult;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
 
@@ -145,23 +144,14 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     @Override
     public MongoIterable<T> find(final FindModel model) {
-        QueryOperation<T> operation = new QueryOperation<T>(namespace, getCodec());
-        operation.setCriteria(asBson(model.getCriteria()));
-        operation.setProjection(asBson(model.getProjection()));
-        operation.setSort(asBson(model.getSort()));
-        operation.setSkip(model.getSkip());
-        operation.setLimit(model.getLimit());
-        operation.setCursorFlags(model.getCursorFlags());
-        operation.setModifiers(asBson(model.getModifiers()));
-        operation.setBatchSize(model.getBatchSize());
-        operation.setMaxTime(model.getMaxTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
-
-        return new OperationIterable<T>(operation, options.getReadPreference());
+        return new OperationIterable<T>(new QueryOperation<T>(namespace, model, options.getCodecRegistry(), getCodec()),
+                                        options.getReadPreference());
     }
 
     @Override
     public <D> MongoIterable<D> find(final FindModel model, Class<D> clazz) {
-        return new OperationIterable<D>(new QueryOperation<D>(namespace, new Find(), options.getCodecRegistry().get(clazz)),
+        return new OperationIterable<D>(new QueryOperation<D>(namespace, model, options.getCodecRegistry(),
+                                                              options.getCodecRegistry().get(clazz)),
                                         options.getReadPreference());
     }
 
