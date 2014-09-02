@@ -35,12 +35,10 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * <p>An iterator over database results. Doing a {@code find()} query on a collection returns a {@code DBCursor} thus</p>
  * <pre>
- *     {@code
- *     DBCursor cursor = collection.find(query);
+ *    DBCursor cursor = collection.find(query);
  *    if(cursor.hasNext()) {
  *       DBObject obj = cursor.next();
  *    }
- * }
  * </pre>
  * <p><b>Warning:</b> Calling {@code toArray} or {@code length} on a DBCursor will irrevocably turn it into an array.  This means that, if
  * the cursor was iterating over ten million results (which it was lazily fetching from the database), suddenly there will be a ten-million
@@ -50,7 +48,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * <p>For example, to get an array of the 1000-1100th elements of a cursor, use</p>
  *
  * <pre>
- *     {@code List<DBObject> obj = collection.find(query).skip(1000).limit(100).toArray(); }
+ *    List<DBObject> obj = collection.find(query).skip(1000).limit(100).toArray();
  * </pre>
  *
  * @mongodb.driver.manual core/read-operations Read Operations
@@ -156,7 +154,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * Adds a query option. See Bytes.QUERYOPTION_* for list.
      *
      * @param option the option to be added
-     * @return {@code this}
+     * @return {@code this} so calls can be chained
      * @see Bytes
      */
     public DBCursor addOption(final int option) {
@@ -168,7 +166,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * Sets the query option - see Bytes.QUERYOPTION_* for list.
      *
      * @param options the bitmask of options
-     * @return {@code this}
+     * @return {@code this} so calls can be chained
      * @see Bytes
      */
     public DBCursor setOptions(final int options) {
@@ -179,7 +177,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Resets the query options.
      *
-     * @return {@code this}
+     * @return {@code this} so calls can be chained
      */
     public DBCursor resetOptions() {
         find.flags(QueryFlag.toSet(collection.getOptions()));
@@ -198,10 +196,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Adds a special operator like $maxScan or $returnKey. For example:
      * <pre>
-     *     {@code
-     *     addSpecial("$returnKey", 1)
+     *    addSpecial("$returnKey", 1)
      *    addSpecial("$maxScan", 100)
-     * }</pre>
+     * </pre>
      *
      * @param name  the name of the special query operator
      * @param value the value of the special query operator
