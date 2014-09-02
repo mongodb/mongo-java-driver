@@ -15,6 +15,7 @@
  */
 
 package org.bson
+
 import org.bson.io.BasicOutputBuffer
 import org.junit.Test
 import spock.lang.Specification

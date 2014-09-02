@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.operation
+
 import category.Async
 import com.mongodb.Block
 import com.mongodb.ClusterFixture
@@ -37,7 +38,6 @@ import static ClusterFixture.getCluster
 import static ClusterFixture.isSharded
 import static ClusterFixture.serverVersionAtLeast
 import static com.mongodb.operation.QueryFlag.Exhaust
-import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class QueryOperationSpecification extends OperationFunctionalSpecification {
@@ -54,7 +54,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         cursor.next() == document
     }
 
-    @IgnoreIf( { isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ isSharded() || !serverVersionAtLeast([2, 6, 0]) })
     def 'should throw execution timeout exception from execute'() {
         given:
         getCollectionHelper().insertDocuments(new Document())
@@ -73,7 +73,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf( { isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ isSharded() || !serverVersionAtLeast([2, 6, 0]) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
         getCollectionHelper().insertDocuments(new Document())
@@ -96,7 +96,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         for ( i in 1..100) {
             collectionHelper.insertDocuments(new Document('x', 'y').append('count', i))
         }
-        collectionHelper.createIndexes(asList(Index.builder().addKey('count').build()))
+        collectionHelper.createIndexes([Index.builder().addKey('count').build()])
         def count = 0;
         def find = new Find()
         find.getOptions().max(new BsonDocument('count', new BsonInt32(11)))
@@ -115,7 +115,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         for ( i in 1..100) {
             collectionHelper.insertDocuments(new Document('x', 'y').append('count', i))
         }
-        collectionHelper.createIndexes(asList(Index.builder().addKey('count').build()))
+        collectionHelper.createIndexes([Index.builder().addKey('count').build()])
         def count = 0;
         def find = new Find()
         find.getOptions().min(new BsonDocument('count', new BsonInt32(10)))
@@ -185,7 +185,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         found
     }
 
-    @IgnoreIf( { !ClusterFixture.isDiscoverableReplicaSet() } )
+    @IgnoreIf({ !ClusterFixture.isDiscoverableReplicaSet() })
     def 'should read from a secondary'() {
         collectionHelper.insertDocuments(new Document())
         def find = new Find()
@@ -196,7 +196,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         queryOperation.execute(binding) != null // if it didn't throw, the query was executed
     }
 
-    @IgnoreIf( { isSharded() } )
+    @IgnoreIf({ isSharded() })
     def 'should exhaust'() {
         for (i in 1..500) {
             collectionHelper.insertDocuments(new Document('_id', i))
@@ -222,7 +222,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf( { isSharded() } )
+    @IgnoreIf({ isSharded() })
     def 'should iterate asynchronously'() {
         given:
         for (i in 1..500) {
@@ -246,7 +246,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf( { isSharded() } )
+    @IgnoreIf({ isSharded() })
     def 'should exhaust asynchronously'() {
         for (i in 1..500) {
             collectionHelper.insertDocuments(new Document('_id', i))

@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.operation
+
 import category.Async
 import category.Slow
 import com.mongodb.Block
@@ -48,6 +49,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
 
     @Shared
     List<Document> documentList
+
     private List<Document> documentResultList
     private AsyncReadBinding binding
     private AsyncConnectionSource source
@@ -59,7 +61,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
             documentList.add(new Document('_id', it))
 
         }
-        getCollectionHelper().insertDocuments(* documentList)
+        getCollectionHelper().insertDocuments(*documentList)
 
         binding = new AsyncClusterBinding(getAsyncCluster(), primary(), 1, SECONDS)
         source = binding.getReadConnectionSource().get()
@@ -97,7 +99,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         documentResultList == documentList[0..99]
     }
 
-    @IgnoreIf( { isSharded() } )
+    @IgnoreIf({ isSharded() })
     def 'Cursor should support Exhaust'() {
         setup:
         Connection connection = source.getConnection().get()
@@ -118,7 +120,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         connection?.release()
     }
 
-    @IgnoreIf( { isSharded() } )
+    @IgnoreIf({ isSharded() })
     def 'Cursor should support Exhaust and limit'() {
         setup:
         Connection connection = source.getConnection().get()
@@ -137,7 +139,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         connection?.release()
     }
 
-    @IgnoreIf( { isSharded() } )
+    @IgnoreIf({ isSharded() })
     def 'Cursor should support Exhaust and Discard'() {
         setup:
         AsyncConnectionSource readConnectionSource = getAsyncBinding().getReadConnectionSource().get()
@@ -159,7 +161,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         readConnectionSource?.release()
     }
 
-    @IgnoreIf( { isSharded() } )
+    @IgnoreIf({ isSharded() })
     def 'exhaust cursor should support early termination'() {
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
@@ -189,10 +191,10 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         Connection connection = source.getConnection().get()
         new DropCollectionOperation(getNamespace()).execute(getBinding())
         new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName(), true, 1000)).execute(getBinding())
-        def ts = new BsonTimestamp(5, 0)
-        getCollectionHelper().insertDocuments([_id: 1, ts: ts] as Document)
+        def timestamp = new BsonTimestamp(5, 0)
+        getCollectionHelper().insertDocuments([_id: 1, ts: timestamp] as Document)
 
-        QueryResult<Document> firstBatch = executeQuery([ts: ['$gte': ts] as Document ] as Document, 2,
+        QueryResult<Document> firstBatch = executeQuery([ts: ['$gte': timestamp] as Document] as Document, 2,
                                                         EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData), connection)
         TestBlock block = new TestBlock(2)
 
@@ -212,14 +214,14 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         then:
         thrown(MongoInternalException)
         block.getIterations() == 2
-        documentResultList *.get('_id') == [1, 3]
+        documentResultList*.get('_id') == [1, 3]
 
         cleanup:
         connection.release()
         source.release()
     }
 
-    @IgnoreIf( { isSharded() } )
+    @IgnoreIf({ isSharded() })
     def 'should get Exceptions for operations on the exhause cursor after closing'() throws InterruptedException {
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
@@ -228,8 +230,8 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
 
         when:
         MongoAsyncQueryCursor<Document> asyncCursor = new MongoAsyncQueryCursor<Document>(getNamespace(),
-                                                                                         firstBatch, 5, 2, new DocumentCodec(),
-                                                                                         connection);
+                                                                                          firstBatch, 5, 2, new DocumentCodec(),
+                                                                                          connection);
 
         asyncCursor.forEach(new TestBlock()).get()
         asyncCursor.forEach(new TestBlock()).get()
@@ -262,8 +264,8 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
     private QueryResult<Document> executeQuery(final Document query, final int numberToReturn, final EnumSet<QueryFlag> queryFlag,
                                                final Connection connection) {
         new QueryProtocol<Document>(getNamespace(), queryFlag, 0, numberToReturn,
-                                           new BsonDocumentWrapper<Document>(query, new DocumentCodec()), null,
-                                           new DocumentCodec()).execute(connection)
+                                    new BsonDocumentWrapper<Document>(query, new DocumentCodec()), null,
+                                    new DocumentCodec()).execute(connection)
     }
 
     private final class TestBlock implements Block<Document> {

@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.codecs
+
 import org.bson.BsonBinaryReader
 import org.bson.BsonBinaryWriter
 import org.bson.BsonDbPointer
@@ -45,8 +46,8 @@ import static java.util.Arrays.asList
 class DocumentCodecSpecification extends Specification {
     def 'should encode and decode all default types'() {
         given:
-        def doc = new Document()
-        doc.with {
+        def originalDocument = new Document()
+        originalDocument.with {
             put('null', null)
             put('int32', 42)
             put('int64', 52L)
@@ -71,45 +72,45 @@ class DocumentCodecSpecification extends Specification {
         }
         when:
         BsonBinaryWriter writer = new BsonBinaryWriter(new BasicOutputBuffer(), false)
-        new DocumentCodec().encode(writer, doc, EncoderContext.builder().build())
+        new DocumentCodec().encode(writer, originalDocument, EncoderContext.builder().build())
         BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(writer.buffer.toByteArray()))),
                                                        true)
         def decodedDoc = new DocumentCodec().decode(reader, DecoderContext.builder().build())
 
         then:
-        decodedDoc.get('null') == doc.get('null')
-        decodedDoc.get('int32') == doc.get('int32')
-        decodedDoc.get('int64') == doc.get('int64')
-        decodedDoc.get('booleanTrue') == doc.get('booleanTrue')
-        decodedDoc.get('booleanFalse') == doc.get('booleanFalse')
-        decodedDoc.get('date') == doc.get('date')
-        decodedDoc.get('dbPointer') == doc.get('dbPointer')
-        decodedDoc.get('double') == doc.get('double')
-        decodedDoc.get('minKey') == doc.get('minKey')
-        decodedDoc.get('maxKey') == doc.get('maxKey')
-        decodedDoc.get('code') == doc.get('code')
-        decodedDoc.get('codeWithScope') == doc.get('codeWithScope')
-        decodedDoc.get('objectId') == doc.get('objectId')
-        decodedDoc.get('regex') == doc.get('regex')
-        decodedDoc.get('string') == doc.get('string')
-        decodedDoc.get('symbol') == doc.get('symbol')
-        decodedDoc.get('timestamp') == doc.get('timestamp')
-        decodedDoc.get('undefined') == doc.get('undefined')
-        decodedDoc.get('binary') == doc.get('binary')
-        decodedDoc.get('array') == doc.get('array')
-        decodedDoc.get('document') == doc.get('document')
+        decodedDoc.get('null') == originalDocument.get('null')
+        decodedDoc.get('int32') == originalDocument.get('int32')
+        decodedDoc.get('int64') == originalDocument.get('int64')
+        decodedDoc.get('booleanTrue') == originalDocument.get('booleanTrue')
+        decodedDoc.get('booleanFalse') == originalDocument.get('booleanFalse')
+        decodedDoc.get('date') == originalDocument.get('date')
+        decodedDoc.get('dbPointer') == originalDocument.get('dbPointer')
+        decodedDoc.get('double') == originalDocument.get('double')
+        decodedDoc.get('minKey') == originalDocument.get('minKey')
+        decodedDoc.get('maxKey') == originalDocument.get('maxKey')
+        decodedDoc.get('code') == originalDocument.get('code')
+        decodedDoc.get('codeWithScope') == originalDocument.get('codeWithScope')
+        decodedDoc.get('objectId') == originalDocument.get('objectId')
+        decodedDoc.get('regex') == originalDocument.get('regex')
+        decodedDoc.get('string') == originalDocument.get('string')
+        decodedDoc.get('symbol') == originalDocument.get('symbol')
+        decodedDoc.get('timestamp') == originalDocument.get('timestamp')
+        decodedDoc.get('undefined') == originalDocument.get('undefined')
+        decodedDoc.get('binary') == originalDocument.get('binary')
+        decodedDoc.get('array') == originalDocument.get('array')
+        decodedDoc.get('document') == originalDocument.get('document')
     }
 
     def 'should respect encodeIdFirst property in encoder context'() {
         given:
-        def doc = new Document('x', 2)
+        def originalDocument = new Document('x', 2)
                 .append('_id', 2)
                 .append('nested', new Document('x', 2).append('_id', 2))
                 .append('array', asList(new Document('x', 2).append('_id', 2)))
 
         when:
         def encodedDocument = new BsonDocument()
-        new DocumentCodec().encode(new BsonDocumentWriter(encodedDocument), doc,
+        new DocumentCodec().encode(new BsonDocumentWriter(encodedDocument), originalDocument,
                                    EncoderContext.builder().isEncodingCollectibleDocument(true).build())
 
         then:
@@ -119,7 +120,7 @@ class DocumentCodecSpecification extends Specification {
 
         when:
         encodedDocument.clear()
-        new DocumentCodec().encode(new BsonDocumentWriter(encodedDocument), doc,
+        new DocumentCodec().encode(new BsonDocumentWriter(encodedDocument), originalDocument,
                                    EncoderContext.builder().isEncodingCollectibleDocument(false).build())
 
         then:

@@ -15,6 +15,7 @@
  */
 
 package com.mongodb
+
 import com.mongodb.connection.Cluster
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.connection.ServerDescription

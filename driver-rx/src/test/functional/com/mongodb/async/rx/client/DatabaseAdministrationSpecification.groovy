@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.async.rx.client
+
 import org.mongodb.Document
 import spock.lang.IgnoreIf
 
@@ -24,7 +25,7 @@ import static Fixture.getMongoClient
 import static com.mongodb.async.client.Fixture.dropDatabase
 import static com.mongodb.async.client.Fixture.isSharded
 
-@IgnoreIf( { isSharded() } )
+@IgnoreIf({ isSharded() })
 class DatabaseAdministrationSpecification extends FunctionalSpecification {
 
     def 'drop should drop the database'() {
@@ -65,7 +66,9 @@ class DatabaseAdministrationSpecification extends FunctionalSpecification {
         getAsList(database.tools().getCollectionNames()).contains(newCollectionName)
 
         cleanup:
-        if (database) { dropDatabase(database.getName()) }
+        if (database) {
+            dropDatabase(database.getName())
+        }
     }
 
 }

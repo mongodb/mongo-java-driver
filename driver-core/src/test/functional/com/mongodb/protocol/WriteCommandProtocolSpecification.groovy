@@ -16,6 +16,7 @@
 
 
 package com.mongodb.protocol
+
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.operation.InsertRequest
@@ -32,10 +33,9 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
-import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 
-@IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+@IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
 class WriteCommandProtocolSpecification extends OperationFunctionalSpecification {
 
     def server = getCluster().selectServer(new PrimaryServerSelector(), 1, SECONDS)
@@ -156,9 +156,8 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         protocol.execute(connection)
 
         then:
-        def e = thrown(BulkWriteException)
-
-        e.writeResult.insertedCount == 1
+        def exception = thrown(BulkWriteException)
+        exception.writeResult.insertedCount == 1
     }
 
     def 'should map indices in exception when split is required'() {
@@ -173,9 +172,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         ]
 
         List<InsertRequest<Document>> insertList = new ArrayList<InsertRequest<Document>>(documents.size());
-        for (
-                Document cur :
-                        documents) {
+        for ( Document cur : documents) {
             insertList.add(new InsertRequest<Document>(cur));
         }
         new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, insertList,

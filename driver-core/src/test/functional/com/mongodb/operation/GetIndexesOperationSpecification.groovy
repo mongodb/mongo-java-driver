@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.operation
+
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec

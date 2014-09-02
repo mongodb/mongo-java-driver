@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-
-
-
-
 package com.mongodb.connection.netty
+
 import com.mongodb.connection.SimpleBufferProvider
 import spock.lang.Specification
 import spock.lang.Unroll

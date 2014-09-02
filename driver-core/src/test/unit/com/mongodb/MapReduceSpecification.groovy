@@ -15,6 +15,7 @@
  */
 
 package com.mongodb
+
 import com.mongodb.operation.MapReduce
 import com.mongodb.operation.MapReduceOutputOptions
 import org.bson.BsonDocument
@@ -27,11 +28,11 @@ import java.util.concurrent.TimeUnit
 
 class MapReduceSpecification extends Specification {
 
-    private static BsonJavaScript map
-    private static BsonJavaScript reduce
-    private static MapReduceOutputOptions output
-    private static MapReduce mapReduceA
-    private static MapReduce mapReduceB
+    static BsonJavaScript map
+    static BsonJavaScript reduce
+    static MapReduceOutputOptions output
+    static MapReduce mapReduceA
+    static MapReduce mapReduceB
 
     def setupSpec() {
         map = new BsonJavaScript('map')
@@ -43,10 +44,10 @@ class MapReduceSpecification extends Specification {
                 .sort(new BsonDocument('a', new BsonInt32(1)))
                 .maxTime(1, TimeUnit.SECONDS)
         mapReduceB = new MapReduce(map, reduce, output)
-                        .finalize(map)
-                        .filter(new BsonDocument())
-                        .sort(new BsonDocument('a', new BsonInt32(1)))
-                        .maxTime(1, TimeUnit.SECONDS)
+                .finalize(map)
+                .filter(new BsonDocument())
+                .sort(new BsonDocument('a', new BsonInt32(1)))
+                .maxTime(1, TimeUnit.SECONDS)
     }
 
     def 'default MapReduce is as expected'() {
@@ -77,10 +78,10 @@ class MapReduceSpecification extends Specification {
         mr.getOutput() == options
 
         where:
-        n               | mr                                    | m    | r      | inline | options
-        'simple'        | new MapReduce(map, reduce)            | map  | reduce | true   | null
-        'null options'  | new MapReduce(map, reduce, null)      | map  | reduce | true   | null
-        'options'       | new MapReduce(map, reduce, output)    | map  | reduce | false  | output
+        n              | mr                                 | m   | r      | inline | options
+        'simple'       | new MapReduce(map, reduce)         | map | reduce | true   | null
+        'null options' | new MapReduce(map, reduce, null)   | map | reduce | true   | null
+        'options'      | new MapReduce(map, reduce, output) | map | reduce | false  | output
     }
 
     @SuppressWarnings('ExplicitCallToEqualsMethod')
@@ -89,20 +90,20 @@ class MapReduceSpecification extends Specification {
         mr.equals(compareTo) == expectedResult
 
         where:
-        mr                                      | compareTo                              | expectedResult
-        new MapReduce(map, reduce)              | new MapReduce(map, reduce)             | true
-        new MapReduce(map, reduce, null)        | new MapReduce(map, reduce, null)       | true
-        new MapReduce(map, reduce, output)      | new MapReduce(map, reduce, output)     | true
-        new MapReduce(map, reduce)              | new MapReduce(map, reduce, output)     | false
-        new MapReduce(map, reduce, null)        | new MapReduce(map, reduce, output)     | false
-        mapReduceA                              | mapReduceA                             | true
-        mapReduceA                              | mapReduceB                             | false
+        mr                                        | compareTo                          | expectedResult
+        new MapReduce(map, reduce)                | new MapReduce(map, reduce)         | true
+        new MapReduce(map, reduce, null)          | new MapReduce(map, reduce, null)   | true
+        new MapReduce(map, reduce, output)        | new MapReduce(map, reduce, output) | true
+        new MapReduce(map, reduce)                | new MapReduce(map, reduce, output) | false
+        new MapReduce(map, reduce, null)          | new MapReduce(map, reduce, output) | false
+        mapReduceA                                | mapReduceA                         | true
+        mapReduceA                                | mapReduceB                         | false
         new MapReduce(map, reduce, null)
-          .jsMode().verbose().finalize(map)     |  new MapReduce(map, reduce)
-                                                    .jsMode().verbose().finalize(map)    | true
+                .jsMode().verbose().finalize(map) | new MapReduce(map, reduce)
+                .jsMode().verbose().finalize(map)                                      | true
         new MapReduce(map, reduce, null)
-            .jsMode().verbose().finalize(map)   |  new MapReduce(map, reduce)
-                                                    .jsMode().verbose().finalize(reduce) | false
+                .jsMode().verbose().finalize(map) | new MapReduce(map, reduce)
+                .jsMode().verbose().finalize(reduce)                                   | false
 
     }
 

@@ -165,7 +165,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
     }
 
     codenarc {
-        toolVersion = '0.20'
+        toolVersion = '0.21'
         reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
     }
 

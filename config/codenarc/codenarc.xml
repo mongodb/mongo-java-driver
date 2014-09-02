@@ -34,8 +34,12 @@
         </rule-config>
         <!-- this check is failing '})' when it shouldn't -->
         <exclude name='SpaceAfterClosingBrace'/>
+        <exclude name='SpaceBeforeOpeningBrace'/>
         <exclude name='SpaceAroundMapEntryColon'/>
         <exclude name='ClassJavadoc'/>
+        <exclude name='BlankLineBeforePackage'/>
+        <exclude name='ConsecutiveBlankLines'/>
+        <exclude name='FileEndsWithoutNewline'/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/generic.xml'/>
     <ruleset-ref path='rulesets/groovyism.xml'>

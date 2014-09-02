@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-
 package com.mongodb.operation
+
 import category.Slow
 import com.mongodb.ClusterFixture
 import com.mongodb.OperationFunctionalSpecification
@@ -300,9 +300,9 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                                              [new UpdateRequest(new BsonDocument('_id', new BsonInt32(0)),
                                                                 new BsonDocument('$set', new BsonDocument('a', new BsonInt32(0))))
                                                       .upsert(true),
-                                             new ReplaceRequest(new BsonDocument('a', new BsonInt32(1)), new Document('_id', 1))
+                                              new ReplaceRequest(new BsonDocument('a', new BsonInt32(1)), new Document('_id', 1))
                                                       .upsert(true),
-                                             new ReplaceRequest(new BsonDocument('_id', new BsonInt32(2)), new Document('_id', 2))
+                                              new ReplaceRequest(new BsonDocument('_id', new BsonInt32(2)), new Document('_id', 2))
                                                       .upsert(true)
                                              ],
                                              ordered, ACKNOWLEDGED, new DocumentCodec())
@@ -518,7 +518,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     }
 
     // using w = 5 to force a timeout
-    @IgnoreIf( { !ClusterFixture.isDiscoverableReplicaSet() } )
+    @IgnoreIf({ !ClusterFixture.isDiscoverableReplicaSet() })
     def 'should throw bulk write exception with a write concern error when wtimeout is exceeded'() {
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
@@ -533,7 +533,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ex.getWriteConcernError() != null
     }
 
-    @IgnoreIf( { !ClusterFixture.isDiscoverableReplicaSet() } )
+    @IgnoreIf({ !ClusterFixture.isDiscoverableReplicaSet() })
     def 'when there is a duplicate key error and a write concern error, both should be reported'() {
         given:
         getCollectionHelper().insertDocuments(getTestInserts())

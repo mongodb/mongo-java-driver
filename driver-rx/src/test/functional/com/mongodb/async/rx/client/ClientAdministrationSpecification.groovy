@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.async.rx.client
+
 import org.mongodb.Document
 
 import static Fixture.getAsList

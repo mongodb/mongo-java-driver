@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.operation
+
 import category.Async
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
@@ -62,59 +63,57 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         thrown(IllegalArgumentException)
     }
 
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
     def 'should be able to output to a collection'() {
-
         when:
-        AggregateToCollectionOperation op =
+        AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
                                                    AggregationOptions.builder().build())
-        op.execute(getBinding());
+        operation.execute(getBinding());
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 3
     }
 
     @Category(Async)
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
     def 'should be able to output to a collection asynchronously'() {
         when:
-        AggregateToCollectionOperation op =
+        AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
                                                    AggregationOptions.builder().build())
-        op.executeAsync(getAsyncBinding()).get();
+        operation.executeAsync(getAsyncBinding()).get();
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 3
     }
 
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should be able to match then output to a collection'() {
-
         when:
-        AggregateToCollectionOperation op =
+        AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
                                                     new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
                                                    AggregationOptions.builder().build())
-        op.execute(getBinding());
+        operation.execute(getBinding());
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 1
     }
 
     @Category(Async)
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should be able to match then output to a collection asynchronously'() {
         when:
-        AggregateToCollectionOperation op =
+        AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
                                                     new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
                                                    AggregationOptions.builder().build())
-        op.executeAsync(getAsyncBinding()).get();
+        operation.executeAsync(getAsyncBinding()).get();
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 1

@@ -27,11 +27,10 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static java.util.Arrays.asList
 
 class AggregateExplainOperationSpecification extends OperationFunctionalSpecification {
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
     def 'should be able to explain an empty pipeline'() {
 
         given:
@@ -50,7 +49,7 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
     }
 
     @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
     def 'should be able to explain an empty pipeline asynchronously'() {
 
         given:
@@ -68,17 +67,17 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
                 AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.CURSOR).build()]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
     def 'should be able to explain a pipeline'() {
 
         given:
         def match = new BsonDocument('job', new BsonString('plumber'))
-        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(),
-                                                                     [new BsonDocument('$match', match)],
-                                                                     aggregateOptions)
+        AggregateExplainOperation operation = new AggregateExplainOperation(getNamespace(),
+                                                                            [new BsonDocument('$match', match)],
+                                                                            aggregateOptions)
 
         when:
-        def result = op.execute(getBinding());
+        def result = operation.execute(getBinding());
 
         then:
         result.containsKey('stages')
@@ -92,7 +91,7 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
     }
 
     @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
     def 'should be able to explain a pipeline asynchronously'() {
 
         given:

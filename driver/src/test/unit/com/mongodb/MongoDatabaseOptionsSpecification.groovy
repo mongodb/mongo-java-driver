@@ -24,11 +24,9 @@ import com.mongodb.client.MongoDatabaseOptions
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
 
-import static com.mongodb.Fixture.getDefaultDatabaseName;
-import static com.mongodb.Fixture.getMongoClient;
-/**
- *
- */
+import static com.mongodb.Fixture.getDefaultDatabaseName
+import static com.mongodb.Fixture.getMongoClient
+
 class MongoDatabaseOptionsSpecification extends Specification {
 
     def 'should return default value inherited from MongoClientOptions'() {

@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.connection
+
 import category.Async
 import category.Slow
 import com.mongodb.MongoException
@@ -24,10 +25,10 @@ import com.mongodb.MongoSocketClosedException
 import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.async.SingleResultCallback
+import com.mongodb.async.SingleResultFuture
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.event.ConnectionListener
 import com.mongodb.operation.QueryFlag
-import com.mongodb.async.SingleResultFuture
 import com.mongodb.protocol.message.CommandMessage
 import com.mongodb.protocol.message.MessageSettings
 import org.bson.BsonBinaryWriter
@@ -100,7 +101,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf( { javaVersion < 1.7 } )
+    @IgnoreIf({ javaVersion < 1.7 })
     def 'should fire message sent event asynchronously'() {
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
@@ -140,7 +141,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf( { javaVersion < 1.7 } )
+    @IgnoreIf({ javaVersion < 1.7 })
     def 'should fire message received event asynchronously'() {
         given:
         stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
@@ -195,7 +196,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf( { javaVersion < 1.7 } )
+    @IgnoreIf({ javaVersion < 1.7 })
     def 'should handle out of order messages on the stream asynchronously'() {
         // Connect then: SendAsync(1), SendAsync(2), SendAsync(3), ReceiveAsync(3), ReceiveAsync(2), ReceiveAsync(1)
         given:
@@ -245,7 +246,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf( { javaVersion < 1.7 } )
+    @IgnoreIf({ javaVersion < 1.7 })
     def 'should handle out of order messages on the stream mixed synchronicity'() {
         // Connect then: Send(1), SendAsync(2), Send(3), ReceiveAsync(3), Receive(2), ReceiveAsync(1)
         given:
@@ -311,10 +312,10 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf( { javaVersion < 1.7 } )
+    @IgnoreIf({ javaVersion < 1.7 })
     def 'failed initialization should close the connection and fail asynchronously'() {
         given:
-        stream.writeAsync(_, _) >>  { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
+        stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
         }
         stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
@@ -377,11 +378,11 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf( { javaVersion < 1.7 } )
+    @IgnoreIf({ javaVersion < 1.7 })
     def 'failed writes should close the connection and fail asynchronously'() {
         given:
         int seen = 0
-        stream.writeAsync(_, _) >>  { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
+        stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             if (seen == 0) {
                 seen += 1
                 return callback.failed(new IOException('Something went wrong'))
@@ -451,11 +452,11 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf( { javaVersion < 1.7 } )
+    @IgnoreIf({ javaVersion < 1.7 })
     def 'failed reads (header) should close the stream and fail asynchronously'() {
         given:
         int seen = 0
-        stream.writeAsync(_, _) >>  { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
+        stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
         }
 
@@ -534,11 +535,11 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf( { javaVersion < 1.7 } )
+    @IgnoreIf({ javaVersion < 1.7 })
     def 'failed reads (body) should close the stream and fail asynchronously'() {
         given:
         int seen = 0
-        stream.writeAsync(_, _) >>  { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
+        stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
         }
 
@@ -606,10 +607,12 @@ class InternalStreamConnectionSpecification extends Specification {
             def conds = new AsyncConditions()
             def (buffers, messageId) = helper.isMaster()
 
-            pool.submit( { connection.sendMessage(buffers, messageId) } as Runnable )
-            pool.submit( { conds.evaluate {
+            pool.submit({ connection.sendMessage(buffers, messageId) } as Runnable)
+            pool.submit({
+                            conds.evaluate {
                                 assert connection.receiveMessage(messageId).replyHeader.responseTo == messageId
-                         } } as Runnable)
+                            }
+                        } as Runnable)
 
             conds.await(10)
         }
@@ -619,7 +622,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     @Category([Async, Slow])
-    @IgnoreIf( { javaVersion < 1.7 } )
+    @IgnoreIf({ javaVersion < 1.7 })
     def 'the connection pipelining should be thread safe asynchronously'() {
         given:
         int threads = 10
@@ -647,8 +650,8 @@ class InternalStreamConnectionSpecification extends Specification {
             def conds = new AsyncConditions()
             def (buffers, messageId, sndCallbck, rcvdCallbck, fSndResult, fRespBuffers) = helper.isMasterAsync(sndLatch, rcvLatch)
 
-            pool.submit( { connection.sendMessageAsync(buffers, messageId, sndCallbck) } as Runnable )
-            pool.submit( {
+            pool.submit({ connection.sendMessageAsync(buffers, messageId, sndCallbck) } as Runnable)
+            pool.submit({
                             connection.receiveMessageAsync(messageId, rcvdCallbck)
                             conds.evaluate {
                                 assert fRespBuffers.get().replyHeader.responseTo == messageId

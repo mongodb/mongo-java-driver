@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.operation
+
 import category.Slow
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.OperationFunctionalSpecification
@@ -42,11 +43,11 @@ import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
 
 class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
-    private ConnectionSource connectionSource
-    private MongoQueryCursor<Document> cursor
+    ConnectionSource connectionSource
+    MongoQueryCursor<Document> cursor
 
     def setup() {
-        for (int i = 0; i < 10; i++) {
+        for ( int i = 0; i < 10; i++) {
             collectionHelper.insertDocuments(new Document('_id', i))
         }
         connectionSource = getBinding().getReadConnectionSource()
@@ -298,7 +299,8 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
         !success.isEmpty()
     }
 
-    @IgnoreIf( { isSharded() && !serverVersionAtLeast([2, 4, 0]) } ) // 2.2 does not properly detect cursor not found, so ignoring
+    // 2.2 does not properly detect cursor not found, so ignoring
+    @IgnoreIf({ isSharded() && !serverVersionAtLeast([2, 4, 0]) })
     def 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
         given:
         def firstBatch = executeQuery(5)
@@ -317,7 +319,8 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
         thrown(MongoCursorNotFoundException)
     }
 
-    @IgnoreIf( { isSharded() && !serverVersionAtLeast([2, 4, 0]) } ) // 2.2 does not properly detect cursor not found, so ignoring
+    @IgnoreIf({ isSharded() && !serverVersionAtLeast([2, 4, 0]) })
+    // 2.2 does not properly detect cursor not found, so ignoring
     def 'should kill cursor if limit is reached on get more'() throws InterruptedException {
         given:
         def firstBatch = executeQuery(3)
@@ -421,7 +424,8 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
         thrown(NoSuchElementException)
     }
 
-    @IgnoreIf( { isSharded() && !serverVersionAtLeast([2, 4, 0]) } ) // 2.2 does not properly detect cursor not found, so ignoring
+    // 2.2 does not properly detect cursor not found, so ignoring
+    @IgnoreIf({ isSharded() && !serverVersionAtLeast([2, 4, 0]) })
     def 'should throw cursor not found exception'() {
         given:
         def firstBatch = executeQuery(2)

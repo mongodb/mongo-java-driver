@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.async.rx.client
+
 import com.mongodb.MongoNamespace
 import org.mongodb.Document
 import spock.lang.Specification

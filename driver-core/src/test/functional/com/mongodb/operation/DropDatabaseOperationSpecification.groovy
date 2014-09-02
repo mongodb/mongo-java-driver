@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.operation
+
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
 import org.junit.experimental.categories.Category
@@ -27,7 +28,7 @@ import static com.mongodb.ClusterFixture.isSharded
 
 class DropDatabaseOperationSpecification extends OperationFunctionalSpecification {
 
-    @IgnoreIf( { isSharded() } )
+    @IgnoreIf({ isSharded() })
     def 'should drop a database that exists'() {
         given:
         getCollectionHelper().insertDocuments(new Document('documentTo', 'createTheCollection'))
@@ -41,7 +42,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
     }
 
     @Category(Async)
-    @IgnoreIf( { isSharded() } )
+    @IgnoreIf({ isSharded() })
     def 'should drop a database that exists asynchronously'() {
         given:
         getCollectionHelper().insertDocuments(new Document('documentTo', 'createTheCollection'))
@@ -53,6 +54,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         then:
         !databaseNameExists(databaseName)
     }
+
     def 'should not error when dropping a collection that does not exist'() {
         given:
         def dbName = 'nonExistingDatabase'

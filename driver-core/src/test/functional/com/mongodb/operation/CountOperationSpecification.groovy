@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.operation
+
 import category.Async
 import com.mongodb.MongoException
 import com.mongodb.MongoExecutionTimeoutException
@@ -40,7 +41,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
     private List<InsertRequest<Document>> insertDocumentList;
 
-    def findWithBadHint = new Find( new BsonDocument('a', new BsonInt32(1))).hintIndex('BAD HINT')
+    def findWithBadHint = new Find(new BsonDocument('a', new BsonInt32(1))).hintIndex('BAD HINT')
 
     def setup() {
         insertDocumentList = [
@@ -65,7 +66,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         insertDocumentList.size()
     }
 
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw execution timeout exception from execute'() {
         given:
         def find = new Find().maxTime(1, SECONDS)
@@ -83,7 +84,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
         def find = new Find().maxTime(1, SECONDS)
@@ -205,7 +206,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf({ serverVersionAtLeast(asList(2, 6, 0))} )
+    @IgnoreIf({ serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should ignore with bad hint with mongod < 2.6 asynchronously'() {
         given:
         def countOperation = new CountOperation(getNamespace(), findWithBadHint)

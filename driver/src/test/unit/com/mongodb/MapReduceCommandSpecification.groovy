@@ -15,6 +15,7 @@
  */
 
 package com.mongodb
+
 import com.mongodb.operation.MapReduce
 import com.mongodb.operation.MapReduceOutputOptions
 import org.bson.BsonDocument
@@ -30,11 +31,14 @@ import static java.util.concurrent.TimeUnit.SECONDS
 
 class MapReduceCommandSpecification extends FunctionalSpecification {
     private static MapReduceCommand cmd
+
     def mapReduceCommand() {
         new MapReduceCommand(getDefaultDatabase().getCollection(getClass().getName()),
-                             'map', 'reduce', 'test',  OutputType.REDUCE, new BasicDBObject())
+                             'map', 'reduce', 'test', OutputType.REDUCE, new BasicDBObject())
     }
+
     def sort() { ['a': 1] as BasicDBObject }
+
     def scope() { ['a': 'b'] }
 
     def setupSpec() { cmd = mapReduceCommand() }
@@ -46,28 +50,28 @@ class MapReduceCommandSpecification extends FunctionalSpecification {
         value == expected
 
         where:
-        field               | value                     | expected
-        'finalize'          | cmd.getFinalize()         | null
-        'input'             | cmd.getInput()            | getClass().getName()
-        'jsMode'            | cmd.getJsMode()           | null
-        'limit'             | cmd.getLimit()            | 0
-        'map'               | cmd.getMap()              | 'map'
-        'maxTime'           | cmd.getMaxTime(SECONDS)   | 0
-        'output db'         | cmd.getOutputDB()         | null
-        'output target'     | cmd.getOutputTarget()     | 'test'
-        'output type'       | cmd.getOutputType()       | OutputType.REDUCE
-        'query'             | cmd.getQuery()            | new BasicDBObject()
-        'readPreference'    | cmd.getReadPreference()   | null
-        'reduce'            | cmd.getReduce()           | 'reduce'
-        'scope'             | cmd.getScope()            | null
-        'sort'              | cmd.getSort()             | null
-        'verbose'           | cmd.isVerbose()           | true
+        field            | value                   | expected
+        'finalize'       | cmd.getFinalize()       | null
+        'input'          | cmd.getInput()          | getClass().getName()
+        'jsMode'         | cmd.getJsMode()         | null
+        'limit'          | cmd.getLimit()          | 0
+        'map'            | cmd.getMap()            | 'map'
+        'maxTime'        | cmd.getMaxTime(SECONDS) | 0
+        'output db'      | cmd.getOutputDB()       | null
+        'output target'  | cmd.getOutputTarget()   | 'test'
+        'output type'    | cmd.getOutputType()     | OutputType.REDUCE
+        'query'          | cmd.getQuery()          | new BasicDBObject()
+        'readPreference' | cmd.getReadPreference() | null
+        'reduce'         | cmd.getReduce()         | 'reduce'
+        'scope'          | cmd.getScope()          | null
+        'sort'           | cmd.getSort()           | null
+        'verbose'        | cmd.isVerbose()         | true
     }
 
     def 'should produce the expected command for defaults'() throws Exception {
         when:
         MapReduce expected = new MapReduce(new BsonJavaScript('map'), new BsonJavaScript('reduce'),
-                                     new MapReduceOutputOptions('test').action(MapReduceOutputOptions.Action.REDUCE)).with {
+                                           new MapReduceOutputOptions('test').action(MapReduceOutputOptions.Action.REDUCE)).with {
             verbose()
             filter([] as BsonDocument)
         }
@@ -83,16 +87,16 @@ class MapReduceCommandSpecification extends FunctionalSpecification {
         value == expected
 
         where:
-        field               | change                            | value                     | expected
-        'finalize'          | cmd.setFinalize('final')          | cmd.getFinalize()         | 'final'
-        'jsMode'            | cmd.setJsMode(true)               | cmd.getJsMode()           | true
-        'limit'             | cmd.setLimit(100)                 | cmd.getLimit()            | 100
-        'maxTime'           | cmd.setMaxTime(1, SECONDS)        | cmd.getMaxTime(SECONDS)   | 1
-        'output db'         | cmd.setOutputDB('outDB')          | cmd.getOutputDB()         | 'outDB'
-        'readPreference'    | cmd.setReadPreference(primary())  | cmd.getReadPreference()   | primary()
-        'scope'             | cmd.setScope(scope())             | cmd.getScope()            | scope()
-        'sort'              | cmd.setSort(sort())               | cmd.getSort()             | sort()
-        'verbose'           | cmd.setVerbose(false)             | cmd.isVerbose()           | false
+        field            | change                           | value                   | expected
+        'finalize'       | cmd.setFinalize('final')         | cmd.getFinalize()       | 'final'
+        'jsMode'         | cmd.setJsMode(true)              | cmd.getJsMode()         | true
+        'limit'          | cmd.setLimit(100)                | cmd.getLimit()          | 100
+        'maxTime'        | cmd.setMaxTime(1, SECONDS)       | cmd.getMaxTime(SECONDS) | 1
+        'output db'      | cmd.setOutputDB('outDB')         | cmd.getOutputDB()       | 'outDB'
+        'readPreference' | cmd.setReadPreference(primary()) | cmd.getReadPreference() | primary()
+        'scope'          | cmd.setScope(scope())            | cmd.getScope()          | scope()
+        'sort'           | cmd.setSort(sort())              | cmd.getSort()           | sort()
+        'verbose'        | cmd.setVerbose(false)            | cmd.isVerbose()         | false
     }
 
     def 'should produce the expected command when changed'() throws Exception {
@@ -119,7 +123,7 @@ class MapReduceCommandSpecification extends FunctionalSpecification {
             limit(100)
             maxTime(1, SECONDS)
             verbose()
-            scope( new BsonDocument('a', new BsonString('b')))
+            scope(new BsonDocument('a', new BsonString('b')))
             sort(new BsonDocument('a', new BsonInt32(1)))
         }
 
@@ -144,8 +148,8 @@ class MapReduceCommandSpecification extends FunctionalSpecification {
 
         when:
         def expected = [mapreduce: getClass().getName(), map: 'map', reduce: 'reduce', verbose: false,
-                        out: [reduce: 'test', db: 'outDB'] as BasicDBObject, query: [:] as BasicDBObject,
-                        finalize: 'final', sort: sort(), limit: 100, scope: scope(), jsMode: true,
+                        out      : [reduce: 'test', db: 'outDB'] as BasicDBObject, query: [:] as BasicDBObject,
+                        finalize : 'final', sort: sort(), limit: 100, scope: scope(), jsMode: true,
                         maxTimeMS: 1000] as BasicDBObject
 
         then:

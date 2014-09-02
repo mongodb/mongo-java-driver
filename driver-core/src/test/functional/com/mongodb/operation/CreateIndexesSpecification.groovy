@@ -15,6 +15,7 @@
  */
 
 package com.mongodb.operation
+
 import category.Async
 import com.mongodb.DuplicateKeyException
 import com.mongodb.MongoServerException
@@ -28,7 +29,6 @@ import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.operation.OrderBy.ASC
-import static java.util.Arrays.asList
 
 class CreateIndexesSpecification extends OperationFunctionalSpecification {
     def idIndex = ['_id': 1]
@@ -104,7 +104,8 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
         getIndexes()*.get('key') containsAll(idIndex, field1Index, field2Index)
     }
 
-    @IgnoreIf( { serverVersionAtLeast(asList(2, 7, 0)) } ) // Todo remove once 2.7 has fixed SERVER-14920
+    // Todo remove once 2.7 has fixed SERVER-14920
+    @IgnoreIf({ serverVersionAtLeast([2, 7, 0]) })
     def 'should be able to handle duplicated indexes in the same array'() {
         given:
         def index = Index.builder().addKey('field', ASC).build()
@@ -118,7 +119,8 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf( { serverVersionAtLeast(asList(2, 7, 0)) } ) // Todo remove once 2.7 has fixed SERVER-14920
+    // Todo remove once 2.7 has fixed SERVER-14920
+    @IgnoreIf({ serverVersionAtLeast([2, 7, 0]) })
     def 'should be able to handle duplicated indexes asynchronously in the same array'() {
         given:
         def index = Index.builder().addKey('field', ASC).build()

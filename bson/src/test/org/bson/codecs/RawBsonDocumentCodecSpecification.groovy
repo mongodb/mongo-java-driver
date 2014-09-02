@@ -15,6 +15,7 @@
  */
 
 package org.bson.codecs
+
 import org.bson.BsonBinaryReader
 import org.bson.BsonBoolean
 import org.bson.BsonDocument

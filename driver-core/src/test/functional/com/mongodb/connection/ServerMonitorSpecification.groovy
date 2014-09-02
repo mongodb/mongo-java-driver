@@ -44,20 +44,20 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
 
     def setup() {
         serverMonitor = new ServerMonitor(getPrimary(), ServerSettings.builder().build(), 'cluster-1',
-                                                new ChangeListener<ServerDescription>() {
-                                                    @Override
-                                                    void stateChanged(final ChangeEvent<ServerDescription> event) {
-                                                        newDescription = event.newValue
-                                                        latch.countDown()
-                                                    }
-                                                },
-                                                new InternalStreamConnectionFactory('1',
-                                                                                    new SocketStreamFactory(SocketSettings.builder()
-                                                                                                                          .build(),
-                                                                                                            getSSLSettings()),
-                                                                                    getCredentialList(),
-                                                                                    new NoOpConnectionListener()),
-                                                new TestConnectionPool())
+                                          new ChangeListener<ServerDescription>() {
+                                              @Override
+                                              void stateChanged(final ChangeEvent<ServerDescription> event) {
+                                                  newDescription = event.newValue
+                                                  latch.countDown()
+                                              }
+                                          },
+                                          new InternalStreamConnectionFactory('1',
+                                                                              new SocketStreamFactory(SocketSettings.builder()
+                                                                                                                    .build(),
+                                                                                                      getSSLSettings()),
+                                                                              getCredentialList(),
+                                                                              new NoOpConnectionListener()),
+                                          new TestConnectionPool())
         serverMonitor.start()
     }
 
