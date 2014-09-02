@@ -23,10 +23,6 @@ class InsertRequest extends WriteRequest {
         this.document = document;
     }
 
-    InsertRequest(final com.mongodb.operation.InsertRequest<DBObject> insertRequest) {
-        this(insertRequest.getDocument());
-    }
-
     public DBObject getDocument() {
         return document;
     }
