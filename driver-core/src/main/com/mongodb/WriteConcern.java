@@ -499,7 +499,7 @@ public class WriteConcern implements Serializable {
      * @param wtimeout timeout for write operation
      * @param fsync    whether or not to fsync
      * @param j        whether writes should wait for a journal group commit
-     * @return Majority, a subclass of WriteConcern that represents the write concern requiring most servers to acknowkledge the write
+     * @return Majority, a subclass of WriteConcern that represents the write concern requiring most servers to acknowledge the write
      */
     public static Majority majorityWriteConcern(final int wtimeout, final boolean fsync, final boolean j) {
         return new Majority(wtimeout, fsync, j);

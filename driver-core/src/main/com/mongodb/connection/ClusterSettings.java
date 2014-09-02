@@ -215,7 +215,7 @@ public final class ClusterSettings {
     }
 
     /**
-     * Gets a pretty String description of these settings.
+     * Returns a short, pretty description for these ClusterSettings.
      *
      * @return a String description of the relevant settings.
      */

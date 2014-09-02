@@ -40,9 +40,10 @@ import static java.lang.String.format;
 
 
 /**
- * Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>. The URI describes the hosts to
- * be used and options.
- * <p>The format of the URI is:
+ * <p>Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>. The URI describes the hosts to
+ * be used and options.</p>
+ * 
+ * <p>The format of the URI is:</p>
  * <pre>
  *   mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
  * </pre>
@@ -147,7 +148,6 @@ import static java.lang.String.format;
  * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name.
  * </li>
  * <ul>
- * </p>
  *
  * @mongodb.driver.manual reference/connection-string Connection String URI Format
  * @since 3.0.0

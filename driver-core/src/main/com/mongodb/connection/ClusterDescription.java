@@ -239,7 +239,7 @@ public class ClusterDescription {
     }
 
     /**
-     * Gets a pretty string describing this cluster.
+     * Returns a short, pretty description for this ClusterDescription.
      *
      * @return a String describing this cluster.
      */
