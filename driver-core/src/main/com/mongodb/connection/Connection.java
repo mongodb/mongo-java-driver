@@ -52,7 +52,7 @@ public interface Connection extends BufferProvider, ReferenceCounted {
      * @param byteBuffers   the list of byte buffers to send.
      * @param lastRequestId the request id of the last message in byteBuffers
      */
-    void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId);
+    void sendMessage(List<ByteBuf> byteBuffers, int lastRequestId);
 
     /**
      * Receive a response to a sent message from the server. <p> This method blocks until the entire message has been read. This method is
@@ -61,7 +61,7 @@ public interface Connection extends BufferProvider, ReferenceCounted {
      * @param responseTo the expected responseTo of the received message
      * @return the response
      */
-    ResponseBuffers receiveMessage(final int responseTo);
+    ResponseBuffers receiveMessage(int responseTo);
 
     /**
      * Asynchronously send a message to the server. The connection may not make any attempt to validate the integrity of the message.
@@ -70,7 +70,7 @@ public interface Connection extends BufferProvider, ReferenceCounted {
      * @param lastRequestId the request id of the last message in byteBuffers
      * @param callback      the callback to invoke on completion
      */
-    void sendMessageAsync(List<ByteBuf> byteBuffers, final int lastRequestId, SingleResultCallback<Void> callback);
+    void sendMessageAsync(List<ByteBuf> byteBuffers, int lastRequestId, SingleResultCallback<Void> callback);
 
     /**
      * Asynchronously receive a response to a sent message from the server.
@@ -78,10 +78,12 @@ public interface Connection extends BufferProvider, ReferenceCounted {
      * @param responseTo the request id that this message is a response to
      * @param callback   the callback to invoke on completion
      */
-    void receiveMessageAsync(final int responseTo, SingleResultCallback<ResponseBuffers> callback);
+    void receiveMessageAsync(int responseTo, SingleResultCallback<ResponseBuffers> callback);
 
     /**
      * Gets the server address of this connection
+     *
+     * @return a ServerAddress for this connection.
      */
     ServerAddress getServerAddress();
 

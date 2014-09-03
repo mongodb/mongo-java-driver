@@ -82,8 +82,8 @@ abstract class BaseCluster implements Cluster {
 
             boolean selectionFailureLogged = false;
 
-            final long startTimeNanos = System.nanoTime();
-            final long endTimeNanos = startTimeNanos + NANOSECONDS.convert(maxWaitTime, timeUnit);
+            long startTimeNanos = System.nanoTime();
+            long endTimeNanos = startTimeNanos + NANOSECONDS.convert(maxWaitTime, timeUnit);
             long curTimeNanos = startTimeNanos;
 
             while (true) {
@@ -143,8 +143,8 @@ abstract class BaseCluster implements Cluster {
 
             boolean selectionFailureLogged = false;
 
-            final long startTimeNanos = System.nanoTime();
-            final long endTimeNanos = startTimeNanos + NANOSECONDS.convert(maxWaitTime, timeUnit);
+            long startTimeNanos = System.nanoTime();
+            long endTimeNanos = startTimeNanos + NANOSECONDS.convert(maxWaitTime, timeUnit);
             long curTimeNanos = startTimeNanos;
 
             while (curDescription.getType() == ClusterType.UNKNOWN) {
@@ -203,7 +203,7 @@ abstract class BaseCluster implements Cluster {
      * @param serverAddress the address
      * @return the server, or null if the cluster no longer contains a server at this address.
      */
-    protected abstract ClusterableServer getServer(final ServerAddress serverAddress);
+    protected abstract ClusterableServer getServer(ServerAddress serverAddress);
 
     protected synchronized void updateDescription(final ClusterDescription newDescription) {
         LOGGER.debug(format("Updating cluster description to  %s", newDescription.getShortDescription()));

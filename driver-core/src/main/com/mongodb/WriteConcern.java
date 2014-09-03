@@ -34,27 +34,26 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * <p>Controls the acknowledgment of write operations with various options.
- * <p>
- * <b>w</b>
+ * <p>Controls the acknowledgment of write operations with various options.</p>
+ * 
+ * <p>{@code w}</p>
  * <ul>
- *  <li> 0 = Don't wait for acknowledgement from the server </li>
- *  <li> 1 = Wait for acknowledgement, but don't wait for secondaries to replicate</li>
- *  <li> 2+= Wait for one or more secondaries to also acknowledge </li>
+ *  <li> 0: Don't wait for acknowledgement from the server </li>
+ *  <li> 1: Wait for acknowledgement, but don't wait for secondaries to replicate</li>
+ *  <li> &gt;=2: Wait for one or more secondaries to also acknowledge </li>
  * </ul>
- * <b>wtimeout</b> how long to wait for slaves before failing
+ * <p>{@code wtimeout} - how long to wait for slaves before failing</p>
  * <ul>
  *   <li>0: indefinite </li>
- *   <li>greater than 0: ms to wait </li>
+ *   <li>&gt;0: time to wait in milliseconds</li>
  * </ul>
- * </p>
- * <p>
- * Other options:
+ * 
+ * <p>Other options:</p>
  * <ul>
- *   <li><b>j</b>: If true block until write operations have been committed to the journal. Cannot be used in combination with
+ *   <li>{@code j}: If true block until write operations have been committed to the journal. Cannot be used in combination with
  *   {@code fsync}. Prior to MongoDB 2.6 this option was ignored if the server was running without journaling.  Starting with MongoDB 2.6
  *   write operations will fail with an exception if this option is used when the server is running without journaling.</li>
- *   <li><b>fsync</b>: If true and the server is running without journaling, blocks until the server has synced all data files to disk.
+ *   <li>{@code fsync}: If true and the server is running without journaling, blocks until the server has synced all data files to disk.
  *   If the server is running with journaling, this acts the same as the {@code j} option, blocking until write operations have been
  *   committed to the journal. Cannot be used in combination with {@code j}. In almost all cases the  {@code j} flag should be used in
  *   preference to this one.</li>
@@ -111,20 +110,20 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(2);
 
     /**
-     * Write operations that use this write concern will return as soon as the message is written to the socket. Exceptions are raised for
-     * network issues, but not server errors.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.UNACKNOWLEDGED}, and may be deprecated in a future release.
+     * <p>Write operations that use this write concern will return as soon as the message is written to the socket. Exceptions are raised
+     * for network issues, but not server errors.</p>
+     *
+     * <p>This field has been superseded by {@code WriteConcern.UNACKNOWLEDGED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#UNACKNOWLEDGED
      */
     public static final WriteConcern NORMAL = UNACKNOWLEDGED;
 
     /**
-     * Write operations that use this write concern will wait for acknowledgement from the primary server before returning. Exceptions are
-     * raised for network issues, and server errors.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.ACKNOWLEDGED}, and may be deprecated in a future release.
+     * <p>Write operations that use this write concern will wait for acknowledgement from the primary server before returning. Exceptions
+     * are raised for network issues, and server errors.</p>
+     *
+     * <p>This field has been superseded by {@code WriteConcern.ACKNOWLEDGED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#ACKNOWLEDGED
      */
@@ -136,28 +135,29 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern MAJORITY = new WriteConcern("majority");
 
     /**
-     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush the data to disk.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.FSYNCED}, and may be deprecated in a future release.
+     * <p>Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush the data to
+     * disk.</p>
+     *
+     * <p>This field has been superseded by {@code WriteConcern.FSYNCED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#FSYNCED
      */
     public static final WriteConcern FSYNC_SAFE = FSYNCED;
 
     /**
-     * Exceptions are raised for network issues, and server errors; the write operation waits for the server to group commit to the journal
-     * file on disk.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.JOURNALED}, and may be deprecated in a future release.
+     * <p>Exceptions are raised for network issues, and server errors; the write operation waits for the server to group commit to the
+     * journal file on disk. </p>
+     *
+     * <p>This field has been superseded by {@code WriteConcern.JOURNALED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#JOURNALED
      */
     public static final WriteConcern JOURNAL_SAFE = JOURNALED;
 
     /**
-     * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.
-     * <p/>
-     * This field has been superseded by {@code WriteConcern.REPLICA_ACKNOWLEDGED}, and may be deprecated in a future release.
+     * <p>Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.</p>
+     *
+     * <p>This field has been superseded by {@code WriteConcern.REPLICA_ACKNOWLEDGED}, and may be deprecated in a future release.</p>
      *
      * @see WriteConcern#REPLICA_ACKNOWLEDGED
      */
@@ -211,10 +211,17 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
-     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
-     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
-     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
+     * <p>Creates a WriteConcern object.</p> 
+     * 
+     * <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior </p>
+     * 
+     * <p> {@code w} represents the number of servers:</p>
+     * <ul> 
+     *     <li>{@code w=-1} None, no checking is done</li> 
+     *     <li>{@code w=0} None, network socket errors raised</li> 
+     *     <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> 
+     *     <li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li> 
+     * </ul>
      *
      * @param w        number of writes
      * @param wtimeout timeout for write operation
@@ -225,10 +232,17 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
-     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
-     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
-     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
+     * <p>Creates a WriteConcern object.</p>
+     * 
+     * <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior</p> 
+     * 
+     * <p> {@code w} represents the number of servers:</p> 
+     * <ul> 
+     *     <li>{@code w=-1} None, no checking is done</li> 
+     *     <li>{@code w=0} None, network socket errors raised</li> 
+     *     <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> 
+     *     <li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li> 
+     * </ul> 
      *
      * @param w        number of writes
      * @param wtimeout timeout for write operation
@@ -244,10 +258,17 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Creates a WriteConcern object. <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior
-     * </p> <p> w represents the number of servers: <ul> <li>{@code w=-1} None, no checking is done</li> <li>{@code w=0} None, network
-     * socket errors raised</li> <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> <li>{@code w>1}
-     * Checks servers (w) for errors as well as network socket errors raised</li> </ul> </p>
+     * <p>Creates a WriteConcern object.</p> 
+     * 
+     * <p>Specifies the number of servers to wait for on the write operation, and exception raising behavior</p>
+     * 
+     * <p> {@code w} represents the number of servers:</p>
+     * <ul> 
+     *     <li>{@code w=-1} None, no checking is done</li> 
+     *     <li>{@code w=0} None, network socket errors raised</li> 
+     *     <li>{@code w=1} Checks server for errors as well as network socket errors raised</li> 
+     *     <li>{@code w>1} Checks servers (w) for errors as well as network socket errors raised</li> 
+     * </ul>
      *
      * @param w        number of writes
      * @param wtimeout timeout for write operation
@@ -318,7 +339,7 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Returns whether "getlasterror" should be called (w > 0)
+     * Returns whether "getlasterror" should be called (w &gt; 0)
      *
      * @return whether this write concern will result in an an acknowledged write
      */
@@ -339,7 +360,7 @@ public class WriteConcern implements Serializable {
     /**
      * Gets this write concern as a document
      *
-     * @return The write concern as a Document, even if {@code w <= 0}
+     * @return The write concern as a Document, even if {@code w &lt;= 0}
      */
     public BsonDocument asDocument() {
         if (!isAcknowledged()) {
@@ -359,7 +380,7 @@ public class WriteConcern implements Serializable {
     /**
      * Returns whether write operations should be acknowledged
      *
-     * @return true w != null or w > 0
+     * @return true w != null or w &gt; 0
      */
     public boolean isAcknowledged() {
         if (w instanceof Integer) {
@@ -498,19 +519,33 @@ public class WriteConcern implements Serializable {
      * @param wtimeout timeout for write operation
      * @param fsync    whether or not to fsync
      * @param j        whether writes should wait for a journal group commit
+     * @return Majority, a subclass of WriteConcern that represents the write concern requiring most servers to acknowledge the write
      */
     public static Majority majorityWriteConcern(final int wtimeout, final boolean fsync, final boolean j) {
         return new Majority(wtimeout, fsync, j);
     }
 
+    /**
+     * A write concern that blocks acknowledgement of a write operation until a majority of replica set members have applied it.
+     */
     public static class Majority extends WriteConcern {
 
         private static final long serialVersionUID = -4128295115883875212L;
 
+        /**
+         * Create a new Majority WriteConcern.
+         */
         public Majority() {
             this(0, false, false);
         }
 
+        /**
+         * Create a new WriteConcern with the given configuration.
+         *
+         * @param wtimeout timeout for write operation
+         * @param fsync    whether or not to fsync
+         * @param j        whether writes should wait for a journaling group commit
+         */
         public Majority(final int wtimeout, final boolean fsync, final boolean j) {
             super("majority", wtimeout, fsync, j);
         }

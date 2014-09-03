@@ -30,10 +30,9 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
 /**
- * Finds the distinct values for a specified field across a single collection. This returns an array of the distinct values.
- * <p/>
- * When possible, the distinct command uses an index to find documents and return values.
- * <p/>
+ * <p>Finds the distinct values for a specified field across a single collection. This returns an array of the distinct values.</p>
+ * 
+ * <p>When possible, the distinct command uses an index to find documents and return values.</p>
  *
  * @mongodb.driver.manual reference/command/distinct Distinct Command
  * @since 3.0

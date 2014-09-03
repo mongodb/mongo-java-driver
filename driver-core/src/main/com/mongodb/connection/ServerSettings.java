@@ -31,6 +31,11 @@ public class ServerSettings {
     private final long heartbeatConnectRetryFrequencyMS;
     private final int heartbeatThreadCount;
 
+    /**
+     * Creates a builder for ServerSettings.
+     *
+     * @return a new Builder for creating ServerSettings.
+     */
     public static Builder builder() {
         return new Builder();
     }
@@ -47,7 +52,7 @@ public class ServerSettings {
          * Sets the frequency that the cluster monitor attempts to reach each server.
          *
          * @param heartbeatFrequency the heartbeat frequency
-         * @param timeUnit the time unit
+         * @param timeUnit           the time unit
          * @return this
          */
         public Builder heartbeatFrequency(final long heartbeatFrequency, final TimeUnit timeUnit) {
@@ -59,7 +64,7 @@ public class ServerSettings {
          * Sets the frequency that the cluster monitor attempts to reach each server that is currently unreachable.
          *
          * @param heartbeatConnectRetryFrequency the heartbeat connect retry frequency
-         * @param timeUnit the time unit
+         * @param timeUnit                       the time unit
          * @return this
          */
         public Builder heartbeatConnectRetryFrequency(final long heartbeatConnectRetryFrequency, final TimeUnit timeUnit) {
@@ -78,6 +83,11 @@ public class ServerSettings {
             return this;
         }
 
+        /**
+         * Create a new ServerSettings from the settings applied to this builder.
+         *
+         * @return a ServerSettings with the given settings.
+         */
         public ServerSettings build() {
             return new ServerSettings(this);
         }
@@ -105,8 +115,8 @@ public class ServerSettings {
     }
 
     /**
-     * Gets the maximum number of threads to use for monitoring the state of the cluster.  If this is set to 0 (which is the default)
-     * then the size of the seed list of cluster server addresses will be used as the maximum.
+     * Gets the maximum number of threads to use for monitoring the state of the cluster.  If this is set to 0 (which is the default) then
+     * the size of the seed list of cluster server addresses will be used as the maximum.
      *
      * @return the max thread count
      */

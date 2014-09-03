@@ -21,13 +21,41 @@ import com.mongodb.selector.ServerSelector;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Represents a cluster of MongoDB servers.  Implementations can define the behaviour depending upon the type of cluster.
+ *
+ * @since 3.0
+ */
 public interface Cluster {
 
+    /**
+     * Get the details of this cluster of servers
+     *
+     * @param maxWaitTime the maximum time to wait for a connection to the cluster to get the description
+     * @param timeUnit    the TimeUnit for the maxWaitTime
+     * @return a ClusterDescription representing the current state of the cluster
+     */
     ClusterDescription getDescription(long maxWaitTime, TimeUnit timeUnit);
 
+    /**
+     * Get a MongoDB server that matches the criteria defined by the serverSelector
+     *
+     * @param serverSelector a ServerSelector that defines how to select the required Server
+     * @param maxWaitTime    the maximum time to wait for a connection to the cluster to get a server
+     * @param timeUnit       the TimeUnit for the maxWaitTime
+     * @return a Server that meets the requirements
+     */
     Server selectServer(ServerSelector serverSelector, long maxWaitTime, TimeUnit timeUnit);
 
+    /**
+     * Closes connections to the servers in the cluster.  After this is called, this cluster instance can no longer be used.
+     */
     void close();
 
+    /**
+     * Whether all the servers in the cluster are closed or not.
+     *
+     * @return true if all the servers in this cluster have been closed
+     */
     boolean isClosed();
 }

@@ -19,5 +19,5 @@ package com.mongodb.connection;
 import com.mongodb.ServerAddress;
 
 interface InternalConnectionFactory {
-    InternalConnection create(final ServerAddress serverAddress);
+    InternalConnection create(ServerAddress serverAddress);
 }

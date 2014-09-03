@@ -18,6 +18,12 @@ package com.mongodb.connection;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ * Represents some sort of change in the system
+ *
+ * @param <T> the type of the value that changed.
+ * @since 3.0
+ */
 public class ChangeEvent<T> {
     private final T oldValue;
     private final T newValue;
@@ -31,10 +37,20 @@ public class ChangeEvent<T> {
         this.newValue = notNull("newValue", newValue);
     }
 
+    /**
+     * Returns the value before this change event was fired.
+     *
+     * @return the previous value
+     */
     public T getOldValue() {
         return oldValue;
     }
 
+    /**
+     * Returns the value after the event was fired
+     *
+     * @return the updated value
+     */
     public T getNewValue() {
         return newValue;
     }

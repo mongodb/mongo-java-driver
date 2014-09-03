@@ -40,9 +40,10 @@ import static java.lang.String.format;
 
 
 /**
- * Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>. The URI describes the hosts to
- * be used and options.
- * <p>The format of the URI is:
+ * <p>Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a>. The URI describes the hosts to
+ * be used and options.</p>
+ * 
+ * <p>The format of the URI is:</p>
  * <pre>
  *   mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
  * </pre>
@@ -60,11 +61,10 @@ import static java.lang.String.format;
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated.</li>
  * </ul>
- * <p>
- * The following options are supported (case insensitive):
- * <p>
- * Replica set configuration:
- * </p>
+ *
+ * <p>The following options are supported (case insensitive):</p>
+ * 
+ * <p>Replica set configuration:</p>
  * <ul>
  * <li>{@code replicaSet=name}: Implies that the hosts given are a seed list, and the driver will attempt to find
  * all members of the set.</li>
@@ -145,10 +145,8 @@ import static java.lang.String.format;
  * If the database is specified in neither place, the default value is "admin".  This option is only respected when using the MONGO-CR
  * mechanism (the default).
  * </li>
- * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name.
- * </li>
- * <ul>
- * <p/>
+ * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name. </li>
+ * </ul>
  *
  * @mongodb.driver.manual reference/connection-string Connection String URI Format
  * @since 3.0.0

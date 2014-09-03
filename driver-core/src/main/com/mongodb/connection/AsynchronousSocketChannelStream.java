@@ -153,7 +153,7 @@ final class AsynchronousSocketChannelStream implements Stream {
                     }
                 });
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new MongoSocketOpenException("Exception opening socket", serverAddress, e);
         }
     }

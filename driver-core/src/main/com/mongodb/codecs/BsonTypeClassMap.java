@@ -37,93 +37,32 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A map from a BSON types to the Class to which it should be decoded.  This class is useful if, for example,
- * you want to change the default decoding of BSON DATE to something besides {@code java.util.Date}.
- * <p>
- * The default mappings are:
+ * <p>A map from a BSON types to the Class to which it should be decoded.  This class is useful if, for example,
+ * you want to change the default decoding of BSON DATE to something besides {@code java.util.Date}.</p>
+ * 
+ * <p>The default mappings are:</p>
  *
- * <table>
- *     <tr>
- *         <th>BSON Type</th>
- *         <th>Class</th>
- *     </tr>
- *     <tr>
- *         <td>DOCUMENT</td>
- *         <td>{@code org.mongodb.Document.class}</td>
- *     </tr>
- *     <tr>
- *         <td>ARRAY</td>
- *         <td>{@code java.util.List.class}</td>
- *     </tr>
- *     <tr>
- *         <td>DATE_TIME</td>
- *         <td>{@code java.util.Date.class}</td>
- *     </tr>
- *     <tr>
- *         <td>BOOLEAN</td>
- *         <td>{@code java.lang.Boolean.class}</td>
- *     </tr>
- *     <tr>
- *         <td>DOUBLE</td>
- *         <td>{@code java.lang.Double.class}</td>
- *     </tr>
- *     <tr>
- *         <td>INT32</td>
- *         <td>{@code java.lang.Integer.class}</td>
- *     </tr>
- *     <tr>
- *         <td>INT64</td>
- *         <td>{@code java.lang.Long.class}</td>
- *     </tr>
- *     <tr>
- *         <td>STRING</td>
- *         <td>{@code java.lang.String.class}</td>
- *     </tr>
- *     <tr>
- *         <td>BINARY</td>
- *         <td>{@code org.bson.types.Binary.class}</td>
- *     </tr>
- *     <tr>
- *         <td>OBJECT_ID</td>
- *         <td>{@code org.bson.types.ObjectId.class}</td>
- *     </tr>
- *     <tr>
- *         <td>REGULAR_EXPRESSION</td>
- *         <td>{@code org.bson.types.RegularExpression.class}</td>
- *     </tr>
- *     <tr>
- *         <td>SYMBOL</td>
- *         <td>{@code org.bson.types.Symbol.class}</td>
- *     </tr>
- *     <tr>
- *         <td>DB_POINTER</td>
- *         <td>{@code org.bson.types.DBPointer.class}</td>
- *     </tr>
- *     <tr>
- *         <td>MAX_KEY</td>
- *         <td>{@code org.bson.types.MaxKey.class}</td>
- *     </tr>
- *     <tr>
- *         <td>MIN_KEY</td>
- *         <td>{@code org.bson.types.MinKey.class}</td>
- *     </tr>
- *     <tr>
- *         <td>JAVASCRIPT</td>
- *         <td>{@code org.bson.types.Code.class}</td>
- *     </tr>
- *     <tr>
- *         <td>JAVASCRIPT_WITH_SCOPE</td>
- *         <td>{@code org.bson.types.CodeWithScope.class}</td>
- *     </tr>
- *     <tr>
- *         <td>TIMESTAMP</td>
- *         <td>{@code org.bson.types.BSONTimestamp.class}</td>
- *     </tr>
- *     <tr>
- *         <td>UNDEFINED</td>
- *         <td>{@code org.bson.types.Undefined.class}</td>
- *     </tr>
- * </table>
+ * <ul>
+ *     <li><em>DOCUMENT</em>: {@code org.mongodb.Document.class} </li>
+ *     <li><em>ARRAY</em>: {@code java.util.List.class} </li>
+ *     <li><em>DATE_TIME</em>: {@code java.util.Date.class} </li>
+ *     <li><em>BOOLEAN</em>: {@code java.lang.Boolean.class} </li>
+ *     <li><em>DOUBLE</em>: {@code java.lang.Double.class} </li>
+ *     <li><em>INT32</em>: {@code java.lang.Integer.class} </li>
+ *     <li><em>INT64</em>: {@code java.lang.Long.class} </li>
+ *     <li><em>STRING</em>: {@code java.lang.String.class} </li>
+ *     <li><em>BINARY</em>: {@code org.bson.types.Binary.class} </li>
+ *     <li><em>OBJECT_ID</em>: {@code org.bson.types.ObjectId.class} </li>
+ *     <li><em>REGULAR_EXPRESSION</em>: {@code org.bson.types.RegularExpression.class} </li>
+ *     <li><em>SYMBOL</em>: {@code org.bson.types.Symbol.class} </li>
+ *     <li><em>DB_POINTER</em>: {@code org.bson.types.DBPointer.class} </li>
+ *     <li><em>MAX_KEY</em>: {@code org.bson.types.MaxKey.class} </li>
+ *     <li><em>MIN_KEY</em>: {@code org.bson.types.MinKey.class} </li>
+ *     <li><em>JAVASCRIPT</em>: {@code org.bson.types.Code.class} </li>
+ *     <li><em>JAVASCRIPT_WITH_SCOPE</em>: {@code org.bson.types.CodeWithScope.class} </li>
+ *     <li><em>TIMESTAMP</em>: {@code org.bson.types.BSONTimestamp.class} </li>
+ *     <li><em>UNDEFINED</em>: {@code org.bson.types.Undefined.class} </li>
+ * </ul>
  *
  * @since 3.0
  */

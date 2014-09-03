@@ -14,18 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
-
-import java.io.Closeable;
-import java.util.concurrent.TimeUnit;
-
-interface ConnectionPool extends Closeable {
-
-    InternalConnection get();
-
-    InternalConnection get(long timeout, TimeUnit timeUnit);
-
-    void invalidate();
-
-    void close();
-}
+/**
+ * Contains annotations that can apply to any part of the driver code.
+ */
+package com.mongodb.annotations;

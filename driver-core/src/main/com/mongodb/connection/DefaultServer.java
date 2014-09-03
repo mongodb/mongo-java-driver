@@ -127,7 +127,7 @@ class DefaultServer implements ClusterableServer {
     }
 
     private class DefaultServerConnection extends AbstractReferenceCounted implements Connection {
-        private InternalConnection wrapped;
+        private final InternalConnection wrapped;
 
         public DefaultServerConnection(final InternalConnection wrapped) {
             this.wrapped = wrapped;

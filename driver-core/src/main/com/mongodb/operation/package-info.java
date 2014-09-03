@@ -14,18 +14,8 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
-
-import java.io.Closeable;
-import java.util.concurrent.TimeUnit;
-
-interface ConnectionPool extends Closeable {
-
-    InternalConnection get();
-
-    InternalConnection get(long timeout, TimeUnit timeUnit);
-
-    void invalidate();
-
-    void close();
-}
+/**
+ * The core of the MongoDB driver works via operations, using the command pattern.  The main Operations supported by MongoDB are in this 
+ * package, as are helpers and infrastructure required for operation functionality.
+ */
+package com.mongodb.operation;

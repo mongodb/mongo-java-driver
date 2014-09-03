@@ -43,6 +43,11 @@ public final class ClusterSettings {
     private final String requiredReplicaSetName;
     private final ServerSelector serverSelector;
 
+    /**
+     * Get a builder for this class.
+     *
+     * @return a new Builder for creating ClusterSettings.
+     */
     public static Builder builder() {
         return new Builder();
     }
@@ -119,10 +124,16 @@ public final class ClusterSettings {
             return this;
         }
 
+        /**
+         * Take the settings from the given ConnectionString and add them to the builder
+         *
+         * @param connectionString a URI containing details of how to connect to MongoDB
+         * @return this
+         */
         public Builder applyConnectionString(final ConnectionString connectionString) {
             if (connectionString.getHosts().size() == 1 && connectionString.getRequiredReplicaSetName() == null) {
                 mode(ClusterConnectionMode.SINGLE)
-                              .hosts(Arrays.asList(new ServerAddress(connectionString.getHosts().get(0))));
+                .hosts(Arrays.asList(new ServerAddress(connectionString.getHosts().get(0))));
             } else {
                 List<ServerAddress> seedList = new ArrayList<ServerAddress>();
                 for (final String cur : connectionString.getHosts()) {
@@ -182,8 +193,8 @@ public final class ClusterSettings {
     }
 
     /**
-     * Gets the {@code ServerSelector} that will be uses as the final server selector that is applied in calls to
-     * {@code Cluster.selectServer}.
+     * Gets the {@code ServerSelector} that will be uses as the final server selector that is applied in calls to {@code
+     * Cluster.selectServer}.
      *
      * @return the server selector, which may be null
      * @see Cluster#selectServer(ServerSelector, long, java.util.concurrent.TimeUnit)
@@ -203,6 +214,11 @@ public final class ClusterSettings {
                + '}';
     }
 
+    /**
+     * Returns a short, pretty description for these ClusterSettings.
+     *
+     * @return a String description of the relevant settings.
+     */
     public String getShortDescription() {
         return "{"
                + "hosts=" + hosts

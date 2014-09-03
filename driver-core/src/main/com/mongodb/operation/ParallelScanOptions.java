@@ -49,7 +49,7 @@ public final class ParallelScanOptions {
         /**
          * Set the requested number of cursors to iterate in parallel.  This is an upper bound and the server may provide fewer.
          *
-         * @param numCursors the number of cursors requested, which must be >= 1
+         * @param numCursors the number of cursors requested, which must be greater than or equal to 1
          * @return this
          */
         public Builder numCursors(final int numCursors) {
@@ -62,7 +62,7 @@ public final class ParallelScanOptions {
         /**
          * The batch size to use for each cursor.
          *
-         * @param batchSize the batch size, which must be >= 0
+         * @param batchSize the batch size, which must be greater than or equal to  0
          * @return this
          */
         public Builder batchSize(final int batchSize) {
@@ -71,6 +71,11 @@ public final class ParallelScanOptions {
             return this;
         }
 
+        /**
+         * Builds an instance of ParallelScanOptions with the settings from this builder.
+         *
+         * @return a new instance of ParallelScanOptions.
+         */
         public ParallelScanOptions build() {
             return new ParallelScanOptions(this);
         }

@@ -299,10 +299,10 @@ class ScramSha1Authenticator extends SaslAuthenticator {
 
     public static class DefaultRandomStringGenerator implements RandomStringGenerator {
         public String generate(final int length) {
-            final int comma = 44;
-            final int low = 33;
-            final int high = 126;
-            final int range = high - low;
+            int comma = 44;
+            int low = 33;
+            int high = 126;
+            int range = high - low;
 
             Random random = new Random();
             char[] text = new char[length];

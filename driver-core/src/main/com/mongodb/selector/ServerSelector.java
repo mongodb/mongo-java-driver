@@ -23,15 +23,21 @@ import com.mongodb.connection.ServerDescription;
 import java.util.List;
 
 /**
- * An interface for selecting a server from a cluster according some preference.
- * <p/>
- * Implementations of this interface should ensure that their equals and hashCode methods compare equal preferences as equal, as users of
- * this interface may rely on that behavior to efficiently consolidate handling of multiple requests waiting on a server that can satisfy
- * the preference.
+ * <p>An interface for selecting a server from a cluster according some preference.</p>
  *
- * @since 3.0.0
+ * <p>Implementations of this interface should ensure that their equals and hashCode methods compare equal preferences as equal, as users of
+ * this interface may rely on that behavior to efficiently consolidate handling of multiple requests waiting on a server that can satisfy
+ * the preference.</p>
+ *
+ * @since 3.0
  */
 @ThreadSafe
 public interface ServerSelector {
+    /**
+     * Select a list of server descriptions from the given cluster description according to some criteria.
+     *
+     * @param clusterDescription the cluster of servers to select from
+     * @return a non-null list of ServerDescriptions that meet the requirements of this ServerSelector. This may be empty.
+     */
     List<ServerDescription> select(ClusterDescription clusterDescription);
 }
