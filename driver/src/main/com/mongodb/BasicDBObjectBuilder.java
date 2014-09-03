@@ -49,12 +49,12 @@ public class BasicDBObjectBuilder {
     /**
      * Creates a builder initialized with the given key/value.
      *
-     * @param k   The field name
+     * @param key The field name
      * @param val The value
-     * @return this
+     * @return the new builder
      */
-    public static BasicDBObjectBuilder start(final String k, final Object val) {
-        return (new BasicDBObjectBuilder()).add(k, val);
+    public static BasicDBObjectBuilder start(final String key, final Object val) {
+        return (new BasicDBObjectBuilder()).add(key, val);
     }
 
     /**
@@ -79,7 +79,7 @@ public class BasicDBObjectBuilder {
      *
      * @param key the field name
      * @param val the value of the field
-     * @return this so you can chain
+     * @return {@code this} so calls can be chained
      */
     public BasicDBObjectBuilder append(final String key, final Object val) {
         _cur().put(key, val);
@@ -91,7 +91,7 @@ public class BasicDBObjectBuilder {
      *
      * @param key the field name
      * @param val the value of the field
-     * @return this so you can chain
+     * @return {@code this} so calls can be chained
      * @see #append(String, Object)
      */
     public BasicDBObjectBuilder add(final String key, final Object val) {
@@ -102,7 +102,7 @@ public class BasicDBObjectBuilder {
      * Creates an new empty object and inserts it into the current object with the given key. The new child object becomes the active one.
      *
      * @param key the field name
-     * @return this so you can chain
+     * @return {@code this} so calls can be chained
      */
     public BasicDBObjectBuilder push(final String key) {
         BasicDBObject o = new BasicDBObject();
@@ -114,7 +114,7 @@ public class BasicDBObjectBuilder {
     /**
      * Pops the active object, which means that the parent object becomes active
      *
-     * @return this so you can chain
+     * @return {@code this} so calls can be chained
      */
     public BasicDBObjectBuilder pop() {
         if (_stack.size() <= 1) {

@@ -82,9 +82,10 @@ public class CommandResult extends BasicDBObject {
     }
 
     /**
-     * Throws an exception containing the command name, in case the command failed, or the "err/code" information
+     * Throws a {@code CommandFailureException} if the command failed. Otherwise, returns normally.
      *
      * @throws MongoException
+     * @see #ok()
      */
     public void throwOnError() {
         if (!ok()) {

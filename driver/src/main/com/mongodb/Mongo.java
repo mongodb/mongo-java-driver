@@ -78,34 +78,6 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * <p>A database connection with internal connection pooling. For most applications, you should have one Mongo instance for the entire
  * JVM.</p>
  *
- * <p>The following are equivalent, and all connect to the local database running on the default port:</p>
- * <pre>
- *  Mongo mongo1 = new Mongo();
- *  Mongo mongo1 = new Mongo("localhost");
- *  Mongo mongo2 = new Mongo("localhost", 27017);
- *  Mongo mongo4 = new Mongo(new ServerAddress("localhost"));
- * </pre>
- *
- * <p>You can connect to a <a href="http://www.mongodb.org/display/DOCS/Replica+Sets">replica set</a> using the Java driver by passing a
- * ServerAddress list to the Mongo constructor. For example:</p>
- * <pre>
- *   Mongo mongo = new Mongo(Arrays.asList(new ServerAddress("localhost", 27017),
- *                                         new ServerAddress("localhost", 27018),
- *                                         new ServerAddress("localhost", 27019)));
- * </pre>
- *
- * <p>You can connect to a sharded cluster using the same constructor.  Mongo will auto-detect whether the servers are a list of replica set
- * members or a list of mongos servers.</p>
- *
- * <p>By default, all read and write operations will be made on the primary, but it's possible to read from secondaries by changing the read
- * preference:</p>
- *
- * <pre>{@code mongo.setReadPreference(ReadPreference.secondary());} </pre>
- *
- * <p>By default, write operations will not throw exceptions on failure, but that is easily changed too:</p>
- *
- * <pre>{@code mongo.setWriteConcern(WriteConcern.SAFE);} </pre>
- *
  * <p>Note: This class has been superseded by {@code MongoClient}, and may be deprecated in a future release.</p>
  *
  * @see MongoClient
@@ -433,7 +405,7 @@ public class Mongo {
     /**
      * <p>Returns the mongo options.</p>
      *
-     * <p>Please be aware that since 3.0 changes to {@code MongoOptions} that are done after connection are not reflected.</p>
+     * <p>Changes to {@code MongoOptions} that are done after connection are not reflected.</p>
      *
      * @return the mongo options
      * @deprecated Please use {@link MongoClient} class to connect to server and corresponding {@link

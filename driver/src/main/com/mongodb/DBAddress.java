@@ -26,7 +26,7 @@ public class DBAddress extends ServerAddress {
     private final String _db;
 
     /**
-     * Creates a new address Accepts as the parameter format:
+     * Creates a new address. Accepts as the parameter format:
      *
      * <ul>
      *     <li><i>name</i> "mydb"</li>

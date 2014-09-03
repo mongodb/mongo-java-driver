@@ -36,7 +36,7 @@ public class ReplicaSetStatus {
     }
 
     /**
-     * Get the name of the Replica Set.
+     * Get the name of the replica set.
      *
      * @return the name of the replica set.
      */

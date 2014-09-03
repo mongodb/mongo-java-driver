@@ -34,7 +34,7 @@ public interface Cursor extends Iterator<DBObject>, Closeable {
     long getCursorId();
 
     /**
-     * Gets the Server Address of the server that data is pulled from. Note that this information may not be available until hasNext() or
+     * Gets the address of the server that data is pulled from. Note that this information may not be available until hasNext() or
      * next() is called.
      *
      * @return the address of the server that data is pulled from

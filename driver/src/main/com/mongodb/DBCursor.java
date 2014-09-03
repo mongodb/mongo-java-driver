@@ -415,15 +415,15 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Limits the number of elements returned. Note: parameter {@code numberOfElements} should be positive, although a negative value is
+     * Limits the number of elements returned. Note: parameter {@code limit} should be positive, although a negative value is
      * supported for legacy reason. Passing a negative value will call {@link DBCursor#batchSize(int)} which is the preferred method.
      *
-     * @param numberOfElements the number of elements to return
+     * @param limit the number of elements to return
      * @return a cursor to iterate the results
      * @mongodb.driver.manual reference/method/cursor.limit Limit
      */
-    public DBCursor limit(final int numberOfElements) {
-        find.limit(numberOfElements);
+    public DBCursor limit(final int limit) {
+        find.limit(limit);
         return this;
     }
 
@@ -438,9 +438,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * 4MB), and cursor will be closed. For example if {@code batchSize} is -10, then the server will return a maximum of 10 documents and
      * as many as can fit in 4MB, then close the cursor. Note that this feature is different from limit() in that documents must fit within
      * a maximum size, and it removes the need to send a request to close the cursor server-side.</p>
-     *
-     * <p>The batch size can be changed even after a cursor is iterated, in which case the setting will apply on the next batch
-     * retrieval.</p>
      *
      * @param numberOfElements the number of elements to return in a batch
      * @return {@code this} so calls can be chained

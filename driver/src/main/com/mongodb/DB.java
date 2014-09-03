@@ -250,7 +250,7 @@ public class DB {
 
     /**
      * <p>Creates a collection with a given name and options. If the collection already exists, 
-     * this throws a {@code CommandFailedException}.</p>
+     * this throws a {@code CommandFailureException}.</p>
      * 
      * <p>Possible options:</p>
      * <ul> 

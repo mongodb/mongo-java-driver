@@ -97,6 +97,21 @@ public class DBTest extends DatabaseTestCase {
         assertThat(database.getCollectionNames(), hasItems(collectionNames));
     }
 
+    @Test
+    public void shouldGetCollectionGivenAStringName() {
+        DBCollection collection = database.getCollectionFromString("foo");
+        assertEquals("foo", collection.getName());
+
+        collection = database.getCollectionFromString("foo.bar");
+        assertEquals("foo.bar", collection.getName());
+
+        collection = database.getCollectionFromString("foo.bar.zoo");
+        assertEquals("foo.bar.zoo", collection.getName());
+
+        collection = database.getCollectionFromString("foo.bar.zoo.dork");
+        assertEquals("foo.bar.zoo.dork", collection.getName());
+    }
+
     @Test(expected = MongoException.class)
     public void shouldReceiveAnErrorIfCreatingCappedCollectionWithoutSize() {
         database.createCollection("someName", new BasicDBObject("capped", true));
