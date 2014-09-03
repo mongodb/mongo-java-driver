@@ -47,7 +47,7 @@ public final class FindModel<D> implements ExplainableModel {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public FindModel criteria(final D criteria) {
+    public FindModel<D> criteria(final D criteria) {
         this.criteria = criteria;
         return this;
     }
@@ -76,7 +76,7 @@ public final class FindModel<D> implements ExplainableModel {
      * @param limit the limit, which may be null
      * @return this
      */
-    public FindModel limit(final Integer limit) {
+    public FindModel<D> limit(final Integer limit) {
         this.limit = limit;
         return this;
     }
@@ -96,7 +96,7 @@ public final class FindModel<D> implements ExplainableModel {
      * @param skip the number of documents to skip, which may be null
      * @return this
      */
-    public FindModel skip(final Integer skip) {
+    public FindModel<D> skip(final Integer skip) {
         this.skip = skip;
         return this;
     }
@@ -116,7 +116,7 @@ public final class FindModel<D> implements ExplainableModel {
      * @param cursorFlags the cursor flags
      * @return this
      */
-    public FindModel cursorFlags(final EnumSet<CursorFlag> cursorFlags) {
+    public FindModel<D> cursorFlags(final EnumSet<CursorFlag> cursorFlags) {
         this.cursorFlags = cursorFlags;
         return this;
     }
@@ -142,7 +142,7 @@ public final class FindModel<D> implements ExplainableModel {
      * @param timeUnit the time unit, which may only be null if maxTime is
      * @return this
      */
-    public FindModel maxTimeMS(final Long maxTime, final TimeUnit timeUnit) {
+    public FindModel<D> maxTimeMS(final Long maxTime, final TimeUnit timeUnit) {
         if (maxTime == null) {
             maxTimeMS = null;
         } else {
@@ -167,7 +167,7 @@ public final class FindModel<D> implements ExplainableModel {
      * @param batchSize the batch size, which may be null
      * @return this
      */
-    public FindModel batchSize(final Integer batchSize) {
+    public FindModel<D> batchSize(final Integer batchSize) {
         this.batchSize = batchSize;
         return this;
     }
@@ -190,7 +190,7 @@ public final class FindModel<D> implements ExplainableModel {
      * @return this
      * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
      */
-    public FindModel modifiers(final D modifiers) {
+    public FindModel<D> modifiers(final D modifiers) {
         this.modifiers = modifiers;
         return this;
     }
@@ -213,7 +213,7 @@ public final class FindModel<D> implements ExplainableModel {
      * @return this
      * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
      */
-    public FindModel projection(final D projection) {
+    public FindModel<D> projection(final D projection) {
         this.projection = projection;
         return this;
     }
@@ -237,7 +237,7 @@ public final class FindModel<D> implements ExplainableModel {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public FindModel sort(final D sort) {
+    public FindModel<D> sort(final D sort) {
         this.sort = sort;
         return this;
     }

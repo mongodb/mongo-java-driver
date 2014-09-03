@@ -41,7 +41,7 @@ public class CountModel<D> implements ExplainableModel {
      * {@code Codec} is registered
      * @return this
      */
-    public CountModel filter(final D filter) {
+    public CountModel<D> filter(final D filter) {
         this.filter = filter;
         return this;
     }
@@ -80,7 +80,7 @@ public class CountModel<D> implements ExplainableModel {
      * {@code Codec} is registered}
      * @return this
      */
-    public CountModel hint(final D hint) {
+    public CountModel<D> hint(final D hint) {
         this.hint = hint;
         return this;
     }
@@ -91,7 +91,7 @@ public class CountModel<D> implements ExplainableModel {
      * @param hint the name of the index which should be used for the operation
      * @return  this
      */
-    public CountModel hint(final String hint) {
+    public CountModel<D> hint(final String hint) {
         this.hintString = hint;
         return this;
     }
@@ -111,7 +111,7 @@ public class CountModel<D> implements ExplainableModel {
      * @param limit the limit, which may be null
      * @return this
      */
-    public CountModel limit(final Long limit) {
+    public CountModel<D> limit(final Long limit) {
         this.limit = limit;
         return this;
     }
@@ -131,7 +131,7 @@ public class CountModel<D> implements ExplainableModel {
      * @param skip the number of documents to skip, which may be null
      * @return this
      */
-    public CountModel skip(final Long skip) {
+    public CountModel<D> skip(final Long skip) {
         this.skip = skip;
         return this;
     }
@@ -154,7 +154,7 @@ public class CountModel<D> implements ExplainableModel {
      * @param timeUnit the time unit, which may only be null if maxTime is
      * @return this
      */
-    public CountModel maxTimeMS(final Long maxTime, final TimeUnit timeUnit) {
+    public CountModel<D> maxTimeMS(final Long maxTime, final TimeUnit timeUnit) {
         if (maxTime == null) {
             maxTimeMS = null;
         } else {

@@ -19,11 +19,15 @@ package com.mongodb;
 import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.NewMongoCollection;
+import com.mongodb.client.model.AggregateModel;
 import com.mongodb.client.model.BulkWriteModel;
 import com.mongodb.client.model.CountModel;
 import com.mongodb.client.model.DistinctModel;
 import com.mongodb.client.model.ExplainableModel;
 import com.mongodb.client.model.FindModel;
+import com.mongodb.client.model.FindOneAndRemoveModel;
+import com.mongodb.client.model.FindOneAndReplaceModel;
+import com.mongodb.client.model.FindOneAndUpdateModel;
 import com.mongodb.client.model.InsertManyModel;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.RemoveManyModel;
@@ -41,6 +45,12 @@ import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.DistinctOperation;
 import com.mongodb.operation.Find;
+import com.mongodb.operation.FindAndRemove;
+import com.mongodb.operation.FindAndRemoveOperation;
+import com.mongodb.operation.FindAndReplace;
+import com.mongodb.operation.FindAndReplaceOperation;
+import com.mongodb.operation.FindAndUpdate;
+import com.mongodb.operation.FindAndUpdateOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
 import com.mongodb.operation.MixedBulkWriteOperation;
@@ -97,17 +107,17 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public MongoIterable<Document> aggregate(final List<?> pipeline) {
-        return aggregate(pipeline, Document.class);
+    public <D> MongoIterable<Document> aggregate(final AggregateModel<D> model) {
+        return aggregate(model, Document.class);
     }
 
     @Override
-    public <D> MongoIterable<D> aggregate(final List<?> pipeline, final Class<D> clazz) {
-        List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(pipeline.size());
-        for (Object obj : pipeline) {
+    public <D, C> MongoIterable<C> aggregate(final AggregateModel<D> model, final Class<C> clazz) {
+        List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(model.getPipeline().size());
+        for (D obj : model.getPipeline()) {
             aggregateList.add(asBson(obj));
         }
-        return new OperationIterable<D>(new AggregateOperation<D>(namespace, aggregateList, options.getCodecRegistry().get(clazz),
+        return new OperationIterable<C>(new AggregateOperation<C>(namespace, aggregateList, options.getCodecRegistry().get(clazz),
                                                                   com.mongodb.operation.AggregationOptions.builder().build()),
                                         options.getReadPreference());
     }
@@ -242,6 +252,27 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
                                                                asList(new UpdateRequest(asBson(model.getFilter()),
                                                                                         asBson(model.getUpdate())).multi(true))));
         return new UpdateResult(writeResult.getCount(), 0, writeResult.getUpsertedId());
+    }
+
+    @Override
+    public <D> T findOneAndRemove(final FindOneAndRemoveModel<D> model) {
+        return operationExecutor.execute(new FindAndRemoveOperation<T>(namespace,
+                                                                       new FindAndRemove<T>(),
+                                                                       getCodec()));
+    }
+
+    @Override
+    public <D> T findOneAndUpdate(final FindOneAndUpdateModel<D> model) {
+        return operationExecutor.execute(new FindAndUpdateOperation<T>(namespace,
+                                                                       new FindAndUpdate(),
+                                                                       getCodec()));
+    }
+
+    @Override
+    public <D> T findOneAndReplace(final FindOneAndReplaceModel<T, D> model) {
+        return operationExecutor.execute(new FindAndReplaceOperation<T>(namespace,
+                                                                       new FindAndReplace<T>(model.getReplacement()),
+                                                                       getCodec()));
     }
 
     @Override
