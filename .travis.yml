@@ -28,4 +28,4 @@ branches:
   - 3.0.x
 
 install: ./gradlew -q assemble
-script: ./gradlew check
+script: ./gradlew check --stacktrace --info
