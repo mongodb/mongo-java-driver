@@ -13,6 +13,9 @@ notifications:
   flowdock:
     secure: "Ziw1Be2tV0QAYuiYDrepfdNH/oBfNhnXFMji3AdRi6MePVpc6CtOOT/b9Fra\nQgMMrX3AHk/QIDo6QQx9/aVB3FS1fzOPGQkSsEZmiljZU7wZCct1sSSyttf/\nsRG0lyTnmgFNTHyTSDT3JbXAkyF/vJmG/JJJoBUZhmFxzR2fM0Q="
 
+env:
+  - TERM=dumb
+
 services:
 - mongodb
 
@@ -24,5 +27,5 @@ branches:
   - master
   - 3.0.x
 
-install: TERM=dumb ./gradlew -q assemble
-script: TERM=dumb ./gradlew -q check
+install: ./gradlew -q assemble
+script: ./gradlew -q check
