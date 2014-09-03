@@ -80,7 +80,8 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
         return withConnection(binding, new CallableWithConnectionAndSource<MongoCursor<T>>() {
             @Override
             public MongoCursor<T> call(final ConnectionSource source, final Connection connection) {
-                return executeWrappedCommandProtocol(namespace, asCommandDocument(namespace, pipeline, options),
+                return executeWrappedCommandProtocol(namespace.getDatabaseName(),
+                                                     asCommandDocument(namespace, pipeline, options),
                                                      CommandResultDocumentCodec.create(decoder, getFieldNameWithResults()),
                                                      connection, binding.getReadPreference(), transformer(source));
             }
@@ -93,7 +94,8 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
 
             @Override
             public MongoFuture<MongoAsyncCursor<T>> call(final AsyncConnectionSource source, final Connection connection) {
-                return executeWrappedCommandProtocolAsync(namespace, asCommandDocument(namespace, pipeline, options),
+                return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(),
+                                                          asCommandDocument(namespace, pipeline, options),
                                                           CommandResultDocumentCodec.create(decoder, getFieldNameWithResults()),
                                                           binding, asyncTransformer(source));
             }

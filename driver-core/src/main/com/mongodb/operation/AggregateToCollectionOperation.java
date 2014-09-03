@@ -64,7 +64,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     @SuppressWarnings("unchecked")
     @Override
     public Void execute(final WriteBinding binding) {
-        executeWrappedCommandProtocol(namespace, asCommandDocument(namespace, pipeline, options),
+        executeWrappedCommandProtocol(namespace.getDatabaseName(), asCommandDocument(namespace, pipeline, options),
                                       new BsonDocumentCodec(), binding, new VoidTransformer<BsonDocument>());
 
         return null;
@@ -72,7 +72,8 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
 
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, asCommandDocument(namespace, pipeline, options),
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(),
+                                                  asCommandDocument(namespace, pipeline, options),
                                                   new BsonDocumentCodec(), binding,
                                                   new VoidTransformer<BsonDocument>());
     }

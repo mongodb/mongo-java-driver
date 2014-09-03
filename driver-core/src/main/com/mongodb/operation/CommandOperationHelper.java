@@ -19,7 +19,6 @@ package com.mongodb.operation;
 import com.mongodb.CommandFailureException;
 import com.mongodb.Function;
 import com.mongodb.MongoException;
-import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
@@ -48,25 +47,37 @@ import static com.mongodb.operation.OperationHelper.IdentityTransformer;
 
 final class CommandOperationHelper {
 
-    static BsonDocument executeWrappedCommandProtocol(final MongoNamespace namespace, final BsonDocument command,
-                                                      final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace.getDatabaseName(), command, binding);
-    }
-
-    static <T> T executeWrappedCommandProtocol(final MongoNamespace namespace, final BsonDocument command, final ReadBinding binding,
-                                               final Function<BsonDocument, T> transformer) {
-        return executeWrappedCommandProtocol(namespace.getDatabaseName(), command, new BsonDocumentCodec(), binding, transformer);
-    }
+    /* Read Binding Helpers */
 
     static BsonDocument executeWrappedCommandProtocol(final String database, final BsonDocument command,
                                                       final ReadBinding binding) {
         return executeWrappedCommandProtocol(database, command, new BsonDocumentCodec(), binding);
     }
 
-    static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command, final ReadBinding binding,
+    static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
+                                               final ReadBinding binding,
                                                final Function<BsonDocument, T> transformer) {
         return executeWrappedCommandProtocol(database, command, new BsonDocumentCodec(), binding, transformer);
     }
+
+    static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
+                                               final Decoder<T> decoder, final ReadBinding binding) {
+        return executeWrappedCommandProtocol(database, command, decoder, binding, new IdentityTransformer<T>());
+    }
+
+    static <D, T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
+                                                  final Decoder<D> decoder, final ReadBinding binding,
+                                                  final Function<D, T> transformer) {
+        ConnectionSource source = binding.getReadConnectionSource();
+        try {
+            return transformer.apply(executeWrappedCommandProtocol(database, command, decoder, source,
+                                                                   binding.getReadPreference()));
+        } finally {
+            source.release();
+        }
+    }
+
+    /* Write Binding Helpers */
 
     static BsonDocument executeWrappedCommandProtocol(final String database, final BsonDocument command,
                                                       final WriteBinding binding) {
@@ -78,29 +89,17 @@ final class CommandOperationHelper {
         return executeWrappedCommandProtocol(database, command, decoder, binding, new IdentityTransformer<T>());
     }
 
-    static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command, final WriteBinding binding,
+    static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
+                                               final WriteBinding binding,
                                                final Function<BsonDocument, T> transformer) {
         return executeWrappedCommandProtocol(database, command, new BsonDocumentCodec(), binding, transformer);
-    }
-
-    static <D, T> T executeWrappedCommandProtocol(final MongoNamespace namespace, final BsonDocument command,
-                                                  final Decoder<D> decoder, final WriteBinding binding,
-                                                  final Function<D, T> transformer) {
-        return executeWrappedCommandProtocol(namespace.getDatabaseName(), command, decoder, binding, transformer);
-    }
-
-    static <T> T executeWrappedCommandProtocol(final MongoNamespace namespace, final BsonDocument command,
-                                               final FieldNameValidator fieldNameValidator,
-                                               final Decoder<BsonDocument> decoder, final WriteBinding binding,
-                                               final Function<BsonDocument, T> transformer) {
-        return executeWrappedCommandProtocol(namespace.getDatabaseName(), command, fieldNameValidator, decoder, binding,
-                                             transformer);
     }
 
     static <D, T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
                                                   final Decoder<D> decoder, final WriteBinding binding,
                                                   final Function<D, T> transformer) {
-        return executeWrappedCommandProtocol(database, command, new NoOpFieldNameValidator(), decoder, binding, transformer);
+        return executeWrappedCommandProtocol(database, command, new NoOpFieldNameValidator(), decoder, binding,
+                                             transformer);
     }
 
     static <D, T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
@@ -108,38 +107,20 @@ final class CommandOperationHelper {
                                                   final WriteBinding binding, final Function<D, T> transformer) {
         ConnectionSource source = binding.getWriteConnectionSource();
         try {
-            return transformer.apply(executeWrappedCommandProtocol(database, command, fieldNameValidator, decoder, source,
-                                                                   primary()));
+            return transformer.apply(executeWrappedCommandProtocol(database, command, fieldNameValidator, decoder,
+                                                                   source, primary()));
         } finally {
             source.release();
         }
     }
 
-    static <D, T> T executeWrappedCommandProtocol(final MongoNamespace namespace, final BsonDocument command,
-                                                  final Decoder<D> decoder, final ReadBinding binding,
-                                                  final Function<D, T> transformer) {
-        return executeWrappedCommandProtocol(namespace.getDatabaseName(), command, decoder, binding, transformer);
-    }
-
-    static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
-                                               final Decoder<T> decoder, final ReadBinding binding) {
-        return executeWrappedCommandProtocol(database, command, decoder, binding, new IdentityTransformer<T>());
-    }
-
-    static <D, T> T executeWrappedCommandProtocol(final String database, final BsonDocument command, final Decoder<D> decoder,
-                                                  final ReadBinding binding, final Function<D, T> transformer) {
-        ConnectionSource source = binding.getReadConnectionSource();
-        try {
-            return transformer.apply(executeWrappedCommandProtocol(database, command, decoder, source, binding.getReadPreference()));
-        } finally {
-            source.release();
-        }
-    }
+    /* Connection Source Helpers */
 
     static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
                                                final Decoder<T> decoder, final ConnectionSource source,
                                                final ReadPreference readPreference) {
-        return executeWrappedCommandProtocol(database, command, new NoOpFieldNameValidator(), decoder, source, readPreference);
+        return executeWrappedCommandProtocol(database, command, new NoOpFieldNameValidator(), decoder, source,
+                                             readPreference);
     }
 
     static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
@@ -148,55 +129,53 @@ final class CommandOperationHelper {
                                                final ConnectionSource source, final ReadPreference readPreference) {
         Connection connection = source.getConnection();
         try {
-            return executeWrappedCommandProtocol(database, command, fieldNameValidator, decoder, connection, readPreference);
+            return executeWrappedCommandProtocol(database, command, fieldNameValidator, decoder, connection,
+                                                 readPreference);
         } finally {
             connection.release();
         }
     }
+
+    /* Connection Helpers */
 
     static BsonDocument executeWrappedCommandProtocol(final String database, final BsonDocument command,
                                                       final Connection connection) {
         return executeWrappedCommandProtocol(database, command, new BsonDocumentCodec(), connection, primary());
     }
 
-    static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command, final Connection connection,
-                                               final ReadPreference readPreference, final Function<BsonDocument, T> transformer) {
-        return executeWrappedCommandProtocol(database, command, new BsonDocumentCodec(), connection, readPreference, transformer);
-    }
-
-    static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command, final Decoder<T> decoder,
-                                               final Connection connection, final ReadPreference readPreference) {
-        return executeWrappedCommandProtocol(database, command, new NoOpFieldNameValidator(), decoder, connection, readPreference);
+    static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
+                                               final Decoder<T> decoder, final Connection connection,
+                                               final ReadPreference readPreference) {
+        return executeWrappedCommandProtocol(database, command, new NoOpFieldNameValidator(), decoder, connection,
+                                             readPreference);
     }
 
     static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
-                                               final FieldNameValidator fieldNameValidator,
-                                               final Decoder<T> decoder,
-                                               final Connection connection, final ReadPreference readPreference) {
-        return executeWrappedCommandProtocol(database, command, fieldNameValidator, decoder, connection, readPreference,
-                                             new IdentityTransformer<T>());
-    }
-
-    static <T> T executeWrappedCommandProtocol(final MongoNamespace namespace, final BsonDocument command,
                                                final Decoder<BsonDocument> decoder, final Connection connection,
                                                final Function<BsonDocument, T> transformer) {
-        return executeWrappedCommandProtocol(namespace, command, decoder, connection, primary(), transformer);
+        return executeWrappedCommandProtocol(database, command, decoder, connection, primary(), transformer);
     }
 
-    static <D, T> T executeWrappedCommandProtocol(final MongoNamespace namespace, final BsonDocument command,
-                                                  final Decoder<D> decoder,
-                                                  final Connection connection, final ReadPreference readPreference,
-                                                  final Function<D, T> transformer) {
-        return executeWrappedCommandProtocol(namespace.getDatabaseName(), command, decoder, connection, readPreference,
+    static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
+                                               final Connection connection, final ReadPreference readPreference,
+                                               final Function<BsonDocument, T> transformer) {
+        return executeWrappedCommandProtocol(database, command, new BsonDocumentCodec(), connection, readPreference,
                                              transformer);
     }
 
     static <D, T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
-                                                  final Decoder<D> decoder,
-                                                  final Connection connection, final ReadPreference readPreference,
+                                                  final Decoder<D> decoder, final Connection connection,
+                                                  final ReadPreference readPreference,
                                                   final Function<D, T> transformer) {
-        return executeWrappedCommandProtocol(database, command, new NoOpFieldNameValidator(), decoder, connection, readPreference,
-                                             transformer);
+        return executeWrappedCommandProtocol(database, command, new NoOpFieldNameValidator(), decoder, connection,
+                                             readPreference, transformer);
+    }
+
+    static <T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
+                                               final FieldNameValidator fieldNameValidator, final Decoder<T> decoder,
+                                               final Connection connection, final ReadPreference readPreference) {
+        return executeWrappedCommandProtocol(database, command, fieldNameValidator, decoder, connection, readPreference,
+                                             new IdentityTransformer<T>());
     }
 
     static <D, T> T executeWrappedCommandProtocol(final String database, final BsonDocument command,
@@ -209,93 +188,12 @@ final class CommandOperationHelper {
                                  .execute(connection));
     }
 
-    static MongoFuture<BsonDocument> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                        final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding);
-    }
+    /* Async Read Binding Helpers */
 
-    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                 final AsyncWriteBinding binding,
-                                                                 final Function<BsonDocument, T> transformer) {
-        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding, transformer);
-    }
-
-    static MongoFuture<BsonDocument> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final BsonDocument command,
+    static MongoFuture<BsonDocument> executeWrappedCommandProtocolAsync(final String database,
+                                                                        final BsonDocument command,
                                                                         final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, command, binding, new IdentityTransformer<BsonDocument>());
-    }
-
-    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final BsonDocument command,
-                                                                 final AsyncReadBinding binding,
-                                                                 final Function<BsonDocument, T> transformer) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), command, binding, transformer);
-    }
-
-    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                 final AsyncReadBinding binding,
-                                                                 final Function<BsonDocument, T> transformer) {
-        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding, transformer);
-    }
-
-    static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final BsonDocument command,
-                                                                    final Decoder<D> decoder,
-                                                                    final AsyncWriteBinding binding,
-                                                                    final Function<D, T> transformer) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), command, decoder, binding, transformer);
-    }
-
-    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final BsonDocument command,
-                                                                 final FieldNameValidator fieldNameValidator,
-                                                                 final Decoder<BsonDocument> decoder,
-                                                                 final AsyncWriteBinding binding,
-                                                                 final Function<BsonDocument, T> transformer) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), command, fieldNameValidator, decoder, binding,
-                                                  transformer);
-    }
-
-    static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final BsonDocument command,
-                                                                    final Decoder<D> decoder,
-                                                                    final AsyncReadBinding binding,
-                                                                    final Function<D, T> transformer) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), command, decoder, binding, transformer);
-    }
-
-    private static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                            final Decoder<D> decoder,
-                                                                            final AsyncReadBinding binding,
-                                                                            final Function<D, T> transformer) {
-        SingleResultFuture<T> future = new SingleResultFuture<T>();
-        binding.getReadConnectionSource().register(new CommandProtocolExecutingCallback<D, T>(database, command,
-                                                                                              new NoOpFieldNameValidator(),
-                                                                                              decoder, primary(), future,
-                                                                                              transformer));
-
-        return future;
-    }
-
-    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                 final Decoder<T> decoder,
-                                                                 final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(database, command, decoder, binding, new IdentityTransformer<T>());
-    }
-
-    static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                    final Decoder<D> decoder,
-                                                                    final AsyncWriteBinding binding,
-                                                                    final Function<D, T> transformer) {
-        return executeWrappedCommandProtocolAsync(database, command, new NoOpFieldNameValidator(), decoder, binding, transformer);
-    }
-
-    static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
-                                                                    final FieldNameValidator fieldNameValidator,
-                                                                    final Decoder<D> decoder,
-                                                                    final AsyncWriteBinding binding,
-                                                                    final Function<D, T> transformer) {
-        SingleResultFuture<T> future = new SingleResultFuture<T>();
-        binding.getWriteConnectionSource().register(new CommandProtocolExecutingCallback<D, T>(database, command, fieldNameValidator,
-                                                                                               decoder, primary(), future,
-                                                                                               transformer));
-        return future;
+        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding);
     }
 
     static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
@@ -304,12 +202,69 @@ final class CommandOperationHelper {
         return executeWrappedCommandProtocolAsync(database, command, decoder, binding, new IdentityTransformer<T>());
     }
 
-    static MongoFuture<BsonDocument> executeWrappedCommandProtocolAsync(final MongoNamespace namespace, final BsonDocument command,
-                                                                        final Connection connection) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), command, new BsonDocumentCodec(), connection);
+    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                                 final AsyncReadBinding binding,
+                                                                 final Function<BsonDocument, T> transformer) {
+        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding, transformer);
     }
 
-    static MongoFuture<BsonDocument> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+    static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                                    final Decoder<D> decoder,
+                                                                    final AsyncReadBinding binding,
+                                                                    final Function<D, T> transformer) {
+        SingleResultFuture<T> future = new SingleResultFuture<T>();
+        binding.getReadConnectionSource().register(new CommandProtocolExecutingCallback<D, T>(database, command,
+                new NoOpFieldNameValidator(), decoder, primary(), future, transformer));
+
+        return future;
+    }
+
+    /* Async Write Binding Helpers */
+
+    static MongoFuture<BsonDocument> executeWrappedCommandProtocolAsync(final String database,
+                                                                        final BsonDocument command,
+                                                                        final AsyncWriteBinding binding) {
+        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding);
+    }
+
+    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                                 final Decoder<T> decoder,
+                                                                 final AsyncWriteBinding binding) {
+        return executeWrappedCommandProtocolAsync(database, command, decoder, binding, new IdentityTransformer<T>());
+    }
+
+    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                                 final AsyncWriteBinding binding,
+                                                                 final Function<BsonDocument, T> transformer) {
+        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), binding, transformer);
+    }
+
+    static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                                    final Decoder<D> decoder,
+                                                                    final AsyncWriteBinding binding,
+                                                                    final Function<D, T> transformer) {
+        return executeWrappedCommandProtocolAsync(database, command, new NoOpFieldNameValidator(), decoder, binding,
+                                                  transformer);
+    }
+
+    static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+                                                                    final FieldNameValidator fieldNameValidator,
+                                                                    final Decoder<D> decoder,
+                                                                    final AsyncWriteBinding binding,
+                                                                    final Function<D, T> transformer) {
+        SingleResultFuture<T> future = new SingleResultFuture<T>();
+        binding.getWriteConnectionSource().register(new CommandProtocolExecutingCallback<D, T>(database, command,
+                                                                                               fieldNameValidator,
+                                                                                               decoder, primary(),
+                                                                                               future,
+                                                                                               transformer));
+        return future;
+    }
+
+    /* Async Connection Helpers */
+
+    static MongoFuture<BsonDocument> executeWrappedCommandProtocolAsync(final String database,
+                                                                        final BsonDocument command,
                                                                         final Connection connection) {
         return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), connection);
     }
@@ -317,21 +272,22 @@ final class CommandOperationHelper {
     static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
                                                                     final Connection connection,
                                                                     final Function<BsonDocument, T> transformer) {
-        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), primary(), connection, transformer);
+        return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), connection, primary(),
+                                                  transformer);
     }
 
-    private static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database,
-                                                                         final BsonDocument command,
-                                                                         final Decoder<T> decoder,
-                                                                         final Connection connection) {
-        return executeWrappedCommandProtocolAsync(database, command, decoder, primary(), connection, new IdentityTransformer<T>());
-
+    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database,
+                                                                 final BsonDocument command,
+                                                                 final Decoder<T> decoder,
+                                                                 final Connection connection) {
+        return executeWrappedCommandProtocolAsync(database, command, decoder, connection, primary(),
+                                                  new IdentityTransformer<T>());
     }
 
     static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
                                                                     final Decoder<D> decoder,
-                                                                    final ReadPreference readPreference,
                                                                     final Connection connection,
+                                                                    final ReadPreference readPreference,
                                                                     final Function<D, T> transformer) {
         final SingleResultFuture<T> future = new SingleResultFuture<T>();
         new CommandProtocol<D>(database, wrapCommand(command, readPreference, connection.getServerDescription()),
@@ -348,6 +304,8 @@ final class CommandOperationHelper {
         });
         return future;
     }
+
+    /* Misc operation helpers */
 
     static void rethrowIfNotNamespaceError(final CommandFailureException e) {
         String message = e.getErrorMessage();

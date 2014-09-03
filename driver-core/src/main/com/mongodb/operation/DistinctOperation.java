@@ -58,12 +58,12 @@ public class DistinctOperation implements AsyncReadOperation<BsonArray>, ReadOpe
 
     @Override
     public BsonArray execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getCommand(), binding, transformer());
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), binding, transformer());
     }
 
     @Override
     public MongoFuture<BsonArray> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), binding, transformer());
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding, transformer());
     }
 
     @SuppressWarnings("unchecked")

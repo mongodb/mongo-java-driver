@@ -79,7 +79,8 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return withConnection(binding, new OperationHelper.CallableWithConnection<MapReduceCursor<T>>() {
             @Override
             public MapReduceCursor<T> call(final Connection connection) {
-                return executeWrappedCommandProtocol(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "results"),
+                return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
+                                                     CommandResultDocumentCodec.create(decoder, "results"),
                                                      connection, transformer(connection));
             }
         });
@@ -87,7 +88,8 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
 
     @Override
     public MongoFuture<MapReduceAsyncCursor<T>> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), CommandResultDocumentCodec.create(decoder, "results"),
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
+                                                  CommandResultDocumentCodec.create(decoder, "results"),
                                                   binding, asyncTransformer());
     }
 

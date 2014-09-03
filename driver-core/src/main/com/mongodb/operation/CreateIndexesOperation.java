@@ -91,7 +91,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             public MongoFuture<Void> call(final Connection connection) {
                 final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    executeWrappedCommandProtocolAsync(namespace, getCommand(), connection)
+                    executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), connection)
                     .register(new SingleResultCallback<BsonDocument>() {
                         @Override
                         public void onResult(final BsonDocument result, final MongoException e) {

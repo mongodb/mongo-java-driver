@@ -54,12 +54,12 @@ public class AggregateExplainOperation implements AsyncReadOperation<BsonDocumen
 
     @Override
     public BsonDocument execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getCommand(), binding);
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), binding);
     }
 
     @Override
     public MongoFuture<BsonDocument> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), binding);
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding);
     }
 
     private BsonDocument getCommand() {

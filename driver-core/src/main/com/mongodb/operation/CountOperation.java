@@ -46,16 +46,16 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         this.find = notNull("find", find);
     }
 
-
+    @Override
     public Long execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace, asCommandDocument(), new BsonDocumentCodec(), binding,
-                                             transformer());
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), asCommandDocument(), new BsonDocumentCodec(),
+                                             binding, transformer());
     }
 
     @Override
     public MongoFuture<Long> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, asCommandDocument(), new BsonDocumentCodec(),
-                                                  binding, transformer());
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), asCommandDocument(),
+                                                  new BsonDocumentCodec(), binding, transformer());
     }
 
     private Function<BsonDocument, Long> transformer() {

@@ -59,13 +59,14 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getCommand(), getValidator(), CommandResultDocumentCodec.create(codec, "value"),
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), getValidator(),
+                                             CommandResultDocumentCodec.create(codec, "value"),
                                              binding, FindAndModifyHelper.<T>transformer());
     }
 
     @Override
     public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), getValidator(),
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), getValidator(),
                                                   CommandResultDocumentCodec.create(codec, "value"), binding,
                                                   FindAndModifyHelper.<T>transformer());
     }

@@ -71,7 +71,7 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
         return withConnection(binding, new OperationHelper.CallableWithConnection<MongoCursor<T>>() {
             @Override
             public MongoCursor<T> call(final Connection connection) {
-                return executeWrappedCommandProtocol(namespace, getCommand(),
+                return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "retval"),
                                                      connection, transformer(connection.getServerAddress()));
             }
@@ -87,11 +87,9 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     @Override
     @SuppressWarnings("unchecked")
     public MongoFuture<MongoAsyncCursor<T>> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace,
-                                                  getCommand(),
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
                                                   CommandResultDocumentCodec.create(decoder, "retval"),
-                                                  binding,
-                                                  asyncTransformer());
+                                                  binding, asyncTransformer());
     }
 
     private Function<BsonDocument, MongoCursor<T>> transformer(final ServerAddress serverAddress) {

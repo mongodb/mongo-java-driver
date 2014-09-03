@@ -76,7 +76,7 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
         return withConnection(binding, new CallableWithConnectionAndSource<List<MongoCursor<T>>>() {
             @Override
             public List<MongoCursor<T>> call(final ConnectionSource source, final Connection connection) {
-                return executeWrappedCommandProtocol(namespace,
+                return executeWrappedCommandProtocol(namespace.getDatabaseName(),
                                                      asCommandDocument(),
                                                      CommandResultDocumentCodec.create(decoder, "firstBatch"),
                                                      connection, binding.getReadPreference(),
@@ -94,7 +94,7 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
                 return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(),
                                                           asCommandDocument(),
                                                           CommandResultDocumentCodec.create(decoder, "firstBatch"),
-                                                          binding.getReadPreference(), connection,
+                                                          connection, binding.getReadPreference(),
                                                           asyncTransformer(source));
             }
         });

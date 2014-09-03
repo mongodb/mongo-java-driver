@@ -58,14 +58,14 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getCommand(), getValidator(),
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), getValidator(),
                                              CommandResultDocumentCodec.create(decoder, "value"), binding,
                                              FindAndModifyHelper.<T>transformer());
     }
 
     @Override
     public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getCommand(), getValidator(),
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), getValidator(),
                                                   CommandResultDocumentCodec.create(decoder, "value"), binding,
                                                   FindAndModifyHelper.<T>transformer());
     }

@@ -50,14 +50,14 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(namespace, getFindAndRemoveDocument(),
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getFindAndRemoveDocument(),
                                              CommandResultDocumentCodec.create(resultDecoder, "value"),
                                              binding, FindAndModifyHelper.<T>transformer());
     }
 
     @Override
     public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace, getFindAndRemoveDocument(),
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getFindAndRemoveDocument(),
                                                   CommandResultDocumentCodec.create(resultDecoder, "value"),
                                                   binding, FindAndModifyHelper.<T>transformer());
     }
