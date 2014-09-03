@@ -249,7 +249,7 @@ public class MapReduceCommand {
      *
      * @return The JavaScript mode
      */
-    public Boolean getJsMode(){
+    public Boolean getJsMode() {
         return jsMode;
     }
 
@@ -258,12 +258,14 @@ public class MapReduceCommand {
      *
      * @param jsMode Specifies whether to convert intermediate data into BSON format between the execution of the map and reduce functions
      */
-    public void setJsMode(final Boolean jsMode){
+    public void setJsMode(final Boolean jsMode) {
         this.jsMode = jsMode;
     }
 
     /**
      * Gets the (optional) database name where the output collection should reside
+     *
+     * @return the name of the database the result is stored in, or null.
      */
     public String getOutputDB() {
         return this.outputDB;
@@ -278,6 +280,11 @@ public class MapReduceCommand {
         this.outputDB = outputDB;
     }
 
+    /**
+     * Turns this command into a DBObject representation of this map reduce command.
+     *
+     * @return a DBObject that contains the MongoDB document representation of this command.
+     */
     public DBObject toDBObject() {
         BasicDBObject cmd = new BasicDBObject();
 

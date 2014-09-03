@@ -18,7 +18,6 @@ package com.mongodb;
 
 import com.mongodb.connection.ServerDescription;
 
-import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -40,11 +39,7 @@ public final class Fixture {
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
             MongoClientURI mongoURI = getMongoClientURI();
-            try {
-                mongoClient = new MongoClient(mongoURI);
-            } catch (UnknownHostException e) {
-                throw new IllegalArgumentException("Invalid Mongo URI: " + mongoURI.getURI(), e);
-            }
+            mongoClient = new MongoClient(mongoURI);
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;

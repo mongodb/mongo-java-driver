@@ -75,40 +75,10 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
- * A database connection with internal connection pooling. For most applications, you should have one Mongo instance for the entire JVM.
- * <p/>
- * The following are equivalent, and all connect to the local database running on the default port:
- * <pre>
- * Mongo mongo1 = new Mongo();
- * Mongo mongo1 = new Mongo("localhost");
- * Mongo mongo2 = new Mongo("localhost", 27017);
- * Mongo mongo4 = new Mongo(new ServerAddress("localhost"));
- * </pre>
- * <p/>
- * You can connect to a <a href="http://www.mongodb.org/display/DOCS/Replica+Sets">replica set</a> using the Java driver by passing a
- * ServerAddress list to the Mongo constructor. For example:
- * <pre>
- * Mongo mongo = new Mongo(Arrays.asList(
- *   new ServerAddress("localhost", 27017),
- *   new ServerAddress("localhost", 27018),
- *   new ServerAddress("localhost", 27019)));
- * </pre>
- * You can connect to a sharded cluster using the same constructor.  Mongo will auto-detect whether the servers are a list of replica set
- * members or a list of mongos servers.
- * <p/>
- * By default, all read and write operations will be made on the primary, but it's possible to read from secondaries by changing the read
- * preference:
- * <p/>
- * <pre>
- * mongo.setReadPreference(ReadPreference.secondary());
- * </pre>
- * By default, write operations will not throw exceptions on failure, but that is easily changed too:
- * <p/>
- * <pre>
- * mongo.setWriteConcern(WriteConcern.SAFE);
- * </pre>
- * <p/>
- * Note: This class has been superseded by {@code MongoClient}, and may be deprecated in a future release.
+ * <p>A database connection with internal connection pooling. For most applications, you should have one Mongo instance for the entire
+ * JVM.</p>
+ *
+ * <p>Note: This class has been superseded by {@code MongoClient}, and may be deprecated in a future release.</p>
  *
  * @see MongoClient
  * @see ReadPreference
@@ -142,12 +112,11 @@ public class Mongo {
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
      *
-     * @throws UnknownHostException
      * @throws MongoException
      * @deprecated Replaced by {@link MongoClient#MongoClient()})
      */
     @Deprecated
-    public Mongo() throws UnknownHostException {
+    public Mongo() {
         this(new ServerAddress(), createLegacyOptions());
     }
 
@@ -170,15 +139,13 @@ public class Mongo {
      *
      * @param host    server to connect to
      * @param options default query options
-     * @throws UnknownHostException if the database host cannot be resolved
      * @throws MongoException
      * @deprecated Replaced by {@link MongoClient#MongoClient(String, MongoClientOptions)}
      */
     @Deprecated
     public Mongo(final String host,
                  @SuppressWarnings("deprecation")
-                 final MongoOptions options)
-    throws UnknownHostException {
+                 final MongoOptions options) {
         this(new ServerAddress(host), options.toClientOptions());
     }
 
@@ -261,10 +228,8 @@ public class Mongo {
     /**
      * Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
      * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
-     * standalone server, use the Mongo(ServerAddress) constructor.
-     * <p/>
-     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically fail
-     * over to the next server if the closest is down.
+     * standalone server, use the Mongo(ServerAddress) constructor. <p/> If this is a list of mongos servers, it will pick the closest
+     * (lowest ping time) one to send all requests to, and automatically fail over to the next server if the closest is down.
      *
      * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
      *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
@@ -278,12 +243,12 @@ public class Mongo {
     }
 
     /**
-     * Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
+     * <p>Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
      * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
-     * standalone server, use the Mongo(ServerAddress) constructor.
-     * <p/>
-     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically fail
-     * over to the next server if the closest is down.
+     * standalone server, use the Mongo(ServerAddress) constructor.</p>
+     *
+     * <p>If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically
+     * fail over to the next server if the closest is down.</p>
      *
      * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of
      *                mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
@@ -305,7 +270,6 @@ public class Mongo {
      *
      * @param uri URI to connect to, optionally containing additional information like credentials
      * @throws MongoException
-     * @throws UnknownHostException
      * @mongodb.driver.manual reference/connection-string Connection String URI Format
      * @see MongoURI <p>examples: <li>mongodb://localhost</li> <li>mongodb://fred:foobar@localhost/</li> </p>
      * @deprecated Replaced by {@link MongoClient#MongoClient(MongoClientURI)}
@@ -313,7 +277,7 @@ public class Mongo {
     @Deprecated
     public Mongo(
                 @SuppressWarnings("deprecation")
-                final MongoURI uri) throws UnknownHostException {
+                final MongoURI uri) {
         this(uri.toClientURI());
     }
 
@@ -333,7 +297,7 @@ public class Mongo {
         this(createCluster(seedList, credentialsList, options), options, credentialsList);
     }
 
-    Mongo(final MongoClientURI mongoURI) throws UnknownHostException {
+    Mongo(final MongoClientURI mongoURI) {
         this(createCluster(mongoURI),
              mongoURI.getOptions(),
              mongoURI.getCredentials() != null ? asList(mongoURI.getCredentials()) : Collections.<MongoCredential>emptyList());
@@ -439,9 +403,9 @@ public class Mongo {
     }
 
     /**
-     * Returns the mongo options.
-     * <p/>
-     * Please be aware that since 3.0 changes to {@code MongoOptions} that are done after connection are not reflected.
+     * <p>Returns the mongo options.</p>
+     *
+     * <p>Changes to {@code MongoOptions} that are done after connection are not reflected.</p>
      *
      * @return the mongo options
      * @deprecated Please use {@link MongoClient} class to connect to server and corresponding {@link
@@ -660,7 +624,7 @@ public class Mongo {
                                  .build();
     }
 
-    private static Cluster createCluster(final MongoClientURI mongoURI) throws UnknownHostException {
+    private static Cluster createCluster(final MongoClientURI mongoURI) {
 
         List<MongoCredential> credentialList = mongoURI.getCredentials() != null
                                                ? asList(mongoURI.getCredentials())
@@ -876,11 +840,10 @@ public class Mongo {
          * @param uri the Mongo URI
          * @return the client
          * @throws MongoException
-         * @throws UnknownHostException
          * @deprecated Please use {@link #connect(MongoClientURI)} instead.
          */
         @Deprecated
-        public Mongo connect(final MongoURI uri) throws UnknownHostException {
+        public Mongo connect(final MongoURI uri) {
             return connect(uri.toClientURI());
         }
 
@@ -891,12 +854,9 @@ public class Mongo {
          * @param uri the Mongo URI
          * @return the client
          * @throws MongoException
-         * @throws UnknownHostException
          */
-        public Mongo connect(final MongoClientURI uri) throws UnknownHostException {
-
+        public Mongo connect(final MongoClientURI uri) {
             String key = toKey(uri);
-
             Mongo client = clients.get(key);
 
             if (client == null) {

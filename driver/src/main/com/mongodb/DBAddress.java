@@ -17,38 +17,27 @@
 package com.mongodb;
 
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 
 /**
- * Represents a database address
+ * Represents a database address, which includes the properties of ServerAddress (host and port) and adds a database name.
  */
 public class DBAddress extends ServerAddress {
     private static final long serialVersionUID = -813211264765778133L;
     private final String _db;
 
     /**
-     * Creates a new address
-     * Accepts as the parameter format:
-     * <table border="1">
-     * <tr>
-     * <td><i>name</i></td>
-     * <td>"mydb"</td>
-     * </tr>
-     * <tr>
-     * <td><i>&lt;host&gt;/name</i></td>
-     * <td>"127.0.0.1/mydb"</td>
-     * </tr>
-     * <tr>
-     * <td><i>&lt;host&gt;:&lt;port&gt;/name</i></td>
-     * <td>"127.0.0.1:8080/mydb"</td>
-     * </tr>
-     * </table>
+     * Creates a new address. Accepts as the parameter format:
+     *
+     * <ul>
+     *     <li><i>name</i> "mydb"</li>
+     *     <li><i>&lt;host&gt;/name</i> "127.0.0.1/mydb"</li>
+     *     <li><i>&lt;host&gt;:&lt;port&gt;/name</i> "127.0.0.1:8080/mydb"</li>
+     * </ul>
      *
      * @param urlFormat the URL-formatted host and port
-     * @throws UnknownHostException
      * @see MongoClientURI
      */
-    public DBAddress(final String urlFormat) throws UnknownHostException {
+    public DBAddress(final String urlFormat) {
         super(_getHostSection(urlFormat));
 
         _check(urlFormat, "urlFormat");
@@ -87,24 +76,28 @@ public class DBAddress extends ServerAddress {
     }
 
     /**
+     * Create a DBAddress using the host and port from an existing DBAddress, and connected to a given database.
+     *
      * @param other        an existing {@code DBAddress} that gives the host and port
      * @param databaseName the database to which to connect
-     * @throws UnknownHostException
      */
-    public DBAddress(final DBAddress other, final String databaseName) throws UnknownHostException {
+    public DBAddress(final DBAddress other, final String databaseName) {
         this(other.getHost(), other.getPort(), databaseName);
     }
 
     /**
+     * Creates a DBAddress for the given database on the given host.
+     *
      * @param host         host name
      * @param databaseName database name
-     * @throws UnknownHostException
      */
-    public DBAddress(final String host, final String databaseName) throws UnknownHostException {
+    public DBAddress(final String host, final String databaseName) {
         this(host, defaultPort(), databaseName);
     }
 
     /**
+     * Creates a DBAddress for the given database on the given host at the given port.
+     *
      * @param host         host name
      * @param port         database port
      * @param databaseName database name

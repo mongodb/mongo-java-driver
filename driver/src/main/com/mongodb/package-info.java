@@ -14,19 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb;
-
 /**
- * Factory for creating concrete implementations of DBCallback.
+ * This package is the main entry point to the MongoDB Java Driver, and it contains the classes for the existing API from 2.x versions.
  */
-public interface DBCallbackFactory {
-
-    /**
-     * Creates a DBCallback for the given collection.
-     *
-     * @param collection a DBCollection for the DBCallback
-     * @return a new DBCallback that operates on the collection.
-     */
-    DBCallback create(DBCollection collection);
-
-}
+package com.mongodb;

@@ -32,6 +32,12 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
     private final DB db;
     private final DBObjectFactory objectFactory;
 
+    /**
+     * Creates a new DefaultDBCallback. If the Collection is null, it uses {@link DBCollectionObjectFactory} to create documents, otherwise
+     * it uses the collection's object factory.
+     *
+     * @param collection an optionally null Collection that the documents created by this callback belong to.
+     */
     public DefaultDBCallback(final DBCollection collection) {
         if (collection != null) {
             this.db = collection.getDB();

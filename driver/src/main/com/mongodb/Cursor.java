@@ -14,19 +14,35 @@
  * limitations under the License.
  */
 
-
 package com.mongodb;
-
 
 import java.io.Closeable;
 import java.util.Iterator;
 
-
+/**
+ * Interface for providing consistent behaviour between different Cursor implementations.
+ *
+ * @since 2.12
+ */
 public interface Cursor extends Iterator<DBObject>, Closeable {
 
+    /**
+     * Gets the server's identifier for this Cursor.
+     *
+     * @return the cursor's ID, or 0 if there is no active cursor.
+     */
     long getCursorId();
 
+    /**
+     * Gets the address of the server that data is pulled from. Note that this information may not be available until hasNext() or
+     * next() is called.
+     *
+     * @return the address of the server that data is pulled from
+     */
     ServerAddress getServerAddress();
 
+    /**
+     * Terminates this cursor on the server.
+     */
     void close();
 }

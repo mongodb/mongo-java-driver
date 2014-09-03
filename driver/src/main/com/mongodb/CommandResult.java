@@ -40,9 +40,9 @@ public class CommandResult extends BasicDBObject {
     }
 
     /**
-     * gets the "ok" field which is the result of the command
+     * Gets the "ok" field, which is whether this command executed correctly or not.
      *
-     * @return True if ok
+     * @return true if the command executed without error.
      */
     public boolean ok() {
         Object okValue = get("ok");
@@ -71,7 +71,7 @@ public class CommandResult extends BasicDBObject {
     /**
      * Utility method to create an exception from a failed command.
      *
-     * @return The mongo exception or null
+     * @return The mongo exception, or null if the command was successful.
      */
     public MongoException getException() {
         if (!ok()) {
@@ -82,9 +82,10 @@ public class CommandResult extends BasicDBObject {
     }
 
     /**
-     * throws an exception containing the cmd name, in case the command failed, or the "err/code" information
+     * Throws a {@code CommandFailureException} if the command failed. Otherwise, returns normally.
      *
      * @throws MongoException
+     * @see #ok()
      */
     public void throwOnError() {
         if (!ok()) {

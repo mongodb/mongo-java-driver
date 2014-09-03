@@ -38,7 +38,7 @@ public final class InsertOptions {
     }
 
     /**
-     *  Set whether documents will continue to be inserted after a failure to insert one.
+     * Set whether documents will continue to be inserted after a failure to insert one.
      *
      * @param continueOnError whether to continue on error
      * @return this
@@ -69,8 +69,8 @@ public final class InsertOptions {
     }
 
     /**
-     * Whether documents will continue to be inserted after a failure to insert one (most commonly due to a duplicate key error).  Note
-     * that this only is relevant for multi-document inserts. The default value is false.
+     * Whether documents will continue to be inserted after a failure to insert one (most commonly due to a duplicate key error).  Note that
+     * this only is relevant for multi-document inserts. The default value is false.
      *
      * @return whether insertion will continue on error.
      */
@@ -80,6 +80,7 @@ public final class InsertOptions {
 
     /**
      * The encoder to use for the documents.  By default the codec configured for the DBCollection instance will be used.
+     *
      * @return the encoder, or null if the default will be used
      */
     public DBEncoder getDbEncoder() {

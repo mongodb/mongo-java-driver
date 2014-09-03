@@ -89,6 +89,11 @@ public final class ParallelScanOptions {
             return this;
         }
 
+        /**
+         * Creates a ParallelScanOptions with the settings initialised in this builder.
+         *
+         * @return a new ParallelScanOptions.
+         */
         public ParallelScanOptions build() {
             return new ParallelScanOptions(this);
         }

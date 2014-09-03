@@ -27,7 +27,6 @@ import org.bson.codecs.configuration.RootCodecRegistry;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -36,10 +35,10 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * Various settings to control the behavior of a {@code MongoClient}.
- * <p/>
- * Note: This class is a replacement for {@code MongoOptions}, to be used with {@code MongoClient}.  The main difference in behavior is that
- * the default write concern is {@code WriteConcern.ACKNOWLEDGED}.
+ * <p>Various settings to control the behavior of a {@code MongoClient}.</p>
+ *
+ * <p>Note: This class is a replacement for {@code MongoOptions}, to be used with {@code MongoClient}.  The main difference in behavior is
+ * that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.</p>
  *
  * @see MongoClient
  * @since 2.10.0
@@ -149,9 +148,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets the description for this MongoClient, which is used in various places like logging and JMX.
-     * <p/>
-     * Default is null.
+     * <p>Gets the description for this MongoClient, which is used in various places like logging and JMX.</p>
+     *
+     * <p>Default is null.</p>
      *
      * @return the description
      */
@@ -160,10 +159,10 @@ public class MongoClientOptions {
     }
 
     /**
-     * The maximum number of connections allowed per host for this MongoClient instance. Those connections will be kept in a pool when idle.
-     * Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection.
-     * <p/>
-     * Default is 100.
+     * <p>The maximum number of connections allowed per host for this MongoClient instance. Those connections will be kept in a pool when
+     * idle. Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection.</p>
+     *
+     * <p>Default is 100.</p>
      *
      * @return the maximum size of the connection pool per host
      * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
@@ -173,10 +172,10 @@ public class MongoClientOptions {
     }
 
     /**
-     * The minimum number of connections per host for this MongoClient instance. Those connections will be kept in a pool when idle, and the
-     * pool will ensure over time that it contains at least this minimum number.
-     * <p/>
-     * Default is 0.
+     * <p>The minimum number of connections per host for this MongoClient instance. Those connections will be kept in a pool when idle, and
+     * the pool will ensure over time that it contains at least this minimum number.</p>
+     *
+     * <p>Default is 0.</p>
      *
      * @return the minimum size of the connection pool per host
      */
@@ -185,11 +184,11 @@ public class MongoClientOptions {
     }
 
     /**
-     * this multiplier, multiplied with the connectionsPerHost setting, gives the maximum number of threads that may be waiting for a
+     * <p>This multiplier, multiplied with the connectionsPerHost setting, gives the maximum number of threads that may be waiting for a
      * connection to become available from the pool. All further threads will get an exception right away. For example if connectionsPerHost
-     * is 10 and threadsAllowedToBlockForConnectionMultiplier is 5, then up to 50 threads can wait for a connection.
-     * <p/>
-     * Default is 5.
+     * is 10 and threadsAllowedToBlockForConnectionMultiplier is 5, then up to 50 threads can wait for a connection.</p>
+     *
+     * <p>Default is 5.</p>
      *
      * @return the multiplier
      */
@@ -198,9 +197,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * The maximum wait time in milliseconds that a thread may wait for a connection to become available.
-     * <p/>
-     * Default is 120,000. A value of 0 means that it will not wait.  A negative value means to wait indefinitely.
+     * <p>The maximum wait time in milliseconds that a thread may wait for a connection to become available.</p>
+     *
+     * <p>Default is 120,000. A value of 0 means that it will not wait.  A negative value means to wait indefinitely.</p>
      *
      * @return the maximum wait time.
      */
@@ -231,10 +230,10 @@ public class MongoClientOptions {
     }
 
     /**
-     * The connection timeout in milliseconds.  A value of 0 means no timeout. It is used solely when establishing a new connection {@link
-     * java.net.Socket#connect(java.net.SocketAddress, int) }
-     * <p/>
-     * Default is 10,000.
+     * <p>The connection timeout in milliseconds.  A value of 0 means no timeout. It is used solely when establishing a new connection
+     * {@link java.net.Socket#connect(java.net.SocketAddress, int) }</p>
+     *
+     * <p>Default is 10,000.</p>
      *
      * @return the socket connect timeout
      */
@@ -243,9 +242,10 @@ public class MongoClientOptions {
     }
 
     /**
-     * The socket timeout in milliseconds. It is used for I/O socket read and write operations {@link java.net.Socket#setSoTimeout(int)}
-     * <p/>
-     * Default is 0 and means no timeout.
+     * <p>The socket timeout in milliseconds. It is used for I/O socket read and write operations {@link
+     * java.net.Socket#setSoTimeout(int)}</p>
+     *
+     * <p>Default is 0 and means no timeout.</p>
      *
      * @return the socket timeout
      */
@@ -254,10 +254,10 @@ public class MongoClientOptions {
     }
 
     /**
-     * This flag controls the socket keep alive feature that keeps a connection alive through firewalls {@link
-     * java.net.Socket#setKeepAlive(boolean)}
-     * <p/>
-     * * Default is false.
+     * <p>This flag controls the socket keep alive feature that keeps a connection alive through firewalls {@link
+     * java.net.Socket#setKeepAlive(boolean)}</p>
+     *
+     * <p>Default is false.</p>
      *
      * @return whether keep-alive is enabled on each socket
      */
@@ -308,12 +308,11 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets the heartbeat thread count.  This is the number of threads that will be used to monitor the MongoDB servers that the
-     * MongoClient is connected to.
+     * <p>Gets the heartbeat thread count.  This is the number of threads that will be used to monitor the MongoDB servers that the
+     * MongoClient is connected to.</p>
      *
-     * <p>
-     * The default value is the number of servers in the seed list.
-     * </p>
+     * <p>The default value is the number of servers in the seed list. </p>
+     *
      * @return the heartbeat thread count
      * @since 2.12.0
      */
@@ -322,20 +321,15 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets the acceptable latency difference.  When choosing among multiple MongoDB servers to send a request,
-     * the MongoClient will only send that request to a server whose ping time is less than or equal to the server with the fastest ping
-     * time plus the acceptable latency difference.
-     * <p>
-     * For example, let's say that the client is choosing a server to send a query when
-     * the read preference is {@code ReadPreference.secondary()}, and that there are three secondaries, server1, server2, and server3,
-     * whose ping times are 10, 15, and 16 milliseconds, respectively.  With an acceptable latency difference of 5 milliseconds,
-     * the client will send the query to either server1 or server2 (randomly selecting between the two).
-     * </p>
-     * <p>
-     * The default value is 15 milliseconds.
-     * </p>
+     * <p>Gets the acceptable latency difference.  When choosing among multiple MongoDB servers to send a request, the MongoClient will only
+     * send that request to a server whose ping time is less than or equal to the server with the fastest ping time plus the acceptable
+     * latency difference.</p> 
+     * 
+     * <p>For example, let's say that the client is choosing a server to send a query when the read preference is
+     * {@code ReadPreference.secondary()}, and that there are three secondaries, server1, server2, and server3, whose ping times are 10, 15,
+     * and 16 milliseconds, respectively.  With an acceptable latency difference of 5 milliseconds, the client will send the query to either
+     * server1 or server2 (randomly selecting between the two). </p> <p> The default value is 15 milliseconds. </p>
      *
-
      * @return the acceptable latency difference, in milliseconds
      * @since 2.12.0
      */
@@ -344,10 +338,13 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets the required replica set name.  With this option set, the MongoClient instance will <p/> <p> 1. Connect in replica set mode, and
-     * discover all members of the set based on the given servers </p> <p> 2. Make sure that the set name reported by all members matches
-     * the required set name. </p> <p> 3. Refuse to service any requests if any member of the seed list is not part of a replica set with
-     * the required name.j </p>
+     * <p>Gets the required replica set name.  With this option set, the MongoClient instance will</p> 
+     * 
+     * <ol> 
+     *     <li>Connect in replica set mode, and discover all members of the set based on the given servers</li> 
+     *     <li>Make sure that the set name reported by all members matches the required set name.</li> 
+     *     <li>Refuse to service any requests if any member of the seed list is not part of a replica set with the required name.</li> 
+     * </ol>
      *
      * @return the required replica set name since 3.0
      * @since 2.12
@@ -367,9 +364,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * The read preference to use for queries, map-reduce, aggregation, and count.
-     * <p/>
-     * Default is {@code ReadPreference.primary()}.
+     * <p>The read preference to use for queries, map-reduce, aggregation, and count.</p>
+     *
+     * <p>Default is {@code ReadPreference.primary()}.</p>
      *
      * @return the read preference
      * @see com.mongodb.ReadPreference#primary()
@@ -379,9 +376,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * The write concern to use.
-     * <p/>
-     * Default is {@code WriteConcern.ACKNOWLEDGED}.
+     * <p>The write concern to use.</p>
+     *
+     * <p>Default is {@code WriteConcern.ACKNOWLEDGED}.</p>
      *
      * @return the write concern
      * @see WriteConcern#ACKNOWLEDGED
@@ -391,11 +388,11 @@ public class MongoClientOptions {
     }
 
     /**
-     * The codec registry to use.  By default, a {@code MongoClient} will be able to
-     * encode and decode instances of {@code Document}.
-     * <p>
-     * Note that instances of {@code DB} and {@code DBCollection} do not use the
-     * registry, so it's not necessary to include a codec for DBObject in the registry.
+     * <p>The codec registry to use.  By default, a {@code MongoClient} will be able to encode and decode instances of {@code
+     * Document}.</p>
+     *
+     * <p>Note that instances of {@code DB} and {@code DBCollection} do not use the registry, so it's not necessary to include a codec for
+     * DBObject in the registry.</p>
      *
      * Default is {@code RootCodecRegistry}
      *
@@ -426,17 +423,21 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is Java 6 or greater. If false,
-     * the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if the VM is Java 5. <p> Default is false. </p>
+     * <p>Gets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is Java 6 or greater. If
+     * false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if the VM is Java 5.</p>
+     *
+     * <p> Default is false. </p>
+     *
+     * @return true if JMX beans should always be MBeans
      */
     public boolean isAlwaysUseMBeans() {
         return alwaysUseMBeans;
     }
 
     /**
-     * The socket factory for creating sockets to the mongo server.
-     * <p/>
-     * Default is SocketFactory.getDefault()
+     * <p>The socket factory for creating sockets to the mongo server.</p>
+     *
+     * <p>Default is SocketFactory.getDefault()</p>
      *
      * @return the socket factory
      */
@@ -445,10 +446,10 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets whether there is a a finalize method created that cleans up instances of DBCursor that the client does not close.  If you are
-     * careful to always call the close method of DBCursor, then this can safely be set to false.
-     * <p/>
-     * Default is true.
+     * <p>Gets whether there is a a finalize method created that cleans up instances of DBCursor that the client does not close.  If you are
+     * careful to always call the close method of DBCursor, then this can safely be set to false.</p>
+     *
+     * <p>Default is true.</p>
      *
      * @return whether finalizers are enabled on cursors
      * @see DBCursor
@@ -644,10 +645,11 @@ public class MongoClientOptions {
      * @since 2.10.0
      */
     public static class Builder {
+        private final List<CodecProvider> codecProviders = Arrays.<CodecProvider>asList(new DocumentCodecProvider());
+
         private String description;
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
-        List<CodecProvider> codecProviders = Arrays.<CodecProvider>asList(new DocumentCodecProvider());
         private CodecRegistry codecRegistry = new RootCodecRegistry(codecProviders);
 
         private int minConnectionPoolSize;
@@ -675,6 +677,9 @@ public class MongoClientOptions {
         private SocketFactory socketFactory = SocketFactory.getDefault();
         private boolean cursorFinalizerEnabled = true;
 
+        /**
+         * Creates a Builder for MongoClientOptions, getting the appropriate system properties for initialization.
+         */
         public Builder() {
             heartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000")));
             heartbeatConnectRetryFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10")));
@@ -727,8 +732,7 @@ public class MongoClientOptions {
         /**
          * Sets the multiplier for number of threads allowed to block waiting for a connection.
          *
-         * @param threadsAllowedToBlockForConnectionMultiplier
-         *         the multiplier
+         * @param threadsAllowedToBlockForConnectionMultiplier the multiplier
          * @return {@code this}
          * @throws IllegalArgumentException if {@code threadsAllowedToBlockForConnectionMultiplier < 1}
          * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
@@ -822,6 +826,7 @@ public class MongoClientOptions {
          * Sets whether to use SSL.  Setting this to true will also set the socketFactory to {@code SSLSocketFactory.getDefault()} and
          * setting it to false will set the socketFactory to {@code SocketFactory.getDefault()}
          *
+         * @param sslEnabled set to true if using SSL
          * @return {@code this}
          * @see MongoClientOptions#isSslEnabled()
          * @since 3.0

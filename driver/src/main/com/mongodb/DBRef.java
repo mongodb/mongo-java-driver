@@ -21,10 +21,10 @@ package com.mongodb;
 import org.bson.BSONObject;
 
 /**
- * Extends DBRefBase to understand a BSONObject representation of a reference.
- * <p>
- * While instances of this class are {@code Serializable}, deserialized instances can not be fetched,
- * as the {@code db} property is transient.
+ * <p>Extends DBRefBase to understand a BSONObject representation of a reference.</p>
+ *
+ * <p>While instances of this class are {@code Serializable}, deserialized instances can not be fetched, as the {@code db} property is
+ * transient.</p>
  *
  * @mongodb.driver.manual applications/database-references Database References
  */
@@ -35,36 +35,37 @@ public class DBRef extends DBRefBase {
     /**
      * Creates a DBRef.
      *
-     * @param db the database
-     * @param o  a BSON object representing the reference
+     * @param db            the database
+     * @param dbrefDocument a BSON object representing the reference
      */
-    public DBRef(final DB db, final BSONObject o) {
-        super(db, o.get("$ref").toString(), o.get("$id"));
+    public DBRef(final DB db, final BSONObject dbrefDocument) {
+        super(db, dbrefDocument.get("$ref").toString(), dbrefDocument.get("$id"));
     }
 
     /**
      * Creates a DBRef.
      *
-     * @param db the database
-     * @param ns the namespace where the object is stored
-     * @param id the object id
+     * @param db        the database
+     * @param namespace the namespace where the object is stored
+     * @param id        the object id
      */
-    public DBRef(final DB db, final String ns, final Object id) {
-        super(db, ns, id);
+    public DBRef(final DB db, final String namespace, final Object id) {
+        super(db, namespace, id);
     }
 
     /**
-     * fetches a referenced object from the database
-     * @param db the database
-     * @param ref the reference
+     * Fetches a referenced object from the database.
+     *
+     * @param db            the database
+     * @param dbrefDocument the reference
      * @return the referenced document
      * @throws MongoException
      */
-    public static DBObject fetch(final DB db, final DBObject ref) {
+    public static DBObject fetch(final DB db, final DBObject dbrefDocument) {
         String ns;
         Object id;
 
-        if ((ns = (String) ref.get("$ref")) != null && (id = ref.get("$id")) != null) {
+        if ((ns = (String) dbrefDocument.get("$ref")) != null && (id = dbrefDocument.get("$id")) != null) {
             return db.getCollection(ns).findOne(new BasicDBObject("_id", id));
         }
         return null;
