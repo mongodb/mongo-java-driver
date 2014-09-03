@@ -280,7 +280,7 @@ public class JsonReader extends AbstractBsonReader {
     @Override
     protected void doReadEndDocument() {
         setContext(getContext().getParentContext());
-        if (getContext() != null && getContext().getContextType() == BsonContextType.JAVASCRIPT_WITH_SCOPE) {
+        if (getContext() != null && getContext().getContextType() == BsonContextType.SCOPE_DOCUMENT) {
             setContext(getContext().getParentContext()); // JavaScriptWithScope
             verifyToken("}"); // outermost closing bracket for JavaScriptWithScope
         }
@@ -932,6 +932,7 @@ public class JsonReader extends AbstractBsonReader {
                 setState(State.VALUE);
                 currentValue = codeToken.getValue();
                 setCurrentBsonType(BsonType.JAVASCRIPT_WITH_SCOPE);
+                setContext(new Context(getContext(), BsonContextType.SCOPE_DOCUMENT));
                 break;
             case END_OBJECT:
                 currentValue = codeToken.getValue();
