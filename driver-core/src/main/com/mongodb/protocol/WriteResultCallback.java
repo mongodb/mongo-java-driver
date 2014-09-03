@@ -22,7 +22,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.Connection;
-import com.mongodb.operation.SingleResultFutureCallback;
 import com.mongodb.protocol.message.RequestMessage;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;

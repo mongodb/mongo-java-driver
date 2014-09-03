@@ -20,7 +20,6 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.async.SingleResultFuture;
-import com.mongodb.operation.SingleResultFutureCallback;
 import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.codecs.Decoder;
 

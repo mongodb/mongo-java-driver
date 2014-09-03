@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.operation;
+package com.mongodb.protocol;
 
 import com.mongodb.MongoException;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 
-// TODO: should this be public?
-public class SingleResultFutureCallback<T> implements SingleResultCallback<T> {
+class SingleResultFutureCallback<T> implements SingleResultCallback<T> {
     private final SingleResultFuture<T> retVal;
 
     public SingleResultFutureCallback(final SingleResultFuture<T> retVal) {

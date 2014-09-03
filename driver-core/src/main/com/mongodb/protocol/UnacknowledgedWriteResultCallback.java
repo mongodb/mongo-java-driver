@@ -22,7 +22,6 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.connection.Connection;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
-import com.mongodb.operation.SingleResultFutureCallback;
 import com.mongodb.protocol.message.RequestMessage;
 import org.bson.io.OutputBuffer;
 import org.mongodb.WriteResult;
