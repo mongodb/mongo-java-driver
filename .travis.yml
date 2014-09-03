@@ -6,23 +6,23 @@ notifications:
   email: 
     recipients: 
     - jeff.yemin@10gen.com
+    - ross@10gen.com
     - trisha.gee@10gen.com
-    - justin.lee@10gen.com
     on_success: change
     on_failure: always
   flowdock:
     secure: "Ziw1Be2tV0QAYuiYDrepfdNH/oBfNhnXFMji3AdRi6MePVpc6CtOOT/b9Fra\nQgMMrX3AHk/QIDo6QQx9/aVB3FS1fzOPGQkSsEZmiljZU7wZCct1sSSyttf/\nsRG0lyTnmgFNTHyTSDT3JbXAkyF/vJmG/JJJoBUZhmFxzR2fM0Q="
 
-services: 
+services:
 - mongodb
 
 before_script:
   - "mongo admin --eval 'db.runCommand({setParameter : 1, textSearchEnabled : true})'"
 
-branches: 
-  only: 
+branches:
+  only:
   - master
   - 3.0.x
 
-install: ./gradlew -q assemble
-script: ./gradlew -q check
+install: TERM=dumb ./gradlew -q assemble
+script: TERM=dumb ./gradlew -q check
