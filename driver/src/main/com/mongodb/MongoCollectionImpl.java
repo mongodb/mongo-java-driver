@@ -354,6 +354,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         @SuppressWarnings("unchecked")
         public WriteResult insert(final T document) {
+            if (getCodec() instanceof CollectibleCodec) {
+                ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
+            }
             return execute(new InsertOperation<T>(getNamespace(), true, writeConcern, asList(new InsertRequest<T>(document)), getCodec()));
         }
 
@@ -361,6 +364,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public WriteResult insert(final List<T> documents) {
             List<InsertRequest<T>> insertRequestList = new ArrayList<InsertRequest<T>>(documents.size());
             for (T cur : documents) {
+                if (getCodec() instanceof CollectibleCodec) {
+                    ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(cur);
+                }
                 insertRequestList.add(new InsertRequest<T>(cur));
             }
             return execute(new InsertOperation<T>(getNamespace(), true, writeConcern, insertRequestList, getCodec()));

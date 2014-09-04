@@ -20,6 +20,7 @@ import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.CountModel
 import com.mongodb.client.model.DistinctModel
 import com.mongodb.client.model.FindModel
+import com.mongodb.client.model.InsertManyModel
 import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.codecs.DocumentCodecProvider
 import com.mongodb.operation.CountOperation
@@ -34,6 +35,7 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.codecs.configuration.RootCodecRegistry
+import org.bson.types.ObjectId
 import org.mongodb.Document
 import spock.lang.Specification
 
@@ -50,7 +52,7 @@ class NewMongoCollectionSpecification extends Specification {
                                         .codecRegistry(new RootCodecRegistry([new DocumentCodecProvider()]))
                                         .build()
 
-    def 'should insert a document'() {
+    def 'insertOne should use InsertOperation properly'() {
         given:
         def executor = new TestOperationExecutor(new AcknowledgedWriteResult(1, false, null))
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
@@ -62,6 +64,57 @@ class NewMongoCollectionSpecification extends Specification {
         executor.getWriteOperation() as InsertOperation
         !result.insertedId
         result.insertedCount == 1
+    }
+
+    def 'insert should add _id to document'() {
+        given:
+        def executor = new TestOperationExecutor(new AcknowledgedWriteResult(1, false, null))
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+
+        def document = new Document()
+        when:
+        def result = collection.insertOne(document)
+
+        then:
+        document.containsKey('_id')
+        document.get('_id') instanceof ObjectId
+        executor.getWriteOperation() as InsertOperation
+        !result.insertedId
+        result.insertedCount == 1
+    }
+
+    def 'insertMany should use InsertOperation properly'() {
+        given:
+        def executor = new TestOperationExecutor(new AcknowledgedWriteResult(2, false, null))
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        def result = collection.insertMany(new InsertManyModel<Document>([new Document('_id', 1), new Document('_id', 2)]));
+
+        then:
+        executor.getWriteOperation() as InsertOperation
+        !result.insertedIds
+        result.insertedCount == 2
+    }
+
+    def 'insertMany should add _id to documents'() {
+        given:
+        def executor = new TestOperationExecutor(new AcknowledgedWriteResult(2, false, null))
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        def documents = [new Document(), new Document()]
+        when:
+        def result = collection.insertMany(new InsertManyModel<Document>(documents));
+
+        then:
+        documents[0].containsKey('_id')
+        documents[0].get('_id') instanceof ObjectId
+        documents[1].containsKey('_id')
+        documents[1].get('_id') instanceof ObjectId
+        executor.getWriteOperation() as InsertOperation
+        !result.insertedIds
+        result.insertedCount == 2
     }
 
     def 'replace should use ReplaceOperation properly'() {

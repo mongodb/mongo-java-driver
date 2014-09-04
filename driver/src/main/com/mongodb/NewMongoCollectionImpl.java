@@ -41,6 +41,7 @@ import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.RemoveResult;
 import com.mongodb.client.result.ReplaceOneResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.DistinctOperation;
@@ -216,6 +217,9 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     @Override
     public InsertOneResult insertOne(final T document) {
+        if (getCodec() instanceof CollectibleCodec) {
+            ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
+        }
         List<InsertRequest<T>> requests = new ArrayList<InsertRequest<T>>();
         requests.add(new InsertRequest<T>(document));
         operationExecutor.execute(new InsertOperation<T>(namespace, true, options.getWriteConcern(), requests, getCodec()));
@@ -226,6 +230,9 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     public InsertManyResult insertMany(final InsertManyModel<T> model) {
         List<InsertRequest<T>> requests = new ArrayList<InsertRequest<T>>();
         for (T document : model.getDocuments()) {
+            if (getCodec() instanceof CollectibleCodec) {
+                ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
+            }
             requests.add(new InsertRequest<T>(document));
         }
         operationExecutor.execute(new InsertOperation<T>(namespace, model.isOrdered(), options.getWriteConcern(), requests, getCodec()));

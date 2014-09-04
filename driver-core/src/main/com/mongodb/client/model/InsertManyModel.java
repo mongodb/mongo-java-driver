@@ -38,7 +38,7 @@ public final class InsertManyModel<T> {
      */
     public InsertManyModel(final List<? extends T> documents) {
         this.documents = notNull("documents", documents);
-        isTrueArgument("documents list is not empty", documents.isEmpty());
+        isTrueArgument("documents list is not empty", !documents.isEmpty());
     }
 
     /**

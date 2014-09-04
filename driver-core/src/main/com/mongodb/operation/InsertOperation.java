@@ -18,7 +18,6 @@ package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.protocol.InsertCommandProtocol;
 import com.mongodb.protocol.InsertProtocol;
 import com.mongodb.protocol.WriteCommandProtocol;
@@ -46,11 +45,6 @@ public class InsertOperation<T> extends BaseWriteOperation {
         super(namespace, ordered, writeConcern);
         this.insertRequestList = notNull("insertList", insertRequestList);
         this.encoder = notNull("encoder", encoder);
-        if (encoder instanceof CollectibleCodec) {
-            for (InsertRequest<T> cur : insertRequestList) {
-                ((CollectibleCodec<T>) encoder).generateIdIfAbsentFromDocument(cur.getDocument());
-            }
-        }
     }
 
     @Override
