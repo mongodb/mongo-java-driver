@@ -20,6 +20,9 @@ import org.bson.ByteBuf;
 
 import java.io.Closeable;
 
+/**
+ * This class should not be considered as part of the public API, and it may change or be removed at any time.
+ */
 public class ResponseBuffers implements Closeable {
     private final ReplyHeader replyHeader;
     private final ByteBuf bodyByteBuffer;
