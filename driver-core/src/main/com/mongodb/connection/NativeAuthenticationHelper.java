@@ -27,9 +27,40 @@ import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * Utility class for working with MongoDB native authentication.
+ *
+ * @since 3.0
+ */
 public final class NativeAuthenticationHelper {
 
     private static final Charset UTF_8_CHARSET = Charset.forName("UTF-8");
+
+    /**
+     * Creates a hash of the given user name and password, which is the hex encoding of
+     * MD5( <userName> + ":mongo:" + <password>.
+     *
+     * @param userName the user name
+     * @param password the password
+     * @return the hash as a string
+     * @mongodb.driver.manual meta-driver/latest/legacy/implement-authentication-in-driver/ Authentication
+     */
+    public static String createAuthenticationHash(final String userName, final char[] password) {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream(userName.length() + 20 + password.length);
+        try {
+            bout.write(userName.getBytes(UTF_8_CHARSET));
+            bout.write(":mongo:".getBytes(UTF_8_CHARSET));
+            for (final char ch : password) {
+                if (ch >= 128) {
+                    throw new IllegalArgumentException("can't handle non-ascii passwords yet");
+                }
+                bout.write((byte) ch);
+            }
+        } catch (IOException ioe) {
+            throw new RuntimeException("impossible", ioe);
+        }
+        return hexMD5(bout.toByteArray());
+    }
 
     static BsonDocument getAuthCommand(final String userName, final char[] password, final String nonce) {
         return getAuthCommand(userName, createAuthenticationHash(userName, password), nonce);
@@ -52,22 +83,6 @@ public final class NativeAuthenticationHelper {
         return new BsonDocument("getnonce", new BsonInt32(1));
     }
 
-    public static String createAuthenticationHash(final String userName, final char[] password) {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream(userName.length() + 20 + password.length);
-        try {
-            bout.write(userName.getBytes(UTF_8_CHARSET));
-            bout.write(":mongo:".getBytes(UTF_8_CHARSET));
-            for (final char ch : password) {
-                if (ch >= 128) {
-                    throw new IllegalArgumentException("can't handle non-ascii passwords yet");
-                }
-                bout.write((byte) ch);
-            }
-        } catch (IOException ioe) {
-            throw new RuntimeException("impossible", ioe);
-        }
-        return hexMD5(bout.toByteArray());
-    }
 
     /**
      * Produce hex representation of the MD5 digest of a byte array
