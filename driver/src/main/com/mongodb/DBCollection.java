@@ -698,7 +698,7 @@ public class DBCollection {
         queryOperation.setProjection(wrapAllowNull(projection));
         queryOperation.setSort(wrapAllowNull(sort));
         queryOperation.setBatchSize(-1);
-        queryOperation.setMaxTimeMS(MILLISECONDS.convert(maxTime, maxTimeUnit));
+        queryOperation.setMaxTime(maxTime, maxTimeUnit);
 
         MongoCursor<DBObject> cursor = execute(queryOperation, readPreference);
 
