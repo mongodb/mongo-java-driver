@@ -255,24 +255,13 @@ public class DBCursorTest extends TestCase {
     }
 
     @Test
-    public void testCursorTryNext() throws ExecutionException, TimeoutException, InterruptedException {
+    public void shouldSupportTryNextOnTailableCursors() throws ExecutionException, TimeoutException, InterruptedException {
         DBCollection c = getDatabase().getCollection("tail1");
         c.drop();
         getDatabase().createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
 
         c.save(new BasicDBObject("x", 1), WriteConcern.SAFE);
         DBCursor cur = c.find()
-                         .sort(new BasicDBObject("$natural", 1))
-                         .addOption(Bytes.QUERYOPTION_AWAITDATA);
-
-        try {
-            cur.tryNext();
-            fail();
-        } catch (IllegalArgumentException e) {
-            // Passed
-        }
-
-        cur = c.find()
                .sort(new BasicDBObject("$natural", 1))
                .addOption(Bytes.QUERYOPTION_TAILABLE);
 
@@ -280,6 +269,25 @@ public class DBCursorTest extends TestCase {
             cur.tryNext();
         } catch (IllegalArgumentException e) {
             fail();
+        }
+    }
+
+    @Test
+    public void shouldThrowExceptionOnTryNextForNonTailableCursors() throws ExecutionException, TimeoutException, InterruptedException {
+        DBCollection c = getDatabase().getCollection("tail1");
+        c.drop();
+        getDatabase().createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
+
+        c.save(new BasicDBObject("x", 1), WriteConcern.SAFE);
+        DBCursor cur = c.find()
+                .sort(new BasicDBObject("$natural", 1))
+                .addOption(Bytes.QUERYOPTION_AWAITDATA);
+
+        try {
+            cur.tryNext();
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Passed
         }
     }
 
