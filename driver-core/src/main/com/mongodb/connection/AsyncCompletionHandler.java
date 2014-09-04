@@ -17,13 +17,16 @@
 package com.mongodb.connection;
 
 /**
- * Completion handler for asynchronous I/O
+ * Completion handler for asynchronous I/O.
  *
  * @since 3.0
+ * @param <T> the type of a successful completion
  */
 public interface AsyncCompletionHandler<T> {
     /**
      * Invoked when an operation has completed.
+     *
+     * @param t the result of the completed operation
      */
     void completed(T t);
 
