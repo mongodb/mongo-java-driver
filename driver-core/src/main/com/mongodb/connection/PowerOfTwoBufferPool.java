@@ -24,6 +24,9 @@ import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This class should not be considered as part of the public API, and it may change or be removed at any time.
+ */
 public class PowerOfTwoBufferPool implements BufferProvider {
 
     private final Map<Integer, ConcurrentPool<ByteBuffer>> powerOfTwoToPoolMap = new HashMap<Integer, ConcurrentPool<ByteBuffer>>();

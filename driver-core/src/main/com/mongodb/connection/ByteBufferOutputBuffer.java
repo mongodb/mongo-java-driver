@@ -26,6 +26,9 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ * This class should not be considered as part of the public API, and it may change or be removed at any time.
+ */
 public class ByteBufferOutputBuffer extends OutputBuffer {
 
     public static final int INITIAL_BUFFER_SIZE = 1024;
