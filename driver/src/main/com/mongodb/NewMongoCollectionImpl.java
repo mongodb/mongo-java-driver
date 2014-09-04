@@ -183,6 +183,9 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
             WriteRequest writeRequest;
             if (writeModel instanceof InsertOneModel) {
                 InsertOneModel<T, D> insertOneModel = (InsertOneModel<T, D>) writeModel;
+                if (getCodec() instanceof CollectibleCodec) {
+                    ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(insertOneModel.getDocument());
+                }
                 writeRequest = new InsertRequest<T>(insertOneModel.getDocument());
             } else if (writeModel instanceof ReplaceOneModel) {
                 ReplaceOneModel<T, D> replaceOneModel = (ReplaceOneModel<T, D>) writeModel;

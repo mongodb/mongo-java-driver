@@ -752,6 +752,20 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     }
 
+    @Test
+    public void bulkWriteOperationShouldGenerateIdsForInserts() {
+        // when
+        BulkWriteOperation bulkWriteOperation = collection.initializeOrderedBulkOperation();
+        BasicDBObject document = new BasicDBObject();
+        bulkWriteOperation.insert(document);
+        bulkWriteOperation.execute();
+
+        // then
+        assertTrue(document.containsField("_id"));
+        assertTrue(document.get("_id") instanceof ObjectId);
+    }
+
+
     @Test(expected = BulkWriteException.class)
     public void testBulkWriteException() {
         // given

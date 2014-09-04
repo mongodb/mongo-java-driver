@@ -25,7 +25,6 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
-import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerVersion;
@@ -424,11 +423,6 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
 
         @SuppressWarnings("unchecked")
         RunExecutor getInsertsRunExecutor(final List<InsertRequest<T>> insertRequests, final Connection connection) {
-            if (encoder instanceof CollectibleCodec) {
-                for (InsertRequest<T> cur : insertRequests) {
-                    ((CollectibleCodec<T>) encoder).generateIdIfAbsentFromDocument(cur.getDocument());
-                }
-            }
             return new RunExecutor(connection) {
                 WriteProtocol getWriteProtocol(final int index) {
                     return new InsertProtocol<T>(namespace, ordered, writeConcern, asList(insertRequests.get(index)), encoder

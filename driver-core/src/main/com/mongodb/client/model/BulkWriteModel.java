@@ -24,7 +24,8 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * A model describing a bulk write, which can include a combination of inserts, updates, and deletes.  By default the writes are ordered.
  *
- * @param <T>
+ * @param <T> the document type for the documents to be added to a collection
+ * @param <D> the document type for the documents used for queries
  * @since 3.0
  */
 public final class BulkWriteModel<T, D> {
@@ -38,7 +39,7 @@ public final class BulkWriteModel<T, D> {
      */
     public BulkWriteModel(final List<? extends WriteModel<? extends T, D>> operations) {
         this.operations = notNull("operations", operations);
-        isTrueArgument("operations list is not empty", operations.isEmpty());
+        isTrueArgument("operations list is not empty", !operations.isEmpty());
     }
 
     /**
