@@ -32,6 +32,7 @@ class TestOperationExecutor implements OperationExecutor {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
         this.readOperation = operation;
         this.readPreference = readPreference;
@@ -39,6 +40,7 @@ class TestOperationExecutor implements OperationExecutor {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <T> T execute(final WriteOperation<T> operation) {
         this.writeOperation = operation;
         return (T) response;
