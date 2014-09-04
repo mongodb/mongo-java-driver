@@ -68,6 +68,7 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWrapper;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
@@ -80,6 +81,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     private final MongoNamespace namespace;
@@ -124,7 +126,17 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     @Override
     public long count(final CountModel model) {
-        return operationExecutor.execute(new CountOperation(namespace, new Find()), options.getReadPreference());
+        CountOperation operation = new CountOperation(namespace);
+        operation.setCriteria(asBson(model.getCriteria()));
+        operation.setSkip(model.getSkip());
+        operation.setLimit(model.getLimit());
+        operation.setMaxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS);
+        if (model.getHint() != null) {
+            operation.setHint(asBson(model.getHint()));
+        } else if (model.getHintString() != null) {
+            operation.setHint(new BsonString(model.getHintString()));
+        }
+        return operationExecutor.execute(operation, options.getReadPreference());
     }
 
     @Override
@@ -149,11 +161,17 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     @Override
     public <F, D> MongoIterable<D> find(final FindModel<F> model, final Class<D> clazz) {
-        QueryOperation<D> queryOperation = new QueryOperation<D>(namespace,
-                                                                 options.getCodecRegistry().get(clazz));
-        queryOperation.setCriteria(asBson(model.getCriteria()));
-        return new OperationIterable<D>(queryOperation,
-                                        options.getReadPreference());
+        QueryOperation<D> operation = new QueryOperation<D>(namespace, options.getCodecRegistry().get(clazz));
+        operation.setCriteria(asBson(model.getCriteria()));
+        operation.setBatchSize(model.getBatchSize());
+        operation.setCursorFlags(model.getCursorFlags());
+        operation.setSkip(model.getSkip());
+        operation.setLimit(model.getLimit());
+        operation.setMaxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS);
+        operation.setModifiers(asBson(model.getModifiers()));
+        operation.setProjection(asBson(model.getProjection()));
+        operation.setSort(asBson(model.getSort()));
+        return new OperationIterable<D>(operation, options.getReadPreference());
     }
 
     @Override

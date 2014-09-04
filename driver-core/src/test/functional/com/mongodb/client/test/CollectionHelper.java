@@ -27,7 +27,6 @@ import com.mongodb.operation.CreateCollectionOptions;
 import com.mongodb.operation.CreateIndexesOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.Find;
 import com.mongodb.operation.Index;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
@@ -120,11 +119,13 @@ public final class CollectionHelper<T> {
     }
 
     public long count() {
-        return new CountOperation(namespace, new Find()).execute(getBinding());
+        return new CountOperation(namespace).execute(getBinding());
     }
 
-    public long count(final Document filter) {
-        return new CountOperation(namespace, new Find(wrap(filter))).execute(getBinding());
+    public long count(final Document criteria) {
+        CountOperation operation = new CountOperation(namespace);
+        operation.setCriteria(wrap(criteria));
+        return operation.execute(getBinding());
     }
 
     public BsonDocument wrap(final Document document) {

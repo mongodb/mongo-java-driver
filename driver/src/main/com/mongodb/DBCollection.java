@@ -915,17 +915,13 @@ public class DBCollection {
             throw new IllegalArgumentException("skip is too large: " + skip);
         }
 
-        Find find = new Find(wrapAllowNull(query)).limit((int) limit).skip((int) skip).maxTime(maxTime, maxTimeUnit);
-
-        if (hint != null) {
-            if (hint instanceof BsonString) {
-                find.hintIndex(((BsonString) hint).getValue());
-            } else if (hint instanceof BsonDocument) {
-                find.hintIndex((BsonDocument) hint);
-            }
-        }
-
-        return execute(new CountOperation(getNamespace(), find), readPreference);
+        CountOperation operation = new CountOperation(getNamespace());
+        operation.setCriteria(wrapAllowNull(query));
+        operation.setHint(hint);
+        operation.setSkip(skip);
+        operation.setLimit(limit);
+        operation.setMaxTime(maxTime, maxTimeUnit);
+        return execute(operation, readPreference);
     }
 
     /**

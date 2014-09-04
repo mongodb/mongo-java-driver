@@ -23,51 +23,53 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * A model describing a count operation.
  *
+ * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/count/ Count
  */
 public class CountModel<D> implements ExplainableModel {
-    private D filter;
+    private D criteria;
     private D hint;
     private String hintString;
-    private Long limit;
-    private Long maxTimeMS;
-    private Long skip;
+    private long limit;
+    private long maxTimeMS;
+    private long skip;
 
     /**
-     * Set the query filter to apply.
+     * Sets the criteria to apply to the query.
      *
-     * @param filter a document describing the query filter, which may be null. The filter can be of any type for which a
-     * {@code Codec} is registered
+     * @param criteria the criteria, which may be null.
      * @return this
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public CountModel<D> filter(final D filter) {
-        this.filter = filter;
+    public CountModel<D> criteria(final D criteria) {
+        this.criteria = criteria;
         return this;
     }
 
     /**
-     * Gets the query filter.
+     * Gets the query criteria.
      *
-     * @return the query filter
+     * @return the query criteria
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public D getFilter() {
-        return filter;
+    public D getCriteria() {
+        return criteria;
     }
 
     /**
      * Gets the hint to apply.
      *
-     * @return the hint
+     * @return the hint, which should describe an existing
      */
     public D getHint() {
         return hint;
     }
 
     /**
-     * Gets the hint to apply.
+     * Gets the hint string to apply.
      *
-     * @return the hint
+     * @return the hint string, which should be the name of an existing index
      */
     public String getHintString() {
         return hintString;
@@ -76,8 +78,7 @@ public class CountModel<D> implements ExplainableModel {
     /**
      * Sets the hint to apply.
      *
-     * @param hint a document describing the index which should be used for this operation.  The hint can be of any type for which a
-     * {@code Codec} is registered}
+     * @param hint a document describing the index which should be used for this operation.
      * @return this
      */
     public CountModel<D> hint(final D hint) {
@@ -89,60 +90,64 @@ public class CountModel<D> implements ExplainableModel {
      * Sets the hint to apply.
      *
      * @param hint the name of the index which should be used for the operation
-     * @return  this
+     * @return this
      */
-    public CountModel<D> hint(final String hint) {
+    public CountModel<D> hintString(final String hint) {
         this.hintString = hint;
         return this;
     }
 
     /**
-     * Gets the limit to apply.  The default is null.
+     * Gets the limit to apply.  The default is 0, which means there is no limit.
      *
      * @return the limit
+     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
      */
-    public Long getLimit() {
+    public long getLimit() {
         return limit;
     }
 
     /**
      * Sets the limit to apply.
      *
-     * @param limit the limit, which may be null
+     * @param limit the limit
      * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
      */
-    public CountModel<D> limit(final Long limit) {
+    public CountModel<D> limit(final long limit) {
         this.limit = limit;
         return this;
     }
 
     /**
-     * Gets the number of documents to skip.  The default is null.
+     * Gets the number of documents to skip.  The default is 0.
      *
-     * @return the number of documents to skip, which may be null
+     * @return the number of documents to skip
+     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
      */
-    public Long getSkip() {
+    public long getSkip() {
         return skip;
     }
 
     /**
      * Sets the number of documents to skip.
      *
-     * @param skip the number of documents to skip, which may be null
+     * @param skip the number of documents to skip
      * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
      */
-    public CountModel<D> skip(final Long skip) {
+    public CountModel<D> skip(final long skip) {
         this.skip = skip;
         return this;
     }
 
     /**
-     * Gets the maximum execution time on the server for this operation.  The default is null, which places no limit on the execution time.
+     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
      *
      * @param timeUnit the time unit to return the result in
      * @return the maximum execution time in the given time unit
      */
-    public Long getMaxTime(final TimeUnit timeUnit) {
+    public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
     }
@@ -150,18 +155,13 @@ public class CountModel<D> implements ExplainableModel {
     /**
      * Sets the maximum execution time on the server for this operation.
      *
-     * @param maxTime the max time, which may be null
-     * @param timeUnit the time unit, which may only be null if maxTime is
+     * @param maxTime  the max time
+     * @param timeUnit the time unit, which may not be null
      * @return this
      */
-    public CountModel<D> maxTimeMS(final Long maxTime, final TimeUnit timeUnit) {
-        if (maxTime == null) {
-            maxTimeMS = null;
-        } else {
-            notNull("timeUnit", timeUnit);
-            this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        }
+    public CountModel<D> maxTime(final long maxTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
-
 }
