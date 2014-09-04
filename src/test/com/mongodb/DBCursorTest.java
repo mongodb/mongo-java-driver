@@ -179,11 +179,34 @@ public class DBCursorTest extends TestCase {
 
         assertEquals(0, dbCursor.getOptions());
         dbCursor.setOptions(Bytes.QUERYOPTION_TAILABLE);
-        assertEquals(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_AWAITDATA, dbCursor.getOptions());
+        assertEquals(Bytes.QUERYOPTION_TAILABLE, dbCursor.getOptions());
         dbCursor.addOption(Bytes.QUERYOPTION_SLAVEOK);
-        assertEquals(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_AWAITDATA | Bytes.QUERYOPTION_SLAVEOK, dbCursor.getOptions());
+        assertEquals(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_SLAVEOK, dbCursor.getOptions());
         dbCursor.resetOptions();
         assertEquals(0, dbCursor.getOptions());
+    }
+
+    @Test
+    public void testTailable() {
+        DBCollection c = getDatabase().getCollection("tail1");
+        c.drop();
+        getDatabase().createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
+
+        DBObject firstDBObject = new BasicDBObject("x", 1);
+        DBObject secondDBObject = new BasicDBObject("x", 2);
+
+        final DBCursor cur = c.find()
+                .sort(new BasicDBObject("$natural", 1))
+                .addOption(Bytes.QUERYOPTION_TAILABLE);
+        c.save(firstDBObject, WriteConcern.SAFE);
+
+        assertEquals(firstDBObject, cur.tryNext());
+        assertEquals(null, cur.tryNext());
+        assertEquals(null, cur.tryNext());
+
+        c.save(secondDBObject, WriteConcern.SAFE);
+        assertEquals(secondDBObject, cur.tryNext());
+        assertEquals(null, cur.tryNext());
     }
 
     @Test
@@ -197,7 +220,8 @@ public class DBCursorTest extends TestCase {
 
         final DBCursor cur = c.find()
                               .sort(new BasicDBObject("$natural", 1))
-                              .addOption(Bytes.QUERYOPTION_TAILABLE);
+                              .addOption(Bytes.QUERYOPTION_TAILABLE)
+                              .addOption(Bytes.QUERYOPTION_AWAITDATA);
 
         final CountDownLatch latch = new CountDownLatch(1);
         Callable<Integer> callable = new Callable<Integer>() {
@@ -228,6 +252,35 @@ public class DBCursorTest extends TestCase {
         // this doc should unblock thread
         c.save(new BasicDBObject("x", 10), WriteConcern.SAFE);
         assertEquals(10, (long) future.get(5, SECONDS));
+    }
+
+    @Test
+    public void testCursorTryNext() throws ExecutionException, TimeoutException, InterruptedException {
+        DBCollection c = getDatabase().getCollection("tail1");
+        c.drop();
+        getDatabase().createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
+
+        c.save(new BasicDBObject("x", 1), WriteConcern.SAFE);
+        DBCursor cur = c.find()
+                         .sort(new BasicDBObject("$natural", 1))
+                         .addOption(Bytes.QUERYOPTION_AWAITDATA);
+
+        try {
+            cur.tryNext();
+            fail();
+        } catch (IllegalArgumentException e) {
+            // Passed
+        }
+
+        cur = c.find()
+               .sort(new BasicDBObject("$natural", 1))
+               .addOption(Bytes.QUERYOPTION_TAILABLE);
+
+        try {
+            cur.tryNext();
+        } catch (IllegalArgumentException e) {
+            fail();
+        }
     }
 
     @Test
