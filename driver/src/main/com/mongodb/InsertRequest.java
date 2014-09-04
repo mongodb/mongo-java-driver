@@ -16,6 +16,9 @@
 
 package com.mongodb;
 
+import org.bson.BsonDocumentWrapper;
+import org.bson.codecs.Codec;
+
 class InsertRequest extends WriteRequest {
     private final DBObject document;
 
@@ -28,7 +31,7 @@ class InsertRequest extends WriteRequest {
     }
 
     @Override
-    com.mongodb.operation.WriteRequest toNew() {
-        return new com.mongodb.operation.InsertRequest<DBObject>(document);
+    com.mongodb.operation.WriteRequest toNew(final Codec<DBObject> codec) {
+        return new com.mongodb.operation.InsertRequest(new BsonDocumentWrapper<DBObject>(document, codec));
     }
 }

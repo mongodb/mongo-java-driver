@@ -18,16 +18,15 @@
 package com.mongodb.protocol
 
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.codecs.DocumentCodec
 import com.mongodb.operation.InsertRequest
 import com.mongodb.operation.UpdateRequest
 import com.mongodb.selector.PrimaryServerSelector
+import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.bson.types.Binary
+import org.bson.codecs.BsonDocumentCodec
 import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
-import org.mongodb.Document
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getCluster
@@ -47,24 +46,25 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
 
     def 'should insert a document'() {
         given:
-        def document = new Document('_id', 1)
+        def document = new BsonDocument('_id', new BsonInt32(1))
 
         def insertRequest = [new InsertRequest(document)]
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertRequest, new DocumentCodec())
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertRequest)
         when:
         def result = protocol.execute(connection)
 
         then:
         result.insertedCount == 1
         result.upserts == []
-        collectionHelper.find(document).first() == document
+        collectionHelper.find(document, new BsonDocumentCodec()).first() == document
     }
 
     def 'should insert documents'() {
-        def requests = [new InsertRequest(new Document('_id', 1)), new InsertRequest(new Document('_id', 2))]
+        def requests = [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                        new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))]
         given:
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, requests,
-                                                 new DocumentCodec())
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, requests
+        )
         when:
         protocol.execute(connection)
 
@@ -75,8 +75,9 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
     def 'should throw exception'() {
         given:
         def protocol = new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED,
-                                                 [new InsertRequest(new Document('_id', 1)), new InsertRequest(new Document('_id', 2))],
-                                                 new DocumentCodec())
+                                                 [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                                                  new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))]
+        )
         protocol.execute(connection)
 
         when:
@@ -103,22 +104,20 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
 
     def 'should split a large batch'() {
         given:
-        def hugeBinary = new Binary(new byte[1024 * 1024 * 16 - 100]);
+        def hugeBinary = new BsonBinary(new byte[1024 * 1024 * 16 - 100]);
 
         def documents = [
-                new Document('_id', 1).append('bytes', hugeBinary),
-                new Document('_id', 2).append('bytes', hugeBinary),
-                new Document('_id', 3).append('bytes', hugeBinary),
-                new Document('_id', 4).append('bytes', hugeBinary)
+                new BsonDocument('_id', new BsonInt32(1)).append('bytes', hugeBinary),
+                new BsonDocument('_id', new BsonInt32(2)).append('bytes', hugeBinary),
+                new BsonDocument('_id', new BsonInt32(3)).append('bytes', hugeBinary),
+                new BsonDocument('_id', new BsonInt32(4)).append('bytes', hugeBinary)
         ]
 
-        List<InsertRequest<Document>> insertList = new ArrayList<InsertRequest<Document>>(documents.size());
-        for (
-                Document cur :
-                        documents) {
-            insertList.add(new InsertRequest<Document>(cur));
+        List<InsertRequest> insertList = new ArrayList<InsertRequest>(documents.size());
+        for (def cur : documents) {
+            insertList.add(new InsertRequest(cur));
         }
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList, new DocumentCodec())
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList)
 
         when:
         def result = protocol.execute(connection)
@@ -130,27 +129,25 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
 
     def 'should have correct list of processed and unprocessed requests after error on split'() {
         given:
-        def hugeBinary = new Binary(new byte[1024 * 1024 * 16 - 100]);
+        def hugeBinary = new BsonBinary(new byte[1024 * 1024 * 16 - 100]);
 
         def documents = [
-                new Document('_id', 1).append('bytes', hugeBinary),
-                new Document('_id', 2).append('bytes', hugeBinary),
-                new Document('_id', 3).append('bytes', hugeBinary),
-                new Document('_id', 4).append('bytes', hugeBinary)
+                new BsonDocument('_id', new BsonInt32(1)).append('bytes', hugeBinary),
+                new BsonDocument('_id', new BsonInt32(2)).append('bytes', hugeBinary),
+                new BsonDocument('_id', new BsonInt32(3)).append('bytes', hugeBinary),
+                new BsonDocument('_id', new BsonInt32(4)).append('bytes', hugeBinary)
         ]
 
-        List<InsertRequest<Document>> insertList = new ArrayList<InsertRequest<Document>>(documents.size());
-        for (
-                Document cur :
-                        documents) {
-            insertList.add(new InsertRequest<Document>(cur));
+        List<InsertRequest> insertList = new ArrayList<InsertRequest>(documents.size());
+        for (def cur : documents) {
+            insertList.add(new InsertRequest(cur));
         }
 
         // Force a duplicate key error in the second insert request
-        new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, [new InsertRequest(new Document('_id', 2))],
-                                  new DocumentCodec()).execute(connection)
+        new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, [new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))])
+                .execute(connection)
 
-        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList, new DocumentCodec())
+        def protocol = new InsertCommandProtocol(getNamespace(), true, ACKNOWLEDGED, insertList)
 
         when:
         protocol.execute(connection)
@@ -162,32 +159,29 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
 
     def 'should map indices in exception when split is required'() {
         given:
-        def hugeBinary = new Binary(new byte[1024 * 1024 * 16 - 100]);
+        def hugeBinary = new BsonBinary(new byte[1024 * 1024 * 16 - 100]);
 
         def documents = [
-                new Document('_id', 1),
-                new Document('_id', 2),
-                new Document('_id', 3),
-                new Document('_id', 4)
+                new BsonDocument('_id', new BsonInt32(1)),
+                new BsonDocument('_id', new BsonInt32(2)),
+                new BsonDocument('_id', new BsonInt32(3)),
+                new BsonDocument('_id', new BsonInt32(4))
         ]
 
-        List<InsertRequest<Document>> insertList = new ArrayList<InsertRequest<Document>>(documents.size());
-        for ( Document cur : documents) {
-            insertList.add(new InsertRequest<Document>(cur));
+        List<InsertRequest> insertList = new ArrayList<InsertRequest>(documents.size());
+        for (def cur : documents) {
+            insertList.add(new InsertRequest(cur));
         }
-        new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, insertList,
-                                  new DocumentCodec()).execute(connection)
+        new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, insertList).execute(connection)
 
         // add a large byte array to each document to force a split after each
-        for (
-                def document :
-                        documents) {
+        for (def document : documents) {
             document.append('bytes', hugeBinary);
         }
-        documents[1].put('_id', 5)  // Make the second document a new one
+        documents[1].put('_id', new BsonInt32(5))  // Make the second document a new one
 
-        def protocol = new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, insertList,
-                                                 new DocumentCodec())
+        def protocol = new InsertCommandProtocol(getNamespace(), false, ACKNOWLEDGED, insertList)
+
         when:
         protocol.execute(connection)
 

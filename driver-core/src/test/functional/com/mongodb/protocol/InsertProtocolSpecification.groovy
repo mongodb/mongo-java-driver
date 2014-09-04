@@ -80,8 +80,8 @@ class InsertProtocolSpecification extends OperationFunctionalSpecification {
 
         when:
         def connection = getBinding().getWriteConnectionSource().getConnection()
-        new InsertProtocol<BsonDocument>(getNamespace(), true, WriteConcern.ACKNOWLEDGED, [new InsertRequest<BsonDocument>(doc)],
-                new BsonDocumentCodec()).execute(connection);
+        new InsertProtocol<BsonDocument>(getNamespace(), true, WriteConcern.ACKNOWLEDGED, [new InsertRequest<BsonDocument>(doc)]
+        ).execute(connection);
 
 
         then:

@@ -33,36 +33,35 @@ import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.operation.OrderBy.ASC
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class CountOperationSpecification extends OperationFunctionalSpecification {
 
-    private List<InsertRequest<Document>> insertDocumentList;
+    private documents;
 
     def setup() {
-        insertDocumentList = [
-                new InsertRequest<Document>(new Document('x', 1)),
-                new InsertRequest<Document>(new Document('x', 2)),
-                new InsertRequest<Document>(new Document('x', 3)),
-                new InsertRequest<Document>(new Document('x', 4)),
-                new InsertRequest<Document>(new Document('x', 5))
+        documents = [
+                new Document('x', 1),
+                new Document('x', 2),
+                new Document('x', 3),
+                new Document('x', 4),
+                new Document('x', 5)
         ]
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, insertDocumentList, new DocumentCodec()).execute(getBinding())
+        getCollectionHelper().insertDocuments(new DocumentCodec(), documents)
     }
 
     def 'should get the count'() {
         expect:
-        new CountOperation(getNamespace()).execute(getBinding()) == insertDocumentList.size()
+        new CountOperation(getNamespace()).execute(getBinding()) == documents.size()
     }
 
     @Category(Async)
     def 'should get the count asynchronously'() {
         expect:
         new CountOperation(getNamespace()).executeAsync(getAsyncBinding()).get() ==
-        insertDocumentList.size()
+        documents.size()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
@@ -121,7 +120,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should use skip with the count'() {
         when:
         def countOperation = new CountOperation(getNamespace())
-        countOperation.setSkip(insertDocumentList.size() - 2)
+        countOperation.setSkip(documents.size() - 2)
 
         then:
         countOperation.execute(getBinding()) == 2
@@ -131,7 +130,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should use skip with the count asynchronously'() {
         when:
         def countOperation = new CountOperation(getNamespace())
-        countOperation.setSkip(insertDocumentList.size() - 2)
+        countOperation.setSkip(documents.size() - 2)
 
         then:
         countOperation.executeAsync(getAsyncBinding()).get() == 2
@@ -148,7 +147,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         createIndexesOperation.execute(getBinding())
 
         then:
-        countOperation.execute(getBinding()) == serverVersionAtLeast(asList(2, 6, 0)) ? 1 : insertDocumentList.size()
+        countOperation.execute(getBinding()) == serverVersionAtLeast(asList(2, 6, 0)) ? 1 : documents.size()
     }
 
     @Category(Async)
@@ -163,7 +162,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         createIndexesOperation.executeAsync(getAsyncBinding()).get()
 
         then:
-        countOperation.executeAsync(getAsyncBinding()).get() == serverVersionAtLeast(asList(2, 6, 0)) ? 1 : insertDocumentList.size()
+        countOperation.executeAsync(getAsyncBinding()).get() == serverVersionAtLeast(asList(2, 6, 0)) ? 1 : documents.size()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })

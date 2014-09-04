@@ -22,7 +22,6 @@ import com.mongodb.protocol.InsertCommandProtocol;
 import com.mongodb.protocol.InsertProtocol;
 import com.mongodb.protocol.WriteCommandProtocol;
 import com.mongodb.protocol.WriteProtocol;
-import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
 
 import java.util.List;
@@ -37,24 +36,30 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  */
 public class InsertOperation<T> extends BaseWriteOperation {
-    private final List<InsertRequest<T>> insertRequestList;
-    private final Encoder<T> encoder;
+    private final List<InsertRequest> insertRequestList;
 
+    /**
+     * Construct an instance.
+     *
+     * @param namespace the namespace
+     * @param ordered whether the inserts are ordered
+     * @param writeConcern the write concern to apply
+     * @param insertRequestList the list of inserts
+     */
     public InsertOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<InsertRequest<T>> insertRequestList, final Encoder<T> encoder) {
+                           final List<InsertRequest> insertRequestList) {
         super(namespace, ordered, writeConcern);
-        this.insertRequestList = notNull("insertList", insertRequestList);
-        this.encoder = notNull("encoder", encoder);
+        this.insertRequestList = notNull("insertRequestList", insertRequestList);
     }
 
     @Override
     protected WriteProtocol getWriteProtocol() {
-        return new InsertProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList, encoder);
+        return new InsertProtocol(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol() {
-        return new InsertCommandProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList, encoder);
+        return new InsertCommandProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList);
     }
 
     @Override

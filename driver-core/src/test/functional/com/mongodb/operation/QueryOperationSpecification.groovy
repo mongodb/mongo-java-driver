@@ -46,7 +46,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     def 'should query with default values'() {
         def document = new Document('_id', 1)
         given:
-        getCollectionHelper().insertDocuments(document);
+        getCollectionHelper().insertDocuments(new DocumentCodec(), document);
         def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
 
         when:
@@ -59,7 +59,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     def 'should apply criteria'() {
         given:
         def document = new Document('_id', 1)
-        getCollectionHelper().insertDocuments(document, new Document());
+        getCollectionHelper().insertDocuments(new DocumentCodec(), document, new Document());
         def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
         queryOperation.setCriteria(new BsonDocument('_id', new BsonInt32(1)))
 
@@ -75,7 +75,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         given:
         def documents = [new Document('_id', 3), new Document('_id', 1), new Document('_id', 2), new Document('_id', 5),
                          new Document('_id', 4)]
-        getCollectionHelper().insertDocuments(documents);
+        getCollectionHelper().insertDocuments(new DocumentCodec(), documents);
 
 
         when: 'ascending'
@@ -94,7 +94,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     def 'should apply projection'() {
         given:
         def document = new Document('_id', 1).append('x', 5).append('y', 10)
-        getCollectionHelper().insertDocuments(document, new Document());
+        getCollectionHelper().insertDocuments(new DocumentCodec(), document, new Document());
         def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
         queryOperation.setProjection(new BsonDocument('_id', new BsonInt32(0)).append('x', new BsonInt32(1)))
 
@@ -108,7 +108,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ isSharded() || !serverVersionAtLeast([2, 6, 0]) })
     def 'should throw execution timeout exception from execute'() {
         given:
-        getCollectionHelper().insertDocuments(new Document())
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
         def operation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
         operation.setMaxTime(1000, MILLISECONDS)
 
@@ -128,7 +128,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ isSharded() || !serverVersionAtLeast([2, 6, 0]) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
-        getCollectionHelper().insertDocuments(new Document())
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
         def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
         queryOperation.setMaxTime(1000, MILLISECONDS)
 
@@ -147,7 +147,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     def '$max should limit items returned'() {
         given:
         for ( i in 1..100) {
-            collectionHelper.insertDocuments(new Document('x', 'y').append('count', i))
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('x', 'y').append('count', i))
         }
         collectionHelper.createIndexes([Index.builder().addKey('count').build()])
         def count = 0;
@@ -166,7 +166,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     def '$min should limit items returned'() {
         given:
         for (i in 1..100) {
-            collectionHelper.insertDocuments(new Document('x', 'y').append('count', i))
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('x', 'y').append('count', i))
         }
         collectionHelper.createIndexes([Index.builder().addKey('count').build()])
         def count = 0;
@@ -185,7 +185,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     def '$maxScan should limit items returned'() {
         given:
         for (i in 1..100) {
-            collectionHelper.insertDocuments(new Document('x', 'y'))
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('x', 'y'))
         }
         def count = 0;
         def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
@@ -203,7 +203,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     def '$returnKey should only return the field that was in an index used to perform the find'() {
         given:
         for (i in 1..13) {
-            collectionHelper.insertDocuments(new Document('x', i))
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('x', i))
         }
         collectionHelper.createIndexes([Index.builder().addKey('x').build()])
 
@@ -223,7 +223,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     def '$showDiskLoc should return disk locations'() {
         given:
         for (i in 1..100) {
-            collectionHelper.insertDocuments(new Document('x', 'y'))
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('x', 'y'))
         }
         def found = true;
         def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
@@ -240,7 +240,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
 
     @IgnoreIf({ !ClusterFixture.isDiscoverableReplicaSet() })
     def 'should read from a secondary'() {
-        collectionHelper.insertDocuments(new Document())
+        collectionHelper.insertDocuments(new DocumentCodec(), new Document())
         def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
         def binding = new ClusterBinding(getCluster(), ReadPreference.secondary(), 1, SECONDS)
 
@@ -251,7 +251,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ isSharded() })
     def 'should exhaust'() {
         for (i in 1..500) {
-            collectionHelper.insertDocuments(new Document('_id', i))
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', i))
         }
         def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
         queryOperation.setCursorFlags(EnumSet.of(EXHAUST))
@@ -278,7 +278,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     def 'should iterate asynchronously'() {
         given:
         for (i in 1..500) {
-            collectionHelper.insertDocuments(new Document('_id', i))
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', i))
         }
         def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
 
@@ -301,7 +301,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ isSharded() })
     def 'should exhaust asynchronously'() {
         for (i in 1..500) {
-            collectionHelper.insertDocuments(new Document('_id', i))
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', i))
         }
         def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
         queryOperation.setCursorFlags(EnumSet.of(EXHAUST))

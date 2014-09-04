@@ -22,7 +22,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.WriteBinding;
-import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -30,6 +29,7 @@ import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
+import org.bson.BsonDocument;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
@@ -69,8 +69,8 @@ public class UserOperationTest extends FunctionalTest {
         // when:
         try {
             new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
-                                          asList(new InsertRequest<Document>(new Document())),
-                                          new DocumentCodec())
+                                          asList(new InsertRequest(new BsonDocument()))
+            )
             .execute(binding);
             fail("should have thrown");
         } catch (MongoException e) {
@@ -97,8 +97,8 @@ public class UserOperationTest extends FunctionalTest {
             // when
             new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()),
                                           true, ACKNOWLEDGED,
-                                          asList(new InsertRequest<Document>(new Document())),
-                                          new DocumentCodec()).execute(binding);
+                                          asList(new InsertRequest(new BsonDocument()))
+            ).execute(binding);
             // then
             assertEquals(1L, (long) new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName())).execute(getBinding()));
         } finally {
@@ -121,8 +121,8 @@ public class UserOperationTest extends FunctionalTest {
         try {
             // when
             new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()), true, ACKNOWLEDGED,
-                                          asList(new InsertRequest<Document>(new Document())),
-                                          new DocumentCodec()).execute(binding);
+                                          asList(new InsertRequest(new BsonDocument()))
+            ).execute(binding);
             fail("Should have thrown");
         } catch (MongoException e) {
             // all good

@@ -18,6 +18,7 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonObjectId
@@ -64,7 +65,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         !result.isUpdateOfExisting()
 
         when:
-        getCollectionHelper().insertDocuments(new Document('_id', 1))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
         result = op.execute(getBinding())
 
         then:
@@ -93,7 +94,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         !result.isUpdateOfExisting()
 
         when:
-        getCollectionHelper().insertDocuments(new Document('_id', 1))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
         result = op.execute(getBinding())
 
         then:

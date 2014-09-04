@@ -16,14 +16,33 @@
 
 package com.mongodb.operation;
 
-public class InsertRequest<T> extends WriteRequest {
-    private final T document;
+import org.bson.BsonDocument;
 
-    public InsertRequest(final T document) {
-        this.document = document;
+import static com.mongodb.assertions.Assertions.notNull;
+
+/**
+ * A representation of a document to insert.
+ *
+ * @since 3.0
+ */
+public class InsertRequest extends WriteRequest {
+    private final BsonDocument document;
+
+    /**
+     * Construct an instance with the given document.
+     *
+     * @param document the document, which may not be null
+     */
+    public InsertRequest(final BsonDocument document) {
+        this.document = notNull("document", document);
     }
 
-    public T getDocument() {
+    /**
+     * Gets the document to insert.
+     *
+     * @return the document
+     */
+    public BsonDocument getDocument() {
         return document;
     }
 

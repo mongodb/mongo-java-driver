@@ -19,9 +19,11 @@ package com.mongodb.operation
 import category.Async
 import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.codecs.DocumentCodec
+import org.bson.BsonBinary
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.bson.BsonSerializationException
-import org.bson.types.Binary
+import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 
@@ -36,8 +38,8 @@ import static java.util.Arrays.asList
 class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should return correct result'() {
         given:
-        def insert = new InsertRequest<Document>(new Document('_id', 1))
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec())
+        def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
+        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert))
 
         when:
         def result = op.execute(getBinding())
@@ -52,8 +54,8 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     @Category(Async)
     def 'should return correct result asynchronously'() {
         given:
-        def insert = new InsertRequest<Document>(new Document('_id', 1))
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec())
+        def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
+        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert))
 
         when:
         def result = op.executeAsync(getAsyncBinding()).get()
@@ -67,36 +69,36 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should insert a single document'() {
         given:
-        def insert = new InsertRequest<Document>(new Document('_id', 1))
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec())
+        def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
+        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert))
 
         when:
         op.execute(getBinding())
 
         then:
-        asList(insert.getDocument()) == getCollectionHelper().find()
+        asList(insert.getDocument()) == getCollectionHelper().find(new BsonDocumentCodec())
     }
 
     @Category(Async)
     def 'should insert a single document asynchronously'() {
         given:
-        def insert = new InsertRequest<Document>(new Document('_id', 1))
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec())
+        def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
+        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert))
 
         when:
         op.executeAsync(getAsyncBinding()).get()
 
         then:
-        asList(insert.getDocument()) == getCollectionHelper().find()
+        asList(insert.getDocument()) == getCollectionHelper().find(new BsonDocumentCodec())
     }
 
     def 'should insert a large number of documents'() {
         given:
         def inserts = []
         for (i in 1..1001) {
-            inserts += new InsertRequest<Document>(new Document('_id', i))
+            inserts += new InsertRequest(new BsonDocument('_id', new BsonInt32(i)))
         }
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, inserts.toList(), new DocumentCodec())
+        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, inserts.toList())
 
 
         when:
@@ -111,9 +113,9 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         given:
         def inserts = []
         for (i in 1..1001) {
-            inserts += new InsertRequest<Document>(new Document('_id', i))
+            inserts += new InsertRequest(new BsonDocument('_id', new BsonInt32(i)))
         }
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, inserts.toList(), new DocumentCodec())
+        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, inserts.toList())
 
 
         when:
@@ -125,14 +127,14 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should return UnacknowledgedWriteResult when using an unacknowledged WriteConcern'() {
         given:
-        def insert = new InsertRequest<Document>(new Document('_id', 1))
-        def op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, asList(insert), new DocumentCodec())
+        def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
+        def op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, asList(insert))
 
         when:
         def binding = getPinnedBinding()
         def result = op.execute(binding)
-        new InsertOperation<Document>(namespace, true, ACKNOWLEDGED, [new InsertRequest<Document>(new Document('_id', 2))],
-                                      new DocumentCodec()).execute(binding);
+        new InsertOperation<Document>(namespace, true, ACKNOWLEDGED, [new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))]
+        ).execute(binding);
 
         then:
         !result.wasAcknowledged()
@@ -144,8 +146,8 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     @Category(Async)
     def 'should return UnacknowledgedWriteResult when using an unacknowledged WriteConcern asynchronously'() {
         given:
-        def insert = new InsertRequest<Document>(new Document('_id', 1))
-        def op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, asList(insert), new DocumentCodec())
+        def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
+        def op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, asList(insert))
 
         when:
         def binding = getAsyncSingleConnectionBinding()
@@ -164,12 +166,12 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         byte[] smallerByteArray = new byte[1024 * 16 + 1980];
 
         def documents = [
-                new InsertRequest<Document>(new Document('bytes', new Binary(hugeByteArray))),
-                new InsertRequest<Document>(new Document('bytes', new Binary(smallerByteArray)))
+                new InsertRequest(new BsonDocument('bytes', new BsonBinary(hugeByteArray))),
+                new InsertRequest(new BsonDocument('bytes', new BsonBinary(smallerByteArray)))
         ]
 
         when:
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents.toList(), new DocumentCodec()).execute(getBinding())
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents.toList()).execute(getBinding())
 
         then:
         getCollectionHelper().count() == 2
@@ -182,12 +184,12 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         byte[] smallerByteArray = new byte[1024 * 16 + 1980];
 
         def documents = [
-                new InsertRequest<Document>(new Document('bytes', new Binary(hugeByteArray))),
-                new InsertRequest<Document>(new Document('bytes', new Binary(smallerByteArray)))
+                new InsertRequest(new BsonDocument('bytes', new BsonBinary(hugeByteArray))),
+                new InsertRequest(new BsonDocument('bytes', new BsonBinary(smallerByteArray)))
         ]
 
         when:
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents.toList(), new DocumentCodec())
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents.toList())
                 .executeAsync(getAsyncBinding()).get()
 
         then:
@@ -197,13 +199,13 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should continue on error when continuing on error'() {
         given:
         def documents = [
-                new InsertRequest<Document>(new Document('_id', 1)),
-                new InsertRequest<Document>(new Document('_id', 1)),
-                new InsertRequest<Document>(new Document('_id', 2)),
+                new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                new InsertRequest(new BsonDocument('_id', new BsonInt32(2))),
         ]
 
         when:
-        new InsertOperation<Document>(getNamespace(), false, ACKNOWLEDGED, documents, new DocumentCodec())
+        new InsertOperation<Document>(getNamespace(), false, ACKNOWLEDGED, documents)
                 .execute(getBinding())
 
         then:
@@ -215,13 +217,13 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should continue on error when continuing on error asynchronously'() {
         given:
         def documents = [
-                new InsertRequest<Document>(new Document('_id', 1)),
-                new InsertRequest<Document>(new Document('_id', 1)),
-                new InsertRequest<Document>(new Document('_id', 2)),
+                new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                new InsertRequest(new BsonDocument('_id', new BsonInt32(2))),
         ]
 
         when:
-        new InsertOperation<Document>(getNamespace(), false, ACKNOWLEDGED, documents, new DocumentCodec())
+        new InsertOperation<Document>(getNamespace(), false, ACKNOWLEDGED, documents)
                 .executeAsync(getAsyncBinding()).get()
 
         then:
@@ -232,13 +234,13 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should not continue on error when not continuing on error'() {
         given:
         def documents = [
-                new InsertRequest<Document>(new Document('_id', 1)),
-                new InsertRequest<Document>(new Document('_id', 1)),
-                new InsertRequest<Document>(new Document('_id', 2)),
+                new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                new InsertRequest(new BsonDocument('_id', new BsonInt32(2))),
         ]
 
         when:
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents, new DocumentCodec())
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents)
                 .execute(getBinding())
 
         then:
@@ -250,13 +252,13 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should not continue on error when not continuing on error asynchronously'() {
         given:
         def documents = [
-                new InsertRequest<Document>(new Document('_id', 1)),
-                new InsertRequest<Document>(new Document('_id', 1)),
-                new InsertRequest<Document>(new Document('_id', 2)),
+                new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
+                new InsertRequest(new BsonDocument('_id', new BsonInt32(2))),
         ]
 
         when:
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents, new DocumentCodec())
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents)
                 .executeAsync(getAsyncBinding()).get()
 
         then:
@@ -267,10 +269,10 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw exception if document is too large'() {
         given:
         byte[] hugeByteArray = new byte[1024 * 1024 * 16];
-        def documents = [new InsertRequest<Document>(new Document('_id', 1).append('b', new Binary(hugeByteArray)))]
+        def documents = [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)).append('b', new BsonBinary(hugeByteArray)))]
 
         when:
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents, new DocumentCodec())
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents)
                 .execute(getBinding())
 
         then:
@@ -280,10 +282,10 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw exception if document is too large asynchronously'() {
         given:
         byte[] hugeByteArray = new byte[1024 * 1024 * 16];
-        def documents = [new InsertRequest<Document>(new Document('_id', 1).append('b', new Binary(hugeByteArray)))]
+        def documents = [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)).append('b', new BsonBinary(hugeByteArray)))]
 
         when:
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents, new DocumentCodec())
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents)
                 .executeAsync(getAsyncBinding()).get()
 
         then:
@@ -292,8 +294,8 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should move _id to the beginning'() {
         given:
-        def insert = new InsertRequest<Document>(new Document('x', 1).append('_id', 1))
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec())
+        def insert = new InsertRequest(new BsonDocument('x', new BsonInt32(1)).append('_id', new BsonInt32(1)))
+        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert))
 
         when:
         op.execute(getBinding())

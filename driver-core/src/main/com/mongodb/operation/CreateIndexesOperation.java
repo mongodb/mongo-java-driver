@@ -31,7 +31,6 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
-import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.WriteResult;
 
 import java.util.List;
@@ -137,10 +136,8 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     }
 
     @SuppressWarnings("unchecked")
-    private InsertProtocol<BsonDocument> asInsertProtocol(final Index index) {
-        return new InsertProtocol<BsonDocument>(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
-                                                asList(new InsertRequest<BsonDocument>(toDocument(index))),
-                                                new BsonDocumentCodec());
+    private InsertProtocol asInsertProtocol(final Index index) {
+        return new InsertProtocol(systemIndexes, true, WriteConcern.ACKNOWLEDGED, asList(new InsertRequest(toDocument(index))));
     }
 
     private BsonDocument toDocument(final Index index) {

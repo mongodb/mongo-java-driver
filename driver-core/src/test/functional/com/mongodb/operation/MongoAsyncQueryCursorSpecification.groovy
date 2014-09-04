@@ -62,7 +62,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
             documentList.add(new Document('_id', it))
 
         }
-        getCollectionHelper().insertDocuments(*documentList)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), *documentList)
 
         binding = new AsyncClusterBinding(getAsyncCluster(), primary(), 1, SECONDS)
         source = binding.getReadConnectionSource().get()
@@ -193,7 +193,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         new DropCollectionOperation(getNamespace()).execute(getBinding())
         new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName(), true, 1000)).execute(getBinding())
         def timestamp = new BsonTimestamp(5, 0)
-        getCollectionHelper().insertDocuments([_id: 1, ts: timestamp] as Document)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), [_id: 1, ts: timestamp] as Document)
 
         QueryResult<Document> firstBatch = executeQuery([ts: ['$gte': timestamp] as Document ] as Document, 2,
                                                         EnumSet.of(CursorFlag.Tailable, CursorFlag.AWAIT_DATA), connection)
@@ -207,9 +207,9 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         block.getIterations() == 1
 
         when:
-        getCollectionHelper().insertDocuments([_id: 2, ts: new BsonTimestamp(1, 0)] as Document)
-        getCollectionHelper().insertDocuments([_id: 3, ts: new BsonTimestamp(6, 0)] as Document)
-        getCollectionHelper().insertDocuments([_id: 4, ts: new BsonTimestamp(8, 0)] as Document)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), [_id: 2, ts: new BsonTimestamp(1, 0)] as Document)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), [_id: 3, ts: new BsonTimestamp(6, 0)] as Document)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), [_id: 4, ts: new BsonTimestamp(8, 0)] as Document)
         future.get()
 
         then:

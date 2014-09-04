@@ -18,39 +18,52 @@ package com.mongodb.protocol.message;
 
 import com.mongodb.WriteConcern;
 import com.mongodb.operation.InsertRequest;
+import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
-import org.bson.codecs.Encoder;
 import org.bson.io.OutputBuffer;
 
 import java.util.List;
 
-public class InsertMessage<T> extends RequestMessage {
+/**
+ * An insert message.
+ *
+ * @since 3.0
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-insert OP_INSERT
+ */
+public class InsertMessage extends RequestMessage {
 
     private final boolean ordered;
     private final WriteConcern writeConcern;
-    private final List<InsertRequest<T>> insertRequestList;
-    private final Encoder<T> encoder;
+    private final List<InsertRequest> insertRequestList;
 
+    /**
+     * Construct an instance.
+     *
+     * @param collectionName the full name of the collection
+     * @param ordered whether the inserts are ordered
+     * @param writeConcern the write concern
+     * @param insertRequestList the list of insert requests
+     * @param settings the message settings
+     */
     public InsertMessage(final String collectionName, final boolean ordered, final WriteConcern writeConcern,
-                         final List<InsertRequest<T>> insertRequestList, final Encoder<T> encoder, final MessageSettings settings) {
+                         final List<InsertRequest> insertRequestList, final MessageSettings settings) {
         super(collectionName, OpCode.OP_INSERT, settings);
         this.ordered = ordered;
         this.writeConcern = writeConcern;
         this.insertRequestList = insertRequestList;
-        this.encoder = encoder;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeInsertPrologue(buffer);
         for (int i = 0; i < insertRequestList.size(); i++) {
-            T document = insertRequestList.get(i).getDocument();
+            BsonDocument document = insertRequestList.get(i).getDocument();
             int pos = buffer.getPosition();
-            addCollectibleDocument(document, encoder, buffer, createValidator());
+            addCollectibleDocument(document, buffer, createValidator());
             if (buffer.getPosition() - messageStartPosition > getSettings().getMaxMessageSize()) {
                 buffer.truncateToPosition(pos);
-                return new InsertMessage<T>(getCollectionName(), ordered, writeConcern,
-                                            insertRequestList.subList(i, insertRequestList.size()), encoder, getSettings());
+                return new InsertMessage(getCollectionName(), ordered, writeConcern,
+                                         insertRequestList.subList(i, insertRequestList.size()), getSettings());
             }
         }
         return null;

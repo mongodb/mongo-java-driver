@@ -6,9 +6,9 @@ import com.mongodb.MongoCursor
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.async.MongoAsyncCursor
 import com.mongodb.codecs.DocumentCodec
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import spock.lang.IgnoreIf
-import org.junit.experimental.categories.Category
 
 import static ParallelScanOptions.builder
 import static com.mongodb.ClusterFixture.getAsyncBinding
@@ -25,7 +25,7 @@ class ParallelScanOperationSpecification extends OperationFunctionalSpecificatio
     def 'setup'() {
         (1..2000).each {
             ids.add(it)
-            getCollectionHelper().insertDocuments(new Document('_id', it))
+            getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', it))
         }
     }
 

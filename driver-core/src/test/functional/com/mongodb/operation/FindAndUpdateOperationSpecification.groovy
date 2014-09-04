@@ -42,7 +42,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         Document pete = new Document('name', 'Pete').append('numberOfJobs', 3)
         Document sam = new Document('name', 'Sam').append('numberOfJobs', 5)
 
-        helper.insertDocuments(pete, sam)
+        helper.insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
         def findAndUpdate = new FindAndUpdate()
@@ -65,7 +65,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         Document pete = new Document('name', 'Pete').append('numberOfJobs', 3)
         Document sam = new Document('name', 'Sam').append('numberOfJobs', 5)
 
-        helper.insertDocuments(pete, sam)
+        helper.insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
         FindAndUpdate findAndUpdate = new FindAndUpdate()
@@ -87,7 +87,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         Worker pete = new Worker('Pete', 'handyman', new Date(), 3)
         Worker sam = new Worker('Sam', 'plumber', new Date(), 5)
 
-        helper.insertDocuments(pete, sam)
+        helper.insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
         def findAndUpdate = new FindAndUpdate()
@@ -110,7 +110,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         Worker pete = new Worker('Pete', 'handyman', new Date(), 3)
         Worker sam = new Worker('Sam', 'plumber', new Date(), 5)
 
-        helper.insertDocuments(pete, sam)
+        helper.insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
         def findAndUpdate = new FindAndUpdate()

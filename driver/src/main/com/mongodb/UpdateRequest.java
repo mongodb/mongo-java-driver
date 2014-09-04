@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import org.bson.BsonDocumentWrapper;
+import org.bson.codecs.Codec;
 
 class UpdateRequest extends WriteRequest {
     private final DBObject query;
@@ -51,9 +52,9 @@ class UpdateRequest extends WriteRequest {
     }
 
     @Override
-    com.mongodb.operation.WriteRequest toNew() {
-        return new com.mongodb.operation.UpdateRequest(new BsonDocumentWrapper<DBObject>(query, codec),
-                                                       new BsonDocumentWrapper<DBObject>(update, codec))
+    com.mongodb.operation.WriteRequest toNew(final Codec<DBObject> codec) {
+        return new com.mongodb.operation.UpdateRequest(new BsonDocumentWrapper<DBObject>(query, this.codec),
+                                                       new BsonDocumentWrapper<DBObject>(update, this.codec))
                .upsert(isUpsert())
                .multi(isMulti());
     }

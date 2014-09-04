@@ -186,7 +186,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
                 if (getCodec() instanceof CollectibleCodec) {
                     ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(insertOneModel.getDocument());
                 }
-                writeRequest = new InsertRequest<T>(insertOneModel.getDocument());
+                writeRequest = new InsertRequest(asBson(insertOneModel.getDocument()));
             } else if (writeModel instanceof ReplaceOneModel) {
                 ReplaceOneModel<T, D> replaceOneModel = (ReplaceOneModel<T, D>) writeModel;
                 writeRequest = new ReplaceRequest<T>(asBson(replaceOneModel.getFilter()), replaceOneModel.getReplacement())
@@ -223,22 +223,22 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
         if (getCodec() instanceof CollectibleCodec) {
             ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
         }
-        List<InsertRequest<T>> requests = new ArrayList<InsertRequest<T>>();
-        requests.add(new InsertRequest<T>(document));
-        operationExecutor.execute(new InsertOperation<T>(namespace, true, options.getWriteConcern(), requests, getCodec()));
+        List<InsertRequest> requests = new ArrayList<InsertRequest>();
+        requests.add(new InsertRequest(asBson(document)));
+        operationExecutor.execute(new InsertOperation<T>(namespace, true, options.getWriteConcern(), requests));
         return new InsertOneResult(null, 1); // TODO: insertedId
     }
 
     @Override
     public InsertManyResult insertMany(final InsertManyModel<T> model) {
-        List<InsertRequest<T>> requests = new ArrayList<InsertRequest<T>>();
+        List<InsertRequest> requests = new ArrayList<InsertRequest>();
         for (T document : model.getDocuments()) {
             if (getCodec() instanceof CollectibleCodec) {
                 ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
             }
-            requests.add(new InsertRequest<T>(document));
+            requests.add(new InsertRequest(asBson(document)));
         }
-        operationExecutor.execute(new InsertOperation<T>(namespace, model.isOrdered(), options.getWriteConcern(), requests, getCodec()));
+        operationExecutor.execute(new InsertOperation<T>(namespace, model.isOrdered(), options.getWriteConcern(), requests));
         return new InsertManyResult(null, model.getDocuments().size()); // TODO: insertedId
     }
 

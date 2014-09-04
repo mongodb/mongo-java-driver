@@ -357,19 +357,20 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             if (getCodec() instanceof CollectibleCodec) {
                 ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
             }
-            return execute(new InsertOperation<T>(getNamespace(), true, writeConcern, asList(new InsertRequest<T>(document)), getCodec()));
+            return execute(new InsertOperation<T>(getNamespace(), true, writeConcern,
+                                                  asList(new InsertRequest(new BsonDocumentWrapper<T>(document, getCodec())))));
         }
 
         @Override
         public WriteResult insert(final List<T> documents) {
-            List<InsertRequest<T>> insertRequestList = new ArrayList<InsertRequest<T>>(documents.size());
+            List<InsertRequest> insertRequestList = new ArrayList<InsertRequest>(documents.size());
             for (T cur : documents) {
                 if (getCodec() instanceof CollectibleCodec) {
                     ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(cur);
                 }
-                insertRequestList.add(new InsertRequest<T>(cur));
+                insertRequestList.add(new InsertRequest(new BsonDocumentWrapper<T>(cur, getCodec())));
             }
-            return execute(new InsertOperation<T>(getNamespace(), true, writeConcern, insertRequestList, getCodec()));
+            return execute(new InsertOperation<T>(getNamespace(), true, writeConcern, insertRequestList));
         }
 
         @Override

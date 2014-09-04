@@ -135,7 +135,7 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
 
     def 'should be able to handle duplicate key errors when indexing'() {
         given:
-        getCollectionHelper().insertDocuments(x1 as Document, x1 as Document)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), x1 as Document, x1 as Document)
         def index = Index.builder().addKey('field', ASC).unique().build()
         def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index])
 
@@ -149,7 +149,7 @@ class CreateIndexesSpecification extends OperationFunctionalSpecification {
     @Category(Async)
     def 'should be able to handle duplicate key errors when indexing asynchronously'() {
         given:
-        getCollectionHelper().insertDocuments(x1 as Document, x1 as Document)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), x1 as Document, x1 as Document)
         def index = Index.builder().addKey('field', ASC).unique().build()
         def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index])
 

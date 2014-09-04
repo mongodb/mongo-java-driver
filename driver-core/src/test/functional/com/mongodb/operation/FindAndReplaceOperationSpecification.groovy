@@ -44,7 +44,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
         Document jordan = new Document('name', 'Jordan').append('job', 'sparky')
 
-        helper.insertDocuments(pete, sam)
+        helper.insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
         FindAndReplace<Document> findAndReplace = new FindAndReplace<Document>(jordan)
@@ -67,7 +67,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
         Document jordan = new Document('name', 'Jordan').append('job', 'sparky')
 
-        helper.insertDocuments(pete, sam)
+        helper.insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
         FindAndReplace<Document> findAndReplace = new FindAndReplace<Document>(jordan)
@@ -89,7 +89,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         Worker sam = new Worker('Sam', 'plumber', new Date(), 5)
         Worker jordan = new Worker(pete.id, 'Jordan', 'sparky', new Date(), 7)
 
-        helper.insertDocuments(pete, sam)
+        helper.insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
         FindAndReplace<Worker> findAndReplace = new FindAndReplace<Worker>(jordan).where(new BsonDocument('name', new BsonString('Pete')));
@@ -110,7 +110,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         Worker sam = new Worker('Sam', 'plumber', new Date(), 5)
         Worker jordan = new Worker(pete.id, 'Jordan', 'sparky', new Date(), 7)
 
-        helper.insertDocuments(pete, sam)
+        helper.insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
         FindAndReplace<Worker> findAndReplace = new FindAndReplace<Worker>(jordan).where(new BsonDocument('name', new BsonString('Pete')));
