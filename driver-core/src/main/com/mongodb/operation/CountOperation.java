@@ -48,21 +48,6 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     private long maxTimeMS;
 
     /**
-     * This is going away soon.
-     *
-     * @param namespace the namespace to execute the count operation on
-     * @param find find
-     */
-    public CountOperation(final MongoNamespace namespace, final Find find) {
-        this.namespace = notNull("namespace", namespace);
-        criteria = find.getFilter();
-        hint = find.getHint();
-        skip = find.getSkip();
-        limit = find.getLimit();
-        maxTimeMS = find.getOptions().getMaxTimeMS();
-    }
-
-    /**
      * Construct a new instance.
      *
      * @param namespace the namespace to execute the count operation on

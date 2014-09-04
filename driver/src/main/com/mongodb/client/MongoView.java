@@ -19,7 +19,6 @@ package com.mongodb.client;
 import com.mongodb.CursorFlag;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.operation.QueryOptions;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
 
@@ -50,8 +49,6 @@ public interface MongoView<T> extends MongoWritableView<T>, MongoReadableView<T>
 
 
     MongoView<T> upsert();
-
-    MongoView<T> withQueryOptions(QueryOptions options);
 
     MongoView<T> withReadPreference(ReadPreference readPreference);
 
