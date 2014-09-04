@@ -20,6 +20,7 @@ import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 
+@SuppressWarnings("rawtypes")
 class TestOperationExecutor implements OperationExecutor {
 
     private final Object response;
