@@ -66,7 +66,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
             writer.writeName("q");
-            getBsonDocumentCodec().encode(writer, removeRequest.getFilter(), EncoderContext.builder().build());
+            getBsonDocumentCodec().encode(writer, removeRequest.getCriteria(), EncoderContext.builder().build());
             writer.writeInt32("limit", removeRequest.isMulti() ? 0 : 1);
             writer.popMaxDocumentSize();
             writer.writeEndDocument();

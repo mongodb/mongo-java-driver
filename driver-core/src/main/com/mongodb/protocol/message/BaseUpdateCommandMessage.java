@@ -53,7 +53,7 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
             writer.writeName("q");
-            getBsonDocumentCodec().encode(writer, update.getFilter(), EncoderContext.builder().build());
+            getBsonDocumentCodec().encode(writer, update.getCriteria(), EncoderContext.builder().build());
             writer.writeName("u");
             writeUpdate(writer, update);
             if (update.isMulti()) {
