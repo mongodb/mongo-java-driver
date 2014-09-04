@@ -144,14 +144,15 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     @Override
     public <F> MongoIterable<T> find(final FindModel<F> model) {
-        return new OperationIterable<T>(new QueryOperation<T, F>(namespace, model, options.getCodecRegistry(), getCodec()),
-                                        options.getReadPreference());
+        return find(model, clazz);
     }
 
     @Override
-    public <F, D> MongoIterable<D> find(final FindModel<F> model, Class<D> clazz) {
-        return new OperationIterable<D>(new QueryOperation<D, F>(namespace, model, options.getCodecRegistry(),
-                                                              options.getCodecRegistry().get(clazz)),
+    public <F, D> MongoIterable<D> find(final FindModel<F> model, final Class<D> clazz) {
+        QueryOperation<D> queryOperation = new QueryOperation<D>(namespace,
+                                                                 options.getCodecRegistry().get(clazz));
+        queryOperation.setCriteria(asBson(model.getCriteria()));
+        return new OperationIterable<D>(queryOperation,
                                         options.getReadPreference());
     }
 
@@ -271,8 +272,8 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     @Override
     public <D> T findOneAndReplace(final FindOneAndReplaceModel<T, D> model) {
         return operationExecutor.execute(new FindAndReplaceOperation<T>(namespace,
-                                                                       new FindAndReplace<T>(model.getReplacement()),
-                                                                       getCodec()));
+                                                                        new FindAndReplace<T>(model.getReplacement()),
+                                                                        getCodec()));
     }
 
     @Override
