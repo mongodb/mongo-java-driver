@@ -24,7 +24,7 @@ import static java.lang.String.format;
 /**
  * Contains the details of a reply from a MongoDB server.
  *
- * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#database-response-messages Database Response Messages
+ * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#database-response-messages Database Response Messages
  * @since 3.0
  */
 public class ReplyHeader {
@@ -94,7 +94,7 @@ public class ReplyHeader {
     }
 
     /**
-     * Gets additional information about the response:
+     * Gets additional information about the response.
      * <ul>
      *     <li>0 - <i>CursorNotFound</i>: Set when getMore is called but the cursor id is not valid at the server. Returned with zero 
      *     results.</li>
@@ -118,7 +118,7 @@ public class ReplyHeader {
      * Gets the cursor ID that this response is a part of. If there are no more documents to fetch from the server, the cursor ID will be 0.
      * This cursor ID must be used in any messages used to get more data, and also must be closed by the client when no longer needed.
      *
-     * @return cursor ID if the client needs to fetch more from the server
+     * @return cursor ID to use if the client needs to fetch more from the server
      */
     public long getCursorId() {
         return cursorId;
@@ -134,6 +134,8 @@ public class ReplyHeader {
     }
 
     /**
+     * Gets the number of documents to expect in the body of this reply.
+     *
      * @return number of documents in the reply
      */
     public int getNumberReturned() {
