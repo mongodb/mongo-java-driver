@@ -25,9 +25,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 
 public class DBCursorOldTest extends DatabaseTestCase {
 
@@ -136,6 +139,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
     @Test
     public void testExplain() {
+        assumeFalse(serverVersionAtLeast(asList(2, 7, 0)));
         insertTestData(collection, 100);
 
         DBObject q = BasicDBObjectBuilder.start().push("x").add("$gt", 50).get();
