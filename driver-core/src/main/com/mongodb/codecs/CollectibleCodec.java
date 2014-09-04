@@ -23,6 +23,7 @@ import org.bson.codecs.Codec;
  * A Codec that generates complete BSON documents for storage in a MongoDB collection.
  *
  * @param <T> the document type
+ * @since 3.0
  */
 public interface CollectibleCodec<T> extends Codec<T> {
     /**
@@ -41,8 +42,8 @@ public interface CollectibleCodec<T> extends Codec<T> {
     boolean documentHasId(T document);
 
     /**
-     * Gets the _id of the given document if it contains one, otherwise throws {@code IllegalArgumentException}.  To avoid the latter
-     * case, call {@code documentHasId} first to check.
+     * Gets the _id of the given document if it contains one, otherwise throws {@code IllegalArgumentException}.  To avoid the latter case,
+     * call {@code documentHasId} first to check.
      *
      * @param document the document from which to get the _id
      * @return the _id of the document

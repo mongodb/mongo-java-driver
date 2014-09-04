@@ -26,12 +26,17 @@ import org.bson.types.Binary;
 import java.util.HashMap;
 import java.util.Map;
 
-@SuppressWarnings("rawtypes")
+/**
+ * Decodes BSON binary types into the appropriate Java types.  Uses the {@code BsonBinarySubType} to determine which {@code
+ * BinaryTransformer} to use to convert the binary type to the right Java object.
+ *
+ * @since 3.0
+ */
 public class TransformingBinaryDecoder implements Decoder<Object> {
-    private final Map<Byte, BinaryTransformer> subTypeTransformerMap;
+    private final Map<Byte, BinaryTransformer<?>> subTypeTransformerMap;
 
-    public TransformingBinaryDecoder() {
-        subTypeTransformerMap = new HashMap<Byte, BinaryTransformer>();
+    {
+        subTypeTransformerMap = new HashMap<Byte, BinaryTransformer<?>>();
         subTypeTransformerMap.put(BsonBinarySubType.BINARY.getValue(), new BinaryToByteArrayTransformer());
         subTypeTransformerMap.put(BsonBinarySubType.OLD_BINARY.getValue(), new BinaryToByteArrayTransformer());
         subTypeTransformerMap.put(BsonBinarySubType.UUID_LEGACY.getValue(), new BinaryToUUIDTransformer());
@@ -40,7 +45,7 @@ public class TransformingBinaryDecoder implements Decoder<Object> {
     @Override
     public Object decode(final BsonReader reader, final DecoderContext decoderContext) {
         BsonBinary binary = reader.readBinaryData();
-        BinaryTransformer transformer = subTypeTransformerMap.get(binary.getType());
+        BinaryTransformer<?> transformer = subTypeTransformerMap.get(binary.getType());
         if (transformer == null) {
             return new Binary(binary.getType(), binary.getData());
         } else {

@@ -25,13 +25,18 @@ import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
 
 /**
- * A Codec for CodeWithScope instances.
+ * Encodes and decodes {@code CodeWithScope} instances.
  *
  * @since 3.0
  */
 public class CodeWithScopeCodec implements Codec<CodeWithScope> {
     private final Codec<Document> documentCodec;
 
+    /**
+     * Creates a new CodeWithScopeCodec.
+     *
+     * @param documentCodec a Codec for encoding and decoding the {@link org.mongodb.CodeWithScope#getScope()}.
+     */
     public CodeWithScopeCodec(final Codec<Document> documentCodec) {
         this.documentCodec = documentCodec;
     }

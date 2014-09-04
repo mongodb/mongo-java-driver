@@ -27,11 +27,23 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.util.ArrayList;
 import java.util.List;
 
-@SuppressWarnings({ "unchecked", "rawtypes"})
+/**
+ * Encodes and decodes {@code List} objects.  The lists are never going to use the generic types as these are erased.
+ *
+ * @since 3.0
+ */
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class ListCodec implements Codec<List> {
     private final CodecRegistry registry;
     private final BsonTypeClassMap bsonTypeClassMap;
 
+    /**
+     * Creates a new {@code ListCodec}, which will use the given {@code CodecRegistry} and {@code BsonTypeClassMap} for encoding and
+     * decoding the values in the List.
+     *
+     * @param registry         contains the codecs required to encode and decode {@code List} values
+     * @param bsonTypeClassMap will be used for decoding BSON values into the List.
+     */
     public ListCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap) {
         this.registry = registry;
         this.bsonTypeClassMap = bsonTypeClassMap;
