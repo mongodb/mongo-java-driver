@@ -28,11 +28,14 @@ public interface ConnectionSource extends ReferenceCounted {
 
     /**
      * Gets the current description of this source.
+     *
+     * @return the current details of the server state.
      */
     ServerDescription getServerDescription();
 
     /**
      * Gets a connection from this source.
+     *
      * @return the connection
      */
     Connection getConnection();

@@ -32,8 +32,8 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * A binding that ensures that reads to the primary use the same connection as writes, while reads to any other server go to the same
- * server so long as the read preference has not been changed.
+ * A binding that ensures that reads to the primary use the same connection as writes, while reads to any other server go to the same server
+ * so long as the read preference has not been changed.
  *
  * @since 3.0
  */
@@ -46,18 +46,26 @@ public class PinnedBinding extends AbstractReferenceCounted implements ReadWrite
     private Connection connectionForReads;
     private Connection connectionForWrites;
     private final Cluster cluster;
-    private long maxWaitTimeMS;
+    private final long maxWaitTimeMS;
 
     /**
      * Create a new session with the given cluster.
      *
-     * @param cluster the cluster, which may not be null
+     * @param cluster     a non-null Cluster which will be used to select a server to bind to
+     * @param maxWaitTime the maximum time to wait for a connection to become available.
+     * @param timeUnit    the TimeUnit for the maxWaitTime
      */
     public PinnedBinding(final Cluster cluster, final long maxWaitTime, final TimeUnit timeUnit) {
         this.cluster = notNull("cluster", cluster);
         maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
     }
 
+    /**
+     * Sets the read preference for determining which servers are eligible to read from. Changing this may change the server which is 
+     * used for reading from.
+     *
+     * @param readPreference a non-null ReadPreference for read operations
+     */
     public void setReadPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
     }

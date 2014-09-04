@@ -37,12 +37,29 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
     private final Cluster cluster;
     private final ServerAddress serverAddress;
     private final ReadPreference readPreference;
-    private long maxWaitTimeMS;
+    private final long maxWaitTimeMS;
 
+    /**
+     * Creates a new {@code SingleServerBinding}, defaulting to {@link com.mongodb.ReadPreference#primary()} for reads.
+     *
+     * @param cluster       the Cluster which will be used to select a server to bind to
+     * @param serverAddress the address of the server to bind to
+     * @param maxWaitTime   the maximum time to wait for a connection to become available.
+     * @param timeUnit      the TimeUnit for the maxWaitTime
+     */
     public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, final long maxWaitTime, final TimeUnit timeUnit) {
         this(cluster, serverAddress, ReadPreference.primary(), maxWaitTime, timeUnit);
     }
 
+    /**
+     * Creates a new {@code SingleServerBinding}.
+     *
+     * @param cluster        the Cluster which will be used to select a server to bind to
+     * @param serverAddress  the address of the server to bind to
+     * @param readPreference the ReadPreference for read operations
+     * @param maxWaitTime    the maximum time to wait for a connection to become available.
+     * @param timeUnit       the TimeUnit for the maxWaitTime
+     */
     public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, final ReadPreference readPreference,
                                final long maxWaitTime, final TimeUnit timeUnit) {
         this.cluster = cluster;
