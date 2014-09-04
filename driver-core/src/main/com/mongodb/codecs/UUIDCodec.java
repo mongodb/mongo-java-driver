@@ -26,6 +26,11 @@ import org.bson.codecs.EncoderContext;
 
 import java.util.UUID;
 
+/**
+ * Encodes and decodes {@code UUID} objects.
+ *
+ * @since 3.0
+ */
 public class UUIDCodec implements Codec<UUID> {
     @Override
     public void encode(final BsonWriter writer, final UUID value, final EncoderContext encoderContext) {

@@ -18,6 +18,11 @@ package com.mongodb.codecs;
 
 import org.bson.BsonBinary;
 
+/**
+ * Turns a {@code BsonBinary} into a byte array.
+ *
+ * @since 3.0
+ */
 public class BinaryToByteArrayTransformer implements BinaryTransformer<byte[]> {
     @Override
     public byte[] transform(final BsonBinary binary) {

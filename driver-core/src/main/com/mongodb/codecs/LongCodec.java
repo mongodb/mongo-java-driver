@@ -22,6 +22,12 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
+/**
+ * Encodes and decodes {@code Long} objects.
+ *
+ * @since 3.0
+ */
+
 public class LongCodec implements Codec<Long> {
     @Override
     public void encode(final BsonWriter writer, final Long value, final EncoderContext encoderContext) {

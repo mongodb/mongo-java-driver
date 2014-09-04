@@ -22,6 +22,11 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
+/**
+ * Encodes and decodes {@code Byte} objects.
+ *
+ * @since 3.0
+ */
 public class ByteCodec implements Codec<Byte> {
     @Override
     public void encode(final BsonWriter writer, final Byte value, final EncoderContext encoderContext) {

@@ -19,10 +19,17 @@ package com.mongodb.codecs;
 import org.bson.BsonBinary;
 
 /**
- * An interface to define transformers from a Binary instance to an instance of T
+ * An interface to define transformers from a {@code BsonBinary} instance to an instance of T
  *
  * @param <T> the type to transform to
+ * @since 3.0
  */
 public interface BinaryTransformer<T> {
+    /**
+     * Converts the {@code BsonBinary} to a {@code T}.
+     *
+     * @param binary the {@code BsonBinary} to transform
+     * @return an instance of {@code T}
+     */
     T transform(BsonBinary binary);
 }

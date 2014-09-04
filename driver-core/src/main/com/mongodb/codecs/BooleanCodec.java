@@ -22,6 +22,11 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
+/**
+ * Encodes and decodes {@code Boolean} objects.
+ *
+ * @since 3.0
+ */
 public class BooleanCodec implements Codec<Boolean> {
     @Override
     public void encode(final BsonWriter writer, final Boolean value, final EncoderContext encoderContext) {

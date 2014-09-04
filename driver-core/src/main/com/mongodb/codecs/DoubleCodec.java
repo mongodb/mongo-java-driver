@@ -22,6 +22,11 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
+/**
+ * Encodes and decodes {@code Double} objects.
+ *
+ * @since 3.0
+ */
 public class DoubleCodec implements Codec<Double> {
     @Override
     public void encode(final BsonWriter writer, final Double value, final EncoderContext encoderContext) {

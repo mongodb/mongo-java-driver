@@ -24,6 +24,11 @@ import org.bson.codecs.EncoderContext;
 
 import java.util.Date;
 
+/**
+ * Encodes and decodes {@code java.util.Date} objects.
+ *
+ * @since 3.0
+ */
 public class DateCodec implements Codec<Date> {
     @Override
     public void encode(final BsonWriter writer, final Date value, final EncoderContext encoderContext) {

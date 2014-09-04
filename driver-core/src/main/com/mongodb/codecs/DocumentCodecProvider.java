@@ -46,16 +46,17 @@ public class DocumentCodecProvider implements CodecProvider {
     private final BsonTypeClassMap bsonTypeClassMap;
 
     /**
-     *  Construct a new instance with a default {@code BsonTypeClassMap}.
+     * Construct a new instance with a default {@code BsonTypeClassMap}.
      */
     public DocumentCodecProvider() {
         this(new BsonTypeClassMap());
     }
 
     /**
-     *  Construct a new instance with the given instance of {@code BsonTypeClassMap}.
+     * Construct a new instance with the given instance of {@code BsonTypeClassMap}.
      *
-     * @param bsonTypeClassMap the {@code BsonTypeClassMap} with which to construct instances of {@code DocumentCodec} and {@code ListCodec}
+     * @param bsonTypeClassMap the {@code BsonTypeClassMap} with which to construct instances of {@code DocumentCodec} and {@code
+     *                         ListCodec}
      */
     public DocumentCodecProvider(final BsonTypeClassMap bsonTypeClassMap) {
         this.bsonTypeClassMap = bsonTypeClassMap;
