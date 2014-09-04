@@ -23,13 +23,14 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * A model describing a distinct operation.
  *
+ * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/distinct/ Distinct
  */
 public class DistinctModel<D> implements ExplainableModel {
     private final String fieldName;
-    private D filter;
-    private Long maxTimeMS;
+    private D criteria;
+    private long maxTimeMS;
 
     /**
      * Construct a new instance.
@@ -41,7 +42,8 @@ public class DistinctModel<D> implements ExplainableModel {
     }
 
     /**
-     * Gets the field name to get the distinct values of
+     * Gets the field name to get the distinct values of.
+     *
      * @return the field name, which may not be null
      */
     public String getFieldName() {
@@ -49,32 +51,35 @@ public class DistinctModel<D> implements ExplainableModel {
     }
 
     /**
-     * Set the query filter to apply.
+     * Gets the query criteria.
      *
-     * @param filter a document describing the query filter, which may be null
-     * @return this
+     * @return the query criteria
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public DistinctModel<D> filter(final D filter) {
-        this.filter = filter;
+    public D getCriteria() {
+        return criteria;
+    }
+
+    /**
+     * Sets the criteria to apply to the query.
+     *
+     * @param criteria the criteria, which may be null.
+     * @return this
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     */
+    public DistinctModel<D> criteria(final D criteria) {
+        this.criteria = criteria;
         return this;
     }
 
-    /**
-     * Gets the query filter.
-     *
-     * @return the query filter
-     */
-    public D getFilter() {
-        return filter;
-    }
 
     /**
-     * Gets the maximum execution time on the server for this operation.  The default is null, which places no limit on the execution time.
+     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
      *
      * @param timeUnit the time unit to return the result in
      * @return the maximum execution time in the given time unit
      */
-    public Long getMaxTime(final TimeUnit timeUnit) {
+    public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
     }
@@ -82,17 +87,13 @@ public class DistinctModel<D> implements ExplainableModel {
     /**
      * Sets the maximum execution time on the server for this operation.
      *
-     * @param maxTime the max time, which may be null
-     * @param timeUnit the time unit, which may only be null if maxTime is
+     * @param maxTime  the max time
+     * @param timeUnit the time unit, which may not be null
      * @return this
      */
-    public DistinctModel<D> maxTimeMS(final Long maxTime, final TimeUnit timeUnit) {
-        if (maxTime == null) {
-            maxTimeMS = null;
-        } else {
-            notNull("timeUnit", timeUnit);
-            this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        }
+    public DistinctModel<D> maxTime(final long maxTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 }

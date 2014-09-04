@@ -18,14 +18,17 @@ package com.mongodb
 
 import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.CountModel
+import com.mongodb.client.model.DistinctModel
 import com.mongodb.client.model.FindModel
 import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.codecs.DocumentCodecProvider
 import com.mongodb.operation.CountOperation
+import com.mongodb.operation.DistinctOperation
 import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.QueryOperation
 import com.mongodb.operation.ReplaceOperation
 import com.mongodb.protocol.AcknowledgedWriteResult
+import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -61,7 +64,7 @@ class NewMongoCollectionSpecification extends Specification {
         result.insertedCount == 1
     }
 
-    def 'should replace'() {
+    def 'replace should use ReplaceOperation properly'() {
         given:
         def executor = new TestOperationExecutor(new AcknowledgedWriteResult(1, false, null))
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
@@ -77,7 +80,7 @@ class NewMongoCollectionSpecification extends Specification {
         !result.upsertedId
     }
 
-    def 'should find'() {
+    def 'find should use FindOperation properly'() {
         given:
         def document = new Document('_id', 1)
         def cursor = Stub(MongoCursor)
@@ -114,7 +117,7 @@ class NewMongoCollectionSpecification extends Specification {
         result == [document]
     }
 
-    def 'should count'() {
+    def 'count should use CountOperation properly'() {
         given:
         def executor = new TestOperationExecutor(42L)
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
@@ -139,7 +142,7 @@ class NewMongoCollectionSpecification extends Specification {
         result == 42
     }
 
-    def 'should count with hint string'() {
+    def 'count should use CountOperation properly with hint string'() {
         given:
         def executor = new TestOperationExecutor(42L)
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
@@ -153,4 +156,24 @@ class NewMongoCollectionSpecification extends Specification {
         def operation = executor.getReadOperation() as CountOperation
         operation.hint == new BsonString('idx1')
     }
+
+    def 'distinct should use DistinctOperation properly'() {
+        given:
+        def executor = new TestOperationExecutor(new BsonArray(Arrays.asList(new BsonString('foo'), new BsonInt32(42))))
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        def model = new DistinctModel<>('fieldName1').criteria(new Document('cold', true))
+                                                     .maxTime(1, TimeUnit.SECONDS)
+
+        when:
+        def result = collection.distinct(model)
+
+        then:
+        def operation = executor.getReadOperation() as DistinctOperation
+        operation.criteria == new BsonDocument('cold', BsonBoolean.TRUE)
+        operation.getMaxTime(TimeUnit.SECONDS) == 1
+        executor.readPreference == secondary()
+        result == ['foo', 42]
+    }
+
 }

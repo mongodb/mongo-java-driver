@@ -27,7 +27,6 @@ import com.mongodb.operation.CreateIndexesOperation;
 import com.mongodb.operation.DistinctOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropIndexOperation;
-import com.mongodb.operation.Find;
 import com.mongodb.operation.FindAndRemove;
 import com.mongodb.operation.FindAndRemoveOperation;
 import com.mongodb.operation.FindAndReplace;
@@ -1072,8 +1071,9 @@ public class DBCollection {
      */
     @SuppressWarnings("unchecked")
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
-        Find find = new Find().filter(wrapAllowNull(query));
-        BsonArray distinctArray = execute(new DistinctOperation(getNamespace(), fieldName, find), readPreference);
+        DistinctOperation operation = new DistinctOperation(getNamespace(), fieldName);
+        operation.setCriteria(wrapAllowNull(query));
+        BsonArray distinctArray = execute(operation, readPreference);
 
         List distinctList = new ArrayList();
         for (BsonValue value : distinctArray) {
