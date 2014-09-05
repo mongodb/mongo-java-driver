@@ -53,10 +53,11 @@ public class PinnedBinding extends AbstractReferenceCounted implements ReadWrite
      *
      * @param cluster     a non-null Cluster which will be used to select a server to bind to
      * @param maxWaitTime the maximum time to wait for a connection to become available.
-     * @param timeUnit    the TimeUnit for the maxWaitTime
+     * @param timeUnit    a non-null TimeUnit for the maxWaitTime
      */
     public PinnedBinding(final Cluster cluster, final long maxWaitTime, final TimeUnit timeUnit) {
         this.cluster = notNull("cluster", cluster);
+        notNull("timeUnit", timeUnit);
         maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
     }
 

@@ -41,7 +41,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     private Connection connection;
 
     /**
-     * Creates a new {@code AsyncSingleConnectionBinding}.
+     * Creates an instance.
      *
      * @param cluster     a non-null Cluster which will be used to select a server to bind to
      * @param maxWaitTime the maximum time to wait for a connection to become available.

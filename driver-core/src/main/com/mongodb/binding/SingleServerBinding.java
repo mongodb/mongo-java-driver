@@ -26,6 +26,7 @@ import com.mongodb.selector.ServerAddressSelector;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -40,31 +41,32 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
     private final long maxWaitTimeMS;
 
     /**
-     * Creates a new {@code SingleServerBinding}, defaulting to {@link com.mongodb.ReadPreference#primary()} for reads.
+     * Creates an instance, defaulting to {@link com.mongodb.ReadPreference#primary()} for reads.
      *
-     * @param cluster       the Cluster which will be used to select a server to bind to
-     * @param serverAddress the address of the server to bind to
+     * @param cluster       a non-null  Cluster which will be used to select a server to bind to
+     * @param serverAddress a non-null  address of the server to bind to
      * @param maxWaitTime   the maximum time to wait for a connection to become available.
-     * @param timeUnit      the TimeUnit for the maxWaitTime
+     * @param timeUnit      a non-null  TimeUnit for the maxWaitTime
      */
     public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, final long maxWaitTime, final TimeUnit timeUnit) {
         this(cluster, serverAddress, ReadPreference.primary(), maxWaitTime, timeUnit);
     }
 
     /**
-     * Creates a new {@code SingleServerBinding}.
+     * Creates an instance.
      *
-     * @param cluster        the Cluster which will be used to select a server to bind to
-     * @param serverAddress  the address of the server to bind to
-     * @param readPreference the ReadPreference for read operations
+     * @param cluster        a non-null  Cluster which will be used to select a server to bind to
+     * @param serverAddress  a non-null  address of the server to bind to
+     * @param readPreference a non-null  ReadPreference for read operations
      * @param maxWaitTime    the maximum time to wait for a connection to become available.
-     * @param timeUnit       the TimeUnit for the maxWaitTime
+     * @param timeUnit       a non-null  TimeUnit for the maxWaitTime
      */
     public SingleServerBinding(final Cluster cluster, final ServerAddress serverAddress, final ReadPreference readPreference,
                                final long maxWaitTime, final TimeUnit timeUnit) {
-        this.cluster = cluster;
-        this.serverAddress = serverAddress;
-        this.readPreference = readPreference;
+        this.cluster = notNull("cluster", cluster);
+        this.serverAddress = notNull("serverAddress", serverAddress);
+        this.readPreference = notNull("readPreference", readPreference);
+        notNull("timeUnit", timeUnit);
         this.maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
     }
 

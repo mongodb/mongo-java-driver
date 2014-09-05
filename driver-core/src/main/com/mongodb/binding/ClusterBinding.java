@@ -27,6 +27,7 @@ import com.mongodb.selector.ServerSelector;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -41,16 +42,18 @@ public class ClusterBinding extends AbstractReferenceCounted implements ReadWrit
     private final long maxWaitTimeMS;
 
     /**
-     * Creates a new {@code ClusterBinding}
+     * Creates an instance.
      *
      * @param cluster        a non-null Cluster which will be used to select a server to bind to
      * @param readPreference a non-null ReadPreference for read operations
      * @param maxWaitTime    the maximum time to wait for a connection to become available.
-     * @param timeUnit       the TimeUnit for the maxWaitTime
+     * @param timeUnit       a non-null  TimeUnit for the maxWaitTime
      */
     public ClusterBinding(final Cluster cluster, final ReadPreference readPreference, final long maxWaitTime, final TimeUnit timeUnit) {
-        this.cluster = cluster;
-        this.readPreference = readPreference;
+        this.cluster = notNull("cluster", cluster);
+        this.readPreference = notNull("readPreference", readPreference);
+        notNull("timeUnit", timeUnit);
+
         this.maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
     }
 
