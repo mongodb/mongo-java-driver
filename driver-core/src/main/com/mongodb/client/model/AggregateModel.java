@@ -29,7 +29,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual manual/aggregation/ Aggregation
  * @mongodb.server.release 2.2
  */
-public class AggregateModel<D> {
+public class AggregateModel<D> implements ExplainableModel<D> {
     private final List<D> pipeline;
     private Boolean allowDiskUse;
     private Integer batchSize;

@@ -30,7 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/query-documents/ Find
  */
-public final class FindModel<D> implements ExplainableModel {
+public final class FindModel<D> implements ExplainableModel<D> {
     private D criteria;
     private int batchSize;
     private int limit;

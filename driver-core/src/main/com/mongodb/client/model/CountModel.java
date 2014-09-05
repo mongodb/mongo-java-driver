@@ -27,7 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/count/ Count
  */
-public class CountModel<D> implements ExplainableModel {
+public class CountModel<D> implements ExplainableModel<D> {
     private D criteria;
     private D hint;
     private String hintString;
