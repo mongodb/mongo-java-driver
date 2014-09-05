@@ -150,13 +150,12 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @throws MongoException
      */
     public DBObject tryNext() {
-        if (!find.getFlags(getReadPreference()).contains(QueryFlag.Tailable)) {
+        if (!findModel.getCursorFlags().contains(CursorFlag.Tailable)) {
             throw new IllegalArgumentException("Can only be used with a tailable cursor");
         }
 
         if (cursor == null) {
-            cursor = collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), find,
-                                                                     resultDecoder), getReadPreference());
+            cursor = collection.execute(getQueryOperation(findModel, resultDecoder), getReadPreference());
         }
 
         if (!cursor.tryHasNext()) {
