@@ -20,6 +20,8 @@ package com.mongodb;
 
 import javax.net.SocketFactory;
 
+import static com.mongodb.MongoClientOptions.Builder;
+
 /**
  * Various settings for a Mongo instance. Not thread safe, and superseded by MongoClientOptions.  This class may be deprecated in a future
  * release.
@@ -32,7 +34,7 @@ import javax.net.SocketFactory;
 public class MongoOptions {
 
     /**
-     * <p>The description for {@code Mongo} instances created with these options. This is used in various places like logging.</p>
+     * The description for {@code Mongo} instances created with these options. This is used in various places like logging.
      */
     public String description;
 
@@ -45,7 +47,7 @@ public class MongoOptions {
     public int connectionsPerHost;
 
     /**
-     * this multiplier, multiplied with the connectionsPerHost setting, gives the maximum number of threads that may be waiting for a
+     * This multiplier, multiplied with the connectionsPerHost setting, gives the maximum number of threads that may be waiting for a
      * connection to become available from the pool. All further threads will get an exception right away. For example if connectionsPerHost
      * is 10 and threadsAllowedToBlockForConnectionMultiplier is 5, then up to 50 threads can wait for a connection. Default is 5.
      */
@@ -91,7 +93,7 @@ public class MongoOptions {
     public DBEncoderFactory dbEncoderFactory;
 
     /**
-     * If <b>true</b> the driver will use a WriteConcern of WriteConcern.SAFE for all operations. If w, wtimeout, fsync or j are specified,
+     * If {@code true} the driver will use a WriteConcern of WriteConcern.SAFE for all operations. If w, wtimeout, fsync or j are specified,
      * this setting is ignored. Default is false.
      */
     public boolean safe;
@@ -118,8 +120,7 @@ public class MongoOptions {
     public boolean j;
 
     /**
-     * sets the socket factory for creating sockets to mongod
-     * Default is SocketFactory.getDefault()
+     * Sets the socket factory for creating sockets to mongod Default is SocketFactory.getDefault()
      */
     public SocketFactory socketFactory;
 
@@ -144,23 +145,29 @@ public class MongoOptions {
     public WriteConcern writeConcern;
 
     /**
-     * Sets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is
-     * Java 6 or greater. If false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if
-     * the VM is Java 5.
-     * <p>
-     *     Default is false.
-     * </p>
+     * Sets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is Java 6 or greater. If false,
+     * the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if the VM is Java 5. <p> Default is false. </p>
      */
     public boolean alwaysUseMBeans;
 
     String requiredReplicaSetName;
 
-
+    /**
+     * Creates a new default {@code MongoOptions}. This class is deprecated, use {@link com.mongodb.MongoClientOptions}.
+     *
+     * @deprecated use {@link com.mongodb.MongoClientOptions}
+     */
     @Deprecated
     public MongoOptions() {
         reset();
     }
 
+    /**
+     * Creates a new {@code MongoOptions} with the given options. This class is deprecated, use {@link com.mongodb.MongoClientOptions}.
+     *
+     * @param options the MongoClientOptions to copy values from into the new MongoOptions.
+     * @deprecated use {@link com.mongodb.MongoClientOptions}
+     */
     @Deprecated
     public MongoOptions(final MongoClientOptions options) {
         connectionsPerHost = options.getConnectionsPerHost();
@@ -177,8 +184,11 @@ public class MongoOptions {
         writeConcern = options.getWriteConcern();
         alwaysUseMBeans = options.isAlwaysUseMBeans();
         requiredReplicaSetName = options.getRequiredReplicaSetName();
-   }
+    }
 
+    /**
+     * Reset all settings to the default.
+     */
     public void reset() {
         connectionsPerHost = 10;
         threadsAllowedToBlockForConnectionMultiplier = 5;
@@ -202,6 +212,11 @@ public class MongoOptions {
         requiredReplicaSetName = null;
     }
 
+    /**
+     * Copy this MongoOptions instance into a new instance.
+     *
+     * @return the new MongoOptions with the same settings as this instance.
+     */
     public MongoOptions copy() {
         MongoOptions m = new MongoOptions();
         m.connectionsPerHost = connectionsPerHost;
@@ -228,17 +243,17 @@ public class MongoOptions {
     }
 
     MongoClientOptions toClientOptions() {
-        MongoClientOptions.Builder builder = MongoClientOptions.builder()
-                .connectTimeout(connectTimeout)
-                .dbDecoderFactory(dbDecoderFactory)
-                .dbEncoderFactory(dbEncoderFactory)
-                .description(description)
-                .maxWaitTime(maxWaitTime)
-                .socketFactory(socketFactory)
-                .socketKeepAlive(socketKeepAlive)
-                .socketTimeout(socketTimeout)
-                .threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockForConnectionMultiplier)
-                .alwaysUseMBeans(alwaysUseMBeans);
+        Builder builder = MongoClientOptions.builder()
+                                            .connectTimeout(connectTimeout)
+                                            .dbDecoderFactory(dbDecoderFactory)
+                                            .dbEncoderFactory(dbEncoderFactory)
+                                            .description(description)
+                                            .maxWaitTime(maxWaitTime)
+                                            .socketFactory(socketFactory)
+                                            .socketKeepAlive(socketKeepAlive)
+                                            .socketTimeout(socketTimeout)
+                                            .threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockForConnectionMultiplier)
+                                            .alwaysUseMBeans(alwaysUseMBeans);
 
         if (readPreference != null) {
             builder.readPreference(readPreference);
@@ -251,6 +266,8 @@ public class MongoOptions {
 
     /**
      * Helper method to return the appropriate WriteConcern instance based on the current related options settings.
+     *
+     * @return a WriteConcern for the current MongoOptions.
      */
     public WriteConcern getWriteConcern() {
         if (writeConcern != null) {
@@ -265,6 +282,9 @@ public class MongoOptions {
     }
 
     /**
+     * Sets the write concern.  If this is not set, the write concern defaults to the combination of settings of the other write
+     * concern-related fields.  If set, this will override all of the other write concern-related fields.
+     *
      * @param writeConcern sets the write concern
      */
     public void setWriteConcern(final WriteConcern writeConcern) {
@@ -272,6 +292,7 @@ public class MongoOptions {
     }
 
     /**
+     * Gets the socket factory for creating sockets to mongod. Default is SocketFactory.getDefault()
      *
      * @return the socket factory for creating sockets to mongod
      */
@@ -280,6 +301,7 @@ public class MongoOptions {
     }
 
     /**
+     * Sets the socket factory for creating sockets to mongod.
      *
      * @param factory sets the socket factory for creating sockets to mongod
      */
@@ -288,6 +310,8 @@ public class MongoOptions {
     }
 
     /**
+     * Gets the description for {@code Mongo} instances created with these options.
+     *
      * @return The description for {@code MongoClient} instances created with these options
      */
     public synchronized String getDescription() {
@@ -295,6 +319,8 @@ public class MongoOptions {
     }
 
     /**
+     * Sets the description for {@code Mongo} instances created with these options. This is used in various places like logging.
+     *
      * @param desc The description for {@code Mongo} instances created with these options
      */
     public synchronized void setDescription(final String desc) {
@@ -302,6 +328,8 @@ public class MongoOptions {
     }
 
     /**
+     * Gets the maximum number of connections allowed per host for this Mongo instance.
+     *
      * @return the maximum number of connections allowed per host for this Mongo instance
      */
     public synchronized int getConnectionsPerHost() {
@@ -309,6 +337,9 @@ public class MongoOptions {
     }
 
     /**
+     * Sets the maximum number of connections allowed per host for this Mongo instance. Those connections will be kept in a pool when idle.
+     * Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection. Default is 10.
+     *
      * @param connections sets the maximum number of connections allowed per host for this Mongo instance
      */
     public synchronized void setConnectionsPerHost(final int connections) {
@@ -316,6 +347,9 @@ public class MongoOptions {
     }
 
     /**
+     * Gets the multiplier which, when multiplied with the connectionsPerHost setting, gives the maximum number of threads that may be
+     * waiting for a connection to become available from the pool.
+     *
      * @return the maximum number of threads that may be waiting for a connection
      */
     public synchronized int getThreadsAllowedToBlockForConnectionMultiplier() {
@@ -323,6 +357,11 @@ public class MongoOptions {
     }
 
     /**
+     * Sets the multiplier which, when multiplied with the connectionsPerHost setting, gives the maximum number of threads that may be
+     * waiting for a connection to become available from the pool. All further threads will get an exception right away. For example if
+     * connectionsPerHost is 10 and threadsAllowedToBlockForConnectionMultiplier is 5, then up to 50 threads can wait for a connection.
+     * Default is 5.
+     *
      * @param threads multiplied with connectionsPerHost, sets the maximum number of threads that may be waiting for a connection
      */
     public synchronized void setThreadsAllowedToBlockForConnectionMultiplier(final int threads) {
@@ -330,6 +369,8 @@ public class MongoOptions {
     }
 
     /**
+     * Gets the maximum wait time in milliseconds that a thread may wait for a connection to become available.
+     *
      * @return The maximum time in milliseconds that threads wait for a connection
      */
     public synchronized int getMaxWaitTime() {
@@ -337,6 +378,9 @@ public class MongoOptions {
     }
 
     /**
+     * Sets the maximum wait time in milliseconds that a thread may wait for a connection to become available. Default is 120, 000. A value
+     * of 0 means that it will not wait.  A negative value means to wait indefinitely.
+     *
      * @param timeMS set the maximum time in milliseconds that threads wait for a connection
      */
     public synchronized void setMaxWaitTime(final int timeMS) {
@@ -344,6 +388,8 @@ public class MongoOptions {
     }
 
     /**
+     * Gets the connection timeout in milliseconds.  A value of 0 means no timeout.
+     *
      * @return the connection timeout in milliseconds.
      */
     public synchronized int getConnectTimeout() {
@@ -351,6 +397,9 @@ public class MongoOptions {
     }
 
     /**
+     * Sets the connection timeout in milliseconds.  A value of 0 means no timeout. It is used solely when establishing a new connection
+     * {@link java.net.Socket#connect(java.net.SocketAddress, int) } Default is 10,000.
+     *
      * @param timeoutMS set the connection timeout in milliseconds.
      */
     public synchronized void setConnectTimeout(final int timeoutMS) {
@@ -358,6 +407,8 @@ public class MongoOptions {
     }
 
     /**
+     * Gets the socket timeout in milliseconds. 0 means no timeout.
+     *
      * @return The socket timeout in milliseconds
      */
     public synchronized int getSocketTimeout() {
@@ -365,6 +416,9 @@ public class MongoOptions {
     }
 
     /**
+     * Sets the socket timeout in milliseconds It is used for I/O socket read and write operations {@link java.net.Socket#setSoTimeout
+     * (int)} Default is 0 and means no timeout.
+     *
      * @param timeoutMS set the socket timeout in milliseconds
      */
     public synchronized void setSocketTimeout(final int timeoutMS) {
@@ -372,6 +426,8 @@ public class MongoOptions {
     }
 
     /**
+     * Gets the flag that controls the socket keep alive feature that keeps a connection alive through firewalls.
+     *
      * @return connection keep-alive flag
      */
     public synchronized boolean isSocketKeepAlive() {
@@ -379,6 +435,9 @@ public class MongoOptions {
     }
 
     /**
+     * Sets the flag that controls the socket keep alive feature that keeps a connection alive through firewalls {@link
+     * java.net.Socket#setKeepAlive(boolean)} Default is false.
+     *
      * @param keepAlive set connection keep-alive flag
      */
     public synchronized void setSocketKeepAlive(final boolean keepAlive) {
@@ -386,6 +445,8 @@ public class MongoOptions {
     }
 
     /**
+     * Gets the DBCallback factory.
+     *
      * @return the DBCallback decoding factory
      */
     public synchronized DBDecoderFactory getDbDecoderFactory() {
@@ -393,6 +454,8 @@ public class MongoOptions {
     }
 
     /**
+     * Override the DBCallback factory. Default is for the standard Mongo Java driver configuration.
+     *
      * @param factory sets the DBCallback decoding factory
      */
     public synchronized void setDbDecoderFactory(final DBDecoderFactory factory) {
@@ -400,6 +463,8 @@ public class MongoOptions {
     }
 
     /**
+     * Gets the encoding factory.
+     *
      * @return the encoding factory
      */
     public synchronized DBEncoderFactory getDbEncoderFactory() {
@@ -407,6 +472,8 @@ public class MongoOptions {
     }
 
     /**
+     * Override the encoding factory. Default is for the standard Mongo Java driver configuration.
+     *
      * @param factory sets the encoding factory
      */
     public synchronized void setDbEncoderFactory(final DBEncoderFactory factory) {
@@ -414,6 +481,8 @@ public class MongoOptions {
     }
 
     /**
+     * Returns whether the driver will use a WriteConcern of WriteConcern.ACKNOWLEDGED for all operations.
+     *
      * @return true if driver uses WriteConcern.SAFE for all operations.
      */
     public synchronized boolean isSafe() {
@@ -421,6 +490,9 @@ public class MongoOptions {
     }
 
     /**
+     * If {@code true} the driver will use a WriteConcern of WriteConcern.SAFE for all operations. If w, wtimeout, fsync or j are specified,
+     * this setting is ignored. Default is false.
+     *
      * @param isSafe true if driver uses WriteConcern.SAFE for all operations.
      */
     public synchronized void setSafe(final boolean isSafe) {
@@ -428,6 +500,8 @@ public class MongoOptions {
     }
 
     /**
+     * Gets the "w" value, (number of writes), of the global WriteConcern.
+     *
      * @return value returns the number of writes of the global WriteConcern.
      */
     public synchronized int getW() {
@@ -435,6 +509,8 @@ public class MongoOptions {
     }
 
     /**
+     * Sets the "w" value, (number of writes), of the global WriteConcern. Default is 0.
+     *
      * @param val set the number of writes of the global WriteConcern.
      */
     public synchronized void setW(final int val) {
@@ -442,20 +518,26 @@ public class MongoOptions {
     }
 
     /**
-     * @return timeout for write operation
+     * Gets the "wtimeout" value of the global WriteConcern.
+     *
+     * @return timeout in millis for write operation
      */
     public synchronized int getWtimeout() {
         return wtimeout;
     }
 
     /**
-     * @param timeoutMS sets timeout for write operation
+     * Sets the "wtimeout" value of the global WriteConcern. Default is 0.
+     *
+     * @param timeoutMS sets timeout in millis for write operation
      */
     public synchronized void setWtimeout(final int timeoutMS) {
         wtimeout = timeoutMS;
     }
 
     /**
+     * Gets the "fsync" value of the global WriteConcern. True indicates writes should wait for data to be written to server data file
+     *
      * @return true if global write concern is set to fsync
      */
     public synchronized boolean isFsync() {
@@ -463,6 +545,9 @@ public class MongoOptions {
     }
 
     /**
+     * Sets the "fsync" value of the global WriteConcern. True indicates writes should wait for data to be written to server data file
+     * Default is false.
+     *
      * @param sync sets global write concern's fsync safe value
      */
     public synchronized void setFsync(final boolean sync) {
@@ -470,6 +555,8 @@ public class MongoOptions {
     }
 
     /**
+     * Gets the "j" value of the global WriteConcern. True indicates writes should wait for a journaling group commit
+     *
      * @return true if global write concern is set to journal safe
      */
     public synchronized boolean isJ() {
@@ -477,6 +564,8 @@ public class MongoOptions {
     }
 
     /**
+     * Sets the "j" value of the global WriteConcern. True indicates writes should wait for a journaling group commit. Default is false.
+     *
      * @param safe sets global write concern's journal safe value
      */
     public synchronized void setJ(final boolean safe) {
@@ -484,6 +573,8 @@ public class MongoOptions {
     }
 
     /**
+     * Gets the read preference.
+     *
      * @return the read preference
      */
     public ReadPreference getReadPreference() {
@@ -491,6 +582,8 @@ public class MongoOptions {
     }
 
     /**
+     * Specifies the read preference.
+     *
      * @param readPreference the read preference
      */
     public void setReadPreference(final ReadPreference readPreference) {
@@ -498,6 +591,7 @@ public class MongoOptions {
     }
 
     /**
+     * Gets whether there is a a finalize method created that cleans up instances of DBCursor that the client does not close.
      *
      * @return whether DBCursor finalizer is enabled
      */
@@ -506,6 +600,8 @@ public class MongoOptions {
     }
 
     /**
+     * Sets whether there is a a finalize method created that cleans up instances of DBCursor that the client does not close.  If you are
+     * careful to always call the close method of DBCursor, then this can safely be set to false.  Default is true.
      *
      * @param cursorFinalizerEnabled whether cursor finalizer is enabled
      */
@@ -515,6 +611,8 @@ public class MongoOptions {
     }
 
     /**
+     * Gets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is Java 6 or greater. If false,
+     * the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if the VM is Java 5.
      *
      * @return true if the driver should always use MBeans, regardless of VM
      */
@@ -523,6 +621,8 @@ public class MongoOptions {
     }
 
     /**
+     * Sets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is Java 6 or greater. If false,
+     * the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if the VM is Java 5. Default is false.
      *
      * @param alwaysUseMBeans sets whether the driver should always use MBeans, regardless of VM
      */
@@ -550,7 +650,7 @@ public class MongoOptions {
             return false;
         }
 
-        final MongoOptions options = (MongoOptions) o;
+        MongoOptions options = (MongoOptions) o;
 
         if (alwaysUseMBeans != options.alwaysUseMBeans) {
             return false;

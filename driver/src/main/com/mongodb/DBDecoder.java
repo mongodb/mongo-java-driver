@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- *  An interface for decoders of BSON into instances of DBObject that belong to a DBCollection.
+ * An interface for decoders of BSON into instances of DBObject that belong to a DBCollection.
  */
 public interface DBDecoder extends BSONDecoder {
 
@@ -35,22 +35,21 @@ public interface DBDecoder extends BSONDecoder {
     DBCallback getDBCallback(DBCollection collection);
 
     /**
-     * Decode a single DBObject belonging to the given collectoin from the given input stream.
+     * Decode a single DBObject belonging to the given collection from the given input stream.
      *
-     * @param in the input stream
+     * @param input      the input stream
      * @param collection the collection
      * @return the DBObject
-     * @throws IOException
+     * @throws IOException may throw an exception while decoding from the {@code InputStream}
      */
-    DBObject decode(InputStream in, DBCollection collection) throws IOException;
+    DBObject decode(InputStream input, DBCollection collection) throws IOException;
 
     /**
-     * Decode a single DBObject belonging to the given collectoin from the given array of bytes.
+     * Decode a single DBObject belonging to the given collection from the given array of bytes.
      *
-     * @param bytes the byte array
+     * @param bytes      the byte array
      * @param collection the collection
      * @return the DBObject
-     * @throws IOException
      */
     DBObject decode(byte[] bytes, DBCollection collection);
 }

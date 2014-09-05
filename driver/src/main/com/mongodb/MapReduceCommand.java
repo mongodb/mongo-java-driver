@@ -367,7 +367,7 @@ public class MapReduceCommand {
         return readPreference;
     }
 
-
+    @Override
     public String toString() {
         return toDBObject().toString();
     }

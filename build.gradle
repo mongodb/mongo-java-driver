@@ -314,6 +314,10 @@ project(':driver') {
         configFile = new File("$configDir/checkstyle-lite.xml")
     }
 
+    tasks.withType(Checkstyle) {
+        classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output);
+    }
+    
     task uberJar(type: Jar) {
         classifier = 'all'
         from project(':bson').sourceSets.main.output

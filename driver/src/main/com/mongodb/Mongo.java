@@ -829,6 +829,11 @@ public class Mongo {
         private static final Holder INSTANCE = new Holder();
         private final ConcurrentMap<String, Mongo> clients = new ConcurrentHashMap<String, Mongo>();
 
+        /**
+         * Get the only instance of {@code Holder}.
+         *
+         * @return the singleton instance of {@code Holder}
+         */
         public static Holder singleton() {
             return INSTANCE;
         }

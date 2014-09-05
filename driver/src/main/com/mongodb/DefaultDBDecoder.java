@@ -32,9 +32,9 @@ public class DefaultDBDecoder extends BasicBSONDecoder implements DBDecoder {
     }
 
     @Override
-    public DBObject decode(final InputStream in, final DBCollection collection) throws IOException {
+    public DBObject decode(final InputStream input, final DBCollection collection) throws IOException {
         DBCallback callback = getDBCallback(collection);
-        decode(in, callback);
+        decode(input, callback);
         return (DBObject) callback.get();
     }
 
