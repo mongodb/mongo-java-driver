@@ -42,6 +42,8 @@ import com.mongodb.client.result.RemoveResult;
 import com.mongodb.client.result.ReplaceOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.codecs.CollectibleCodec;
+import com.mongodb.codecs.DocumentCodec;
+import com.mongodb.operation.AggregateExplainOperation;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.CountOperation;
@@ -78,6 +80,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -113,10 +116,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     @Override
     public <D, C> MongoIterable<C> aggregate(final AggregateModel<D> model, final Class<C> clazz) {
-        List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(model.getPipeline().size());
-        for (D obj : model.getPipeline()) {
-            aggregateList.add(asBson(obj));
-        }
+        List<BsonDocument> aggregateList = createBsonDocumentList(model.getPipeline());
 
         BsonValue outCollection = aggregateList.size() == 0 ? null : aggregateList.get(aggregateList.size() - 1).get("$out");
 
@@ -224,7 +224,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
                 writeRequest = new RemoveRequest(asBson(removeManyModel.getFilter()))
                                .multi(true);
             } else {
-                throw new UnsupportedOperationException(String.format("WriteModel of type %s is not supported", writeModel.getClass()));
+                throw new UnsupportedOperationException(format("WriteModel of type %s is not supported", writeModel.getClass()));
             }
 
             requests.add(writeRequest);
@@ -331,8 +331,18 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public Document explain(final ExplainableModel explainableModel, final ExplainVerbosity verbosity) {
-        throw new UnsupportedOperationException("Not implemented yet!");
+    public <D> Document explain(final ExplainableModel<D> explainableModel, final ExplainVerbosity verbosity) {
+        if (explainableModel instanceof AggregateModel) {
+            AggregateModel<D> aggregateModel = (AggregateModel<D>) explainableModel;
+            AggregateExplainOperation operation = new AggregateExplainOperation(namespace,
+                                                                                createBsonDocumentList(aggregateModel.getPipeline()));
+            operation.setAllowDiskUse(aggregateModel.getAllowDiskUse());
+            operation.setMaxTime(aggregateModel.getMaxTime(MILLISECONDS), MILLISECONDS);
+            BsonDocument bsonDocument = operationExecutor.execute(operation, options.getReadPreference());
+            return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
+        } else {
+            throw new UnsupportedOperationException(format("Unsupported explainable model type %s", explainableModel.getClass()));
+        }
     }
 
     private Codec<T> getCodec() {
@@ -349,6 +359,13 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
         } else {
             return new BsonDocumentWrapper(document, options.getCodecRegistry().get(document.getClass()));
         }
+    }
+    private <D> List<BsonDocument> createBsonDocumentList(final List<D> pipeline) {
+        List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(pipeline.size());
+        for (D obj : pipeline) {
+            aggregateList.add(asBson(obj));
+        }
+        return aggregateList;
     }
 
     private final class OperationIterable<D> implements MongoIterable<D> {

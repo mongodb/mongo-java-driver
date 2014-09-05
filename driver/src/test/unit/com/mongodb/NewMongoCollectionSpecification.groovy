@@ -27,6 +27,7 @@ import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.codecs.DocumentCodecProvider
+import com.mongodb.operation.AggregateExplainOperation
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.CountOperation
@@ -309,5 +310,29 @@ class NewMongoCollectionSpecification extends Specification {
 
         executor.readPreference == secondary()
         result == [document]
+    }
+
+    def 'should explain an aggregate model'() {
+        given:
+        def explainResultDocument = new BsonDocument('explain', new BsonString('yeah, it works'))
+        def executor = new TestOperationExecutor([explainResultDocument])
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        def model = new AggregateModel<>([new Document('$match', new Document('job', 'plumber'))])
+                .allowDiskUse(true)
+                .batchSize(10)
+                .maxTime(1, TimeUnit.SECONDS)
+                .useCursor(true)
+
+        when:
+        def result = collection.explain(model, ExplainVerbosity.ALL_PLANS_EXECUTIONS)
+
+        then:
+        def operation = executor.getReadOperation() as AggregateExplainOperation
+        operation != null
+        operation.pipeline == [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber')))]
+        operation.getMaxTime(TimeUnit.SECONDS) == 1
+        executor.readPreference == secondary()
+        result == new Document('explain', 'yeah, it works')
     }
 }
