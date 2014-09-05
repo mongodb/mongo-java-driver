@@ -30,6 +30,7 @@ import org.bson.codecs.Decoder;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
@@ -47,13 +48,173 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
     private final MongoNamespace namespace;
-    private final FindAndUpdate findAndUpdate;
     private final Decoder<T> decoder;
+    private final BsonDocument update;
+    private BsonDocument criteria;
+    private BsonDocument projection;
+    private BsonDocument sort;
+    private long maxTimeMS;
+    private boolean returnUpdated = false;
+    private boolean upsert = false;
 
-    public FindAndUpdateOperation(final MongoNamespace namespace, final FindAndUpdate findAndUpdate, final Decoder<T> decoder) {
+    /**
+     * Construct a new instance
+     *
+     * @param namespace the namespace to execute the query in
+     * @param decoder the decoder to decode the results with
+     * @param update the document containing update operators
+     */
+    public FindAndUpdateOperation(final MongoNamespace namespace, final Decoder<T> decoder, final BsonDocument update) {
         this.namespace = notNull("namespace", namespace);
-        this.findAndUpdate = notNull("findAndUpdate", findAndUpdate);
         this.decoder = notNull("decoder", decoder);
+        this.update = notNull("decoder", update);
+    }
+
+    /**
+     * Gets the namespace.
+     *
+     * @return the namespace
+     */
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    /**
+     * Gets the decoder used to decode the result documents.
+     *
+     * @return the decoder
+     */
+    public Decoder<T> getDecoder() {
+        return decoder;
+    }
+
+    /**
+     * Gets the document containing update operators
+     *
+     * @return the update document
+     */
+    public BsonDocument getUpdate() {
+        return update;
+    }
+
+    /**
+     * Gets the query criteria.
+     *
+     * @return the query criteria
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     */
+    public BsonDocument getCriteria() {
+        return criteria;
+    }
+
+    /**
+     * Sets the criteria to apply to the query.
+     *
+     * @param criteria the criteria, which may be null.
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     */
+    public void setCriteria(final BsonDocument criteria) {
+        this.criteria = criteria;
+    }
+
+    /**
+     * Gets a document describing the fields to return for all matching documents.
+     *
+     * @return the project document, which may be null
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
+     */
+    public BsonDocument getProjection() {
+        return projection;
+    }
+
+    /**
+     * Sets a document describing the fields to return for all matching documents.
+     *
+     * @param projection the project document, which may be null.
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
+     */
+    public void setProjection(final BsonDocument projection) {
+        this.projection = projection;
+    }
+
+
+    /**
+     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
+     *
+     * @param timeUnit the time unit to return the result in
+     * @return the maximum execution time in the given time unit
+     */
+    public long getMaxTime(final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        return timeUnit.convert(maxTimeMS, MILLISECONDS);
+    }
+
+    /**
+     * Sets the maximum execution time on the server for this operation.
+     *
+     * @param maxTime  the max time
+     * @param timeUnit the time unit, which may not be null
+     */
+    public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
+    }
+
+    /**
+     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
+     * order.
+     *
+     * @return a document describing the sort criteria
+     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     */
+    public BsonDocument getSort() {
+        return sort;
+    }
+
+    /**
+     * Sets the sort criteria to apply to the query.
+     *
+     * @param sort the sort criteria, which may be null.
+     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     */
+    public void setSort(final BsonDocument sort) {
+        this.sort = sort;
+    }
+
+    /**
+     * When true if the updated document should be returned rather than the original. The default is false.
+     *
+     * @return true if the updated document should be returned, otherwise false
+     */
+    public boolean isReturnUpdated() {
+        return returnUpdated;
+    }
+
+    /**
+     * Set to true if the updated document should be returned rather than the original. The default is false.
+     *
+     * @param returnUpdated set to true if the updated document should be returned rather than the original.
+     */
+    public void setReturnUpdated(final boolean returnUpdated) {
+        this.returnUpdated = returnUpdated;
+    }
+
+    /**
+     * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
+     *
+     * @return true if a new document should be inserted if there are no matches to the query filter
+     */
+    public boolean isUpsert() {
+        return upsert;
+    }
+
+    /**
+     * Set to true if a new document should be inserted if there are no matches to the query filter.
+     *
+     * @param upsert true if a new document should be inserted if there are no matches to the query filter
+     */
+    public void setUpsert(final boolean upsert) {
+        this.upsert = upsert;
     }
 
     @Override
@@ -72,14 +233,13 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
 
     private BsonDocument getCommand() {
         BsonDocument command = new BsonDocument("findandmodify", new BsonString(namespace.getCollectionName()));
-        putIfNotNull(command, "query", findAndUpdate.getFilter());
-        putIfNotNull(command, "fields", findAndUpdate.getSelector());
-        putIfNotNull(command, "sort", findAndUpdate.getSortCriteria());
-        putIfTrue(command, "new", findAndUpdate.isReturnNew());
-        putIfTrue(command, "upsert", findAndUpdate.isUpsert());
-        putIfNotZero(command, "maxTimeMS", findAndUpdate.getOptions().getMaxTime(MILLISECONDS));
-
-        command.put("update", findAndUpdate.getUpdateOperations());
+        putIfNotNull(command, "query", getCriteria());
+        putIfNotNull(command, "fields", getProjection());
+        putIfNotNull(command, "sort", getSort());
+        putIfTrue(command, "new", isReturnUpdated());
+        putIfTrue(command, "upsert", isUpsert());
+        putIfNotZero(command, "maxTimeMS", getMaxTime(MILLISECONDS));
+        command.put("update", getUpdate());
         return command;
     }
 

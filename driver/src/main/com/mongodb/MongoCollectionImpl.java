@@ -462,14 +462,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         public T updateOneAndGet(final Document updateOperations, final Get beforeOrAfter) {
-            FindAndUpdate findAndUpdate = new FindAndUpdate().where(findOp.getCriteria())
-                                                             .updateWith(wrap(updateOperations))
-                                                             .returnNew(asBoolean(beforeOrAfter))
-                                                             .select(findOp.getProjection())
-                                                             .sortBy(findOp.getSort())
-                                                             .upsert(upsert);
-
-            return execute(new FindAndUpdateOperation<T>(getNamespace(), findAndUpdate, getCodec()));
+            FindAndUpdateOperation<T> operation = new FindAndUpdateOperation<T>(getNamespace(), getCodec(), wrap(updateOperations));
+            operation.setCriteria(findOp.getCriteria());
+            operation.setProjection(findOp.getProjection());
+            operation.setSort(findOp.getSort());
+            operation.setReturnUpdated(asBoolean(beforeOrAfter));
+            operation.setUpsert(upsert);
+            return execute(operation);
         }
 
         public T replaceOneAndGet(final T replacement, final Get beforeOrAfter) {
