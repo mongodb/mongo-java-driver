@@ -343,6 +343,7 @@ public class DBCursorTest extends TestCase {
 
     @Test
     public void testExplain() {
+        assumeFalse(serverIsAtLeastVersion(2.7));
         DBCollection c = collection;
         for (int i = 0; i < 100; i++) {
             c.save(new BasicDBObject("x", i));
