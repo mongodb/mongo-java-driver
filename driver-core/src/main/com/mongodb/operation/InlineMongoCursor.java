@@ -47,6 +47,11 @@ class InlineMongoCursor<T> implements MongoCursor<T> {
     }
 
     @Override
+    public boolean tryHasNext() {
+        return hasNext();
+    }
+
+    @Override
     public ServerCursor getServerCursor() {
         return null;
     }

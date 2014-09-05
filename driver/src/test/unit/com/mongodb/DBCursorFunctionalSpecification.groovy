@@ -24,6 +24,8 @@ import static java.util.Arrays.asList
 
 class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
+    def cursorMap = [a:1]
+
     @Subject
     private DBCursor dbCursor
 
@@ -46,6 +48,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         1 * decoder.decode(_ as byte[], collection)
     }
 
+    @IgnoreIf({ serverVersionAtLeast(asList(2, 7, 0)) })
     def 'should use provided hints for queries'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -63,6 +66,25 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 0)) })
+    def 'should use provided hints for queries mongod > 2.7'() {
+        given:
+        collection.createIndex(new BasicDBObject('a', 1))
+
+        when:
+        dbCursor = collection.find().hint(new BasicDBObject('a', 1))
+
+        then:
+        dbCursor.explain().queryPlanner.winningPlan.inputStage.keyPattern == cursorMap
+
+        when:
+        dbCursor = collection.find().addSpecial('$hint', new BasicDBObject('a', 1))
+
+        then:
+        dbCursor.explain().queryPlanner.winningPlan.inputStage.keyPattern == cursorMap
+    }
+
+    @IgnoreIf({ serverVersionAtLeast(asList(2, 7, 0)) })
     def 'should use provided string hints for queries'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -78,6 +100,25 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
         then:
         dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
+    }
+
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 0)) })
+    def 'should use provided string hints for queries mongodb > 2.7'() {
+        given:
+        collection.createIndex(new BasicDBObject('a', 1))
+
+        when:
+        dbCursor = collection.find().hint('a_1')
+
+        then:
+        dbCursor.explain().queryPlanner.winningPlan.inputStage.keyPattern == cursorMap
+
+        when:
+        dbCursor = collection.find().addSpecial('$hint', 'a_1')
+
+        then:
+        dbCursor.explain().queryPlanner.winningPlan.inputStage.keyPattern == cursorMap
     }
 
     def 'should use provided hints for count'() {
@@ -102,7 +143,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.find().hint('a_1').count() == 2
     }
 
-    @IgnoreIf( { !serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw with bad hint with mongod 2.6+'() {
         when:
         collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').count()
@@ -110,7 +151,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         thrown(MongoException)
     }
 
-    @IgnoreIf( { serverVersionAtLeast(asList(2, 6, 0)) } )
+    @IgnoreIf({ serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should ignore bad hints with mongod < 2.6'() {
         when:
         collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').count()
@@ -139,6 +180,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         countWithHint == serverVersionAtLeast(asList(2, 6, 0)) ? 0 : 1
     }
 
+    @IgnoreIf({ serverVersionAtLeast(asList(2, 7, 0)) })
     def 'should be able to use addSpecial with $explain'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
@@ -150,6 +192,20 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         then:
         dbCursor.next().get('cursor') == 'BtreeCursor a_1'
     }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 0)) })
+    def 'should be able to use addSpecial with $explain mongod > 2.7'() {
+        given:
+        collection.createIndex(new BasicDBObject('a', 1))
+
+        when:
+        dbCursor = collection.find().hint(new BasicDBObject('a', 1))
+        dbCursor.addSpecial('$explain', 1)
+
+        then:
+        dbCursor.explain().queryPlanner.winningPlan.inputStage.keyPattern == cursorMap
+    }
+
 
     def 'should return results in the order they are on disk when natural sort applied'() {
         given:

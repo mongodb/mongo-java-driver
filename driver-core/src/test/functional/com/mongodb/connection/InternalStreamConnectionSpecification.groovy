@@ -66,8 +66,8 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should fire connection opened event'() {
         given:
         def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
-        stream.read(_) >>> helper.read(1)
-        def (buffers1, messageId1) = helper.isMaster()
+        def (buffers1, messageId1) =  helper.isMaster()
+        stream.read(_) >>> helper.read([messageId1])
 
         when:
         connection.sendMessage(buffers1, messageId1)
@@ -90,9 +90,8 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should fire messages sent event'() {
         given:
         def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
-        stream.read(_) >>> helper.read(1)
         def (buffers1, messageId1) = helper.isMaster()
-
+        stream.read(_) >>> helper.read([messageId1])
         when:
         connection.sendMessage(buffers1, messageId1)
 
@@ -106,12 +105,11 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
         }
-
+        def (buffers1, messageId1) = helper.isMaster()
         def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
         connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
             callback.onResult(null, null);
         }
-        def (buffers1, messageId1) = helper.isMaster()
         def latch = new CountDownLatch(1);
 
         when:
@@ -129,9 +127,9 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should fire message received event'() {
         given:
-        stream.read(_) >>> helper.read(1)
         def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
         def (buffers1, messageId1) = helper.isMaster()
+        stream.read(_) >>> helper.read([messageId1])
 
         when:
         connection.receiveMessage(messageId1)
@@ -144,8 +142,9 @@ class InternalStreamConnectionSpecification extends Specification {
     @IgnoreIf({ javaVersion < 1.7 })
     def 'should fire message received event asynchronously'() {
         given:
+        def (buffers1, messageId1) = helper.isMaster()
         stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(helper.header())
+            handler.completed(helper.header(messageId1))
         }
         stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             handler.completed(helper.body())
@@ -155,7 +154,6 @@ class InternalStreamConnectionSpecification extends Specification {
         connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
             callback.onResult(null, null);
         }
-        def (buffers1, messageId1) = helper.isMaster()
         def latch = new CountDownLatch(1);
 
         when:
@@ -165,6 +163,7 @@ class InternalStreamConnectionSpecification extends Specification {
                 latch.countDown();
             }
         })
+        latch.countDown();
         latch.await()
 
         then:
@@ -174,12 +173,11 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should handle out of order messages on the stream'() {
         // Connect then: Send(1), Send(2), Send(3), Receive(3), Receive(2), Receive(1)
         given:
-        stream.read(_) >>> helper.read(3, ordered)
-
         def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
         def (buffers1, messageId1) = helper.isMaster()
         def (buffers2, messageId2) = helper.isMaster()
         def (buffers3, messageId3) = helper.isMaster()
+        stream.read(_) >>> helper.read([messageId1, messageId2, messageId3], ordered)
 
         when:
         connection.sendMessage(buffers1, messageId1)
@@ -200,11 +198,17 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should handle out of order messages on the stream asynchronously'() {
         // Connect then: SendAsync(1), SendAsync(2), SendAsync(3), ReceiveAsync(3), ReceiveAsync(2), ReceiveAsync(1)
         given:
+        def sndLatch = new CountDownLatch(3)
+        def rcvdLatch = new CountDownLatch(3)
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def (buffers3, messageId3, sndCallbck3, rcvdCallbck3, fSndResult3, fRespBuffers3) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def headers = helper.generateHeaders([messageId1, messageId2, messageId3], ordered)
+
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
         }
 
-        def headers = helper.generateHeaders(3, ordered)
         stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             handler.completed(headers.pop())
         }
@@ -216,11 +220,6 @@ class InternalStreamConnectionSpecification extends Specification {
         connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
             callback.onResult(null, null);
         }
-        def sndLatch = new CountDownLatch(3)
-        def rcvdLatch = new CountDownLatch(3)
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers3, messageId3, sndCallbck3, rcvdCallbck3, fSndResult3, fRespBuffers3) = helper.isMasterAsync(sndLatch, rcvdLatch)
 
         when:
         connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
@@ -250,24 +249,26 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should handle out of order messages on the stream mixed synchronicity'() {
         // Connect then: Send(1), SendAsync(2), Send(3), ReceiveAsync(3), Receive(2), ReceiveAsync(1)
         given:
-        stream.read(36) >> { helper.header() }
+        def sndLatch = new CountDownLatch(1)
+        def rcvdLatch = new CountDownLatch(2)
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def (buffers3, messageId3, sndCallbck3, rcvdCallbck3, fSndResult3, fRespBuffers3) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def headers = helper.generateHeaders([messageId1, messageId2, messageId3])
+
+        stream.read(36) >> { helper.header(messageId2) }
         stream.read(74) >> { helper.body() }
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
         }
         stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(helper.header())
+            handler.completed(headers.pop())
         }
         stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             handler.completed(helper.body())
         }
 
         def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
-        def sndLatch = new CountDownLatch(1)
-        def rcvdLatch = new CountDownLatch(2)
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers3, messageId3, sndCallbck3, rcvdCallbck3, fSndResult3, fRespBuffers3) = helper.isMasterAsync(sndLatch, rcvdLatch)
 
         when:
         connection.sendMessage(buffers1, messageId1)
@@ -315,11 +316,17 @@ class InternalStreamConnectionSpecification extends Specification {
     @IgnoreIf({ javaVersion < 1.7 })
     def 'failed initialization should close the connection and fail asynchronously'() {
         given:
+        def sndLatch = new CountDownLatch(2)
+        def rcvdLatch = new CountDownLatch(2)
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def headers = helper.generateHeaders([messageId1, messageId2])
+
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
         }
         stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(helper.header())
+            handler.completed(headers.pop())
         }
         stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             handler.completed(helper.body())
@@ -329,10 +336,6 @@ class InternalStreamConnectionSpecification extends Specification {
         connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
             callback.onResult(null, new MongoInternalException('Something went wrong'));
         }
-        def sndLatch = new CountDownLatch(2)
-        def rcvdLatch = new CountDownLatch(2)
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
 
         when:
         connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
@@ -381,7 +384,13 @@ class InternalStreamConnectionSpecification extends Specification {
     @IgnoreIf({ javaVersion < 1.7 })
     def 'failed writes should close the connection and fail asynchronously'() {
         given:
+        def sndLatch = new CountDownLatch(2)
+        def rcvdLatch = new CountDownLatch(2)
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def headers = helper.generateHeaders([messageId1, messageId2])
         int seen = 0
+
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             if (seen == 0) {
                 seen += 1
@@ -390,7 +399,7 @@ class InternalStreamConnectionSpecification extends Specification {
             callback.completed(null)
         }
         stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(helper.header())
+            handler.completed(headers.pop())
         }
         stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             handler.completed(helper.body())
@@ -400,10 +409,6 @@ class InternalStreamConnectionSpecification extends Specification {
         connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
             callback.onResult(null, null);
         }
-        def sndLatch = new CountDownLatch(2)
-        def rcvdLatch = new CountDownLatch(2)
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
 
         when:
         connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
@@ -456,16 +461,21 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'failed reads (header) should close the stream and fail asynchronously'() {
         given:
         int seen = 0
+        def sndLatch = new CountDownLatch(2)
+        def rcvdLatch = new CountDownLatch(2)
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def headers = helper.generateHeaders([messageId1, messageId2])
+
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
         }
-
         stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             if (seen == 0) {
                 seen += 1
                 return handler.failed(new IOException('Something went wrong'))
             }
-            handler.completed(helper.header())
+            handler.completed(headers.pop())
         }
         stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             handler.completed(helper.body())
@@ -475,11 +485,6 @@ class InternalStreamConnectionSpecification extends Specification {
         connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
             callback.onResult(null, null);
         }
-
-        def sndLatch = new CountDownLatch(2)
-        def rcvdLatch = new CountDownLatch(2)
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
 
         when:
         connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
@@ -511,12 +516,14 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'failed reads (body) should close the stream and fail'() {
         given:
-        stream.read(36) >> { helper.header() }
+        def (buffers1, messageId1) = helper.isMaster()
+        def (buffers2, messageId2) = helper.isMaster()
+        def headers = helper.generateHeaders([messageId1, messageId2])
+
+        stream.read(36) >> { headers.pop() }
         stream.read(74) >> { throw new IOException('Something went wrong') }
 
         def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
-        def (buffers1, messageId1) = helper.isMaster()
-        def (buffers2, messageId2) = helper.isMaster()
 
         when:
         connection.sendMessage(buffers1, messageId1)
@@ -539,12 +546,17 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'failed reads (body) should close the stream and fail asynchronously'() {
         given:
         int seen = 0
+        def sndLatch = new CountDownLatch(2)
+        def rcvdLatch = new CountDownLatch(2)
+        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
+        def headers = helper.generateHeaders([messageId1, messageId2])
+
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
         }
-
         stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(helper.header())
+            handler.completed(headers.pop())
         }
         stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             if (seen == 0) {
@@ -557,10 +569,6 @@ class InternalStreamConnectionSpecification extends Specification {
         connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
             callback.onResult(null, null);
         }
-        def sndLatch = new CountDownLatch(2)
-        def rcvdLatch = new CountDownLatch(2)
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
 
         when:
         connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
@@ -595,18 +603,20 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'the connection pipelining should be thread safe'() {
         given:
         int threads = 10
+        int numberOfOperations = 100000
         ExecutorService pool = Executors.newFixedThreadPool(threads)
-        stream.read(36) >> { helper.header() }
+        def messages = (1..numberOfOperations).collect { helper.isMaster() }
+        def headers = helper.generateHeaders( messages.collect { buffer, messageId -> messageId })
+        stream.read(36) >> { headers.pop() }
         stream.read(74) >> { helper.body() }
 
         when:
         def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
 
         then:
-        (1..100000).each { n ->
+        (1..numberOfOperations).each { n ->
             def conds = new AsyncConditions()
-            def (buffers, messageId) = helper.isMaster()
-
+            def (buffers, messageId) = messages.pop()
             pool.submit({ connection.sendMessage(buffers, messageId) } as Runnable)
             pool.submit({
                             conds.evaluate {
@@ -626,12 +636,23 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'the connection pipelining should be thread safe asynchronously'() {
         given:
         int threads = 10
+        int numberOfOperations = 100000
         ExecutorService pool = Executors.newFixedThreadPool(threads)
+
+        def messages = (1..numberOfOperations).collect {
+            def sndLatch = new CountDownLatch(1)
+            def rcvLatch = new CountDownLatch(1)
+
+            helper.isMasterAsync(sndLatch, rcvLatch) + sndLatch + rcvLatch
+        }
+        def headers = messages.collect { buffers, messageId, sndCallbck, rcvdCallbck, fSndResult, fRespBuffers, sndLatch,
+                                         rcvLatch -> helper.header(messageId) }
+
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
         }
         stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(helper.header())
+            handler.completed(headers.pop())
         }
         stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             handler.completed(helper.body())
@@ -644,11 +665,9 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         then:
-        (1..100000).each { n ->
-            def sndLatch = new CountDownLatch(1)
-            def rcvLatch = new CountDownLatch(1)
+        (1..numberOfOperations).each { n ->
             def conds = new AsyncConditions()
-            def (buffers, messageId, sndCallbck, rcvdCallbck, fSndResult, fRespBuffers) = helper.isMasterAsync(sndLatch, rcvLatch)
+            def (buffers, messageId, sndCallbck, rcvdCallbck, fSndResult, fRespBuffers, sndLatch,  rcvLatch) = messages.pop()
 
             pool.submit({ connection.sendMessageAsync(buffers, messageId, sndCallbck) } as Runnable)
             pool.submit({
@@ -666,27 +685,27 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     class StreamHelper {
-        int nextMessageId = isMaster().get(1) + 1 // Generates a message then adds one to the id
+        int nextMessageId = 900000 // Generates a message then adds one to the id
 
-        def read(int count) {
-            read(count, false)
+        def read(List<Integer> messageIds) {
+            read(messageIds, true)
         }
 
-        def read(int count, boolean ordered) {
-            List<ByteBuf> headers = (1..count).collect { header() }
-            List<ByteBuf> bodies = (1..count).collect { body() }
+        def read(List<Integer> messageIds, boolean ordered) {
+            List<ByteBuf> headers = messageIds.collect { header(it) }
+            List<ByteBuf> bodies = messageIds.collect { body() }
             if (!ordered) {
                 Collections.shuffle(headers, new SecureRandom())
             }
             [headers, bodies].transpose().flatten()
         }
 
-        def header() {
+        def header(messageId) {
             ByteBuffer headerByteBuffer = ByteBuffer.allocate(36).with {
                 order(ByteOrder.LITTLE_ENDIAN);
                 putInt(110);           // messageLength
                 putInt(4);             // requestId
-                putInt(nextMessageId); // responseTo
+                putInt(messageId);     // responseTo
                 putInt(1);             // opCode
                 putInt(0);             // responseFlags
                 putLong(0);            // cursorId
@@ -694,7 +713,6 @@ class InternalStreamConnectionSpecification extends Specification {
                 putInt(1);             // number returned
             }
             headerByteBuffer.flip()
-            nextMessageId++
             new ByteBufNIO(headerByteBuffer)
         }
 
@@ -705,8 +723,12 @@ class InternalStreamConnectionSpecification extends Specification {
             binaryResponse.buffer.byteBuffers.get(0)
         }
 
-        def generateHeaders(int amount, boolean ordered) {
-            List<ByteBuf> headers = (1..amount).collect { header() }.reverse()
+        def generateHeaders(List<Integer> messageIds) {
+            generateHeaders(messageIds, true)
+        }
+
+        def generateHeaders(List<Integer> messageIds, boolean ordered) {
+            List<ByteBuf> headers = messageIds.collect { header(it) }.reverse()
             if (!ordered) {
                 Collections.shuffle(headers, new SecureRandom())
             }
@@ -720,7 +742,8 @@ class InternalStreamConnectionSpecification extends Specification {
                                              MessageSettings.builder().build());
             OutputBuffer buffer = new BasicOutputBuffer();
             command.encode(buffer);
-            [buffer.byteBuffers, command.getId()]
+            nextMessageId++
+            [buffer.byteBuffers, nextMessageId]
         }
 
         def isMasterAsync(CountDownLatch sndLatch, CountDownLatch rcvdLatch) {

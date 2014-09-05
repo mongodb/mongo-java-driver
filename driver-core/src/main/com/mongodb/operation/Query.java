@@ -102,9 +102,7 @@ public abstract class Query {
         if (flags == null) {
             throw new IllegalArgumentException();
         }
-        if (flags.contains(CursorFlag.Tailable)) {
-            flags.add(CursorFlag.AWAIT_DATA);
-        }
+
         this.flags.addAll(flags);
         return this;
     }
