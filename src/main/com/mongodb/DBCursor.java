@@ -557,18 +557,29 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     // ----- iterator api -----
 
     /**
-     * Checks if there is another object available
-     * @return
+     * Checks if there is another object available.
+     *
+     * <p><em>Note</em>: Automatically adds the {@link Bytes#QUERYOPTION_AWAITDATA} option to any cursors with the
+     * {@link Bytes#QUERYOPTION_TAILABLE} option set. For non blocking tailable cursors see {@link #tryNext }.</p>
+     *
+     * @return true if there is another object available
      * @throws MongoException
      */
     public boolean hasNext() {
         _checkType(CursorType.ITERATOR);
+
+        if ((getOptions() & Bytes.QUERYOPTION_TAILABLE) != 0) {
+            addOption(Bytes.QUERYOPTION_AWAITDATA);
+        }
+
         return _hasNext();
     }
 
     /**
-     * Only allowed for tailable cursors, returns the object the cursor is at and moves the cursor ahead by one or
-     * return null if no documents is available.
+     * Non blocking check for tailable cursors to see if another object is available.
+     *
+     * <p>Returns the object the cursor is at and moves the cursor ahead by one or
+     * return null if no documents is available.</p>
      *
      * @return the next element or null
      * @throws MongoException
@@ -585,16 +596,25 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         if (!_it.tryHasNext()) {
             return null;
         }
-        return next();
+        return _next();
     }
 
     /**
      * Returns the object the cursor is at and moves the cursor ahead by one.
+     *
+     * <p><em>Note</em>: Automatically adds the {@link Bytes#QUERYOPTION_AWAITDATA} option to any cursors with the
+     * {@link Bytes#QUERYOPTION_TAILABLE} option set. For non blocking tailable cursors see {@link #tryNext }.</p>
+     *
      * @return the next element
      * @throws MongoException
      */
     public DBObject next() {
         _checkType( CursorType.ITERATOR );
+
+        if ((getOptions() & Bytes.QUERYOPTION_TAILABLE) != 0) {
+            addOption(Bytes.QUERYOPTION_AWAITDATA);
+        }
+
         return _next();
     }
 
