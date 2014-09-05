@@ -18,10 +18,10 @@ package com.mongodb.binding;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 
@@ -40,13 +40,19 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     private final Server server;
     private Connection connection;
 
+    /**
+     * Creates an instance.
+     *
+     * @param cluster     a non-null Cluster which will be used to select a server to bind to
+     * @param maxWaitTime the maximum time to wait for a connection to become available.
+     * @param timeUnit    a non-null TimeUnit for the maxWaitTime
+     */
     public AsyncSingleConnectionBinding(final Cluster cluster, final long maxWaitTime, final TimeUnit timeUnit) {
         notNull("cluster", cluster);
-        notNull("maxWaitTime", maxWaitTime);
         notNull("timeUnit", timeUnit);
 
         long maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
-        this.server =  cluster.selectServer(new ReadPreferenceServerSelector(getReadPreference()), maxWaitTimeMS, MILLISECONDS);
+        this.server = cluster.selectServer(new ReadPreferenceServerSelector(getReadPreference()), maxWaitTimeMS, MILLISECONDS);
     }
 
     @Override
@@ -99,8 +105,8 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
         @Override
         public MongoFuture<Connection> getConnection() {
-          isTrue("open", getCount() > 0);
-          return new SingleResultFuture<Connection>(connection.retain());
+            isTrue("open", getCount() > 0);
+            return new SingleResultFuture<Connection>(connection.retain());
         }
 
         public AsyncConnectionSource retain() {
