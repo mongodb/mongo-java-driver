@@ -44,17 +44,19 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     private final long maxWaitTimeMS;
 
     /**
-     * Creates a new {@code AsyncClusterBinding}.
+     * Creates an instance.
      *
      * @param cluster        a non-null Cluster which will be used to select a server to bind to
      * @param readPreference a non-null ReadPreference for read operations
      * @param maxWaitTime    the maximum time to wait for a connection to become available.
-     * @param timeUnit       the TimeUnit for the maxWaitTime
+     * @param timeUnit       a non-null TimeUnit for the maxWaitTime
      */
     public AsyncClusterBinding(final Cluster cluster, final ReadPreference readPreference,
                                final long maxWaitTime, final TimeUnit timeUnit) {
         this.cluster = notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
+        notNull("timeUnit", timeUnit);
+        
         this.maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
     }
 
