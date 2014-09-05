@@ -32,7 +32,7 @@ import javax.net.SocketFactory;
 public class MongoOptions {
 
     /**
-     * <p>The description for {@code Mongo} instances created with these options. This is used in various places like logging.</p>
+     * The description for {@code Mongo} instances created with these options. This is used in various places like logging.
      */
     public String description;
 
@@ -118,8 +118,7 @@ public class MongoOptions {
     public boolean j;
 
     /**
-     * sets the socket factory for creating sockets to mongod
-     * Default is SocketFactory.getDefault()
+     * sets the socket factory for creating sockets to mongod Default is SocketFactory.getDefault()
      */
     public SocketFactory socketFactory;
 
@@ -144,23 +143,29 @@ public class MongoOptions {
     public WriteConcern writeConcern;
 
     /**
-     * Sets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is
-     * Java 6 or greater. If false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if
-     * the VM is Java 5.
-     * <p>
-     *     Default is false.
-     * </p>
+     * Sets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is Java 6 or greater. If false,
+     * the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if the VM is Java 5. <p> Default is false. </p>
      */
     public boolean alwaysUseMBeans;
 
     String requiredReplicaSetName;
 
-
+    /**
+     * Creates a new default {@code MongoOptions}. This class is deprecated, use {@link com.mongodb.MongoClientOptions}.
+     *
+     * @deprecated use {@link com.mongodb.MongoClientOptions}
+     */
     @Deprecated
     public MongoOptions() {
         reset();
     }
 
+    /**
+     * Creates a new {@code MongoOptions} with the given options. This class is deprecated, use {@link com.mongodb.MongoClientOptions}.
+     *
+     * @param options the MongoClientOptions to copy values from into the new MongoOptions.
+     * @deprecated use {@link com.mongodb.MongoClientOptions}
+     */
     @Deprecated
     public MongoOptions(final MongoClientOptions options) {
         connectionsPerHost = options.getConnectionsPerHost();
@@ -177,8 +182,11 @@ public class MongoOptions {
         writeConcern = options.getWriteConcern();
         alwaysUseMBeans = options.isAlwaysUseMBeans();
         requiredReplicaSetName = options.getRequiredReplicaSetName();
-   }
+    }
 
+    /**
+     * Reset all settings to the default.
+     */
     public void reset() {
         connectionsPerHost = 10;
         threadsAllowedToBlockForConnectionMultiplier = 5;
@@ -202,6 +210,11 @@ public class MongoOptions {
         requiredReplicaSetName = null;
     }
 
+    /**
+     * Copy this MongoOptions instance into a new instance.
+     *
+     * @return the new MongoOptions with the same settings as this instance.
+     */
     public MongoOptions copy() {
         MongoOptions m = new MongoOptions();
         m.connectionsPerHost = connectionsPerHost;
@@ -251,6 +264,7 @@ public class MongoOptions {
 
     /**
      * Helper method to return the appropriate WriteConcern instance based on the current related options settings.
+     * @return a WriteConcern for the current MongoOptions.
      */
     public WriteConcern getWriteConcern() {
         if (writeConcern != null) {
@@ -272,7 +286,6 @@ public class MongoOptions {
     }
 
     /**
-     *
      * @return the socket factory for creating sockets to mongod
      */
     public synchronized SocketFactory getSocketFactory() {
@@ -280,7 +293,6 @@ public class MongoOptions {
     }
 
     /**
-     *
      * @param factory sets the socket factory for creating sockets to mongod
      */
     public synchronized void setSocketFactory(final SocketFactory factory) {
@@ -498,7 +510,6 @@ public class MongoOptions {
     }
 
     /**
-     *
      * @return whether DBCursor finalizer is enabled
      */
     public boolean isCursorFinalizerEnabled() {
@@ -506,7 +517,6 @@ public class MongoOptions {
     }
 
     /**
-     *
      * @param cursorFinalizerEnabled whether cursor finalizer is enabled
      */
     public void setCursorFinalizerEnabled(final boolean cursorFinalizerEnabled) {
@@ -515,7 +525,6 @@ public class MongoOptions {
     }
 
     /**
-     *
      * @return true if the driver should always use MBeans, regardless of VM
      */
     public boolean isAlwaysUseMBeans() {
@@ -523,7 +532,6 @@ public class MongoOptions {
     }
 
     /**
-     *
      * @param alwaysUseMBeans sets whether the driver should always use MBeans, regardless of VM
      */
     public void setAlwaysUseMBeans(final boolean alwaysUseMBeans) {
@@ -550,7 +558,7 @@ public class MongoOptions {
             return false;
         }
 
-        final MongoOptions options = (MongoOptions) o;
+        MongoOptions options = (MongoOptions) o;
 
         if (alwaysUseMBeans != options.alwaysUseMBeans) {
             return false;
