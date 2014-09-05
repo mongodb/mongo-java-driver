@@ -65,6 +65,7 @@ import com.mongodb.operation.UpdateOperation;
 import com.mongodb.operation.UpdateRequest;
 import com.mongodb.operation.WriteRequest;
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWrapper;
@@ -179,17 +180,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     @Override
     public <F, D> MongoIterable<D> find(final FindModel<F> model, final Class<D> clazz) {
-        QueryOperation<D> operation = new QueryOperation<D>(namespace, options.getCodecRegistry().get(clazz));
-        operation.setCriteria(asBson(model.getCriteria()));
-        operation.setBatchSize(model.getBatchSize());
-        operation.setCursorFlags(model.getCursorFlags());
-        operation.setSkip(model.getSkip());
-        operation.setLimit(model.getLimit());
-        operation.setMaxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS);
-        operation.setModifiers(asBson(model.getModifiers()));
-        operation.setProjection(asBson(model.getProjection()));
-        operation.setSort(asBson(model.getSort()));
-        return new OperationIterable<D>(operation, options.getReadPreference());
+        return new OperationIterable<D>(createQueryOperation(model, clazz), options.getReadPreference());
     }
 
     @Override
@@ -340,6 +331,14 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
             operation.setMaxTime(aggregateModel.getMaxTime(MILLISECONDS), MILLISECONDS);
             BsonDocument bsonDocument = operationExecutor.execute(operation, options.getReadPreference());
             return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
+        } else if (explainableModel instanceof FindModel) {
+            FindModel<D> findModel = (FindModel<D>) explainableModel;
+            QueryOperation<Document> queryOperation = createQueryOperation(findModel, Document.class);
+            if (queryOperation.getModifiers() == null) {
+                queryOperation.setModifiers(new BsonDocument());
+            }
+            queryOperation.getModifiers().append("$explain", BsonBoolean.TRUE);
+            return operationExecutor.execute(queryOperation, options.getReadPreference()).next();
         } else {
             throw new UnsupportedOperationException(format("Unsupported explainable model type %s", explainableModel.getClass()));
         }
@@ -360,6 +359,21 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
             return new BsonDocumentWrapper(document, options.getCodecRegistry().get(document.getClass()));
         }
     }
+
+    private <F, D> QueryOperation<D> createQueryOperation(final FindModel<F> model, final Class<D> clazz) {
+        QueryOperation<D> operation = new QueryOperation<D>(namespace, options.getCodecRegistry().get(clazz));
+        operation.setCriteria(asBson(model.getCriteria()));
+        operation.setBatchSize(model.getBatchSize());
+        operation.setCursorFlags(model.getCursorFlags());
+        operation.setSkip(model.getSkip());
+        operation.setLimit(model.getLimit());
+        operation.setMaxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS);
+        operation.setModifiers(asBson(model.getModifiers()));
+        operation.setProjection(asBson(model.getProjection()));
+        operation.setSort(asBson(model.getSort()));
+        return operation;
+    }
+
     private <D> List<BsonDocument> createBsonDocumentList(final List<D> pipeline) {
         List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(pipeline.size());
         for (D obj : pipeline) {
