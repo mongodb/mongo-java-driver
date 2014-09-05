@@ -25,44 +25,7 @@ import java.util.List;
  *
  * <p>This class has been superseded by <{@code MongoClientURI}, and may be deprecated in a future release.</p>
  *
- * <p>The format of the URI is:</p>
- * <pre>
- *   mongodb://[username:password@]host1[:port1][,host2[:port2],...[,hostN[:portN]]][/[database][?options]]
- * </pre>
- * <ul> <li>{@code mongodb://} is a required prefix to identify that this is a string in the standard connection format.</li> <li>{@code
- * username:password@} are optional.  If given, the driver will attempt to login to a database after connecting to a database server.</li>
- * <li>{@code host1} is the only required part of the URI.  It identifies a server address to connect to.</li> <li>{@code :portX} is
- * optional and defaults to :27017 if not provided.</li> <li>{@code /database} is the name of the database to login to and thus is only
- * relevant if the {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li> <li>{@code
- * ?options} are connection options. Note that if {@code database} is absent there is still a {@code /} required between the last host and
- * the {@code ?} introducing the options. Options are name=value pairs and the pairs are separated by "&amp;". For backwards compatibility,
- * ";" is accepted as a separator in addition to "&amp;", but should be considered as deprecated.</li> </ul> <p>The Java driver supports the
- * following options (case insensitive):</p>
- *
- * <p>Replica set configuration: </p> <ul> <li>{@code replicaSet=name}: Implies that the hosts given are a seed list, and the driver will
- * attempt to find all members of the set.</li> </ul> <p>Connection Configuration:</p> <ul> <li>{@code connectTimeoutMS=ms}: How long a
- * connection can take to be opened before timing out.</li> <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take
- * before timing out.</li> </ul> <p>Connection pool configuration:</p> <ul> <li>{@code maxPoolSize=n}: The maximum number of connections in
- * the connection pool.</li> <li>{@code waitQueueMultiple=n} : this multiplier, multiplied with the maxPoolSize setting, gives the maximum
- * number of threads that may be waiting for a connection to become available from the pool.  All further threads will get an exception
- * right away.</li> <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
- * become available.</li> </ul> <p>Write concern configuration:</p> <ul> <li>{@code safe=true|false} <ul> <li>{@code true}: the driver sends
- * a getLastError command after every update to ensure that the update succeeded (see also {@code w} and {@code wtimeoutMS}).</li>
- * <li>{@code false}: the driver does not send a getLastError command after every update.</li> </ul> </li> <li>{@code w=wValue} <ul> <li>The
- * driver adds { w : wValue } to the getLastError command. Implies {@code safe=true}.</li> <li>wValue is typically a number, but can be any
- * string in order to allow for specifications like {@code "majority"}</li> </ul> </li> <li>{@code wtimeoutMS=ms} <ul> <li>The driver adds {
- * wtimeout : ms } to the getlasterror command. Implies {@code safe=true}.</li> <li>Used in combination with {@code w}</li> </ul> </li>
- * </ul> <p>Read preference configuration:</p> <ul> <li>{@code slaveOk=true|false}: Whether a driver connected to a replica set will send
- * reads to slaves/secondaries.</li> <li>{@code readPreference=enum}: The read preference for this connection.  If set, it overrides any
- * slaveOk value. <ul> <li>Enumerated values: <ul> <li>{@code primary}</li> <li>{@code primaryPreferred}</li> <li>{@code secondary}</li>
- * <li>{@code secondaryPreferred}</li> <li>{@code nearest}</li> </ul> </li> </ul> </li> <li>{@code readPreferenceTags=string}.  A
- * representation of a tag set as a comma-separated list of colon-separated key-value pairs, e.g. {@code "dc:ny,rack:1}".  Spaces are
- * stripped from beginning and end of all keys and values. To specify a list of tag sets, using multiple readPreferenceTags, e.g. {@code
- * readPreferenceTags=dc:ny,rack:1;readPreferenceTags=dc:ny;readPreferenceTags=} <ul> <li>Note the empty value for the last one, which means
- * match any secondary as a last resort.</li> <li>Order matters when using multiple readPreferenceTags.</li> </ul> </li> </ul>
- *
  * @see MongoClientURI
- * @see MongoOptions for the default values for all options
  * @deprecated Replaced by {@link MongoClientURI}
  */
 @Deprecated
