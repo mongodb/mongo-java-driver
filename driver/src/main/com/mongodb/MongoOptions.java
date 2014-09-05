@@ -20,6 +20,8 @@ package com.mongodb;
 
 import javax.net.SocketFactory;
 
+import static com.mongodb.MongoClientOptions.Builder;
+
 /**
  * Various settings for a Mongo instance. Not thread safe, and superseded by MongoClientOptions.  This class may be deprecated in a future
  * release.
@@ -91,7 +93,7 @@ public class MongoOptions {
     public DBEncoderFactory dbEncoderFactory;
 
     /**
-     * If <b>true</b> the driver will use a WriteConcern of WriteConcern.SAFE for all operations. If w, wtimeout, fsync or j are specified,
+     * If {@code true} the driver will use a WriteConcern of WriteConcern.SAFE for all operations. If w, wtimeout, fsync or j are specified,
      * this setting is ignored. Default is false.
      */
     public boolean safe;
@@ -241,18 +243,17 @@ public class MongoOptions {
     }
 
     MongoClientOptions toClientOptions() {
-        MongoClientOptions.Builder builder = MongoClientOptions.builder()
-                                                               .connectTimeout(connectTimeout)
-                                                               .dbDecoderFactory(dbDecoderFactory)
-                                                               .dbEncoderFactory(dbEncoderFactory)
-                                                               .description(description)
-                                                               .maxWaitTime(maxWaitTime)
-                                                               .socketFactory(socketFactory)
-                                                               .socketKeepAlive(socketKeepAlive)
-                                                               .socketTimeout(socketTimeout)
-                                                               .threadsAllowedToBlockForConnectionMultiplier(
-                                                                                                            threadsAllowedToBlockForConnectionMultiplier)
-                                                               .alwaysUseMBeans(alwaysUseMBeans);
+        Builder builder = MongoClientOptions.builder()
+                                            .connectTimeout(connectTimeout)
+                                            .dbDecoderFactory(dbDecoderFactory)
+                                            .dbEncoderFactory(dbEncoderFactory)
+                                            .description(description)
+                                            .maxWaitTime(maxWaitTime)
+                                            .socketFactory(socketFactory)
+                                            .socketKeepAlive(socketKeepAlive)
+                                            .socketTimeout(socketTimeout)
+                                            .threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockForConnectionMultiplier)
+                                            .alwaysUseMBeans(alwaysUseMBeans);
 
         if (readPreference != null) {
             builder.readPreference(readPreference);
@@ -480,7 +481,7 @@ public class MongoOptions {
     }
 
     /**
-     * Returns whether the driver will use a WriteConcern of WriteConcern.SAFE for all operations.
+     * Returns whether the driver will use a WriteConcern of WriteConcern.ACKNOWLEDGED for all operations.
      *
      * @return true if driver uses WriteConcern.SAFE for all operations.
      */
@@ -489,7 +490,7 @@ public class MongoOptions {
     }
 
     /**
-     * If <b>true</b> the driver will use a WriteConcern of WriteConcern.SAFE for all operations. If w, wtimeout, fsync or j are specified,
+     * If {@code true} the driver will use a WriteConcern of WriteConcern.SAFE for all operations. If w, wtimeout, fsync or j are specified,
      * this setting is ignored. Default is false.
      *
      * @param isSafe true if driver uses WriteConcern.SAFE for all operations.
