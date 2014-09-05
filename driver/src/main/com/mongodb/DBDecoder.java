@@ -22,7 +22,9 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * An interface for decoders of BSON into instances of DBObject that belong to a DBCollection.
+ * An interface for decoders of BSON into instances of DBObject that belong to a DBCollection. Instead of using custom Encoders and
+ * Decoders, consider constructing a {@link org.bson.codecs.configuration.CodecRegistry} containing {@link org.bson.codecs.Codec}
+ * implementations for the classes that need custom encoding and decoding.
  */
 public interface DBDecoder extends BSONDecoder {
 
