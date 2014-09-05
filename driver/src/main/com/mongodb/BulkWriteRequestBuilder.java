@@ -16,20 +16,25 @@
 
 package com.mongodb;
 
+import org.bson.codecs.Encoder;
+
 /**
- * A builder for a single write request
+ * A builder for a single write request.
  *
  * @since 2.12
  */
 public class BulkWriteRequestBuilder {
     private final BulkWriteOperation bulkWriteOperation;
     private final DBObject query;
-    private final DBObjectCodec codec;
+    private final Encoder<DBObject> codec;
+    private final Encoder<DBObject> replacementCodec;
 
-    BulkWriteRequestBuilder(final BulkWriteOperation bulkWriteOperation, final DBObject query, final DBObjectCodec codec) {
+    BulkWriteRequestBuilder(final BulkWriteOperation bulkWriteOperation, final DBObject query, final Encoder<DBObject> queryCodec,
+                            final Encoder<DBObject> replacementCodec) {
         this.bulkWriteOperation = bulkWriteOperation;
         this.query = query;
-        this.codec = codec;
+        this.codec = queryCodec;
+        this.replacementCodec = replacementCodec;
     }
 
     /**
@@ -53,7 +58,7 @@ public class BulkWriteRequestBuilder {
      *                 update operators.
      */
     public void replaceOne(final DBObject document) {
-        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec).replaceOne(document);
+        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec).replaceOne(document);
     }
 
     /**
@@ -62,7 +67,7 @@ public class BulkWriteRequestBuilder {
      * @param update the update criteria
      */
     public void update(final DBObject update) {
-        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec).update(update);
+        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec).update(update);
     }
 
     /**
@@ -71,7 +76,7 @@ public class BulkWriteRequestBuilder {
      * @param update the update criteria
      */
     public void updateOne(final DBObject update) {
-        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec).updateOne(update);
+        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec).updateOne(update);
     }
 
     /**
@@ -80,6 +85,6 @@ public class BulkWriteRequestBuilder {
      * @return a new builder that allows only update and replace, since upsert does not apply to remove.
      */
     public BulkUpdateRequestBuilder upsert() {
-        return new BulkUpdateRequestBuilder(bulkWriteOperation, query, true, codec);
+        return new BulkUpdateRequestBuilder(bulkWriteOperation, query, true, codec, replacementCodec);
     }
 }

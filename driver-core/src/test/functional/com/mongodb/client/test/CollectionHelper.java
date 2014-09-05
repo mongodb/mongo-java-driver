@@ -78,7 +78,7 @@ public final class CollectionHelper<T> {
     @SuppressWarnings("unchecked")
     public void insertDocuments(final BsonDocument... documents) {
         for (BsonDocument document : documents) {
-            new InsertOperation<T>(namespace, true, WriteConcern.ACKNOWLEDGED,
+            new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
                                    asList(new InsertRequest(document))).execute(getBinding());
         }
     }
@@ -86,7 +86,7 @@ public final class CollectionHelper<T> {
     @SuppressWarnings("unchecked")
     public void insertDocuments(final List<BsonDocument> documents) {
         for (BsonDocument document : documents) {
-            new InsertOperation<T>(namespace, true, WriteConcern.ACKNOWLEDGED,
+            new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
                                    asList(new InsertRequest(document))).execute(getBinding());
         }
     }
@@ -94,14 +94,14 @@ public final class CollectionHelper<T> {
     @SuppressWarnings("unchecked")
     public <I> void insertDocuments(final Codec<I> iCodec, final I... documents) {
         for (I document : documents) {
-            new InsertOperation<I>(namespace, true, WriteConcern.ACKNOWLEDGED,
+            new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
                                    asList(new InsertRequest(new BsonDocumentWrapper<I>(document, iCodec)))).execute(getBinding());
         }
     }
 
     public <I> void insertDocuments(final Codec<I> iCodec, final List<I> documents) {
         for (I document : documents) {
-            new InsertOperation<I>(namespace, true, WriteConcern.ACKNOWLEDGED,
+            new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
                                    asList(new InsertRequest(new BsonDocumentWrapper<I>(document, iCodec)))).execute(getBinding());
         }
     }

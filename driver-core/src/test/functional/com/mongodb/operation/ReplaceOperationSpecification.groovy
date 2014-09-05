@@ -18,11 +18,11 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.codecs.DocumentCodec
+import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonSerializationException
-import org.bson.types.Binary
+import org.bson.codecs.BsonDocumentCodec
 import org.mongodb.Document
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
@@ -33,8 +33,8 @@ import static java.util.Arrays.asList
 class ReplaceOperationSpecification extends OperationFunctionalSpecification {
     def 'should return correct result'() {
         given:
-        def replacement = new ReplaceRequest<Document>(new BsonDocument(), new Document('_id', 1))
-        def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
+        def replacement = new ReplaceRequest(new BsonDocument(), new BsonDocument('_id', new BsonInt32(1)))
+        def op = new ReplaceOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
 
         when:
         def result = op.execute(getBinding())
@@ -49,8 +49,8 @@ class ReplaceOperationSpecification extends OperationFunctionalSpecification {
     @org.junit.experimental.categories.Category(Async)
     def 'should return correct result asynchronously'() {
         given:
-        def replacement = new ReplaceRequest<Document>(new BsonDocument(), new Document('_id', 1))
-        def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
+        def replacement = new ReplaceRequest(new BsonDocument(), new BsonDocument('_id', new BsonInt32(1)))
+        def op = new ReplaceOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
 
         when:
         def result = op.executeAsync(getAsyncBinding()).get()
@@ -67,8 +67,9 @@ class ReplaceOperationSpecification extends OperationFunctionalSpecification {
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert)).execute(getBinding())
 
-        def replacement = new ReplaceRequest<Document>(new BsonDocument('_id', new BsonInt32(1)), new Document('_id', 1).append('x', 1))
-        def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
+        def replacement = new ReplaceRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                             new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)))
+        def op = new ReplaceOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
 
         when:
         def result = op.execute(getBinding())
@@ -78,7 +79,7 @@ class ReplaceOperationSpecification extends OperationFunctionalSpecification {
         result.count == 1
         result.upsertedId == null
         result.isUpdateOfExisting()
-        asList(replacement.getReplacement()) == getCollectionHelper().find()
+        asList(replacement.getReplacement()) == getCollectionHelper().find(new BsonDocumentCodec())
         getCollectionHelper().find().get(0).keySet().iterator().next() == '_id'
     }
 
@@ -88,8 +89,9 @@ class ReplaceOperationSpecification extends OperationFunctionalSpecification {
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert)).execute(getBinding())
 
-        def replacement = new ReplaceRequest<Document>(new BsonDocument('_id', new BsonInt32(1)), new Document('_id', 1).append('x', 1))
-        def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
+        def replacement = new ReplaceRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                             new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)))
+        def op = new ReplaceOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
 
 
         when:
@@ -100,43 +102,43 @@ class ReplaceOperationSpecification extends OperationFunctionalSpecification {
         result.count == 1
         result.upsertedId == null
         result.isUpdateOfExisting()
-        asList(replacement.getReplacement()) == getCollectionHelper().find()
+        asList(replacement.getReplacement()) == getCollectionHelper().find(new BsonDocumentCodec())
     }
 
     def 'should upsert a single document'() {
         given:
-        def replacement = new ReplaceRequest<Document>(new BsonDocument('_id', new BsonInt32(1)), new Document('_id', 1).append('x', 1))
-                .upsert(true)
-        def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
+        def replacement = new ReplaceRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                             new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1))).upsert(true)
+        def op = new ReplaceOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
 
         when:
         op.execute(getBinding())
 
         then:
-        asList(replacement.getReplacement()) == getCollectionHelper().find()
+        asList(replacement.getReplacement()) == getCollectionHelper().find(new BsonDocumentCodec())
     }
 
     def 'should upsert a single document asynchronously'() {
         given:
-        def replacement = new ReplaceRequest<Document>(new BsonDocument('_id', new BsonInt32(1)), new Document('_id', 1).append('x', 1))
-                .upsert(true)
-        def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
+        def replacement = new ReplaceRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                             new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1))).upsert(true)
+        def op = new ReplaceOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
 
         when:
         op.executeAsync(getAsyncBinding()).get()
 
         then:
-        asList(replacement.getReplacement()) == getCollectionHelper().find()
+        asList(replacement.getReplacement()) == getCollectionHelper().find(new BsonDocumentCodec())
     }
 
     def 'should throw exception if document is too large'() {
         given:
         byte[] hugeByteArray = new byte[1024 * 1024 * 16];
-        def replacements = [new ReplaceRequest<Document>(new BsonDocument(), new Document('_id', 1).append('b', new Binary(hugeByteArray)))]
+        def replacements = [new ReplaceRequest(new BsonDocument(),
+                                               new BsonDocument('_id', new BsonInt32(1)).append('b', new BsonBinary(hugeByteArray)))]
 
         when:
-        new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, replacements, new DocumentCodec())
-                .execute(getBinding())
+        new ReplaceOperation(getNamespace(), true, ACKNOWLEDGED, replacements).execute(getBinding())
 
         then:
         thrown(BsonSerializationException)
@@ -145,11 +147,11 @@ class ReplaceOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw exception if document is too large asynchronously'() {
         given:
         byte[] hugeByteArray = new byte[1024 * 1024 * 16];
-        def replacements = [new ReplaceRequest<Document>(new BsonDocument(), new Document('_id', 1).append('b', new Binary(hugeByteArray)))]
+        def replacements = [new ReplaceRequest(new BsonDocument(),
+                                               new BsonDocument('_id', new BsonInt32(1)).append('b', new BsonBinary(hugeByteArray)))]
 
         when:
-        new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, replacements, new DocumentCodec())
-                .executeAsync(getAsyncBinding()).get()
+        new ReplaceOperation(getNamespace(), true, ACKNOWLEDGED, replacements).executeAsync(getAsyncBinding()).get()
 
         then:
         thrown(BsonSerializationException)
@@ -157,10 +159,11 @@ class ReplaceOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should move _id to the beginning'() {
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert)).execute(getBinding())
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(insert)).execute(getBinding())
 
-        def replacement = new ReplaceRequest<Document>(new BsonDocument('_id', new BsonInt32(1)), new Document('x', 1).append('_id', 1))
-        def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
+        def replacement = new ReplaceRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                             new BsonDocument('x', new BsonInt32(1)).append('_id', new BsonInt32(1)))
+        def op = new ReplaceOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
 
         when:
         op.execute(getBinding())

@@ -61,7 +61,7 @@ public class BulkWriteOperation {
         if (document.get(ID_FIELD_NAME) == null) {
             document.put(ID_FIELD_NAME, new ObjectId());
         }
-        addRequest(new InsertRequest(document));
+        addRequest(new InsertRequest(document, collection.getObjectCodec()));
     }
 
     /**
@@ -72,7 +72,7 @@ public class BulkWriteOperation {
      * @return a builder for a single write request
      */
     public BulkWriteRequestBuilder find(final DBObject query) {
-        return new BulkWriteRequestBuilder(this, query, collection.getDefaultDBObjectCodec());
+        return new BulkWriteRequestBuilder(this, query, collection.getDefaultDBObjectCodec(), collection.getObjectCodec());
     }
 
     /**

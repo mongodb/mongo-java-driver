@@ -42,10 +42,8 @@ import com.mongodb.protocol.UpdateProtocol;
 import com.mongodb.protocol.WriteCommandProtocol;
 import com.mongodb.protocol.WriteProtocol;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentWrapper;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteError;
 import org.mongodb.BulkWriteException;
 import org.mongodb.BulkWriteResult;
@@ -75,33 +73,28 @@ import static java.util.Arrays.asList;
 /**
  * An operation to execute a series of write operations in bulk.
  *
- * @param <T> The type of document stored in the given namespace
  * @since 3.0
  */
-public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWriteResult>, WriteOperation<BulkWriteResult> {
+public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteResult>, WriteOperation<BulkWriteResult> {
     private final MongoNamespace namespace;
     private final List<WriteRequest> writeRequests;
     private final WriteConcern writeConcern;
-    private final Encoder<T> encoder;
     private final boolean ordered;
     private boolean closed;
 
     /**
      * Construct a new instance.
-     *
      * @param namespace     the namespace to write to
      * @param writeRequests the list of runWrites to execute
      * @param ordered       whether the runWrites must be executed in order.
      * @param writeConcern  the write concern to apply
-     * @param encoder       the encoder
      */
     public MixedBulkWriteOperation(final MongoNamespace namespace, final List<WriteRequest> writeRequests, final boolean ordered,
-                                   final WriteConcern writeConcern, final Encoder<T> encoder) {
+                                   final WriteConcern writeConcern) {
         this.ordered = ordered;
         this.namespace = notNull("namespace", namespace);
         this.writeRequests = notNull("writes", writeRequests);
         this.writeConcern = notNull("writeConcern", writeConcern);
-        this.encoder = notNull("encoder", encoder);
         isTrueArgument("writes is not an empty list", !writeRequests.isEmpty());
     }
 
@@ -351,7 +344,7 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
             if (type == UPDATE) {
                 nextWriteResult = getUpdatesRunExecutor((List<UpdateRequest>) runWrites, connection).execute();
             } else if (type == REPLACE) {
-                nextWriteResult = getReplacesRunExecutor((List<ReplaceRequest<T>>) runWrites, connection).execute();
+                nextWriteResult = getReplacesRunExecutor((List<ReplaceRequest>) runWrites, connection).execute();
             } else if (type == INSERT) {
                 nextWriteResult = getInsertsRunExecutor((List<InsertRequest>) runWrites, connection).execute();
             } else if (type == REMOVE) {
@@ -369,7 +362,7 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
             if (type == UPDATE) {
                 nextWriteResult = getUpdatesRunExecutor((List<UpdateRequest>) runWrites, connection).executeAsync();
             } else if (type == REPLACE) {
-                nextWriteResult = getReplacesRunExecutor((List<ReplaceRequest<T>>) runWrites, connection).executeAsync();
+                nextWriteResult = getReplacesRunExecutor((List<ReplaceRequest>) runWrites, connection).executeAsync();
             } else if (type == INSERT) {
                 nextWriteResult = getInsertsRunExecutor((List<InsertRequest>) runWrites, connection).executeAsync();
             } else if (type == REMOVE) {
@@ -381,18 +374,16 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
         }
 
         @SuppressWarnings("unchecked")
-        RunExecutor getReplacesRunExecutor(final List<ReplaceRequest<T>> replaceRequests, final Connection connection) {
+        RunExecutor getReplacesRunExecutor(final List<ReplaceRequest> replaceRequests, final Connection connection) {
             return new RunExecutor(connection) {
                 WriteProtocol getWriteProtocol(final int index) {
-                    return new ReplaceProtocol<T>(namespace,
-                                                  ordered, writeConcern,
-                                                  asList(replaceRequests.get(index)),
-                                                  encoder
-                    );
+                    return new ReplaceProtocol(namespace,
+                                               ordered, writeConcern,
+                                               asList(replaceRequests.get(index)));
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new ReplaceCommandProtocol<T>(namespace, ordered, writeConcern, replaceRequests, encoder);
+                    return new ReplaceCommandProtocol(namespace, ordered, writeConcern, replaceRequests);
                 }
 
                 @Override
@@ -430,8 +421,7 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new InsertCommandProtocol<T>(namespace, ordered, writeConcern, insertRequests
-                    );
+                    return new InsertCommandProtocol(namespace, ordered, writeConcern, insertRequests);
                 }
 
                 @Override
@@ -589,8 +579,8 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
 
             List<BulkWriteUpsert> getUpsertedItems(final WriteResult writeResult) {
                 return writeResult.getUpsertedId() == null
-                        ? Collections.<BulkWriteUpsert>emptyList()
-                        : asList(new BulkWriteUpsert(0, writeResult.getUpsertedId()));
+                       ? Collections.<BulkWriteUpsert>emptyList()
+                       : asList(new BulkWriteUpsert(0, writeResult.getUpsertedId()));
             }
 
             @SuppressWarnings("unchecked")
@@ -598,13 +588,13 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
                                                    final BaseUpdateRequest baseUpdateRequest) {
                 if (writeResult.getUpsertedId() == null) {
                     if (writeResult.isUpdateOfExisting() || !baseUpdateRequest.isUpsert()) {
-                        return Collections.<BulkWriteUpsert>emptyList();
+                        return Collections.emptyList();
                     } else {
                         BsonDocument update;
                         BsonDocument filter;
                         if (baseUpdateRequest instanceof ReplaceRequest) {
-                            ReplaceRequest<T> replaceRequest = (ReplaceRequest<T>) baseUpdateRequest;
-                            update = new BsonDocumentWrapper<T>(replaceRequest.getReplacement(), encoder);
+                            ReplaceRequest replaceRequest = (ReplaceRequest) baseUpdateRequest;
+                            update = replaceRequest.getReplacement();
                             filter = replaceRequest.getCriteria();
                         } else {
                             UpdateRequest updateRequest = (UpdateRequest) baseUpdateRequest;
@@ -617,7 +607,7 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
                         } else if (filter.containsKey("_id")) {
                             return asList(new BulkWriteUpsert(0, filter.get("_id")));
                         } else {
-                            return Collections.<BulkWriteUpsert>emptyList();
+                            return Collections.emptyList();
                         }
                     }
                 } else {

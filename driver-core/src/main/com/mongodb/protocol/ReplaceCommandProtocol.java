@@ -20,16 +20,15 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.connection.Connection;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.SingleResultFuture;
+import com.mongodb.connection.Connection;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.operation.ReplaceRequest;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.operation.WriteRequest;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.ReplaceCommandMessage;
-import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
 
 import java.util.List;
@@ -37,18 +36,30 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 
-public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
+/**
+ * An implementation of the update command that handles full document replacements
+ *
+ * @since 3.0
+ * @mongodb.driver.manual manual/reference/command/insert/#dbcmd.update Update Command
+ */
+public class ReplaceCommandProtocol extends WriteCommandProtocol {
 
     private static final Logger LOGGER = Loggers.getLogger("protocol.replace");
 
-    private final List<ReplaceRequest<T>> replaceRequests;
-    private final Encoder<T> encoder;
+    private final List<ReplaceRequest> replaceRequests;
 
+    /**
+     * Construct an instance.
+     *
+     * @param namespace the namespace
+     * @param ordered whether the inserts are ordered
+     * @param writeConcern the write concern
+     * @param replaceRequests the list of inserts
+     */
     public ReplaceCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                  final List<ReplaceRequest<T>> replaceRequests, final Encoder<T> encoder) {
+                                  final List<ReplaceRequest> replaceRequests) {
         super(namespace, ordered, writeConcern);
         this.replaceRequests = notNull("replaces", replaceRequests);
-        this.encoder = notNull("encoder", encoder);
     }
 
     @Override
@@ -83,8 +94,8 @@ public class ReplaceCommandProtocol<T> extends WriteCommandProtocol {
     }
 
     @Override
-    protected ReplaceCommandMessage<T> createRequestMessage(final MessageSettings messageSettings) {
-        return new ReplaceCommandMessage<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, encoder, messageSettings);
+    protected ReplaceCommandMessage createRequestMessage(final MessageSettings messageSettings) {
+        return new ReplaceCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, messageSettings);
     }
 
     @Override

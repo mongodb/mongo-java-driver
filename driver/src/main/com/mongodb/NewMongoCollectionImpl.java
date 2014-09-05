@@ -189,7 +189,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
                 writeRequest = new InsertRequest(asBson(insertOneModel.getDocument()));
             } else if (writeModel instanceof ReplaceOneModel) {
                 ReplaceOneModel<T, D> replaceOneModel = (ReplaceOneModel<T, D>) writeModel;
-                writeRequest = new ReplaceRequest<T>(asBson(replaceOneModel.getFilter()), replaceOneModel.getReplacement())
+                writeRequest = new ReplaceRequest(asBson(replaceOneModel.getFilter()), asBson(replaceOneModel.getReplacement()))
                                .upsert(replaceOneModel.isUpsert());
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel updateOneModel = (UpdateOneModel) writeModel;
@@ -214,8 +214,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
             requests.add(writeRequest);
         }
 
-        return operationExecutor.execute(new MixedBulkWriteOperation<T>(namespace, requests, model.isOrdered(),
-                                                                        options.getWriteConcern(), getCodec()));
+        return operationExecutor.execute(new MixedBulkWriteOperation(namespace, requests, model.isOrdered(), options.getWriteConcern()));
     }
 
     @Override
@@ -225,7 +224,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
         }
         List<InsertRequest> requests = new ArrayList<InsertRequest>();
         requests.add(new InsertRequest(asBson(document)));
-        operationExecutor.execute(new InsertOperation<T>(namespace, true, options.getWriteConcern(), requests));
+        operationExecutor.execute(new InsertOperation(namespace, true, options.getWriteConcern(), requests));
         return new InsertOneResult(null, 1); // TODO: insertedId
     }
 
@@ -238,7 +237,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
             }
             requests.add(new InsertRequest(asBson(document)));
         }
-        operationExecutor.execute(new InsertOperation<T>(namespace, model.isOrdered(), options.getWriteConcern(), requests));
+        operationExecutor.execute(new InsertOperation(namespace, model.isOrdered(), options.getWriteConcern(), requests));
         return new InsertManyResult(null, model.getDocuments().size()); // TODO: insertedId
     }
 
@@ -259,10 +258,9 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     @Override
     public <D> ReplaceOneResult replaceOne(final ReplaceOneModel<T, D> model) {
-        List<ReplaceRequest<T>> requests = new ArrayList<ReplaceRequest<T>>();
-        requests.add(new ReplaceRequest<T>(asBson(model.getFilter()), model.getReplacement()));
-        WriteResult writeResult = operationExecutor.execute(new ReplaceOperation<T>(namespace, true, options.getWriteConcern(),
-                                                                                    requests, getCodec()));
+        List<ReplaceRequest> requests = new ArrayList<ReplaceRequest>();
+        requests.add(new ReplaceRequest(asBson(model.getFilter()), asBson(model.getReplacement())));
+        WriteResult writeResult = operationExecutor.execute(new ReplaceOperation(namespace, true, options.getWriteConcern(), requests));
         return new ReplaceOneResult(writeResult.getCount(), 0, writeResult.getUpsertedId());  // TODO matchedCount
     }
 

@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import org.bson.codecs.Codec;
-
 abstract class WriteRequest {
-    abstract com.mongodb.operation.WriteRequest toNew(final Codec<DBObject> codec);
+    abstract com.mongodb.operation.WriteRequest toNew();
 }

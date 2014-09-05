@@ -32,7 +32,6 @@ import com.mongodb.connection.SocketStreamFactory;
 import org.bson.BsonDocument;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import static com.mongodb.ClusterFixture.getBinding;
 import static com.mongodb.ClusterFixture.getPrimary;
@@ -68,8 +67,8 @@ public class UserOperationTest extends FunctionalTest {
 
         // when:
         try {
-            new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
-                                          asList(new InsertRequest(new BsonDocument()))
+            new InsertOperation(getNamespace(), true, ACKNOWLEDGED,
+                                asList(new InsertRequest(new BsonDocument()))
             )
             .execute(binding);
             fail("should have thrown");
@@ -95,9 +94,9 @@ public class UserOperationTest extends FunctionalTest {
 
         try {
             // when
-            new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()),
-                                          true, ACKNOWLEDGED,
-                                          asList(new InsertRequest(new BsonDocument()))
+            new InsertOperation(new MongoNamespace(getDatabaseName(), getCollectionName()),
+                                true, ACKNOWLEDGED,
+                                asList(new InsertRequest(new BsonDocument()))
             ).execute(binding);
             // then
             assertEquals(1L, (long) new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName())).execute(getBinding()));
@@ -120,8 +119,8 @@ public class UserOperationTest extends FunctionalTest {
 
         try {
             // when
-            new InsertOperation<Document>(new MongoNamespace(getDatabaseName(), getCollectionName()), true, ACKNOWLEDGED,
-                                          asList(new InsertRequest(new BsonDocument()))
+            new InsertOperation(new MongoNamespace(getDatabaseName(), getCollectionName()), true, ACKNOWLEDGED,
+                                asList(new InsertRequest(new BsonDocument()))
             ).execute(binding);
             fail("Should have thrown");
         } catch (MongoException e) {

@@ -20,33 +20,44 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.connection.Connection;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.SingleResultFuture;
+import com.mongodb.connection.Connection;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.operation.ReplaceRequest;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.ReplaceMessage;
 import com.mongodb.protocol.message.RequestMessage;
-import org.bson.codecs.Encoder;
 import org.mongodb.WriteResult;
 
 import java.util.List;
 
 import static java.lang.String.format;
 
-public class ReplaceProtocol<T> extends WriteProtocol {
+/**
+ * An implementation of the update wire protocol that handles full document replacements.  This class also takes care of applying the write
+ * concern.
+ *
+ * @since 3.0
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-update OP_UPDATE
+ */
+public class ReplaceProtocol extends WriteProtocol {
     private static final com.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.replace");
 
-    private final List<ReplaceRequest<T>> replaceRequests;
-    private final Encoder<T> encoder;
+    private final List<ReplaceRequest> replaceRequests;
 
-    public ReplaceProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<ReplaceRequest<T>> replaceRequests, final Encoder<T> encoder) {
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the namespace
+     * @param ordered whether the inserts are ordered
+     * @param writeConcern the write concern
+     * @param replaceRequests the list of replace requests
+     */public ReplaceProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                              final List<ReplaceRequest> replaceRequests) {
         super(namespace, ordered, writeConcern);
         this.replaceRequests = replaceRequests;
-        this.encoder = encoder;
     }
 
     @Override
@@ -77,7 +88,7 @@ public class ReplaceProtocol<T> extends WriteProtocol {
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new ReplaceMessage<T>(getNamespace().getFullName(), replaceRequests, encoder, settings);
+        return new ReplaceMessage(getNamespace().getFullName(), replaceRequests, settings);
     }
 
     @Override

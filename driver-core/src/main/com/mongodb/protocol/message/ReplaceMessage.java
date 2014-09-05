@@ -18,30 +18,39 @@ package com.mongodb.protocol.message;
 
 import com.mongodb.operation.BaseUpdateRequest;
 import com.mongodb.operation.ReplaceRequest;
-import org.bson.codecs.Encoder;
 import org.bson.io.OutputBuffer;
 
 import java.util.List;
 
-public class ReplaceMessage<T> extends BaseUpdateMessage {
-    private final List<ReplaceRequest<T>> replaceRequests;
-    private final Encoder<T> encoder;
+/**
+ * An update message that handles full document replacements.
+ *
+ * @since 3.0
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-update OP_UPDATE
+ */
+public class ReplaceMessage extends BaseUpdateMessage {
+    private final List<ReplaceRequest> replaceRequests;
 
-    public ReplaceMessage(final String collectionName, final List<ReplaceRequest<T>> replaceRequests,
-                          final Encoder<T> encoder, final MessageSettings settings) {
+    /**
+     * Construct an instance.
+     *
+     * @param collectionName the full name of the collection
+     * @param replaceRequests the list of replace requests
+     * @param settings the message settings
+     */
+    public ReplaceMessage(final String collectionName, final List<ReplaceRequest> replaceRequests, final MessageSettings settings) {
         super(collectionName, OpCode.OP_UPDATE, settings);
         this.replaceRequests = replaceRequests;
-        this.encoder = encoder;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
         writeBaseUpdate(buffer);
-        addCollectibleDocument(replaceRequests.get(0).getReplacement(), encoder, buffer, new CollectibleDocumentFieldNameValidator());
+        addCollectibleDocument(replaceRequests.get(0).getReplacement(), buffer, new CollectibleDocumentFieldNameValidator());
         if (replaceRequests.size() == 1) {
             return null;
         } else {
-            return new ReplaceMessage<T>(getCollectionName(), replaceRequests.subList(1, replaceRequests.size()), encoder, getSettings());
+            return new ReplaceMessage(getCollectionName(), replaceRequests.subList(1, replaceRequests.size()), getSettings());
         }
     }
 

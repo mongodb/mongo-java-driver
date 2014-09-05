@@ -31,11 +31,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * An operation that inserts one or more documents into a collection.
  *
- * @param <T> the document type
- *
  * @since 3.0
  */
-public class InsertOperation<T> extends BaseWriteOperation {
+public class InsertOperation extends BaseWriteOperation {
     private final List<InsertRequest> insertRequestList;
 
     /**
@@ -59,7 +57,7 @@ public class InsertOperation<T> extends BaseWriteOperation {
 
     @Override
     protected WriteCommandProtocol getCommandProtocol() {
-        return new InsertCommandProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList);
+        return new InsertCommandProtocol(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList);
     }
 
     @Override
