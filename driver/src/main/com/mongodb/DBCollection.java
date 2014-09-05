@@ -1529,12 +1529,13 @@ public class DBCollection {
                                   final long maxTime, final TimeUnit maxTimeUnit) {
         WriteOperation<DBObject> operation;
         if (remove) {
-            FindAndRemoveOperation<DBObject> findAndRemoveOperation = new FindAndRemoveOperation<DBObject>(getNamespace(), objectCodec);
-            findAndRemoveOperation.setCriteria(wrapAllowNull(query));
-            findAndRemoveOperation.setSort(wrapAllowNull(sort));
-            findAndRemoveOperation.setMaxTime(maxTime, maxTimeUnit);
+            FindAndRemoveOperation<DBObject> findAndRemove = new FindAndRemoveOperation<DBObject>(getNamespace(), objectCodec);
+            findAndRemove.setCriteria(wrapAllowNull(query));
+            findAndRemove.setProjection(wrapAllowNull(fields));
+            findAndRemove.setSort(wrapAllowNull(sort));
+            findAndRemove.setMaxTime(maxTime, maxTimeUnit);
 
-            operation = findAndRemoveOperation;
+            operation = findAndRemove;
         } else {
             if (update == null) {
                 throw new IllegalArgumentException("Update document can't be null");
@@ -1551,14 +1552,15 @@ public class DBCollection {
                                               .maxTime(maxTime, maxTimeUnit);
                 operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, objectCodec);
             } else {
-                FindAndReplace<DBObject> findAndReplace = new FindAndReplace<DBObject>(update)
-                                                          .where(wrapAllowNull(query))
-                                                          .sortBy(wrapAllowNull(sort))
-                                                          .select(wrapAllowNull(fields))
-                                                          .returnNew(returnNew)
-                                                          .upsert(upsert)
-                                                          .maxTime(maxTime, maxTimeUnit);
-                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), findAndReplace, objectCodec);
+                FindAndReplaceOperation<DBObject> findAndReplace = new FindAndReplaceOperation<DBObject>(getNamespace(), objectCodec,
+                                                                                                         wrap(update));
+                findAndReplace.setCriteria(wrapAllowNull(query));
+                findAndReplace.setProjection(wrapAllowNull(fields));
+                findAndReplace.setSort(wrapAllowNull(sort));
+                findAndReplace.setReturnReplaced(returnNew);
+                findAndReplace.setUpsert(upsert);
+                findAndReplace.setMaxTime(maxTime, maxTimeUnit);
+                operation = findAndReplace;
             }
         }
 

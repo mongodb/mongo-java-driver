@@ -473,12 +473,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         public T replaceOneAndGet(final T replacement, final Get beforeOrAfter) {
-            FindAndReplace<T> findAndReplace = new FindAndReplace<T>(replacement).where(findOp.getCriteria())
-                                                                                 .returnNew(asBoolean(beforeOrAfter))
-                                                                                 .select(findOp.getProjection())
-                                                                                 .sortBy(findOp.getSort())
-                                                                                 .upsert(upsert);
-            return execute(new FindAndReplaceOperation<T>(getNamespace(), findAndReplace, getCodec()));
+            FindAndReplaceOperation<T> operation = new FindAndReplaceOperation<T>(getNamespace(), getCodec(),
+                                                                                  new BsonDocumentWrapper<T>(replacement, getCodec()));
+            operation.setCriteria(findOp.getCriteria());
+            operation.setProjection(findOp.getProjection());
+            operation.setSort(findOp.getSort());
+            operation.setReturnReplaced(asBoolean(beforeOrAfter));
+            operation.setUpsert(upsert);
+            return execute(operation);
         }
 
         @Override

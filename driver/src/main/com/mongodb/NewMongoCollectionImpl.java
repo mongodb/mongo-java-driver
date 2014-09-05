@@ -300,9 +300,14 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     @Override
     public <D> T findOneAndReplace(final FindOneAndReplaceModel<T, D> model) {
-        return operationExecutor.execute(new FindAndReplaceOperation<T>(namespace,
-                                                                        new FindAndReplace<T>(model.getReplacement()),
-                                                                        getCodec()));
+        FindAndReplaceOperation<T> operation = new FindAndReplaceOperation<T>(namespace, getCodec(), asBson(model.getReplacement()));
+        operation.setCriteria(asBson(model.getCriteria()));
+        operation.setProjection(asBson(model.getProjection()));
+        operation.setSort(asBson(model.getSort()));
+        operation.setReturnReplaced(model.getReturnReplaced());
+        operation.setUpsert(model.isUpsert());
+
+        return operationExecutor.execute(operation);
     }
 
     @Override
