@@ -408,11 +408,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             throw new IllegalArgumentException("The exhaust option is not user settable.");
         }
 
-        // If tailable is set, await data should be as well
-        if ((options & Bytes.QUERYOPTION_TAILABLE) != 0) {
-            options |= Bytes.QUERYOPTION_AWAITDATA;
-        }
-
         _options = options;
         return this;
     }
@@ -569,6 +564,28 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     public boolean hasNext() {
         _checkType(CursorType.ITERATOR);
         return _hasNext();
+    }
+
+    /**
+     * Only allowed for tailable cursors, returns the object the cursor is at and moves the cursor ahead by one or
+     * return null if no documents is available.
+     *
+     * @return the next element or null
+     * @throws MongoException
+     */
+    public DBObject tryNext() {
+        _checkType( CursorType.ITERATOR );
+
+        if ((getOptions() & Bytes.QUERYOPTION_TAILABLE) != Bytes.QUERYOPTION_TAILABLE) {
+            throw new IllegalArgumentException("Can only be used with a tailable cursor");
+        }
+
+        _check();
+
+        if (!_it.tryHasNext()) {
+            return null;
+        }
+        return next();
     }
 
     /**
