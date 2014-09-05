@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonDocument
 import org.bson.BsonString
@@ -24,9 +25,13 @@ import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
+import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static java.util.Arrays.asList
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class AggregateExplainOperationSpecification extends OperationFunctionalSpecification {
 
@@ -34,18 +39,26 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
     def 'should be able to explain an empty pipeline'() {
 
         given:
-        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [], aggregateOptions)
+        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [])
 
         when:
         def result = op.execute(getBinding());
 
         then:
         result.containsKey('stages')
+    }
 
-        where:
-        aggregateOptions << [
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build(),
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.CURSOR).build()]
+    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    def 'should be able to explain an empty pipeline with allowDiskUse'() {
+        given:
+        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [])
+        op.setAllowDiskUse(true)
+
+        when:
+        def result = op.execute(getBinding());
+
+        then:
+        result.containsKey('stages')
     }
 
     @Category(Async)
@@ -53,18 +66,13 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
     def 'should be able to explain an empty pipeline asynchronously'() {
 
         given:
-        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [], aggregateOptions)
+        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [])
 
         when:
         def result = op.executeAsync(getAsyncBinding()).get();
 
         then:
         result.containsKey('stages')
-
-        where:
-        aggregateOptions << [
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build(),
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.CURSOR).build()]
     }
 
     @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
@@ -72,9 +80,7 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
 
         given:
         def match = new BsonDocument('job', new BsonString('plumber'))
-        AggregateExplainOperation operation = new AggregateExplainOperation(getNamespace(),
-                                                                            [new BsonDocument('$match', match)],
-                                                                            aggregateOptions)
+        AggregateExplainOperation operation = new AggregateExplainOperation(getNamespace(), [new BsonDocument('$match', match)])
 
         when:
         def result = operation.execute(getBinding());
@@ -83,11 +89,6 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
         result.containsKey('stages')
         Document stage = (Document) result.get('stages').first()
         stage.'$cursor'.'query' == match
-
-        where:
-        aggregateOptions << [
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build(),
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.CURSOR).build()]
     }
 
     @Category(Async)
@@ -96,9 +97,8 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
 
         given:
         def match = new BsonDocument('job', new BsonString('plumber'))
-        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(),
-                                                                     [new BsonDocument('$match', match)],
-                                                                     aggregateOptions)
+        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [new BsonDocument('$match', match)])
+
         when:
         def result = op.executeAsync(getAsyncBinding()).get();
 
@@ -106,10 +106,40 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
         result.containsKey('stages')
         Document stage = (Document) result.get('stages').first()
         stage.'$cursor'.'query' == match
+    }
 
-        where:
-        aggregateOptions << [
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build(),
-                AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.CURSOR).build()]
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should throw execution timeout exception from execute'() {
+        given:
+        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [])
+        op.setMaxTime(1, SECONDS)
+        enableMaxTimeFailPoint()
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        thrown(MongoExecutionTimeoutException)
+
+        cleanup:
+        disableMaxTimeFailPoint()
+    }
+
+    @Category(Async)
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should throw execution timeout exception from executeAsync'() {
+        given:
+        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [])
+        op.setMaxTime(1, SECONDS)
+        enableMaxTimeFailPoint()
+
+        when:
+        op.executeAsync(getAsyncBinding()).get()
+
+        then:
+        thrown(MongoExecutionTimeoutException)
+
+        cleanup:
+        disableMaxTimeFailPoint()
     }
 }

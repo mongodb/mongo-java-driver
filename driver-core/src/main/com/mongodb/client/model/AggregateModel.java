@@ -21,49 +21,95 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ * A model describing an aggregation.
+ *
+ * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
+ * @since 3.0
+ * @mongodb.driver.manual manual/aggregation/ Aggregation
+ * @mongodb.server.release 2.2
+ */
 public class AggregateModel<D> {
     private final List<D> pipeline;
     private Boolean allowDiskUse;
     private Integer batchSize;
-    private Long maxTimeMS;
+    private long maxTimeMS;
     private Boolean useCursor;
 
+    /**
+     * Construct an instance.
+     *
+     * @param pipeline the non-null aggregation pipeline
+     */
     public AggregateModel(final List<D> pipeline) {
-        this.pipeline = pipeline;
+        this.pipeline = notNull("pipeline", pipeline);
     }
 
+    /**
+     * Gets the aggregation pipeline.
+     *
+     * @return the pipeline
+     * @mongodb.driver.manual manual/core/aggregation-introduction/#aggregation-pipelines Aggregation Pipeline
+     */
     public List<D> getPipeline() {
         return pipeline;
     }
 
+    /**
+     * Whether writing to temporary files is enabled. A null value indicates that it's unspecified.
+     *
+     * @return true if writing to temporary files is enabled
+     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
+     * @mongodb.server.release 2.6
+     */
     public Boolean getAllowDiskUse() {
         return allowDiskUse;
     }
 
+    /**
+     * Enables writing to temporary files. A null value indicates that it's unspecified.
+     *
+     * @param allowDiskUse true if writing to temporary files is enabled
+     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
+     * @mongodb.server.release 2.6
+     * @return this
+     */
     public AggregateModel<D> allowDiskUse(final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
         return this;
     }
 
+    /**
+     * Gets the number of documents to return per batch.  Default to null, which indicates that the server chooses an appropriate batch
+     * size.
+     *
+     * @return the batch size, which may be null
+     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     */
     public Integer getBatchSize() {
         return batchSize;
     }
 
+    /**
+     * Sets the number of documents to return per batch.
+     *
+     * @param batchSize the batch size
+     * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     */
     public AggregateModel<D> batchSize(final Integer batchSize) {
         this.batchSize = batchSize;
         return this;
     }
 
     /**
-     * Gets the maximum execution time on the server for this operation.  The default is null, which places no limit on the execution time.
+     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
      *
      * @param timeUnit the time unit to return the result in
      * @return the maximum execution time in the given time unit
+     * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
-    public Long getMaxTime(final TimeUnit timeUnit) {
-        if (maxTimeMS == null) {
-            return null;
-        }
+    public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
     }
@@ -71,24 +117,37 @@ public class AggregateModel<D> {
     /**
      * Sets the maximum execution time on the server for this operation.
      *
-     * @param maxTime the max time, which may be null
-     * @param timeUnit the time unit, which may only be null if maxTime is
+     * @param maxTime  the max time
+     * @param timeUnit the time unit, which may not be null
      * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
-    public AggregateModel<D> maxTimeMS(final Long maxTime, final TimeUnit timeUnit) {
-        if (maxTime == null) {
-            maxTimeMS = null;
-        } else {
-            notNull("timeUnit", timeUnit);
-            this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        }
+    public AggregateModel<D> maxTime(final long maxTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
+    /**
+     * Gets whether the server should use a cursor to return results.  The default value is null, in which case
+     * a cursor will be used if the server supports it.
+     *
+     * @return whether the server should use a cursor to return results
+     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
+     * @mongodb.server.release 2.6
+     */
     public Boolean getUseCursor() {
         return useCursor;
     }
 
+    /**
+     * Sets whether the server should use a cursor to return results.
+     *
+     * @param useCursor whether the server should use a cursor to return results
+     * @return this
+     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
+     * @mongodb.server.release 2.6
+     */
     public AggregateModel<D> useCursor(final Boolean useCursor) {
         this.useCursor = useCursor;
         return this;

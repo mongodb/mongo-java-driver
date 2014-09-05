@@ -15,7 +15,6 @@
  */
 
 
-
 package com.mongodb
 
 import spock.lang.Specification
@@ -26,21 +25,19 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS
 class AggregationOptionsSpecification extends Specification {
 
     def "should return new options with the same property values"() {
-        expect:
-        AggregationOptions.builder().build().toNew() == com.mongodb.operation.AggregationOptions.builder().build()
-
-        AggregationOptions.builder()
-                          .allowDiskUse(true)
-                          .batchSize(3)
-                          .outputMode(CURSOR)
-                          .maxTime(42, MILLISECONDS)
-                          .build().toNew() ==
-        com.mongodb.operation.AggregationOptions.builder()
-           .allowDiskUse(true)
-           .batchSize(3)
-           .outputMode(com.mongodb.operation.AggregationOptions.OutputMode.CURSOR)
-           .maxTime(42, MILLISECONDS)
-           .build()
+        when:
+        def options = AggregationOptions.builder()
+                                        .allowDiskUse(true)
+                                        .batchSize(3)
+                                        .outputMode(CURSOR)
+                                        .maxTime(42, MILLISECONDS)
+                                        .build()
+        then:
+        options.with {
+            allowDiskUse
+            batchSize == 3
+            outputMode == CURSOR
+            getMaxTime(MILLISECONDS) == 42
+        }
     }
-
 }
