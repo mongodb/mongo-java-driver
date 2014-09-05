@@ -22,6 +22,12 @@ import com.mongodb.annotations.NotThreadSafe;
 import java.io.Closeable;
 import java.util.Iterator;
 
+/**
+ * The Mongo Cursor interface implementing the iterator protocol
+ *
+ * @since 3.0
+ * @param <T> The type of documents the cursor contains
+ */
 @NotThreadSafe
 public interface MongoCursor<T> extends Iterator<T>, Closeable {
     @Override
@@ -33,7 +39,25 @@ public interface MongoCursor<T> extends Iterator<T>, Closeable {
     @Override
     T next();
 
+    /**
+     * A special {@code hasNext()} case for tailable cursors providing a non blocking check to see if there are any results available.
+     * Returns true if there are more elements available and false if currently there are no more results available.
+     *
+     * @return {@code true} if the iteration has more elements readily available.
+     */
+    boolean tryHasNext();
+
+    /**
+     * Returns the server cursor
+     *
+     * @return ServerCursor
+     */
     ServerCursor getServerCursor();
 
+    /**
+     * Returns the server address
+     *
+     * @return ServerAddress
+     */
     ServerAddress getServerAddress();
 }

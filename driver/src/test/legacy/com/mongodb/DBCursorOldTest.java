@@ -16,20 +16,24 @@
 
 package com.mongodb;
 
-import category.Slow;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import java.util.NoSuchElementException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 
 public class DBCursorOldTest extends DatabaseTestCase {
@@ -100,41 +104,102 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
 
     @Test
-    @Category(Slow.class)
-    public void testTailable() throws ExecutionException, TimeoutException, InterruptedException {
-        database.getCollection("tail1").drop();
-        DBCollection c = database.createCollection("tail1",
-                                                   new BasicDBObject("capped", true).append("size", 10000)
-                                                  );
-        insertTestData(c, 10);
+    public void testTailable() {
+        DBCollection c = database.getCollection("tail1");
+        c.drop();
+        database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
+
+        DBObject firstDBObject = new BasicDBObject("x", 1);
+        DBObject secondDBObject = new BasicDBObject("x", 2);
+
+        DBCursor cur = c.find()
+                        .sort(new BasicDBObject("$natural", 1))
+                        .addOption(Bytes.QUERYOPTION_TAILABLE);
+        c.save(firstDBObject, WriteConcern.SAFE);
+
+        assertEquals(firstDBObject, cur.tryNext());
+        assertEquals(null, cur.tryNext());
+        assertEquals(null, cur.tryNext());
+
+        c.save(secondDBObject, WriteConcern.SAFE);
+        assertEquals(secondDBObject, cur.tryNext());
+        assertEquals(null, cur.tryNext());
+    }
+
+    @Test
+    public void testTailableAwait() throws ExecutionException, TimeoutException, InterruptedException {
+        DBCollection c = database.getCollection("tail1");
+        c.drop();
+        database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
+        for (int i = 0; i < 10; i++) {
+            c.save(new BasicDBObject("x", i), WriteConcern.SAFE);
+        }
 
         final DBCursor cur = c.find()
                               .sort(new BasicDBObject("$natural", 1))
-                              .addOption(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_AWAITDATA);
+                              .addOption(Bytes.QUERYOPTION_TAILABLE)
+                              .addOption(Bytes.QUERYOPTION_AWAITDATA);
 
         final CountDownLatch latch = new CountDownLatch(1);
-        new Thread(new Runnable() {
+        Callable<Integer> callable = new Callable<Integer>() {
             @Override
-            public void run() {
+            public Integer call() throws Exception {
                 // the following call will block on the last hasNext
                 int i = 0;
                 while (cur.hasNext()) {
                     DBObject obj = cur.next();
                     i++;
-                    if (i > 10) {
-                        obj.get("x");
+                    if (i == 10) {
                         latch.countDown();
-                        return;
+                    } else if (i > 10) {
+                        return (Integer) obj.get("x");
                     }
                 }
+
+                return null;
             }
-        }).start();
+        };
 
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        Future<Integer> future = es.submit(callable);
 
-        Thread.sleep(500);
+        latch.await(5, SECONDS);
+
         // this doc should unblock thread
-        c.save(new BasicDBObject("x", 10));
-        latch.await();
+        c.save(new BasicDBObject("x", 10), WriteConcern.SAFE);
+        assertEquals(10, (long) future.get(5, SECONDS));
+    }
+
+    @Test
+    public void shouldSupportTryNextOnTailableCursors() {
+        DBCollection c = database.getCollection("tail1");
+        c.drop();
+        database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
+
+        c.save(new BasicDBObject("x", 1), WriteConcern.SAFE);
+        DBCursor cur = c.find()
+                        .sort(new BasicDBObject("$natural", 1))
+                        .addOption(Bytes.QUERYOPTION_TAILABLE);
+
+        try {
+            cur.tryNext();
+        } catch (IllegalArgumentException e) {
+            fail();
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldThrowExceptionOnTryNextForNonTailableCursors() {
+        DBCollection c = database.getCollection("tail1");
+        c.drop();
+        database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
+
+        c.save(new BasicDBObject("x", 1), WriteConcern.SAFE);
+        DBCursor cur = c.find()
+                        .sort(new BasicDBObject("$natural", 1))
+                        .addOption(Bytes.QUERYOPTION_AWAITDATA);
+
+        cur.tryNext();
     }
 
     @Test

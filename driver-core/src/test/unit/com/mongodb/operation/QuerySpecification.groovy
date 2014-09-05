@@ -23,7 +23,6 @@ import spock.lang.Specification
 
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.operation.QueryFlag.AwaitData
 import static com.mongodb.operation.QueryFlag.Exhaust
 import static com.mongodb.operation.QueryFlag.SlaveOk
 import static com.mongodb.operation.QueryFlag.Tailable
@@ -52,9 +51,9 @@ class QuerySpecification extends Specification {
         where:
         query                                                                         | flags
         new Find()                                                                    | EnumSet.noneOf(QueryFlag)
-        new Find().addFlags(EnumSet.of(Tailable))                                     | EnumSet.of(Tailable, AwaitData)
+        new Find().addFlags(EnumSet.of(Tailable))                                     | EnumSet.of(Tailable)
         new Find().addFlags(EnumSet.of(SlaveOk))                                      | EnumSet.of(SlaveOk)
-        new Find().addFlags(EnumSet.of(Tailable, SlaveOk))                            | EnumSet.of(Tailable, AwaitData, SlaveOk)
+        new Find().addFlags(EnumSet.of(Tailable, SlaveOk))                            | EnumSet.of(Tailable, SlaveOk)
         new Find().flags(EnumSet.of(Exhaust))                                         | EnumSet.of(Exhaust)
         new Find().addFlags(EnumSet.of(Tailable, SlaveOk)).flags(EnumSet.of(Exhaust)) | EnumSet.of(Exhaust)
     }

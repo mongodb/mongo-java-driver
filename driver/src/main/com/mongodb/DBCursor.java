@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.operation.Find;
 import com.mongodb.operation.QueryFlag;
@@ -135,6 +134,30 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
         return nextInternal();
     }
+
+    /**
+     * Only allowed for tailable cursors, returns the object the cursor is at and moves the cursor ahead by one or
+     * return null if no documents is available.
+     *
+     * @return the next element or null
+     * @throws MongoException
+     */
+    public DBObject tryNext() {
+        if (!find.getFlags(getReadPreference()).contains(QueryFlag.Tailable)) {
+            throw new IllegalArgumentException("Can only be used with a tailable cursor");
+        }
+
+        if (cursor == null) {
+            cursor = collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), find,
+                                                                     resultDecoder), getReadPreference());
+        }
+
+        if (!cursor.tryHasNext()) {
+            return null;
+        }
+        return cursor.next();
+    }
+
 
     /**
      * Returns the element the cursor is at.

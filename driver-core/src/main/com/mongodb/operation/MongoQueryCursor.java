@@ -143,6 +143,27 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
         return currentIterator.next();
     }
 
+    @Override
+    public boolean tryHasNext() {
+        if (closed) {
+            throw new IllegalStateException("Cursor has been closed");
+        }
+
+        if (currentIterator.hasNext()) {
+            return true;
+        }
+
+        if (limit > 0 && nextCount >= limit) {
+            return false;
+        }
+
+        if (currentResult.getCursor() != null) {
+            getMore();
+        }
+
+        return currentIterator.hasNext();
+    }
+
     /**
      * Gets the cursor id.
      *

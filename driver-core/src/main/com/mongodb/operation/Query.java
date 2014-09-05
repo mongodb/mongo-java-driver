@@ -101,9 +101,6 @@ public abstract class Query {
         if (flags == null) {
             throw new IllegalArgumentException();
         }
-        if (flags.contains(QueryFlag.Tailable)) {
-            flags.add(QueryFlag.AwaitData);
-        }
         this.flags.addAll(flags);
         return this;
     }

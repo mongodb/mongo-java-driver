@@ -41,6 +41,11 @@ class MongoMappingCursor<T, U> implements MongoCursor<U> {
     }
 
     @Override
+    public boolean tryHasNext() {
+        return proxied.tryHasNext();
+    }
+
+    @Override
     public void remove() {
         proxied.remove();
     }
