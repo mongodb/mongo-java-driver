@@ -290,7 +290,7 @@ class InternalStreamConnectionSpecification extends Specification {
         fRespBuffers3.get().replyHeader.responseTo == messageId3
     }
 
-    def 'failed initialization should close the connection and fail'() {
+    def 'should close the stream when initialization throws an exception'() {
         given:
         connectionInitializer.initialize() >> { throw new MongoInternalException('Something went wrong') }
 
@@ -302,8 +302,8 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.sendMessage(buffers1, messageId1)
 
         then:
-        connection.isClosed()
         thrown MongoInternalException
+        connection.isClosed()
 
         when:
         connection.sendMessage(buffers2, messageId2)
@@ -314,7 +314,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     @Category(Async)
     @IgnoreIf({ javaVersion < 1.7 })
-    def 'failed initialization should close the connection and fail asynchronously'() {
+    def 'should close the stream when initialization throws an exception asynchronously'() {
         given:
         def sndLatch = new CountDownLatch(2)
         def rcvdLatch = new CountDownLatch(2)
@@ -358,7 +358,7 @@ class InternalStreamConnectionSpecification extends Specification {
         thrown MongoSocketClosedException
     }
 
-    def 'failed writes should close the connection and fail'() {
+    def 'should close the stream when writing a message throws an exception'() {
         given:
         stream.write(_) >> { throw new IOException('Something went wrong') }
 
@@ -382,7 +382,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     @Category(Async)
     @IgnoreIf({ javaVersion < 1.7 })
-    def 'failed writes should close the connection and fail asynchronously'() {
+    def 'should close the stream when writing a message throws an exception asynchronously'() {
         given:
         def sndLatch = new CountDownLatch(2)
         def rcvdLatch = new CountDownLatch(2)
@@ -431,7 +431,7 @@ class InternalStreamConnectionSpecification extends Specification {
         thrown MongoSocketClosedException
     }
 
-    def 'failed reads (header) should close the stream and fail'() {
+    def 'should close the stream when reading the message header throws an exception'() {
         given:
         stream.read(36) >> { throw new IOException('Something went wrong') }
         stream.read(74) >> helper.body()
@@ -458,7 +458,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     @Category(Async)
     @IgnoreIf({ javaVersion < 1.7 })
-    def 'failed reads (header) should close the stream and fail asynchronously'() {
+    def 'should close the stream when reading the message header throws an exception asynchronously'() {
         given:
         int seen = 0
         def sndLatch = new CountDownLatch(2)
@@ -514,7 +514,7 @@ class InternalStreamConnectionSpecification extends Specification {
         thrown MongoSocketClosedException
     }
 
-    def 'failed reads (body) should close the stream and fail'() {
+    def 'should close the stream when reading the message body throws an exception'() {
         given:
         def (buffers1, messageId1) = helper.isMaster()
         def (buffers2, messageId2) = helper.isMaster()
@@ -543,7 +543,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     @Category(Async)
     @IgnoreIf({ javaVersion < 1.7 })
-    def 'failed reads (body) should close the stream and fail asynchronously'() {
+    def 'should close the stream when reading the message body throws an exception asynchronously'() {
         given:
         int seen = 0
         def sndLatch = new CountDownLatch(2)
@@ -600,7 +600,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
 
     @Category(Slow)
-    def 'the connection pipelining should be thread safe'() {
+    def 'should have threadsafe connection pipelining'() {
         given:
         int threads = 10
         int numberOfOperations = 100000
@@ -633,7 +633,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     @Category([Async, Slow])
     @IgnoreIf({ javaVersion < 1.7 })
-    def 'the connection pipelining should be thread safe asynchronously'() {
+    def 'should have threadsafe connection pipelining asynchronously'() {
         given:
         int threads = 10
         int numberOfOperations = 100000
