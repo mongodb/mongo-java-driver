@@ -1541,7 +1541,7 @@ public class DBCollection {
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
                 operation = new FindAndUpdateOperation<DBObject>(getNamespace(), objectCodec, wrapAllowNull(update))
-                                .criteria(wrapAllowNull(query))
+                                .criteria(wrap(query))
                                 .projection(wrapAllowNull(fields))
                                 .sort(wrapAllowNull(sort))
                                 .returnUpdated(returnNew)
