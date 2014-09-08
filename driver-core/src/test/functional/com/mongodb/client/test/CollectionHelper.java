@@ -124,9 +124,7 @@ public final class CollectionHelper<T> {
     }
 
     public <D> List<D> find(final BsonDocument filter, final Decoder<D> decoder) {
-        QueryOperation<D> queryOperation = new QueryOperation<D>(namespace, decoder);
-        queryOperation.setCriteria(filter);
-        MongoCursor<D> cursor = queryOperation.execute(getBinding());
+        MongoCursor<D> cursor = new QueryOperation<D>(namespace, decoder).criteria(filter).execute(getBinding());
         List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
             results.add(cursor.next());
@@ -139,9 +137,7 @@ public final class CollectionHelper<T> {
     }
 
     public long count(final Document criteria) {
-        CountOperation operation = new CountOperation(namespace);
-        operation.setCriteria(wrap(criteria));
-        return operation.execute(getBinding());
+        return new CountOperation(namespace).criteria(wrap(criteria)).execute(getBinding());
     }
 
     public BsonDocument wrap(final Document document) {

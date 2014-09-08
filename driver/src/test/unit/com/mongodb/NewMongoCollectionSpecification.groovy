@@ -300,7 +300,7 @@ class NewMongoCollectionSpecification extends Specification {
         def aggregateToCollectionOperation = executor.getWriteOperation() as AggregateToCollectionOperation
         aggregateToCollectionOperation != null
         aggregateToCollectionOperation.pipeline == [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
-                               new BsonDocument('$out', new BsonString('outCollection'))]
+                                                    new BsonDocument('$out', new BsonString('outCollection'))]
         aggregateToCollectionOperation.getMaxTime(TimeUnit.SECONDS) == 1
 
         def queryOperation = executor.getReadOperation() as QueryOperation

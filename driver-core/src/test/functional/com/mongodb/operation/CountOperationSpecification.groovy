@@ -68,7 +68,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw execution timeout exception from execute'() {
         given:
         def countOperation = new CountOperation(getNamespace())
-        countOperation.setMaxTime(1, SECONDS)
+                .maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:
@@ -86,7 +86,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw execution timeout exception from executeAsync'() {
         given:
         def countOperation = new CountOperation(getNamespace())
-        countOperation.setMaxTime(1, SECONDS)
+                .maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:
@@ -102,7 +102,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should use limit with the count'() {
         when:
         def countOperation = new CountOperation(getNamespace())
-        countOperation.setLimit(1)
+                .limit(1)
         then:
         countOperation.execute(getBinding()) == 1
     }
@@ -111,7 +111,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should use limit with the count asynchronously'() {
         when:
         def countOperation = new CountOperation(getNamespace())
-        countOperation.setLimit(1)
+                .limit(1)
 
         then:
         countOperation.executeAsync(getAsyncBinding()).get() == 1
@@ -120,7 +120,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should use skip with the count'() {
         when:
         def countOperation = new CountOperation(getNamespace())
-        countOperation.setSkip(documents.size() - 2)
+                .skip(documents.size() - 2)
 
         then:
         countOperation.execute(getBinding()) == 2
@@ -130,7 +130,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should use skip with the count asynchronously'() {
         when:
         def countOperation = new CountOperation(getNamespace())
-        countOperation.setSkip(documents.size() - 2)
+                .skip(documents.size() - 2)
 
         then:
         countOperation.executeAsync(getAsyncBinding()).get() == 2
@@ -141,7 +141,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         def index = Index.builder().addKey('x', ASC).sparse().build()
         def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index])
         def countOperation = new CountOperation(getNamespace())
-        countOperation.setHint(new BsonString('x_1'))
+                .hint(new BsonString('x_1'))
 
         when:
         createIndexesOperation.execute(getBinding())
@@ -156,7 +156,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         def index = Index.builder().addKey('x', ASC).sparse().build()
         def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index])
         def countOperation = new CountOperation(getNamespace())
-        countOperation.setHint(new BsonString('x_1'))
+                .hint(new BsonString('x_1'))
 
         when:
         createIndexesOperation.executeAsync(getAsyncBinding()).get()
@@ -169,8 +169,8 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw with bad hint with mongod 2.6+'() {
         given:
         def countOperation = new CountOperation(getNamespace())
-        countOperation.setCriteria(new BsonDocument('a', new BsonInt32(1)))
-        countOperation.setHint(new BsonString('BAD HINT'))
+                .criteria(new BsonDocument('a', new BsonInt32(1)))
+                .hint(new BsonString('BAD HINT'))
 
         when:
         countOperation.execute(getBinding())
@@ -184,8 +184,8 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw with bad hint with mongod 2.6+ asynchronously'() {
         given:
         def countOperation = new CountOperation(getNamespace())
-        countOperation.setCriteria(new BsonDocument('a', new BsonInt32(1)))
-        countOperation.setHint(new BsonString('BAD HINT'))
+                .criteria(new BsonDocument('a', new BsonInt32(1)))
+                .hint(new BsonString('BAD HINT'))
 
         when:
         countOperation.executeAsync(getAsyncBinding()).get()
@@ -198,8 +198,8 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should ignore with bad hint with mongod < 2.6'() {
         given:
         def countOperation = new CountOperation(getNamespace())
-        countOperation.setCriteria(new BsonDocument('a', new BsonInt32(1)))
-        countOperation.setHint(new BsonString('BAD HINT'))
+                .criteria(new BsonDocument('a', new BsonInt32(1)))
+                .hint(new BsonString('BAD HINT'))
 
         when:
         countOperation.execute(getBinding())
@@ -213,8 +213,8 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should ignore with bad hint with mongod < 2.6 asynchronously'() {
         given:
         def countOperation = new CountOperation(getNamespace())
-        countOperation.setCriteria(new BsonDocument('a', new BsonInt32(1)))
-        countOperation.setHint(new BsonString('BAD HINT'))
+                .criteria(new BsonDocument('a', new BsonInt32(1)))
+                .hint(new BsonString('BAD HINT'))
 
         when:
         countOperation.executeAsync(getAsyncBinding()).get()

@@ -46,8 +46,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should be able to aggregate'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
-        op.setUseCursor(useCursor)
+        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).useCursor(useCursor)
         def result = op.execute(getBinding());
 
         then:
@@ -62,8 +61,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @Category(Async)
     def 'should be able to aggregate asynchronously'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
-        op.setUseCursor(useCursor)
+        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).useCursor(useCursor)
         List<Document> docList = []
         def cursor = op.executeAsync(getAsyncBinding()).get(1, SECONDS)
         cursor.forEach(new Block<Document>() {
@@ -89,8 +87,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         AggregateOperation op = new AggregateOperation<Document>(getNamespace(),
                                                                  [new BsonDocument('$match',
                                                                                    new BsonDocument('job', new BsonString('plumber')))],
-                                                                 new DocumentCodec())
-        op.setUseCursor(useCursor)
+                                                                 new DocumentCodec()).useCursor(useCursor)
         def result = op.execute(getBinding());
 
         then:
@@ -108,8 +105,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         AggregateOperation op = new AggregateOperation<Document>(getNamespace(),
                                                                  [new BsonDocument('$match',
                                                                                    new BsonDocument('job', new BsonString('plumber')))],
-                                                                 new DocumentCodec())
-        op.setUseCursor(useCursor)
+                                                                 new DocumentCodec()).useCursor(useCursor)
         List<Document> docList = []
         def cursor = op.executeAsync(getAsyncBinding()).get(1, SECONDS)
         cursor.forEach(new Block<Document>() {
@@ -133,8 +129,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should allow disk usage'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
-        op.setAllowDiskUse(allowDiskUse)
+        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).allowDiskUse(allowDiskUse)
         def cursor = op.execute(getBinding())
 
         then:
@@ -147,8 +142,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should allow batch size'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
-        op.setBatchSize(batchSize)
+        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).batchSize(batchSize)
         def cursor = op.execute(getBinding())
 
         then:
@@ -161,8 +155,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw execution timeout exception from execute'() {
         given:
-        def op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
-        op.setMaxTime(1, SECONDS)
+        def op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:
@@ -179,9 +172,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
-        def op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
-
-        op.setMaxTime(1, SECONDS)
+        def op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:

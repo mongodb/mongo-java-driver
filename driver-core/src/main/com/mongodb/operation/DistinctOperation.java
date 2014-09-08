@@ -72,10 +72,12 @@ public class DistinctOperation implements AsyncReadOperation<BsonArray>, ReadOpe
      * Sets the criteria to apply to the query.
      *
      * @param criteria the criteria, which may be null.
+     * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public void setCriteria(final BsonDocument criteria) {
+    public DistinctOperation criteria(final BsonDocument criteria) {
         this.criteria = criteria;
+        return this;
     }
 
     /**
@@ -94,10 +96,12 @@ public class DistinctOperation implements AsyncReadOperation<BsonArray>, ReadOpe
      *
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
+     * @return this
      */
-    public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
+    public DistinctOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
     }
 
     @Override

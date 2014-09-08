@@ -51,8 +51,7 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
     @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
     def 'should be able to explain an empty pipeline with allowDiskUse'() {
         given:
-        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [])
-        op.setAllowDiskUse(true)
+        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), []).allowDiskUse(true)
 
         when:
         def result = op.execute(getBinding());
@@ -111,8 +110,7 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw execution timeout exception from execute'() {
         given:
-        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [])
-        op.setMaxTime(1, SECONDS)
+        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), []).maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:
@@ -129,8 +127,7 @@ class AggregateExplainOperationSpecification extends OperationFunctionalSpecific
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
-        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), [])
-        op.setMaxTime(1, SECONDS)
+        AggregateExplainOperation op = new AggregateExplainOperation(getNamespace(), []).maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:

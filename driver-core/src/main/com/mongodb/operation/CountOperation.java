@@ -70,10 +70,12 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      * Sets the criteria to apply to the query.
      *
      * @param criteria the criteria, which may be null.
+     * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public void setCriteria(final BsonDocument criteria) {
+    public CountOperation criteria(final BsonDocument criteria) {
         this.criteria = criteria;
+        return this;
     }
 
     /**
@@ -89,9 +91,11 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      * Sets the hint to apply.
      *
      * @param hint a value describing the index which should be used for this operation.
+     * @return this
      */
-    public void setHint(final BsonValue hint) {
+    public CountOperation hint(final BsonValue hint) {
         this.hint = hint;
+        return this;
     }
 
     /**
@@ -108,10 +112,12 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      * Sets the limit to apply.
      *
      * @param limit the limit
+     * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
      */
-    public void setLimit(final long limit) {
+    public CountOperation limit(final long limit) {
         this.limit = limit;
+        return this;
     }
 
     /**
@@ -128,10 +134,12 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      * Sets the number of documents to skip.
      *
      * @param skip the number of documents to skip
+     * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
      */
-    public void setSkip(final long skip) {
+    public CountOperation skip(final long skip) {
         this.skip = skip;
+        return this;
     }
 
     /**
@@ -150,10 +158,12 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      *
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
+     * @return this
      */
-    public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
+    public CountOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
     }
 
     @Override

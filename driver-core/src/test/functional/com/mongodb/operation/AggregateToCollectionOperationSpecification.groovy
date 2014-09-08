@@ -126,7 +126,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
                                                     new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
-        operation.setMaxTime(1, SECONDS)
+                        .maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:
@@ -147,7 +147,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
                                                     new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
-        operation.setMaxTime(1, SECONDS)
+                        .maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:
