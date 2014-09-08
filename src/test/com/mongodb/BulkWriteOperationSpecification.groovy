@@ -20,8 +20,6 @@ import org.bson.types.ObjectId
 import spock.lang.Unroll
 
 import static com.mongodb.Fixture.isReplicaSet
-import static com.mongodb.Fixture.isServerStartedWithJournalingDisabled
-import static com.mongodb.Fixture.isSharded
 import static com.mongodb.Fixture.isStandalone
 import static com.mongodb.Fixture.serverIsAtLeastVersion
 import static com.mongodb.WriteRequest.Type.INSERT
@@ -691,27 +689,6 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
 
         then:
         thrown(BulkWriteException)
-
-        where:
-        ordered << [true, false]
-    }
-
-    def 'when j write concern is used on a server without journaling or write commands, BulkWriteException is thrown'() {
-        assumeTrue(!isSharded() && isServerStartedWithJournalingDisabled() && !serverIsAtLeastVersion(2.6))
-
-        given:
-        def operation = collection.initializeUnorderedBulkOperation()
-        operation.insert(new BasicDBObject('_id', 1))
-        operation.insert(new BasicDBObject('_id', 2))
-
-        when:
-        operation.execute(WriteConcern.JOURNALED)
-
-        then:
-        def e = thrown(BulkWriteException)
-        e.writeResult == new AcknowledgedBulkWriteResult(INSERT, 2, [])
-        e.writeConcernError != null
-        e.writeConcernError.getDetails().containsField('jnote')
 
         where:
         ordered << [true, false]
