@@ -18,27 +18,20 @@ package com.mongodb.client.result;
 
 import org.bson.BsonValue;
 
-public final class ReplaceOneResult {
-    private final long matchedCount;
-    private final long modifiedCount;
-    private final BsonValue upsertedId;
-
+/**
+ * The result of a replace operation.
+ *
+ * @since 3.0
+ */
+public class ReplaceOneResult extends UpdateResult {
+    /**
+     * Construct an instance
+     *
+     * @param matchedCount the number of documents matched
+     * @param modifiedCount the number of documents modified
+     * @param upsertedId if the replace resulted in an inserted document, the id of the inserted document
+     */
     public ReplaceOneResult(final long matchedCount, final long modifiedCount, final BsonValue upsertedId) {
-        this.matchedCount = matchedCount;
-        this.modifiedCount = modifiedCount;
-        this.upsertedId = upsertedId;
-    }
-
-    public long getMatchedCount() {
-        return matchedCount;
-    }
-
-    public long getModifiedCount() {
-        return modifiedCount;
-    }
-
-    // TODO: BsonValue or Object?
-    public BsonValue getUpsertedId() {
-        return upsertedId;
+        super(matchedCount, modifiedCount, upsertedId);
     }
 }
