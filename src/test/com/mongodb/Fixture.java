@@ -85,7 +85,7 @@ public final class Fixture {
         CommandResult res = getMongoClient().getDB("admin").command(new BasicDBObject("getCmdLineOpts", 1));
         res.throwOnError();
         if (res.containsField("parsed") && ((DBObject) res.get("parsed")).containsField(configOption)) {
-            return (Boolean) ((DBObject) res.get("parsed")).get(configOption);
+            return Boolean.valueOf(((DBObject) res.get("parsed")).get(configOption).toString());
         } else {
             return ((List) res.get("argv")).contains(commandLineOption);
         }
