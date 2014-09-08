@@ -34,8 +34,6 @@ import com.mongodb.client.model.RemoveOneModel;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.result.InsertManyResult;
-import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.RemoveResult;
 import com.mongodb.client.result.ReplaceOneResult;
 import com.mongodb.client.result.UpdateResult;
@@ -103,11 +101,10 @@ public interface NewMongoCollection<T> {
      * the driver should generate one.
      *
      * @param document the document to insert
-     * @return the result of the insert one operation
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
      */
-    InsertOneResult insertOne(T document);
+    void insertOne(T document);
 
     /**
      * Inserts a batch of documents. The preferred way to perform bulk
@@ -118,9 +115,8 @@ public interface NewMongoCollection<T> {
      * @param model the model describing the insert
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
-     * @return the result of the insert many operation
      */
-    InsertManyResult insertMany(InsertManyModel<T> model);
+    void insertMany(InsertManyModel<T> model);
 
     /**
      * Removes at most one document from the collection that matches the given query filter.  If no documents match,
