@@ -80,7 +80,8 @@ tasks.withType(AbstractCompile) {
 }
 
 test {
-    maxHeapSize = "512m"
+    jvmArgs '-XX:MaxPermSize=1024m'
+    maxHeapSize = "1024m"
 
     useJUnit()
     jacoco { enabled = false }
