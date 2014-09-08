@@ -60,7 +60,8 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         given:
         def document = new Document('_id', 1)
         getCollectionHelper().insertDocuments(new DocumentCodec(), document, new Document());
-        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec()).criteria(new BsonDocument('_id', new BsonInt32(1)))
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+                .criteria(new BsonDocument('_id', new BsonInt32(1)))
 
         when:
         def cursor = queryOperation.execute(getBinding())

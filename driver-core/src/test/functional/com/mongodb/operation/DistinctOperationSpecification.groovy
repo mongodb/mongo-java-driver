@@ -106,7 +106,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw execution timeout exception from execute'() {
         given:
         def op = new DistinctOperation(getNamespace(), 'name')
-        op.setMaxTime(1, SECONDS)
+        op.maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:
@@ -124,7 +124,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw execution timeout exception from executeAsync'() {
         given:
         def op = new DistinctOperation(getNamespace(), 'name')
-        op.setMaxTime(1, SECONDS)
+        op.maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:
