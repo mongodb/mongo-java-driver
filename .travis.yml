@@ -18,6 +18,12 @@ notifications:
 services:
   - mongodb
 
+env:
+  - TERM=dumb
+
+install: ./gradlew -q assemble
+script: ./gradlew check -s -i
+
 branches:
   only:
     - master
