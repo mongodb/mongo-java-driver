@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 
-import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -197,13 +196,13 @@ public class GridFSTest extends TestCase {
         inputFile.save(chunkSize);
 
         GridFSDBFile savedFile = _fs.findOne(new BasicDBObject("_id", inputFile.getId()));
-        GridFSDBFile.MyInputStream inputStream = (GridFSDBFile.MyInputStream)savedFile.getInputStream();
+        InputStream inputStream = savedFile.getInputStream();
 
         //Quick run-through, make sure the file is as expected
         for (int idx = 0; idx < fileSize; ++idx)
             assertEquals((byte)(idx % 251), (byte)inputStream.read());
 
-        inputStream = (GridFSDBFile.MyInputStream)savedFile.getInputStream();
+        inputStream = savedFile.getInputStream();
 
         long skipped = inputStream.skip(1);
         assertEquals(1, skipped);
