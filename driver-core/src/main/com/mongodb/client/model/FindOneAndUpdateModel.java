@@ -18,6 +18,13 @@ package com.mongodb.client.model;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ * Finds a single document and updates it.
+ *
+ * @param <D> The document type for the command.
+ * @since 3.0
+ * @mongodb.driver.manual manual/reference/command/findAndModify/
+ */
 public class FindOneAndUpdateModel<D> {
     private final D criteria;
     private final D update;
@@ -27,11 +34,11 @@ public class FindOneAndUpdateModel<D> {
     private boolean returnUpdated;
 
     /**
-     * Sets the sort criteria to apply to the query.
+     * Construct a new instance
      *
-     * @param criteria the criteria, which may be null. This can be of any type for which a {@code Codec} is registered
-     * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     * @param criteria the query criteria. This can be of any type for which a {@code Codec} is registered.
+     * @param update the update operation. This can be of any type for which a {@code Codec} is registered.
+     * @mongodb.driver.manual manual/reference/command/findAndModify/
      */
     public FindOneAndUpdateModel(final D criteria, final D update) {
         this.criteria = notNull("criteria", criteria);
@@ -133,6 +140,12 @@ public class FindOneAndUpdateModel<D> {
         return returnUpdated;
     }
 
+    /**
+     * Set true to return the updated document rather than the original.
+     *
+     * @param returnUpdated set true to return the updated document rather than the original.
+     * @return this
+     */
     public FindOneAndUpdateModel<D> returnUpdated(final boolean returnUpdated) {
         this.returnUpdated = returnUpdated;
         return this;
