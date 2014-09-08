@@ -77,10 +77,6 @@ public final class Fixture {
         return runIsMaster().get("setName") != null;
     }
 
-    public static boolean isServerStartedWithJournalingDisabled() {
-        return serverStartedWithBooleanOption("--nojournal", "nojournal");
-    }
-
     private static boolean serverStartedWithBooleanOption(final String commandLineOption, final String configOption) {
         CommandResult res = getMongoClient().getDB("admin").command(new BasicDBObject("getCmdLineOpts", 1));
         res.throwOnError();
