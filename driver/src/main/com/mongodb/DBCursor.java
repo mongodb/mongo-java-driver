@@ -23,6 +23,7 @@ import com.mongodb.operation.QueryOperation;
 import org.bson.codecs.Decoder;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -111,10 +112,22 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return new DBCursor(collection, find, readPreference);
     }
 
+    /**
+     * Checks if there is another object available.
+     *
+     * <p><em>Note</em>: Automatically adds the {@link Bytes#QUERYOPTION_AWAITDATA} option to any cursors with the
+     * {@link Bytes#QUERYOPTION_TAILABLE} option set. For non blocking tailable cursors see {@link #tryNext }.</p>
+     *
+     * @return true if there is another object available
+     */
     @Override
     public boolean hasNext() {
         if (closed) {
             throw new IllegalStateException("Cursor has been closed");
+        }
+
+        if (find.getFlags(getReadPreference()).contains(QueryFlag.Tailable)) {
+            find.addFlags(EnumSet.of(QueryFlag.AwaitData));
         }
 
         if (cursor == null) {
@@ -125,6 +138,14 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return cursor.hasNext();
     }
 
+    /**
+     * Returns the object the cursor is at and moves the cursor ahead by one.
+     *
+     * <p><em>Note</em>: Automatically adds the {@link Bytes#QUERYOPTION_AWAITDATA} option to any cursors with the
+     * {@link Bytes#QUERYOPTION_TAILABLE} option set. For non blocking tailable cursors see {@link #tryNext }.</p>
+     *
+     * @return the next element
+     */
     @Override
     public DBObject next() {
         checkCursorType(CursorType.ITERATOR);
@@ -136,8 +157,10 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Only allowed for tailable cursors, returns the object the cursor is at and moves the cursor ahead by one or
-     * return null if no documents is available.
+     * Non blocking check for tailable cursors to see if another object is available.
+     *
+     * <p>Returns the object the cursor is at and moves the cursor ahead by one or
+     * return null if no documents is available.</p>
      *
      * @return the next element or null
      * @throws MongoException

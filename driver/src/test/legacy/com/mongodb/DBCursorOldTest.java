@@ -127,7 +127,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
     }
 
     @Test
-    public void testTailableAwait() throws ExecutionException, TimeoutException, InterruptedException {
+    public void testTailableImplicitAwaitOnHasNext() throws ExecutionException, TimeoutException, InterruptedException {
         DBCollection c = database.getCollection("tail1");
         c.drop();
         database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
@@ -137,8 +137,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
         final DBCursor cur = c.find()
                               .sort(new BasicDBObject("$natural", 1))
-                              .addOption(Bytes.QUERYOPTION_TAILABLE)
-                              .addOption(Bytes.QUERYOPTION_AWAITDATA);
+                              .addOption(Bytes.QUERYOPTION_TAILABLE);
 
         final CountDownLatch latch = new CountDownLatch(1);
         Callable<Integer> callable = new Callable<Integer>() {
@@ -156,6 +155,48 @@ public class DBCursorOldTest extends DatabaseTestCase {
                     }
                 }
 
+                return null;
+            }
+        };
+
+        ExecutorService es = Executors.newSingleThreadExecutor();
+        Future<Integer> future = es.submit(callable);
+
+        latch.await(5, SECONDS);
+
+        // this doc should unblock thread
+        c.save(new BasicDBObject("x", 10), WriteConcern.SAFE);
+        assertEquals(10, (long) future.get(5, SECONDS));
+    }
+
+    @Test
+    public void testTailableImplicitAwaitOnNext() throws ExecutionException, TimeoutException, InterruptedException {
+        DBCollection c = database.getCollection("tail1");
+        c.drop();
+        database.createCollection("tail1", new BasicDBObject("capped", true).append("size", 10000));
+        for (int i = 0; i < 10; i++) {
+            c.save(new BasicDBObject("x", i), WriteConcern.SAFE);
+        }
+
+        final DBCursor cur = c.find()
+                              .sort(new BasicDBObject("$natural", 1))
+                              .addOption(Bytes.QUERYOPTION_TAILABLE);
+
+        final CountDownLatch latch = new CountDownLatch(1);
+        Callable<Integer> callable = new Callable<Integer>() {
+            @Override
+            public Integer call() throws Exception {
+                // the following call will block on the last hasNext
+                int i = 0;
+                while (i < 11) {
+                    DBObject obj = cur.next();
+                    i++;
+                    if (i == 10) {
+                        latch.countDown();
+                    } else if (i > 10) {
+                        return (Integer) obj.get("x");
+                    }
+                }
                 return null;
             }
         };
