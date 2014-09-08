@@ -35,7 +35,6 @@ import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.result.RemoveResult;
-import com.mongodb.client.result.ReplaceOneResult;
 import com.mongodb.client.result.UpdateResult;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
@@ -142,7 +141,7 @@ public interface NewMongoCollection<T> {
      * @param model
      * @return the result of the replace one operation
      */
-    <D> ReplaceOneResult replaceOne(ReplaceOneModel<T, D> model);
+    <D> UpdateResult replaceOne(ReplaceOneModel<T, D> model);
 
     /**
      *

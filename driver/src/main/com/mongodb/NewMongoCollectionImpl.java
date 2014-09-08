@@ -37,7 +37,6 @@ import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.RemoveResult;
-import com.mongodb.client.result.ReplaceOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.codecs.DocumentCodec;
@@ -259,11 +258,11 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public <D> ReplaceOneResult replaceOne(final ReplaceOneModel<T, D> model) {
+    public <D> UpdateResult replaceOne(final ReplaceOneModel<T, D> model) {
         List<ReplaceRequest> requests = new ArrayList<ReplaceRequest>();
         requests.add(new ReplaceRequest(asBson(model.getFilter()), asBson(model.getReplacement())));
         WriteResult writeResult = operationExecutor.execute(new ReplaceOperation(namespace, true, options.getWriteConcern(), requests));
-        return new ReplaceOneResult(writeResult.getCount(), 0, writeResult.getUpsertedId());  // TODO matchedCount
+        return new UpdateResult(writeResult.getCount(), 0, writeResult.getUpsertedId());  // TODO matchedCount
     }
 
     @Override
