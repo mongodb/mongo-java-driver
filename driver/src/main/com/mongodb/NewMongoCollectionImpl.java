@@ -22,21 +22,21 @@ import com.mongodb.client.NewMongoCollection;
 import com.mongodb.client.model.AggregateModel;
 import com.mongodb.client.model.BulkWriteModel;
 import com.mongodb.client.model.CountModel;
+import com.mongodb.client.model.DeleteManyModel;
+import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DistinctModel;
 import com.mongodb.client.model.ExplainableModel;
 import com.mongodb.client.model.FindModel;
-import com.mongodb.client.model.FindOneAndRemoveModel;
+import com.mongodb.client.model.FindOneAndDeleteModel;
 import com.mongodb.client.model.FindOneAndReplaceModel;
 import com.mongodb.client.model.FindOneAndUpdateModel;
 import com.mongodb.client.model.InsertManyModel;
 import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.RemoveManyModel;
-import com.mongodb.client.model.RemoveOneModel;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.WriteModel;
-import com.mongodb.client.result.RemoveResult;
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.codecs.DocumentCodec;
@@ -168,7 +168,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     @Override
     public <D> BulkWriteResult bulkWrite(final BulkWriteModel<? extends T, D> model) {
         List<WriteRequest> requests = new ArrayList<WriteRequest>();
-        for (WriteModel<? extends T, D> writeModel : model.getOperations()) {
+        for (WriteModel<? extends T, D> writeModel : model.getRequests()) {
             WriteRequest writeRequest;
             if (writeModel instanceof InsertOneModel) {
                 InsertOneModel<T, D> insertOneModel = (InsertOneModel<T, D>) writeModel;
@@ -178,23 +178,23 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
                 writeRequest = new InsertRequest(asBson(insertOneModel.getDocument()));
             } else if (writeModel instanceof ReplaceOneModel) {
                 ReplaceOneModel<T, D> replaceOneModel = (ReplaceOneModel<T, D>) writeModel;
-                writeRequest = new ReplaceRequest(asBson(replaceOneModel.getFilter()), asBson(replaceOneModel.getReplacement()))
+                writeRequest = new ReplaceRequest(asBson(replaceOneModel.getCriteria()), asBson(replaceOneModel.getReplacement()))
                                .upsert(replaceOneModel.isUpsert());
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel updateOneModel = (UpdateOneModel) writeModel;
-                writeRequest = new UpdateRequest(asBson(updateOneModel.getFilter()), asBson(updateOneModel.getUpdate()))
+                writeRequest = new UpdateRequest(asBson(updateOneModel.getCriteria()), asBson(updateOneModel.getUpdate()))
                                .upsert(updateOneModel.isUpsert());
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel updateManyModel = (UpdateManyModel) writeModel;
-                writeRequest = new UpdateRequest(asBson(updateManyModel.getFilter()), asBson(updateManyModel.getUpdate()))
+                writeRequest = new UpdateRequest(asBson(updateManyModel.getCriteria()), asBson(updateManyModel.getUpdate()))
                                .multi(true)
                                .upsert(updateManyModel.isUpsert());
-            } else if (writeModel instanceof RemoveOneModel) {
-                RemoveOneModel removeOneModel = (RemoveOneModel) writeModel;
-                writeRequest = new RemoveRequest(asBson(removeOneModel.getFilter()));
-            } else if (writeModel instanceof RemoveManyModel) {
-                RemoveManyModel removeManyModel = (RemoveManyModel) writeModel;
-                writeRequest = new RemoveRequest(asBson(removeManyModel.getFilter()))
+            } else if (writeModel instanceof DeleteOneModel) {
+                DeleteOneModel deleteOneModel = (DeleteOneModel) writeModel;
+                writeRequest = new RemoveRequest(asBson(deleteOneModel.getCriteria()));
+            } else if (writeModel instanceof DeleteManyModel) {
+                DeleteManyModel deleteManyModel = (DeleteManyModel) writeModel;
+                writeRequest = new RemoveRequest(asBson(deleteManyModel.getCriteria()))
                                .multi(true);
             } else {
                 throw new UnsupportedOperationException(format("WriteModel of type %s is not supported", writeModel.getClass()));
@@ -229,24 +229,24 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public <D> RemoveResult removeOne(final RemoveOneModel<T, D> model) {
+    public <D> DeleteResult deleteOne(final DeleteOneModel<T, D> model) {
         WriteResult writeResult = operationExecutor.execute(new RemoveOperation(namespace, true, options.getWriteConcern(),
-                                                                                asList(new RemoveRequest(asBson(model.getFilter())))));
-        return new RemoveResult(writeResult.getCount());
+                                                                                asList(new RemoveRequest(asBson(model.getCriteria())))));
+        return new DeleteResult(writeResult.getCount());
     }
 
     @Override
-    public <D> RemoveResult removeMany(final RemoveManyModel<T, D> model) {
+    public <D> DeleteResult deleteMany(final DeleteManyModel<T, D> model) {
         WriteResult writeResult = operationExecutor.execute(new RemoveOperation(namespace, true, options.getWriteConcern(),
-                                                                                asList(new RemoveRequest(asBson(model.getFilter()))
+                                                                                asList(new RemoveRequest(asBson(model.getCriteria()))
                                                                                        .multi(true))));
-        return new RemoveResult(writeResult.getCount());
+        return new DeleteResult(writeResult.getCount());
     }
 
     @Override
     public <D> UpdateResult replaceOne(final ReplaceOneModel<T, D> model) {
         List<ReplaceRequest> requests = new ArrayList<ReplaceRequest>();
-        requests.add(new ReplaceRequest(asBson(model.getFilter()), asBson(model.getReplacement())));
+        requests.add(new ReplaceRequest(asBson(model.getCriteria()), asBson(model.getReplacement())));
         WriteResult writeResult = operationExecutor.execute(new ReplaceOperation(namespace, true, options.getWriteConcern(), requests));
         return new UpdateResult(writeResult.getCount(), 0, writeResult.getUpsertedId());  // TODO matchedCount
     }
@@ -255,7 +255,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     public <D> UpdateResult updateOne(final UpdateOneModel<T, D> model) {
         WriteResult writeResult = operationExecutor
                                   .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
-                                                               asList(new UpdateRequest(asBson(model.getFilter()),
+                                                               asList(new UpdateRequest(asBson(model.getCriteria()),
                                                                                         asBson(model.getUpdate())))));
         return new UpdateResult(writeResult.getCount(), 0, writeResult.getUpsertedId());
     }
@@ -264,13 +264,13 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     public <D> UpdateResult updateMany(final UpdateManyModel<T, D> model) {
         WriteResult writeResult = operationExecutor
                                   .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
-                                                               asList(new UpdateRequest(asBson(model.getFilter()),
+                                                               asList(new UpdateRequest(asBson(model.getCriteria()),
                                                                                         asBson(model.getUpdate())).multi(true))));
         return new UpdateResult(writeResult.getCount(), 0, writeResult.getUpsertedId());
     }
 
     @Override
-    public <D> T findOneAndRemove(final FindOneAndRemoveModel<D> model) {
+    public <D> T findOneAndDelete(final FindOneAndDeleteModel<D> model) {
         FindAndRemoveOperation<T> operation = new FindAndRemoveOperation<T>(namespace, getCodec())
                                               .criteria(asBson(model.getCriteria()))
                                               .projection(asBson(model.getProjection()))

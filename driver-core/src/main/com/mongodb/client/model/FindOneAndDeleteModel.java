@@ -25,7 +25,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/findAndModify/
  */
-public class FindOneAndRemoveModel<D> {
+public class FindOneAndDeleteModel<D> {
     private final D criteria;
     private D projection;
     private D sort;
@@ -36,7 +36,7 @@ public class FindOneAndRemoveModel<D> {
      * @param criteria the query criteria. This can be of any type for which a {@code Codec} is registered.
      * @mongodb.driver.manual manual/reference/command/findAndModify/
      */
-    public FindOneAndRemoveModel(final D criteria) {
+    public FindOneAndDeleteModel(final D criteria) {
         this.criteria = notNull("criteria", criteria);
     }
 
@@ -67,7 +67,7 @@ public class FindOneAndRemoveModel<D> {
      * @return this
      * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
      */
-    public FindOneAndRemoveModel<D> projection(final D projection) {
+    public FindOneAndDeleteModel<D> projection(final D projection) {
         this.projection = projection;
         return this;
     }
@@ -91,7 +91,7 @@ public class FindOneAndRemoveModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public FindOneAndRemoveModel<D> sort(final D sort) {
+    public FindOneAndDeleteModel<D> sort(final D sort) {
         this.sort = sort;
         return this;
     }

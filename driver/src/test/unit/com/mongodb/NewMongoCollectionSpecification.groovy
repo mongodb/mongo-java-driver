@@ -22,7 +22,7 @@ import com.mongodb.client.model.BulkWriteModel
 import com.mongodb.client.model.CountModel
 import com.mongodb.client.model.DistinctModel
 import com.mongodb.client.model.FindModel
-import com.mongodb.client.model.FindOneAndRemoveModel
+import com.mongodb.client.model.FindOneAndDeleteModel
 import com.mongodb.client.model.FindOneAndReplaceModel
 import com.mongodb.client.model.FindOneAndUpdateModel
 import com.mongodb.client.model.InsertManyModel
@@ -309,17 +309,17 @@ class NewMongoCollectionSpecification extends Specification {
         result == [document]
     }
 
-    def 'findOneAndRemove should use FindAndRemoveOperation correctly'() {
+    def 'findOneAndDelete should use FindAndDeleteOperation correctly'() {
         given:
         def returnedDocument = new Document('_id', 1).append('cold', true)
         def executor = new TestOperationExecutor([returnedDocument])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
-        def model = new FindOneAndRemoveModel<>(new Document('cold', true))
+        def model = new FindOneAndDeleteModel<>(new Document('cold', true))
                 .projection(new Document('field', 1))
                 .sort(new Document('sort', -1))
 
         when:
-        def result = collection.findOneAndRemove(model)
+        def result = collection.findOneAndDelete(model)
 
         then:
         def operation = executor.getWriteOperation() as FindAndRemoveOperation

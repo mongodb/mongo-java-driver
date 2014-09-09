@@ -17,28 +17,28 @@
 package com.mongodb.client.result;
 
 /**
- * The result of a remove operation.
+ * The result of a delete operation.
  *
  * @since 3.0
  */
-public class RemoveResult {
-    private final long removedCount;
+public class DeleteResult {
+    private final long deletedCount;
 
     /**
      * Construct an instance.
      *
-     * @param removedCount the number of documents removed
+     * @param deletedCount the number of documents deleted
      */
-    public RemoveResult(final long removedCount) {
-        this.removedCount = removedCount;
+    public DeleteResult(final long deletedCount) {
+        this.deletedCount = deletedCount;
     }
 
     /**
-     * Gets the number of documents removed.
+     * Gets the number of documents deleted.
      *
-     * @return the number of documents removed
+     * @return the number of documents deleted
      */
-    public long getRemovedCount() {
-        return removedCount;
+    public long getDeletedCount() {
+        return deletedCount;
     }
 }
