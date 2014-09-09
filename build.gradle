@@ -100,6 +100,8 @@ configure(subprojects.findAll { it.name != 'util' }) {
     /* Testing */
     tasks.withType(Test) {
         maxParallelForks = 1
+        jvmArgs '-XX:MaxPermSize=1024m'
+
         systemProperties(
                 'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri', null),
                 'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', 'false'),
@@ -317,7 +319,7 @@ project(':driver') {
     tasks.withType(Checkstyle) {
         classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output);
     }
-    
+
     task uberJar(type: Jar) {
         classifier = 'all'
         from project(':bson').sourceSets.main.output
