@@ -27,50 +27,51 @@ import org.bson.BSONCallback;
 public class JSON {
 
     /**
-     * Serializes an object into its JSON form.
-     * <p/>
-     * This method delegates serialization to {@code JSONSerializers.getLegacy}
+     * <p>Serializes an object into its JSON form.</p>
+     * 
+     * <p>This method delegates serialization to {@code JSONSerializers.getLegacy}</p>
      *
-     * @param o object to serialize
+     * @param object object to serialize
      * @return String containing JSON form of the object
      * @see JSONSerializers#getLegacy()
      */
-    public static String serialize(final Object o) {
+    public static String serialize(final Object object) {
         StringBuilder buf = new StringBuilder();
-        serialize(o, buf);
+        serialize(object, buf);
         return buf.toString();
     }
 
     /**
-     * Serializes an object into its JSON form.
-     * <p/>
-     * This method delegates serialization to {@code JSONSerializers.getLegacy}
+     * <p>Serializes an object into its JSON form.</p>
+     * 
+     * <p>This method delegates serialization to {@code JSONSerializers.getLegacy}</p>
      *
-     * @param o   object to serialize
+     * @param object   object to serialize
      * @param buf StringBuilder containing the JSON representation under construction
      * @see JSONSerializers#getLegacy()
      */
-    public static void serialize(final Object o, final StringBuilder buf) {
-        JSONSerializers.getLegacy().serialize(o, buf);
+    public static void serialize(final Object object, final StringBuilder buf) {
+        JSONSerializers.getLegacy().serialize(object, buf);
     }
 
     /**
-     * Parses a JSON string and returns a corresponding Java object. The returned value is either a {@link com.mongodb.DBObject DBObject}
-     * (if the string is a JSON object or array), or a boxed primitive value according to the following mapping:
-     * <p/>
-     * <code>java.lang.Boolean</code> for <code>true</code> or {@code false}<br> {@code java.lang.Integer} for integers between
-     * Integer.MIN_VALUE and Integer.MAX_VALUE<br> {@code java.lang.Long} for integers outside of this range<br> {@code java.lang.Double}
-     * for floating point numbers
-     * <p/>
+     * <p>Parses a JSON string and returns a corresponding Java object. The returned value is either a {@link com.mongodb.DBObject DBObject}
+     * (if the string is a JSON object or array), or a boxed primitive value according to the following mapping:</p>
+     * <ul>
+     *     <li>{@code java.lang.Boolean} for {@code true} or {@code false}</li>
+     *     <li>{@code java.lang.Integer} for integers between Integer.MIN_VALUE and Integer.MAX_VALUE</li>
+     *     <li>{@code java.lang.Long} for integers outside of this range</li>
+     *     <li>{@code java.lang.Double} for floating point numbers</li>
+     * </ul>
      * If the parameter is a string that contains a single-quoted or double-quoted string, it is returned as an unquoted {@code
      * java.lang.String}. Parses a JSON string representing a JSON value
      *
-     * @param s the string to parse
+     * @param jsonString the string to parse
      * @return a Java object representing the JSON data
-     * @throws JSONParseException if s is not valid JSON
+     * @throws JSONParseException if jsonString is not valid JSON
      */
-    public static Object parse(final String s) {
-        return parse(s, null);
+    public static Object parse(final String jsonString) {
+        return parse(jsonString, null);
     }
 
     /**
@@ -119,9 +120,9 @@ public class JSON {
 }
 
 /**
- * Parser for JSON objects.
- * <p/>
- * Supports all types described at www.json.org, except for numbers with "e" or "E" in them.
+ * <p>Parser for JSON objects.</p>
+ * 
+ * <p>Supports all types described at www.json.org, except for numbers with "e" or "E" in them.</p>
  */
 class JSONParser {
 

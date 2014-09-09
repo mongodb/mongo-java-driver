@@ -15,8 +15,6 @@
  */
 
 /**
- * <body>
- * <p>JSON serialization and deserialization.</p>
- * </body>
+ * JSON serialization and deserialization.
  */
 package org.bson.json;

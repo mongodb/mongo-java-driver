@@ -115,8 +115,8 @@ public class JsonWriterSettings extends BsonWriterSettings {
     /**
      * The indentation mode.  If true, output will be indented.  Otherwise, it will all be on the same line. The default value is {@code
      * false}.
-     * <p/>
-     * * @return whether output should be indented.
+     *
+     * @return whether output should be indented.
      */
     public boolean isIndent() {
         return indent;

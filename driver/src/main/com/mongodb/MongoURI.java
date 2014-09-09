@@ -23,7 +23,7 @@ import java.util.List;
  * <p>Represents a <a href="http://www.mongodb.org/display/DOCS/Connections">URI</a> which can be used to create a Mongo instance. The URI
  * describes the hosts to be used and options.</p>
  *
- * <p>This class has been superseded by <{@code MongoClientURI}, and may be removed in a future release.</p>
+ * <p>This class has been superseded by {@code MongoClientURI}, and may be removed in a future release.</p>
  *
  * @see MongoClientURI
  * @deprecated Replaced by {@link MongoClientURI}

@@ -193,8 +193,9 @@ public class Mongo {
     }
 
     /**
-     * <p>Creates a Mongo in paired mode. <br/> This will also work for a replica set and will find all members (the master will be used by
-     * default).</p>
+     * <p>Creates a Mongo in paired mode. </p>
+     * 
+     * <p>This will also work for a replica set and will find all members (the master will be used by default).</p>
      *
      * @param left  left side of the pair
      * @param right right side of the pair
@@ -208,8 +209,9 @@ public class Mongo {
     }
 
     /**
-     * <p>Creates a Mongo connection in paired mode. <br/> This will also work for a replica set and will find all members (the master will
-     * be used by default).</p>
+     * <p>Creates a Mongo connection in paired mode. </p>
+     * 
+     * <p>This will also work for a replica set and will find all members (the master will be used by default).</p>
      *
      * @param left    left side of the pair
      * @param right   right side of the pair
@@ -226,10 +228,12 @@ public class Mongo {
     }
 
     /**
-     * Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
+     * <p>Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
      * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
-     * standalone server, use the Mongo(ServerAddress) constructor. <p/> If this is a list of mongos servers, it will pick the closest
-     * (lowest ping time) one to send all requests to, and automatically fail over to the next server if the closest is down.
+     * standalone server, use the Mongo(ServerAddress) constructor.</p>
+     *
+     * <p>If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically
+     * fail over to the next server if the closest is down.</p>
      *
      * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
      *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
@@ -265,13 +269,19 @@ public class Mongo {
     }
 
     /**
-     * Creates a Mongo described by a URI. If only one address is used it will only connect to that node, otherwise it will discover all
-     * nodes. If the URI contains database credentials, the database will be authenticated lazily on first use with those credentials.
+     * <p>Creates a Mongo described by a URI. If only one address is used it will only connect to that node, otherwise it will discover all
+     * nodes. If the URI contains database credentials, the database will be authenticated lazily on first use with those credentials.</p>
+     * 
+     * <p>Examples:</p> 
+     * <ul>
+     *     <li>mongodb://localhost</li> 
+     *     <li>mongodb://fred:foobar@localhost/</li>
+     * </ul>
      *
      * @param uri URI to connect to, optionally containing additional information like credentials
      * @throws MongoException
      * @mongodb.driver.manual reference/connection-string Connection String URI Format
-     * @see MongoURI <p>examples: <li>mongodb://localhost</li> <li>mongodb://fred:foobar@localhost/</li> </p>
+     * @see MongoURI 
      * @deprecated Replaced by {@link MongoClient#MongoClient(MongoClientURI)}
      */
     @Deprecated

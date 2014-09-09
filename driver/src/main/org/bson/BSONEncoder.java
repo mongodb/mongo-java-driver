@@ -19,10 +19,10 @@ package org.bson;
 import org.bson.io.OutputBuffer;
 
 /**
- * An {@code BSONEncoder} is a class which can be used to turn documents into byte arrays. The {@code BSONEncoder} walks down through the
- * object graph and writes corresponding {@code byte} sequences into underlying {@code OutputBuffer}.
- * <p/>
- * This class is a part of legacy APi. Please check {@link org.bson.codecs.Encoder} for a new one.
+ * <p>An {@code BSONEncoder} is a class which can be used to turn documents into byte arrays. The {@code BSONEncoder} walks down through the
+ * object graph and writes corresponding {@code byte} sequences into underlying {@code OutputBuffer}.</p>
+ * 
+ * <p>This class is a part of legacy API. Please check {@link org.bson.codecs.Encoder} for a new one.</p>
  */
 public interface BSONEncoder {
 
@@ -35,7 +35,6 @@ public interface BSONEncoder {
      * <li>{@link #putObject(BSONObject)}</li>
      * <li>{@link #done()}</li>
      * </ul>
-     * <p/>
      * and returns the contents of the {@code OutputBuffer}.
      *
      * @param document the document to be encoded

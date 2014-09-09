@@ -31,10 +31,14 @@ import java.io.IOException;
 /**
  * A simple BSONDocumentBuffer codec.  It does not attempt to validate the contents of the underlying ByteBuffer. It assumes that it
  * contains a single encoded BSON document.
- * <p/>
+ *
+ * @since 3.0
  */
 public class RawBsonDocumentCodec implements Codec<RawBsonDocument> {
 
+    /**
+     * Constructs a new instance.
+     */
     public RawBsonDocumentCodec() {
     }
 

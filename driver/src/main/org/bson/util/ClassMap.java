@@ -20,17 +20,22 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Maps Class objects to values. A ClassMap is different from a regular Map in that get(c) does not only look to see if 'c' is a key in the
+ * <p>Maps Class objects to values. A ClassMap is different from a regular Map in that get(c) does not only look to see if 'c' is a key in
+ * the
  * Map, but also walks the up superclass and interface graph of 'c' to find matches. Derived matches of this sort are then "cached" in the
- * registry so that matches are faster on future gets.
- * <p/>
- * This is a very useful class for Class based registries.
- * <p/>
- * Example:
- * <p/>
- * ClassMap<String> m = new ClassMap<String>(); m.put(Animal.class, "Animal"); m.put(Fox.class, "Fox"); m.Fox.class) --> "Fox"
+ * registry so that matches are faster on future gets.</p>
+ * 
+ * <p>This is a very useful class for Class based registries.</p>
+ * 
+ * <p>Example:</p>
+ * <pre>{@code
+ * ClassMap<String> m = new ClassMap<String>(); 
+ * m.put(Animal.class, "Animal"); 
+ * m.put(Fox.class, "Fox"); 
+ * m.get(Fox.class) --> "Fox"
  * m.get(Dog.class) --> "Animal"
- * <p/>
+ * } </pre>
+ * 
  * (assuming Dog.class &lt; Animal.class)
  */
 public class ClassMap<T> {

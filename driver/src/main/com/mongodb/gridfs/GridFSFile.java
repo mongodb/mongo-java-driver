@@ -165,7 +165,7 @@ public abstract class GridFSFile implements DBObject {
     }
 
     /**
-     * Gets the aliases from the metadata. note: to set aliases, call put( "aliases" , List<String> )
+     * Gets the aliases from the metadata. note: to set aliases, call {@link #put(String, Object)} with {@code "aliases" , List<String>}.
      *
      * @return list of aliases
      */

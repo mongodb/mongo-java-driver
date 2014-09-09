@@ -125,10 +125,12 @@ public class MongoOptions {
     public SocketFactory socketFactory;
 
     /**
-     * Sets whether there is a a finalize method created that cleans up instances of DBCursor that the client does not close.  If you are
-     * careful to always call the close method of DBCursor, then this can safely be set to false.
+     * <p>Sets whether there is a a finalize method created that cleans up instances of DBCursor that the client does not close.  If you are
+     * careful to always call the close method of DBCursor, then this can safely be set to false.</p>
      *
-     * @see com.mongodb.DBCursor#close(). Default is true.
+     * <p>Default is true.</p>
+     *
+     * @see DBCursor#close()
      */
     public boolean cursorFinalizerEnabled;
 
