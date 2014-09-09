@@ -18,7 +18,6 @@ package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.BufferProvider;
-import com.mongodb.operation.AggregateExplainOperation;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.BaseWriteOperation;
@@ -59,6 +58,7 @@ import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
@@ -1285,10 +1285,11 @@ public class DBCollection {
      * @mongodb.server.release 2.6
      */
     public CommandResult explainAggregate(final List<DBObject> pipeline, final AggregationOptions options) {
-        AggregateExplainOperation operation = new AggregateExplainOperation(getNamespace(), preparePipeline(pipeline))
-                                                  .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                  .allowDiskUse(options.getAllowDiskUse());
-        return new CommandResult(execute(operation, primaryPreferred()));
+        AggregateOperation<BsonDocument> operation = new AggregateOperation<BsonDocument>(getNamespace(), preparePipeline(pipeline),
+                                                                                          new BsonDocumentCodec())
+                                                     .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                                     .allowDiskUse(options.getAllowDiskUse());
+        return new CommandResult(execute(operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER), primaryPreferred()));
     }
 
     @SuppressWarnings("unchecked")

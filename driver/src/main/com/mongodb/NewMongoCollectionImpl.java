@@ -40,7 +40,6 @@ import com.mongodb.client.result.RemoveResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.codecs.DocumentCodec;
-import com.mongodb.operation.AggregateExplainOperation;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.CountOperation;
@@ -62,13 +61,14 @@ import com.mongodb.operation.UpdateOperation;
 import com.mongodb.operation.UpdateRequest;
 import com.mongodb.operation.WriteRequest;
 import org.bson.BsonArray;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
+import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
@@ -120,43 +120,29 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
         if (outCollection != null) {
             AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList)
-                                                           .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                           .allowDiskUse(model.getAllowDiskUse());
+                                                       .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                                       .allowDiskUse(model.getAllowDiskUse());
             operationExecutor.execute(operation);
             return new OperationIterable<C>(new QueryOperation<C>(new MongoNamespace(namespace.getDatabaseName(),
                                                                                      outCollection.asString().getValue()),
                                                                   options.getCodecRegistry().get(clazz)),
                                             options.getReadPreference());
         } else {
-            AggregateOperation<C> operation = new AggregateOperation<C>(namespace, aggregateList, options.getCodecRegistry().get(clazz))
-                                                  .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                  .allowDiskUse(model.getAllowDiskUse())
-                                                  .batchSize(model.getBatchSize())
-                                                  .useCursor(model.getUseCursor());
-            return new OperationIterable<C>(operation, options.getReadPreference());
+            return new OperationIterable<C>(createAggregateOperation(model, options.getCodecRegistry().get(clazz), aggregateList),
+                                            options.getReadPreference());
         }
     }
 
     @Override
     public <D> long count(final CountModel<D> model) {
-        CountOperation operation = new CountOperation(namespace)
-                                       .criteria(asBson(model.getCriteria()))
-                                       .skip(model.getSkip())
-                                       .limit(model.getLimit())
-                                       .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS);
-        if (model.getHint() != null) {
-            operation.hint(asBson(model.getHint()));
-        } else if (model.getHintString() != null) {
-            operation.hint(new BsonString(model.getHintString()));
-        }
-        return operationExecutor.execute(operation, options.getReadPreference());
+        return operationExecutor.execute(createCountOperation(model), options.getReadPreference());
     }
 
     @Override
     public <D> List<Object> distinct(final DistinctModel<D> model) {
         DistinctOperation operation = new DistinctOperation(namespace, model.getFieldName())
-                                          .criteria(asBson(model.getCriteria()))
-                                          .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS);
+                                      .criteria(asBson(model.getCriteria()))
+                                      .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS);
         BsonArray distinctArray = operationExecutor.execute(operation, options.getReadPreference());
         List<Object> distinctList = new ArrayList<Object>();
         for (BsonValue value : distinctArray) {
@@ -176,7 +162,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     @Override
     public <F, D> MongoIterable<D> find(final FindModel<F> model, final Class<D> clazz) {
-        return new OperationIterable<D>(createQueryOperation(model, clazz), options.getReadPreference());
+        return new OperationIterable<D>(createQueryOperation(model, options.getCodecRegistry().get(clazz)), options.getReadPreference());
     }
 
     @Override
@@ -286,55 +272,66 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     @Override
     public <D> T findOneAndRemove(final FindOneAndRemoveModel<D> model) {
         FindAndRemoveOperation<T> operation = new FindAndRemoveOperation<T>(namespace, getCodec())
-                                                  .criteria(asBson(model.getCriteria()))
-                                                  .projection(asBson(model.getProjection()))
-                                                  .sort(asBson(model.getSort()));
+                                              .criteria(asBson(model.getCriteria()))
+                                              .projection(asBson(model.getProjection()))
+                                              .sort(asBson(model.getSort()));
         return operationExecutor.execute(operation);
     }
 
     @Override
     public <D> T findOneAndUpdate(final FindOneAndUpdateModel<D> model) {
         FindAndUpdateOperation<T> operation = new FindAndUpdateOperation<T>(namespace, getCodec(), asBson(model.getUpdate()))
-                                                  .criteria(asBson(model.getCriteria()))
-                                                  .projection(asBson(model.getProjection()))
-                                                  .sort(asBson(model.getSort()))
-                                                  .returnUpdated(model.getReturnUpdated())
-                                                  .upsert(model.isUpsert());
+                                              .criteria(asBson(model.getCriteria()))
+                                              .projection(asBson(model.getProjection()))
+                                              .sort(asBson(model.getSort()))
+                                              .returnUpdated(model.getReturnUpdated())
+                                              .upsert(model.isUpsert());
         return operationExecutor.execute(operation);
     }
 
     @Override
     public <D> T findOneAndReplace(final FindOneAndReplaceModel<T, D> model) {
         FindAndReplaceOperation<T> operation = new FindAndReplaceOperation<T>(namespace, getCodec(), asBson(model.getReplacement()))
-                                                   .criteria(asBson(model.getCriteria()))
-                                                   .projection(asBson(model.getProjection()))
-                                                   .sort(asBson(model.getSort()))
-                                                   .returnReplaced(model.getReturnReplaced())
-                                                   .upsert(model.isUpsert());
+                                               .criteria(asBson(model.getCriteria()))
+                                               .projection(asBson(model.getProjection()))
+                                               .sort(asBson(model.getSort()))
+                                               .returnReplaced(model.getReturnReplaced())
+                                               .upsert(model.isUpsert());
         return operationExecutor.execute(operation);
     }
 
     @Override
     public <D> Document explain(final ExplainableModel<D> explainableModel, final ExplainVerbosity verbosity) {
         if (explainableModel instanceof AggregateModel) {
-            AggregateModel<D> aggregateModel = (AggregateModel<D>) explainableModel;
-            AggregateExplainOperation operation = new AggregateExplainOperation(namespace,
-                                                                                createBsonDocumentList(aggregateModel.getPipeline()))
-                                                      .allowDiskUse(aggregateModel.getAllowDiskUse())
-                                                      .maxTime(aggregateModel.getMaxTime(MILLISECONDS), MILLISECONDS);
-            BsonDocument bsonDocument = operationExecutor.execute(operation, options.getReadPreference());
-            return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
+            return explainAggregate((AggregateModel<D>) explainableModel, verbosity);
         } else if (explainableModel instanceof FindModel) {
-            FindModel<D> findModel = (FindModel<D>) explainableModel;
-            QueryOperation<Document> queryOperation = createQueryOperation(findModel, Document.class);
-            if (queryOperation.getModifiers() == null) {
-                queryOperation.modifiers(new BsonDocument());
-            }
-            queryOperation.getModifiers().append("$explain", BsonBoolean.TRUE);
-            return operationExecutor.execute(queryOperation, options.getReadPreference()).next();
+            return explainFind((FindModel<D>) explainableModel, verbosity);
+        } else if (explainableModel instanceof CountModel) {
+            return explainCount((CountModel<D>) explainableModel, verbosity);
         } else {
             throw new UnsupportedOperationException(format("Unsupported explainable model type %s", explainableModel.getClass()));
         }
+    }
+
+    private <D> Document explainCount(final CountModel<D> countModel, final ExplainVerbosity verbosity) {
+        CountOperation countOperation = createCountOperation(countModel);
+        BsonDocument bsonDocument = operationExecutor.execute(countOperation.asExplainableOperation(verbosity),
+                                                              options.getReadPreference());
+        return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
+    }
+
+    private <D> Document explainFind(final FindModel<D> findModel, final ExplainVerbosity verbosity) {
+        QueryOperation<BsonDocument> queryOperation = createQueryOperation(findModel, new BsonDocumentCodec());
+        BsonDocument bsonDocument = operationExecutor.execute(queryOperation.asExplainableOperation(verbosity),
+                                                              options.getReadPreference());
+        return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
+    }
+
+    private <D> Document explainAggregate(final AggregateModel<D> aggregateModel, final ExplainVerbosity verbosity) {
+        AggregateOperation<BsonDocument> operation = createAggregateOperation(aggregateModel, new BsonDocumentCodec(),
+                                                                              createBsonDocumentList(aggregateModel.getPipeline()));
+        BsonDocument bsonDocument = operationExecutor.execute(operation.asExplainableOperation(verbosity), options.getReadPreference());
+        return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
     }
 
     private Codec<T> getCodec() {
@@ -353,18 +350,40 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
         }
     }
 
-    private <F, D> QueryOperation<D> createQueryOperation(final FindModel<F> model, final Class<D> clazz) {
-        QueryOperation<D> operation = new QueryOperation<D>(namespace, options.getCodecRegistry().get(clazz))
-                                          .criteria(asBson(model.getCriteria()))
-                                          .batchSize(model.getBatchSize())
-                                          .cursorFlags(model.getCursorFlags())
-                                          .skip(model.getSkip())
-                                          .limit(model.getLimit())
-                                          .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                          .modifiers(asBson(model.getModifiers()))
-                                          .projection(asBson(model.getProjection()))
-                                          .sort(asBson(model.getSort()));
+    private <F, D> QueryOperation<D> createQueryOperation(final FindModel<F> model, final Decoder<D> decoder) {
+        return new QueryOperation<D>(namespace, decoder)
+               .criteria(asBson(model.getCriteria()))
+               .batchSize(model.getBatchSize())
+               .cursorFlags(model.getCursorFlags())
+               .skip(model.getSkip())
+               .limit(model.getLimit())
+               .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS)
+               .modifiers(asBson(model.getModifiers()))
+               .projection(asBson(model.getProjection()))
+               .sort(asBson(model.getSort()));
+    }
+
+    private <D> CountOperation createCountOperation(final CountModel<D> model) {
+        CountOperation operation = new CountOperation(namespace)
+                                   .criteria(asBson(model.getCriteria()))
+                                   .skip(model.getSkip())
+                                   .limit(model.getLimit())
+                                   .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS);
+        if (model.getHint() != null) {
+            operation.hint(asBson(model.getHint()));
+        } else if (model.getHintString() != null) {
+            operation.hint(new BsonString(model.getHintString()));
+        }
         return operation;
+    }
+
+    private <D, C> AggregateOperation<C> createAggregateOperation(final AggregateModel<D> model, final Decoder<C> decoder,
+                                                                  final List<BsonDocument> aggregateList) {
+        return new AggregateOperation<C>(namespace, aggregateList, decoder)
+               .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS)
+               .allowDiskUse(model.getAllowDiskUse())
+               .batchSize(model.getBatchSize())
+               .useCursor(model.getUseCursor());
     }
 
     private <D> List<BsonDocument> createBsonDocumentList(final List<D> pipeline) {

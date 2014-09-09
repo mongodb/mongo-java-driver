@@ -33,16 +33,13 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 
-/**
- * An operation that executes an explain on an aggregation pipeline.
- *
- * @since 3.0
- */
-public class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, ReadOperation<BsonDocument> {
+// an operation that executes an explain on an aggregation pipeline
+class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, ReadOperation<BsonDocument> {
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private Boolean allowDiskUse;
     private long maxTimeMS;
+
     /**
      * Constructs a new instance.
      *  @param namespace the namespace

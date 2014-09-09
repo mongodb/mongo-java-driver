@@ -18,11 +18,13 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.Block
+import com.mongodb.ExplainVerbosity
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonString
+import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import spock.lang.IgnoreIf
@@ -184,6 +186,32 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         cleanup:
         disableMaxTimeFailPoint()
     }
+
+    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    def 'should be able to explain an empty pipeline'() {
+        given:
+        AggregateOperation op = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
+
+        when:
+        def result = op.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER).execute(getBinding());
+
+        then:
+        result.containsKey('stages')
+    }
+
+    @Category(Async)
+    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    def 'should be able to explain an empty pipeline asynchronously'() {
+        given:
+        AggregateOperation op = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
+
+        when:
+        def result = op.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER).executeAsync(getAsyncBinding()).get();
+
+        then:
+        result.containsKey('stages')
+    }
+
 
     private static List<Boolean> useCursorOptions() {
         [null, true, false]
