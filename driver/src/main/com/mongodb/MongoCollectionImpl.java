@@ -55,7 +55,6 @@ import org.mongodb.WriteResult;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -187,12 +186,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoView<T> cursorFlags(final EnumSet<CursorFlag> flags) {
-            findOp.cursorFlags(flags);
-            return this;
-        }
-
-        @Override
         public MongoView<T> find(final Document filter) {
             findOp.criteria(new BsonDocumentWrapper<Document>(filter, getDocumentCodec()));
             return this;
@@ -270,7 +263,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return new QueryOperation<T>(getNamespace(), getCodec())
                        .criteria(asBson(findOp.getCriteria()))
                        .batchSize(findOp.getBatchSize())
-                       .cursorFlags(findOp.getCursorFlags())
                        .skip(findOp.getSkip())
                        .limit(findOp.getLimit())
                        .maxTime(findOp.getMaxTime(MILLISECONDS), MILLISECONDS)

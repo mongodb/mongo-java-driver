@@ -27,17 +27,17 @@ public enum CursorFlag {
     /**
      * Tailable means cursor is not closed when the last data is retrieved. Rather, the cursor marks the final object's position. You can
      * resume using the cursor later, from where it was located, if more data were received. Like any "latent cursor", the cursor may become
-     * invalid at some point (CursorNotFound) – for example if the final object it references were deleted.
+     * invalid at some point – for example if the final object it references were deleted.
      */
     TAILABLE(1 << 1),
 
     /**
-     * Allow query of replica slave.
+     * Allow query of non-primary replica set members.
      */
     SLAVE_OK(1 << 2),
 
     /**
-     * Internal replication use only - driver should not set
+     * Internal replication use only.  Driver users should ordinarily not use this.
      */
     OPLOG_REPLAY(1 << 3),
 

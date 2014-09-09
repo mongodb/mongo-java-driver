@@ -26,6 +26,7 @@ import org.bson.BsonString;
 import org.bson.codecs.Decoder;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -59,6 +60,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class DBCursor implements Cursor, Iterable<DBObject> {
     private final DBCollection collection;
     private final FindModel<BsonDocument> findModel;
+    private final EnumSet<CursorFlag> cursorFlags = EnumSet.noneOf(CursorFlag.class);
     private ReadPreference readPreference;
     private Decoder<DBObject> resultDecoder;
     private DBDecoderFactory decoderFactory;
@@ -86,10 +88,10 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
              new FindModel<BsonDocument>()
              .modifiers(new BsonDocument())
              .criteria(collection.wrapAllowNull(query))
-             .projection(collection.wrapAllowNull(fields))
-             .cursorFlags(CursorFlag.toSet(collection.getOptions())),
-             readPreference
-            );
+             .projection(collection.wrapAllowNull(fields)),
+             readPreference);
+
+        cursorFlags.addAll(CursorFlag.toSet(collection.getOptions()));
 
         DBObject indexKeys = lookupSuitableHints(query, collection.getHintFields());
         if (indexKeys != null) {
@@ -133,8 +135,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             throw new IllegalStateException("Cursor has been closed");
         }
 
-        if (findModel.getCursorFlags().contains(CursorFlag.TAILABLE)) {
-            findModel.getCursorFlags().add(CursorFlag.AWAIT_DATA);
+        if (cursorFlags.contains(CursorFlag.TAILABLE)) {
+            cursorFlags.add(CursorFlag.AWAIT_DATA);
         }
 
         if (cursor == null) {
@@ -172,7 +174,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @throws MongoException
      */
     public DBObject tryNext() {
-        if (!findModel.getCursorFlags().contains(CursorFlag.TAILABLE)) {
+        if (!cursorFlags.contains(CursorFlag.TAILABLE)) {
             throw new IllegalArgumentException("Can only be used with a tailable cursor");
         }
 
@@ -209,7 +211,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @see Bytes
      */
     public DBCursor addOption(final int option) {
-        findModel.getCursorFlags().addAll(CursorFlag.toSet(option));
+        cursorFlags.addAll(CursorFlag.toSet(option));
         return this;
     }
 
@@ -221,7 +223,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @see Bytes
      */
     public DBCursor setOptions(final int options) {
-        findModel.cursorFlags(CursorFlag.toSet(options));
+        cursorFlags.clear();
+        cursorFlags.addAll(CursorFlag.toSet(options));
         return this;
     }
 
@@ -231,7 +234,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return {@code this} so calls can be chained
      */
     public DBCursor resetOptions() {
-        findModel.getCursorFlags().clear();
+        cursorFlags.clear();
         return this;
     }
 
@@ -241,7 +244,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the bitmask of options
      */
     public int getOptions() {
-        return CursorFlag.fromSet(findModel.getCursorFlags());
+        return CursorFlag.fromSet(cursorFlags);
     }
 
     /**
@@ -452,7 +455,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return new QueryOperation<DBObject>(collection.getNamespace(), decoder)
                    .criteria(find.getCriteria())
                    .batchSize(find.getBatchSize())
-                   .cursorFlags(find.getCursorFlags())
+                   .cursorFlags(cursorFlags)
                    .limit(find.getLimit())
                    .maxTime(find.getMaxTime(MILLISECONDS), MILLISECONDS)
                    .modifiers(find.getModifiers())

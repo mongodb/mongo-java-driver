@@ -143,12 +143,12 @@ class NewMongoCollectionSpecification extends Specification {
         def cursor = Stub(MongoCursor)
         cursor.hasNext() >>> [true, false]
         cursor.next() >> document
-        def executor = new TestOperationExecutor([cursor])
+        def executor = new TestOperationExecutor([cursor, cursor])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
+        when:
         def model = new FindModel<>().criteria(new Document('cold', true))
                                      .batchSize(4)
-                                     .cursorFlags(EnumSet.of(CursorFlag.PARTIAL, CursorFlag.NO_CURSOR_TIMEOUT))
                                      .maxTime(1, TimeUnit.SECONDS)
                                      .skip(5)
                                      .limit(100)
@@ -156,22 +156,37 @@ class NewMongoCollectionSpecification extends Specification {
                                      .projection(new Document('x', 1))
                                      .sort(new Document('y', 1))
 
-        when:
         def result = collection.find(model).into([])
 
         then:
         def operation = executor.getReadOperation() as QueryOperation
-        operation.criteria == new BsonDocument('cold', BsonBoolean.TRUE)
-        operation.batchSize == 4
-        operation.cursorFlags == EnumSet.of(CursorFlag.PARTIAL, CursorFlag.NO_CURSOR_TIMEOUT)
-        operation.getMaxTime(TimeUnit.SECONDS) == 1
-        operation.skip == 5
-        operation.limit == 100
-        operation.modifiers == new BsonDocument('$hint', new BsonString('i1'))
-        operation.projection == new BsonDocument('x', new BsonInt32(1))
-        operation.sort == new BsonDocument('y', new BsonInt32(1))
+        operation.with {
+            criteria == new BsonDocument('cold', BsonBoolean.TRUE)
+            batchSize == 4
+            getMaxTime(TimeUnit.SECONDS) == 1
+            skip == 5
+            limit == 100
+            modifiers == new BsonDocument('$hint', new BsonString('i1'))
+            projection == new BsonDocument('x', new BsonInt32(1))
+            sort == new BsonDocument('y', new BsonInt32(1))
+            cursorFlags == EnumSet.noneOf(CursorFlag)
+        }
         executor.readPreference == secondary()
         result == [document]
+
+        when: 'all the boolean properties are enabled'
+        model = new FindModel<>().awaitData(true)
+                                 .exhaust(true)
+                                 .noCursorTimeout(true)
+                                 .partial(true)
+                                 .tailable(true)
+
+        collection.find(model).into([])
+
+        then: 'cursor flags contains all flags'
+        def operation2 = executor.getReadOperation() as QueryOperation
+        operation2.cursorFlags == EnumSet.of(CursorFlag.AWAIT_DATA, CursorFlag.EXHAUST, CursorFlag.NO_CURSOR_TIMEOUT, CursorFlag.PARTIAL,
+                                             CursorFlag.TAILABLE);
     }
 
     def 'count should use CountOperation properly'() {
