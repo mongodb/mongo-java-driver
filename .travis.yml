@@ -1,6 +1,6 @@
 language: java
 jdk: 
-- oraclejdk7
+- oraclejdk8
 
 notifications: 
   email: 
@@ -21,9 +21,6 @@ services:
 
 before_script:
   - "mongo admin --eval 'db.runCommand({setParameter : 1, textSearchEnabled : true})'"
-  - "echo $JAVA_OPTS"
-  - "export JAVA_OPTS=-XX:MaxPermSize=1024m"
-  - "echo $JAVA_OPTS"
 
 branches:
   only:

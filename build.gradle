@@ -86,7 +86,6 @@ configure(subprojects.findAll { it.name != 'util' }) {
     /* Compiling */
     tasks.withType(AbstractCompile) {
         options.encoding = 'ISO-8859-1'
-        options.fork = true
         options.debug = true
         options.compilerArgs = ['-Xlint:all', '-Xlint:-options']
 
@@ -100,7 +99,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
     /* Testing */
     tasks.withType(Test) {
         maxParallelForks = 1
-        jvmArgs '-XX:MaxPermSize=1024m'
+        jvmArgs '-XX:MaxPermSize=256m'
 
         systemProperties(
                 'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri', null),
