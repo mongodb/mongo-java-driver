@@ -36,10 +36,27 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class RemoveOperation extends BaseWriteOperation {
     private final List<RemoveRequest> removeRequests;
 
+    /**
+     * Construct an instance.
+     *
+     * @param namespace the non-null namespace
+     * @param ordered whether the writes are ordered
+     * @param writeConcern the write concern to apply
+     * @param removeRequests the write requests
+     */
     public RemoveOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                            final List<RemoveRequest> removeRequests) {
         super(namespace, ordered, writeConcern);
         this.removeRequests = notNull("removes", removeRequests);
+    }
+
+    /**
+     * Gets the list of remove requests.
+     *
+     * @return the remove requests
+     */
+    public List<RemoveRequest> getRemoveRequests() {
+        return removeRequests;
     }
 
     @Override

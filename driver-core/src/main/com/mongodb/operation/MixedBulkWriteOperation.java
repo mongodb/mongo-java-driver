@@ -57,7 +57,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
@@ -80,7 +79,6 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     private final List<WriteRequest> writeRequests;
     private final WriteConcern writeConcern;
     private final boolean ordered;
-    private boolean closed;
 
     /**
      * Construct a new instance.
@@ -98,6 +96,43 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         isTrueArgument("writes is not an empty list", !writeRequests.isEmpty());
     }
 
+
+    /**
+     * Gets the namespace of the collection to write to.
+     *
+     * @return the namespace
+     */
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    /**
+     * Gets the write concern to apply
+     *
+     * @return the write concern
+     */
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
+    }
+
+    /**
+     * Gets whether the writes are ordered.  If true, no more writes will be executed after the first failure.
+     *
+     * @return whether the writes are ordered
+     */
+    public boolean isOrdered() {
+        return ordered;
+    }
+
+    /**
+     * Gets the list of write requests to execute.
+     *
+     * @return the list of write requests
+     */
+    public List<WriteRequest> getWriteRequests() {
+        return writeRequests;
+    }
+
     /**
      * Executes a bulk write operation.
      *
@@ -108,9 +143,6 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
      */
     @Override
     public BulkWriteResult execute(final WriteBinding binding) {
-        isTrue("already executed", !closed);
-
-        closed = true;
         return withConnection(binding, new CallableWithConnection<BulkWriteResult>() {
             @Override
             public BulkWriteResult call(final Connection connection) {
@@ -144,9 +176,6 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
      */
     @Override
     public MongoFuture<BulkWriteResult> executeAsync(final AsyncWriteBinding binding) {
-        isTrue("already executed", !closed);
-
-        closed = true;
         final SingleResultFuture<BulkWriteResult> future = new SingleResultFuture<BulkWriteResult>();
         return withConnection(binding, new AsyncCallableWithConnection<BulkWriteResult>() {
 
