@@ -27,21 +27,31 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class FindOneAndReplaceModel<T> {
     private final Object criteria;
     private final T replacement;
-    private Object projection;
-    private Object sort;
-    private boolean upsert;
-    private boolean returnReplaced;
+    private final FindOneAndReplaceOptions options;
 
     /**
      * Construct a new instance
      *
-     * @param criteria the query criteria. This can be of any type for which a {@code Codec} is registered.
+     * @param criteria    the query criteria. This can be of any type for which a {@code Codec} is registered.
      * @param replacement the replacement. This can be of any type for which a {@code Codec} is registered.
      * @mongodb.driver.manual manual/reference/command/findAndModify/
      */
     public FindOneAndReplaceModel(final Object criteria, final T replacement) {
+        this(criteria, replacement, new FindOneAndReplaceOptions());
+    }
+
+    /**
+     * Construct a new instance
+     *
+     * @param criteria    the query criteria. This can be of any type for which a {@code Codec} is registered.
+     * @param replacement the replacement. This can be of any type for which a {@code Codec} is registered.
+     * @param options     the options to apply
+     * @mongodb.driver.manual manual/reference/command/findAndModify/
+     */
+    public FindOneAndReplaceModel(final Object criteria, final T replacement, final FindOneAndReplaceOptions options) {
         this.criteria = notNull("criteria", criteria);
         this.replacement = notNull("replacement", replacement);
+        this.options = notNull("options", options);
     }
 
     /**
@@ -63,88 +73,13 @@ public class FindOneAndReplaceModel<T> {
     }
 
     /**
-     * Gets a document describing the fields to return for all matching documents.
+     * Gets the options to apply.
      *
-     * @return the project document, which may be null
-     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
+     * @return the options
      */
-    public Object getProjection() {
-        return projection;
-    }
-
-    /**
-     * Sets a document describing the fields to return for all matching documents.
-     *
-     * @param projection the project document, which may be null. This can be of any type for which a {@code Codec} is registered
-     * @return this
-     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
-     */
-    public FindOneAndReplaceModel<T> projection(final Object projection) {
-        this.projection = projection;
-        return this;
-    }
-
-    /**
-     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
-     * order.
-     *
-     * @return a document describing the sort criteria
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
-     */
-    public Object getSort() {
-        return sort;
-    }
-
-    /**
-     * Sets the sort criteria to apply to the query.
-     *
-     * @param sort the sort criteria, which may be null. This can be of any type for which a {@code Codec} is registered
-     * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
-     */
-    public FindOneAndReplaceModel<T> sort(final Object sort) {
-        this.sort = sort;
-        return this;
-    }
-
-    /**
-     * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
-     *
-     * @return true if a new document should be inserted if there are no matches to the query filter
-     */
-    public boolean isUpsert() {
-        return upsert;
-    }
-
-    /**
-     * Set to true if a new document should be inserted if there are no matches to the query filter.
-     *
-     * @param upsert true if a new document should be inserted if there are no matches to the query filter
-     * @return this
-     */
-    public FindOneAndReplaceModel<T> upsert(final boolean upsert) {
-        this.upsert = upsert;
-        return this;
-    }
-
-    /**
-     * When true, returns the updated document rather than the original. The default is false.
-     *
-     * @return true if the updated document should be returned, otherwise false
-     */
-    public boolean getReturnReplaced() {
-        return returnReplaced;
-    }
-
-    /**
-     * Set true to return the updated document rather than the original.
-     *
-     * @param returnReplaced set true to return the updated document rather than the original.
-     * @return this
-     */
-    public FindOneAndReplaceModel<T> returnReplaced(final boolean returnReplaced) {
-        this.returnReplaced = returnReplaced;
-        return this;
+    public FindOneAndReplaceOptions getOptions() {
+        return options;
     }
 }
+
 

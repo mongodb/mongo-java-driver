@@ -20,21 +20,33 @@ import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.NewMongoCollection;
 import com.mongodb.client.model.AggregateModel;
+import com.mongodb.client.model.AggregateOptions;
 import com.mongodb.client.model.BulkWriteModel;
+import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountModel;
+import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DistinctModel;
+import com.mongodb.client.model.DistinctOptions;
 import com.mongodb.client.model.ExplainableModel;
 import com.mongodb.client.model.FindModel;
 import com.mongodb.client.model.FindOneAndDeleteModel;
+import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceModel;
+import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateModel;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.InsertManyModel;
+import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.ReplaceOneModel;
+import com.mongodb.client.model.ReplaceOneOptions;
 import com.mongodb.client.model.UpdateManyModel;
+import com.mongodb.client.model.UpdateManyOptions;
 import com.mongodb.client.model.UpdateOneModel;
+import com.mongodb.client.model.UpdateOneOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
@@ -109,41 +121,33 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public MongoIterable<Document> aggregate(final AggregateModel model) {
-        return aggregate(model, Document.class);
+    public long count() {
+        return count(new CountModel());
     }
 
     @Override
-    public <C> MongoIterable<C> aggregate(final AggregateModel model, final Class<C> clazz) {
-        List<BsonDocument> aggregateList = createBsonDocumentList(model.getPipeline());
-
-        BsonValue outCollection = aggregateList.size() == 0 ? null : aggregateList.get(aggregateList.size() - 1).get("$out");
-
-        if (outCollection != null) {
-            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList)
-                                                       .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                       .allowDiskUse(model.getAllowDiskUse());
-            operationExecutor.execute(operation);
-            return new OperationIterable<C>(new QueryOperation<C>(new MongoNamespace(namespace.getDatabaseName(),
-                                                                                     outCollection.asString().getValue()),
-                                                                  options.getCodecRegistry().get(clazz)),
-                                            options.getReadPreference());
-        } else {
-            return new OperationIterable<C>(createAggregateOperation(model, options.getCodecRegistry().get(clazz), aggregateList),
-                                            options.getReadPreference());
-        }
+    public long count(final CountOptions options) {
+        return operationExecutor.execute(createCountOperation(new CountModel(options)), this.options.getReadPreference());
     }
 
-    @Override
-    public long count(final CountModel model) {
+    private long count(final CountModel model) {
         return operationExecutor.execute(createCountOperation(model), options.getReadPreference());
     }
 
     @Override
-    public List<Object> distinct(final DistinctModel model) {
+    public List<Object> distinct(final String fieldName) {
+        return distinct(fieldName, new DistinctOptions());
+    }
+
+    @Override
+    public List<Object> distinct(final String fieldName, final DistinctOptions options) {
+        return distinct(new DistinctModel(fieldName, options));
+    }
+
+    private List<Object> distinct(final DistinctModel model) {
         DistinctOperation operation = new DistinctOperation(namespace, model.getFieldName())
-                                      .criteria(asBson(model.getCriteria()))
-                                      .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS);
+                                      .criteria(asBson(model.getOptions().getCriteria()))
+                                      .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
         BsonArray distinctArray = operationExecutor.execute(operation, options.getReadPreference());
         List<Object> distinctList = new ArrayList<Object>();
         for (BsonValue value : distinctArray) {
@@ -157,17 +161,86 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public MongoIterable<T> find(final FindModel model) {
-        return find(model, clazz);
+    public MongoIterable<T> find() {
+        return find(new FindOptions());
     }
 
     @Override
-    public <C> MongoIterable<C> find(final FindModel model, final Class<C> clazz) {
-        return new OperationIterable<C>(createQueryOperation(model, options.getCodecRegistry().get(clazz)), options.getReadPreference());
+    public <C> MongoIterable<C> find(final Class<C> clazz) {
+        return find(new FindOptions(), clazz);
     }
 
     @Override
-    public BulkWriteResult bulkWrite(final BulkWriteModel<? extends T> model) {
+    public MongoIterable<T> find(final FindOptions findOptions) {
+        return find(findOptions, clazz);
+    }
+
+    @Override
+    public <C> MongoIterable<C> find(final FindOptions findOptions, final Class<C> clazz) {
+        return find(new FindModel(findOptions), clazz);
+    }
+
+    private <C> MongoIterable<C> find(final FindModel findModel, final Class<C> clazz) {
+        return new OperationIterable<C>(createQueryOperation(findModel, options.getCodecRegistry().get(clazz)),
+                                        options.getReadPreference());
+    }
+
+    @Override
+    public MongoIterable<Document> aggregate(final List<?> pipeline) {
+        return aggregate(pipeline, Document.class);
+    }
+
+    @Override
+    public <C> MongoIterable<C> aggregate(final List<?> pipeline, final Class<C> clazz) {
+        return aggregate(pipeline, new AggregateOptions(), clazz);
+    }
+
+    @Override
+    public MongoIterable<Document> aggregate(final List<?> pipeline, final AggregateOptions options) {
+        return aggregate(pipeline, options, Document.class);
+    }
+
+    @Override
+    public <C> MongoIterable<C> aggregate(final List<?> pipeline, final AggregateOptions options, final Class<C> clazz) {
+        return aggregate(new AggregateModel(pipeline, options), clazz);
+    }
+
+    private MongoIterable<Document> aggregate(final AggregateModel model) {
+        return aggregate(model, Document.class);
+    }
+
+    private <C> MongoIterable<C> aggregate(final AggregateModel model, final Class<C> clazz) {
+        List<BsonDocument> aggregateList = createBsonDocumentList(model.getPipeline());
+
+        BsonValue outCollection = aggregateList.size() == 0 ? null : aggregateList.get(aggregateList.size() - 1).get("$out");
+
+        if (outCollection != null) {
+            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList)
+                                                       .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
+                                                       .allowDiskUse(model.getOptions().getAllowDiskUse());
+            operationExecutor.execute(operation);
+            return new OperationIterable<C>(new QueryOperation<C>(new MongoNamespace(namespace.getDatabaseName(),
+                                                                                     outCollection.asString().getValue()),
+                                                                  options.getCodecRegistry().get(clazz)),
+                                            options.getReadPreference());
+        } else {
+            return new OperationIterable<C>(createAggregateOperation(model, options.getCodecRegistry().get(clazz), aggregateList),
+                                            options.getReadPreference());
+        }
+    }
+
+    @Override
+    public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends T>> requests) {
+        return bulkWrite(requests, new BulkWriteOptions());
+    }
+
+    @Override
+    public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options) {
+        return bulkWrite(new BulkWriteModel<T>(requests, options));
+    }
+
+
+    private BulkWriteResult bulkWrite(final BulkWriteModel<? extends T> model) {
         List<WriteRequest> requests = new ArrayList<WriteRequest>();
         for (WriteModel<? extends T> writeModel : model.getRequests()) {
             WriteRequest writeRequest;
@@ -180,16 +253,16 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
             } else if (writeModel instanceof ReplaceOneModel) {
                 ReplaceOneModel<T> replaceOneModel = (ReplaceOneModel<T>) writeModel;
                 writeRequest = new ReplaceRequest(asBson(replaceOneModel.getCriteria()), asBson(replaceOneModel.getReplacement()))
-                               .upsert(replaceOneModel.isUpsert());
+                               .upsert(replaceOneModel.getOptions().isUpsert());
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel updateOneModel = (UpdateOneModel) writeModel;
                 writeRequest = new UpdateRequest(asBson(updateOneModel.getCriteria()), asBson(updateOneModel.getUpdate()))
-                               .upsert(updateOneModel.isUpsert());
+                               .upsert(updateOneModel.getOptions().isUpsert());
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel updateManyModel = (UpdateManyModel) writeModel;
                 writeRequest = new UpdateRequest(asBson(updateManyModel.getCriteria()), asBson(updateManyModel.getUpdate()))
                                .multi(true)
-                               .upsert(updateManyModel.isUpsert());
+                               .upsert(updateManyModel.getOptions().isUpsert());
             } else if (writeModel instanceof DeleteOneModel) {
                 DeleteOneModel deleteOneModel = (DeleteOneModel) writeModel;
                 writeRequest = new RemoveRequest(asBson(deleteOneModel.getCriteria())).multi(false);
@@ -203,7 +276,8 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
             requests.add(writeRequest);
         }
 
-        return operationExecutor.execute(new MixedBulkWriteOperation(namespace, requests, model.isOrdered(), options.getWriteConcern()));
+        return operationExecutor.execute(new MixedBulkWriteOperation(namespace, requests, model.getOptions().isOrdered(),
+                                                                     options.getWriteConcern()));
     }
 
     @Override
@@ -217,7 +291,16 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public void insertMany(final InsertManyModel<T> model) {
+    public void insertMany(final List<? extends T> documents) {
+        insertMany(documents, new InsertManyOptions());
+    }
+
+    @Override
+    public void insertMany(final List<? extends T> documents, final InsertManyOptions options) {
+        insertMany(new InsertManyModel<T>(documents, options));
+    }
+
+    private void insertMany(final InsertManyModel<T> model) {
         List<InsertRequest> requests = new ArrayList<InsertRequest>();
         for (T document : model.getDocuments()) {
             if (getCodec() instanceof CollectibleCodec) {
@@ -225,32 +308,51 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
             }
             requests.add(new InsertRequest(asBson(document)));
         }
-        operationExecutor.execute(new InsertOperation(namespace, model.isOrdered(), options.getWriteConcern(), requests));
+        operationExecutor.execute(new InsertOperation(namespace, model.getOptions().isOrdered(), options.getWriteConcern(), requests));
     }
 
     @Override
-    public DeleteResult deleteOne(final DeleteOneModel<T> model) {
+    public DeleteResult deleteOne(final Object criteria) {
         WriteResult writeResult = operationExecutor.execute(new RemoveOperation(namespace, true, options.getWriteConcern(),
-                                                                                asList(new RemoveRequest(asBson(model.getCriteria()))
-                                                                                      .multi(false))));
+                                                                                asList(new RemoveRequest(asBson(criteria))
+                                                                                       .multi(false))));
         return new DeleteResult(writeResult.getCount());
     }
 
     @Override
-    public DeleteResult deleteMany(final DeleteManyModel<T> model) {
+    public DeleteResult deleteMany(final Object criteria) {
         WriteResult writeResult = operationExecutor.execute(new RemoveOperation(namespace, true, options.getWriteConcern(),
-                                                                                asList(new RemoveRequest(asBson(model.getCriteria()))
+                                                                                asList(new RemoveRequest(asBson(criteria))
                                                                                        .multi(true))));
         return new DeleteResult(writeResult.getCount());
     }
 
     @Override
-    public UpdateResult replaceOne(final ReplaceOneModel<T> model) {
+    public UpdateResult replaceOne(final Object criteria, final T replacement) {
+        return replaceOne(criteria, replacement, new ReplaceOneOptions());
+    }
+
+    @Override
+    public UpdateResult replaceOne(final Object criteria, final T replacement, final ReplaceOneOptions options) {
+        return replaceOne(new ReplaceOneModel<T>(criteria, replacement, options));
+    }
+
+    private UpdateResult replaceOne(final ReplaceOneModel<T> model) {
         List<ReplaceRequest> requests = new ArrayList<ReplaceRequest>();
         requests.add(new ReplaceRequest(asBson(model.getCriteria()), asBson(model.getReplacement()))
-                     .upsert(model.isUpsert()));
+                     .upsert(model.getOptions().isUpsert()));
         WriteResult writeResult = operationExecutor.execute(new ReplaceOperation(namespace, true, options.getWriteConcern(), requests));
         return createUpdateResult(writeResult);
+    }
+
+    @Override
+    public UpdateResult updateOne(final Object criteria, final Object update) {
+        return updateOne(criteria, update, new UpdateOneOptions());
+    }
+
+    @Override
+    public UpdateResult updateOne(final Object criteria, final Object update, final UpdateOneOptions options) {
+        return updateOne(new UpdateOneModel<T>(criteria, update, options));
     }
 
     @Override
@@ -260,19 +362,38 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
                                                                asList(new UpdateRequest(asBson(model.getCriteria()),
                                                                                         asBson(model.getUpdate()))
                                                                       .multi(false)
-                                                                      .upsert(model.isUpsert()))));
+                                                                      .upsert(model.getOptions().isUpsert()))));
         return createUpdateResult(writeResult);
     }
 
     @Override
-    public UpdateResult updateMany(final UpdateManyModel<T> model) {
+    public UpdateResult updateMany(final Object criteria, final Object update) {
+        return updateMany(criteria, update, new UpdateManyOptions());
+    }
+
+    @Override
+    public UpdateResult updateMany(final Object criteria, final Object update, final UpdateManyOptions options) {
+        return updateMany(new UpdateManyModel<T>(criteria, update, options));
+    }
+
+    private UpdateResult updateMany(final UpdateManyModel<T> model) {
         WriteResult writeResult = operationExecutor
                                   .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
                                                                asList(new UpdateRequest(asBson(model.getCriteria()),
                                                                                         asBson(model.getUpdate()))
                                                                       .multi(true)
-                                                                      .upsert(model.isUpsert()))));
+                                                                      .upsert(model.getOptions().isUpsert()))));
         return createUpdateResult(writeResult);
+    }
+
+    @Override
+    public T findOneAndDelete(final Object criteria) {
+        return findOneAndDelete(criteria, new FindOneAndDeleteOptions());
+    }
+
+    @Override
+    public T findOneAndDelete(final Object criteria, final FindOneAndDeleteOptions options) {
+        return findOneAndDelete(new FindOneAndDeleteModel(criteria, options));
     }
 
     // TODO modifiedCount
@@ -280,35 +401,52 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
         return new UpdateResult(writeResult.getCount(), 0, writeResult.getUpsertedId());
     }
 
-    @Override
-    public T findOneAndDelete(final FindOneAndDeleteModel model) {
+    private T findOneAndDelete(final FindOneAndDeleteModel model) {
         FindAndRemoveOperation<T> operation = new FindAndRemoveOperation<T>(namespace, getCodec())
                                               .criteria(asBson(model.getCriteria()))
-                                              .projection(asBson(model.getProjection()))
-                                              .sort(asBson(model.getSort()));
+                                              .projection(asBson(model.getOptions().getProjection()))
+                                              .sort(asBson(model.getOptions().getSort()));
         return operationExecutor.execute(operation);
     }
 
     @Override
-    public T findOneAndUpdate(final FindOneAndUpdateModel model) {
+    public T findOneAndReplace(final Object criteria, final T replacement) {
+        return findOneAndReplace(criteria, replacement, new FindOneAndReplaceOptions());
+    }
+
+    @Override
+    public T findOneAndReplace(final Object criteria, final T replacement, final FindOneAndReplaceOptions options) {
+        return findOneAndReplace(new FindOneAndReplaceModel<T>(criteria, replacement, options));
+    }
+
+    T findOneAndUpdate(final FindOneAndUpdateModel model) {
         FindAndUpdateOperation<T> operation = new FindAndUpdateOperation<T>(namespace, getCodec(), asBson(model.getUpdate()))
                                               .criteria(asBson(model.getCriteria()))
-                                              .projection(asBson(model.getProjection()))
-                                              .sort(asBson(model.getSort()))
-                                              .returnUpdated(model.getReturnUpdated())
-                                              .upsert(model.isUpsert());
+                                              .projection(asBson(model.getOptions().getProjection()))
+                                              .sort(asBson(model.getOptions().getSort()))
+                                              .returnUpdated(model.getOptions().getReturnUpdated())
+                                              .upsert(model.getOptions().isUpsert());
+        return operationExecutor.execute(operation);
+    }
+
+    private T findOneAndReplace(final FindOneAndReplaceModel<T> model) {
+        FindAndReplaceOperation<T> operation = new FindAndReplaceOperation<T>(namespace, getCodec(), asBson(model.getReplacement()))
+                                               .criteria(asBson(model.getCriteria()))
+                                               .projection(asBson(model.getOptions().getProjection()))
+                                               .sort(asBson(model.getOptions().getSort()))
+                                               .returnReplaced(model.getOptions().getReturnReplaced())
+                                               .upsert(model.getOptions().isUpsert());
         return operationExecutor.execute(operation);
     }
 
     @Override
-    public T findOneAndReplace(final FindOneAndReplaceModel<T> model) {
-        FindAndReplaceOperation<T> operation = new FindAndReplaceOperation<T>(namespace, getCodec(), asBson(model.getReplacement()))
-                                               .criteria(asBson(model.getCriteria()))
-                                               .projection(asBson(model.getProjection()))
-                                               .sort(asBson(model.getSort()))
-                                               .returnReplaced(model.getReturnReplaced())
-                                               .upsert(model.isUpsert());
-        return operationExecutor.execute(operation);
+    public T findOneAndUpdate(final Object criteria, final Object update) {
+        return findOneAndUpdate(criteria, update, new FindOneAndUpdateOptions());
+    }
+
+    @Override
+    public T findOneAndUpdate(final Object criteria, final Object update, final FindOneAndUpdateOptions options) {
+        return findOneAndUpdate(new FindOneAndUpdateModel(criteria, update, options));
     }
 
     @Override
@@ -363,35 +501,35 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     private <C> QueryOperation<C> createQueryOperation(final FindModel model, final Decoder<C> decoder) {
         return new QueryOperation<C>(namespace, decoder)
-               .criteria(asBson(model.getCriteria()))
-               .batchSize(model.getBatchSize())
+               .criteria(asBson(model.getOptions().getCriteria()))
+               .batchSize(model.getOptions().getBatchSize())
                .cursorFlags(getCursorFlags(model))
-               .skip(model.getSkip())
-               .limit(model.getLimit())
-               .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS)
-               .modifiers(asBson(model.getModifiers()))
-               .projection(asBson(model.getProjection()))
-               .sort(asBson(model.getSort()));
+               .skip(model.getOptions().getSkip())
+               .limit(model.getOptions().getLimit())
+               .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
+               .modifiers(asBson(model.getOptions().getModifiers()))
+               .projection(asBson(model.getOptions().getProjection()))
+               .sort(asBson(model.getOptions().getSort()));
     }
 
     private EnumSet<CursorFlag> getCursorFlags(final FindModel model) {
         EnumSet<CursorFlag> cursorFlags = EnumSet.noneOf(CursorFlag.class);
-        if (model.isAwaitData()) {
+        if (model.getOptions().isAwaitData()) {
             cursorFlags.add(CursorFlag.AWAIT_DATA);
         }
-        if (model.isExhaust()) {
+        if (model.getOptions().isExhaust()) {
             cursorFlags.add(CursorFlag.EXHAUST);
         }
-        if (model.isNoCursorTimeout()) {
+        if (model.getOptions().isNoCursorTimeout()) {
             cursorFlags.add(CursorFlag.NO_CURSOR_TIMEOUT);
         }
-        if (model.isOplogReplay()) {
+        if (model.getOptions().isOplogReplay()) {
             cursorFlags.add(CursorFlag.OPLOG_REPLAY);
         }
-        if (model.isPartial()) {
+        if (model.getOptions().isPartial()) {
             cursorFlags.add(CursorFlag.PARTIAL);
         }
-        if (model.isTailable()) {
+        if (model.getOptions().isTailable()) {
             cursorFlags.add(CursorFlag.TAILABLE);
         }
         return cursorFlags;
@@ -399,25 +537,25 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     private CountOperation createCountOperation(final CountModel model) {
         CountOperation operation = new CountOperation(namespace)
-                                   .criteria(asBson(model.getCriteria()))
-                                   .skip(model.getSkip())
-                                   .limit(model.getLimit())
-                                   .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS);
-        if (model.getHint() != null) {
-            operation.hint(asBson(model.getHint()));
-        } else if (model.getHintString() != null) {
-            operation.hint(new BsonString(model.getHintString()));
+                                   .criteria(asBson(model.getOptions().getCriteria()))
+                                   .skip(model.getOptions().getSkip())
+                                   .limit(model.getOptions().getLimit())
+                                   .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
+        if (model.getOptions().getHint() != null) {
+            operation.hint(asBson(model.getOptions().getHint()));
+        } else if (model.getOptions().getHintString() != null) {
+            operation.hint(new BsonString(model.getOptions().getHintString()));
         }
         return operation;
     }
 
     private <C> AggregateOperation<C> createAggregateOperation(final AggregateModel model, final Decoder<C> decoder,
-                                                                  final List<BsonDocument> aggregateList) {
+                                                               final List<BsonDocument> aggregateList) {
         return new AggregateOperation<C>(namespace, aggregateList, decoder)
-               .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS)
-               .allowDiskUse(model.getAllowDiskUse())
-               .batchSize(model.getBatchSize())
-               .useCursor(model.getUseCursor());
+               .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
+               .allowDiskUse(model.getOptions().getAllowDiskUse())
+               .batchSize(model.getOptions().getBatchSize())
+               .useCursor(model.getOptions().getUseCursor());
     }
 
     private <D> List<BsonDocument> createBsonDocumentList(final List<D> pipeline) {

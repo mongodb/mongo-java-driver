@@ -16,8 +16,6 @@
 
 package com.mongodb.client.model;
 
-import java.util.concurrent.TimeUnit;
-
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -28,8 +26,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public class DistinctModel implements ExplainableModel {
     private final String fieldName;
-    private Object criteria;
-    private long maxTimeMS;
+    private final DistinctOptions options;
 
     /**
      * Construct a new instance.
@@ -37,7 +34,18 @@ public class DistinctModel implements ExplainableModel {
      * @param fieldName the non-null field name to get the distinct values of
      */
     public DistinctModel(final String fieldName) {
+        this(fieldName, new DistinctOptions());
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param fieldName the non-null field name to get the distinct values of
+     * @param options the options
+     */
+    public DistinctModel(final String fieldName, final DistinctOptions options) {
         this.fieldName = notNull("fieldName", fieldName);
+        this.options = notNull("options", options);
     }
 
     /**
@@ -50,49 +58,11 @@ public class DistinctModel implements ExplainableModel {
     }
 
     /**
-     * Gets the query criteria.
+     * Gets the options to apply.
      *
-     * @return the query criteria
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     * @return the options
      */
-    public Object getCriteria() {
-        return criteria;
-    }
-
-    /**
-     * Sets the criteria to apply to the query.
-     *
-     * @param criteria the criteria, which may be null.
-     * @return this
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
-     */
-    public DistinctModel criteria(final Object criteria) {
-        this.criteria = criteria;
-        return this;
-    }
-
-
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     */
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
-    }
-
-    /**
-     * Sets the maximum execution time on the server for this operation.
-     *
-     * @param maxTime  the max time
-     * @param timeUnit the time unit, which may not be null
-     * @return this
-     */
-    public DistinctModel maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
+    public DistinctOptions getOptions() {
+        return options;
     }
 }

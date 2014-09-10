@@ -31,7 +31,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class UpdateManyModel<T> extends WriteModel<T> {
     private final Object criteria;
     private final Object update;
-    private boolean upsert;
+    private final UpdateManyOptions options;
 
     /**
      * Construct a new instance.
@@ -42,8 +42,22 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
      * operators. This can be of any type for which a {@code Codec} is registered
      */
     public UpdateManyModel(final Object criteria, final Object update) {
+        this(criteria, update, new UpdateManyOptions());
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
+     * {@code Codec} is registered
+     * @param update a document describing the update, which may not be null. The update to apply must include only update
+     * operators. This can be of any type for which a {@code Codec} is registered
+     * @param options the options to apply
+     */
+    public UpdateManyModel(final Object criteria, final Object update, final UpdateManyOptions options) {
         this.criteria = notNull("criteria", criteria);
         this.update = notNull("update", update);
+        this.options = notNull("options", options);
     }
 
     /**
@@ -66,22 +80,11 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
     }
 
     /**
-     * Returns true if a new document should be inserted if there are no matches to the query criteria.  The default is false.
+     * Gets the options to apply.
      *
-     * @return true if a new document should be inserted if there are no matches to the query criteria
+     * @return the options
      */
-    public boolean isUpsert() {
-        return upsert;
-    }
-
-    /**
-     * Set to true if a new document should be inserted if there are no matches to the query criteria.
-     *
-     * @param upsert true if a new document should be inserted if there are no matches to the query criteria
-     * @return this
-     */
-    public UpdateManyModel<T> upsert(final boolean upsert) {
-        this.upsert = upsert;
-        return this;
+    public UpdateManyOptions getOptions() {
+        return options;
     }
 }

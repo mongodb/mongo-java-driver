@@ -28,18 +28,31 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class ReplaceOneModel<T> extends WriteModel<T> {
     private final Object criteria;
     private final T replacement;
-    private boolean upsert;
+    private final ReplaceOneOptions options;
 
     /**
      * Construct a new instance.
      *
-     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
-     * {@code Codec} is registered
+     * @param criteria    a document describing the query criteria, which may not be null. This can be of any type for which a {@code Codec}
+     *                    is registered
      * @param replacement the replacement document
      */
     public ReplaceOneModel(final Object criteria, final T replacement) {
+        this(criteria, replacement, new ReplaceOneOptions());
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param criteria    a document describing the query criteria, which may not be null. This can be of any type for which a {@code Codec}
+     *                    is registered
+     * @param replacement the replacement document
+     * @param options     the options to apply
+     */
+    public ReplaceOneModel(final Object criteria, final T replacement, final ReplaceOneOptions options) {
         this.criteria = notNull("criteria", criteria);
         this.replacement = notNull("replacement", replacement);
+        this.options = notNull("options", options);
     }
 
     /**
@@ -61,22 +74,11 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
     }
 
     /**
-     * Returns true if a new document should be inserted if there are no matches to the query criteria.  The default is false.
+     * Gets the options to apply.
      *
-     * @return true if a new document should be inserted if there are no matches to the query criteria
+     * @return the options
      */
-    public boolean isUpsert() {
-        return upsert;
-    }
-
-    /**
-     * Set to true if a new document should be inserted if there are no matches to the query criteria.
-     *
-     * @param upsert true if a new document should be inserted if there are no matches to the query criteria
-     * @return this
-     */
-    public ReplaceOneModel<T> upsert(final boolean upsert) {
-        this.upsert = upsert;
-        return this;
+    public ReplaceOneOptions getOptions() {
+        return options;
     }
 }

@@ -26,17 +26,35 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public class FindOneAndDeleteModel {
     private final Object criteria;
-    private Object projection;
-    private Object sort;
+    private final FindOneAndDeleteOptions options;
 
     /**
      * Construct a new instance
      *
      * @param criteria the query criteria. This can be of any type for which a {@code Codec} is registered.
-     * @mongodb.driver.manual manual/reference/command/findAndModify/
      */
     public FindOneAndDeleteModel(final Object criteria) {
+        this(criteria, new FindOneAndDeleteOptions());
+    }
+
+    /**
+     * Construct a new instance
+     *
+     * @param criteria the query criteria. This can be of any type for which a {@code Codec} is registered.
+     * @param options the options to apply
+     */
+    public FindOneAndDeleteModel(final Object criteria, final FindOneAndDeleteOptions options) {
         this.criteria = notNull("criteria", criteria);
+        this.options = notNull("options", options);
+    }
+
+    /**
+     * Gets the options to apply.
+     *
+     * @return the options
+     */
+    public FindOneAndDeleteOptions getOptions() {
+        return options;
     }
 
     /**
@@ -46,52 +64,5 @@ public class FindOneAndDeleteModel {
      */
     public Object getCriteria() {
         return criteria;
-    }
-
-    /**
-     * Gets a document describing the fields to return for all matching documents.
-     *
-     * @return the project document, which may be null
-     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
-     */
-    public Object getProjection() {
-        return projection;
-    }
-
-    /**
-     * Sets a document describing the fields to return for all matching documents.
-     *
-     * @param projection the project document, which may be null. This can be of any type for which a
-     * {@code Codec} is registered
-     * @return this
-     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
-     */
-    public FindOneAndDeleteModel projection(final Object projection) {
-        this.projection = projection;
-        return this;
-    }
-
-    /**
-     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
-     * order.
-     *
-     * @return a document describing the sort criteria
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
-     */
-    public Object getSort() {
-        return sort;
-    }
-
-    /**
-     * Sets the sort criteria to apply to the query.
-     *
-     * @param sort the sort criteria, which may be null. This can be of any type for which a
-     * {@code Codec} is registered
-     * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
-     */
-    public FindOneAndDeleteModel sort(final Object sort) {
-        this.sort = sort;
-        return this;
     }
 }

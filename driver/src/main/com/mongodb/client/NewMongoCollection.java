@@ -19,21 +19,21 @@ package com.mongodb.client;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.client.model.AggregateModel;
-import com.mongodb.client.model.BulkWriteModel;
-import com.mongodb.client.model.CountModel;
-import com.mongodb.client.model.DeleteManyModel;
-import com.mongodb.client.model.DeleteOneModel;
-import com.mongodb.client.model.DistinctModel;
+import com.mongodb.client.model.AggregateOptions;
+import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.DistinctOptions;
 import com.mongodb.client.model.ExplainableModel;
-import com.mongodb.client.model.FindModel;
-import com.mongodb.client.model.FindOneAndDeleteModel;
-import com.mongodb.client.model.FindOneAndReplaceModel;
-import com.mongodb.client.model.FindOneAndUpdateModel;
-import com.mongodb.client.model.InsertManyModel;
-import com.mongodb.client.model.ReplaceOneModel;
-import com.mongodb.client.model.UpdateManyModel;
+import com.mongodb.client.model.FindOneAndDeleteOptions;
+import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.FindOptions;
+import com.mongodb.client.model.InsertManyOptions;
+import com.mongodb.client.model.ReplaceOneOptions;
+import com.mongodb.client.model.UpdateManyOptions;
 import com.mongodb.client.model.UpdateOneModel;
+import com.mongodb.client.model.UpdateOneOptions;
+import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.mongodb.BulkWriteResult;
@@ -65,70 +65,138 @@ public interface NewMongoCollection<T> {
     MongoCollectionOptions getOptions();
 
     /**
-     * Counts the number of documents in the collection according to the given model.
+     * Counts the number of documents in the collection.
      *
-     * @param model the model describing the count
      * @return the number of documents in the collection
      */
-     long count(CountModel model);
+     long count();
+
+    /**
+     * Counts the number of documents in the collection according to the given options.
+     *
+     * @param options the options describing the count
+     * @return the number of documents in the collection
+     */
+    long count(CountOptions options);
 
     /**
      * Gets the distinct values of the specified field name.
      *
-     * @param model the model describing the distinct operation
-     * @return a non-null list of distict values
+     * @param fieldName the field name
+     * @return a non-null list of distinct values
      * @mongodb.driver.manual manual/reference/command/distinct/ Distinct
      */
-     List<Object> distinct(DistinctModel model);
+     List<Object> distinct(String fieldName);
 
     /**
-     * Finds documents according to the specified criteria.
+     * Gets the distinct values of the specified field name.
      *
-     * @param model the model describing the find operation
+     * @param fieldName the field name
+     * @return a non-null list of distinct values
+     * @mongodb.driver.manual manual/reference/command/distinct/ Distinct
+     */
+    List<Object> distinct(String fieldName, DistinctOptions options);
+
+    /**
+     * Finds all documents in the collection.
+     *
      * @return an iterable containing the result of the find operation
      * @mongodb.driver.manual manual/tutorial/query-documents/ Find
      */
-     MongoIterable<T> find(FindModel model);
+    MongoIterable<T> find();
 
     /**
-     * Finds documents according to the specified criteria.
+     * Finds all documents in the collection.
      *
-     * @param model the model describing the find operation
      * @param clazz the class to decode each document into
      * @return an iterable containing the result of the find operation
      * @mongodb.driver.manual manual/tutorial/query-documents/ Find
      */
-    <C> MongoIterable<C> find(FindModel model, Class<C> clazz);
+    <C> MongoIterable<C> find(final Class<C> clazz);
+
+    /**
+     * Finds documents in the collection according to the specified options.
+     *
+     * @param findOptions the options to apply to the find operation
+     * @return an iterable containing the result of the find operation
+     * @mongodb.driver.manual manual/tutorial/query-documents/ Find
+     */
+     MongoIterable<T> find(FindOptions findOptions);
+
+    /**
+     * Finds documents according to the specified criteria.
+     *
+     * @param findOptions the options describing the find operation
+     * @param clazz the class to decode each document into
+     * @return an iterable containing the result of the find operation
+     * @mongodb.driver.manual manual/tutorial/query-documents/ Find
+     */
+    <C> MongoIterable<C> find(FindOptions findOptions, Class<C> clazz);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.
      *
-     * @param model the model describing the aggregate operation
+     * @param pipeline the aggregate pipeline
      * @return an iterable containing the result of the find operation
      * @mongodb.driver.manual manual/aggregation/ Aggregation
      * @mongodb.server.release 2.2
      */
-     MongoIterable<Document> aggregate(AggregateModel model);
+    MongoIterable<Document> aggregate(List<?> pipeline);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.
      *
-     * @param model the model describing the aggregate operation
+     * @param pipeline the aggregate pipeline
      * @param clazz the class to decode each document into
      * @return an iterable containing the result of the find operation
      * @mongodb.driver.manual manual/aggregation/ Aggregation
      * @mongodb.server.release 2.2
      */
-    <C> MongoIterable<C> aggregate(AggregateModel model, Class<C> clazz);
+    <C> MongoIterable<C> aggregate(List<?> pipeline, Class<C> clazz);
 
     /**
+     * Aggregates documents according to the specified aggregation pipeline.
      *
-     * @param model additional options to apply to the bulk write
+     * @param pipeline the aggregate pipeline
+     * @param options the options to apply to the aggregation operation
+     * @return an iterable containing the result of the find operation
+     * @mongodb.driver.manual manual/aggregation/ Aggregation
+     * @mongodb.server.release 2.2
+     */
+    MongoIterable<Document> aggregate(List<?> pipeline, AggregateOptions options);
+
+    /**
+     * Aggregates documents according to the specified aggregation pipeline.
+     *
+     * @param pipeline the aggregate pipeline
+     * @param options the options to apply to the aggregation operation
+     * @param clazz the class to decode each document into
+     * @return an iterable containing the result of the find operation
+     * @mongodb.driver.manual manual/aggregation/ Aggregation
+     * @mongodb.server.release 2.2
+     */
+    <C> MongoIterable<C> aggregate(List<?> pipeline, AggregateOptions options, Class<C> clazz);
+
+    /**
+     * Executes a mix of inserts, updates, replaces, and deletes.
+     *
+     * @param requests the writes to execute
      * @throws com.mongodb.BulkWriteException
      * @throws com.mongodb.MongoException
      * @return the result of the bulk write
      */
-     BulkWriteResult bulkWrite(BulkWriteModel<? extends T> model);
+    BulkWriteResult bulkWrite(List<? extends WriteModel<? extends T>> requests);
+
+    /**
+     * Executes a mix of inserts, updates, replaces, and deletes.
+     *
+     * @param requests the writes to execute
+     * @param options the options to apply to the bulk write operation
+     * @throws com.mongodb.BulkWriteException
+     * @throws com.mongodb.MongoException
+     * @return the result of the bulk write
+     */
+    BulkWriteResult bulkWrite(List<? extends WriteModel<? extends T>> requests, BulkWriteOptions options);
 
     /**
      * Inserts the provided document. If the document is missing an identifier,
@@ -146,39 +214,91 @@ public interface NewMongoCollection<T> {
      * a server < 2.6, using this method will be faster due to constraints
      * in the bulk API related to error handling.
      *
-     * @param model the model describing the insert
+     * @param documents the documents to insert
      * @throws com.mongodb.DuplicateKeyException
      * @throws com.mongodb.MongoException
      */
-    void insertMany(InsertManyModel<T> model);
+    void insertMany(List<? extends T> documents);
 
     /**
-     * Removes at most one document from the collection that matches the given query filter.  If no documents match,
+     * Inserts a batch of documents. The preferred way to perform bulk
+     * inserts is to use the BulkWrite API. However, when talking with
+     * a server < 2.6, using this method will be faster due to constraints
+     * in the bulk API related to error handling.
+     *
+     * @param documents the documents to insert
+     * @param options the options to apply to the operation
+     * @throws com.mongodb.DuplicateKeyException
+     * @throws com.mongodb.MongoException
+     */
+    void insertMany(List<? extends T> documents, InsertManyOptions options);
+
+    /**
+     * Removes at most one document from the collection that matches the given criteria.  If no documents match,
      * the collection is not modified.
      *
-     * @param model the model describing the remove
+     * @param criteria the query criteria to apply the the delete operation
      * @return the result of the remove one operation
      * @throws com.mongodb.MongoException
      */
-     DeleteResult deleteOne(DeleteOneModel<T> model);
+     DeleteResult deleteOne(Object criteria);
 
     /**
-     * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
+     * Removes all documents from the collection that match the given criteria.  If no documents match, the collection is not modified.
      *
-     * @param model the model describing the remove
+     * @param criteria the query criteria to apply the the delete operation
      * @return the result of the remove many operation
      * @throws com.mongodb.MongoException
      */
-     DeleteResult deleteMany(DeleteManyModel<T> model);
+     DeleteResult deleteMany(Object criteria);
 
     /**
      * Replace a document in the collection according to the specified arguments.
      *
-     * @param model the model describing the replace
      * @return the result of the replace one operation
      * @mongodb.driver.manual manual/tutorial/modify-documents/#replace-the-document Replace
+     * @param criteria the query criteria to apply the the replace operation
+     * @param replacement the replacement document
      */
-     UpdateResult replaceOne(ReplaceOneModel<T> model);
+    UpdateResult replaceOne(Object criteria, T replacement);
+
+    /**
+     * Replace a document in the collection according to the specified arguments.
+     *
+     * @return the result of the replace one operation
+     * @mongodb.driver.manual manual/tutorial/modify-documents/#replace-the-document Replace
+     * @param criteria the query criteria to apply the the replace operation
+     * @param replacement the replacement document
+     * @param options the options to apply to the replace operation
+     */
+    UpdateResult replaceOne(Object criteria, T replacement, ReplaceOneOptions options);
+
+     /**
+     * Update a single document in the collection according to the specified arguments.
+     *
+     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
+     * {@code Codec} is registered
+     * @param update a document describing the update, which may not be null. The update to apply must include only update
+     * operators. This can be of any type for which a {@code Codec} is registered
+     * @return the result of the update one operation
+     * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
+     */
+    UpdateResult updateOne(Object criteria, Object update);
+
+    /**
+     * Update a single document in the collection according to the specified arguments.
+     *
+     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
+     * {@code Codec} is registered
+     * @param update a document describing the update, which may not be null. The update to apply must include only update
+     * operators. This can be of any type for which a {@code Codec} is registered
+     * @param options the options to apply to the update operation
+     * @return the result of the update one operation
+     * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
+     */
+    UpdateResult updateOne(Object criteria, Object update, UpdateOneOptions options);
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -191,42 +311,98 @@ public interface NewMongoCollection<T> {
      UpdateResult updateOne(UpdateOneModel<T> model);
 
     /**
-     * Update all documents in the collection according to the specified arguments.
+     * Update a single document in the collection according to the specified arguments.
      *
-     * @param model the model describing the update
-     * @return the result of the update many operation
+     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
+     * {@code Codec} is registered
+     * @param update a document describing the update, which may not be null. The update to apply must include only update
+     * operators. This can be of any type for which a {@code Codec} is registered
+     * @return the result of the update one operation
      * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
      * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
      */
-     UpdateResult updateMany(UpdateManyModel<T> model);
+    UpdateResult updateMany(Object criteria, Object update);
+
+    /**
+     * Update a single document in the collection according to the specified arguments.
+     *
+     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
+     * {@code Codec} is registered
+     * @param update a document describing the update, which may not be null. The update to apply must include only update
+     * operators. This can be of any type for which a {@code Codec} is registered
+     * @param options the options to apply to the update operation
+     * @return the result of the update one operation
+     * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
+     */
+    UpdateResult updateMany(Object criteria, Object update, UpdateManyOptions options);
 
     /**
      * Atomically find a document and remove it.
      *
-     * @param model the model describing the find one and remove
+     * @param criteria the query criteria to find the document with
      * @return the document that was removed.  If no documents matched the criteria, then null will be returned
      */
-     T findOneAndDelete(FindOneAndDeleteModel model);
+    T findOneAndDelete(Object criteria);
+
+    /**
+     * Atomically find a document and remove it.
+     *
+     * @param criteria the query criteria to find the document with
+     * @param options the options to apply to the operation
+     * @return the document that was removed.  If no documents matched the criteria, then null will be returned
+     */
+    T findOneAndDelete(Object criteria, FindOneAndDeleteOptions options);
 
     /**
      * Atomically find a document and replace it.
      *
-     * @param model the model describing the find one and replace
+     * @param criteria the query criteria to apply the the replace operation
+     * @param replacement the replacement document
      * @return the document that was replaced.  Depending on the value of the {@code returnReplaced} property,
      * this will either be the document as it was before the update or as it is after the update.  If no documents matched the criteria,
      * then null will be returned
      */
-     T findOneAndReplace(FindOneAndReplaceModel<T> model);
+    T findOneAndReplace(Object criteria, T replacement);
+
+    /**
+     * Atomically find a document and replace it.
+     *
+     * @param criteria the query criteria to apply the the replace operation
+     * @param replacement the replacement document
+     * @param options the options to apply to the operation
+     * @return the document that was replaced.  Depending on the value of the {@code returnReplaced} property,
+     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the criteria,
+     * then null will be returned
+     */
+    T findOneAndReplace(Object criteria, T replacement, FindOneAndReplaceOptions options);
 
     /**
      * Atomically find a document and update it.
      *
-     * @param model the model describing the find one and update
+     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
+     * {@code Codec} is registered
+     * @param update a document describing the update, which may not be null. The update to apply must include only update
+     * operators. This can be of any type for which a {@code Codec} is registered
      * @return the document that was updated.  Depending on the value of the {@code returnUpdated} property,
      * this will either be the document as it was before the update or as it is after the update.  If no documents matched the criteria,
      * then null will be returned
      */
-     T findOneAndUpdate(FindOneAndUpdateModel model);
+    T findOneAndUpdate(Object criteria, Object update);
+
+    /**
+     * Atomically find a document and update it.
+     *
+     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
+     * {@code Codec} is registered
+     * @param update a document describing the update, which may not be null. The update to apply must include only update
+     * operators. This can be of any type for which a {@code Codec} is registered
+     * @param options the options to apply to the operation
+     * @return the document that was updated.  Depending on the value of the {@code returnUpdated} property,
+     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the criteria,
+     * then null will be returned
+     */
+    T findOneAndUpdate(Object criteria, Object update, FindOneAndUpdateOptions options);
 
     /**
      * Explain the specified operation with the specified verbosity.

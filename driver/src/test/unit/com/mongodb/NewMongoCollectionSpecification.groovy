@@ -18,20 +18,24 @@ package com.mongodb
 
 import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.AggregateModel
-import com.mongodb.client.model.BulkWriteModel
-import com.mongodb.client.model.CountModel
+import com.mongodb.client.model.AggregateOptions
+import com.mongodb.client.model.BulkWriteOptions
+import com.mongodb.client.model.CountOptions
 import com.mongodb.client.model.DeleteManyModel
 import com.mongodb.client.model.DeleteOneModel
-import com.mongodb.client.model.DistinctModel
-import com.mongodb.client.model.FindModel
-import com.mongodb.client.model.FindOneAndDeleteModel
-import com.mongodb.client.model.FindOneAndReplaceModel
-import com.mongodb.client.model.FindOneAndUpdateModel
-import com.mongodb.client.model.InsertManyModel
+import com.mongodb.client.model.DistinctOptions
+import com.mongodb.client.model.FindOneAndDeleteOptions
+import com.mongodb.client.model.FindOneAndReplaceOptions
+import com.mongodb.client.model.FindOneAndUpdateOptions
+import com.mongodb.client.model.FindOptions
+import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.ReplaceOneModel
+import com.mongodb.client.model.ReplaceOneOptions
 import com.mongodb.client.model.UpdateManyModel
+import com.mongodb.client.model.UpdateManyOptions
 import com.mongodb.client.model.UpdateOneModel
+import com.mongodb.client.model.UpdateOneOptions
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.codecs.DocumentCodecProvider
 import com.mongodb.operation.AggregateOperation
@@ -119,16 +123,25 @@ class NewMongoCollectionSpecification extends Specification {
 
     def 'insertMany should use InsertOperation properly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(2, false, null)])
+        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(2, false, null),
+                                                  new AcknowledgedWriteResult(2, false, null)])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        collection.insertMany(new InsertManyModel<Document>([new Document('_id', 1), new Document('_id', 2)]));
+        collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(false));
 
         then:
         def operation = executor.getWriteOperation() as InsertOperation
         operation.insertRequests[0].document == new BsonDocument('_id', new BsonInt32(1))
         operation.insertRequests[1].document == new BsonDocument('_id', new BsonInt32(2))
+        !operation.ordered
+
+        when:
+        collection.insertMany([new Document('_id', 1), new Document('_id', 2)], new InsertManyOptions().ordered(false));
+
+        then:
+        def operation2 = executor.getWriteOperation() as InsertOperation
+        !operation2.ordered
     }
 
     def 'insertMany should add _id to documents'() {
@@ -138,7 +151,7 @@ class NewMongoCollectionSpecification extends Specification {
 
         def documents = [new Document(), new Document()]
         when:
-        collection.insertMany(new InsertManyModel<Document>(documents));
+        collection.insertMany(documents);
 
         then:
         documents[0].containsKey('_id')
@@ -154,9 +167,9 @@ class NewMongoCollectionSpecification extends Specification {
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        def result = collection.replaceOne(new ReplaceOneModel<>(new Document('_id', 1),
-                                                                 new Document('color', 'blue'))
-                                                   .upsert(true))
+        def result = collection.replaceOne(new Document('_id', 1),
+                                           new Document('color', 'blue'),
+                                           new ReplaceOneOptions().upsert(true))
 
         then:
         def operation = executor.getWriteOperation() as ReplaceOperation
@@ -178,9 +191,9 @@ class NewMongoCollectionSpecification extends Specification {
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        def result = collection.updateOne(new UpdateOneModel<>(new Document('_id', 1),
-                                                               new Document('$set', new Document('color', 'blue')))
-                                                  .upsert(true))
+        def result = collection.updateOne(new Document('_id', 1),
+                                          new Document('$set', new Document('color', 'blue')),
+                                          new UpdateOneOptions().upsert(true))
 
         then:
         def operation = executor.getWriteOperation() as UpdateOperation
@@ -202,9 +215,9 @@ class NewMongoCollectionSpecification extends Specification {
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        def result = collection.updateMany(new UpdateManyModel<>(new Document('_id', 1),
-                                                                 new Document('$set', new Document('color', 'blue')))
-                                                   .upsert(true))
+        def result = collection.updateMany(new Document('_id', 1),
+                                           new Document('$set', new Document('color', 'blue')),
+                                           new UpdateManyOptions().upsert(true))
 
         then:
         def operation = executor.getWriteOperation() as UpdateOperation
@@ -226,7 +239,7 @@ class NewMongoCollectionSpecification extends Specification {
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        def result = collection.deleteOne(new DeleteOneModel<>(new Document('_id', 1)));
+        def result = collection.deleteOne(new Document('_id', 1));
 
         then:
         def operation = executor.getWriteOperation() as RemoveOperation
@@ -244,7 +257,7 @@ class NewMongoCollectionSpecification extends Specification {
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        def result = collection.deleteMany(new DeleteManyModel<>(new Document('_id', 1)));
+        def result = collection.deleteMany(new Document('_id', 1));
 
         then:
         def operation = executor.getWriteOperation() as RemoveOperation
@@ -266,16 +279,17 @@ class NewMongoCollectionSpecification extends Specification {
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        def model = new FindModel().criteria(new Document('cold', true))
-                                   .batchSize(4)
-                                   .maxTime(1, TimeUnit.SECONDS)
-                                   .skip(5)
-                                   .limit(100)
-                                   .modifiers(new Document('$hint', 'i1'))
-                                   .projection(new Document('x', 1))
-                                   .sort(new Document('y', 1))
+        def options = new FindOptions()
+                .criteria(new Document('cold', true))
+                .batchSize(4)
+                .maxTime(1, TimeUnit.SECONDS)
+                .skip(5)
+                .limit(100)
+                .modifiers(new Document('$hint', 'i1'))
+                .projection(new Document('x', 1))
+                .sort(new Document('y', 1))
 
-        def result = collection.find(model).into([])
+        def result = collection.find(options).into([])
 
         then:
         def operation = executor.getReadOperation() as QueryOperation
@@ -293,15 +307,16 @@ class NewMongoCollectionSpecification extends Specification {
         executor.readPreference == secondary()
         result == [document]
 
-        when: 'all the boolean properties are enabled'
-        model = new FindModel().awaitData(true)
-                               .exhaust(true)
-                               .noCursorTimeout(true)
-                               .partial(true)
-                               .tailable(true)
-                               .oplogReplay(true)
+        when:
+        'all the boolean properties are enabled'
+        options = new FindOptions().awaitData(true)
+                                   .exhaust(true)
+                                   .noCursorTimeout(true)
+                                   .partial(true)
+                                   .tailable(true)
+                                   .oplogReplay(true)
 
-        collection.find(model).into([])
+        collection.find(options).into([])
 
         then: 'cursor flags contains all flags'
         def operation2 = executor.getReadOperation() as QueryOperation
@@ -314,14 +329,12 @@ class NewMongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([42L])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
-        def model = new CountModel().criteria(new Document('cold', true))
-                                    .maxTime(1, TimeUnit.SECONDS)
-                                    .skip(5)
-                                    .limit(100)
-                                    .hint(new Document('x', 1))
-
         when:
-        def result = collection.count(model)
+        def result = collection.count(new CountOptions().criteria(new Document('cold', true))
+                                                        .maxTime(1, TimeUnit.SECONDS)
+                                                        .skip(5)
+                                                        .limit(100)
+                                                        .hint(new Document('x', 1)))
 
         then:
         def operation = executor.getReadOperation() as CountOperation
@@ -337,12 +350,10 @@ class NewMongoCollectionSpecification extends Specification {
     def 'count should use CountOperation properly with hint string'() {
         given:
         def executor = new TestOperationExecutor([42L])
-        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-        def model = new CountModel().hintString('idx1')
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, this.options, executor)
 
         when:
-        collection.count(model)
+        collection.count(new CountOptions().hintString('idx1'))
 
         then:
         def operation = executor.getReadOperation() as CountOperation
@@ -354,11 +365,10 @@ class NewMongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([new BsonArray(Arrays.asList(new BsonString('foo'), new BsonInt32(42)))])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
-        def model = new DistinctModel('fieldName1').criteria(new Document('cold', true))
-                                                   .maxTime(1, TimeUnit.SECONDS)
-
         when:
-        def result = collection.distinct(model)
+        def result = collection.distinct('fieldName1',
+                                         new DistinctOptions().criteria(new Document('cold', true))
+                                                              .maxTime(1, TimeUnit.SECONDS))
 
         then:
         def operation = executor.getReadOperation() as DistinctOperation
@@ -375,19 +385,19 @@ class NewMongoCollectionSpecification extends Specification {
         def document = new Document();
 
         when:
-        collection.bulkWrite(new BulkWriteModel<>([new InsertOneModel<>(document),
-                                                   new UpdateOneModel<>(new Document('_id', 1),
-                                                                        new Document('$set', new Document('color', 'blue')))
-                                                           .upsert(true),
-                                                   new UpdateManyModel<>(new Document('_id', 1),
-                                                                         new Document('$set', new Document('color', 'blue')))
-                                                           .upsert(true),
-                                                   new ReplaceOneModel<>(new Document('_id', 1),
-                                                                         new Document('color', 'blue'))
-                                                           .upsert(true),
-                                                   new DeleteOneModel<>(new Document('_id', 1)),
-                                                   new DeleteManyModel<>(new Document('_id', 1))])
-                                     .ordered(false))
+        collection.bulkWrite([new InsertOneModel<>(document),
+                              new UpdateOneModel<>(new Document('_id', 1),
+                                                   new Document('$set', new Document('color', 'blue')),
+                                                   new UpdateOneOptions().upsert(true)),
+                              new UpdateManyModel<>(new Document('_id', 1),
+                                                    new Document('$set', new Document('color', 'blue')),
+                                                    new UpdateManyOptions().upsert(true)),
+                              new ReplaceOneModel<>(new Document('_id', 1),
+                                                    new Document('color', 'blue'),
+                                                    new ReplaceOneOptions().upsert(true)),
+                              new DeleteOneModel<>(new Document('_id', 1)),
+                              new DeleteManyModel<>(new Document('_id', 1))],
+                             new BulkWriteOptions().ordered(false))
 
 
         then:
@@ -432,7 +442,7 @@ class NewMongoCollectionSpecification extends Specification {
         def document = new Document();
 
         when:
-        collection.bulkWrite(new BulkWriteModel<>([new InsertOneModel<>(document),]))
+        collection.bulkWrite([new InsertOneModel<>(document)])
 
 
         then:
@@ -448,14 +458,12 @@ class NewMongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
-        def model = new AggregateModel([new Document('$match', new Document('job', 'plumber'))])
-                .allowDiskUse(true)
-                .batchSize(10)
-                .maxTime(1, TimeUnit.SECONDS)
-                .useCursor(true)
-
         when:
-        def result = collection.aggregate(model).into([])
+        def result = collection.aggregate([new Document('$match', new Document('job', 'plumber'))],
+                                          new AggregateOptions().allowDiskUse(true)
+                                                                .batchSize(10)
+                                                                .maxTime(1, TimeUnit.SECONDS)
+                                                                .useCursor(true)).into([])
 
         then:
         def operation = executor.getReadOperation() as AggregateOperation
@@ -477,11 +485,11 @@ class NewMongoCollectionSpecification extends Specification {
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         def model = new AggregateModel([new Document('$match', new Document('job', 'plumber')),
-                                        new Document('$out', 'outCollection')])
-                .allowDiskUse(true)
-                .batchSize(10)
-                .maxTime(1, TimeUnit.SECONDS)
-                .useCursor(true)
+                                        new Document('$out', 'outCollection')],
+                                       new AggregateOptions().allowDiskUse(true)
+                                                             .batchSize(10)
+                                                             .maxTime(1, TimeUnit.SECONDS)
+                                                             .useCursor(true))
 
         when:
         def result = collection.aggregate(model).into([])
@@ -507,12 +515,11 @@ class NewMongoCollectionSpecification extends Specification {
         def returnedDocument = new Document('_id', 1).append('cold', true)
         def executor = new TestOperationExecutor([returnedDocument])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
-        def model = new FindOneAndDeleteModel(new Document('cold', true))
-                .projection(new Document('field', 1))
-                .sort(new Document('sort', -1))
 
         when:
-        def result = collection.findOneAndDelete(model)
+        def result = collection.findOneAndDelete(new Document('cold', true),
+                                                 new FindOneAndDeleteOptions().projection(new Document('field', 1))
+                                                                              .sort(new Document('sort', -1)))
 
         then:
         def operation = executor.getWriteOperation() as FindAndRemoveOperation
@@ -528,12 +535,11 @@ class NewMongoCollectionSpecification extends Specification {
         def returnedDocument = new Document('_id', 1).append('cold', true)
         def executor = new TestOperationExecutor([returnedDocument, returnedDocument])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
-        def model = new FindOneAndReplaceModel(new Document('cold', true), new Document('hot', false))
-                .projection(new Document('field', 1))
-                .sort(new Document('sort', -1))
 
         when:
-        def result = collection.findOneAndReplace(model)
+        def result = collection.findOneAndReplace(new Document('cold', true), new Document('hot', false),
+                                                  new FindOneAndReplaceOptions().projection(new Document('field', 1))
+                                                                                .sort(new Document('sort', -1)))
 
         then:
         def operation = executor.getWriteOperation() as FindAndReplaceOperation
@@ -547,8 +553,11 @@ class NewMongoCollectionSpecification extends Specification {
         result == returnedDocument
 
         when:
-        model.upsert(true).returnReplaced(true)
-        collection.findOneAndReplace(model)
+        collection.findOneAndReplace(new Document('cold', true), new Document('hot', false),
+                                     new FindOneAndReplaceOptions().projection(new Document('field', 1))
+                                                                   .sort(new Document('sort', -1))
+                                                                   .upsert(true)
+                                                                   .returnReplaced(true))
 
         then:
         def operation2 = executor.getWriteOperation() as FindAndReplaceOperation
@@ -561,12 +570,11 @@ class NewMongoCollectionSpecification extends Specification {
         def returnedDocument = new Document('_id', 1).append('cold', true)
         def executor = new TestOperationExecutor([returnedDocument, returnedDocument])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
-        def model = new FindOneAndUpdateModel(new Document('cold', true), new Document('hot', false))
-                .projection(new Document('field', 1))
-                .sort(new Document('sort', -1))
 
         when:
-        def result = collection.findOneAndUpdate(model)
+        def result = collection.findOneAndUpdate(new Document('cold', true), new Document('hot', false),
+                                                 new FindOneAndUpdateOptions().projection(new Document('field', 1))
+                                                                              .sort(new Document('sort', -1)))
 
         then:
         def operation = executor.getWriteOperation() as FindAndUpdateOperation
@@ -580,8 +588,11 @@ class NewMongoCollectionSpecification extends Specification {
         result == returnedDocument
 
         when:
-        model.upsert(true).returnUpdated(true)
-        collection.findOneAndUpdate(model)
+        collection.findOneAndUpdate(new Document('cold', true), new Document('hot', false),
+                                    new FindOneAndUpdateOptions().projection(new Document('field', 1))
+                                                                 .sort(new Document('sort', -1))
+                                                                 .upsert(true)
+                                                                 .returnUpdated(true))
 
         then:
         def operation2 = executor.getWriteOperation() as FindAndUpdateOperation

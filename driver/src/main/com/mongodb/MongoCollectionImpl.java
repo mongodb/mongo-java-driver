@@ -168,14 +168,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private final class MongoCollectionView implements MongoView<T> {
-        private final FindModel findOp;
+        private final FindModel findModelOp;
         private ReadPreference readPreference;
         private WriteConcern writeConcern;
         private boolean limitSet;
         private boolean upsert;
 
         private MongoCollectionView() {
-            findOp = new FindModel();
+            findModelOp = new FindModel();
             writeConcern = getOptions().getWriteConcern();
             readPreference = getOptions().getReadPreference();
         }
@@ -187,12 +187,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoView<T> find(final Document filter) {
-            findOp.criteria(new BsonDocumentWrapper<Document>(filter, getDocumentCodec()));
+            findModelOp.getOptions().criteria(new BsonDocumentWrapper<Document>(filter, getDocumentCodec()));
             return this;
         }
 
         MongoView<T> find(final BsonDocument filter) {
-            findOp.criteria(filter);
+            findModelOp.getOptions().criteria(filter);
             return this;
         }
 
@@ -208,13 +208,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoView<T> sort(final Document sortCriteria) {
-            findOp.sort(wrap(sortCriteria));
+            findModelOp.getOptions().sort(wrap(sortCriteria));
             return this;
         }
 
         @Override
         public MongoView<T> fields(final Document selector) {
-            findOp.projection(wrap(selector));
+            findModelOp.getOptions().projection(wrap(selector));
             return this;
         }
 
@@ -231,13 +231,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoView<T> skip(final int skip) {
-            findOp.skip(skip);
+            findModelOp.getOptions().skip(skip);
             return this;
         }
 
         @Override
         public MongoView<T> limit(final int limit) {
-            findOp.limit(limit);
+            findModelOp.getOptions().limit(limit);
             limitSet = true;
             return this;
         }
@@ -261,24 +261,24 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         private QueryOperation<T> createQueryOperation() {
             return new QueryOperation<T>(getNamespace(), getCodec())
-                   .criteria(asBson(findOp.getCriteria()))
-                   .batchSize(findOp.getBatchSize())
-                   .skip(findOp.getSkip())
-                   .limit(findOp.getLimit())
-                   .maxTime(findOp.getMaxTime(MILLISECONDS), MILLISECONDS)
-                   .modifiers(asBson(findOp.getModifiers()))
-                   .projection(asBson(findOp.getProjection()))
-                   .sort(asBson(findOp.getSort()));
+                   .criteria(asBson(findModelOp.getOptions().getCriteria()))
+                   .batchSize(findModelOp.getOptions().getBatchSize())
+                   .skip(findModelOp.getOptions().getSkip())
+                   .limit(findModelOp.getOptions().getLimit())
+                   .maxTime(findModelOp.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
+                   .modifiers(asBson(findModelOp.getOptions().getModifiers()))
+                   .projection(asBson(findModelOp.getOptions().getProjection()))
+                   .sort(asBson(findModelOp.getOptions().getSort()));
         }
 
 
         @Override
         public long count() {
             CountOperation operation = new CountOperation(getNamespace())
-                                       .criteria((BsonDocument) findOp.getCriteria())
-                                       .skip(findOp.getSkip())
-                                       .limit(findOp.getLimit())
-                                       .maxTime(findOp.getMaxTime(MILLISECONDS), MILLISECONDS);
+                                       .criteria((BsonDocument) findModelOp.getOptions().getCriteria())
+                                       .skip(findModelOp.getOptions().getSkip())
+                                       .limit(findModelOp.getOptions().getLimit())
+                                       .maxTime(findModelOp.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
             return execute(operation, readPreference);
         }
 
@@ -286,8 +286,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoIterable<Document> mapReduce(final String map, final String reduce) {
             //TODO: support supplied read preferences?
             MapReduce mapReduce = new MapReduce(new BsonJavaScript(map), new BsonJavaScript(reduce))
-                                  .filter((BsonDocument) findOp.getCriteria())
-                                  .limit(findOp.getLimit());
+                                  .filter((BsonDocument) findModelOp.getOptions().getCriteria())
+                                  .limit(findModelOp.getOptions().getLimit());
 
             if (mapReduce.isInline()) {
                 MapReduceWithInlineResultsOperation<Document> operation =
@@ -372,22 +372,24 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult remove() {
-            RemoveRequest removeRequest = new RemoveRequest((BsonDocument) findOp.getCriteria()).multi(getMultiFromLimit());
+            RemoveRequest removeRequest = new RemoveRequest((BsonDocument) findModelOp.getOptions().getCriteria())
+                                          .multi(getMultiFromLimit());
             return execute(new RemoveOperation(getNamespace(), true, writeConcern, asList(removeRequest)
             ));
         }
 
         @Override
         public WriteResult removeOne() {
-            RemoveRequest removeRequest = new RemoveRequest((BsonDocument) findOp.getCriteria()).multi(false);
+            RemoveRequest removeRequest = new RemoveRequest((BsonDocument) findModelOp.getOptions().getCriteria()).multi(false);
             return execute(new RemoveOperation(getNamespace(), true, writeConcern, asList(removeRequest)
             ));
         }
 
         @Override
         public WriteResult update(final Document updateOperations) {
-            UpdateRequest update = new UpdateRequest((BsonDocument) findOp.getCriteria(), wrap(updateOperations)).upsert(upsert)
-                                                                                                  .multi(getMultiFromLimit());
+            UpdateRequest update = new UpdateRequest((BsonDocument) findModelOp.getOptions().getCriteria(),
+                                                     wrap(updateOperations)).upsert(upsert)
+                                                                            .multi(getMultiFromLimit());
             return execute(new UpdateOperation(getNamespace(), true, writeConcern, asList(update)
             ));
         }
@@ -399,7 +401,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public WriteResult updateOne(final Document updateOperations) {
-            UpdateRequest update = new UpdateRequest((BsonDocument) findOp.getCriteria(), wrap(updateOperations))
+            UpdateRequest update = new UpdateRequest((BsonDocument) findModelOp.getOptions().getCriteria(), wrap(updateOperations))
                                    .upsert(upsert)
                                    .multi(false);
             return execute(new UpdateOperation(getNamespace(), true, writeConcern, asList(update)));
@@ -413,7 +415,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         @SuppressWarnings("unchecked")
         public WriteResult replace(final T replacement) {
-            ReplaceRequest replaceRequest = new ReplaceRequest((BsonDocument) findOp.getCriteria(), asBson(replacement)).upsert(upsert);
+            ReplaceRequest replaceRequest = new ReplaceRequest((BsonDocument) findModelOp.getOptions().getCriteria(),
+                                                               asBson(replacement)).upsert(upsert);
             return execute(new ReplaceOperation(getNamespace(), true, writeConcern, asList(replaceRequest)));
         }
 
@@ -449,9 +452,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         public T updateOneAndGet(final Document updateOperations, final Get beforeOrAfter) {
             FindAndUpdateOperation<T> operation = new FindAndUpdateOperation<T>(getNamespace(), getCodec(), wrap(updateOperations))
-                                                  .criteria((BsonDocument) findOp.getCriteria())
-                                                  .projection((BsonDocument) findOp.getProjection())
-                                                  .sort((BsonDocument) findOp.getSort())
+                                                  .criteria((BsonDocument) findModelOp.getOptions().getCriteria())
+                                                  .projection((BsonDocument) findModelOp.getOptions().getProjection())
+                                                  .sort((BsonDocument) findModelOp.getOptions().getSort())
                                                   .returnUpdated(asBoolean(beforeOrAfter))
                                                   .upsert(upsert);
             return execute(operation);
@@ -460,9 +463,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public T replaceOneAndGet(final T replacement, final Get beforeOrAfter) {
             FindAndReplaceOperation<T> operation = new FindAndReplaceOperation<T>(getNamespace(), getCodec(),
                                                                                   new BsonDocumentWrapper<T>(replacement, getCodec()))
-                                                   .criteria((BsonDocument) findOp.getCriteria())
-                                                   .projection((BsonDocument) findOp.getProjection())
-                                                   .sort((BsonDocument) findOp.getSort())
+                                                   .criteria((BsonDocument) findModelOp.getOptions().getCriteria())
+                                                   .projection((BsonDocument) findModelOp.getOptions().getProjection())
+                                                   .sort((BsonDocument) findModelOp.getOptions().getSort())
                                                    .returnReplaced(asBoolean(beforeOrAfter))
                                                    .upsert(upsert);
             return execute(operation);
@@ -471,9 +474,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public T getOneAndRemove() {
             FindAndRemoveOperation<T> operation = new FindAndRemoveOperation<T>(getNamespace(), getCodec())
-                                                  .criteria((BsonDocument) findOp.getCriteria())
-                                                  .projection((BsonDocument) findOp.getProjection())
-                                                  .sort((BsonDocument) findOp.getSort());
+                                                  .criteria((BsonDocument) findModelOp.getOptions().getCriteria())
+                                                  .projection((BsonDocument) findModelOp.getOptions().getProjection())
+                                                  .sort((BsonDocument) findModelOp.getOptions().getSort());
             return execute(operation);
         }
 
@@ -483,9 +486,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         private boolean getMultiFromLimit() {
             if (limitSet) {
-                if (findOp.getLimit() == 1) {
+                if (findModelOp.getOptions().getLimit() == 1) {
                     return false;
-                } else if (findOp.getLimit() == 0) {
+                } else if (findModelOp.getOptions().getLimit() == 0) {
                     return true;
                 } else {
                     throw new IllegalArgumentException("Update currently only supports a limit of either none or 1");
