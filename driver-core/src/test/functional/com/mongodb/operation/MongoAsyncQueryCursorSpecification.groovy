@@ -194,7 +194,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         getCollectionHelper().insertDocuments(new DocumentCodec(), [_id: 1, ts: timestamp] as Document)
 
         QueryResult<Document> firstBatch = executeQuery([ts: ['$gte': timestamp] as Document ] as Document, 2,
-                                                        EnumSet.of(CursorFlag.Tailable, CursorFlag.AWAIT_DATA), connection)
+                                                        EnumSet.of(CursorFlag.TAILABLE, CursorFlag.AWAIT_DATA), connection)
         TestBlock block = new TestBlock(2)
 
         when:

@@ -26,7 +26,6 @@ import org.bson.BsonString;
 import org.bson.codecs.Decoder;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -134,8 +133,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             throw new IllegalStateException("Cursor has been closed");
         }
 
-        if (find.getFlags(getReadPreference()).contains(QueryFlag.Tailable)) {
-            find.addFlags(EnumSet.of(QueryFlag.AwaitData));
+        if (findModel.getCursorFlags().contains(CursorFlag.TAILABLE)) {
+            findModel.getCursorFlags().add(CursorFlag.AWAIT_DATA);
         }
 
         if (cursor == null) {
@@ -173,7 +172,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @throws MongoException
      */
     public DBObject tryNext() {
-        if (!findModel.getCursorFlags().contains(CursorFlag.Tailable)) {
+        if (!findModel.getCursorFlags().contains(CursorFlag.TAILABLE)) {
             throw new IllegalArgumentException("Can only be used with a tailable cursor");
         }
 

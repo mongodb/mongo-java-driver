@@ -29,10 +29,10 @@ public enum CursorFlag {
      * resume using the cursor later, from where it was located, if more data were received. Like any "latent cursor", the cursor may become
      * invalid at some point (CursorNotFound) – for example if the final object it references were deleted.
      */
-    Tailable(1 << 1),
+    TAILABLE(1 << 1),
 
     /**
-     * When turned on, .
+     * Allow query of replica slave.
      */
     SLAVE_OK(1 << 2),
 

@@ -225,7 +225,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
 
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2,
-                                      EnumSet.of(CursorFlag.Tailable, CursorFlag.AWAIT_DATA))
+                                      EnumSet.of(CursorFlag.TAILABLE, CursorFlag.AWAIT_DATA))
 
         when:
         cursor = new MongoQueryCursor<Document>(getNamespace(),
@@ -269,7 +269,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1))
 
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2,
-                                      EnumSet.of(CursorFlag.Tailable, CursorFlag.AWAIT_DATA))
+                                      EnumSet.of(CursorFlag.TAILABLE, CursorFlag.AWAIT_DATA))
 
         when:
         cursor = new MongoQueryCursor<Document>(getNamespace(),
