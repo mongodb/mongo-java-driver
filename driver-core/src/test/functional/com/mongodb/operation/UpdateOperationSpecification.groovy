@@ -47,11 +47,12 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         thrown(IllegalArgumentException)
     }
 
-    def 'should return correct result for update '() {
+    def 'should update nothing if no documents match'() {
         given:
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
-                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))))))
+                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))))
+                                                    .multi(false)))
 
         when:
         def result = op.execute(getBinding())
@@ -61,17 +62,64 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         result.count == 0
         result.upsertedId == null
         !result.isUpdateOfExisting()
+        getCollectionHelper().count() == 0
+    }
 
+    def 'when multi is false should update one matching document'() {
+        given:
+        getCollectionHelper().insertDocuments(new DocumentCodec(),
+                                              new Document('x', 1),
+                                              new Document('x', 1))
+        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
+                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))))
+                                                    .multi(false)))
         when:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
-        result = op.execute(getBinding())
+        def result = op.execute(getBinding())
 
         then:
         result.wasAcknowledged()
         result.count == 1
         result.upsertedId == null
         result.isUpdateOfExisting()
+        getCollectionHelper().count(new Document('y', 2)) == 1
+   }
 
+    def 'when multi is true should update all matching documents'() {
+        given:
+        getCollectionHelper().insertDocuments(new DocumentCodec(),
+                                              new Document('x', 1),
+                                              new Document('x', 1))
+        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
+                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))))
+                                                    .multi(true)))
+        when:
+        def result = op.execute(getBinding())
+
+        then:
+        result.wasAcknowledged()
+        result.count == 2
+        result.upsertedId == null
+        result.isUpdateOfExisting()
+        getCollectionHelper().count(new Document('y', 2)) == 2
+    }
+
+    def 'when upsert is true should insert a document if there are no matching documents'() {
+        given:
+        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))))
+                                                    .upsert(true)))
+        when:
+        def result = op.execute(getBinding())
+
+        then:
+        result.wasAcknowledged()
+        result.count == 1
+        result.upsertedId == new BsonInt32(1)
+        !result.isUpdateOfExisting()
+        getCollectionHelper().count(new Document('y', 2)) == 1
     }
 
     @Category(Async)
