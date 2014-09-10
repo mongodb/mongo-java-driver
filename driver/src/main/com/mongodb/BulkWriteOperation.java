@@ -21,6 +21,8 @@ import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.isTrue;
+
 /**
  * A bulk write operation.  A bulk write operation consists of an ordered or unordered collection of write requests,
  * which can be any combination of inserts, updates, replaces, or removes.
@@ -35,6 +37,7 @@ public class BulkWriteOperation {
     private final boolean ordered;
     private final DBCollection collection;
     private final List<WriteRequest> requests = new ArrayList<WriteRequest>();
+    private boolean closed;
 
     BulkWriteOperation(final boolean ordered, final DBCollection collection) {
         this.ordered = ordered;
@@ -58,6 +61,7 @@ public class BulkWriteOperation {
      * @param document the document to insert
      */
     public void insert(final DBObject document) {
+        isTrue("already executed", !closed);
         if (document.get(ID_FIELD_NAME) == null) {
             document.put(ID_FIELD_NAME, new ObjectId());
         }
@@ -72,6 +76,7 @@ public class BulkWriteOperation {
      * @return a builder for a single write request
      */
     public BulkWriteRequestBuilder find(final DBObject query) {
+        isTrue("already executed", !closed);
         return new BulkWriteRequestBuilder(this, query, collection.getDefaultDBObjectCodec(), collection.getObjectCodec());
     }
 
@@ -84,6 +89,8 @@ public class BulkWriteOperation {
      * @throws com.mongodb.MongoException
      */
     public BulkWriteResult execute() {
+        isTrue("already executed", !closed);
+        closed = true;
         return collection.executeBulkWriteOperation(ordered, requests);
     }
 
@@ -97,10 +104,13 @@ public class BulkWriteOperation {
      * @throws com.mongodb.MongoException
      */
     public BulkWriteResult execute(final WriteConcern writeConcern) {
+        isTrue("already executed", !closed);
+        closed = true;
         return collection.executeBulkWriteOperation(ordered, requests, writeConcern);
     }
 
     void addRequest(final WriteRequest request) {
+        isTrue("already executed", !closed);
         requests.add(request);
     }
 }

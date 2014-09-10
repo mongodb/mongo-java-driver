@@ -723,6 +723,38 @@ public class DBCollectionTest extends DatabaseTestCase {
                                              new BasicDBObject("_id", upsertTwoId).append("y", 2)),
 
                      collection.find().sort(new BasicDBObject("_id", 1)).toArray());
+
+        // when
+        try {
+            bulkWriteOperation.insert(new BasicDBObject());
+            fail();
+        } catch (IllegalStateException e) {
+            // then should throw
+        }
+
+        // when
+        try {
+            bulkWriteOperation.find(new BasicDBObject());
+            fail();
+        } catch (IllegalStateException e) {
+            // then should throw
+        }
+
+        // when
+        try {
+            bulkWriteOperation.execute();
+            fail();
+        } catch (IllegalStateException e) {
+            // then should throw
+        }
+
+        // when
+        try {
+            bulkWriteOperation.execute(WriteConcern.ACKNOWLEDGED);
+            fail();
+        } catch (IllegalStateException e) {
+            // then should throw
+        }
     }
 
     @Test
