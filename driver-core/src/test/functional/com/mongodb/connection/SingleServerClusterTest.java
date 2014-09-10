@@ -71,7 +71,7 @@ public class SingleServerClusterTest {
             public List<ServerDescription> select(final ClusterDescription clusterDescription) {
                 return clusterDescription.getPrimaries();
             }
-        }, 1, TimeUnit.SECONDS);
+        }, 10, TimeUnit.SECONDS);
         assertTrue(server.getDescription().isOk());
     }
 

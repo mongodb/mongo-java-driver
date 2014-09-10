@@ -27,10 +27,11 @@ import com.mongodb.selector.ServerSelector;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * A simple ReadWriteBinding implementation that supplies write connection sources bound to a possibly different primary each time and a
+ * A simple ReadWriteBinding implementation that supplies write connection sources bound to a possibly different primary each time, and a
  * read connection source bound to a possible different server each time.
  *
  * @since 3.0
@@ -40,9 +41,19 @@ public class ClusterBinding extends AbstractReferenceCounted implements ReadWrit
     private final ReadPreference readPreference;
     private final long maxWaitTimeMS;
 
+    /**
+     * Creates an instance.
+     *
+     * @param cluster        a non-null Cluster which will be used to select a server to bind to
+     * @param readPreference a non-null ReadPreference for read operations
+     * @param maxWaitTime    the maximum time to wait for a connection to become available.
+     * @param timeUnit       a non-null  TimeUnit for the maxWaitTime
+     */
     public ClusterBinding(final Cluster cluster, final ReadPreference readPreference, final long maxWaitTime, final TimeUnit timeUnit) {
-        this.cluster = cluster;
-        this.readPreference = readPreference;
+        this.cluster = notNull("cluster", cluster);
+        this.readPreference = notNull("readPreference", readPreference);
+        notNull("timeUnit", timeUnit);
+
         this.maxWaitTimeMS = MILLISECONDS.convert(maxWaitTime, timeUnit);
     }
 

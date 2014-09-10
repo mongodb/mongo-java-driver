@@ -28,43 +28,49 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import static java.util.Collections.synchronizedMap;
+
 /**
  * This class enables to map simple Class fields to a BSON object fields
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public abstract class ReflectionDBObject implements DBObject {
 
+    @Override
     public Object get(final String key) {
         return getWrapper().get(this, key);
     }
 
+    @Override
     public Set<String> keySet() {
         return getWrapper().keySet();
     }
 
-    /**
-     * @deprecated
-     */
     @Deprecated
+    @Override
     public boolean containsKey(final String key) {
         return containsField(key);
     }
 
-    public boolean containsField(final String s) {
-        return getWrapper().containsKey(s);
+    @Override
+    public boolean containsField(final String fieldName) {
+        return getWrapper().containsKey(fieldName);
     }
 
+    @Override
     public Object put(final String key, final Object v) {
         return getWrapper().set(this, key, v);
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public void putAll(final Map m) {
         for (final Map.Entry entry : (Set<Map.Entry>) m.entrySet()) {
             put(entry.getKey().toString(), entry.getValue());
         }
     }
 
+    @Override
     public void putAll(final BSONObject o) {
         for (final String k : o.keySet()) {
             put(k, o.get(k));
@@ -89,11 +95,13 @@ public abstract class ReflectionDBObject implements DBObject {
         _id = id;
     }
 
+    @Override
     public boolean isPartialObject() {
         return false;
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public Map toMap() {
         Map m = new HashMap();
         Iterator i = this.keySet().iterator();
@@ -107,13 +115,15 @@ public abstract class ReflectionDBObject implements DBObject {
     /**
      * ReflectionDBObjects can't be partial. This operation is not supported.
      */
+    @Override
     public void markAsPartialObject() {
         throw new RuntimeException("ReflectionDBObjects can't be partial");
     }
 
     /**
-     * This operation is not supported.
+     * This operation is not supported. {@inheritDoc}
      */
+    @Override
     public Object removeField(final String key) {
         throw new UnsupportedOperationException("can't remove from a ReflectionDBObject");
     }
@@ -127,8 +137,10 @@ public abstract class ReflectionDBObject implements DBObject {
         return _wrapper;
     }
 
+    //CHECKSTYLE:OFF
     JavaWrapper _wrapper;
     Object _id;
+    //CHECKSTYLE:ON
 
     /**
      * Represents a wrapper around the DBObject to interface with the Class fields
@@ -174,11 +186,20 @@ public abstract class ReflectionDBObject implements DBObject {
             keys = Collections.unmodifiableSet(fields.keySet());
         }
 
+        /**
+         * Gets all the fields on this object.
+         *
+         * @return a Set of all the field names.
+         */
         public Set<String> keySet() {
             return keys;
         }
 
         /**
+         * Whether the document this represents contains the given field.
+         *
+         * @param key a field name
+         * @return true if the key exists
          * @deprecated
          */
         @Deprecated
@@ -186,27 +207,42 @@ public abstract class ReflectionDBObject implements DBObject {
             return keys.contains(key);
         }
 
-        public Object get(final ReflectionDBObject t, final String name) {
-            FieldInfo i = fields.get(name);
+        /**
+         * Gets the value for the given field from the given document.
+         *
+         * @param document  a ReflectionDBObject representing a MongoDB document
+         * @param fieldName the name of the field to get the value for
+         * @return the value for the given field name
+         */
+        public Object get(final ReflectionDBObject document, final String fieldName) {
+            FieldInfo i = fields.get(fieldName);
             if (i == null) {
                 return null;
             }
             try {
-                return i.getter.invoke(t);
+                return i.getter.invoke(document);
             } catch (Exception e) {
-                throw new RuntimeException("could not invoke getter for [" + name + "] on [" + this.name + "]", e);
+                throw new RuntimeException("could not invoke getter for [" + fieldName + "] on [" + this.name + "]", e);
             }
         }
 
-        public Object set(final ReflectionDBObject t, final String name, final Object val) {
-            FieldInfo i = fields.get(name);
+        /**
+         * Adds or sets the given field to the given value on the document.
+         *
+         * @param document  a ReflectionDBObject representing a MongoDB document
+         * @param fieldName the name of the field to get the value for
+         * @param value     the value to set the field to
+         * @return the result of setting this value
+         */
+        public Object set(final ReflectionDBObject document, final String fieldName, final Object value) {
+            FieldInfo i = fields.get(fieldName);
             if (i == null) {
-                throw new IllegalArgumentException("no field [" + name + "] on [" + this.name + "]");
+                throw new IllegalArgumentException("no field [" + fieldName + "] on [" + this.name + "]");
             }
             try {
-                return i.setter.invoke(t, val);
+                return i.setter.invoke(document, value);
             } catch (Exception e) {
-                throw new RuntimeException("could not invoke setter for [" + name + "] on [" + this.name + "]", e);
+                throw new RuntimeException("could not invoke setter for [" + fieldName + "] on [" + this.name + "]", e);
             }
         }
 
@@ -229,10 +265,12 @@ public abstract class ReflectionDBObject implements DBObject {
             return w.getInternalClass(path.subList(1, path.size()));
         }
 
+        //CHECKSTYLE:OFF
         final Class clazz;
         final String name;
         final Map<String, FieldInfo> fields;
         final Set<String> keys;
+        //CHECKSTYLE:ON
     }
 
     static class FieldInfo {
@@ -245,10 +283,12 @@ public abstract class ReflectionDBObject implements DBObject {
             return getter != null && setter != null;
         }
 
+        //CHECKSTYLE:OFF
         final String name;
         final Class<? extends DBObject> clazz;
         Method getter;
         Method setter;
+        //CHECKSTYLE:ON
     }
 
     /**
@@ -279,9 +319,7 @@ public abstract class ReflectionDBObject implements DBObject {
         return w;
     }
 
-    private static final Map<Class, JavaWrapper> _wrappers = Collections.synchronizedMap(
-                                                                                            new HashMap<Class,
-                                                                                                           JavaWrapper>());
+    private static final Map<Class, JavaWrapper> _wrappers = synchronizedMap(new HashMap<Class, JavaWrapper>());
     private static final Set<String> IGNORE_FIELDS = new HashSet<String>();
 
     static {

@@ -1966,7 +1966,7 @@ public class DBCollection {
         return keys;
     }
 
-    public static BasicDBList toDBList(final MongoCursor<DBObject> source) {
+    private static BasicDBList toDBList(final MongoCursor<DBObject> source) {
         BasicDBList dbList = new BasicDBList();
         while (source.hasNext()) {
             dbList.add(source.next());

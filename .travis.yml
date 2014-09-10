@@ -21,6 +21,9 @@ services:
 
 before_script:
   - "mongo admin --eval 'db.runCommand({setParameter : 1, textSearchEnabled : true})'"
+  - "echo $JAVA_OPTS"
+  - "export JAVA_OPTS=-XX:MaxPermSize=1024m"
+  - "echo $JAVA_OPTS"
 
 branches:
   only:
@@ -28,4 +31,4 @@ branches:
   - 3.0.x
 
 install: ./gradlew -q assemble
-script: ./gradlew check --stacktrace --info
+script: ./gradlew check -i -S
