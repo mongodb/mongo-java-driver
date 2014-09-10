@@ -67,7 +67,12 @@ public final class CollectionHelper<T> {
 
     public void create(final CreateCollectionOptions options) {
         drop(namespace);
-        new CreateCollectionOperation(namespace.getDatabaseName(), options).execute(getBinding());
+        new CreateCollectionOperation(namespace.getDatabaseName(), options.getCollectionName())
+            .capped(options.isCapped())
+            .sizeInBytes(options.getSizeInBytes())
+            .autoIndex(options.isAutoIndex())
+            .maxDocuments(options.getMaxDocuments())
+            .setUsePowerOf2Sizes(options.isUsePowerOf2Sizes()).execute(getBinding());
     }
 
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {

@@ -39,7 +39,6 @@ import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncCluster
-import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.CursorFlag.EXHAUST
 import static com.mongodb.ReadPreference.primary
@@ -190,8 +189,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = source.getConnection().get()
-        new DropCollectionOperation(getNamespace()).execute(getBinding())
-        new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName(), true, 1000)).execute(getBinding())
+        getCollectionHelper().create(new CreateCollectionOptions(getCollectionName(), true, 1000))
         def timestamp = new BsonTimestamp(5, 0)
         getCollectionHelper().insertDocuments(new DocumentCodec(), [_id: 1, ts: timestamp] as Document)
 

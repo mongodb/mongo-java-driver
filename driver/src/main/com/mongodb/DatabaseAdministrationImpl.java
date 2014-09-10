@@ -28,14 +28,22 @@ import java.util.List;
 import static com.mongodb.ReadPreference.primary;
 
 /**
- * Runs the admin commands for a selected database.  This should be accessed from MongoDatabase.  The methods here are not implemented in
- * MongoDatabase in order to keep the API very simple, these should be the methods that are not commonly used by clients of the driver.
+ * The administrative commands that can be run against a selected database.  Application developers should not normally need to call these
+ * methods.
+ *
+ * @since 3.0
  */
 class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     private final String databaseName;
     private final MongoClient client;
 
+    /**
+     * Constructs a new instance.
+     *
+     * @param databaseName the name of the database
+     * @param client the MongoClient
+     */
     public DatabaseAdministrationImpl(final String databaseName, final MongoClient client) {
         this.databaseName = databaseName;
         this.client = client;
@@ -57,8 +65,13 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
     }
 
     @Override
-    public void createCollection(final CreateCollectionOptions createCollectionOptions) {
-        client.execute(new CreateCollectionOperation(databaseName, createCollectionOptions));
+    public void createCollection(final CreateCollectionOptions options) {
+        client.execute(new CreateCollectionOperation(databaseName, options.getCollectionName())
+                           .capped(options.isCapped())
+                           .sizeInBytes(options.getSizeInBytes())
+                           .autoIndex(options.isAutoIndex())
+                           .maxDocuments(options.getMaxDocuments())
+                           .setUsePowerOf2Sizes(options.isUsePowerOf2Sizes()));
     }
 
     @Override

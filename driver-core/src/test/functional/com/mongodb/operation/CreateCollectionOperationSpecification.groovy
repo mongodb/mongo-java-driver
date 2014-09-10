@@ -26,12 +26,21 @@ import static com.mongodb.ClusterFixture.getBinding
 
 class CreateCollectionOperationSpecification extends OperationFunctionalSpecification {
 
+    def makeCreateCollectionOperation(CreateCollectionOptions options) {
+        new CreateCollectionOperation(getDatabaseName(), options.getCollectionName())
+                .capped(options.isCapped())
+                .sizeInBytes(options.getSizeInBytes())
+                .autoIndex(options.isAutoIndex())
+                .maxDocuments(options.getMaxDocuments())
+                .setUsePowerOf2Sizes(options.isUsePowerOf2Sizes())
+    }
+
     def 'should create a collection'() {
         given:
         assert !collectionNameExists(getCollectionName())
 
         when:
-        new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName())).execute(getBinding())
+        makeCreateCollectionOperation(new CreateCollectionOptions(getCollectionName())).execute(getBinding())
 
         then:
         collectionNameExists(getCollectionName())
@@ -43,7 +52,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         assert !collectionNameExists(getCollectionName())
 
         when:
-        new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName())).execute(getBinding())
+        makeCreateCollectionOperation(new CreateCollectionOptions(getCollectionName())).executeAsync(getAsyncBinding())
 
         then:
         collectionNameExists(getCollectionName())
@@ -52,7 +61,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     def 'should error when creating a collection that already exists'() {
         given:
         assert !collectionNameExists(getCollectionName())
-        def operation = new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName()))
+        def operation = makeCreateCollectionOperation(new CreateCollectionOptions(getCollectionName()))
         operation.execute(getBinding())
 
         when:
@@ -67,7 +76,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     def 'should error when creating a collection that already exists asynchronously'() {
         given:
         assert !collectionNameExists(getCollectionName())
-        def operation = new CreateCollectionOperation(getDatabaseName(), new CreateCollectionOptions(getCollectionName()))
+        def operation = makeCreateCollectionOperation(new CreateCollectionOptions(getCollectionName()))
         operation.execute(getBinding())
 
         when:
