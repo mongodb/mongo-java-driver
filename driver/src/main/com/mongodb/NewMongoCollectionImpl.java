@@ -192,11 +192,10 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
                                .upsert(updateManyModel.isUpsert());
             } else if (writeModel instanceof DeleteOneModel) {
                 DeleteOneModel deleteOneModel = (DeleteOneModel) writeModel;
-                writeRequest = new RemoveRequest(asBson(deleteOneModel.getCriteria()));
+                writeRequest = new RemoveRequest(asBson(deleteOneModel.getCriteria())).multi(false);
             } else if (writeModel instanceof DeleteManyModel) {
                 DeleteManyModel deleteManyModel = (DeleteManyModel) writeModel;
-                writeRequest = new RemoveRequest(asBson(deleteManyModel.getCriteria()))
-                               .multi(true);
+                writeRequest = new RemoveRequest(asBson(deleteManyModel.getCriteria())).multi(true);
             } else {
                 throw new UnsupportedOperationException(format("WriteModel of type %s is not supported", writeModel.getClass()));
             }
@@ -232,7 +231,8 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     @Override
     public <D> DeleteResult deleteOne(final DeleteOneModel<T, D> model) {
         WriteResult writeResult = operationExecutor.execute(new RemoveOperation(namespace, true, options.getWriteConcern(),
-                                                                                asList(new RemoveRequest(asBson(model.getCriteria())))));
+                                                                                asList(new RemoveRequest(asBson(model.getCriteria()))
+                                                                                      .multi(false))));
         return new DeleteResult(writeResult.getCount());
     }
 
@@ -247,9 +247,10 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     @Override
     public <D> UpdateResult replaceOne(final ReplaceOneModel<T, D> model) {
         List<ReplaceRequest> requests = new ArrayList<ReplaceRequest>();
-        requests.add(new ReplaceRequest(asBson(model.getCriteria()), asBson(model.getReplacement())));
+        requests.add(new ReplaceRequest(asBson(model.getCriteria()), asBson(model.getReplacement()))
+                     .upsert(model.isUpsert()));
         WriteResult writeResult = operationExecutor.execute(new ReplaceOperation(namespace, true, options.getWriteConcern(), requests));
-        return new UpdateResult(writeResult.getCount(), 0, writeResult.getUpsertedId());  // TODO matchedCount
+        return createUpdateResult(writeResult);
     }
 
     @Override
@@ -257,8 +258,10 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
         WriteResult writeResult = operationExecutor
                                   .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
                                                                asList(new UpdateRequest(asBson(model.getCriteria()),
-                                                                                        asBson(model.getUpdate())))));
-        return new UpdateResult(writeResult.getCount(), 0, writeResult.getUpsertedId());
+                                                                                        asBson(model.getUpdate()))
+                                                                      .multi(false)
+                                                                      .upsert(model.isUpsert()))));
+        return createUpdateResult(writeResult);
     }
 
     @Override
@@ -266,7 +269,14 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
         WriteResult writeResult = operationExecutor
                                   .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
                                                                asList(new UpdateRequest(asBson(model.getCriteria()),
-                                                                                        asBson(model.getUpdate())).multi(true))));
+                                                                                        asBson(model.getUpdate()))
+                                                                      .multi(true)
+                                                                      .upsert(model.isUpsert()))));
+        return createUpdateResult(writeResult);
+    }
+
+    // TODO modifiedCount
+    private UpdateResult createUpdateResult(final WriteResult writeResult) {
         return new UpdateResult(writeResult.getCount(), 0, writeResult.getUpsertedId());
     }
 
