@@ -542,24 +542,6 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ordered << [false]
     }
 
-    def 'execute should throw IllegalStateException when already executed'() {
-        given:
-        def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
-                                             ordered, UNACKNOWLEDGED)
-
-        op.execute(getBinding())
-
-        when:
-        op.execute(getBinding())
-
-        then:
-        thrown(IllegalStateException)
-
-        where:
-        ordered << [true, false]
-    }
-
     def 'should throw IllegalArgumentException when passed an empty bulk operation'() {
 
         when:

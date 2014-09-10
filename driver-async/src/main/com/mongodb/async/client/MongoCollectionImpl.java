@@ -143,7 +143,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private class MongoCollectionView implements MongoView<T> {
-        private final FindModel<BsonDocument> find = new FindModel<BsonDocument>();
+        private final FindModel find = new FindModel();
         private final ReadPreference readPreference = options.getReadPreference();
         private boolean upsert;
 
@@ -182,7 +182,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<Long> count() {
             CountOperation operation = new CountOperation(getNamespace())
-                                           .criteria(find.getCriteria())
+                                           .criteria((BsonDocument) find.getCriteria())
                                            .skip(find.getSkip())
                                            .limit(find.getLimit())
                                            .maxTime(find.getMaxTime(MILLISECONDS), MILLISECONDS);
@@ -308,7 +308,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> replace(final T replacement) {
             notNull("replacement", replacement);
             return execute(new ReplaceOperation(getNamespace(), true, options.getWriteConcern(),
-                                                   asList(new ReplaceRequest(find.getCriteria(), asBson(replacement)).upsert(upsert))
+                                                   asList(new ReplaceRequest((BsonDocument) find.getCriteria(), asBson(replacement))
+                                                          .upsert(upsert))
             ));
         }
 
@@ -316,7 +317,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> update(final Document updateOperations) {
             notNull("updateOperations", updateOperations);
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new UpdateRequest(find.getCriteria(),
+                                               asList(new UpdateRequest((BsonDocument) find.getCriteria(),
                                                                         new BsonDocumentWrapper<Document>(updateOperations,
                                                                                                           options.getDocumentCodec()))
                                                       .upsert(upsert).multi(true))
@@ -327,7 +328,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> updateOne(final Document updateOperations) {
             notNull("updateOperations", updateOperations);
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new UpdateRequest(find.getCriteria(),
+                                               asList(new UpdateRequest((BsonDocument) find.getCriteria(),
                                                                         new BsonDocumentWrapper<Document>(updateOperations,
                                                                                                           options.getDocumentCodec()))
                                                       .upsert(upsert).multi(false))
@@ -337,13 +338,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<WriteResult> remove() {
             return execute(new RemoveOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new RemoveRequest(find.getCriteria()).multi(true))));
+                                               asList(new RemoveRequest((BsonDocument) find.getCriteria()).multi(true))));
         }
 
         @Override
         public MongoFuture<WriteResult> removeOne() {
             return execute(new RemoveOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new RemoveRequest(find.getCriteria()).multi(false))));
+                                               asList(new RemoveRequest((BsonDocument) find.getCriteria()).multi(false))));
         }
 
         private QueryOperation<T> createQueryOperation() {

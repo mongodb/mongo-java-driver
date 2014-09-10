@@ -23,13 +23,12 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * A model describing a distinct operation.
  *
- * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/distinct/ Distinct
  */
-public class DistinctModel<D> implements ExplainableModel<D> {
+public class DistinctModel implements ExplainableModel {
     private final String fieldName;
-    private D criteria;
+    private Object criteria;
     private long maxTimeMS;
 
     /**
@@ -56,7 +55,7 @@ public class DistinctModel<D> implements ExplainableModel<D> {
      * @return the query criteria
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public D getCriteria() {
+    public Object getCriteria() {
         return criteria;
     }
 
@@ -67,7 +66,7 @@ public class DistinctModel<D> implements ExplainableModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public DistinctModel<D> criteria(final D criteria) {
+    public DistinctModel criteria(final Object criteria) {
         this.criteria = criteria;
         return this;
     }
@@ -91,7 +90,7 @@ public class DistinctModel<D> implements ExplainableModel<D> {
      * @param timeUnit the time unit, which may not be null
      * @return this
      */
-    public DistinctModel<D> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public DistinctModel maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;

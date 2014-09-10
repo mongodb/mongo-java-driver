@@ -25,11 +25,10 @@ import static com.mongodb.assertions.Assertions.notNull;
  * A model describing a bulk write, which can include a combination of inserts, updates, and deletes.  By default the writes are ordered.
  *
  * @param <T> the document type for the documents to be added to a collection
- * @param <D> the document type for the documents used for queries
  * @since 3.0
  */
-public final class BulkWriteModel<T, D> {
-    private final List<? extends WriteModel<? extends T, D>> requests;
+public final class BulkWriteModel<T> {
+    private final List<? extends WriteModel<? extends T>> requests;
     private boolean ordered;
 
     /**
@@ -37,7 +36,7 @@ public final class BulkWriteModel<T, D> {
      *
      * @param requests a non-null, non-empty list of write models
      */
-    public BulkWriteModel(final List<? extends WriteModel<? extends T, D>> requests) {
+    public BulkWriteModel(final List<? extends WriteModel<? extends T>> requests) {
         this.requests = notNull("requests", requests);
         isTrueArgument("requests list is not empty", !requests.isEmpty());
     }
@@ -47,7 +46,7 @@ public final class BulkWriteModel<T, D> {
      *
      * @return a non-null, non-empty list of write models
      */
-    public List<? extends WriteModel<? extends T, D>> getRequests() {
+    public List<? extends WriteModel<? extends T>> getRequests() {
         return requests;
     }
 
@@ -70,7 +69,7 @@ public final class BulkWriteModel<T, D> {
      * @param ordered true if the writes should be ordered
      * @return this
      */
-    public BulkWriteModel<T, D> ordered(final boolean ordered) {
+    public BulkWriteModel<T> ordered(final boolean ordered) {
         this.ordered = ordered;
         return this;
     }

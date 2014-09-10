@@ -59,7 +59,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @NotThreadSafe
 public class DBCursor implements Cursor, Iterable<DBObject> {
     private final DBCollection collection;
-    private final FindModel<BsonDocument> findModel;
+    private final FindModel findModel;
     private final EnumSet<CursorFlag> cursorFlags = EnumSet.noneOf(CursorFlag.class);
     private ReadPreference readPreference;
     private Decoder<DBObject> resultDecoder;
@@ -85,7 +85,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public DBCursor(final DBCollection collection, final DBObject query, final DBObject fields, final ReadPreference readPreference) {
         this(collection,
-             new FindModel<BsonDocument>()
+             new FindModel()
              .modifiers(new BsonDocument())
              .criteria(collection.wrapAllowNull(query))
              .projection(collection.wrapAllowNull(fields)),
@@ -99,7 +99,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
     }
 
-    private DBCursor(final DBCollection collection, final FindModel<BsonDocument> findModel, final ReadPreference readPreference) {
+    private DBCursor(final DBCollection collection, final FindModel findModel, final ReadPreference readPreference) {
         if (collection == null) {
             throw new IllegalArgumentException("Collection can't be null");
         }
@@ -118,7 +118,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the new cursor
      */
     public DBCursor copy() {
-        return new DBCursor(collection, new FindModel<BsonDocument>(findModel), readPreference);
+        return new DBCursor(collection, new FindModel(findModel), readPreference);
     }
 
     /**
@@ -267,7 +267,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         if ("$comment".equals(name)) {
             comment(value.toString());
         } else if ("$explain".equals(name)) {
-            findModel.getModifiers().append("$explain", BsonBoolean.TRUE);
+            ((BsonDocument) findModel.getModifiers()).append("$explain", BsonBoolean.TRUE);
         } else if ("$hint".equals(name)) {
             if (value instanceof String) {
                 hint((String) value);
@@ -307,7 +307,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBCursor comment(final String comment) {
-        findModel.getModifiers().append("$comment", new BsonString(comment));
+        ((BsonDocument) findModel.getModifiers()).append("$comment", new BsonString(comment));
         return this;
     }
 
@@ -321,7 +321,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBCursor maxScan(final int max) {
-        findModel.getModifiers().append("$maxScan", new BsonInt32(max));
+        ((BsonDocument) findModel.getModifiers()).append("$maxScan", new BsonInt32(max));
         return this;
     }
 
@@ -334,7 +334,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBCursor max(final DBObject max) {
-        findModel.getModifiers().append("$max", collection.wrap(max));
+        ((BsonDocument) findModel.getModifiers()).append("$max", collection.wrap(max));
         return this;
     }
 
@@ -347,7 +347,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBCursor min(final DBObject min) {
-        findModel.getModifiers().append("$min", collection.wrap(min));
+        ((BsonDocument) findModel.getModifiers()).append("$min", collection.wrap(min));
         return this;
     }
 
@@ -359,7 +359,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBCursor returnKey() {
-        findModel.getModifiers().append("$returnKey", BsonBoolean.TRUE);
+        ((BsonDocument) findModel.getModifiers()).append("$returnKey", BsonBoolean.TRUE);
         return this;
     }
 
@@ -372,7 +372,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBCursor showDiskLoc() {
-        findModel.getModifiers().append("$showDiskLoc", BsonBoolean.TRUE);
+        ((BsonDocument) findModel.getModifiers()).append("$showDiskLoc", BsonBoolean.TRUE);
         return this;
     }
 
@@ -383,7 +383,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return same DBCursor for chaining operations
      */
     public DBCursor hint(final DBObject indexKeys) {
-        findModel.getModifiers().append("$hint", collection.wrap(indexKeys));
+        ((BsonDocument) findModel.getModifiers()).append("$hint", collection.wrap(indexKeys));
         return this;
     }
 
@@ -394,7 +394,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return same DBCursor for chaining operations
      */
     public DBCursor hint(final String indexName) {
-        findModel.getModifiers().append("$hint", new BsonString(indexName));
+        ((BsonDocument) findModel.getModifiers()).append("$hint", new BsonString(indexName));
         return this;
     }
 
@@ -422,7 +422,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return {@code this} so calls can be chained
      */
     public DBCursor snapshot() {
-        findModel.getModifiers().append("$snapshot", BsonBoolean.TRUE);
+        ((BsonDocument) findModel.getModifiers()).append("$snapshot", BsonBoolean.TRUE);
         return this;
     }
 
@@ -441,8 +441,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @mongodb.driver.manual reference/explain Explain Output
      */
     public DBObject explain() {
-        FindModel<BsonDocument> explainModel = new FindModel<BsonDocument>(findModel);
-        explainModel.getModifiers().append("$explain", BsonBoolean.TRUE);
+        FindModel explainModel = new FindModel(findModel);
+        ((BsonDocument) findModel.getModifiers()).append("$explain", BsonBoolean.TRUE);
         if (explainModel.getLimit() > 0) {
             // need to pass a negative batchSize as limit for explain
             explainModel.batchSize(explainModel.getLimit() * -1);
@@ -451,17 +451,17 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return collection.execute(getQueryOperation(explainModel, collection.getObjectCodec()), getReadPreference()).next();
     }
 
-    private QueryOperation<DBObject> getQueryOperation(final FindModel<BsonDocument> find, final Decoder<DBObject> decoder) {
+    private QueryOperation<DBObject> getQueryOperation(final FindModel find, final Decoder<DBObject> decoder) {
         return new QueryOperation<DBObject>(collection.getNamespace(), decoder)
-                   .criteria(find.getCriteria())
+                   .criteria((BsonDocument) find.getCriteria())
                    .batchSize(find.getBatchSize())
                    .cursorFlags(cursorFlags)
                    .limit(find.getLimit())
                    .maxTime(find.getMaxTime(MILLISECONDS), MILLISECONDS)
-                   .modifiers(find.getModifiers())
-                   .projection(find.getProjection())
+                   .modifiers((BsonDocument) find.getModifiers())
+                   .projection((BsonDocument) find.getProjection())
                    .skip(find.getSkip())
-                   .sort(find.getSort());
+                   .sort((BsonDocument) find.getSort());
     }
 
     /**
@@ -609,7 +609,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public int count() {
         return (int) collection.getCount(getQuery(), getKeysWanted(), 0, 0, getReadPreference(),
-                                         findModel.getMaxTime(MILLISECONDS), MILLISECONDS, findModel.getModifiers().get("$hint"));
+                                         findModel.getMaxTime(MILLISECONDS), MILLISECONDS,
+                                         ((BsonDocument) findModel.getModifiers()).get("$hint"));
     }
 
     /**
@@ -617,7 +618,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public DBObject one() {
         return collection.findOne(getQuery(), getKeysWanted(),
-                                  findModel.getSort() == null ? null : DBObjects.toDBObject(findModel.getSort()),
+                                  findModel.getSort() == null ? null : DBObjects.toDBObject((BsonDocument) findModel.getSort()),
                                   getReadPreference(), findModel.getMaxTime(MILLISECONDS), MILLISECONDS);
     }
 
@@ -670,7 +671,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the field selector that cursor used
      */
     public DBObject getKeysWanted() {
-        return findModel.getProjection() == null ? null : DBObjects.toDBObject(findModel.getProjection());
+        return findModel.getProjection() == null ? null : DBObjects.toDBObject((BsonDocument) findModel.getProjection());
     }
 
     /**
@@ -679,7 +680,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the query that cursor used
      */
     public DBObject getQuery() {
-        return DBObjects.toDBObject(findModel.getCriteria());
+        return DBObjects.toDBObject((BsonDocument) findModel.getCriteria());
     }
 
     /**
@@ -769,7 +770,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         currentObject = cursor.next();
         numSeen++;
 
-        if (findModel.getProjection() != null && !findModel.getProjection().isEmpty()) {
+        if (findModel.getProjection() != null && !((BsonDocument) findModel.getProjection()).isEmpty()) {
             currentObject.markAsPartialObject();
         }
 

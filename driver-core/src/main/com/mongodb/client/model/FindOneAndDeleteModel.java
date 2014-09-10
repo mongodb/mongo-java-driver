@@ -21,14 +21,13 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * Finds a single document and deletes it, returning the original.
  *
- * @param <D> The document type.  This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/findAndModify/
  */
-public class FindOneAndDeleteModel<D> {
-    private final D criteria;
-    private D projection;
-    private D sort;
+public class FindOneAndDeleteModel {
+    private final Object criteria;
+    private Object projection;
+    private Object sort;
 
     /**
      * Construct a new instance
@@ -36,7 +35,7 @@ public class FindOneAndDeleteModel<D> {
      * @param criteria the query criteria. This can be of any type for which a {@code Codec} is registered.
      * @mongodb.driver.manual manual/reference/command/findAndModify/
      */
-    public FindOneAndDeleteModel(final D criteria) {
+    public FindOneAndDeleteModel(final Object criteria) {
         this.criteria = notNull("criteria", criteria);
     }
 
@@ -45,7 +44,7 @@ public class FindOneAndDeleteModel<D> {
      *
      * @return the query criteria
      */
-    public D getCriteria() {
+    public Object getCriteria() {
         return criteria;
     }
 
@@ -55,7 +54,7 @@ public class FindOneAndDeleteModel<D> {
      * @return the project document, which may be null
      * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
      */
-    public D getProjection() {
+    public Object getProjection() {
         return projection;
     }
 
@@ -67,7 +66,7 @@ public class FindOneAndDeleteModel<D> {
      * @return this
      * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
      */
-    public FindOneAndDeleteModel<D> projection(final D projection) {
+    public FindOneAndDeleteModel projection(final Object projection) {
         this.projection = projection;
         return this;
     }
@@ -79,7 +78,7 @@ public class FindOneAndDeleteModel<D> {
      * @return a document describing the sort criteria
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public D getSort() {
+    public Object getSort() {
         return sort;
     }
 
@@ -91,7 +90,7 @@ public class FindOneAndDeleteModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public FindOneAndDeleteModel<D> sort(final D sort) {
+    public FindOneAndDeleteModel sort(final Object sort) {
         this.sort = sort;
         return this;
     }

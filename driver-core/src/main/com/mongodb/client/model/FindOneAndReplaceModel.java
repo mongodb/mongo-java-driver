@@ -21,15 +21,14 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  *
  * @param <T> The replacement type for the command. This can be of any type for which a {@code Codec} is registered
- * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/findAndModify/
  */
-public class FindOneAndReplaceModel<T, D> {
-    private final D criteria;
+public class FindOneAndReplaceModel<T> {
+    private final Object criteria;
     private final T replacement;
-    private D projection;
-    private D sort;
+    private Object projection;
+    private Object sort;
     private boolean upsert;
     private boolean returnReplaced;
 
@@ -40,7 +39,7 @@ public class FindOneAndReplaceModel<T, D> {
      * @param replacement the replacement. This can be of any type for which a {@code Codec} is registered.
      * @mongodb.driver.manual manual/reference/command/findAndModify/
      */
-    public FindOneAndReplaceModel(final D criteria, final T replacement) {
+    public FindOneAndReplaceModel(final Object criteria, final T replacement) {
         this.criteria = notNull("criteria", criteria);
         this.replacement = notNull("replacement", replacement);
     }
@@ -50,7 +49,7 @@ public class FindOneAndReplaceModel<T, D> {
      *
      * @return the query criteria
      */
-    public D getCriteria() {
+    public Object getCriteria() {
         return criteria;
     }
 
@@ -69,7 +68,7 @@ public class FindOneAndReplaceModel<T, D> {
      * @return the project document, which may be null
      * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
      */
-    public D getProjection() {
+    public Object getProjection() {
         return projection;
     }
 
@@ -80,7 +79,7 @@ public class FindOneAndReplaceModel<T, D> {
      * @return this
      * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
      */
-    public FindOneAndReplaceModel<T, D> projection(final D projection) {
+    public FindOneAndReplaceModel<T> projection(final Object projection) {
         this.projection = projection;
         return this;
     }
@@ -92,7 +91,7 @@ public class FindOneAndReplaceModel<T, D> {
      * @return a document describing the sort criteria
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public D getSort() {
+    public Object getSort() {
         return sort;
     }
 
@@ -103,7 +102,7 @@ public class FindOneAndReplaceModel<T, D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public FindOneAndReplaceModel<T, D> sort(final D sort) {
+    public FindOneAndReplaceModel<T> sort(final Object sort) {
         this.sort = sort;
         return this;
     }
@@ -123,7 +122,7 @@ public class FindOneAndReplaceModel<T, D> {
      * @param upsert true if a new document should be inserted if there are no matches to the query filter
      * @return this
      */
-    public FindOneAndReplaceModel<T, D> upsert(final boolean upsert) {
+    public FindOneAndReplaceModel<T> upsert(final boolean upsert) {
         this.upsert = upsert;
         return this;
     }
@@ -143,7 +142,7 @@ public class FindOneAndReplaceModel<T, D> {
      * @param returnReplaced set true to return the updated document rather than the original.
      * @return this
      */
-    public FindOneAndReplaceModel<T, D> returnReplaced(final boolean returnReplaced) {
+    public FindOneAndReplaceModel<T> returnReplaced(final boolean returnReplaced) {
         this.returnReplaced = returnReplaced;
         return this;
     }

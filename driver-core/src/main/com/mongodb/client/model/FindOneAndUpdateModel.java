@@ -21,15 +21,14 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * Finds a single document and updates it.
  *
- * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/findAndModify/
  */
-public class FindOneAndUpdateModel<D> {
-    private final D criteria;
-    private final D update;
-    private D projection;
-    private D sort;
+public class FindOneAndUpdateModel {
+    private final Object criteria;
+    private final Object update;
+    private Object projection;
+    private Object sort;
     private boolean upsert;
     private boolean returnUpdated;
 
@@ -40,7 +39,7 @@ public class FindOneAndUpdateModel<D> {
      * @param update the update operation. This can be of any type for which a {@code Codec} is registered.
      * @mongodb.driver.manual manual/reference/command/findAndModify/
      */
-    public FindOneAndUpdateModel(final D criteria, final D update) {
+    public FindOneAndUpdateModel(final Object criteria, final Object update) {
         this.criteria = notNull("criteria", criteria);
         this.update = notNull("update", update);
     }
@@ -50,7 +49,7 @@ public class FindOneAndUpdateModel<D> {
      *
      * @return the query criteria
      */
-    public D getCriteria() {
+    public  Object getCriteria() {
         return criteria;
     }
 
@@ -60,7 +59,7 @@ public class FindOneAndUpdateModel<D> {
      *
      * @return the document specifying the updates to apply
      */
-    public D getUpdate() {
+    public Object getUpdate() {
         return update;
     }
 
@@ -70,7 +69,7 @@ public class FindOneAndUpdateModel<D> {
      * @return the project document, which may be null
      * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
      */
-    public D getProjection() {
+    public Object getProjection() {
         return projection;
     }
 
@@ -82,7 +81,7 @@ public class FindOneAndUpdateModel<D> {
      * @return this
      * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
      */
-    public FindOneAndUpdateModel<D> projection(final D projection) {
+    public FindOneAndUpdateModel projection(final Object projection) {
         this.projection = projection;
         return this;
     }
@@ -94,7 +93,7 @@ public class FindOneAndUpdateModel<D> {
      * @return a document describing the sort criteria
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public D getSort() {
+    public Object getSort() {
         return sort;
     }
 
@@ -106,7 +105,7 @@ public class FindOneAndUpdateModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public FindOneAndUpdateModel<D> sort(final D sort) {
+    public FindOneAndUpdateModel sort(final Object sort) {
         this.sort = sort;
         return this;
     }
@@ -126,7 +125,7 @@ public class FindOneAndUpdateModel<D> {
      * @param upsert true if a new document should be inserted if there are no matches to the query filter
      * @return this
      */
-    public FindOneAndUpdateModel<D> upsert(final boolean upsert) {
+    public FindOneAndUpdateModel upsert(final boolean upsert) {
         this.upsert = upsert;
         return this;
     }
@@ -146,7 +145,7 @@ public class FindOneAndUpdateModel<D> {
      * @param returnUpdated set true to return the updated document rather than the original.
      * @return this
      */
-    public FindOneAndUpdateModel<D> returnUpdated(final boolean returnUpdated) {
+    public FindOneAndUpdateModel returnUpdated(final boolean returnUpdated) {
         this.returnUpdated = returnUpdated;
         return this;
     }

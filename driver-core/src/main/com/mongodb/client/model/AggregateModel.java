@@ -24,13 +24,12 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * A model describing an aggregation.
  *
- * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/aggregation/ Aggregation
  * @mongodb.server.release 2.2
  */
-public class AggregateModel<D> implements ExplainableModel<D> {
-    private final List<D> pipeline;
+public class AggregateModel implements ExplainableModel {
+    private final List<?> pipeline;
     private Boolean allowDiskUse;
     private Integer batchSize;
     private long maxTimeMS;
@@ -41,7 +40,7 @@ public class AggregateModel<D> implements ExplainableModel<D> {
      *
      * @param pipeline the non-null aggregation pipeline
      */
-    public AggregateModel(final List<D> pipeline) {
+    public AggregateModel(final List<?> pipeline) {
         this.pipeline = notNull("pipeline", pipeline);
     }
 
@@ -51,7 +50,7 @@ public class AggregateModel<D> implements ExplainableModel<D> {
      * @return the pipeline
      * @mongodb.driver.manual manual/core/aggregation-introduction/#aggregation-pipelines Aggregation Pipeline
      */
-    public List<D> getPipeline() {
+    public List<?> getPipeline() {
         return pipeline;
     }
 
@@ -74,7 +73,7 @@ public class AggregateModel<D> implements ExplainableModel<D> {
      * @mongodb.server.release 2.6
      * @return this
      */
-    public AggregateModel<D> allowDiskUse(final Boolean allowDiskUse) {
+    public AggregateModel allowDiskUse(final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
         return this;
     }
@@ -97,7 +96,7 @@ public class AggregateModel<D> implements ExplainableModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    public AggregateModel<D> batchSize(final Integer batchSize) {
+    public AggregateModel batchSize(final Integer batchSize) {
         this.batchSize = batchSize;
         return this;
     }
@@ -122,7 +121,7 @@ public class AggregateModel<D> implements ExplainableModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
-    public AggregateModel<D> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public AggregateModel maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
@@ -148,7 +147,7 @@ public class AggregateModel<D> implements ExplainableModel<D> {
      * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
-    public AggregateModel<D> useCursor(final Boolean useCursor) {
+    public AggregateModel useCursor(final Boolean useCursor) {
         this.useCursor = useCursor;
         return this;
     }
