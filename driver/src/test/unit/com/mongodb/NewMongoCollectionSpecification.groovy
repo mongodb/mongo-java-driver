@@ -20,6 +20,8 @@ import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.AggregateModel
 import com.mongodb.client.model.BulkWriteModel
 import com.mongodb.client.model.CountModel
+import com.mongodb.client.model.DeleteManyModel
+import com.mongodb.client.model.DeleteOneModel
 import com.mongodb.client.model.DistinctModel
 import com.mongodb.client.model.FindModel
 import com.mongodb.client.model.FindOneAndDeleteModel
@@ -28,6 +30,8 @@ import com.mongodb.client.model.FindOneAndUpdateModel
 import com.mongodb.client.model.InsertManyModel
 import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.ReplaceOneModel
+import com.mongodb.client.model.UpdateManyModel
+import com.mongodb.client.model.UpdateOneModel
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.codecs.DocumentCodecProvider
 import com.mongodb.operation.AggregateOperation
@@ -38,13 +42,17 @@ import com.mongodb.operation.FindAndRemoveOperation
 import com.mongodb.operation.FindAndReplaceOperation
 import com.mongodb.operation.FindAndUpdateOperation
 import com.mongodb.operation.InsertOperation
+import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.QueryOperation
+import com.mongodb.operation.RemoveOperation
 import com.mongodb.operation.ReplaceOperation
+import com.mongodb.operation.UpdateOperation
 import com.mongodb.protocol.AcknowledgedWriteResult
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.codecs.configuration.RootCodecRegistry
 import org.bson.types.ObjectId
@@ -64,6 +72,22 @@ class NewMongoCollectionSpecification extends Specification {
                                         .codecRegistry(new RootCodecRegistry([new DocumentCodecProvider()]))
                                         .build()
 
+    def 'should get namespace'() {
+        given:
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, new TestOperationExecutor([]))
+
+        expect:
+        collection.namespace == namespace
+    }
+
+    def 'should get options'() {
+        given:
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, new TestOperationExecutor([]))
+
+        expect:
+        collection.options == options
+    }
+
     def 'insertOne should use InsertOperation properly'() {
         given:
         def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
@@ -73,7 +97,8 @@ class NewMongoCollectionSpecification extends Specification {
         collection.insertOne(new Document('_id', 1))
 
         then:
-        executor.getWriteOperation() as InsertOperation
+        def operation = executor.getWriteOperation() as InsertOperation
+        operation.insertRequests[0].document == new BsonDocument('_id', new BsonInt32(1))
     }
 
     def 'insert should add _id to document'() {
@@ -101,7 +126,9 @@ class NewMongoCollectionSpecification extends Specification {
         collection.insertMany(new InsertManyModel<Document>([new Document('_id', 1), new Document('_id', 2)]));
 
         then:
-        executor.getWriteOperation() as InsertOperation
+        def operation = executor.getWriteOperation() as InsertOperation
+        operation.insertRequests[0].document == new BsonDocument('_id', new BsonInt32(1))
+        operation.insertRequests[1].document == new BsonDocument('_id', new BsonInt32(2))
     }
 
     def 'insertMany should add _id to documents'() {
@@ -128,13 +155,105 @@ class NewMongoCollectionSpecification extends Specification {
 
         when:
         def result = collection.replaceOne(new ReplaceOneModel<>(new Document('_id', 1),
-                                                                 new Document('_id', 1).append('color', 'blue')))
+                                                                 new Document('color', 'blue'))
+                                                   .upsert(true))
 
         then:
-        executor.getWriteOperation() as ReplaceOperation
+        def operation = executor.getWriteOperation() as ReplaceOperation
+
+        def replaceRequest = operation.replaceRequests[0]
+        !replaceRequest.multi
+        replaceRequest.upsert
+        replaceRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        replaceRequest.replacement == new BsonDocument('color', new BsonString('blue'))
+
         result.modifiedCount == 0
         result.matchedCount == 1
         !result.upsertedId
+    }
+
+    def 'updateOne should use UpdateOperation properly'() {
+        given:
+        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        def result = collection.updateOne(new UpdateOneModel<>(new Document('_id', 1),
+                                                               new Document('$set', new Document('color', 'blue')))
+                                                  .upsert(true))
+
+        then:
+        def operation = executor.getWriteOperation() as UpdateOperation
+
+        def updateRequest = operation.updateRequests[0]
+        !updateRequest.multi
+        updateRequest.upsert
+        updateRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        updateRequest.updateOperations == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
+
+        result.modifiedCount == 0
+        result.matchedCount == 1
+        !result.upsertedId
+    }
+
+    def 'updateMany should use UpdateOperation properly'() {
+        given:
+        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        def result = collection.updateMany(new UpdateManyModel<>(new Document('_id', 1),
+                                                                 new Document('$set', new Document('color', 'blue')))
+                                                   .upsert(true))
+
+        then:
+        def operation = executor.getWriteOperation() as UpdateOperation
+
+        def updateRequest = operation.updateRequests[0]
+        updateRequest.multi
+        updateRequest.upsert
+        updateRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        updateRequest.updateOperations == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
+
+        result.modifiedCount == 0
+        result.matchedCount == 1
+        !result.upsertedId
+    }
+
+    def 'deleteOne should use RemoveOperation properly'() {
+        given:
+        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        def result = collection.deleteOne(new DeleteOneModel<>(new Document('_id', 1)));
+
+        then:
+        def operation = executor.getWriteOperation() as RemoveOperation
+
+        def removeRequest = operation.removeRequests[0]
+        !removeRequest.multi
+        removeRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+
+        result.deletedCount == 1
+    }
+
+    def 'deleteMany should use RemoveOperation properly'() {
+        given:
+        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        def result = collection.deleteMany(new DeleteManyModel<>(new Document('_id', 1)));
+
+        then:
+        def operation = executor.getWriteOperation() as RemoveOperation
+
+        def updateRequest = operation.removeRequests[0]
+        updateRequest.multi
+        updateRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+
+        result.deletedCount == 1
     }
 
     def 'find should use FindOperation properly'() {
@@ -143,12 +262,12 @@ class NewMongoCollectionSpecification extends Specification {
         def cursor = Stub(MongoCursor)
         cursor.hasNext() >>> [true, false]
         cursor.next() >> document
-        def executor = new TestOperationExecutor([cursor])
+        def executor = new TestOperationExecutor([cursor, cursor])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
+        when:
         def model = new FindModel<>().criteria(new Document('cold', true))
                                      .batchSize(4)
-                                     .cursorFlags(EnumSet.of(CursorFlag.PARTIAL, CursorFlag.NO_CURSOR_TIMEOUT))
                                      .maxTime(1, TimeUnit.SECONDS)
                                      .skip(5)
                                      .limit(100)
@@ -156,22 +275,38 @@ class NewMongoCollectionSpecification extends Specification {
                                      .projection(new Document('x', 1))
                                      .sort(new Document('y', 1))
 
-        when:
         def result = collection.find(model).into([])
 
         then:
         def operation = executor.getReadOperation() as QueryOperation
-        operation.criteria == new BsonDocument('cold', BsonBoolean.TRUE)
-        operation.batchSize == 4
-        operation.cursorFlags == EnumSet.of(CursorFlag.PARTIAL, CursorFlag.NO_CURSOR_TIMEOUT)
-        operation.getMaxTime(TimeUnit.SECONDS) == 1
-        operation.skip == 5
-        operation.limit == 100
-        operation.modifiers == new BsonDocument('$hint', new BsonString('i1'))
-        operation.projection == new BsonDocument('x', new BsonInt32(1))
-        operation.sort == new BsonDocument('y', new BsonInt32(1))
+        operation.with {
+            criteria == new BsonDocument('cold', BsonBoolean.TRUE)
+            batchSize == 4
+            getMaxTime(TimeUnit.SECONDS) == 1
+            skip == 5
+            limit == 100
+            modifiers == new BsonDocument('$hint', new BsonString('i1'))
+            projection == new BsonDocument('x', new BsonInt32(1))
+            sort == new BsonDocument('y', new BsonInt32(1))
+            cursorFlags == EnumSet.noneOf(CursorFlag)
+        }
         executor.readPreference == secondary()
         result == [document]
+
+        when: 'all the boolean properties are enabled'
+        model = new FindModel<>().awaitData(true)
+                                 .exhaust(true)
+                                 .noCursorTimeout(true)
+                                 .partial(true)
+                                 .tailable(true)
+                                 .oplogReplay(true)
+
+        collection.find(model).into([])
+
+        then: 'cursor flags contains all flags'
+        def operation2 = executor.getReadOperation() as QueryOperation
+        operation2.cursorFlags == EnumSet.of(CursorFlag.AWAIT_DATA, CursorFlag.EXHAUST, CursorFlag.NO_CURSOR_TIMEOUT, CursorFlag.PARTIAL,
+                                             CursorFlag.TAILABLE, CursorFlag.OPLOG_REPLAY);
     }
 
     def 'count should use CountOperation properly'() {
@@ -233,6 +368,63 @@ class NewMongoCollectionSpecification extends Specification {
         result == ['foo', 42]
     }
 
+    def 'bulk insert should use BulkWriteOperation properly'() {
+        given:
+        def executor = new TestOperationExecutor([new com.mongodb.protocol.AcknowledgedBulkWriteResult(1, 0, 0, 0, [])])
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def document = new Document();
+
+        when:
+        collection.bulkWrite(new BulkWriteModel<>([new InsertOneModel<>(document),
+                                                   new UpdateOneModel<>(new Document('_id', 1),
+                                                                        new Document('$set', new Document('color', 'blue')))
+                                                           .upsert(true),
+                                                   new UpdateManyModel<>(new Document('_id', 1),
+                                                                         new Document('$set', new Document('color', 'blue')))
+                                                           .upsert(true),
+                                                   new ReplaceOneModel<>(new Document('_id', 1),
+                                                                         new Document('color', 'blue'))
+                                                           .upsert(true),
+                                                   new DeleteOneModel<>(new Document('_id', 1)),
+                                                   new DeleteManyModel<>(new Document('_id', 1))])
+                                     .ordered(false))
+
+
+        then:
+        def operation = executor.getWriteOperation() as MixedBulkWriteOperation
+
+        def insertRequest = operation.writeRequests[0] as com.mongodb.operation.InsertRequest
+        insertRequest.document == new BsonDocument('_id', new BsonObjectId(document.getObjectId('_id')))
+
+        def updateOneRequest = operation.writeRequests[1] as com.mongodb.operation.UpdateRequest
+        !updateOneRequest.multi
+        updateOneRequest.upsert
+        updateOneRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        updateOneRequest.updateOperations == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
+
+        def updateManyRequest = operation.writeRequests[2] as com.mongodb.operation.UpdateRequest
+        updateManyRequest.multi
+        updateManyRequest.upsert
+        updateManyRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        updateManyRequest.updateOperations == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
+
+        def replaceRequest = operation.writeRequests[3] as com.mongodb.operation.ReplaceRequest
+        !replaceRequest.multi
+        replaceRequest.upsert
+        replaceRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        replaceRequest.replacement == new BsonDocument('color', new BsonString('blue'))
+
+        def deleteOneRequest = operation.writeRequests[4] as com.mongodb.operation.RemoveRequest
+        !deleteOneRequest.multi
+        deleteOneRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+
+        def deleteManyRequest = operation.writeRequests[5] as com.mongodb.operation.RemoveRequest
+        deleteManyRequest.multi
+        deleteManyRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+
+        document.containsKey('_id')
+    }
+
     def 'bulk insert should generate _id'() {
         given:
         def executor = new TestOperationExecutor([new com.mongodb.protocol.AcknowledgedBulkWriteResult(1, 0, 0, 0, [])])
@@ -240,7 +432,8 @@ class NewMongoCollectionSpecification extends Specification {
         def document = new Document();
 
         when:
-        collection.bulkWrite(new BulkWriteModel<>([new InsertOneModel<>(document)]))
+        collection.bulkWrite(new BulkWriteModel<>([new InsertOneModel<>(document),]))
+
 
         then:
         document.containsKey('_id')

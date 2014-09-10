@@ -16,12 +16,9 @@
 
 package com.mongodb.async.rx.client;
 
-import com.mongodb.CursorFlag;
 import com.mongodb.annotations.NotThreadSafe;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
-
-import java.util.EnumSet;
 
 /**
  * A view onto a collection.  Operations on the view will change which, how many, and in what order the documents appear in the view when
@@ -38,14 +35,6 @@ import java.util.EnumSet;
  */
 @NotThreadSafe
 public interface MongoView<T> extends MongoWritableView<T>, MongoReadableView<T>, MongoIterable<T> {
-
-    /**
-     * Adds a query option - see Bytes.QUERYOPTION_* for list.
-     *
-     * @param flags the flags to be added
-     * @return a view on this collection with the query with the query flag set
-     */
-    MongoView<T> cursorFlags(final EnumSet<CursorFlag> flags);
 
     /**
      * Updates the filter applied to the documents in the view.

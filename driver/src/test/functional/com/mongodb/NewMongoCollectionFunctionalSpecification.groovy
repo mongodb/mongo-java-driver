@@ -57,7 +57,6 @@ class NewMongoCollectionFunctionalSpecification extends FunctionalSpecification 
         when:
         def model = new FindModel<>().criteria(new Document('cold', true))
                                      .batchSize(4)
-                                     .cursorFlags(EnumSet.of(CursorFlag.PARTIAL, CursorFlag.NO_CURSOR_TIMEOUT))
                                      .maxTime(1, TimeUnit.SECONDS)
                                      .skip(5)
                                      .limit(100)

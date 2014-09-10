@@ -34,7 +34,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  */
 public class InsertOperation extends BaseWriteOperation {
-    private final List<InsertRequest> insertRequestList;
+    private final List<InsertRequest> insertRequests;
 
     /**
      * Construct an instance.
@@ -42,22 +42,31 @@ public class InsertOperation extends BaseWriteOperation {
      * @param namespace the namespace
      * @param ordered whether the inserts are ordered
      * @param writeConcern the write concern to apply
-     * @param insertRequestList the list of inserts
+     * @param insertRequests the list of inserts
      */
     public InsertOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<InsertRequest> insertRequestList) {
+                           final List<InsertRequest> insertRequests) {
         super(namespace, ordered, writeConcern);
-        this.insertRequestList = notNull("insertRequestList", insertRequestList);
+        this.insertRequests = notNull("insertRequests", insertRequests);
+    }
+
+    /**
+     * Gets the list of insert requests.
+     *
+     * @return the list of insert requests.
+     */
+    public List<InsertRequest> getInsertRequests() {
+        return insertRequests;
     }
 
     @Override
     protected WriteProtocol getWriteProtocol() {
-        return new InsertProtocol(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList);
+        return new InsertProtocol(getNamespace(), isOrdered(), getWriteConcern(), insertRequests);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol() {
-        return new InsertCommandProtocol(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList);
+        return new InsertCommandProtocol(getNamespace(), isOrdered(), getWriteConcern(), insertRequests);
     }
 
     @Override
