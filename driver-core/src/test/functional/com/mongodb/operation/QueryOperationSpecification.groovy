@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
+import category.Slow
 import com.mongodb.Block
 import com.mongodb.ClusterFixture
 import com.mongodb.MongoExecutionTimeoutException
@@ -197,6 +198,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @IgnoreIf({ isSharded() })
+    @Category(Slow)
     def 'should exhaust'() {
         for (i in 1..500) {
             collectionHelper.insertDocuments(new Document('_id', i))
@@ -221,7 +223,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         count == 500
     }
 
-    @Category(Async)
+    @Category([Async, Slow])
     @IgnoreIf({ isSharded() })
     def 'should iterate asynchronously'() {
         given:
@@ -245,7 +247,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         count == 500
     }
 
-    @Category(Async)
+    @Category([Async, Slow])
     @IgnoreIf({ isSharded() })
     def 'should exhaust asynchronously'() {
         for (i in 1..500) {

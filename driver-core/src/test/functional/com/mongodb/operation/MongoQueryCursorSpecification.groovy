@@ -301,6 +301,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
 
     // 2.2 does not properly detect cursor not found, so ignoring
     @IgnoreIf({ isSharded() && !serverVersionAtLeast([2, 4, 0]) })
+    @Category(Slow)
     def 'should kill cursor if limit is reached on initial query'() throws InterruptedException {
         given:
         def firstBatch = executeQuery(5)
@@ -321,6 +322,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
 
     @IgnoreIf({ isSharded() && !serverVersionAtLeast([2, 4, 0]) })
     // 2.2 does not properly detect cursor not found, so ignoring
+    @Category(Slow)
     def 'should kill cursor if limit is reached on get more'() throws InterruptedException {
         given:
         def firstBatch = executeQuery(3)
@@ -359,6 +361,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
         !cursor.hasNext()
     }
 
+    @Category(Slow)
     def 'test limit with large documents'() {
         given:
         char[] array = 'x' * 16000

@@ -44,7 +44,7 @@ import static com.mongodb.ReadPreference.primary
 import static com.mongodb.operation.QueryFlag.Exhaust
 import static java.util.concurrent.TimeUnit.SECONDS
 
-@Category(Async)
+@Category([Async, Slow])
 class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecification {
 
     @Shared

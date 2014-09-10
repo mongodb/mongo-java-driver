@@ -16,6 +16,7 @@
 
 package com.mongodb.gridfs;
 
+import category.Slow;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.DatabaseTestCase;
@@ -23,6 +24,7 @@ import com.mongodb.MongoException;
 import org.bson.types.ObjectId;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -135,6 +137,7 @@ public class GridFSTest extends DatabaseTestCase {
     }
 
     @Test
+    @Category(Slow.class)
     public void testMultipleChunks() throws Exception {
         int fileSize = 1024 * 128;
         byte[] randomBytes = new byte[fileSize];
@@ -156,6 +159,7 @@ public class GridFSTest extends DatabaseTestCase {
     }
 
     @Test
+    @Category(Slow.class)
     public void getBigChunkSize() throws Exception {
         GridFSInputFile file = gridFS.createFile("512kb_bucket");
         file.setChunkSize(file.getChunkSize() * 2);
@@ -227,6 +231,10 @@ public class GridFSTest extends DatabaseTestCase {
 
     @Test
     public void testCustomFileID() throws IOException {
+        // given
+        int id = 1;
+        gridFS.remove(new BasicDBObject("_id", id));
+
         int chunkSize = 10;
         int fileSize = (int) (3.25 * chunkSize);
 
@@ -235,19 +243,23 @@ public class GridFSTest extends DatabaseTestCase {
             fileBytes[idx] = (byte) (idx % 251);
         }
 
+        // when
         GridFSInputFile inputFile = gridFS.createFile(fileBytes);
-        int id = 1;
         inputFile.setId(id);
         inputFile.setFilename("custom_file_id.bin");
         inputFile.save(chunkSize);
         assertEquals(id, inputFile.getId());
 
+        // then
         GridFSDBFile savedFile = gridFS.findOne(new BasicDBObject("_id", id));
         InputStream inputStream = savedFile.getInputStream();
 
         for (int idx = 0; idx < fileSize; ++idx) {
             assertEquals((byte) (idx % 251), (byte) inputStream.read());
         }
+        
+        // finally
+        gridFS.remove(new BasicDBObject("_id", id));
     }
 
     void testInOut(final String s) throws Exception {

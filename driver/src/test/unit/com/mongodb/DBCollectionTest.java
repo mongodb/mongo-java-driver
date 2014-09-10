@@ -17,6 +17,7 @@
 package com.mongodb;
 
 
+import category.Slow;
 import org.bson.BSONObject;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonBinaryWriter;
@@ -29,6 +30,7 @@ import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.mongodb.Document;
 
 import java.net.UnknownHostException;
@@ -330,6 +332,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    @Category(Slow.class)
     public void testUpdateWithDBEncoder() {
         DBObject document = new BasicDBObject("_id", 1).append("x", 1);
         collection.insert(document);
@@ -447,6 +450,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    @Category(Slow.class)
     public void testFindAndReplaceA16MDocument() {
         BasicDBObject documentWithJustId = new BasicDBObject("_id", 42);
         DBObject foundDocument = collection.findAndModify(documentWithJustId, new BasicDBObject("_id", 1), null, false,
@@ -831,6 +835,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    @Category(Slow.class)
     public void testParallelScan() throws UnknownHostException {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 5)));
         assumeFalse(isSharded());

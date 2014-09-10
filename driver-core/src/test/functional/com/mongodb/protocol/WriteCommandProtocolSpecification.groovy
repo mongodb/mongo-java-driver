@@ -17,6 +17,7 @@
 
 package com.mongodb.protocol
 
+import category.Slow
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.operation.InsertRequest
@@ -25,6 +26,7 @@ import com.mongodb.selector.PrimaryServerSelector
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.types.Binary
+import org.junit.experimental.categories.Category
 import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
@@ -101,6 +103,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         }
     }
 
+    @Category(Slow)
     def 'should split a large batch'() {
         given:
         def hugeBinary = new Binary(new byte[1024 * 1024 * 16 - 100]);
@@ -128,6 +131,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         documents.size() == collectionHelper.count()
     }
 
+    @Category(Slow)
     def 'should have correct list of processed and unprocessed requests after error on split'() {
         given:
         def hugeBinary = new Binary(new byte[1024 * 1024 * 16 - 100]);
@@ -160,6 +164,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         exception.writeResult.insertedCount == 1
     }
 
+    @Category(Slow)
     def 'should map indices in exception when split is required'() {
         given:
         def hugeBinary = new Binary(new byte[1024 * 1024 * 16 - 100]);

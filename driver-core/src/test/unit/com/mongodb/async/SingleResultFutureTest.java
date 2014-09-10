@@ -16,8 +16,10 @@
 
 package com.mongodb.async;
 
+import category.Slow;
 import com.mongodb.MongoException;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CountDownLatch;
@@ -106,6 +108,7 @@ public class SingleResultFutureTest {
     }
 
     @Test
+    @Category(Slow.class)
     public void testCancellationNotification() throws InterruptedException {
         final SingleResultFuture<Integer> future = new SingleResultFuture<Integer>();
         final CountDownLatch latch = new CountDownLatch(1);

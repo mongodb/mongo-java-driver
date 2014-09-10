@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
+import category.Slow
 import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
@@ -158,6 +159,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         acknowledgeWrite(binding)
     }
 
+    @Category(Slow)
     def 'should insert a batch at The limit of the batch size'() {
         given:
         byte[] hugeByteArray = new byte[1024 * 1024 * 16 - 2127];
@@ -175,7 +177,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().count() == 2
     }
 
-    @Category(Async)
+    @Category([Async, Slow])
     def 'should insert a batch at The limit of the batch size asynchronously'() {
         given:
         byte[] hugeByteArray = new byte[1024 * 1024 * 16 - 2127];

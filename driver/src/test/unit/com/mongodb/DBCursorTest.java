@@ -350,6 +350,10 @@ public class DBCursorTest extends DatabaseTestCase {
         DBCollection profileCollection = database.getCollection("system.profile");
         assertEquals(1, profileCollection.count());
         assertEquals(expectedComment, ((DBObject) profileCollection.findOne().get("query")).get("$comment"));
+        
+        // finally
+        database.command(new BasicDBObject("profile", 0));
+        profileCollection.drop();
     }
 
     @Test
