@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoCredential;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -28,31 +29,30 @@ import static com.mongodb.connection.NativeAuthenticationHelper.createAuthentica
 
 final class UserOperationHelper {
 
-    static BsonDocument asCommandDocument(final User user, final String commandName) {
+    static BsonDocument asCommandDocument(final MongoCredential credential, final boolean readOnly, final String commandName) {
         BsonDocument document = new BsonDocument();
-        document.put(commandName, new BsonString(user.getCredential().getUserName()));
-        document.put("pwd", new BsonString(createAuthenticationHash(user.getCredential().getUserName(),
-                                                                    user.getCredential().getPassword())));
+        document.put(commandName, new BsonString(credential.getUserName()));
+        document.put("pwd", new BsonString(createAuthenticationHash(credential.getUserName(),
+                                                                    credential.getPassword())));
         document.put("digestPassword", BsonBoolean.FALSE);
-        document.put("roles", new BsonArray(Arrays.<BsonValue>asList(new BsonString(getRoleName(user)))));
+        document.put("roles", new BsonArray(Arrays.<BsonValue>asList(new BsonString(getRoleName(credential, readOnly)))));
         return document;
     }
 
-    private static String getRoleName(final User user) {
-        return user.getCredential().getSource().equals("admin")
-               ? (user.isReadOnly() ? "readAnyDatabase" : "root") : (user.isReadOnly() ? "read" : "dbOwner");
+    private static String getRoleName(final MongoCredential credential, final boolean readOnly) {
+        return credential.getSource().equals("admin")
+               ? (readOnly ? "readAnyDatabase" : "root") : (readOnly ? "read" : "dbOwner");
     }
 
-    static BsonDocument asCollectionQueryDocument(final User user) {
-        return new BsonDocument("user", new BsonString(user.getCredential().getUserName()));
+    static BsonDocument asCollectionQueryDocument(final MongoCredential credential) {
+        return new BsonDocument("user", new BsonString(credential.getUserName()));
     }
 
-    static BsonDocument asCollectionDocument(final User user) {
-        BsonDocument document = asCollectionQueryDocument(user);
-        document.put("pwd", new BsonString(createAuthenticationHash(user.getCredential().getUserName(),
-                                                                    user.getCredential().getPassword())));
-        document.put("readOnly", BsonBoolean.valueOf(user.isReadOnly()));
-
+    static BsonDocument asCollectionDocument(final MongoCredential credential, final boolean readOnly) {
+        BsonDocument document = asCollectionQueryDocument(credential);
+        document.put("pwd", new BsonString(createAuthenticationHash(credential.getUserName(),
+                                                                    credential.getPassword())));
+        document.put("readOnly", BsonBoolean.valueOf(readOnly));
         return document;
     }
 

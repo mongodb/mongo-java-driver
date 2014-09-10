@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-
-
-
-
 package com.mongodb.operation
 
 import com.mongodb.MongoException
@@ -29,8 +25,8 @@ import static com.mongodb.MongoCredential.createMongoCRCredential
 class DropUserOperationSpecification extends OperationFunctionalSpecification {
     def 'should delete user without error'() {
         given:
-        User jeff = new User(createMongoCRCredential('jeff', databaseName, '123'.toCharArray()), true)
-        new CreateUserOperation(jeff).execute(getBinding())
+        def credential = createMongoCRCredential('jeff', databaseName, '123'.toCharArray())
+        new CreateUserOperation(credential, true).execute(getBinding())
 
         when:
         DropUserOperation operation = new DropUserOperation(databaseName, 'jeff')

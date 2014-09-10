@@ -120,7 +120,11 @@ public final class ClusterFixture {
     }
 
     public static ReadWriteBinding getBinding() {
-        return new ClusterBinding(getCluster(), ReadPreference.primary(), 1, SECONDS);
+        return getBinding(getCluster());
+    }
+
+    public static ReadWriteBinding getBinding(final Cluster cluster) {
+        return new ClusterBinding(cluster, ReadPreference.primary(), 1, SECONDS);
     }
 
     public static PinnedBinding getPinnedBinding() {
