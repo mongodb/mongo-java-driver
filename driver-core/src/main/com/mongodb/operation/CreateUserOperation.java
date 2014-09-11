@@ -51,7 +51,7 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
     private final boolean readOnly;
 
     /**
-     * Constructs a new instance.
+     * Construct a new instance.
      *
      * @param credential the users credentials.
      * @param readOnly true if the user is a readOnly user.

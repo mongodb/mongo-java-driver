@@ -51,7 +51,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     /**
      * Construct a new instance.
      *
-     * @param namespace the namespace to execute the count operation on
+     * @param namespace the database and collection namespace for the operation.
      */
     public CountOperation(final MongoNamespace namespace) {
         this.namespace = notNull("namespace", namespace);

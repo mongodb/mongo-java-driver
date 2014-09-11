@@ -45,9 +45,9 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private Boolean usePowerOf2Sizes = null;
 
     /**
-     * Construct a new instance
+     * Construct a new instance.
      *
-     * @param databaseName the database name to create the collection in.
+     * @param databaseName the name of the database for the operation.
      * @param collectionName the name of the collection to be created.
      */
     public CreateCollectionOperation(final String databaseName, final String collectionName) {

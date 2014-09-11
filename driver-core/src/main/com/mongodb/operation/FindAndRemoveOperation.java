@@ -37,7 +37,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * An operation that atomically finds and removes a single document.
  *
- * @param <T> the resulting document type
+ * @param <T> the operations result type.
  * @since 3.0
  */
 public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
@@ -49,10 +49,10 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
     private long maxTimeMS;
 
     /**
-     * Construct a new instance
+     * Construct a new instance.
      *
-     * @param namespace the namespace to execute the query in
-     * @param decoder the decoder to decode the results with
+     * @param namespace the database and collection namespace for the operation.
+     * @param decoder the decoder for the result documents.
      */
     public FindAndRemoveOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);

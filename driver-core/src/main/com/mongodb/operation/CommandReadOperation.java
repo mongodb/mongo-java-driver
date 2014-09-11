@@ -29,26 +29,34 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 /**
  * An operation that executes an arbitrary command that reads from the server.
  *
+ * @param <T> the operations result type.
  * @since 3.0
  */
 public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOperation<T> {
-    private final String database;
+    private final String databaseName;
     private final BsonDocument command;
     private final Decoder<T> decoder;
 
-    public CommandReadOperation(final String database, final BsonDocument command, final Decoder<T> decoder) {
-        this.database = notNull("database", database);
+    /**
+     * Construct a new instance.
+     *
+     * @param databaseName the name of the database for the operation.
+     * @param command the command to execute.
+     * @param decoder the decoder for the result documents.
+     */
+    public CommandReadOperation(final String databaseName, final BsonDocument command, final Decoder<T> decoder) {
+        this.databaseName = notNull("databaseName", databaseName);
         this.command = notNull("command", command);
         this.decoder = notNull("decoder", decoder);
     }
 
     @Override
     public T execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(database, command, decoder, binding);
+        return executeWrappedCommandProtocol(databaseName, command, decoder, binding);
     }
 
     @Override
     public MongoFuture<T> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(database, command, decoder, binding);
+        return executeWrappedCommandProtocolAsync(databaseName, command, decoder, binding);
     }
 }

@@ -52,7 +52,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
 /**
  * An operation that queries a collection using the provided criteria.
  *
- * @param <T> the document type
+ * @param <T> the operations result type.
  * @since 3.0
  */
 public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoCursor<T>> {
@@ -71,8 +71,8 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     /**
      * Construct a new instance.
      *
-     * @param namespace the namespace to execute the query in
-     * @param decoder   the decoder to decode the results with
+     * @param namespace the database and collection namespace for the operation.
+     * @param decoder the decoder for the result documents.
      */
     public QueryOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);

@@ -42,9 +42,9 @@ public class GetCollectionNamesOperation implements AsyncReadOperation<List<Stri
     private final String databaseName;
 
     /**
-     * Constructs a new instance.
+     * Construct a new instance.
      *
-     * @param databaseName the name of the database to get the list of collection names from.
+     * @param databaseName the name of the database for the operation.
      */
     public GetCollectionNamesOperation(final String databaseName) {
         this.databaseName = notNull("databaseName", databaseName);

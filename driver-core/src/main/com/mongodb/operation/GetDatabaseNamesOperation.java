@@ -39,8 +39,8 @@ public class GetDatabaseNamesOperation implements AsyncReadOperation<List<String
     /**
      * Executing this will return a list of all the databases names in the MongoDB instance.
      *
-     * @param binding the binding
-     * @return a List of Strings of the names of all the databases in the MongoDB instance
+     * @param binding the binding.
+     * @return a List of Strings of the names of all the databases in the MongoDB instance.
      */
     @Override
     public List<String> execute(final ReadBinding binding) {

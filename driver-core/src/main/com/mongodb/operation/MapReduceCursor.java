@@ -22,7 +22,7 @@ import com.mongodb.MongoCursor;
  * Represents the results of a map-reduce operation as a cursor.  Users can iterate over the results and additionally get relevant
  * statistics about the operation.
  *
- * @param <T> the type of each result, usually some sort of document.
+ * @param <T> the operations result type.
  * @since 3.0
  */
 public interface MapReduceCursor<T> extends MongoCursor<T> {

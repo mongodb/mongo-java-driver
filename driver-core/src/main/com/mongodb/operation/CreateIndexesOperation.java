@@ -56,6 +56,12 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     private final List<Index> indexes;
     private final MongoNamespace systemIndexes;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param indexes the indexes to create.
+     */
     public CreateIndexesOperation(final MongoNamespace namespace, final List<Index> indexes) {
         this.namespace = notNull("namespace", namespace);
         this.indexes = notNull("indexes", indexes);

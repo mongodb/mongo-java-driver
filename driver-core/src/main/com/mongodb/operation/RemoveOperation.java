@@ -39,10 +39,10 @@ public class RemoveOperation extends BaseWriteOperation {
     /**
      * Construct an instance.
      *
-     * @param namespace the non-null namespace
-     * @param ordered whether the writes are ordered
-     * @param writeConcern the write concern to apply
-     * @param removeRequests the write requests
+     * @param namespace the database and collection namespace for the operation.
+     * @param ordered whether the writes are ordered.
+     * @param writeConcern the write concern for the operation.
+     * @param removeRequests the remove requests.
      */
     public RemoveOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                            final List<RemoveRequest> removeRequests) {

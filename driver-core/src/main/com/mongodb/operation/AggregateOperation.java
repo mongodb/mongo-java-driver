@@ -50,7 +50,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
 /**
  * An operation that executes an aggregation query.
  *
- * @param <T> the type to deserialize the results to
+ * @param <T> the operations result type.
  * @mongodb.driver.manual manual/aggregation/ Aggregation
  * @mongodb.server.release 2.2
  * @since 3.0
@@ -70,9 +70,9 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
     /**
      * Construct a new instance.
      *
-     * @param namespace the namespace of the collection to aggregate
-     * @param pipeline  the pipeline of operators
-     * @param decoder   the decoder to decode the result documents
+     * @param namespace the database and collection namespace for the operation.
+     * @param pipeline the aggregation pipeline.
+     * @param decoder the decoder for the result documents.
      */
     public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);

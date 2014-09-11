@@ -51,8 +51,8 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     /**
      * Construct a new instance.
      *
-     * @param namespace the namespace to aggregate from
-     * @param pipeline  the aggregate pipeline
+     * @param namespace the database and collection namespace for the operation.
+     * @param pipeline the aggregation pipeline.
      */
     public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline) {
         this.namespace = notNull("namespace", namespace);

@@ -43,7 +43,7 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private final boolean dropTarget;
 
     /**
-     * @param databaseName           the name of the database containing the collection to rename
+     * @param databaseName the name of the database for the operation.
      * @param originalCollectionName the name of the collection to rename
      * @param newCollectionName      the desired new name for the collection
      * @param dropTarget             set to true if you want any existing database with newCollectionName to be dropped during the rename
