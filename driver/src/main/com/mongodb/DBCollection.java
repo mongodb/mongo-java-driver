@@ -30,7 +30,6 @@ import com.mongodb.operation.FindAndRemoveOperation;
 import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
 import com.mongodb.operation.GetIndexesOperation;
-import com.mongodb.operation.GroupOperation;
 import com.mongodb.operation.Index;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
@@ -1010,10 +1009,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/group/ Group Command
      */
     public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
-        MongoCursor<DBObject> cursor = execute(new GroupOperation<DBObject>(getNamespace(), cmd.toNew(getDefaultDBObjectCodec()),
-                                                                            getDefaultDBObjectCodec()),
-                                               readPreference);
-        return toDBList(cursor);
+        return toDBList(execute(cmd.toOperation(getNamespace(), getDefaultDBObjectCodec()), readPreference));
     }
 
     /**

@@ -26,6 +26,7 @@ import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
 import org.bson.BsonDocument;
+import org.bson.BsonJavaScript;
 import org.bson.BsonString;
 import org.bson.codecs.Decoder;
 
@@ -44,20 +45,128 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  */
 public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoCursor<T>> {
     private final MongoNamespace namespace;
-    private final Group group;
     private final Decoder<T> decoder;
+    private final BsonJavaScript reduceFunction;
+    private final BsonDocument initial;
+    private BsonDocument key;
+    private BsonJavaScript keyFunction;
+    private BsonDocument criteria;
+    private BsonJavaScript finalizeFunction;
 
     /**
      * Create an operation that will perform a Group on a given collection.
      *
      * @param namespace the database and collection namespace for the operation.
-     * @param group     contains all the arguments for this group command.
+     * @param reduceFunction The aggregation function that operates on the documents during the grouping operation.
+     * @param initial The initial the aggregation result document.
      * @param decoder the decoder for the result documents.
+     * @mongodb.driver.manual reference/command/group Group Command
      */
-    public GroupOperation(final MongoNamespace namespace, final Group group, final Decoder<T> decoder) {
+    public GroupOperation(final MongoNamespace namespace, final BsonJavaScript reduceFunction,
+                          final BsonDocument initial, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
-        this.group = notNull("group", group);
+        this.reduceFunction = notNull("reduceFunction", reduceFunction);
+        this.initial = notNull("initial", initial);
         this.decoder = notNull("decoder", decoder);
+    }
+
+    /**
+     * Gets the document containing the field or fields to group.
+     *
+     * @return the document containing the field or fields to group.
+     */
+    public BsonDocument getKey() {
+        return key;
+    }
+
+    /**
+     * Sets the document containing the field or fields to group.
+     *
+     * @param key the document containing the field or fields to group.
+     * @return this
+     */
+    public GroupOperation key(final BsonDocument key) {
+        this.key = key;
+        return this;
+    }
+
+
+    /**
+     * Gets the function that creates a "key object" for use as the grouping key.
+     *
+     * @return the function that creates a "key object" for use as the grouping key.
+     */
+    public BsonJavaScript getKeyFunction() {
+        return keyFunction;
+    }
+
+    /**
+     * Sets the function that creates a "key object" for use as the grouping key.
+     *
+     * @param keyFunction the function that creates a "key object" for use as the grouping key.
+     * @return this
+     */
+    public GroupOperation keyFunction(final BsonJavaScript keyFunction) {
+        this.keyFunction = keyFunction;
+        return this;
+    }
+
+    /**
+     * Gets the initial the aggregation result document.
+     *
+     * @return the initial the aggregation result document.
+     */
+    public BsonDocument getInitial() {
+        return initial;
+    }
+
+    /**
+     * Gets the aggregation function that operates on the documents during the grouping operation.
+     *
+     * @return the aggregation function that operates on the documents during the grouping operation.
+     */
+    public BsonJavaScript getReduceFunction() {
+        return reduceFunction;
+    }
+
+    /**
+     * Gets the selection criteria to determine which documents in the collection to process.
+     *
+     * @return the selection criteria to determine which documents in the collection to process.
+     */
+    public BsonDocument getCriteria() {
+        return criteria;
+    }
+
+    /**
+     * Sets the optional selection criteria to determine which documents in the collection to process.
+     *
+     * @param criteria the selection criteria to determine which documents in the collection to process.
+     * @return this
+     */
+    public GroupOperation criteria(final BsonDocument criteria) {
+        this.criteria = criteria;
+        return this;
+    }
+
+    /**
+     * Gets the function that runs each item in the result before returning the final value.
+     *
+     * @return the function that runs each item in the result set before returning the final value.
+     */
+    public BsonJavaScript getFinalizeFunction() {
+        return finalizeFunction;
+    }
+
+    /**
+     * Sets the function that runs each item in the result set before returning the final value.
+     *
+     * @param finalizeFunction the function that runs each item in the result set before returning the final value.
+     * @return this
+     */
+    public GroupOperation finalizeFunction(final BsonJavaScript finalizeFunction) {
+        this.finalizeFunction = finalizeFunction;
+        return this;
     }
 
     /**
@@ -119,23 +228,24 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
 
         BsonDocument document = new BsonDocument("ns", new BsonString(namespace.getCollectionName()));
 
-        if (group.getKey() != null) {
-            document.put("key", group.getKey());
-        } else if (group.getKeyFunction() != null) {
-            document.put("keyf", group.getKeyFunction());
+        if (getKey() != null) {
+            document.put("key", getKey());
+        } else if (getKeyFunction() != null) {
+            document.put("keyf", getKeyFunction());
         }
 
-        document.put("initial", group.getInitial());
-        document.put("$reduce", group.getReduceFunction());
+        document.put("initial", getInitial());
+        document.put("$reduce", getReduceFunction());
 
-        if (group.getFinalizeFunction() != null) {
-            document.put("finalize", group.getFinalizeFunction());
+        if (getFinalizeFunction() != null) {
+            document.put("finalize", getFinalizeFunction());
         }
 
-        if (group.getFilter() != null) {
-            document.put("cond", group.getFilter());
+        if (getCriteria() != null) {
+            document.put("cond", getCriteria());
         }
 
         return new BsonDocument("group", document);
     }
+
 }

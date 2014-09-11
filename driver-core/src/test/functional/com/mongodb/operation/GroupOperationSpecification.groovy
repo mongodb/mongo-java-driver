@@ -38,12 +38,12 @@ class GroupOperationSpecification extends OperationFunctionalSpecification {
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
-        Group group = new Group(new BsonDocument('name', new BsonInt32(1)), new BsonJavaScript('function ( curr, result ) {}'),
-                                new BsonDocument())
-
         when:
-        GroupOperation op = new GroupOperation(getNamespace(), group, new DocumentCodec())
-        def result = op.execute(getBinding());
+        def result = new GroupOperation(getNamespace(),
+                                        new BsonJavaScript('function ( curr, result ) {}'),
+                                        new BsonDocument(), new DocumentCodec())
+                .key(new BsonDocument('name', new BsonInt32(1)))
+                .execute(getBinding());
 
         then:
         List<String> results = result.iterator()*.getString('name')
@@ -58,13 +58,15 @@ class GroupOperationSpecification extends OperationFunctionalSpecification {
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
-        Group group = new Group(new BsonDocument('name', new BsonInt32(1)), new BsonJavaScript('function ( curr, result ) {}'),
-                                new BsonDocument())
-
         when:
-        GroupOperation op = new GroupOperation(getNamespace(), group, new DocumentCodec())
         List<Document> docList = []
-        op.executeAsync(getAsyncBinding()).get().forEach(new Block<Document>() {
+        def result = new GroupOperation(getNamespace(),
+                                        new BsonJavaScript('function ( curr, result ) {}'),
+                                        new BsonDocument(), new DocumentCodec())
+                .key(new BsonDocument('name', new BsonInt32(1)))
+                .executeAsync(getAsyncBinding()).get()
+
+         result.forEach(new Block<Document>() {
             @Override
             void apply(final Document value) {
                 if (value != null) {
