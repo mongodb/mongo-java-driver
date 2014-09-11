@@ -50,9 +50,9 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     /**
      * Create an operation that will perform a Group on a given collection.
      *
-     * @param namespace the database and collection to run the operation against
-     * @param group     contains all the arguments for this group command
-     * @param decoder   the decoder to use to turn the results into type {@code T}
+     * @param namespace the database and collection to run the operation against.
+     * @param group     contains all the arguments for this group command.
+     * @param decoder   the decoder to use to turn the results into type {@code T}.
      */
     public GroupOperation(final MongoNamespace namespace, final Group group, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
@@ -64,7 +64,7 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * Will return a cursor of Documents containing the results of the group operation.
      *
      * @param binding the binding
-     * @return a MongoCursor of T, the results of the group operation in a form to be iterated over
+     * @return a MongoCursor of T, the results of the group operation in a form to be iterated over.
      */
     @Override
     @SuppressWarnings("unchecked")

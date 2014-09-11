@@ -37,10 +37,10 @@ import static com.mongodb.operation.OperationHelper.VoidTransformer;
  * @since 3.0
  */
 public class RenameCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+    private final String databaseName;
     private final String originalCollectionName;
     private final String newCollectionName;
     private final boolean dropTarget;
-    private final String databaseName;
 
     /**
      * @param databaseName           the name of the database containing the collection to rename

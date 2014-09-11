@@ -32,18 +32,18 @@ import org.bson.codecs.configuration.RootCodecRegistry;
 import java.util.Arrays;
 
 class CommandResultDocumentCodec<T> extends BsonDocumentCodec {
-    private final Decoder<T> payloadDecoder;
+    private final Decoder<T> decoder;
     private final String fieldContainingPayload;
 
-    CommandResultDocumentCodec(final CodecRegistry registry, final Decoder<T> payloadDecoder, final String fieldContainingPayload) {
+    CommandResultDocumentCodec(final CodecRegistry registry, final Decoder<T> decoder, final String fieldContainingPayload) {
         super(registry);
-        this.payloadDecoder = payloadDecoder;
+        this.decoder = decoder;
         this.fieldContainingPayload = fieldContainingPayload;
     }
 
-    static <P> Codec<BsonDocument> create(final Decoder<P> payloadDecoder, final String fieldContainingPayload) {
-        CodecRegistry registry = new RootCodecRegistry(Arrays.<CodecProvider>asList(new CommandResultCodecProvider<P>(payloadDecoder,
-                                                                                                                  fieldContainingPayload)));
+    static <P> Codec<BsonDocument> create(final Decoder<P> decoder, final String fieldContainingPayload) {
+        CodecRegistry registry = new RootCodecRegistry(Arrays.<CodecProvider>asList(
+            new CommandResultCodecProvider<P>(decoder, fieldContainingPayload)));
         return registry.get(BsonDocument.class);
     }
 
@@ -51,9 +51,9 @@ class CommandResultDocumentCodec<T> extends BsonDocumentCodec {
     protected BsonValue readValue(final BsonReader reader, final DecoderContext decoderContext) {
         if (reader.getCurrentName().equals(fieldContainingPayload)) {
             if (reader.getCurrentBsonType() == BsonType.DOCUMENT) {
-                return new BsonDocumentWrapper<T>(payloadDecoder.decode(reader, decoderContext), null);
+                return new BsonDocumentWrapper<T>(decoder.decode(reader, decoderContext), null);
             } else if (reader.getCurrentBsonType() == BsonType.ARRAY) {
-                return new CommandResultArrayCodec<T>(getCodecRegistry(), payloadDecoder).decode(reader, decoderContext);
+                return new CommandResultArrayCodec<T>(getCodecRegistry(), decoder).decode(reader, decoderContext);
             }
         }
         return super.readValue(reader, decoderContext);

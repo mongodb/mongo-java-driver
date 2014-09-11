@@ -37,6 +37,11 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
     private static final BsonDocument DROP_DATABASE = new BsonDocument("dropDatabase", new BsonInt32(1));
     private final String databaseName;
 
+    /**
+     * Constructs a new instance.
+     *
+     * @param databaseName the database to be dropped.
+     */
     public DropDatabaseOperation(final String databaseName) {
         this.databaseName = notNull("databaseName", databaseName);
     }

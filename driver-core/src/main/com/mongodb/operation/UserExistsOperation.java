@@ -47,10 +47,15 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @since 3.0
  */
 public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOperation<Boolean> {
-
     private final String databaseName;
     private final String userName;
 
+    /**
+     * Construct a new instance
+     *
+     * @param databaseName the name of the database to check for the user.
+     * @param userName the name of the user to check if they exist.
+     */
     public UserExistsOperation(final String databaseName, final String userName) {
         this.databaseName = notNull("databaseName", databaseName);
         this.userName = notNull("userName", userName);

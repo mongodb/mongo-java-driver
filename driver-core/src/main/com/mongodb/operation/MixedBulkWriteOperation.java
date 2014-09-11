@@ -77,11 +77,12 @@ import static java.util.Arrays.asList;
 public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteResult>, WriteOperation<BulkWriteResult> {
     private final MongoNamespace namespace;
     private final List<WriteRequest> writeRequests;
-    private final WriteConcern writeConcern;
     private final boolean ordered;
+    private final WriteConcern writeConcern;
 
     /**
      * Construct a new instance.
+     *
      * @param namespace     the namespace to write to
      * @param writeRequests the list of runWrites to execute
      * @param ordered       whether the runWrites must be executed in order.

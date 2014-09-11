@@ -44,16 +44,16 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  */
 public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperation<MapReduceAsyncCursor<T>>,
                                                                ReadOperation<MapReduceCursor<T>> {
-    private final MapReduce mapReduce;
     private final MongoNamespace namespace;
+    private final MapReduce mapReduce;
     private final Decoder<T> decoder;
 
     /**
-     * Construct a MapReduceOperation with all the criteria it needs to execute
+     * Construct a MapReduceOperation with all the criteria it needs to execute.
      *
-     * @param namespace the database and collection to perform the map reduce on
-     * @param mapReduce the bean containing all the details of the Map Reduce operation to perform
-     * @param decoder   the decoder to use for decoding the documents in the results of the map-reduce operation
+     * @param namespace the database and collection to perform the map reduce on.
+     * @param mapReduce the bean containing all the details of the Map Reduce operation to perform.
+     * @param decoder   the decoder to use for decoding the documents in the results of the map-reduce operation.
      */
     public MapReduceWithInlineResultsOperation(final MongoNamespace namespace, final MapReduce mapReduce,
                                                final Decoder<T> decoder) {

@@ -42,17 +42,17 @@ import static com.mongodb.operation.QueryOperationHelper.queryResultToListAsync;
  * @since 3.0
  */
 public class GetIndexesOperation<T> implements AsyncReadOperation<List<T>>, ReadOperation<List<T>> {
-    private final MongoNamespace collectionNamespace;
+    private final MongoNamespace namespace;
     private final Decoder<T> decoder;
 
     /**
-     * Construct a new instance
+     * Construct a new instance.
      *
-     * @param collectionNamespace the namespace of the collection to get the indexes for
-     * @param decoder the decoder for the indexes
+     * @param namespace the namespace of the collection to get the indexes for.
+     * @param decoder the decoder for the indexes.
      */
-    public GetIndexesOperation(final MongoNamespace collectionNamespace, final Decoder<T> decoder) {
-        this.collectionNamespace = notNull("collectionNamespace", collectionNamespace);
+    public GetIndexesOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
+        this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
     }
 
@@ -67,11 +67,11 @@ public class GetIndexesOperation<T> implements AsyncReadOperation<List<T>>, Read
     }
 
     private BsonDocument asQueryDocument() {
-        return new BsonDocument("ns", new BsonString(collectionNamespace.getFullName()));
+        return new BsonDocument("ns", new BsonString(namespace.getFullName()));
     }
 
     private MongoNamespace getIndexNamespace() {
-        return new MongoNamespace(collectionNamespace.getDatabaseName(), "system.indexes");
+        return new MongoNamespace(namespace.getDatabaseName(), "system.indexes");
     }
 
     private QueryProtocol<T> getProtocol() {

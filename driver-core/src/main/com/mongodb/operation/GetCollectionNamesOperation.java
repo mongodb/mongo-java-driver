@@ -41,6 +41,11 @@ import static com.mongodb.operation.QueryOperationHelper.queryResultToListAsync;
 public class GetCollectionNamesOperation implements AsyncReadOperation<List<String>>, ReadOperation<List<String>> {
     private final String databaseName;
 
+    /**
+     * Constructs a new instance.
+     *
+     * @param databaseName the name of the database to get the list of collection names from.
+     */
     public GetCollectionNamesOperation(final String databaseName) {
         this.databaseName = notNull("databaseName", databaseName);
     }
