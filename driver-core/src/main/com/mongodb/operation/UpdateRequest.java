@@ -27,7 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class UpdateRequest extends BaseUpdateRequest {
     private final BsonDocument updateOperations;
-    private boolean isMulti = false;
+    private boolean isMulti = true;
 
     /**
      * Construct a new instance.
@@ -50,7 +50,7 @@ public final class UpdateRequest extends BaseUpdateRequest {
     }
 
     /**
-     * Gets whether this update will update all documents matching the criteria.  The default is false.
+     * Gets whether this update will update all documents matching the criteria.  The default is true.
      *
      * @return whether this update will update all documents matching the criteria
      */
