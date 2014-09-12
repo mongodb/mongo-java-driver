@@ -16,18 +16,17 @@
 
 package com.mongodb.protocol;
 
-import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.ByteBufferOutputBuffer;
 import com.mongodb.connection.SimpleBufferProvider;
 import com.mongodb.operation.InsertRequest;
 import com.mongodb.protocol.message.InsertMessage;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
-import org.bson.types.Binary;
+import org.bson.BsonBinary;
+import org.bson.BsonDocument;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import java.util.Arrays;
 
@@ -37,17 +36,17 @@ import static org.junit.Assert.assertNull;
 
 public class MaxMessageSizeTest {
     private ByteBufferOutputBuffer buffer;
-    private InsertMessage<Document> message;
+    private InsertMessage message;
 
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() {
-        Binary binary = new Binary(new byte[2048]);
-        message = new InsertMessage<Document>("test.test", true, ACKNOWLEDGED,
-                                              Arrays.asList(new InsertRequest<Document>(new Document("bytes", binary)),
-                                                            new InsertRequest<Document>(new Document("bytes", binary)),
-                                                            new InsertRequest<Document>(new Document("bytes", binary))),
-                                              new DocumentCodec(), MessageSettings.builder().maxMessageSize(4500).build());
+        BsonBinary binary = new BsonBinary(new byte[2048]);
+        message = new InsertMessage("test.test", true, ACKNOWLEDGED,
+                                    Arrays.asList(new InsertRequest(new BsonDocument("bytes", binary)),
+                                                  new InsertRequest(new BsonDocument("bytes", binary)),
+                                                  new InsertRequest(new BsonDocument("bytes", binary))),
+                                    MessageSettings.builder().maxMessageSize(4500).build());
         buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
     }
 

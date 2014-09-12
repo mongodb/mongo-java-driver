@@ -353,7 +353,7 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
             } else if (type == REPLACE) {
                 nextWriteResult = getReplacesRunExecutor((List<ReplaceRequest<T>>) runWrites, connection).execute();
             } else if (type == INSERT) {
-                nextWriteResult = getInsertsRunExecutor((List<InsertRequest<T>>) runWrites, connection).execute();
+                nextWriteResult = getInsertsRunExecutor((List<InsertRequest>) runWrites, connection).execute();
             } else if (type == REMOVE) {
                 nextWriteResult = getRemovesRunExecutor((List<RemoveRequest>) runWrites, connection).execute();
             } else {
@@ -371,7 +371,7 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
             } else if (type == REPLACE) {
                 nextWriteResult = getReplacesRunExecutor((List<ReplaceRequest<T>>) runWrites, connection).executeAsync();
             } else if (type == INSERT) {
-                nextWriteResult = getInsertsRunExecutor((List<InsertRequest<T>>) runWrites, connection).executeAsync();
+                nextWriteResult = getInsertsRunExecutor((List<InsertRequest>) runWrites, connection).executeAsync();
             } else if (type == REMOVE) {
                 nextWriteResult = getRemovesRunExecutor((List<RemoveRequest>) runWrites, connection).executeAsync();
             } else {
@@ -422,15 +422,15 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
         }
 
         @SuppressWarnings("unchecked")
-        RunExecutor getInsertsRunExecutor(final List<InsertRequest<T>> insertRequests, final Connection connection) {
+        RunExecutor getInsertsRunExecutor(final List<InsertRequest> insertRequests, final Connection connection) {
             return new RunExecutor(connection) {
                 WriteProtocol getWriteProtocol(final int index) {
-                    return new InsertProtocol<T>(namespace, ordered, writeConcern, asList(insertRequests.get(index)), encoder
+                    return new InsertProtocol(namespace, ordered, writeConcern, asList(insertRequests.get(index))
                     );
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new InsertCommandProtocol<T>(namespace, ordered, writeConcern, insertRequests, encoder
+                    return new InsertCommandProtocol<T>(namespace, ordered, writeConcern, insertRequests
                     );
                 }
 

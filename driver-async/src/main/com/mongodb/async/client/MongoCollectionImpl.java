@@ -106,15 +106,15 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     @Override
     public MongoFuture<WriteResult> insert(final List<T> documents) {
         notNull("documents", documents);
-        List<InsertRequest<T>> insertRequests = new ArrayList<InsertRequest<T>>();
+        List<InsertRequest> insertRequests = new ArrayList<InsertRequest>();
         for (T document : documents) {
             if (getCodec() instanceof CollectibleCodec) {
                 ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
             }
-            insertRequests.add(new InsertRequest<T>(document));
+            insertRequests.add(new InsertRequest(new BsonDocumentWrapper<T>(document, getCodec())));
         }
-        return execute(new InsertOperation<T>(getNamespace(), true, options.getWriteConcern(), insertRequests,
-                                              getCodec()));
+        return execute(new InsertOperation<T>(getNamespace(), true, options.getWriteConcern(), insertRequests
+        ));
     }
 
     @Override

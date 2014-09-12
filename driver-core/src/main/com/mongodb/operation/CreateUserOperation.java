@@ -25,7 +25,6 @@ import com.mongodb.connection.Connection;
 import com.mongodb.protocol.InsertProtocol;
 import com.mongodb.protocol.Protocol;
 import org.bson.BsonDocument;
-import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.WriteResult;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -86,9 +85,9 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
     @SuppressWarnings("unchecked")
     private Protocol<WriteResult> getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(user.getCredential().getSource(), "system.users");
-        return new InsertProtocol<BsonDocument>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                                asList(new InsertRequest<BsonDocument>(asCollectionDocument(user))),
-                                                new BsonDocumentCodec());
+        return new InsertProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                  asList(new InsertRequest(asCollectionDocument(user)))
+        );
     }
 
     private BsonDocument getCommand() {

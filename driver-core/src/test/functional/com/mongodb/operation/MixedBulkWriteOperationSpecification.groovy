@@ -46,7 +46,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'when no document with the same id exists, should insert the document'() {
         given:
-        def op = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest<Document>(new Document('_id', 1))], ordered,
+        def op = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))], ordered,
                                              ACKNOWLEDGED, new DocumentCodec())
 
         when:
@@ -63,9 +63,9 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'when a document with the same id exists, should throw an exception'() {
         given:
-        def document = new Document('_id', 1)
+        def document = new BsonDocument('_id', new BsonInt32(1))
         getCollectionHelper().insertDocuments(document)
-        def op = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest<Document>(document)], ordered,
+        def op = new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(document)], ordered,
                                              ACKNOWLEDGED, new DocumentCodec())
 
         when:
@@ -81,7 +81,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'when documents match the query, a remove of one should remove one of them'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true))
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new RemoveRequest(new BsonDocument('x', BsonBoolean.TRUE)).multi(false)],
                                              ordered, ACKNOWLEDGED, new DocumentCodec())
@@ -99,7 +99,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'when documents match the query, a remove should remove all of them'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true), new Document('x', false))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true),
+                                              new Document('x', false))
 
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new RemoveRequest(new BsonDocument('x', BsonBoolean.TRUE))],
@@ -118,7 +119,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'when multiple document match the query, update of one should update only one of them'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true));
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true));
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))))],
@@ -137,7 +138,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'when documents match the query, update multi should update all of them'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true));
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true));
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))))
@@ -197,7 +198,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'when documents matches the query, update one with upsert should update only one of them'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true));
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true));
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))))
@@ -217,7 +218,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'when documents match the query, update multi with upsert should update all of them'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true));
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true));
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))))
@@ -316,7 +317,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         def result = op.execute(getBinding())
-        getCollectionHelper().insertDocuments(new Document('_id', 4))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 4))
 
         then:
         !result.acknowledged
@@ -328,7 +329,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
     def 'when multiple documents match the query, replace should replace only one of them'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('x', true), new Document('x', true))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true))
 
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new ReplaceRequest(new BsonDocument('x', BsonBoolean.TRUE),
@@ -350,7 +351,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     @Category(Slow)
     def 'when a replacement document is 16MB, the document is still replaced'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('_id', 1))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new ReplaceRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                                  new Document('_id', 1)
@@ -369,7 +370,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     @Category(Slow)
     def 'when two update documents together exceed 16MB, the documents are still updated'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('_id', 1), new Document('_id', 2))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1), new Document('_id', 2))
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new ReplaceRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                                  new Document('_id', 1)
@@ -422,8 +423,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         when:
         def binding = getPinnedBinding()
         def result = op.execute(binding)
-        new InsertOperation<Document>(namespace, true, ACKNOWLEDGED, [new InsertRequest<Document>(new Document('_id', 9))],
-                                      new DocumentCodec()).execute(binding);
+        new InsertOperation<Document>(namespace, true, ACKNOWLEDGED, [new InsertRequest(new BsonDocument('_id', new BsonInt32(9)))])
+                .execute(binding);
 
         then:
         !result.acknowledged
@@ -446,7 +447,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         def writes = []
         (0..2000).each {
-            writes.add(new InsertRequest(new Document()))
+            writes.add(new InsertRequest(new BsonDocument()))
         }
 
         when:
@@ -462,10 +463,10 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'error details should have correct index on ordered write failure'() {
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new InsertRequest<Document>(new Document('_id', 1)),
+                                             [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                                               new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                                 new BsonDocument('$set', new BsonDocument('x', new BsonInt32(3)))),
-                                              new InsertRequest<Document>(new Document('_id', 1))   // this should fail with index 2
+                                              new InsertRequest(new BsonDocument('_id', new BsonInt32(1))) // this should fail with index 2
                                              ], true, ACKNOWLEDGED, new DocumentCodec())
         when:
         op.execute(getBinding())
@@ -481,10 +482,10 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new InsertRequest<Document>(new Document('_id', 1)),
+                                             [new InsertRequest(new BsonDocument('_id', new BsonInt32(1))),
                                               new UpdateRequest(new BsonDocument('_id', new BsonInt32(2)),
                                                                 new BsonDocument('$set', new BsonDocument('x', new BsonInt32(3)))),
-                                              new InsertRequest<Document>(new Document('_id', 3))   // this should fail with index 2
+                                              new InsertRequest(new BsonDocument('_id', new BsonInt32(3))) // this should fail with index 2
                                              ], false, ACKNOWLEDGED, new DocumentCodec())
         when:
         op.execute(getBinding())
@@ -503,7 +504,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'should throw bulk write exception with a write concern error when wtimeout is exceeded'() {
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new InsertRequest<Document>(new Document('_id', 1))],
+                                             [new InsertRequest(new Document('_id', 1))],
                                              false, new WriteConcern(5, 1), new DocumentCodec()
         )
         when:
@@ -519,8 +520,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new InsertRequest<Document>(new Document('_id', 7)),
-                                              new InsertRequest<Document>(new Document('_id', 1))   // duplicate key
+                                             [new InsertRequest(new Document('_id', 7)),
+                                              new InsertRequest(new Document('_id', 1))   // duplicate key
                                              ], ordered, new WriteConcern(4, 1), new DocumentCodec())
 
         when:
@@ -540,7 +541,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'execute should throw IllegalStateException when already executed'() {
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new InsertRequest<Document>(new Document('_id', 1))],
+                                             [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
                                              ordered, UNACKNOWLEDGED, new DocumentCodec())
 
         op.execute(getBinding())
@@ -578,18 +579,18 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
                             new Document('_id', 5).append('x', 4)),
          new ReplaceRequest(new BsonDocument('_id', new BsonInt32(6)),
                             new Document('_id', 6).append('x', 5)),
-         new InsertRequest<Document>(new Document('_id', 7)),
-         new InsertRequest<Document>(new Document('_id', 8))
+         new InsertRequest(new BsonDocument('_id', new BsonInt32(7))),
+         new InsertRequest(new BsonDocument('_id', new BsonInt32(8)))
         ]
     }
 
-    private static Document[] getTestInserts() {
-        [new Document('_id', 1),
-         new Document('_id', 2),
-         new Document('_id', 3),
-         new Document('_id', 4),
-         new Document('_id', 5),
-         new Document('_id', 6)]
+    private static BsonDocument[] getTestInserts() {
+        [new BsonDocument('_id', new BsonInt32(1)),
+         new BsonDocument('_id', new BsonInt32(2)),
+         new BsonDocument('_id', new BsonInt32(3)),
+         new BsonDocument('_id', new BsonInt32(4)),
+         new BsonDocument('_id', new BsonInt32(5)),
+         new BsonDocument('_id', new BsonInt32(6))]
     }
 
     private static Integer expectedModifiedCount(final int expectedCountForServersThatSupportIt) {

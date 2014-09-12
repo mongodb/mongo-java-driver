@@ -21,7 +21,6 @@ import com.mongodb.CursorFlag
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoSecurityException
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.codecs.DocumentCodec
 import com.mongodb.connection.ClusterSettings
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionPoolSettings
@@ -215,8 +214,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
 
         when:
         def result = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
-                asList(new InsertRequest<Document>(new Document())),
-                new DocumentCodec())
+                                                   asList(new InsertRequest(new BsonDocument())))
                 .execute(getBinding())
         then:
         result.getCount() == 0
@@ -234,8 +232,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
 
         when:
         def result = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
-                asList(new InsertRequest<Document>(new Document())),
-                new DocumentCodec())
+                                                   asList(new InsertRequest(new BsonDocument())))
                 .executeAsync(getAsyncBinding()).get()
         then:
         result.getCount() == 0

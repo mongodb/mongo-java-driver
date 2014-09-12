@@ -20,34 +20,45 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.connection.Connection;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.SingleResultFuture;
+import com.mongodb.connection.Connection;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.operation.InsertRequest;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.operation.WriteRequest;
 import com.mongodb.protocol.message.InsertCommandMessage;
 import com.mongodb.protocol.message.MessageSettings;
-import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
 
 import java.util.List;
 
 import static java.lang.String.format;
 
+/**
+ * An implementation of the insert command.
+ *
+ * @since 3.0
+ * @mongodb.driver.manual manual/reference/command/insert/#dbcmd.insert Insert Command
+ */
 public class InsertCommandProtocol<T> extends WriteCommandProtocol {
 
     private static final Logger LOGGER = Loggers.getLogger("protocol.insert");
 
-    private final List<InsertRequest<T>> insertRequests;
-    private final Encoder<T> encoder;
+    private final List<InsertRequest> insertRequests;
 
+    /**
+     * Construct an instance.
+     *
+     * @param namespace the namespace
+     * @param ordered whether the inserts are ordered
+     * @param writeConcern the write concern
+     * @param insertRequests the list of inserts
+     */
     public InsertCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                 final List<InsertRequest<T>> insertRequests, final Encoder<T> encoder) {
+                                 final List<InsertRequest> insertRequests) {
         super(namespace, ordered, writeConcern);
         this.insertRequests = insertRequests;
-        this.encoder = encoder;
     }
 
     @Override
@@ -82,8 +93,8 @@ public class InsertCommandProtocol<T> extends WriteCommandProtocol {
     }
 
     @Override
-    protected InsertCommandMessage<T> createRequestMessage(final MessageSettings messageSettings) {
-        return new InsertCommandMessage<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequests, encoder, messageSettings);
+    protected InsertCommandMessage createRequestMessage(final MessageSettings messageSettings) {
+        return new InsertCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), insertRequests, messageSettings);
     }
 
     @Override

@@ -18,6 +18,7 @@ package com.mongodb;
 
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
+import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 
@@ -68,10 +69,11 @@ final class BulkWriteHelper {
         return retVal;
     }
 
-    static List<com.mongodb.operation.WriteRequest> translateWriteRequestsToNew(final List<WriteRequest> writeRequests) {
+    static List<com.mongodb.operation.WriteRequest> translateWriteRequestsToNew(final List<WriteRequest> writeRequests,
+                                                                                final Codec<DBObject> objectCodec) {
         List<com.mongodb.operation.WriteRequest> retVal = new ArrayList<com.mongodb.operation.WriteRequest>(writeRequests.size());
         for (WriteRequest cur : writeRequests) {
-            retVal.add(cur.toNew());
+            retVal.add(cur.toNew(objectCodec));
         }
         return retVal;
     }

@@ -20,6 +20,7 @@ import category.Async
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.client.test.CollectionHelper
+import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
@@ -40,7 +41,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
     }
 
     def 'should not accept an empty pipeline'() {

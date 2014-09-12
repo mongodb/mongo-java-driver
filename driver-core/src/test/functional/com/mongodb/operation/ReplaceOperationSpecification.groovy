@@ -66,8 +66,8 @@ class ReplaceOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should replace a single document'() {
         given:
-        def insert = new InsertRequest<Document>(new Document('_id', 1))
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec()).execute(getBinding())
+        def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert)).execute(getBinding())
 
         def replacement = new ReplaceRequest<Document>(new BsonDocument('_id', new BsonInt32(1)), new Document('_id', 1).append('x', 1))
         def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
@@ -87,8 +87,8 @@ class ReplaceOperationSpecification extends OperationFunctionalSpecification {
     @Category(Async)
     def 'should replace a single document asynchronously'() {
         given:
-        def insert = new InsertRequest<Document>(new Document('_id', 1))
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec()).execute(getBinding())
+        def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert)).execute(getBinding())
 
         def replacement = new ReplaceRequest<Document>(new BsonDocument('_id', new BsonInt32(1)), new Document('_id', 1).append('x', 1))
         def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())
@@ -160,8 +160,8 @@ class ReplaceOperationSpecification extends OperationFunctionalSpecification {
     }
 
     def 'should move _id to the beginning'() {
-        def insert = new InsertRequest<Document>(new Document('_id', 1))
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert), new DocumentCodec()).execute(getBinding())
+        def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
+        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert)).execute(getBinding())
 
         def replacement = new ReplaceRequest<Document>(new BsonDocument('_id', new BsonInt32(1)), new Document('x', 1).append('_id', 1))
         def op = new ReplaceOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(replacement), new DocumentCodec())

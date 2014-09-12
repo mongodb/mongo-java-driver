@@ -34,6 +34,7 @@ import com.mongodb.operation.QueryOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
+import org.bson.codecs.Decoder;
 import org.mongodb.Document;
 
 import java.util.ArrayList;
@@ -75,18 +76,18 @@ public final class CollectionHelper<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public void insertDocuments(final T... documents) {
-        for (T document : documents) {
+    public void insertDocuments(final BsonDocument... documents) {
+        for (BsonDocument document : documents) {
             new InsertOperation<T>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                   asList(new InsertRequest<T>(document)), codec).execute(getBinding());
+                                   asList(new InsertRequest(document))).execute(getBinding());
         }
     }
 
     @SuppressWarnings("unchecked")
-    public void insertDocuments(final List<T> documents) {
-        for (T document : documents) {
+    public void insertDocuments(final List<BsonDocument> documents) {
+        for (BsonDocument document : documents) {
             new InsertOperation<T>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                   asList(new InsertRequest<T>(document)), codec).execute(getBinding());
+                                   asList(new InsertRequest(document))).execute(getBinding());
         }
     }
 
@@ -94,13 +95,24 @@ public final class CollectionHelper<T> {
     public <I> void insertDocuments(final Codec<I> iCodec, final I... documents) {
         for (I document : documents) {
             new InsertOperation<I>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                   asList(new InsertRequest<I>(document)), iCodec).execute(getBinding());
+                                   asList(new InsertRequest(new BsonDocumentWrapper<I>(document, iCodec)))).execute(getBinding());
+        }
+    }
+
+    public <I> void insertDocuments(final Codec<I> iCodec, final List<I> documents) {
+        for (I document : documents) {
+            new InsertOperation<I>(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                   asList(new InsertRequest(new BsonDocumentWrapper<I>(document, iCodec)))).execute(getBinding());
         }
     }
 
     public List<T> find() {
-        MongoCursor<T> cursor = new QueryOperation<T>(namespace, codec).execute(getBinding());
-        List<T> results = new ArrayList<T>();
+        return find(codec);
+    }
+
+    public <D> List<D> find(final Codec<D> codec) {
+        MongoCursor<D> cursor = new QueryOperation<D>(namespace, codec).execute(getBinding());
+        List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
             results.add(cursor.next());
         }
@@ -108,10 +120,14 @@ public final class CollectionHelper<T> {
     }
 
     public List<T> find(final Document filter) {
-        QueryOperation<T> queryOperation = new QueryOperation<T>(namespace, codec);
-        queryOperation.setCriteria(wrap(filter));
-        MongoCursor<T> cursor = queryOperation.execute(getBinding());
-        List<T> results = new ArrayList<T>();
+        return find(new BsonDocumentWrapper<Document>(filter, new DocumentCodec()), codec);
+    }
+
+    public <D> List<D> find(final BsonDocument filter, final Decoder<D> decoder) {
+        QueryOperation<D> queryOperation = new QueryOperation<D>(namespace, decoder);
+        queryOperation.setCriteria(filter);
+        MongoCursor<D> cursor = queryOperation.execute(getBinding());
+        List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
             results.add(cursor.next());
         }

@@ -21,7 +21,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.operation.InsertRequest;
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
-import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.OutputBuffer;
 
@@ -30,16 +29,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
-    private final List<InsertRequest<T>> insertRequestList;
-    private final Encoder<T> encoder;
+import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ * An insert command message.
+ *
+ * @since 3.0
+ * @mongodb.driver.manual manual/reference/command/insert/#dbcmd.insert Insert Command
+ */
+public class InsertCommandMessage extends BaseWriteCommandMessage {
+    private final List<InsertRequest> insertRequestList;
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the namespace
+     * @param ordered whether the inserts are ordered
+     * @param writeConcern the write concern
+     * @param insertRequestList the list of inserts
+     * @param settings the message settings
+     */
     public InsertCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                final List<InsertRequest<T>> insertRequestList,
-                                final Encoder<T> encoder, final MessageSettings settings) {
+                                final List<InsertRequest> insertRequestList, final MessageSettings settings) {
         super(namespace, ordered, writeConcern, settings);
-        this.insertRequestList = insertRequestList;
-        this.encoder = encoder;
+        this.insertRequestList = notNull("insertRequestList", insertRequestList);
     }
 
     @Override
@@ -54,29 +67,39 @@ public class InsertCommandMessage<T> extends BaseWriteCommandMessage {
         return new MappedFieldNameValidator(new NoOpFieldNameValidator(), map);
     }
 
-    public List<InsertRequest<T>> getRequests() {
+    /**
+     * Gets the list of insert requests.
+     *
+     * @return the non-null list of insert requests
+     */
+    public List<InsertRequest> getRequests() {
         return Collections.unmodifiableList(insertRequestList);
     }
 
+    /**
+     * Gets the command name, which is "insert".
+     *
+     * @return the command name
+     */
     protected String getCommandName() {
         return "insert";
     }
 
-    protected InsertCommandMessage<T> writeTheWrites(final OutputBuffer buffer, final int commandStartPosition,
+    protected InsertCommandMessage writeTheWrites(final OutputBuffer buffer, final int commandStartPosition,
                                                      final BsonBinaryWriter writer) {
-        InsertCommandMessage<T> nextMessage = null;
+        InsertCommandMessage nextMessage = null;
         writer.writeStartArray("documents");
         writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
         for (int i = 0; i < insertRequestList.size(); i++) {
             writer.mark();
-            encoder.encode(writer,
-                           insertRequestList.get(i).getDocument(),
-                           EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+            getBsonDocumentCodec().encode(writer,
+                                          insertRequestList.get(i).getDocument(),
+                                          EncoderContext.builder().isEncodingCollectibleDocument(true).build());
             if (exceedsLimits(buffer.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
-                nextMessage = new InsertCommandMessage<T>(getWriteNamespace(), isOrdered(), getWriteConcern(),
+                nextMessage = new InsertCommandMessage(getWriteNamespace(), isOrdered(), getWriteConcern(),
                                                           insertRequestList.subList(i, insertRequestList.size()),
-                                                          encoder, getSettings());
+                                                          getSettings());
                 break;
             }
         }

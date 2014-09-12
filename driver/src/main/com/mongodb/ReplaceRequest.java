@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import org.bson.BsonDocumentWrapper;
+import org.bson.codecs.Codec;
 
 class ReplaceRequest extends WriteRequest {
     private final DBObject query;
@@ -44,8 +45,8 @@ class ReplaceRequest extends WriteRequest {
     }
 
     @Override
-    com.mongodb.operation.WriteRequest toNew() {
-        return new com.mongodb.operation.ReplaceRequest<DBObject>(new BsonDocumentWrapper<DBObject>(query, codec), document)
+    com.mongodb.operation.WriteRequest toNew(final Codec<DBObject> codec) {
+        return new com.mongodb.operation.ReplaceRequest<DBObject>(new BsonDocumentWrapper<DBObject>(query, this.codec), document)
                .upsert(isUpsert());
     }
 }

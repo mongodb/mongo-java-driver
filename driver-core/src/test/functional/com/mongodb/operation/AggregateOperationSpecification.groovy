@@ -37,7 +37,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
     }
 
     def 'should be able to aggregate'() {

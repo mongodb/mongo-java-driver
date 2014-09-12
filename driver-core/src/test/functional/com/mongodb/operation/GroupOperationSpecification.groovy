@@ -36,7 +36,7 @@ class GroupOperationSpecification extends OperationFunctionalSpecification {
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         Group group = new Group(new BsonDocument('name', new BsonInt32(1)), new BsonJavaScript('function ( curr, result ) {}'),
                                 new BsonDocument())
@@ -56,7 +56,7 @@ class GroupOperationSpecification extends OperationFunctionalSpecification {
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         Group group = new Group(new BsonDocument('name', new BsonInt32(1)), new BsonJavaScript('function ( curr, result ) {}'),
                                 new BsonDocument())

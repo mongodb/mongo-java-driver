@@ -287,12 +287,12 @@ public class DBCollection {
         WriteConcern writeConcern = insertOptions.getWriteConcern() != null ? insertOptions.getWriteConcern() : getWriteConcern();
         Encoder<DBObject> encoder = toEncoder(insertOptions.getDbEncoder());
 
-        List<InsertRequest<DBObject>> insertRequestList = new ArrayList<InsertRequest<DBObject>>(documents.size());
+        List<InsertRequest> insertRequestList = new ArrayList<InsertRequest>(documents.size());
         for (DBObject cur : documents) {
             if (cur.get(ID_FIELD_NAME) == null) {
                 cur.put(ID_FIELD_NAME, new ObjectId());
             }
-            insertRequestList.add(new InsertRequest<DBObject>(cur));
+            insertRequestList.add(new InsertRequest(new BsonDocumentWrapper<DBObject>(cur, encoder)));
         }
         return insert(insertRequestList, encoder, writeConcern, insertOptions.isContinueOnError());
     }
@@ -301,10 +301,10 @@ public class DBCollection {
         return dbEncoder != null ? new DBEncoderAdapter(dbEncoder) : objectCodec;
     }
 
-    private WriteResult insert(final List<InsertRequest<DBObject>> insertRequestList, final Encoder<DBObject> encoder,
+    private WriteResult insert(final List<InsertRequest> insertRequestList, final Encoder<DBObject> encoder,
                                final WriteConcern writeConcern, final boolean continueOnError) {
-        return executeWriteOperation(new InsertOperation<DBObject>(getNamespace(), !continueOnError, writeConcern, insertRequestList,
-                                                                   encoder));
+        return executeWriteOperation(new InsertOperation<DBObject>(getNamespace(), !continueOnError, writeConcern, insertRequestList
+        ));
     }
 
     WriteResult executeWriteOperation(final BaseWriteOperation operation) {
@@ -1890,7 +1890,8 @@ public class DBCollection {
                                               final WriteConcern writeConcern) {
         try {
             return translateBulkWriteResult(execute(new MixedBulkWriteOperation<DBObject>(getNamespace(),
-                                                                                          translateWriteRequestsToNew(writeRequests),
+                                                                                          translateWriteRequestsToNew(writeRequests,
+                                                                                                                      getObjectCodec()),
                                                                                           ordered, writeConcern,
                                                                                           getObjectCodec())),
                                             getObjectCodec());

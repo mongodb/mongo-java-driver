@@ -19,6 +19,7 @@ package com.mongodb.operation
 import category.Async
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -42,7 +43,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document pete = new Document('name', 'Pete').append('age', 38)
         Document sam = new Document('name', 'Sam').append('age', 21)
         Document pete2 = new Document('name', 'Pete').append('age', 25)
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
         DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
@@ -58,7 +59,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document pete = new Document('name', 'Pete').append('age', 38)
         Document sam = new Document('name', 'Sam').append('age', 21)
         Document pete2 = new Document('name', 'Pete').append('age', 25)
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
         DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
@@ -73,7 +74,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document pete = new Document('name', 'Pete').append('age', 38)
         Document sam = new Document('name', 'Sam').append('age', 21)
         Document pete2 = new Document('name', 'Pete').append('age', 25)
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
         DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
@@ -90,7 +91,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document pete = new Document('name', 'Pete').append('age', 38)
         Document sam = new Document('name', 'Sam').append('age', 21)
         Document pete2 = new Document('name', 'Pete').append('age', 25)
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
         DistinctOperation op = new DistinctOperation(getNamespace(), 'name')

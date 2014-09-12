@@ -40,12 +40,12 @@ class WriteCommandLimitsSpecifications extends Specification {
         given:
         def inserts = []
         (1..4).each {
-            inserts.add(new InsertRequest(new Document()))
+            inserts.add(new InsertRequest(new BsonDocument()))
         }
 
         def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new InsertCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, inserts,
-                                               new DocumentCodec(), MessageSettings.builder().maxWriteBatchSize(3).build());
+                                               MessageSettings.builder().maxWriteBatchSize(3).build());
 
         when:
         def nextMessage = message.encode(buffer)
@@ -59,12 +59,12 @@ class WriteCommandLimitsSpecifications extends Specification {
         given:
         def inserts = []
         (1..4).each {
-            inserts.add(new InsertRequest(new Document('_id', it)))
+            inserts.add(new InsertRequest(new BsonDocument('_id', new BsonInt32(it))))
         }
 
         def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new InsertCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, inserts,
-                                               new DocumentCodec(), MessageSettings.builder().maxDocumentSize(113).build());
+                                               MessageSettings.builder().maxDocumentSize(113).build());
 
         when:
         def nextMessage = message.encode(buffer)

@@ -16,18 +16,17 @@
 
 package com.mongodb.protocol;
 
-import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.ByteBufferOutputBuffer;
 import com.mongodb.connection.SimpleBufferProvider;
 import com.mongodb.operation.InsertRequest;
 import com.mongodb.protocol.message.InsertMessage;
 import com.mongodb.protocol.message.MessageSettings;
+import org.bson.BsonBinary;
+import org.bson.BsonDocument;
 import org.bson.BsonSerializationException;
-import org.bson.types.Binary;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED;
 import static java.util.Arrays.asList;
@@ -35,13 +34,13 @@ import static java.util.Arrays.asList;
 @SuppressWarnings("unchecked")
 public class MaxDocumentSizeTest {
     private ByteBufferOutputBuffer buffer;
-    private InsertMessage<Document> message;
+    private InsertMessage message;
 
     @Before
     public void setUp() {
-        message = new InsertMessage<Document>("test.test", true, ACKNOWLEDGED,
-                                              asList(new InsertRequest<Document>(new Document("bytes", new Binary(new byte[2048])))),
-                                              new DocumentCodec(), MessageSettings.builder().maxDocumentSize(1024).build());
+        message = new InsertMessage("test.test", true, ACKNOWLEDGED,
+                                              asList(new InsertRequest(new BsonDocument("bytes", new BsonBinary(new byte[2048])))),
+                                              MessageSettings.builder().maxDocumentSize(1024).build());
         buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
     }
 
