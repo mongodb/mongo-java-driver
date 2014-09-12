@@ -28,6 +28,7 @@ import org.mongodb.Document
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 
@@ -117,7 +118,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         then:
         result.wasAcknowledged()
         result.count == 1
-        result.upsertedId == new BsonInt32(1)
+        result.upsertedId == (serverVersionAtLeast(asList(2, 6, 0)) ? new BsonInt32(1) : null)
         !result.isUpdateOfExisting()
         getCollectionHelper().count(new Document('y', 2)) == 1
     }
