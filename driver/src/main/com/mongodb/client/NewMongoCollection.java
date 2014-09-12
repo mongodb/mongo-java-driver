@@ -22,19 +22,19 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.model.AggregateModel;
 import com.mongodb.client.model.BulkWriteModel;
 import com.mongodb.client.model.CountModel;
+import com.mongodb.client.model.DeleteManyModel;
+import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DistinctModel;
 import com.mongodb.client.model.ExplainableModel;
 import com.mongodb.client.model.FindModel;
-import com.mongodb.client.model.FindOneAndRemoveModel;
+import com.mongodb.client.model.FindOneAndDeleteModel;
 import com.mongodb.client.model.FindOneAndReplaceModel;
 import com.mongodb.client.model.FindOneAndUpdateModel;
 import com.mongodb.client.model.InsertManyModel;
-import com.mongodb.client.model.RemoveManyModel;
-import com.mongodb.client.model.RemoveOneModel;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.result.RemoveResult;
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
@@ -160,7 +160,7 @@ public interface NewMongoCollection<T> {
      * @return the result of the remove one operation
      * @throws com.mongodb.MongoException
      */
-    <D> RemoveResult removeOne(RemoveOneModel<T, D> model);
+    <D> DeleteResult deleteOne(DeleteOneModel<T, D> model);
 
     /**
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
@@ -169,7 +169,7 @@ public interface NewMongoCollection<T> {
      * @return the result of the remove many operation
      * @throws com.mongodb.MongoException
      */
-    <D> RemoveResult removeMany(RemoveManyModel<T, D> model);
+    <D> DeleteResult deleteMany(DeleteManyModel<T, D> model);
 
     /**
      * Replace a document in the collection according to the specified arguments.
@@ -206,17 +206,7 @@ public interface NewMongoCollection<T> {
      * @param model the model describing the find one and remove
      * @return the document that was removed.  If no documents matched the criteria, then null will be returned
      */
-    <D> T findOneAndRemove(FindOneAndRemoveModel<D> model);
-
-    /**
-     * Atomically find a document and update it.
-     *
-     * @param model the model describing the find one and update
-     * @return the document that was updated.  Depending on the value of the {@code returnUpdated} property,
-     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the criteria,
-     * then null will be returned
-     */
-    <D> T findOneAndUpdate(FindOneAndUpdateModel<D> model);
+    <D> T findOneAndDelete(FindOneAndDeleteModel<D> model);
 
     /**
      * Atomically find a document and replace it.
@@ -228,6 +218,15 @@ public interface NewMongoCollection<T> {
      */
     <D> T findOneAndReplace(FindOneAndReplaceModel<T, D> model);
 
+    /**
+     * Atomically find a document and update it.
+     *
+     * @param model the model describing the find one and update
+     * @return the document that was updated.  Depending on the value of the {@code returnUpdated} property,
+     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the criteria,
+     * then null will be returned
+     */
+    <D> T findOneAndUpdate(FindOneAndUpdateModel<D> model);
 
     /**
      * Explain the specified operation with the specified verbosity.

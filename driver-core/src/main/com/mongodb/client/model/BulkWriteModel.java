@@ -29,17 +29,17 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  */
 public final class BulkWriteModel<T, D> {
-    private final List<? extends WriteModel<? extends T, D>> operations;
+    private final List<? extends WriteModel<? extends T, D>> requests;
     private boolean ordered;
 
     /**
      * Construct a new instance with the given list of write models.
      *
-     * @param operations a non-null, non-empty list of write models
+     * @param requests a non-null, non-empty list of write models
      */
-    public BulkWriteModel(final List<? extends WriteModel<? extends T, D>> operations) {
-        this.operations = notNull("operations", operations);
-        isTrueArgument("operations list is not empty", !operations.isEmpty());
+    public BulkWriteModel(final List<? extends WriteModel<? extends T, D>> requests) {
+        this.requests = notNull("requests", requests);
+        isTrueArgument("requests list is not empty", !requests.isEmpty());
     }
 
     /**
@@ -47,8 +47,8 @@ public final class BulkWriteModel<T, D> {
      *
      * @return a non-null, non-empty list of write models
      */
-    public List<? extends WriteModel<? extends T, D>> getOperations() {
-        return operations;
+    public List<? extends WriteModel<? extends T, D>> getRequests() {
+        return requests;
     }
 
     /**
