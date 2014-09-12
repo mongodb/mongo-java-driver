@@ -21,7 +21,8 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * A model describing the replacement of at most one document that matches the query filter.
  *
- * @param <T> the type of document to update.
+ * @param <T> the type of document to replace. This can be of any type for which a {@code Codec} is registered
+ * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
  * @mongodb.driver.manual manual/reference/operator/update/ Update Operators

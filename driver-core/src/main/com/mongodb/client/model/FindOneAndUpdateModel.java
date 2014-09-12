@@ -21,7 +21,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * Finds a single document and updates it.
  *
- * @param <D> The document type for the command.
+ * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/findAndModify/
  */

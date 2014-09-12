@@ -26,6 +26,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/insert-documents/ Insert
+ * @param <T> the type of document to insert. This can be of any type for which a {@code Codec} is registered
  */
 public final class InsertManyModel<T> {
     private final List<? extends T> documents;

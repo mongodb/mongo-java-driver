@@ -23,6 +23,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/insert-documents/ Insert
+ * @param <T> the type of document to insert. This can be of any type for which a {@code Codec} is registered
+ * @param <D> The type is unused in this model, and is just here to make WriteModel happy
  */
 public final class InsertOneModel<T, D> extends WriteModel<T, D> {
     private final T document;
