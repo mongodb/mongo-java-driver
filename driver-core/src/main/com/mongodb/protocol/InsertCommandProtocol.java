@@ -41,7 +41,7 @@ import static java.lang.String.format;
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/insert/#dbcmd.insert Insert Command
  */
-public class InsertCommandProtocol<T> extends WriteCommandProtocol {
+public class InsertCommandProtocol extends WriteCommandProtocol {
 
     private static final Logger LOGGER = Loggers.getLogger("protocol.insert");
 

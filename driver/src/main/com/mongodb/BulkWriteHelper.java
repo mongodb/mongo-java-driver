@@ -73,7 +73,7 @@ final class BulkWriteHelper {
                                                                                 final Codec<DBObject> objectCodec) {
         List<com.mongodb.operation.WriteRequest> retVal = new ArrayList<com.mongodb.operation.WriteRequest>(writeRequests.size());
         for (WriteRequest cur : writeRequests) {
-            retVal.add(cur.toNew(objectCodec));
+            retVal.add(cur.toNew());
         }
         return retVal;
     }

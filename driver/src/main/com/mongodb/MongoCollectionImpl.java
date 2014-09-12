@@ -303,7 +303,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoIterable<Document> mapReduce(final String map, final String reduce) {
             //TODO: support supplied read preferences?
             MapReduce mapReduce = new MapReduce(new BsonJavaScript(map), new BsonJavaScript(reduce)).filter(findOp.getCriteria())
-                                                                                .limit(findOp.getLimit());
+                                                                                                    .limit(findOp.getLimit());
 
             if (mapReduce.isInline()) {
                 MapReduceWithInlineResultsOperation<Document> operation =
@@ -357,8 +357,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             if (getCodec() instanceof CollectibleCodec) {
                 ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
             }
-            return execute(new InsertOperation<T>(getNamespace(), true, writeConcern,
-                                                  asList(new InsertRequest(new BsonDocumentWrapper<T>(document, getCodec())))));
+            return execute(new InsertOperation(getNamespace(), true, writeConcern,
+                                               asList(new InsertRequest(new BsonDocumentWrapper<T>(document, getCodec())))));
         }
 
         @Override
@@ -370,7 +370,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 }
                 insertRequestList.add(new InsertRequest(new BsonDocumentWrapper<T>(cur, getCodec())));
             }
-            return execute(new InsertOperation<T>(getNamespace(), true, writeConcern, insertRequestList));
+            return execute(new InsertOperation(getNamespace(), true, writeConcern, insertRequestList));
         }
 
         @Override
@@ -427,9 +427,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         @SuppressWarnings("unchecked")
         public WriteResult replace(final T replacement) {
-            ReplaceRequest<T> replaceRequest = new ReplaceRequest<T>(findOp.getCriteria(), replacement).upsert(upsert);
-            return execute(new ReplaceOperation<T>(getNamespace(), true, writeConcern, asList(replaceRequest),
-                                                   getCodec()));
+            ReplaceRequest replaceRequest = new ReplaceRequest(findOp.getCriteria(), asBson(replacement)).upsert(upsert);
+            return execute(new ReplaceOperation(getNamespace(), true, writeConcern, asList(replaceRequest)));
         }
 
         @Override

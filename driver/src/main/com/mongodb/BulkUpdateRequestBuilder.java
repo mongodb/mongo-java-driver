@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import org.bson.codecs.Encoder;
+
 /**
  * A builder for a single update request.
  *
@@ -25,14 +27,16 @@ public class BulkUpdateRequestBuilder {
     private final BulkWriteOperation bulkWriteOperation;
     private final DBObject query;
     private final boolean upsert;
-    private final DBObjectCodec codec;
+    private final Encoder<DBObject> queryCodec;
+    private final Encoder<DBObject> replacementCodec;
 
     BulkUpdateRequestBuilder(final BulkWriteOperation bulkWriteOperation, final DBObject query, final boolean upsert,
-                             final DBObjectCodec codec) {
+                             final Encoder<DBObject> queryCodec, final Encoder<DBObject> replacementCodec) {
         this.bulkWriteOperation = bulkWriteOperation;
         this.query = query;
         this.upsert = upsert;
-        this.codec = codec;
+        this.queryCodec = queryCodec;
+        this.replacementCodec = replacementCodec;
     }
 
     /**
@@ -42,7 +46,7 @@ public class BulkUpdateRequestBuilder {
      *                 update operators.
      */
     public void replaceOne(final DBObject document) {
-        bulkWriteOperation.addRequest(new ReplaceRequest(query, document, upsert, codec));
+        bulkWriteOperation.addRequest(new ReplaceRequest(query, document, upsert, queryCodec, replacementCodec));
     }
 
     /**
@@ -51,7 +55,7 @@ public class BulkUpdateRequestBuilder {
      * @param update the update criteria
      */
     public void update(final DBObject update) {
-        bulkWriteOperation.addRequest(new UpdateRequest(query, update, true, upsert, codec));
+        bulkWriteOperation.addRequest(new UpdateRequest(query, update, true, upsert, queryCodec));
     }
 
     /**
@@ -60,6 +64,6 @@ public class BulkUpdateRequestBuilder {
      * @param update the update criteria
      */
     public void updateOne(final DBObject update) {
-        bulkWriteOperation.addRequest(new UpdateRequest(query, update, false, upsert, codec));
+        bulkWriteOperation.addRequest(new UpdateRequest(query, update, false, upsert, queryCodec));
     }
 }

@@ -20,7 +20,6 @@ package com.mongodb.protocol
 
 import com.mongodb.MongoNamespace
 import com.mongodb.WriteConcern
-import com.mongodb.codecs.DocumentCodec
 import com.mongodb.connection.ByteBufferOutputBuffer
 import com.mongodb.connection.SimpleBufferProvider
 import com.mongodb.operation.InsertRequest
@@ -32,7 +31,6 @@ import com.mongodb.protocol.message.MessageSettings
 import com.mongodb.protocol.message.ReplaceCommandMessage
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.mongodb.Document
 import spock.lang.Specification
 
 class WriteCommandLimitsSpecifications extends Specification {
@@ -116,12 +114,12 @@ class WriteCommandLimitsSpecifications extends Specification {
         given:
         def replaces = []
         (1..4).each {
-            replaces.add(new ReplaceRequest(new BsonDocument('_id', new BsonInt32(it)), new Document()))
+            replaces.add(new ReplaceRequest(new BsonDocument('_id', new BsonInt32(it)), new BsonDocument()))
         }
 
         def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new ReplaceCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, replaces,
-                                                new DocumentCodec(), MessageSettings.builder().maxWriteBatchSize(3).build());
+                                                MessageSettings.builder().maxWriteBatchSize(3).build());
 
         when:
         def nextMessage = message.encode(buffer)
@@ -135,12 +133,12 @@ class WriteCommandLimitsSpecifications extends Specification {
         given:
         def replaces = []
         (1..4).each {
-            replaces.add(new ReplaceRequest(new BsonDocument('_id', new BsonInt32(it)), new Document()))
+            replaces.add(new ReplaceRequest(new BsonDocument('_id', new BsonInt32(it)), new BsonDocument()))
         }
 
         def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         def message = new ReplaceCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, replaces,
-                                                new DocumentCodec(), MessageSettings.builder().maxDocumentSize(175).build());
+                                                MessageSettings.builder().maxDocumentSize(175).build());
 
         when:
         def nextMessage = message.encode(buffer)

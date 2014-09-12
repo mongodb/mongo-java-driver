@@ -25,8 +25,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-public final class ReplaceRequest<T> extends BaseUpdateRequest {
-    private final T replacement;
+public final class ReplaceRequest extends BaseUpdateRequest {
+    private final BsonDocument replacement;
 
     /**
      * Construct an instance.
@@ -34,7 +34,7 @@ public final class ReplaceRequest<T> extends BaseUpdateRequest {
      * @param criteria the non-null query criteria
      * @param replacement the non-null replacement document
      */
-    public ReplaceRequest(final BsonDocument criteria, final T replacement) {
+    public ReplaceRequest(final BsonDocument criteria, final BsonDocument replacement) {
         super(criteria);
         this.replacement = notNull("replacement", replacement);
     }
@@ -44,11 +44,11 @@ public final class ReplaceRequest<T> extends BaseUpdateRequest {
      *
      * @return the replacement
      */
-    public T getReplacement() {
+    public BsonDocument getReplacement() {
         return replacement;
     }
 
-    public ReplaceRequest<T> upsert(final boolean isUpsert) {
+    public ReplaceRequest upsert(final boolean isUpsert) {
         super.upsert(isUpsert);
         return this;
     }

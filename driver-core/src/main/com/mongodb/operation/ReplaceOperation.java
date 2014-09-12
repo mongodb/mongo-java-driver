@@ -22,7 +22,6 @@ import com.mongodb.protocol.ReplaceCommandProtocol;
 import com.mongodb.protocol.ReplaceProtocol;
 import com.mongodb.protocol.WriteCommandProtocol;
 import com.mongodb.protocol.WriteProtocol;
-import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
 
 import java.util.List;
@@ -32,28 +31,33 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * An operation that atomically replaces a document in a collection with a new document.
  *
- * @param <T> the document type
  * @since 3.0
  */
-public class ReplaceOperation<T> extends BaseWriteOperation {
-    private final List<ReplaceRequest<T>> replaceRequests;
-    private final Encoder<T> encoder;
+public class ReplaceOperation extends BaseWriteOperation {
+    private final List<ReplaceRequest> replaceRequests;
 
+    /**
+     * Construct an instance.
+     *
+     * @param namespace the namespace
+     * @param ordered whether the inserts are ordered
+     * @param writeConcern the write concern to apply
+     * @param replaceRequests the list of replace requests
+     */
     public ReplaceOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                            final List<ReplaceRequest<T>> replaceRequests, final Encoder<T> encoder) {
+                            final List<ReplaceRequest> replaceRequests) {
         super(namespace, ordered, writeConcern);
         this.replaceRequests = notNull("replace", replaceRequests);
-        this.encoder = notNull("encoder", encoder);
     }
 
     @Override
     protected WriteProtocol getWriteProtocol() {
-        return new ReplaceProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, encoder);
+        return new ReplaceProtocol(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol() {
-        return new ReplaceCommandProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests, encoder);
+        return new ReplaceCommandProtocol(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests);
     }
 
     @Override

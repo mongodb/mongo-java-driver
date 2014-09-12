@@ -303,7 +303,7 @@ public class DBCollection {
 
     private WriteResult insert(final List<InsertRequest> insertRequestList, final Encoder<DBObject> encoder,
                                final WriteConcern writeConcern, final boolean continueOnError) {
-        return executeWriteOperation(new InsertOperation<DBObject>(getNamespace(), !continueOnError, writeConcern, insertRequestList
+        return executeWriteOperation(new InsertOperation(getNamespace(), !continueOnError, writeConcern, insertRequestList
         ));
     }
 
@@ -372,10 +372,9 @@ public class DBCollection {
     private WriteResult replaceOrInsert(final DBObject obj, final Object id, final WriteConcern writeConcern) {
         DBObject filter = new BasicDBObject(ID_FIELD_NAME, id);
 
-        ReplaceRequest<DBObject> replaceRequest = new ReplaceRequest<DBObject>(wrap(filter), obj).upsert(true);
+        ReplaceRequest replaceRequest = new ReplaceRequest(wrap(filter), wrap(obj, objectCodec)).upsert(true);
 
-        return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), false, writeConcern, asList(replaceRequest),
-                                                                    getObjectCodec()));
+        return executeWriteOperation(new ReplaceOperation(getNamespace(), false, writeConcern, asList(replaceRequest)));
     }
 
     /**
@@ -425,12 +424,11 @@ public class DBCollection {
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")) {
                 UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, encoder)).upsert(upsert).multi(multi);
 
-                return executeWriteOperation(new UpdateOperation(getNamespace(), false, aWriteConcern, asList(updateRequest)
-                ));
+                return executeWriteOperation(new UpdateOperation(getNamespace(), false, aWriteConcern, asList(updateRequest)));
             } else {
-                ReplaceRequest<DBObject> replaceRequest = new ReplaceRequest<DBObject>(wrap(query), update).upsert(upsert);
-                return executeWriteOperation(new ReplaceOperation<DBObject>(getNamespace(), true, aWriteConcern,
-                                                                            asList(replaceRequest), toEncoder(encoder)));
+                ReplaceRequest replaceRequest = new ReplaceRequest(wrap(query), wrap(update, encoder)).upsert(upsert);
+                return executeWriteOperation(new ReplaceOperation(getNamespace(), true, aWriteConcern,
+                                                                  asList(replaceRequest)));
             }
         } catch (WriteConcernException e) {
             if (e.getWriteResult().getUpsertedId() != null && e.getWriteResult().getUpsertedId() instanceof BsonValue) {
@@ -1889,11 +1887,10 @@ public class DBCollection {
     BulkWriteResult executeBulkWriteOperation(final boolean ordered, final List<WriteRequest> writeRequests,
                                               final WriteConcern writeConcern) {
         try {
-            return translateBulkWriteResult(execute(new MixedBulkWriteOperation<DBObject>(getNamespace(),
-                                                                                          translateWriteRequestsToNew(writeRequests,
-                                                                                                                      getObjectCodec()),
-                                                                                          ordered, writeConcern,
-                                                                                          getObjectCodec())),
+            return translateBulkWriteResult(execute(new MixedBulkWriteOperation(getNamespace(),
+                                                                                translateWriteRequestsToNew(writeRequests,
+                                                                                                            getObjectCodec()),
+                                                                                ordered, writeConcern)),
                                             getObjectCodec());
         } catch (org.mongodb.BulkWriteException e) {
             throw BulkWriteHelper.translateBulkWriteException(e, DBObjects.codec);
@@ -2017,6 +2014,14 @@ public class DBCollection {
             return wrap(document);
         } else {
             return new BsonDocumentWrapper<DBObject>(document, new DBEncoderAdapter(encoder));
+        }
+    }
+
+    BsonDocument wrap(final DBObject document, final Encoder<DBObject> encoder) {
+        if (encoder == null) {
+            return wrap(document);
+        } else {
+            return new BsonDocumentWrapper<DBObject>(document, encoder);
         }
     }
 }

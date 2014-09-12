@@ -348,6 +348,25 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    public void testSaveWithDBEncoder() {
+        try {
+            DBObject document = new BasicDBObject("_id", 1).append("x", 1);
+            collection.setDBEncoderFactory(new MyEncoderFactory());
+            collection.save(document);
+
+            assertEquals(1, collection.count());
+            assertThat(collection.find(), hasItem(MyEncoder.getConstantObject()));
+
+            collection.save(document);
+
+            assertEquals(1, collection.count());
+            assertThat(collection.find(), hasItem(MyEncoder.getConstantObject()));
+        } finally {
+            collection.setDBEncoderFactory(null);
+        }
+    }
+
+    @Test
     public void testFindAndRemove() {
         DBObject doc = new BasicDBObject("_id", 1).append("x", true);
         collection.insert(doc);

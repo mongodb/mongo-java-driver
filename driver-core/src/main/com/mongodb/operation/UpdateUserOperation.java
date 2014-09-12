@@ -24,7 +24,6 @@ import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.protocol.ReplaceProtocol;
 import org.bson.BsonDocument;
-import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.WriteResult;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -84,12 +83,11 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
     }
 
     @SuppressWarnings("unchecked")
-    private ReplaceProtocol<BsonDocument> getCollectionBasedProtocol() {
+    private ReplaceProtocol getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(user.getCredential().getSource(), "system.users");
-        return new ReplaceProtocol<BsonDocument>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                                 asList(new ReplaceRequest<BsonDocument>(asCollectionQueryDocument(user),
-                                                                                         asCollectionDocument(user))),
-                                                 new BsonDocumentCodec());
+        return new ReplaceProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                   asList(new ReplaceRequest(asCollectionQueryDocument(user),
+                                                             asCollectionDocument(user))));
     }
 
     private BsonDocument getCommand() {

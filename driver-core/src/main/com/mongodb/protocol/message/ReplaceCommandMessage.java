@@ -21,30 +21,41 @@ import com.mongodb.WriteConcern;
 import com.mongodb.operation.ReplaceRequest;
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
-import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
 
 import java.util.List;
 
-public class ReplaceCommandMessage<T> extends BaseUpdateCommandMessage<ReplaceRequest<T>> {
-    private final Encoder<T> encoder;
-
+/**
+ * An update command message that handles full document replacements.
+ *
+ * @since 3.0
+ * @mongodb.driver.manual manual/reference/command/insert/#dbcmd.update Update Command
+ */
+public class ReplaceCommandMessage extends BaseUpdateCommandMessage<ReplaceRequest> {
+    /**
+     * Construct an instance.
+     *
+     * @param namespace the namespace
+     * @param ordered whether the inserts are ordered
+     * @param writeConcern the write concern
+     * @param replaceRequests the list of replace requests
+     * @param settings the message settings
+     */
     public ReplaceCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                 final List<ReplaceRequest<T>> replaceRequests,
-                                 final Encoder<T> encoder, final MessageSettings settings) {
+                                 final List<ReplaceRequest> replaceRequests,
+                                 final MessageSettings settings) {
         super(namespace, ordered, writeConcern, replaceRequests, settings);
-        this.encoder = encoder;
     }
 
     @Override
-    protected void writeUpdate(final BsonBinaryWriter writer, final ReplaceRequest<T> update) {
-        encoder.encode(writer, update.getReplacement(), EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+    protected void writeUpdate(final BsonBinaryWriter writer, final ReplaceRequest update) {
+        getBsonDocumentCodec().encode(writer, update.getReplacement(),
+                                      EncoderContext.builder().isEncodingCollectibleDocument(true).build());
     }
 
     @Override
-    protected ReplaceCommandMessage<T> createNextMessage(final List<ReplaceRequest<T>> remainingUpdates) {
-        return new ReplaceCommandMessage<T>(getWriteNamespace(), isOrdered(), getWriteConcern(), remainingUpdates,
-                                            encoder, getSettings());
+    protected ReplaceCommandMessage createNextMessage(final List<ReplaceRequest> remainingUpdates) {
+        return new ReplaceCommandMessage(getWriteNamespace(), isOrdered(), getWriteConcern(), remainingUpdates, getSettings());
     }
 
     @Override

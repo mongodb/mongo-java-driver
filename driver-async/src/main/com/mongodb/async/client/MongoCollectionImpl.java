@@ -113,8 +113,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             }
             insertRequests.add(new InsertRequest(new BsonDocumentWrapper<T>(document, getCodec())));
         }
-        return execute(new InsertOperation<T>(getNamespace(), true, options.getWriteConcern(), insertRequests
-        ));
+        return execute(new InsertOperation(getNamespace(), true, options.getWriteConcern(), insertRequests));
     }
 
     @Override
@@ -317,9 +316,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @SuppressWarnings("unchecked")
         public MongoFuture<WriteResult> replace(final T replacement) {
             notNull("replacement", replacement);
-            return execute(new ReplaceOperation<T>(getNamespace(), true, options.getWriteConcern(),
-                                                   asList(new ReplaceRequest<T>(find.getCriteria(), replacement).upsert(upsert)),
-                                                   getCodec()));
+            return execute(new ReplaceOperation(getNamespace(), true, options.getWriteConcern(),
+                                                   asList(new ReplaceRequest(find.getCriteria(), asBson(replacement)).upsert(upsert))
+            ));
         }
 
         @Override
