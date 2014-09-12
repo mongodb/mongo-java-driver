@@ -27,10 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class FindOneAndUpdateModel {
     private final Object criteria;
     private final Object update;
-    private Object projection;
-    private Object sort;
-    private boolean upsert;
-    private boolean returnUpdated;
+    private final FindOneAndUpdateOptions options;
 
     /**
      * Construct a new instance
@@ -40,8 +37,21 @@ public class FindOneAndUpdateModel {
      * @mongodb.driver.manual manual/reference/command/findAndModify/
      */
     public FindOneAndUpdateModel(final Object criteria, final Object update) {
+        this(criteria, update, new FindOneAndUpdateOptions());
+    }
+
+    /**
+     * Construct a new instance
+     *
+     * @param criteria the query criteria. This can be of any type for which a {@code Codec} is registered.
+     * @param update the update operation. This can be of any type for which a {@code Codec} is registered.
+     * @param options the options to apply
+     * @mongodb.driver.manual manual/reference/command/findAndModify/
+     */
+    public FindOneAndUpdateModel(final Object criteria, final Object update, final FindOneAndUpdateOptions options) {
         this.criteria = notNull("criteria", criteria);
         this.update = notNull("update", update);
+        this.options = notNull("options", options);
     }
 
     /**
@@ -63,90 +73,12 @@ public class FindOneAndUpdateModel {
         return update;
     }
 
-     /**
-     * Gets a document describing the fields to return for all matching documents.
-     *
-     * @return the project document, which may be null
-     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
-     */
-    public Object getProjection() {
-        return projection;
-    }
-
     /**
-     * Sets a document describing the fields to return for all matching documents.
+     * Gets the options to apply.
      *
-     * @param projection the project document, which may be null. This can be of any type for which a
-     * {@code Codec} is registered
-     * @return this
-     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
+     * @return the options
      */
-    public FindOneAndUpdateModel projection(final Object projection) {
-        this.projection = projection;
-        return this;
-    }
-
-    /**
-     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
-     * order.
-     *
-     * @return a document describing the sort criteria
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
-     */
-    public Object getSort() {
-        return sort;
-    }
-
-    /**
-     * Sets the sort criteria to apply to the query.
-     *
-     * @param sort the sort criteria, which may be null. This can be of any type for which a
-     * {@code Codec} is registered
-     * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
-     */
-    public FindOneAndUpdateModel sort(final Object sort) {
-        this.sort = sort;
-        return this;
-    }
-
-    /**
-     * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
-     *
-     * @return true if a new document should be inserted if there are no matches to the query filter
-     */
-    public boolean isUpsert() {
-        return upsert;
-    }
-
-    /**
-     * Set to true if a new document should be inserted if there are no matches to the query filter.
-     *
-     * @param upsert true if a new document should be inserted if there are no matches to the query filter
-     * @return this
-     */
-    public FindOneAndUpdateModel upsert(final boolean upsert) {
-        this.upsert = upsert;
-        return this;
-    }
-
-    /**
-     * When true, returns the updated document rather than the original. The default is false.
-     *
-     * @return true if the updated document should be returned, otherwise false
-     */
-    public boolean getReturnUpdated() {
-        return returnUpdated;
-    }
-
-    /**
-     * Set true to return the updated document rather than the original.
-     *
-     * @param returnUpdated set true to return the updated document rather than the original.
-     * @return this
-     */
-    public FindOneAndUpdateModel returnUpdated(final boolean returnUpdated) {
-        this.returnUpdated = returnUpdated;
-        return this;
+    public FindOneAndUpdateOptions getOptions() {
+        return options;
     }
 }

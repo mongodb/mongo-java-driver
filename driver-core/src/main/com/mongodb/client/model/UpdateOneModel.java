@@ -22,28 +22,42 @@ import static com.mongodb.assertions.Assertions.notNull;
  * A model describing an update to at most one document that matches the query criteria. The update to apply must include only update
  * operators.
  *
- * @param <T> the type of document to update.  In practice this doesn't actually apply to updates but is here for consistency with the
- *           other write models
- * @since 3.0
+ * @param <T> the type of document to update.  In practice this doesn't actually apply to updates but is here for consistency with the other
+ *            write models
  * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
  * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
+ * @since 3.0
  */
 public final class UpdateOneModel<T> extends WriteModel<T> {
     private final Object criteria;
     private final Object update;
-    private boolean upsert;
+    private final UpdateOneOptions options;
 
     /**
      * Construct a new instance.
      *
-     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
-     * {@code Codec} is registered
-     * @param update a document describing the update, which may not be null. The update to apply must include only update
-     * operators. This can be of any type for which a {@code Codec} is registered
+     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a {@code Codec} is
+     *                 registered
+     * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. This
+     *                 can be of any type for which a {@code Codec} is registered
      */
     public UpdateOneModel(final Object criteria, final Object update) {
+        this(criteria, update, new UpdateOneOptions());
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a {@code Codec} is
+     *                 registered
+     * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. This
+     *                 can be of any type for which a {@code Codec} is registered
+     * @param options the options to apply
+     */
+    public UpdateOneModel(final Object criteria, final Object update, final UpdateOneOptions options) {
         this.criteria = notNull("criteria", criteria);
         this.update = notNull("update", update);
+        this.options = notNull("options", options);
     }
 
     /**
@@ -56,8 +70,7 @@ public final class UpdateOneModel<T> extends WriteModel<T> {
     }
 
     /**
-     * Gets the document specifying the updates to apply to the matching document.  The update to apply must include only update
-     * operators.
+     * Gets the document specifying the updates to apply to the matching document.  The update to apply must include only update operators.
      *
      * @return the document specifying the updates to apply
      */
@@ -66,22 +79,11 @@ public final class UpdateOneModel<T> extends WriteModel<T> {
     }
 
     /**
-     * Returns true if a new document should be inserted if there are no matches to the query criteria.  The default is false.
+     * Gets the options to apply.
      *
-     * @return true if a new document should be inserted if there are no matches to the query criteria
+     * @return the options
      */
-    public boolean isUpsert() {
-        return upsert;
-    }
-
-    /**
-     * Set to true if a new document should be inserted if there are no matches to the query criteria.
-     *
-     * @param upsert true if a new document should be inserted if there are no matches to the query criteria
-     * @return this
-     */
-    public UpdateOneModel<T> upsert(final boolean upsert) {
-        this.upsert = upsert;
-        return this;
+    public UpdateOneOptions getOptions() {
+        return options;
     }
 }

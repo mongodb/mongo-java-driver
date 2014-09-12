@@ -30,7 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class InsertManyModel<T> {
     private final List<? extends T> documents;
-    private boolean ordered;
+    private final InsertManyOptions options;
 
     /**
      * Construct a new instance.
@@ -38,8 +38,18 @@ public final class InsertManyModel<T> {
      * @param documents a non-null, non-empty list of documents to insert
      */
     public InsertManyModel(final List<? extends T> documents) {
+        this(documents, new InsertManyOptions());
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param documents a non-null, non-empty list of documents to insert
+     */
+    public InsertManyModel(final List<? extends T> documents, final InsertManyOptions options) {
         this.documents = notNull("documents", documents);
         isTrueArgument("documents list is not empty", !documents.isEmpty());
+        this.options = notNull("options", options);
     }
 
     /**
@@ -51,23 +61,11 @@ public final class InsertManyModel<T> {
     }
 
     /**
-     * Gets whether the documents should be inserted in the order provided, stopping on the first failed insertion. The default is true.
-     * If false, the server will attempt to insert all the documents regardless of an failures.
+     * Gets the options to apply.
      *
-     * @return whether the the documents should be inserted in order
+     * @return the options
      */
-    public boolean isOrdered() {
-        return ordered;
-    }
-
-    /**
-     * Sets whether the server should insert the documents in the order provided.
-     *
-     * @param ordered true if documents should be inserted in order
-     * @return this
-     */
-    public InsertManyModel<T> ordered(final boolean ordered) {
-        this.ordered = ordered;
-        return this;
+    public InsertManyOptions getOptions() {
+        return options;
     }
 }

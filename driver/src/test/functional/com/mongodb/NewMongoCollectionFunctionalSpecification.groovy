@@ -18,8 +18,10 @@ package com.mongodb
 
 import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.AggregateModel
+import com.mongodb.client.model.AggregateOptions
 import com.mongodb.client.model.CountModel
 import com.mongodb.client.model.FindModel
+import com.mongodb.client.model.FindOptions
 import com.mongodb.codecs.DocumentCodecProvider
 import com.mongodb.operation.OperationExecutor
 import com.mongodb.operation.ReadOperation
@@ -56,14 +58,14 @@ class NewMongoCollectionFunctionalSpecification extends FunctionalSpecification 
 
     def 'should explain a find model'() {
         when:
-        def model = new FindModel().criteria(new Document('cold', true))
-                                   .batchSize(4)
-                                   .maxTime(1, TimeUnit.SECONDS)
-                                   .skip(5)
-                                   .limit(100)
-                                   .modifiers(new Document('$hint', 'i1'))
-                                   .projection(new Document('x', 1))
-                                   .sort(new Document('y', 1))
+        def model = new FindModel(new FindOptions().criteria(new Document('cold', true))
+                                                   .batchSize(4)
+                                                   .maxTime(1, TimeUnit.SECONDS)
+                                                   .skip(5)
+                                                   .limit(100)
+                                                   .modifiers(new Document('$hint', 'i1'))
+                                                   .projection(new Document('x', 1))
+                                                   .sort(new Document('y', 1)))
         def result = collection.explain(model, ExplainVerbosity.ALL_PLANS_EXECUTIONS)
 
         then:
@@ -72,11 +74,12 @@ class NewMongoCollectionFunctionalSpecification extends FunctionalSpecification 
 
     def 'should explain an aggregate model'() {
         given:
-        def model = new AggregateModel([new Document('$match', new Document('job', 'plumber'))])
-                .allowDiskUse(true)
-                .batchSize(10)
-                .maxTime(1, TimeUnit.SECONDS)
-                .useCursor(true)
+        def model = new AggregateModel([new Document('$match', new Document('job', 'plumber'))],
+                                       new AggregateOptions()
+                                               .allowDiskUse(true)
+                                               .batchSize(10)
+                                               .maxTime(1, TimeUnit.SECONDS)
+                                               .useCursor(true))
 
         when:
         def result = collection.explain(model, ExplainVerbosity.ALL_PLANS_EXECUTIONS)

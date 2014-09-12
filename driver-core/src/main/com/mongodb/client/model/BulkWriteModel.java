@@ -29,7 +29,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class BulkWriteModel<T> {
     private final List<? extends WriteModel<? extends T>> requests;
-    private boolean ordered;
+    private BulkWriteOptions options;
 
     /**
      * Construct a new instance with the given list of write models.
@@ -37,8 +37,18 @@ public final class BulkWriteModel<T> {
      * @param requests a non-null, non-empty list of write models
      */
     public BulkWriteModel(final List<? extends WriteModel<? extends T>> requests) {
+       this(requests, new BulkWriteOptions());
+    }
+
+    /**
+     * Construct a new instance with the given list of write models.
+     *
+     * @param requests a non-null, non-empty list of write models
+     */
+    public BulkWriteModel(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options) {
         this.requests = notNull("requests", requests);
         isTrueArgument("requests list is not empty", !requests.isEmpty());
+        this.options = notNull("options", options);
     }
 
     /**
@@ -51,26 +61,11 @@ public final class BulkWriteModel<T> {
     }
 
     /**
-     * If true, then when a write fails, return without performing the remaining
-     * writes. If false, then when a write fails, continue with the remaining writes, if any.
-     * Defaults to true.
+     * Gets the options to apply
      *
-     * @return true if the writes are ordered
+     * @return the options
      */
-    public boolean isOrdered() {
-        return ordered;
-    }
-
-    /**
-     * If true, then when a write fails, return without performing the remaining
-     * writes. If false, then when a write fails, continue with the remaining writes, if any.
-     * Defaults to true.
-     *
-     * @param ordered true if the writes should be ordered
-     * @return this
-     */
-    public BulkWriteModel<T> ordered(final boolean ordered) {
-        this.ordered = ordered;
-        return this;
+    public BulkWriteOptions getOptions() {
+        return options;
     }
 }
