@@ -39,6 +39,7 @@ import org.bson.BsonTimestamp;
 import org.bson.BsonType;
 import org.bson.BsonUndefined;
 import org.bson.BsonValue;
+import org.bson.RawBsonDocument;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -63,6 +64,11 @@ public class BsonValueCodecProvider implements CodecProvider {
         addCodecs();
     }
 
+    /**
+     * Get the {@code BsonValue} subclass associated with the given {@code BsonType}.
+     * @param bsonType the BsonType
+     * @return the class associated with the given type
+     */
     public static Class<? extends BsonValue> getClassForBsonType(final BsonType bsonType) {
         return DEFAULT_BSON_TYPE_CLASS_MAP.get(bsonType);
     }
@@ -84,6 +90,10 @@ public class BsonValueCodecProvider implements CodecProvider {
 
         if (clazz == BsonDocumentWrapper.class) {
             return (Codec<T>) new BsonDocumentWrapperCodec(registry.get(BsonDocument.class));
+        }
+
+        if (clazz == RawBsonDocument.class) {
+            return (Codec<T>) new RawBsonDocumentCodec();
         }
 
         if (clazz == BsonJavaScriptWithScope.class) {

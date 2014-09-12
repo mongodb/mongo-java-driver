@@ -34,6 +34,11 @@ import java.util.List;
 public class BsonArrayCodec implements Codec<BsonArray> {
     private final CodecRegistry registry;
 
+    /**
+     * Construct an instance with the given registry
+     *
+     * @param registry the registry
+     */
     public BsonArrayCodec(final CodecRegistry registry) {
         this.registry = registry;
     }
@@ -58,7 +63,7 @@ public class BsonArrayCodec implements Codec<BsonArray> {
         writer.writeStartArray();
 
         for (BsonValue value : array) {
-            Codec codec = registry.get(BsonValueCodecProvider.getClassForBsonType(value.getBsonType()));
+            Codec codec = registry.get(value.getClass());
             encoderContext.encodeWithChildContext(codec, writer, value);
         }
 
@@ -75,7 +80,7 @@ public class BsonArrayCodec implements Codec<BsonArray> {
      * that the value be fully consumed before returning.
      *
      * @param reader the read to read the value from
-     * @param decoderContext
+     * @param decoderContext the decoder context
      * @return the non-null value read from the reader
      */
     protected BsonValue readValue(final BsonReader reader, final DecoderContext decoderContext) {

@@ -120,7 +120,7 @@ public class BsonDocumentCodec implements Codec<BsonDocument> {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void writeValue(final BsonWriter writer, final EncoderContext encoderContext, final BsonValue value) {
-        Codec codec = codecRegistry.get(BsonValueCodecProvider.getClassForBsonType(value.getBsonType()));
+        Codec codec = codecRegistry.get(value.getClass());
         encoderContext.encodeWithChildContext(codec, writer, value);
     }
 

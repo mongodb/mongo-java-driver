@@ -40,6 +40,7 @@ import org.bson.BsonSymbol
 import org.bson.BsonTimestamp
 import org.bson.BsonUndefined
 import org.bson.ByteBufNIO
+import org.bson.RawBsonDocument
 import org.bson.io.BasicInputBuffer
 import org.bson.io.BasicOutputBuffer
 import org.bson.types.ObjectId
@@ -149,5 +150,20 @@ class BsonDocumentCodecSpecification extends Specification {
         encodedDocument.keySet() as List == ['x', '_id', 'nested', 'array']
         encodedDocument.getDocument('nested').keySet() as List == ['x', '_id']
         encodedDocument.getArray('array').get(0).asDocument().keySet() as List == ['x', '_id']
+    }
+
+    def 'should encode nested raw documents'() {
+        given:
+        def doc = new BsonDocument('a', BsonBoolean.TRUE)
+        def rawDoc = new RawBsonDocument(doc, new BsonDocumentCodec());
+        def docWithNestedRawDoc = new BsonDocument('a', rawDoc).append('b', new BsonArray(asList(rawDoc)))
+
+        when:
+        def encodedDocument = new BsonDocument()
+        new BsonDocumentCodec().encode(new BsonDocumentWriter(encodedDocument), docWithNestedRawDoc,
+                                       EncoderContext.builder().isEncodingCollectibleDocument(true).build())
+
+        then:
+        encodedDocument == docWithNestedRawDoc
     }
 }
