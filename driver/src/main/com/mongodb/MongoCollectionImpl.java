@@ -267,12 +267,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoCursor<T> get() {
-            return execute(new QueryOperation<T, Document>(getNamespace(), findOp, getCodec()), readPreference);
+            return execute(new QueryOperation<T>(getNamespace(), findOp, getCodec()), readPreference);
         }
 
         @Override
         public T getOne() {
-            MongoCursor<T> cursor = execute(new QueryOperation<T, Document>(getNamespace(), findOp.batchSize(-1), getCodec()),
+            MongoCursor<T> cursor = execute(new QueryOperation<T>(getNamespace(), findOp.batchSize(-1), getCodec()),
                                             readPreference);
 
             return cursor.hasNext() ? cursor.next() : null;

@@ -26,7 +26,6 @@ import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateCollectionOptions;
 import com.mongodb.operation.CreateUserOperation;
 import com.mongodb.operation.DropUserOperation;
-import com.mongodb.operation.Find;
 import com.mongodb.operation.QueryOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.UpdateUserOperation;
@@ -234,8 +233,8 @@ public class DB {
      * @throws MongoException
      */
         public Set<String> getCollectionNames() {
-        MongoCursor<BsonDocument> cursor = execute(new QueryOperation<BsonDocument, DBObject>(new MongoNamespace(name, "system.namespaces"),
-                                                                                    new Find(), new BsonDocumentCodec()), primary());
+        MongoCursor<BsonDocument> cursor = execute(new QueryOperation<BsonDocument>(new MongoNamespace(name, "system.namespaces"),
+                                                                                    new BsonDocumentCodec()), primary());
         HashSet<String> collections = new HashSet<String>();
         int lengthOfDatabaseName = getName().length();
         while (cursor.hasNext()) {

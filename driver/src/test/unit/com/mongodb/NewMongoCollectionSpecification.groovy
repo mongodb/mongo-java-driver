@@ -15,14 +15,17 @@
  */
 
 package com.mongodb
+
 import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.FindModel
+import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.codecs.DocumentCodecProvider
 import com.mongodb.operation.InsertOperation
-import com.mongodb.operation.OperationExecutor
 import com.mongodb.operation.QueryOperation
-import com.mongodb.operation.ReadOperation
-import com.mongodb.operation.WriteOperation
+import com.mongodb.operation.ReplaceOperation
+import com.mongodb.protocol.AcknowledgedWriteResult
+import org.bson.BsonBoolean
+import org.bson.BsonDocument
 import org.bson.codecs.configuration.RootCodecRegistry
 import org.mongodb.Document
 import spock.lang.Specification
@@ -31,7 +34,7 @@ import static com.mongodb.ReadPreference.secondary
 
 class NewMongoCollectionSpecification extends Specification {
 
-    def namespace = new MongoNamespace("db", "coll")
+    def namespace = new MongoNamespace('db', 'coll')
     def collection;
     def options = MongoCollectionOptions.builder().writeConcern(WriteConcern.JOURNALED)
                                         .readPreference(secondary())
@@ -40,30 +43,32 @@ class NewMongoCollectionSpecification extends Specification {
 
     def 'should insert a document'() {
         given:
-        def executor = new TestOperationExecutor(new WriteResult(1, false, null))
+        def executor = new TestOperationExecutor(new AcknowledgedWriteResult(1, false, null))
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
         def result = collection.insertOne(new Document('_id', 1))
 
         then:
-        def operation = executor.getWriteOperation() as InsertOperation
+        executor.getWriteOperation() as InsertOperation
         !result.insertedId
         result.insertedCount == 1
     }
 
     def 'should replace'() {
         given:
-        def executor = new TestOperationExecutor(new WriteResult(1, false, null))
+        def executor = new TestOperationExecutor(new AcknowledgedWriteResult(1, false, null))
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        def result = collection.replaceOne()
+        def result = collection.replaceOne(new ReplaceOneModel<>(new Document('_id', 1),
+                                                                 new Document('_id', 1).append('color', 'blue')))
 
         then:
-        def operation = executor.getWriteOperation() as InsertOperation
-        !result.insertedId
-        result.insertedCount == 1
+        executor.getWriteOperation() as ReplaceOperation
+        result.modifiedCount == 0
+        result.matchedCount == 1
+        !result.upsertedId
     }
 
     def 'should find'() {
@@ -82,48 +87,8 @@ class NewMongoCollectionSpecification extends Specification {
 
         then:
         def operation = executor.getReadOperation() as QueryOperation
-        operation.model.is(model)
+        operation.criteria == new BsonDocument('cold', BsonBoolean.TRUE)
         executor.readPreference == secondary()
         result == [document]
     }
-
-
-
-    class TestOperationExecutor<T> implements OperationExecutor {
-
-        private final T response
-        private ReadPreference readPreference
-        private ReadOperation<T> readOperation;
-        private WriteOperation<T> writeOperation;
-
-        TestOperationExecutor(T response) {
-            this.response = response
-        }
-
-        @Override
-        def <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-            this.readOperation = operation
-            this.readPreference = readPreference
-            response;
-        }
-
-        @Override
-        def <T> T execute(final WriteOperation<T> operation) {
-            this.writeOperation = operation;
-            response
-        }
-
-        ReadOperation<T> getReadOperation() {
-            readOperation
-        }
-
-        ReadPreference getReadPreference() {
-            return readPreference
-        }
-
-        WriteOperation<T> getWriteOperation() {
-            writeOperation
-        }
-    }
-
 }

@@ -30,19 +30,16 @@ import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
-import com.mongodb.client.model.FindModel;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.protocol.QueryProtocol;
 import com.mongodb.protocol.QueryResult;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.codecs.Decoder;
-import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.EnumSet;
 
@@ -50,7 +47,6 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * An operation that queries a collection using the provided criteria.
@@ -58,35 +54,37 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @param <T> the document type
  * @since 3.0
  */
-public class QueryOperation<T, F> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoTailableCursor<T>> {
+public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoTailableCursor<T>> {
+
     private final MongoNamespace namespace;
-    private final FindModel<Object> model;
     private final Decoder<T> resultDecoder;
-    private final CodecRegistry codecRegistry;
+    private BsonDocument criteria;
+    private Integer batchSize;
+    private Integer limit;
+    private BsonDocument modifiers;
+    private BsonDocument projection;
+    private EnumSet<CursorFlag> cursorFlags = EnumSet.noneOf(CursorFlag.class);
+    private Long maxTimeMS;
+    private Integer skip;
+    private BsonDocument sort;
 
     public QueryOperation(final MongoNamespace namespace, final Find find, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
         this.resultDecoder = resultDecoder;
-        this.codecRegistry = null;
-        model = new FindModel<Object>();
-        model.criteria(find.getFilter());
-        model.batchSize(find.getBatchSize());
-        model.limit(find.getLimit());
-        model.projection(find.getFields());
-        model.maxTimeMS(find.getOptions().getMaxTimeMS(), MILLISECONDS);
-        model.limit(find.getLimit());
-        model.skip(find.getSkip());
-        model.sort(find.getOrder());
-        model.cursorFlags(find.getFlags(primary()));
-        BsonDocument modifiers = new BsonDocument();
+        criteria = find.getFilter();
+        batchSize = (find.getBatchSize());
+        limit = (find.getLimit());
+        projection = (find.getFields());
+        maxTimeMS = (find.getOptions().getMaxTimeMS());
+        limit = (find.getLimit());
+        skip = (find.getSkip());
+        sort = (find.getOrder());
+        cursorFlags = (find.getFlags(primary()));
+        modifiers = new BsonDocument();
         addToModifiers(find, modifiers);
-        model.modifiers(modifiers);
     }
 
-    public QueryOperation(final MongoNamespace namespace, final FindModel<F> model, final CodecRegistry codecRegistry,
-                          final Decoder<T> resultDecoder) {
-        this.model = (FindModel) model;
-        this.codecRegistry = codecRegistry;
+    public QueryOperation(final MongoNamespace namespace, final Decoder<T> resultDecoder) {
         this.namespace = notNull("namespace", namespace);
         this.resultDecoder = notNull("resultDecoder", resultDecoder);
     }
@@ -95,12 +93,68 @@ public class QueryOperation<T, F> implements AsyncReadOperation<MongoAsyncCursor
         return namespace;
     }
 
-    public FindModel getModel() {
-        return model;
-    }
-
     public Decoder<T> getResultDecoder() {
         return resultDecoder;
+    }
+
+    public BsonDocument getCriteria() {
+        return criteria;
+    }
+
+    public void setCriteria(final BsonDocument criteria) {
+        this.criteria = criteria;
+    }
+
+    public void setBatchSize(final Integer batchSize) {
+        this.batchSize = batchSize;
+    }
+
+    public void setLimit(final Integer limit) {
+        this.limit = limit;
+    }
+
+    public BsonDocument getModifiers() {
+        return modifiers;
+    }
+
+    public void setModifiers(final BsonDocument modifiers) {
+        this.modifiers = modifiers;
+    }
+
+    public BsonDocument getProjection() {
+        return projection;
+    }
+
+    public void setProjection(final BsonDocument projection) {
+        this.projection = projection;
+    }
+
+    public EnumSet<CursorFlag> getCursorFlags() {
+        return cursorFlags;
+    }
+
+    public void setCursorFlags(final EnumSet<CursorFlag> cursorFlags) {
+        this.cursorFlags = cursorFlags;
+    }
+
+    public Long getMaxTimeMS() {
+        return maxTimeMS;
+    }
+
+    public void setMaxTimeMS(final Long maxTimeMS) {
+        this.maxTimeMS = maxTimeMS;
+    }
+
+    public void setSkip(final Integer skip) {
+        this.skip = skip;
+    }
+
+    public BsonDocument getSort() {
+        return sort;
+    }
+
+    public void setSort(final BsonDocument sort) {
+        this.sort = sort;
     }
 
     @Override
@@ -119,14 +173,6 @@ public class QueryOperation<T, F> implements AsyncReadOperation<MongoAsyncCursor
                 }
             }
         });
-    }
-
-    private int getBatchSize() {
-        return model.getBatchSize() != null ? model.getBatchSize() : 0;
-    }
-
-    private int getLimit() {
-        return model.getLimit() != null ? model.getLimit() : 0;
     }
 
     public MongoFuture<MongoAsyncCursor<T>> executeAsync(final AsyncReadBinding binding) {
@@ -163,23 +209,19 @@ public class QueryOperation<T, F> implements AsyncReadOperation<MongoAsyncCursor
     private QueryProtocol<T> asQueryProtocol(final ServerDescription serverDescription, final ReadPreference readPreference) {
         return new QueryProtocol<T>(namespace, getFlags(readPreference), getSkip(),
                                     getNumberToReturn(), asDocument(serverDescription, readPreference),
-                                    asBson(model.getProjection()), resultDecoder);
+                                    projection, resultDecoder);
+    }
+
+    private int getBatchSize() {
+        return batchSize != null ? batchSize : 0;
+    }
+
+    private int getLimit() {
+        return limit != null ? limit : 0;
     }
 
     private int getSkip() {
-        return model.getSkip() != null ? model.getSkip() : 0;
-    }
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private BsonDocument asBson(Object document) {
-        if (document == null) {
-            return null;
-        }
-        if (document instanceof BsonDocument) {
-            return (BsonDocument) document;
-        } else {
-            return new BsonDocumentWrapper(document, codecRegistry.get(document.getClass()));
-        }
+        return skip != null ? skip : 0;
     }
 
     /**
@@ -209,11 +251,11 @@ public class QueryOperation<T, F> implements AsyncReadOperation<MongoAsyncCursor
 
     private EnumSet<CursorFlag> getFlags(final ReadPreference readPreference) {
         if (readPreference.isSlaveOk()) {
-            EnumSet<CursorFlag> retVal = EnumSet.copyOf(model.getCursorFlags());
+            EnumSet<CursorFlag> retVal = EnumSet.copyOf(cursorFlags);
             retVal.add(CursorFlag.SLAVE_OK);
             return retVal;
         } else {
-            return model.getCursorFlags();
+            return cursorFlags;
         }
     }
 
@@ -255,14 +297,14 @@ public class QueryOperation<T, F> implements AsyncReadOperation<MongoAsyncCursor
     }
 
     private BsonDocument asDocument(final ServerDescription serverDescription, final ReadPreference readPreference) {
-        BsonDocument document = model.getModifiers() != null ? asBson(model.getModifiers()) : new BsonDocument();
-        document.put("$query", model.getCriteria() != null ? asBson(model.getCriteria()) : new BsonDocument());
-        if (model.getSort() != null) {
-            document.put("$orderby", asBson(model.getSort()));
+        BsonDocument document = modifiers != null ? modifiers : new BsonDocument();
+        document.put("$query", criteria != null ? criteria : new BsonDocument());
+        if (sort != null) {
+            document.put("$orderby", sort);
         }
 
-        if (model.getMaxTime(MILLISECONDS) != null && model.getMaxTime(MILLISECONDS) > 0) {
-            document.put("$maxTimeMS", new BsonInt64(model.getMaxTime(MILLISECONDS)));
+        if (maxTimeMS != null && maxTimeMS > 0) {
+            document.put("$maxTimeMS", new BsonInt64(maxTimeMS));
         }
 
         if (serverDescription.getType() == SHARD_ROUTER && !readPreference.equals(primary())) {
@@ -274,6 +316,6 @@ public class QueryOperation<T, F> implements AsyncReadOperation<MongoAsyncCursor
 
 
     private boolean isExhaustCursor() {
-        return model.getCursorFlags().contains(CursorFlag.EXHAUST);
+        return cursorFlags.contains(CursorFlag.EXHAUST);
     }
 }

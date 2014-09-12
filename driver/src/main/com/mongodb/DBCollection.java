@@ -693,14 +693,14 @@ public class DBCollection {
                      final ReadPreference readPreference, final long maxTime, final TimeUnit maxTimeUnit) {
 
 
-        Find find = new Find().select(wrapAllowNull(projection))
-                              .where(wrapAllowNull(query))
-                              .order(wrapAllowNull(sort))
-                              .batchSize(-1)
-                              .maxTime(maxTime, maxTimeUnit);
+        QueryOperation<DBObject> queryOperation = new QueryOperation<DBObject>(getNamespace(), objectCodec);
+        queryOperation.setCriteria(wrapAllowNull(query));
+        queryOperation.setProjection(wrapAllowNull(projection));
+        queryOperation.setSort(wrapAllowNull(sort));
+        queryOperation.setBatchSize(-1);
+        queryOperation.setMaxTimeMS(MILLISECONDS.convert(maxTime, maxTimeUnit));
 
-        MongoCursor<DBObject> cursor = execute(new QueryOperation<DBObject, DBObject>(getNamespace(), find, objectCodec),
-                                               readPreference);
+        MongoCursor<DBObject> cursor = execute(queryOperation, readPreference);
 
         return cursor.hasNext() ? cursor.next() : null;
     }

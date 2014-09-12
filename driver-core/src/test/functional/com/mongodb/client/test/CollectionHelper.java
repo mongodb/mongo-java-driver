@@ -100,7 +100,7 @@ public final class CollectionHelper<T> {
     }
 
     public List<T> find() {
-        MongoCursor<T> cursor = new QueryOperation<T, Document>(namespace, new Find(), codec).execute(getBinding());
+        MongoCursor<T> cursor = new QueryOperation<T>(namespace, codec).execute(getBinding());
         List<T> results = new ArrayList<T>();
         while (cursor.hasNext()) {
             results.add(cursor.next());
@@ -109,7 +109,9 @@ public final class CollectionHelper<T> {
     }
 
     public List<T> find(final Document filter) {
-        MongoCursor<T> cursor = new QueryOperation<T, Document>(namespace, new Find(wrap(filter)), codec).execute(getBinding());
+        QueryOperation<T> queryOperation = new QueryOperation<T>(namespace, codec);
+        queryOperation.setCriteria(wrap(filter));
+        MongoCursor<T> cursor = queryOperation.execute(getBinding());
         List<T> results = new ArrayList<T>();
         while (cursor.hasNext()) {
             results.add(cursor.next());
