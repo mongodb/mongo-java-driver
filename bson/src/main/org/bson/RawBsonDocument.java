@@ -16,22 +16,36 @@
 
 package org.bson;
 
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
+
+import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
 
 /**
- * A simple wrapper around a byte array that is the representation of a single BSON document.
+ * An immutable BSON document that is represented using only the raw bytes.
  *
  * @since 3.0
  */
-// TODO: Add an easy way to iterate over the fields?
-public class RawBsonDocument {
+public class RawBsonDocument extends BsonDocument {
+    private static final long serialVersionUID = 5551249268878132972L;
+
+    private static BsonValueCodecProvider provider = new BsonValueCodecProvider();
+    private static RootCodecRegistry registry = new RootCodecRegistry(Arrays.<CodecProvider>asList(provider));
+
     private final byte[] bytes;
 
     /**
@@ -83,11 +97,178 @@ public class RawBsonDocument {
      * @return the decoded document
      */
     public <T> T decode(final Codec<T> codec) {
-        BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(getByteBuffer()), true);
+        BsonBinaryReader reader = createReader();
         try {
             return codec.decode(reader, DecoderContext.builder().build());
         } finally {
             reader.close();
+        }
+    }
+
+    @Override
+    public void clear() {
+        throw new UnsupportedOperationException("RawBsonDocument instances are immutable");
+    }
+
+    @Override
+    public BsonValue put(final String key, final BsonValue value) {
+        throw new UnsupportedOperationException("RawBsonDocument instances are immutable");
+    }
+
+    @Override
+    public BsonDocument append(final String key, final BsonValue value) {
+        throw new UnsupportedOperationException("RawBsonDocument instances are immutable");
+    }
+
+    @Override
+    public void putAll(final Map<? extends String, ? extends BsonValue> m) {
+        throw new UnsupportedOperationException("RawBsonDocument instances are immutable");
+    }
+
+    @Override
+    public BsonValue remove(final Object key) {
+        throw new UnsupportedOperationException("RawBsonDocument instances are immutable");
+    }
+
+    @Override
+    public boolean isEmpty() {
+        BsonBinaryReader bsonReader = createReader();
+        try {
+            bsonReader.readStartDocument();
+            if (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+                return false;
+            }
+            bsonReader.readEndDocument();
+        } finally {
+            bsonReader.close();
+        }
+
+        return true;
+    }
+
+    @Override
+    public int size() {
+        int size = 0;
+        BsonBinaryReader bsonReader = createReader();
+        try {
+            bsonReader.readStartDocument();
+            while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+                size++;
+                bsonReader.readName();
+                bsonReader.skipValue();
+            }
+            bsonReader.readEndDocument();
+        } finally {
+            bsonReader.close();
+        }
+
+        return size;
+    }
+
+    @Override
+    public Set<Entry<String, BsonValue>> entrySet() {
+        return toBsonDocument().entrySet();
+    }
+
+    @Override
+    public Collection<BsonValue> values() {
+        return toBsonDocument().values();
+    }
+
+    @Override
+    public Set<String> keySet() {
+        return toBsonDocument().keySet();
+    }
+
+    @Override
+    public boolean containsKey(final Object key) {
+        if (key == null) {
+            throw new IllegalArgumentException("key can not be null");
+        }
+
+        BsonBinaryReader bsonReader = createReader();
+        try {
+            bsonReader.readStartDocument();
+            while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+                if (bsonReader.readName().equals(key)) {
+                    return true;
+                }
+                bsonReader.skipValue();
+            }
+            bsonReader.readEndDocument();
+        } finally {
+            bsonReader.close();
+        }
+
+        return false;
+    }
+
+    @Override
+    public boolean containsValue(final Object value) {
+        BsonBinaryReader bsonReader = createReader();
+        try {
+            bsonReader.readStartDocument();
+            while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+                bsonReader.skipName();
+                if (deserializeBsonValue(bsonReader).equals(value)) {
+                    return true;
+                }
+            }
+            bsonReader.readEndDocument();
+        } finally {
+            bsonReader.close();
+        }
+
+        return false;
+    }
+
+    @Override
+    public BsonValue get(final Object key) {
+        if (key == null) {
+            throw new IllegalArgumentException("key can not be null");
+        }
+
+        BsonBinaryReader bsonReader = createReader();
+        try {
+            bsonReader.readStartDocument();
+            while (bsonReader.readBsonType() != BsonType.END_OF_DOCUMENT) {
+                if (bsonReader.readName().equals(key)) {
+                    return deserializeBsonValue(bsonReader);
+                }
+                bsonReader.skipValue();
+            }
+            bsonReader.readEndDocument();
+        } finally {
+            bsonReader.close();
+        }
+
+        return null;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
+
+    private BsonValue deserializeBsonValue(final BsonBinaryReader bsonReader) {
+        return registry.get(getClassForBsonType(bsonReader.getCurrentBsonType())).decode(bsonReader, DecoderContext.builder().build());
+    }
+
+    private BsonBinaryReader createReader() {
+        return new BsonBinaryReader(new BasicInputBuffer(getByteBuffer()), true);
+    }
+
+    private BsonDocument toBsonDocument() {
+        BsonBinaryReader bsonReader = createReader();
+        try {
+            return new BsonDocumentCodec().decode(bsonReader, DecoderContext.builder().build());
+        } finally {
+            bsonReader.close();
         }
     }
 }
