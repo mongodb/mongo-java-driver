@@ -108,6 +108,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         notNull("documents", documents);
         List<InsertRequest<T>> insertRequests = new ArrayList<InsertRequest<T>>();
         for (T document : documents) {
+            if (getCodec() instanceof CollectibleCodec) {
+                ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
+            }
             insertRequests.add(new InsertRequest<T>(document));
         }
         return execute(new InsertOperation<T>(getNamespace(), true, options.getWriteConcern(), insertRequests,

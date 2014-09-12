@@ -45,7 +45,7 @@ import static java.util.concurrent.TimeUnit.SECONDS
 class QueryOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should query with default values'() {
-        def document = new Document()
+        def document = new Document('_id', 1)
         given:
         getCollectionHelper().insertDocuments(document);
         def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
