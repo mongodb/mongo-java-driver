@@ -23,14 +23,16 @@ import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
+
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * An operation that executes a count.
@@ -39,11 +41,134 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private final MongoNamespace namespace;
-    private final Find find;
+    private BsonDocument criteria;
+    private BsonValue hint;
+    private long skip;
+    private long limit;
+    private long maxTimeMS;
 
+    /**
+     * This is going away soon.
+     *
+     * @param namespace the namespace to execute the count operation on
+     * @param find find
+     */
     public CountOperation(final MongoNamespace namespace, final Find find) {
         this.namespace = notNull("namespace", namespace);
-        this.find = notNull("find", find);
+        criteria = find.getFilter();
+        hint = find.getHint();
+        skip = find.getSkip();
+        limit = find.getLimit();
+        maxTimeMS = find.getOptions().getMaxTimeMS();
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the namespace to execute the count operation on
+     */
+    public CountOperation(final MongoNamespace namespace) {
+        this.namespace = notNull("namespace", namespace);
+    }
+
+    /**
+     * Gets the query criteria.
+     *
+     * @return the query criteria
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     */
+    public BsonDocument getCriteria() {
+        return criteria;
+    }
+
+    /**
+     * Sets the criteria to apply to the query.
+     *
+     * @param criteria the criteria, which may be null.
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     */
+    public void setCriteria(final BsonDocument criteria) {
+        this.criteria = criteria;
+    }
+
+    /**
+     * Gets the hint to apply.
+     *
+     * @return the hint, which should describe an existing
+     */
+    public BsonValue getHint() {
+        return hint;
+    }
+
+    /**
+     * Sets the hint to apply.
+     *
+     * @param hint a value describing the index which should be used for this operation.
+     */
+    public void setHint(final BsonValue hint) {
+        this.hint = hint;
+    }
+
+    /**
+     * Gets the limit to apply.  The default is 0, which means there is no limit.
+     *
+     * @return the limit
+     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
+     */
+    public long getLimit() {
+        return limit;
+    }
+
+    /**
+     * Sets the limit to apply.
+     *
+     * @param limit the limit
+     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
+     */
+    public void setLimit(final long limit) {
+        this.limit = limit;
+    }
+
+    /**
+     * Gets the number of documents to skip.  The default is 0.
+     *
+     * @return the number of documents to skip, which may be null
+     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
+     */
+    public long getSkip() {
+        return skip;
+    }
+
+    /**
+     * Sets the number of documents to skip.
+     *
+     * @param skip the number of documents to skip
+     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
+     */
+    public void setSkip(final long skip) {
+        this.skip = skip;
+    }
+
+    /**
+     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
+     *
+     * @param timeUnit the time unit to return the result in
+     * @return the maximum execution time in the given time unit
+     */
+    public long getMaxTime(final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Sets the maximum execution time on the server for this operation.
+     *
+     * @param maxTime  the max time
+     * @param timeUnit the time unit, which may not be null
+     */
+    public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
     }
 
     @Override
@@ -69,11 +194,11 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     private BsonDocument asCommandDocument() {
         BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
-        putIfNotNull(document, "query", find.getFilter());
-        putIfNotZero(document, "limit", find.getLimit());
-        putIfNotZero(document, "skip", find.getSkip());
-        putIfNotNull(document, "hint", find.getHint());
-        putIfNotZero(document, "maxTimeMS", find.getOptions().getMaxTime(MILLISECONDS));
+        putIfNotNull(document, "query", criteria);
+        putIfNotZero(document, "limit", limit);
+        putIfNotZero(document, "skip", skip);
+        putIfNotNull(document, "hint", hint);
+        putIfNotZero(document, "maxTimeMS", maxTimeMS);
         return document;
     }
 }

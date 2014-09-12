@@ -100,9 +100,7 @@ public class UserOperationTest extends FunctionalTest {
                                           asList(new InsertRequest<Document>(new Document())),
                                           new DocumentCodec()).execute(binding);
             // then
-            assertEquals(1L, (long) new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()), new Find()
-            )
-                                    .execute(getBinding()));
+            assertEquals(1L, (long) new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName())).execute(getBinding()));
         } finally {
             // cleanup
             new DropUserOperation("admin", adminUser.getCredential().getUserName()).execute(getBinding());
@@ -147,10 +145,7 @@ public class UserOperationTest extends FunctionalTest {
         ReadWriteBinding binding = new ClusterBinding(cluster, primary(), 1, SECONDS);
         try {
             // when
-            long result = new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName()),
-                                             new Find()
-            )
-                          .execute(binding);
+            long result = new CountOperation(new MongoNamespace(getDatabaseName(), getCollectionName())).execute(binding);
             // then
             assertEquals(0, result);
         } finally {

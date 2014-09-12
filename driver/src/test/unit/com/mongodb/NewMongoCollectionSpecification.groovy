@@ -17,18 +17,24 @@
 package com.mongodb
 
 import com.mongodb.client.MongoCollectionOptions
+import com.mongodb.client.model.CountModel
 import com.mongodb.client.model.FindModel
 import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.codecs.DocumentCodecProvider
+import com.mongodb.operation.CountOperation
 import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.QueryOperation
 import com.mongodb.operation.ReplaceOperation
 import com.mongodb.protocol.AcknowledgedWriteResult
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonString
 import org.bson.codecs.configuration.RootCodecRegistry
 import org.mongodb.Document
 import spock.lang.Specification
+
+import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ReadPreference.secondary
 
@@ -81,6 +87,14 @@ class NewMongoCollectionSpecification extends Specification {
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         def model = new FindModel<>().criteria(new Document('cold', true))
+                                     .batchSize(4)
+                                     .cursorFlags(EnumSet.of(CursorFlag.PARTIAL, CursorFlag.NO_CURSOR_TIMEOUT))
+                                     .maxTime(1, TimeUnit.SECONDS)
+                                     .skip(5)
+                                     .limit(100)
+                                     .modifiers(new Document('$hint', 'i1'))
+                                     .projection(new Document('x', 1))
+                                     .sort(new Document('y', 1))
 
         when:
         def result = collection.find(model).into([])
@@ -88,7 +102,55 @@ class NewMongoCollectionSpecification extends Specification {
         then:
         def operation = executor.getReadOperation() as QueryOperation
         operation.criteria == new BsonDocument('cold', BsonBoolean.TRUE)
+        operation.batchSize == 4
+        operation.cursorFlags == EnumSet.of(CursorFlag.PARTIAL, CursorFlag.NO_CURSOR_TIMEOUT)
+        operation.getMaxTime(TimeUnit.SECONDS) == 1
+        operation.skip == 5
+        operation.limit == 100
+        operation.modifiers == new BsonDocument('$hint', new BsonString('i1'))
+        operation.projection == new BsonDocument('x', new BsonInt32(1))
+        operation.sort == new BsonDocument('y', new BsonInt32(1))
         executor.readPreference == secondary()
         result == [document]
+    }
+
+    def 'should count'() {
+        given:
+        def executor = new TestOperationExecutor(42L)
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        def model = new CountModel<>().criteria(new Document('cold', true))
+                                      .maxTime(1, TimeUnit.SECONDS)
+                                      .skip(5)
+                                      .limit(100)
+                                      .hint(new Document('x', 1))
+
+        when:
+        def result = collection.count(model)
+
+        then:
+        def operation = executor.getReadOperation() as CountOperation
+        operation.criteria == new BsonDocument('cold', BsonBoolean.TRUE)
+        operation.getMaxTime(TimeUnit.SECONDS) == 1
+        operation.skip == 5
+        operation.limit == 100
+        operation.hint == new BsonDocument('x', new BsonInt32(1))
+        executor.readPreference == secondary()
+        result == 42
+    }
+
+    def 'should count with hint string'() {
+        given:
+        def executor = new TestOperationExecutor(42L)
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        def model = new CountModel<>().hintString('idx1')
+
+        when:
+        collection.count(model)
+
+        then:
+        def operation = executor.getReadOperation() as CountOperation
+        operation.hint == new BsonString('idx1')
     }
 }
