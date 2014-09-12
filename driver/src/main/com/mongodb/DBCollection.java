@@ -294,17 +294,15 @@ public class DBCollection {
             }
             insertRequestList.add(new InsertRequest(new BsonDocumentWrapper<DBObject>(cur, encoder)));
         }
-        return insert(insertRequestList, encoder, writeConcern, insertOptions.isContinueOnError());
+        return insert(insertRequestList, writeConcern, insertOptions.isContinueOnError());
     }
 
     private Encoder<DBObject> toEncoder(final DBEncoder dbEncoder) {
         return dbEncoder != null ? new DBEncoderAdapter(dbEncoder) : objectCodec;
     }
 
-    private WriteResult insert(final List<InsertRequest> insertRequestList, final Encoder<DBObject> encoder,
-                               final WriteConcern writeConcern, final boolean continueOnError) {
-        return executeWriteOperation(new InsertOperation(getNamespace(), !continueOnError, writeConcern, insertRequestList
-        ));
+    private WriteResult insert(final List<InsertRequest> insertRequestList, final WriteConcern writeConcern, final boolean continueOnError) {
+        return executeWriteOperation(new InsertOperation(getNamespace(), !continueOnError, writeConcern, insertRequestList));
     }
 
     WriteResult executeWriteOperation(final BaseWriteOperation operation) {
