@@ -134,10 +134,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             throw new IllegalStateException("Cursor has been closed");
         }
 
-        if (find.getFlags(getReadPreference()).contains(QueryFlag.Tailable)) {
-            find.addFlags(EnumSet.of(QueryFlag.AwaitData));
-        }
-
         if (cursor == null) {
             cursor = collection.execute(getQueryOperation(findModel, resultDecoder), getReadPreference());
         }
@@ -173,13 +169,12 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @throws MongoException
      */
     public DBObject tryNext() {
-        if (!find.getFlags(getReadPreference()).contains(QueryFlag.Tailable)) {
+        if (!findModel.getCursorFlags().contains(CursorFlag.Tailable)) {
             throw new IllegalArgumentException("Can only be used with a tailable cursor");
         }
 
         if (cursor == null) {
-            cursor = collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), find,
-                                                                        resultDecoder), getReadPreference());
+            cursor = collection.execute(getQueryOperation(findModel, resultDecoder), getReadPreference());
         }
 
         return cursor.tryNext();
