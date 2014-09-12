@@ -36,6 +36,16 @@ public class CountModel<D> implements ExplainableModel {
     private long skip;
 
     /**
+     * Gets the query criteria.
+     *
+     * @return the query criteria
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     */
+    public D getCriteria() {
+        return criteria;
+    }
+
+    /**
      * Sets the criteria to apply to the query.
      *
      * @param criteria the criteria, which may be null.
@@ -45,16 +55,6 @@ public class CountModel<D> implements ExplainableModel {
     public CountModel<D> criteria(final D criteria) {
         this.criteria = criteria;
         return this;
-    }
-
-    /**
-     * Gets the query criteria.
-     *
-     * @return the query criteria
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
-     */
-    public D getCriteria() {
-        return criteria;
     }
 
     /**
