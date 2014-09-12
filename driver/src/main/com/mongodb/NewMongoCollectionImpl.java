@@ -125,7 +125,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public long count(final CountModel model) {
+    public <D> long count(final CountModel<D> model) {
         CountOperation operation = new CountOperation(namespace);
         operation.setCriteria(asBson(model.getCriteria()));
         operation.setSkip(model.getSkip());
@@ -140,7 +140,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public List<Object> distinct(final DistinctModel model) {
+    public <D> List<Object> distinct(final DistinctModel<D> model) {
         BsonArray distinctArray = operationExecutor.execute(new DistinctOperation(namespace, model.getFieldName(), new Find()),
                                                             options.getReadPreference());
         List<Object> distinctList = new ArrayList<Object>();
