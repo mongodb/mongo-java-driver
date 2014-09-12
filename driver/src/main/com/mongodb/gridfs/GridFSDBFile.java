@@ -27,14 +27,14 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * This class enables to retrieve a GridFS file metadata and content. Operations include: - writing data to a file on disk or an
- * OutputStream - getting each chunk as a byte array - getting an InputStream to stream the data into
- *
- * @author antoine
+ * This class enables retrieving a GridFS file metadata and content. Operations include: 
+ * <ul>
+ *     <li>Writing data to a file on disk or an OutputStream </li>
+ *     <li>Getting each chunk as a byte array</li>
+ *     <li>Creating an {@code InputStream} to stream the data into</li>
+ * </ul>
  */
 public class GridFSDBFile extends GridFSFile {
-
-
     /**
      * Returns an InputStream from which data can be read.
      *
@@ -49,26 +49,24 @@ public class GridFSDBFile extends GridFSFile {
      *
      * @param filename the file name on disk
      * @return number of bytes written
-     * @throws IOException
-     * @throws MongoException
+     * @throws IOException if there are problems writing to the file
      */
     public long writeTo(final String filename) throws IOException {
         return writeTo(new File(filename));
     }
 
     /**
-     * Writes the file's data to a file on disk
+     * Writes the file's data to a file on disk.
      *
-     * @param f the File object
+     * @param file the File object
      * @return number of bytes written
-     * @throws IOException
-     * @throws MongoException
+     * @throws IOException if there are problems writing to the {@code file}
      */
-    public long writeTo(final File f) throws IOException {
+    public long writeTo(final File file) throws IOException {
 
         FileOutputStream out = null;
         try {
-            out = new FileOutputStream(f);
+            out = new FileOutputStream(file);
             return writeTo(out);
         } finally {
             if (out != null) {
@@ -78,12 +76,11 @@ public class GridFSDBFile extends GridFSFile {
     }
 
     /**
-     * Writes the file's data to an OutputStream
+     * Writes the file's data to an OutputStream.
      *
      * @param out the OutputStream
      * @return number of bytes written
-     * @throws IOException
-     * @throws MongoException
+     * @throws IOException if there are problems writing to {@code out}
      */
     public long writeTo(final OutputStream out) throws IOException {
         int nc = numChunks();
@@ -167,7 +164,7 @@ public class GridFSDBFile extends GridFSFile {
         }
 
         /**
-         * Will smartly skips over chunks without fetching them if possible.
+         * Will smartly skip over chunks without fetching them if possible.
          */
         @Override
         public long skip(final long bytesToSkip) throws IOException {

@@ -325,14 +325,14 @@ public class GridFS {
     /**
      * Creates a file entry. After calling this method, you have to call {@link com.mongodb.gridfs.GridFSInputFile#save()}.
      *
-     * @param f the file object
-     * @return a gridfs input file
-     * @throws IOException
+     * @param file the file object
+     * @return a GridFS input file
+     * @throws IOException if there are problems reading {@code file}
      */
-    public GridFSInputFile createFile(final File f) throws IOException {
-        FileInputStream fileInputStream = new FileInputStream(f);
+    public GridFSInputFile createFile(final File file) throws IOException {
+        FileInputStream fileInputStream = new FileInputStream(file);
         try {
-            return createFile(fileInputStream, f.getName(), true);
+            return createFile(fileInputStream, file.getName(), true);
         } finally {
             fileInputStream.close();
         }

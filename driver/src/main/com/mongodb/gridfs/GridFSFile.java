@@ -201,6 +201,7 @@ public abstract class GridFSFile implements DBObject {
         return md5;
     }
 
+    @Override
     public Object put(final String key, final Object v) {
         if (key == null) {
             throw new RuntimeException("key should never be null");
@@ -246,9 +247,6 @@ public abstract class GridFSFile implements DBObject {
         return extra.get(key);
     }
 
-    /**
-     * @deprecated Please use {@link #containsField(String)} instead.
-     */
     @Override
     @Deprecated
     public boolean containsKey(final String key) {
