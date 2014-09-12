@@ -39,6 +39,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.CursorFlag.EXHAUST
+import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class QueryOperationSpecification extends OperationFunctionalSpecification {
@@ -110,7 +111,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document())
         def operation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
-        operation.setMaxTimeMS(1000)
+        operation.setMaxTime(1000, MILLISECONDS)
 
         enableMaxTimeFailPoint()
 
@@ -130,7 +131,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         given:
         getCollectionHelper().insertDocuments(new Document())
         def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
-        queryOperation.setMaxTimeMS(1000)
+        queryOperation.setMaxTime(1000, MILLISECONDS)
 
         enableMaxTimeFailPoint()
 

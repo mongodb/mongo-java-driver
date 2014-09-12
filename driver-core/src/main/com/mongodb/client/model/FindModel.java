@@ -26,26 +26,49 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * A model describing a find operation (also commonly referred to as a query).
  *
+ * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/query-documents/ Find
  */
 public final class FindModel<D> implements ExplainableModel {
     private D criteria;
-    private Integer batchSize;
-    private Integer limit;
+    private int batchSize;
+    private int limit;
     private D modifiers;
     private D projection;
     private EnumSet<CursorFlag> cursorFlags = EnumSet.noneOf(CursorFlag.class);
-    private Long maxTimeMS;
-    private Integer skip;
+    private long maxTimeMS;
+    private int skip;
     private D sort;
 
     /**
-     * Sets the sort criteria to apply to the query.
+     * Construct a new instance.
+     */
+    public FindModel() {
+    }
+
+    /**
+     * Construct a new instance by making a shallow copy of the given model.
+     * @param from model to copy
+     */
+    public FindModel(final FindModel<D> from) {
+        criteria = from.criteria;
+        batchSize = from.batchSize;
+        limit = from.limit;
+        modifiers = from.modifiers;
+        projection = from.projection;
+        cursorFlags = from.cursorFlags;
+        maxTimeMS = from.maxTimeMS;
+        skip = from.skip;
+        sort = from.sort;
+    }
+
+    /**
+     * Sets the criteria to apply to the query.
      *
-     * @param criteria the criteria, which may be null. This can be of any type for which a {@code Codec} is registered
+     * @param criteria the criteria, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
     public FindModel<D> criteria(final D criteria) {
         this.criteria = criteria;
@@ -56,6 +79,7 @@ public final class FindModel<D> implements ExplainableModel {
      * Gets the query criteria.
      *
      * @return the query criteria
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
     public D getCriteria() {
         return criteria;
@@ -65,8 +89,9 @@ public final class FindModel<D> implements ExplainableModel {
      * Gets the limit to apply.  The default is null.
      *
      * @return the limit
+     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
      */
-    public Integer getLimit() {
+    public int getLimit() {
         return limit;
     }
 
@@ -75,28 +100,31 @@ public final class FindModel<D> implements ExplainableModel {
      *
      * @param limit the limit, which may be null
      * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
      */
-    public FindModel<D> limit(final Integer limit) {
+    public FindModel<D> limit(final int limit) {
         this.limit = limit;
         return this;
     }
 
     /**
-     * Gets the number of documents to skip.  The default is null.
+     * Gets the number of documents to skip.  The default is 0.
      *
      * @return the number of documents to skip, which may be null
+     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
      */
-    public Integer getSkip() {
+    public int getSkip() {
         return skip;
     }
 
     /**
      * Sets the number of documents to skip.
      *
-     * @param skip the number of documents to skip, which may be null
+     * @param skip the number of documents to skip
      * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
      */
-    public FindModel<D> skip(final Integer skip) {
+    public FindModel<D> skip(final int skip) {
         this.skip = skip;
         return this;
     }
@@ -122,15 +150,13 @@ public final class FindModel<D> implements ExplainableModel {
     }
 
     /**
-     * Gets the maximum execution time on the server for this operation.  The default is null, which places no limit on the execution time.
+     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
      *
      * @param timeUnit the time unit to return the result in
      * @return the maximum execution time in the given time unit
+     * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
-    public Long getMaxTime(final TimeUnit timeUnit) {
-        if (maxTimeMS == null) {
-            return null;
-        }
+    public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
     }
@@ -138,36 +164,36 @@ public final class FindModel<D> implements ExplainableModel {
     /**
      * Sets the maximum execution time on the server for this operation.
      *
-     * @param maxTime the max time, which may be null
-     * @param timeUnit the time unit, which may only be null if maxTime is
+     * @param maxTime  the max time
+     * @param timeUnit the time unit, which may not be null
      * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
-    public FindModel<D> maxTimeMS(final Long maxTime, final TimeUnit timeUnit) {
-        if (maxTime == null) {
-            maxTimeMS = null;
-        } else {
-            notNull("timeUnit", timeUnit);
-            this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        }
+    public FindModel<D> maxTime(final long maxTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
 
     /**
-     * Gets the number of documents to return per batch.  Default to null, which indicates that the server chooses an appropriate batch
+     * Gets the number of documents to return per batch.  Default to 0, which indicates that the server chooses an appropriate batch
      * size.
      *
      * @return the batch size, which may be null
+     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    public Integer getBatchSize() {
+    public int getBatchSize() {
         return batchSize;
     }
 
     /**
-     * Sets the number of documents to return per batch
-     * @param batchSize the batch size, which may be null
+     * Sets the number of documents to return per batch.
+     *
+     * @param batchSize the batch size
      * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    public FindModel<D> batchSize(final Integer batchSize) {
+    public FindModel<D> batchSize(final int batchSize) {
         this.batchSize = batchSize;
         return this;
     }
@@ -185,8 +211,7 @@ public final class FindModel<D> implements ExplainableModel {
     /**
      * Sets the query modifiers to apply to this operation.
      *
-     * @param modifiers the query modifiers to apply, which may be null. This can be of any type for which a
-     * {@code Codec} is registered
+     * @param modifiers the query modifiers to apply, which may be null.
      * @return this
      * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
      */
@@ -199,7 +224,7 @@ public final class FindModel<D> implements ExplainableModel {
      * Gets a document describing the fields to return for all matching documents.
      *
      * @return the project document, which may be null
-     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
      */
     public D getProjection() {
         return projection;
@@ -208,10 +233,9 @@ public final class FindModel<D> implements ExplainableModel {
     /**
      * Sets a document describing the fields to return for all matching documents.
      *
-     * @param projection the project document, which may be null. This can be of any type for which a
-     * {@code Codec} is registered
+     * @param projection the project document, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
      */
     public FindModel<D> projection(final D projection) {
         this.projection = projection;
@@ -232,8 +256,7 @@ public final class FindModel<D> implements ExplainableModel {
     /**
      * Sets the sort criteria to apply to the query.
      *
-     * @param sort the sort criteria, which may be null. This can be of any type for which a
-     * {@code Codec} is registered
+     * @param sort the sort criteria, which may be null.
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
