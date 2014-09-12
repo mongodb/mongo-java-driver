@@ -28,7 +28,6 @@ import com.mongodb.operation.DropUserOperation;
 import com.mongodb.operation.QueryOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.UpdateUserOperation;
-import com.mongodb.operation.User;
 import com.mongodb.operation.UserExistsOperation;
 import com.mongodb.operation.WriteOperation;
 import org.bson.BsonDocument;
@@ -500,13 +499,13 @@ public class DB {
      */
     @Deprecated
     public WriteResult addUser(final String userName, final char[] password, final boolean readOnly) {
-        User user = new User(createMongoCRCredential(userName, getName(), password), readOnly);
+        MongoCredential credential = createMongoCRCredential(userName, getName(), password);
         if (execute(new UserExistsOperation(getName(), userName), primary())) {
-            execute(new UpdateUserOperation(user));
+            execute(new UpdateUserOperation(credential, readOnly));
             return new WriteResult(1, false, null);
 
         } else {
-            execute(new CreateUserOperation(user));
+            execute(new CreateUserOperation(credential, readOnly));
             return new WriteResult(1, true, null);
         }
     }
