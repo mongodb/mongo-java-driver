@@ -22,8 +22,6 @@ import com.mongodb.operation.OperationExecutor
 import com.mongodb.operation.QueryOperation
 import com.mongodb.operation.ReadOperation
 import com.mongodb.operation.WriteOperation
-import org.bson.BsonBoolean
-import org.bson.BsonDocument
 import org.bson.codecs.configuration.RootCodecRegistry
 import org.mongodb.Document
 import spock.lang.Specification
@@ -55,12 +53,15 @@ class NewMongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor(Stub(MongoCursor))
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
+
+        def model = new FindModel(new Document('cold', true))
+
         when:
-        def result = collection.find(new FindModel(new Document('cold', true))).into([])
+        def result = collection.find(model).into([])
 
         then:
         def operation = executor.getReadOperation() as QueryOperation
-        operation.getCriteria() == new BsonDocument('cold', BsonBoolean.TRUE)
+        operation.model.is(model)
     }
 
 

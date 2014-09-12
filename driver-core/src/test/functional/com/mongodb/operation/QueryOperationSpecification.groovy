@@ -43,13 +43,14 @@ import static java.util.concurrent.TimeUnit.SECONDS
 
 class QueryOperationSpecification extends OperationFunctionalSpecification {
 
-    def 'should query with no filter'() {
+    def 'should query with empty filter'() {
         def document = new Document()
         given:
         getCollectionHelper().insertDocuments(document);
 
         when:
-        def cursor = new QueryOperation<Document>(getNamespace(), new Find().filter(null), new DocumentCodec()).execute(getBinding())
+        def cursor = new QueryOperation<Document>(getNamespace(), new Find(new Document()),
+                                                  new DocumentCodec()).execute(getBinding())
 
         then:
         cursor.next() == document
