@@ -50,11 +50,19 @@ import java.util.List;
  */
 @ThreadSafe
 public interface NewMongoCollection<T> {
+    /**
+     * Gets the namespace of this collection.
+     *
+     * @return the namespace
+     */
     MongoNamespace getNamespace();
 
+    /**
+     * Gets the options to apply by default to all operations executed via this instance.
+     *
+     * @return the collection options
+     */
     MongoCollectionOptions getOptions();
-
-    // READ
 
     /**
      * Counts the number of documents in the collection according to the given model.
@@ -65,26 +73,53 @@ public interface NewMongoCollection<T> {
     <D> long count(CountModel<D> model);
 
     /**
+     * Gets the distinct values of the specified field name.
      *
-     * @param model
-     * @return
+     * @param model the model describing the distinct operation
+     * @return a non-null list of distict values
+     * @mongodb.driver.manual manual/reference/command/distinct/ Distinct
      */
     <D> List<Object> distinct(DistinctModel<D> model);
 
     /**
+     * Finds documents according to the specified criteria.
      *
      * @param model the model describing the find operation
      * @return an iterable containing the result of the find operation
+     * @mongodb.driver.manual manual/tutorial/query-documents/ Find
      */
     <D> MongoIterable<T> find(FindModel<D> model);
 
+    /**
+     * Finds documents according to the specified criteria.
+     *
+     * @param model the model describing the find operation
+     * @param clazz the class to decode each document into
+     * @return an iterable containing the result of the find operation
+     * @mongodb.driver.manual manual/tutorial/query-documents/ Find
+     */
     <D, C> MongoIterable<C> find(FindModel<D> model, Class<C> clazz);
 
+    /**
+     * Aggregates documents according to the specified aggregation pipeline.
+     *
+     * @param model the model describing the aggregate operation
+     * @return an iterable containing the result of the find operation
+     * @mongodb.driver.manual manual/aggregation/ Aggregation
+     * @mongodb.server.release 2.2
+     */
     <D> MongoIterable<Document> aggregate(AggregateModel<D> model);
 
+    /**
+     * Aggregates documents according to the specified aggregation pipeline.
+     *
+     * @param model the model describing the aggregate operation
+     * @param clazz the class to decode each document into
+     * @return an iterable containing the result of the find operation
+     * @mongodb.driver.manual manual/aggregation/ Aggregation
+     * @mongodb.server.release 2.2
+     */
     <D, C> MongoIterable<C> aggregate(AggregateModel<D> model, Class<C> clazz);
-
-    // WRITE
 
     /**
      *
@@ -137,40 +172,69 @@ public interface NewMongoCollection<T> {
     <D> RemoveResult removeMany(RemoveManyModel<T, D> model);
 
     /**
+     * Replace a document in the collection according to the specified arguments.
      *
-     * @param model
+     * @param model the model describing the replace
      * @return the result of the replace one operation
+     * @mongodb.driver.manual manual/tutorial/modify-documents/#replace-the-document Replace
      */
     <D> UpdateResult replaceOne(ReplaceOneModel<T, D> model);
 
     /**
+     * Update a single document in the collection according to the specified arguments.
      *
-     * @param model
+     * @param model the model describing the update
      * @return the result of the update one operation
+     * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
      */
     <D> UpdateResult updateOne(UpdateOneModel<T, D> model);
 
     /**
+     * Update all documents in the collection according to the specified arguments.
      *
-     * @param model
+     * @param model the model describing the update
      * @return the result of the update many operation
+     * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
      */
     <D> UpdateResult updateMany(UpdateManyModel<T, D> model);
 
+    /**
+     * Atomically find a document and remove it.
+     *
+     * @param model the model describing the find one and remove
+     * @return the document that was removed.  If no documents matched the criteria, then null will be returned
+     */
     <D> T findOneAndRemove(FindOneAndRemoveModel<D> model);
 
+    /**
+     * Atomically find a document and update it.
+     *
+     * @param model the model describing the find one and update
+     * @return the document that was updated.  Depending on the value of the {@code returnUpdated} property,
+     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the criteria,
+     * then null will be returned
+     */
     <D> T findOneAndUpdate(FindOneAndUpdateModel<D> model);
 
+    /**
+     * Atomically find a document and replace it.
+     *
+     * @param model the model describing the find one and replace
+     * @return the document that was replaced.  Depending on the value of the {@code returnReplaced} property,
+     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the criteria,
+     * then null will be returned
+     */
     <D> T findOneAndReplace(FindOneAndReplaceModel<T, D> model);
 
 
-    // explain
-
     /**
+     * Explain the specified operation with the specified verbosity.
      *
-     * @param explainableModel
-     * @param verbosity
-     * @return
+     * @param explainableModel the operation to explain
+     * @param verbosity the verbosity
+     * @return a document explaining how the server would perform the given operation
      * @mongodb.server.release 2.8
      */
     <D> Document explain(ExplainableModel<D> explainableModel, ExplainVerbosity verbosity);
