@@ -269,7 +269,14 @@ public class DB {
      * @throws MongoException
      */
     public DBCollection createCollection(final String collectionName, final DBObject options) {
-        execute(new CreateCollectionOperation(getName(), toCreateCollectionOptions(collectionName, options)));
+        CreateCollectionOptions createOptions = toCreateCollectionOptions(collectionName, options);
+        CreateCollectionOperation operation = new CreateCollectionOperation(getName(), createOptions.getCollectionName())
+                                                   .capped(createOptions.isCapped())
+                                                   .sizeInBytes(createOptions.getSizeInBytes())
+                                                   .autoIndex(createOptions.isAutoIndex())
+                                                   .maxDocuments(createOptions.getMaxDocuments())
+                                                   .setUsePowerOf2Sizes(createOptions.isUsePowerOf2Sizes());
+        execute(operation);
         return getCollection(collectionName);
     }
 
@@ -291,6 +298,7 @@ public class DB {
         boolean autoIndex = true;
         long sizeInBytes = 0;
         long maxDocuments = 0;
+        Boolean usePowerOfTwoSizes = null;
         if (options.get("capped") != null) {
             capped = (Boolean) options.get("capped");
         }
@@ -303,7 +311,11 @@ public class DB {
         if (options.get("max") != null) {
             maxDocuments = ((Number) options.get("max")).longValue();
         }
-        return new CreateCollectionOptions(collectionName, capped, sizeInBytes, autoIndex, maxDocuments);
+        if (options.get("usePowerOfTwoSizes") != null) {
+            usePowerOfTwoSizes = (Boolean) options.get("usePowerOfTwoSizes");
+        }
+
+        return new CreateCollectionOptions(collectionName, capped, sizeInBytes, autoIndex, maxDocuments, usePowerOfTwoSizes);
     }
 
     /**
