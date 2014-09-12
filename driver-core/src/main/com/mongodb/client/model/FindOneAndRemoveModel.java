@@ -16,19 +16,28 @@
 
 package com.mongodb.client.model;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
+/**
+ * Finds a single document and deletes it, returning the original.
+ *
+ * @param <D> The document type for the command.
+ * @since 3.0
+ * @mongodb.driver.manual manual/reference/command/findAndModify/
+ */
 public class FindOneAndRemoveModel<D> {
     private final D criteria;
     private D projection;
     private D sort;
 
     /**
-     * Sets the sort criteria to apply to the query.
+     * Construct a new instance
      *
-     * @param criteria the criteria, which may be null. This can be of any type for which a {@code Codec} is registered
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     * @param criteria the query criteria. This can be of any type for which a {@code Codec} is registered.
+     * @mongodb.driver.manual manual/reference/command/findAndModify/
      */
     public FindOneAndRemoveModel(final D criteria) {
-        this.criteria = criteria;
+        this.criteria = notNull("criteria", criteria);
     }
 
     /**

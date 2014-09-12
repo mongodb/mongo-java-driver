@@ -18,6 +18,13 @@ package com.mongodb.client.model;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ *
+ * @param <T> The replacement type for the command.
+ * @param <D> The document type for the command.
+ * @since 3.0
+ * @mongodb.driver.manual manual/reference/command/findAndModify/
+ */
 public class FindOneAndReplaceModel<T, D> {
     private final D criteria;
     private final T replacement;
@@ -27,10 +34,11 @@ public class FindOneAndReplaceModel<T, D> {
     private boolean returnReplaced;
 
     /**
-     * Sets the sort criteria to apply to the query.
+     * Construct a new instance
      *
-     * @param criteria the criteria, which may be null. This can be of any type for which a {@code Codec} is registered
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     * @param criteria the query criteria. This can be of any type for which a {@code Codec} is registered.
+     * @param replacement the replacement. This can be of any type for which a {@code Codec} is registered.
+     * @mongodb.driver.manual manual/reference/command/findAndModify/
      */
     public FindOneAndReplaceModel(final D criteria, final T replacement) {
         this.criteria = notNull("criteria", criteria);
@@ -129,6 +137,12 @@ public class FindOneAndReplaceModel<T, D> {
         return returnReplaced;
     }
 
+    /**
+     * Set true to return the updated document rather than the original.
+     *
+     * @param returnReplaced set true to return the updated document rather than the original.
+     * @return this
+     */
     public FindOneAndReplaceModel<T, D> returnReplaced(final boolean returnReplaced) {
         this.returnReplaced = returnReplaced;
         return this;
