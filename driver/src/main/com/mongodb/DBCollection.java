@@ -1534,23 +1534,21 @@ public class DBCollection {
             findAndRemove.setProjection(wrapAllowNull(fields));
             findAndRemove.setSort(wrapAllowNull(sort));
             findAndRemove.setMaxTime(maxTime, maxTimeUnit);
-
             operation = findAndRemove;
         } else {
             if (update == null) {
                 throw new IllegalArgumentException("Update document can't be null");
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
-
-                FindAndUpdate findAndUpdate = new FindAndUpdate()
-                                              .where(wrapAllowNull(query))
-                                              .sortBy(wrapAllowNull(sort))
-                                              .returnNew(returnNew)
-                                              .select(wrapAllowNull(fields))
-                                              .updateWith(wrapAllowNull(update))
-                                              .upsert(upsert)
-                                              .maxTime(maxTime, maxTimeUnit);
-                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), findAndUpdate, objectCodec);
+                FindAndUpdateOperation<DBObject> findAndUpdate = new FindAndUpdateOperation<DBObject>(getNamespace(), objectCodec,
+                                                                                                      wrapAllowNull(update));
+                findAndUpdate.setCriteria(wrapAllowNull(query));
+                findAndUpdate.setProjection(wrapAllowNull(fields));
+                findAndUpdate.setSort(wrapAllowNull(sort));
+                findAndUpdate.setReturnUpdated(returnNew);
+                findAndUpdate.setUpsert(upsert);
+                findAndUpdate.setMaxTime(maxTime, maxTimeUnit);
+                operation = findAndUpdate;
             } else {
                 FindAndReplaceOperation<DBObject> findAndReplace = new FindAndReplaceOperation<DBObject>(getNamespace(), objectCodec,
                                                                                                          wrap(update));
