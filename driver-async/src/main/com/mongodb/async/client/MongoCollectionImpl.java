@@ -157,8 +157,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoFuture<T> one() {
-            QueryOperation<T> queryOperation = createQueryOperation();
-            queryOperation.setBatchSize(-1);
+            QueryOperation<T> queryOperation = createQueryOperation().batchSize(-1);
 
             final SingleResultFuture<T> retVal = new SingleResultFuture<T>();
             execute(queryOperation, readPreference)
@@ -190,11 +189,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoFuture<Long> count() {
-            CountOperation operation = new CountOperation(getNamespace());
-            operation.setCriteria(find.getCriteria());
-            operation.setSkip(find.getSkip());
-            operation.setLimit(find.getLimit());
-            operation.setMaxTime(find.getMaxTime(MILLISECONDS), MILLISECONDS);
+            CountOperation operation = new CountOperation(getNamespace())
+                                           .criteria(find.getCriteria())
+                                           .skip(find.getSkip())
+                                           .limit(find.getLimit())
+                                           .maxTime(find.getMaxTime(MILLISECONDS), MILLISECONDS);
             return execute(operation, readPreference);
         }
 
@@ -356,17 +355,16 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         private QueryOperation<T> createQueryOperation() {
-            QueryOperation<T> operation = new QueryOperation<T>(getNamespace(), getCodec());
-            operation.setCriteria(asBson(find.getCriteria()));
-            operation.setBatchSize(find.getBatchSize());
-            operation.setCursorFlags(find.getCursorFlags());
-            operation.setSkip(find.getSkip());
-            operation.setLimit(find.getLimit());
-            operation.setMaxTime(find.getMaxTime(MILLISECONDS), MILLISECONDS);
-            operation.setModifiers(asBson(find.getModifiers()));
-            operation.setProjection(asBson(find.getProjection()));
-            operation.setSort(asBson(find.getSort()));
-            return operation;
+            return new QueryOperation<T>(getNamespace(), getCodec())
+                       .criteria(asBson(find.getCriteria()))
+                       .batchSize(find.getBatchSize())
+                       .cursorFlags(find.getCursorFlags())
+                       .skip(find.getSkip())
+                       .limit(find.getLimit())
+                       .maxTime(find.getMaxTime(MILLISECONDS), MILLISECONDS)
+                       .modifiers(asBson(find.getModifiers()))
+                       .projection(asBson(find.getProjection()))
+                       .sort(asBson(find.getSort()));
         }
 
         @SuppressWarnings({"rawtypes", "unchecked"})

@@ -443,17 +443,16 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     private QueryOperation<DBObject> getQueryOperation(final FindModel<BsonDocument> find, final Decoder<DBObject> decoder) {
-        QueryOperation<DBObject> queryOperation = new QueryOperation<DBObject>(collection.getNamespace(), decoder);
-        queryOperation.setCriteria(find.getCriteria());
-        queryOperation.setBatchSize(find.getBatchSize());
-        queryOperation.setCursorFlags(find.getCursorFlags());
-        queryOperation.setLimit(find.getLimit());
-        queryOperation.setMaxTime(find.getMaxTime(MILLISECONDS), MILLISECONDS);
-        queryOperation.setModifiers(find.getModifiers());
-        queryOperation.setProjection(find.getProjection());
-        queryOperation.setSkip(find.getSkip());
-        queryOperation.setSort(find.getSort());
-        return queryOperation;
+        return new QueryOperation<DBObject>(collection.getNamespace(), decoder)
+                   .criteria(find.getCriteria())
+                   .batchSize(find.getBatchSize())
+                   .cursorFlags(find.getCursorFlags())
+                   .limit(find.getLimit())
+                   .maxTime(find.getMaxTime(MILLISECONDS), MILLISECONDS)
+                   .modifiers(find.getModifiers())
+                   .projection(find.getProjection())
+                   .skip(find.getSkip())
+                   .sort(find.getSort());
     }
 
     /**

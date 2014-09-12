@@ -43,7 +43,7 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
 
         when:
         FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), documentCodec)
-        operation.setCriteria(new BsonDocument('name', new BsonString('Pete')))
+                .criteria(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.execute(getBinding())
 
         then:
@@ -63,7 +63,7 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
 
         when:
         FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), documentCodec)
-        operation.setCriteria(new BsonDocument('name', new BsonString('Pete')))
+                .criteria(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:
@@ -80,7 +80,7 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
 
         when:
         FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Document>(getNamespace(), workerCodec)
-        operation.setCriteria(new BsonDocument('name', new BsonString('Pete')))
+                .criteria(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 
         then:
@@ -98,7 +98,7 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
 
         when:
         FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Document>(getNamespace(), workerCodec)
-        operation.setCriteria(new BsonDocument('name', new BsonString('Pete')))
+                .criteria(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 
         then:

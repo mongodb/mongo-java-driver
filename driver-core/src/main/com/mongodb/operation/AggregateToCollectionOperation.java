@@ -88,11 +88,13 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      * Enables writing to temporary files. A null value indicates that it's unspecified.
      *
      * @param allowDiskUse true if writing to temporary files is enabled
+     * @return this
      * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
-    public void setAllowDiskUse(final Boolean allowDiskUse) {
+    public AggregateToCollectionOperation allowDiskUse(final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
+        return this;
     }
 
     /**
@@ -112,11 +114,13 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      *
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
+     * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
-    public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
+    public AggregateToCollectionOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
     }
 
     @SuppressWarnings("unchecked")

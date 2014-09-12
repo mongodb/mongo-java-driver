@@ -111,10 +111,12 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
      * Sets the criteria to apply to the query.
      *
      * @param criteria the criteria, which may be null.
+     * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public void setCriteria(final BsonDocument criteria) {
+    public FindAndReplaceOperation<T> criteria(final BsonDocument criteria) {
         this.criteria = criteria;
+        return this;
     }
 
     /**
@@ -131,10 +133,12 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
      * Sets a document describing the fields to return for all matching documents.
      *
      * @param projection the project document, which may be null.
+     * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
      */
-    public void setProjection(final BsonDocument projection) {
+    public FindAndReplaceOperation<T> projection(final BsonDocument projection) {
         this.projection = projection;
+        return this;
     }
 
 
@@ -154,10 +158,12 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
      *
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
+     * @return this
      */
-    public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
+    public FindAndReplaceOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
     }
 
     /**
@@ -175,10 +181,12 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
      * Sets the sort criteria to apply to the query.
      *
      * @param sort the sort criteria, which may be null.
+     * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public void setSort(final BsonDocument sort) {
+    public FindAndReplaceOperation<T> sort(final BsonDocument sort) {
         this.sort = sort;
+        return this;
     }
 
     /**
@@ -194,9 +202,11 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
      * Set to true if the updated document should be returned.
      *
      * @param returnReplaced set to true if the updated document should be returned
+     * @return this
      */
-    public void setReturnReplaced(final boolean returnReplaced) {
+    public FindAndReplaceOperation<T> returnReplaced(final boolean returnReplaced) {
         this.returnReplaced = returnReplaced;
+        return this;
     }
 
     /**
@@ -212,9 +222,11 @@ public class FindAndReplaceOperation<T> implements AsyncWriteOperation<T>, Write
      * Set to true if a new document should be inserted if there are no matches to the query filter.
      *
      * @param upsert true if a new document should be inserted if there are no matches to the query filter
+     * @return this
      */
-    public void setUpsert(final boolean upsert) {
+    public FindAndReplaceOperation<T> upsert(final boolean upsert) {
         this.upsert = upsert;
+        return this;
     }
 
     @Override

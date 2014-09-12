@@ -91,10 +91,12 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
      * Sets the criteria to apply to the query.
      *
      * @param criteria the criteria, which may be null.
+     * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public void setCriteria(final BsonDocument criteria) {
+    public FindAndRemoveOperation<T> criteria(final BsonDocument criteria) {
         this.criteria = criteria;
+        return this;
     }
 
     /**
@@ -111,10 +113,12 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
      * Sets a document describing the fields to return for all matching documents.
      *
      * @param projection the project document, which may be null.
+     * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
      */
-    public void setProjection(final BsonDocument projection) {
+    public FindAndRemoveOperation<T> projection(final BsonDocument projection) {
         this.projection = projection;
+        return this;
     }
 
 
@@ -134,10 +138,12 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
      *
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
+     * @return this
      */
-    public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
+    public FindAndRemoveOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
     }
 
     /**
@@ -155,10 +161,12 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
      * Sets the sort criteria to apply to the query.
      *
      * @param sort the sort criteria, which may be null.
+     * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public void setSort(final BsonDocument sort) {
+    public FindAndRemoveOperation<T> sort(final BsonDocument sort) {
         this.sort = sort;
+        return this;
     }
 
     @Override

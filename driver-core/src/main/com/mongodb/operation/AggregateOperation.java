@@ -104,11 +104,13 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      * Enables writing to temporary files. A null value indicates that it's unspecified.
      *
      * @param allowDiskUse true if writing to temporary files is enabled
+     * @return this
      * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
-    public void setAllowDiskUse(final Boolean allowDiskUse) {
+    public AggregateOperation<T> allowDiskUse(final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
+        return this;
     }
 
     /**
@@ -126,10 +128,12 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      * Sets the number of documents to return per batch.
      *
      * @param batchSize the batch size
+     * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    public void setBatchSize(final Integer batchSize) {
+    public AggregateOperation<T> batchSize(final Integer batchSize) {
         this.batchSize = batchSize;
+        return this;
     }
 
     /**
@@ -149,11 +153,13 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      *
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
+     * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
-    public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
+    public AggregateOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
     }
 
     /**
@@ -172,11 +178,13 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      * Sets whether the server should use a cursor to return results.
      *
      * @param useCursor whether the server should use a cursor to return results
+     * @return this
      * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
-    public void setUseCursor(final Boolean useCursor) {
+    public AggregateOperation<T> useCursor(final Boolean useCursor) {
         this.useCursor = useCursor;
+        return this;
     }
 
     @Override

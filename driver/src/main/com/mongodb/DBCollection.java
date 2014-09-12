@@ -685,17 +685,13 @@ public class DBCollection {
      */
     DBObject findOne(final DBObject query, final DBObject projection, final DBObject sort,
                      final ReadPreference readPreference, final long maxTime, final TimeUnit maxTimeUnit) {
-
-
-        QueryOperation<DBObject> queryOperation = new QueryOperation<DBObject>(getNamespace(), objectCodec);
-        queryOperation.setCriteria(wrapAllowNull(query));
-        queryOperation.setProjection(wrapAllowNull(projection));
-        queryOperation.setSort(wrapAllowNull(sort));
-        queryOperation.setBatchSize(-1);
-        queryOperation.setMaxTime(maxTime, maxTimeUnit);
-
+        QueryOperation<DBObject> queryOperation = new QueryOperation<DBObject>(getNamespace(), objectCodec)
+                                                      .criteria(wrapAllowNull(query))
+                                                      .projection(wrapAllowNull(projection))
+                                                      .sort(wrapAllowNull(sort))
+                                                      .batchSize(-1)
+                                                      .maxTime(maxTime, maxTimeUnit);
         MongoCursor<DBObject> cursor = execute(queryOperation, readPreference);
-
         return cursor.hasNext() ? cursor.next() : null;
     }
 
@@ -909,12 +905,12 @@ public class DBCollection {
             throw new IllegalArgumentException("skip is too large: " + skip);
         }
 
-        CountOperation operation = new CountOperation(getNamespace());
-        operation.setCriteria(wrapAllowNull(query));
-        operation.setHint(hint);
-        operation.setSkip(skip);
-        operation.setLimit(limit);
-        operation.setMaxTime(maxTime, maxTimeUnit);
+        CountOperation operation = new CountOperation(getNamespace())
+                                       .criteria(wrapAllowNull(query))
+                                       .hint(hint)
+                                       .skip(skip)
+                                       .limit(limit)
+                                       .maxTime(maxTime, maxTimeUnit);
         return execute(operation, readPreference);
     }
 
@@ -1066,9 +1062,7 @@ public class DBCollection {
      */
     @SuppressWarnings("unchecked")
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
-        DistinctOperation operation = new DistinctOperation(getNamespace(), fieldName);
-        operation.setCriteria(wrapAllowNull(query));
-        BsonArray distinctArray = execute(operation, readPreference);
+        BsonArray distinctArray = execute(new DistinctOperation(getNamespace(), fieldName).criteria(wrapAllowNull(query)), readPreference);
 
         List distinctList = new ArrayList();
         for (BsonValue value : distinctArray) {
@@ -1260,9 +1254,9 @@ public class DBCollection {
         BsonValue outCollection = stages.get(stages.size() - 1).get("$out");
 
         if (outCollection != null) {
-            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), stages);
-            operation.setMaxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
-            operation.setAllowDiskUse(options.getAllowDiskUse());
+            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), stages)
+                                                           .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                                           .allowDiskUse(options.getAllowDiskUse());
             execute(operation);
             if (returnCursorForOutCollection) {
                 return new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(), null, primary());
@@ -1270,11 +1264,11 @@ public class DBCollection {
                 return null;
             }
         } else {
-            AggregateOperation<DBObject> operation = new AggregateOperation<DBObject>(getNamespace(), stages, objectCodec);
-            operation.setMaxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
-            operation.setAllowDiskUse(options.getAllowDiskUse());
-            operation.setBatchSize(options.getBatchSize());
-            operation.setUseCursor(options.getOutputMode() == CURSOR);
+            AggregateOperation<DBObject> operation = new AggregateOperation<DBObject>(getNamespace(), stages, objectCodec)
+                                                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                                         .allowDiskUse(options.getAllowDiskUse())
+                                                         .batchSize(options.getBatchSize())
+                                                         .useCursor(options.getOutputMode() == CURSOR);
             MongoCursor<DBObject> cursor = execute(operation, readPreference);
             return new MongoCursorAdapter(cursor);
         }
@@ -1291,9 +1285,9 @@ public class DBCollection {
      * @mongodb.server.release 2.6
      */
     public CommandResult explainAggregate(final List<DBObject> pipeline, final AggregationOptions options) {
-        AggregateExplainOperation operation = new AggregateExplainOperation(getNamespace(), preparePipeline(pipeline));
-        operation.setMaxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
-        operation.setAllowDiskUse(options.getAllowDiskUse());
+        AggregateExplainOperation operation = new AggregateExplainOperation(getNamespace(), preparePipeline(pipeline))
+                                                  .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                                  .allowDiskUse(options.getAllowDiskUse());
         return new CommandResult(execute(operation, primaryPreferred()));
     }
 
@@ -1536,36 +1530,31 @@ public class DBCollection {
                                   final long maxTime, final TimeUnit maxTimeUnit) {
         WriteOperation<DBObject> operation;
         if (remove) {
-            FindAndRemoveOperation<DBObject> findAndRemove = new FindAndRemoveOperation<DBObject>(getNamespace(), objectCodec);
-            findAndRemove.setCriteria(wrapAllowNull(query));
-            findAndRemove.setProjection(wrapAllowNull(fields));
-            findAndRemove.setSort(wrapAllowNull(sort));
-            findAndRemove.setMaxTime(maxTime, maxTimeUnit);
-            operation = findAndRemove;
+            operation = new FindAndRemoveOperation<DBObject>(getNamespace(), objectCodec)
+                            .criteria(wrapAllowNull(query))
+                            .projection(wrapAllowNull(fields))
+                            .sort(wrapAllowNull(sort))
+                            .maxTime(maxTime, maxTimeUnit);
         } else {
             if (update == null) {
                 throw new IllegalArgumentException("Update document can't be null");
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
-                FindAndUpdateOperation<DBObject> findAndUpdate = new FindAndUpdateOperation<DBObject>(getNamespace(), objectCodec,
-                                                                                                      wrapAllowNull(update));
-                findAndUpdate.setCriteria(wrapAllowNull(query));
-                findAndUpdate.setProjection(wrapAllowNull(fields));
-                findAndUpdate.setSort(wrapAllowNull(sort));
-                findAndUpdate.setReturnUpdated(returnNew);
-                findAndUpdate.setUpsert(upsert);
-                findAndUpdate.setMaxTime(maxTime, maxTimeUnit);
-                operation = findAndUpdate;
+                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), objectCodec, wrapAllowNull(update))
+                                .criteria(wrapAllowNull(query))
+                                .projection(wrapAllowNull(fields))
+                                .sort(wrapAllowNull(sort))
+                                .returnUpdated(returnNew)
+                                .upsert(upsert)
+                                .maxTime(maxTime, maxTimeUnit);
             } else {
-                FindAndReplaceOperation<DBObject> findAndReplace = new FindAndReplaceOperation<DBObject>(getNamespace(), objectCodec,
-                                                                                                         wrap(update));
-                findAndReplace.setCriteria(wrapAllowNull(query));
-                findAndReplace.setProjection(wrapAllowNull(fields));
-                findAndReplace.setSort(wrapAllowNull(sort));
-                findAndReplace.setReturnReplaced(returnNew);
-                findAndReplace.setUpsert(upsert);
-                findAndReplace.setMaxTime(maxTime, maxTimeUnit);
-                operation = findAndReplace;
+                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), objectCodec, wrap(update))
+                                .criteria(wrapAllowNull(query))
+                                .projection(wrapAllowNull(fields))
+                                .sort(wrapAllowNull(sort))
+                                .returnReplaced(returnNew)
+                                .upsert(upsert)
+                                .maxTime(maxTime, maxTimeUnit);
             }
         }
 

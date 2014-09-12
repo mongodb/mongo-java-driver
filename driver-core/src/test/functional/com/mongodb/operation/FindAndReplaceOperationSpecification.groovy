@@ -49,7 +49,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, jordan)
-        operation.setCriteria(new BsonDocument('name', new BsonString('Pete')))
+                .criteria(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.execute(getBinding())
 
         then:
@@ -70,7 +70,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), documentCodec, jordan)
-        operation.setCriteria(new BsonDocument('name', new BsonString('Pete')))
+                .criteria(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:
@@ -91,7 +91,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), workerCodec, replacement)
-        operation.setCriteria(new BsonDocument('name', new BsonString('Pete')))
+                .criteria(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 
         then:
@@ -112,7 +112,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         FindAndReplaceOperation<Document> operation = new FindAndReplaceOperation<Document>(getNamespace(), workerCodec, replacement)
-        operation.setCriteria(new BsonDocument('name', new BsonString('Pete')))
+                .criteria(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:

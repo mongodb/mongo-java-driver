@@ -109,10 +109,12 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * Sets the criteria to apply to the query.
      *
      * @param criteria the criteria, which may be null.
+     * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public void setCriteria(final BsonDocument criteria) {
+    public QueryOperation<T> criteria(final BsonDocument criteria) {
         this.criteria = criteria;
+        return this;
     }
 
     /**
@@ -130,10 +132,12 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * Sets the number of documents to return per batch.
      *
      * @param batchSize the batch size
+     * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    public void setBatchSize(final int batchSize) {
+    public QueryOperation<T> batchSize(final int batchSize) {
         this.batchSize = batchSize;
+        return this;
     }
 
     /**
@@ -150,10 +154,12 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * Sets the limit to apply.
      *
      * @param limit the limit, which may be null
+     * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
      */
-    public void setLimit(final int limit) {
+    public QueryOperation<T> limit(final int limit) {
         this.limit = limit;
+        return this;
     }
 
     /**
@@ -170,10 +176,12 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * Sets the query modifiers to apply to this operation.
      *
      * @param modifiers the query modifiers to apply, which may be null.
+     * @return this
      * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
      */
-    public void setModifiers(final BsonDocument modifiers) {
+    public QueryOperation<T> modifiers(final BsonDocument modifiers) {
         this.modifiers = modifiers;
+        return this;
     }
 
     /**
@@ -190,10 +198,12 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * Sets a document describing the fields to return for all matching documents.
      *
      * @param projection the project document, which may be null.
+     * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
      */
-    public void setProjection(final BsonDocument projection) {
+    public QueryOperation<T> projection(final BsonDocument projection) {
         this.projection = projection;
+        return this;
     }
 
     /**
@@ -209,9 +219,11 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * Sets the cursor flags.
      *
      * @param cursorFlags the cursor flags
+     * @return this
      */
-    public void setCursorFlags(final EnumSet<CursorFlag> cursorFlags) {
+    public QueryOperation<T> cursorFlags(final EnumSet<CursorFlag> cursorFlags) {
         this.cursorFlags = cursorFlags;
+        return this;
     }
 
     /**
@@ -230,10 +242,12 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      *
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
+     * @return this
      */
-    public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
+    public QueryOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
     }
 
     /**
@@ -250,10 +264,12 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * Sets the number of documents to skip.
      *
      * @param skip the number of documents to skip
+     * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
      */
-    public void setSkip(final int skip) {
+    public QueryOperation<T> skip(final int skip) {
         this.skip = skip;
+        return this;
     }
 
     /**
@@ -271,10 +287,12 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * Sets the sort criteria to apply to the query.
      *
      * @param sort the sort criteria, which may be null.
+     * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public void setSort(final BsonDocument sort) {
+    public QueryOperation<T> sort(final BsonDocument sort) {
         this.sort = sort;
+        return this;
     }
 
     @Override

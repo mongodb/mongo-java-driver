@@ -262,36 +262,31 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public T getOne() {
-            QueryOperation<T> queryOperation = createQueryOperation();
-            queryOperation.setBatchSize(-1);
-            MongoCursor<T> cursor = execute(queryOperation, readPreference);
-
+            MongoCursor<T> cursor = execute(createQueryOperation().batchSize(-1), readPreference);
             return cursor.hasNext() ? cursor.next() : null;
         }
 
         private QueryOperation<T> createQueryOperation() {
-            QueryOperation<T> operation = new QueryOperation<T>(getNamespace(), getCodec());
-            operation.setCriteria(asBson(findOp.getCriteria()));
-            operation.setBatchSize(findOp.getBatchSize());
-            operation.setCursorFlags(findOp.getCursorFlags());
-            operation.setSkip(findOp.getSkip());
-            operation.setLimit(findOp.getLimit());
-            operation.setMaxTime(findOp.getMaxTime(MILLISECONDS), MILLISECONDS);
-            operation.setModifiers(asBson(findOp.getModifiers()));
-            operation.setProjection(asBson(findOp.getProjection()));
-            operation.setSort(asBson(findOp.getSort()));
-            return operation;
+            return new QueryOperation<T>(getNamespace(), getCodec())
+                       .criteria(asBson(findOp.getCriteria()))
+                       .batchSize(findOp.getBatchSize())
+                       .cursorFlags(findOp.getCursorFlags())
+                       .skip(findOp.getSkip())
+                       .limit(findOp.getLimit())
+                       .maxTime(findOp.getMaxTime(MILLISECONDS), MILLISECONDS)
+                       .modifiers(asBson(findOp.getModifiers()))
+                       .projection(asBson(findOp.getProjection()))
+                       .sort(asBson(findOp.getSort()));
         }
 
 
         @Override
         public long count() {
-            CountOperation operation = new CountOperation(getNamespace());
-            operation.setCriteria(findOp.getCriteria());
-            operation.setSkip(findOp.getSkip());
-            operation.setLimit(findOp.getLimit());
-            operation.setMaxTime(findOp.getMaxTime(MILLISECONDS), MILLISECONDS);
-
+            CountOperation operation = new CountOperation(getNamespace())
+                                           .criteria(findOp.getCriteria())
+                                           .skip(findOp.getSkip())
+                                           .limit(findOp.getLimit())
+                                           .maxTime(findOp.getMaxTime(MILLISECONDS), MILLISECONDS);
             return execute(operation, readPreference);
         }
 
@@ -458,32 +453,32 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         public T updateOneAndGet(final Document updateOperations, final Get beforeOrAfter) {
-            FindAndUpdateOperation<T> operation = new FindAndUpdateOperation<T>(getNamespace(), getCodec(), wrap(updateOperations));
-            operation.setCriteria(findOp.getCriteria());
-            operation.setProjection(findOp.getProjection());
-            operation.setSort(findOp.getSort());
-            operation.setReturnUpdated(asBoolean(beforeOrAfter));
-            operation.setUpsert(upsert);
+            FindAndUpdateOperation<T> operation = new FindAndUpdateOperation<T>(getNamespace(), getCodec(), wrap(updateOperations))
+                                                      .criteria(findOp.getCriteria())
+                                                      .projection(findOp.getProjection())
+                                                      .sort(findOp.getSort())
+                                                      .returnUpdated(asBoolean(beforeOrAfter))
+                                                      .upsert(upsert);
             return execute(operation);
         }
 
         public T replaceOneAndGet(final T replacement, final Get beforeOrAfter) {
             FindAndReplaceOperation<T> operation = new FindAndReplaceOperation<T>(getNamespace(), getCodec(),
-                                                                                  new BsonDocumentWrapper<T>(replacement, getCodec()));
-            operation.setCriteria(findOp.getCriteria());
-            operation.setProjection(findOp.getProjection());
-            operation.setSort(findOp.getSort());
-            operation.setReturnReplaced(asBoolean(beforeOrAfter));
-            operation.setUpsert(upsert);
+                                                                                  new BsonDocumentWrapper<T>(replacement, getCodec()))
+                                                       .criteria(findOp.getCriteria())
+                                                       .projection(findOp.getProjection())
+                                                       .sort(findOp.getSort())
+                                                       .returnReplaced(asBoolean(beforeOrAfter))
+                                                       .upsert(upsert);
             return execute(operation);
         }
 
         @Override
         public T getOneAndRemove() {
-            FindAndRemoveOperation<T> operation = new FindAndRemoveOperation<T>(getNamespace(), getCodec());
-            operation.setCriteria(findOp.getCriteria());
-            operation.setProjection(findOp.getProjection());
-            operation.setSort(findOp.getSort());
+            FindAndRemoveOperation<T> operation = new FindAndRemoveOperation<T>(getNamespace(), getCodec())
+                                                      .criteria(findOp.getCriteria())
+                                                      .projection(findOp.getProjection())
+                                                      .sort(findOp.getSort());
             return execute(operation);
         }
 
