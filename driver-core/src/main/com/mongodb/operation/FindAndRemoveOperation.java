@@ -126,7 +126,7 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
      */
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
+        return timeUnit.convert(maxTimeMS, MILLISECONDS);
     }
 
     /**
@@ -137,7 +137,7 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
      */
     public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
     }
 
     /**
@@ -180,7 +180,7 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
         putIfNotNull(command, "query", getCriteria());
         putIfNotNull(command, "fields", getProjection());
         putIfNotNull(command, "sort", getSort());
-        putIfNotZero(command, "maxTimeMS", getMaxTime(TimeUnit.MILLISECONDS));
+        putIfNotZero(command, "maxTimeMS", getMaxTime(MILLISECONDS));
         command.put("remove", BsonBoolean.TRUE);
         return command;
     }
