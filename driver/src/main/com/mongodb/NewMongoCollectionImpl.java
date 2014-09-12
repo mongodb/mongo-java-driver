@@ -44,7 +44,6 @@ import com.mongodb.client.result.UpdateResult;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.DistinctOperation;
-import com.mongodb.operation.Find;
 import com.mongodb.operation.FindAndRemove;
 import com.mongodb.operation.FindAndRemoveOperation;
 import com.mongodb.operation.FindAndReplace;
@@ -141,8 +140,10 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     @Override
     public <D> List<Object> distinct(final DistinctModel<D> model) {
-        BsonArray distinctArray = operationExecutor.execute(new DistinctOperation(namespace, model.getFieldName(), new Find()),
-                                                            options.getReadPreference());
+        DistinctOperation operation = new DistinctOperation(namespace, model.getFieldName());
+        operation.setCriteria(asBson(model.getCriteria()));
+        operation.setMaxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS);
+        BsonArray distinctArray = operationExecutor.execute(operation, options.getReadPreference());
         List<Object> distinctList = new ArrayList<Object>();
         for (BsonValue value : distinctArray) {
             BsonDocument bsonDocument = new BsonDocument("value", value);
