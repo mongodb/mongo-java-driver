@@ -48,9 +48,9 @@ public class AggregateOptions implements ExplainableModel {
      * Enables writing to temporary files. A null value indicates that it's unspecified.
      *
      * @param allowDiskUse true if writing to temporary files is enabled
+     * @return this
      * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
-     * @return this
      */
     public AggregateOptions allowDiskUse(final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
