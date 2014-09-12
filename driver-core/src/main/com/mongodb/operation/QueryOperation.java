@@ -58,9 +58,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @param <T> the document type
  * @since 3.0
  */
-public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoTailableCursor<T>> {
+public class QueryOperation<T, F> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoTailableCursor<T>> {
     private final MongoNamespace namespace;
-    private final FindModel model;
+    private final FindModel<Object> model;
     private final Decoder<T> resultDecoder;
     private final CodecRegistry codecRegistry;
 
@@ -68,7 +68,8 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
         this.namespace = namespace;
         this.resultDecoder = resultDecoder;
         this.codecRegistry = null;
-        model = new FindModel(find.getFilter());
+        model = new FindModel<Object>();
+        model.criteria(find.getFilter());
         model.batchSize(find.getBatchSize());
         model.limit(find.getLimit());
         model.projection(find.getFields());
@@ -76,14 +77,15 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
         model.limit(find.getLimit());
         model.skip(find.getSkip());
         model.sort(find.getOrder());
+        model.cursorFlags(find.getFlags(primary()));
         BsonDocument modifiers = new BsonDocument();
         addToModifiers(find, modifiers);
         model.modifiers(modifiers);
     }
 
-    public QueryOperation(final MongoNamespace namespace, final FindModel model, final CodecRegistry codecRegistry,
+    public QueryOperation(final MongoNamespace namespace, final FindModel<F> model, final CodecRegistry codecRegistry,
                           final Decoder<T> resultDecoder) {
-        this.model = model;
+        this.model = (FindModel) model;
         this.codecRegistry = codecRegistry;
         this.namespace = notNull("namespace", namespace);
         this.resultDecoder = notNull("resultDecoder", resultDecoder);
@@ -100,7 +102,6 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     public Decoder<T> getResultDecoder() {
         return resultDecoder;
     }
-
 
     @Override
     public MongoTailableCursor<T> execute(final ReadBinding binding) {

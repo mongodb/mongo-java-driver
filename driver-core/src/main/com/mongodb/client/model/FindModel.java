@@ -17,7 +17,6 @@
 package com.mongodb.client.model;
 
 import com.mongodb.CursorFlag;
-import org.mongodb.Document;
 
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
@@ -30,34 +29,27 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/query-documents/ Find
  */
-public final class FindModel implements ExplainableModel {
-    private final Object criteria;
+public final class FindModel<D> implements ExplainableModel {
+    private D criteria;
     private Integer batchSize;
     private Integer limit;
-    private Object modifiers;
-    private Object projection;
+    private D modifiers;
+    private D projection;
     private EnumSet<CursorFlag> cursorFlags = EnumSet.noneOf(CursorFlag.class);
     private Long maxTimeMS;
     private Integer skip;
-    private Object sort;
+    private D sort;
 
     /**
-     * Construct a new instance.
+     * Sets the sort criteria to apply to the query.
      *
-     * @param criteria a document describing the query criteria, which may be null. This can be of any type for which a
-     * {@code Codec} is registered
+     * @param criteria the criteria, which may be null. This can be of any type for which a {@code Codec} is registered
+     * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public FindModel(final Object criteria) {
-        this.criteria = notNull("criteria", criteria);
-    }
-
-    /**
-     * Construct a new instance.
-     *
-     * @param criteria a document describing the query criteria, which may be null.
-     */
-    public FindModel(final Document criteria) {
-        this((Object) criteria);
+    public FindModel criteria(final D criteria) {
+        this.criteria = criteria;
+        return this;
     }
 
     /**
@@ -65,7 +57,7 @@ public final class FindModel implements ExplainableModel {
      *
      * @return the query criteria
      */
-    public Object getCriteria() {
+    public D getCriteria() {
         return criteria;
     }
 
@@ -186,7 +178,7 @@ public final class FindModel implements ExplainableModel {
      * @return the query modifiers, which may be null
      * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
      */
-    public Object getModifiers() {
+    public D getModifiers() {
         return modifiers;
     }
 
@@ -198,19 +190,7 @@ public final class FindModel implements ExplainableModel {
      * @return this
      * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
      */
-    public FindModel modifiers(final Object modifiers) {
-        this.modifiers = modifiers;
-        return this;
-    }
-
-    /**
-     * Sets the query modifiers to apply to this operation.
-     *
-     * @param modifiers the query modifiers to apply, which may be null.
-     * @return this
-     * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
-     */
-    public FindModel modifiers(final Document modifiers) {
+    public FindModel modifiers(final D modifiers) {
         this.modifiers = modifiers;
         return this;
     }
@@ -221,7 +201,7 @@ public final class FindModel implements ExplainableModel {
      * @return the project document, which may be null
      * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
      */
-    public Object getProjection() {
+    public D getProjection() {
         return projection;
     }
 
@@ -233,20 +213,7 @@ public final class FindModel implements ExplainableModel {
      * @return this
      * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
      */
-    public FindModel projection(final Object projection) {
-        this.projection = projection;
-        return this;
-    }
-
-    /**
-     * Sets a document describing the fields to return for all matching documents.
-     *
-     * @param projection the project document, which may be null. This can be of any type for which a
-     * {@code Codec} is registered
-     * @return this
-     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
-     */
-    public FindModel projection(final Document projection) {
+    public FindModel projection(final D projection) {
         this.projection = projection;
         return this;
     }
@@ -258,7 +225,7 @@ public final class FindModel implements ExplainableModel {
      * @return a document describing the sort criteria
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public Object getSort() {
+    public D getSort() {
         return sort;
     }
 
@@ -270,19 +237,7 @@ public final class FindModel implements ExplainableModel {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public FindModel sort(final Object sort) {
-        this.sort = sort;
-        return this;
-    }
-
-    /**
-     * Sets the sort criteria to apply to the query.
-     *
-     * @param sort the sort criteria, which may be null.
-     * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
-     */
-    public FindModel sort(final Document sort) {
+    public FindModel sort(final D sort) {
         this.sort = sort;
         return this;
     }

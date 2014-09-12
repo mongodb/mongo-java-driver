@@ -234,7 +234,7 @@ public class DB {
      * @throws MongoException
      */
         public Set<String> getCollectionNames() {
-        MongoCursor<BsonDocument> cursor = execute(new QueryOperation<BsonDocument>(new MongoNamespace(name, "system.namespaces"),
+        MongoCursor<BsonDocument> cursor = execute(new QueryOperation<BsonDocument, DBObject>(new MongoNamespace(name, "system.namespaces"),
                                                                                     new Find(), new BsonDocumentCodec()), primary());
         HashSet<String> collections = new HashSet<String>();
         int lengthOfDatabaseName = getName().length();

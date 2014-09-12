@@ -90,9 +90,9 @@ public interface NewMongoCollection<T> {
      * @param model
      * @return
      */
-    MongoIterable<T> find(FindModel model);
+    <F> MongoIterable<T> find(FindModel<F> model);
 
-    <D> MongoIterable<D> find(FindModel model, Class<D> clazz);
+    <F, D> MongoIterable<D> find(FindModel<F> model, Class<D> clazz);
 
     // WRITE
 

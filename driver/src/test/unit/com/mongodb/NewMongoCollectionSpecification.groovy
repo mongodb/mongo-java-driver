@@ -18,6 +18,7 @@ package com.mongodb
 import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.FindModel
 import com.mongodb.codecs.DocumentCodecProvider
+import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.OperationExecutor
 import com.mongodb.operation.QueryOperation
 import com.mongodb.operation.ReadOperation
@@ -26,12 +27,14 @@ import org.bson.codecs.configuration.RootCodecRegistry
 import org.mongodb.Document
 import spock.lang.Specification
 
+import static com.mongodb.ReadPreference.secondary
+
 class NewMongoCollectionSpecification extends Specification {
 
     def namespace = new MongoNamespace("db", "coll")
     def collection;
     def options = MongoCollectionOptions.builder().writeConcern(WriteConcern.JOURNALED)
-                                        .readPreference(ReadPreference.secondary())
+                                        .readPreference(secondary())
                                         .codecRegistry(new RootCodecRegistry([new DocumentCodecProvider()]))
                                         .build()
 
@@ -44,17 +47,21 @@ class NewMongoCollectionSpecification extends Specification {
         def result = collection.insertOne(new Document('_id', 1))
 
         then:
+        def operation = executor.getWriteOperation() as InsertOperation
         !result.insertedId
         result.insertedCount == 1
     }
 
     def 'should find'() {
         given:
-        def executor = new TestOperationExecutor(Stub(MongoCursor))
+        def document = new Document('_id', 1)
+        def cursor = Stub(MongoCursor)
+        cursor.hasNext() >>> [true, false]
+        cursor.next() >> document
+        def executor = new TestOperationExecutor(cursor)
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
-
-        def model = new FindModel(new Document('cold', true))
+        def model = new FindModel<>().criteria(new Document('cold', true))
 
         when:
         def result = collection.find(model).into([])
@@ -62,85 +69,11 @@ class NewMongoCollectionSpecification extends Specification {
         then:
         def operation = executor.getReadOperation() as QueryOperation
         operation.model.is(model)
+        executor.readPreference == secondary()
+        result == [document]
     }
 
 
-//    public void tryNewMongoCollection(NewMongoCollection<Animal> animals) {
-//        // writes
-//        InsertOneResult insertOneResult = animals.insertOne(new Mammal());
-//        System.out.println(insertOneResult.getInsertedCount());
-//        System.out.println(insertOneResult.getInsertedId());
-//
-//        animals.insertOne(new Insect());
-//
-//        InsertManyResult insertManyResult = animals.insertMany(Arrays.<Animal> asList(new Mammal(), new Insect()));
-//        System.out.println(insertManyResult.getInsertedCount());
-//        System.out.println(insertManyResult.getInsertedIds());
-//
-//        animals.insertMany(Arrays.<Mammal> asList(new Mammal(), new Mammal()));
-//
-//        animals.insertMany(new InsertManyModel<Animal>(Arrays.asList(new Mammal(), new Mammal()))
-//                                   .ordered(false));
-//
-//        ReplaceOneResult replaceOneResult = animals.replaceOne(new Document("_id", 1),
-//                                                               new Insect());
-//        animals.replaceOne(new ReplaceOneModel<Animal>(new Document("_id", 1),
-//                                                       new Insect())
-//                                   .upsert(true));
-//
-//        UpdateResult updateOneResult = animals.updateOne(new Document("_id", 1),
-//                                                         new Document("$set", new Document("color", "blue")));
-//        updateOneResult = animals.updateOne(new UpdateOneModel<Animal>(new Document("_id", 1),
-//                                                                       new Document("$set", new Document("color", "blue")))
-//                                                    .upsert(true));
-//
-//        UpdateResult updateManyResult = animals.updateMany(new Document("type", "Mammal"),
-//                                                           new Document("$set", new Document("warm-blooded", true)));
-//        animals.updateMany(new UpdateManyModel<Animal>(new Document("type", "Mammal"),
-//                                                       new Document("$set", new Document("warm-blooded", true)))
-//                                   .upsert(true));
-//
-//        RemoveResult removeOneResult = animals.removeOne(new Document("_id", 1));
-//        RemoveResult removeManyResult = animals.removeMany(new Document("type", "Mammal"));
-//
-//        // reads
-//        long count = animals.count();
-//        count = animals.count(new CountModel().criteria(new Document("type", "Mammal")));
-//
-//        MongoCursor<BsonValue> distinctValues = animals.distinct("type");
-//        distinctValues = animals.distinct(new DistinctModel("type")
-//                                                  .criteria(new Document("color", "blue")));
-//
-//        MongoCursor<Animal> animalCursor = animals.find(new Document("type", "Mammal"));
-//        animalCursor = animals.find(new FindModel(new Document("type", "Mammal"))
-//                                            .projection(new Document("_id", 1)));
-//
-//        // bulk
-//
-//        List<WriteModel<? extends Animal>> writes = new ArrayList<WriteModel<? extends Animal>>();
-//        writes.add(new InsertOneModel<Mammal>(new Mammal()));
-//        writes.add(new UpdateOneModel<Animal>(new Document("_id", 1),
-//                                              new Document("$set", new Document("color", "blue")))
-//                           .upsert(true));
-//        writes.add(new ReplaceOneModel<Insect>(new Document("_id", 1),
-//                                               new Insect())
-//                           .upsert(true));
-//        writes.add(new RemoveOneModel<Animal>(new Document("_id", 1)));
-//
-//        animals.bulkWrite(writes);
-//
-//
-//        BulkWriteModel<Animal> bulkWriteModel = new BulkWriteModel<Animal>(writes);
-//
-//        animals.bulkWrite(bulkWriteModel
-//                                  .ordered(false));
-//
-//        Document explainPlan = animals.explain(new FindModel(new Document("type", "Mammal")),
-//                                               ExplainVerbosity.QUERY_PLANNER);
-//        explainPlan = animals.explain(new CountModel().criteria(new Document("type", "Mammal")),
-//                                      ExplainVerbosity.QUERY_PLANNER);
-//
-//    }
 
     class TestOperationExecutor<T> implements OperationExecutor {
 
@@ -153,11 +86,6 @@ class NewMongoCollectionSpecification extends Specification {
             this.response = response
         }
 
-        TestOperationExecutor(T response, ReadPreference readPreference) {
-            this.response = response;
-            this.readPreference = readPreference
-        }
-
         @Override
         def <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
             this.readOperation = operation
@@ -167,9 +95,6 @@ class NewMongoCollectionSpecification extends Specification {
 
         @Override
         def <T> T execute(final WriteOperation<T> operation) {
-            if (this.readPreference != null) {
-                throw new IllegalStateException()
-            }
             this.writeOperation = operation;
             response
         }
