@@ -1529,11 +1529,12 @@ public class DBCollection {
                                   final long maxTime, final TimeUnit maxTimeUnit) {
         WriteOperation<DBObject> operation;
         if (remove) {
-            FindAndRemove<DBObject> findAndRemove = new FindAndRemove<DBObject>().where(wrapAllowNull(query))
-                                                                                 .sortBy(wrapAllowNull(sort))
-                                                                                 .returnNew(returnNew)
-                                                                                 .maxTime(maxTime, maxTimeUnit);
-            operation = new FindAndRemoveOperation<DBObject>(getNamespace(), findAndRemove, objectCodec);
+            FindAndRemoveOperation<DBObject> findAndRemoveOperation = new FindAndRemoveOperation<DBObject>(getNamespace(), objectCodec);
+            findAndRemoveOperation.setCriteria(wrapAllowNull(query));
+            findAndRemoveOperation.setSort(wrapAllowNull(sort));
+            findAndRemoveOperation.setMaxTime(maxTime, maxTimeUnit);
+
+            operation = findAndRemoveOperation;
         } else {
             if (update == null) {
                 throw new IllegalArgumentException("Update document can't be null");

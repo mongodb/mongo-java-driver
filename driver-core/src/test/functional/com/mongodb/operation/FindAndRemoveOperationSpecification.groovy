@@ -42,10 +42,8 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
-        FindAndRemove findAndRemove = new FindAndRemove().where(new BsonDocument('name', new BsonString('Pete')));
-
-        FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), findAndRemove,
-                                                                                          documentCodec)
+        FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), documentCodec)
+        operation.setCriteria(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.execute(getBinding())
 
         then:
@@ -64,10 +62,8 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
-        FindAndRemove findAndRemove = new FindAndRemove().where(new BsonDocument('name', new BsonString('Pete')));
-
-        FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), findAndRemove,
-                                                                                          documentCodec)
+        FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), documentCodec)
+        operation.setCriteria(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:
@@ -83,10 +79,8 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
         getWorkerCollectionHelper().insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
-        FindAndRemove<Worker> findAndRemove = new FindAndRemove<Worker>().where(new BsonDocument('name', new BsonString('Pete')));
-
-        FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Worker>(getNamespace(), findAndRemove,
-                                                                                      workerCodec)
+        FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Document>(getNamespace(), workerCodec)
+        operation.setCriteria(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 
         then:
@@ -103,10 +97,8 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
         getWorkerCollectionHelper().insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
-        FindAndRemove<Worker> findAndRemove = new FindAndRemove<Worker>().where(new BsonDocument('name', new BsonString('Pete')));
-
-        FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Worker>(getNamespace(), findAndRemove,
-                                                                                      workerCodec)
+        FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Document>(getNamespace(), workerCodec)
+        operation.setCriteria(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 
         then:

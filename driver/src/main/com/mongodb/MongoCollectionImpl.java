@@ -483,11 +483,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public T getOneAndRemove() {
-            FindAndRemove<T> findAndRemove = new FindAndRemove<T>().where(findOp.getCriteria())
-                                                                   .select(findOp.getProjection())
-                                                                   .sortBy(findOp.getSort());
-
-            return execute(new FindAndRemoveOperation<T>(getNamespace(), findAndRemove, getCodec()));
+            FindAndRemoveOperation<T> operation = new FindAndRemoveOperation<T>(getNamespace(), getCodec());
+            operation.setCriteria(findOp.getCriteria());
+            operation.setProjection(findOp.getProjection());
+            operation.setSort(findOp.getSort());
+            return execute(operation);
         }
 
         boolean asBoolean(final Get get) {

@@ -25,6 +25,8 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.codecs.Decoder;
 
+import java.util.concurrent.TimeUnit;
+
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
@@ -35,40 +37,150 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * An operation that atomically finds and removes a single document.
  *
+ * @param <T> the resulting document type
  * @since 3.0
  */
 public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
     private final MongoNamespace namespace;
-    private final FindAndRemove<T> findAndRemove;
-    private final Decoder<T> resultDecoder;
+    private final Decoder<T> decoder;
+    private BsonDocument criteria;
+    private BsonDocument projection;
+    private BsonDocument sort;
+    private long maxTimeMS;
 
-    public FindAndRemoveOperation(final MongoNamespace namespace, final FindAndRemove<T> findAndRemove, final Decoder<T> resultDecoder) {
+    /**
+     * Construct a new instance
+     *
+     * @param namespace the namespace to execute the query in
+     * @param decoder the decoder to decode the results with
+     */
+    public FindAndRemoveOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
-        this.findAndRemove = notNull("findAndRemove", findAndRemove);
-        this.resultDecoder = notNull("resultDecoder", resultDecoder);
+        this.decoder = notNull("decoder", decoder);
+    }
+
+    /**
+     * Gets the namespace.
+     *
+     * @return the namespace
+     */
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    /**
+     * Gets the decoder used to decode the result documents.
+     *
+     * @return the decoder
+     */
+    public Decoder<T> getDecoder() {
+        return decoder;
+    }
+
+    /**
+     * Gets the query criteria.
+     *
+     * @return the query criteria
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     */
+    public BsonDocument getCriteria() {
+        return criteria;
+    }
+
+    /**
+     * Sets the criteria to apply to the query.
+     *
+     * @param criteria the criteria, which may be null.
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     */
+    public void setCriteria(final BsonDocument criteria) {
+        this.criteria = criteria;
+    }
+
+    /**
+     * Gets a document describing the fields to return for all matching documents.
+     *
+     * @return the project document, which may be null
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
+     */
+    public BsonDocument getProjection() {
+        return projection;
+    }
+
+    /**
+     * Sets a document describing the fields to return for all matching documents.
+     *
+     * @param projection the project document, which may be null.
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
+     */
+    public void setProjection(final BsonDocument projection) {
+        this.projection = projection;
+    }
+
+
+    /**
+     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
+     *
+     * @param timeUnit the time unit to return the result in
+     * @return the maximum execution time in the given time unit
+     */
+    public long getMaxTime(final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Sets the maximum execution time on the server for this operation.
+     *
+     * @param maxTime  the max time
+     * @param timeUnit the time unit, which may not be null
+     */
+    public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+    }
+
+    /**
+     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
+     * order.
+     *
+     * @return a document describing the sort criteria
+     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     */
+    public BsonDocument getSort() {
+        return sort;
+    }
+
+    /**
+     * Sets the sort criteria to apply to the query.
+     *
+     * @param sort the sort criteria, which may be null.
+     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     */
+    public void setSort(final BsonDocument sort) {
+        this.sort = sort;
     }
 
     @Override
     public T execute(final WriteBinding binding) {
         return executeWrappedCommandProtocol(namespace.getDatabaseName(), getFindAndRemoveDocument(),
-                                             CommandResultDocumentCodec.create(resultDecoder, "value"),
+                                             CommandResultDocumentCodec.create(decoder, "value"),
                                              binding, FindAndModifyHelper.<T>transformer());
     }
 
     @Override
     public MongoFuture<T> executeAsync(final AsyncWriteBinding binding) {
         return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getFindAndRemoveDocument(),
-                                                  CommandResultDocumentCodec.create(resultDecoder, "value"),
+                                                  CommandResultDocumentCodec.create(decoder, "value"),
                                                   binding, FindAndModifyHelper.<T>transformer());
     }
 
     private BsonDocument getFindAndRemoveDocument() {
         BsonDocument command = new BsonDocument("findandmodify", new BsonString(namespace.getCollectionName()));
-        putIfNotNull(command, "query", findAndRemove.getFilter());
-        putIfNotNull(command, "fields", findAndRemove.getSelector());
-        putIfNotNull(command, "sort", findAndRemove.getSortCriteria());
-        putIfNotZero(command, "maxTimeMS", findAndRemove.getOptions().getMaxTime(MILLISECONDS));
-
+        putIfNotNull(command, "query", getCriteria());
+        putIfNotNull(command, "fields", getProjection());
+        putIfNotNull(command, "sort", getSort());
+        putIfNotZero(command, "maxTimeMS", getMaxTime(TimeUnit.MILLISECONDS));
         command.put("remove", BsonBoolean.TRUE);
         return command;
     }

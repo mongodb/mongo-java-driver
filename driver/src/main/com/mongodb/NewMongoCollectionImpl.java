@@ -284,9 +284,11 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     @Override
     public <D> T findOneAndRemove(final FindOneAndRemoveModel<D> model) {
-        return operationExecutor.execute(new FindAndRemoveOperation<T>(namespace,
-                                                                       new FindAndRemove<T>(),
-                                                                       getCodec()));
+        FindAndRemoveOperation<T> operation = new FindAndRemoveOperation<T>(namespace, getCodec());
+        operation.setCriteria(asBson(model.getCriteria()));
+        operation.setProjection(asBson(model.getProjection()));
+        operation.setSort(asBson(model.getSort()));
+        return operationExecutor.execute(operation);
     }
 
     @Override
