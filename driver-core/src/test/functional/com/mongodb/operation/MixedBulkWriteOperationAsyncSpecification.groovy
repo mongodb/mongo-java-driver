@@ -126,7 +126,8 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true));
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
-                                                                new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))))],
+                                                                new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))))
+                                                      .multi(false)],
                                              ordered, ACKNOWLEDGED)
 
         when:
@@ -206,6 +207,7 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))))
+                                                      .multi(false)
                                                       .upsert(true)],
                                              ordered, ACKNOWLEDGED)
 
@@ -545,24 +547,6 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
 
         where:
         ordered << [false]
-    }
-
-    def 'execute should throw IllegalStateException when already executed'() {
-        given:
-        def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
-                                             ordered, UNACKNOWLEDGED)
-
-        op.executeAsync(getAsyncBinding()).get()
-
-        when:
-        op.executeAsync(getAsyncBinding()).get()
-
-        then:
-        thrown(IllegalStateException)
-
-        where:
-        ordered << [true, false]
     }
 
     def 'should throw IllegalArgumentException when passed an empty bulk operation'() {
