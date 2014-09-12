@@ -16,7 +16,7 @@
 
 package com.mongodb;
 
-import com.mongodb.operation.Group;
+import com.mongodb.operation.GroupOperation;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;
 
@@ -69,15 +69,32 @@ public class GroupCommand {
         return new BasicDBObject("group", args);
     }
 
-    Group toNew(final DBObjectCodec codec) {
-        Group group = new Group(keys == null ? null : new BsonDocumentWrapper<DBObject>(keys, codec),
-                                reduce == null ? null : new BsonJavaScript(reduce),
-                                initial == null ? null : new BsonDocumentWrapper<DBObject>(initial, codec));
+    GroupOperation<DBObject> toOperation(final MongoNamespace namespace, final DBObjectCodec codec) {
+        if (initial == null) {
+            throw new IllegalArgumentException("Group command requires an initial document for the aggregate result");
+        }
 
-        group.finalizeFunction(finalize == null ? null : new BsonJavaScript(finalize));
-        group.filter(condition == null ? null : new BsonDocumentWrapper<DBObject>(condition, codec));
+        if (reduce == null) {
+            throw new IllegalArgumentException("Group command requires a reduce function for the aggregate result");
+        }
 
-        return group;
+        GroupOperation<DBObject> operation = new GroupOperation<DBObject>(namespace,
+                                                                          new BsonJavaScript(reduce),
+                                                                          new BsonDocumentWrapper<DBObject>(initial, codec), codec);
+
+        if (keys != null) {
+            operation.key(new BsonDocumentWrapper<DBObject>(keys, codec));
+        }
+
+        if (condition != null) {
+            operation.criteria(new BsonDocumentWrapper<DBObject>(condition, codec));
+        }
+
+        if (finalize != null) {
+            operation.finalizeFunction(new BsonJavaScript(finalize));
+        }
+
+        return operation;
     }
 
 }
