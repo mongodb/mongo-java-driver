@@ -240,6 +240,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
 
+    @SuppressWarnings("unchecked")
     private BulkWriteResult bulkWrite(final BulkWriteModel<? extends T> model) {
         List<WriteRequest> requests = new ArrayList<WriteRequest>();
         for (WriteModel<? extends T> writeModel : model.getRequests()) {
@@ -255,20 +256,20 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
                 writeRequest = new ReplaceRequest(asBson(replaceOneModel.getCriteria()), asBson(replaceOneModel.getReplacement()))
                                .upsert(replaceOneModel.getOptions().isUpsert());
             } else if (writeModel instanceof UpdateOneModel) {
-                UpdateOneModel updateOneModel = (UpdateOneModel) writeModel;
+                UpdateOneModel<T> updateOneModel = (UpdateOneModel<T>) writeModel;
                 writeRequest = new UpdateRequest(asBson(updateOneModel.getCriteria()), asBson(updateOneModel.getUpdate()))
                                .multi(false)
                                .upsert(updateOneModel.getOptions().isUpsert());
             } else if (writeModel instanceof UpdateManyModel) {
-                UpdateManyModel updateManyModel = (UpdateManyModel) writeModel;
+                UpdateManyModel<T> updateManyModel = (UpdateManyModel<T>) writeModel;
                 writeRequest = new UpdateRequest(asBson(updateManyModel.getCriteria()), asBson(updateManyModel.getUpdate()))
                                .multi(true)
                                .upsert(updateManyModel.getOptions().isUpsert());
             } else if (writeModel instanceof DeleteOneModel) {
-                DeleteOneModel deleteOneModel = (DeleteOneModel) writeModel;
+                DeleteOneModel<T> deleteOneModel = (DeleteOneModel<T>) writeModel;
                 writeRequest = new RemoveRequest(asBson(deleteOneModel.getCriteria())).multi(false);
             } else if (writeModel instanceof DeleteManyModel) {
-                DeleteManyModel deleteManyModel = (DeleteManyModel) writeModel;
+                DeleteManyModel<T> deleteManyModel = (DeleteManyModel<T>) writeModel;
                 writeRequest = new RemoveRequest(asBson(deleteManyModel.getCriteria())).multi(true);
             } else {
                 throw new UnsupportedOperationException(format("WriteModel of type %s is not supported", writeModel.getClass()));
