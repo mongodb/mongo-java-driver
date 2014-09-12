@@ -25,6 +25,7 @@ import com.mongodb.DBRef;
 import org.bson.BSON;
 import org.bson.BSONObject;
 import org.bson.BasicBSONCallback;
+import org.bson.BsonUndefined;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -32,7 +33,6 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
-import org.bson.BsonUndefined;
 
 import javax.xml.bind.DatatypeConverter;
 import java.text.ParsePosition;
@@ -43,6 +43,9 @@ import java.util.SimpleTimeZone;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+/**
+ * Converts JSON to DBObjects and vice versa.
+ */
 public class JSONCallback extends BasicBSONCallback {
 
     @Override
@@ -55,11 +58,13 @@ public class JSONCallback extends BasicBSONCallback {
         return new BasicDBList();
     }
 
+    @Override
     public void objectStart(final boolean array, final String name) {
         _lastArray = array;
         super.objectStart(array, name);
     }
 
+    @Override
     public Object objectDone() {
         String name = curName();
         Object o = super.objectDone();

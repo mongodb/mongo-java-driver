@@ -20,7 +20,16 @@ import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * General utilities that are useful throughout the driver.
+ */
 public class Util {
+    /**
+     * Converts the given byte buffer to a hexadecimal string using {@link java.lang.Integer#toHexString(int)}.
+     *
+     * @param bytes the bytes to convert to hex
+     * @return a String containing the hex representation of the given bytes.
+     */
     public static String toHex(final byte[] bytes) {
         StringBuilder sb = new StringBuilder();
 
@@ -32,19 +41,16 @@ public class Util {
             }
             sb.append(s);
         }
-
         return sb.toString();
-
     }
 
     /**
-     * Produce hex representation of the MD5 digest of a byte array
+     * Produce hex representation of the MD5 digest of a byte array.
      *
      * @param data bytes to digest
      * @return hex string of the MD5 digest
      */
     public static String hexMD5(final byte[] data) {
-
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
 
@@ -58,6 +64,14 @@ public class Util {
         }
     }
 
+    /**
+     * Produce hex representation of the MD5 digest of a byte array.
+     *
+     * @param buf    byte buffer containing the bytes to digest
+     * @param offset the position to start reading bytes from
+     * @param len    the number of bytes to read from the buffer
+     * @return hex string of the MD5 digest
+     */
     public static String hexMD5(final ByteBuffer buf, final int offset, final int len) {
         byte[] b = new byte[len];
         for (int i = 0; i < len; i++) {

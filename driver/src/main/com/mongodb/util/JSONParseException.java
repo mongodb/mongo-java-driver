@@ -34,6 +34,7 @@ public class JSONParseException extends RuntimeException {
     final String jsonString;
     final int pos;
 
+    @Override
     public String getMessage() {
         StringBuilder sb = new StringBuilder();
         sb.append("\n");
