@@ -211,7 +211,7 @@ public interface NewMongoCollection<T> {
     /**
      * Inserts a batch of documents. The preferred way to perform bulk
      * inserts is to use the BulkWrite API. However, when talking with
-     * a server < 2.6, using this method will be faster due to constraints
+     * a server &lt; 2.6, using this method will be faster due to constraints
      * in the bulk API related to error handling.
      *
      * @param documents the documents to insert
@@ -223,7 +223,7 @@ public interface NewMongoCollection<T> {
     /**
      * Inserts a batch of documents. The preferred way to perform bulk
      * inserts is to use the BulkWrite API. However, when talking with
-     * a server < 2.6, using this method will be faster due to constraints
+     * a server &lt; 2.6, using this method will be faster due to constraints
      * in the bulk API related to error handling.
      *
      * @param documents the documents to insert
