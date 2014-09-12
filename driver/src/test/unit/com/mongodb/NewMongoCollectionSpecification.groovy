@@ -22,6 +22,9 @@ import com.mongodb.client.model.BulkWriteModel
 import com.mongodb.client.model.CountModel
 import com.mongodb.client.model.DistinctModel
 import com.mongodb.client.model.FindModel
+import com.mongodb.client.model.FindOneAndRemoveModel
+import com.mongodb.client.model.FindOneAndReplaceModel
+import com.mongodb.client.model.FindOneAndUpdateModel
 import com.mongodb.client.model.InsertManyModel
 import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.ReplaceOneModel
@@ -32,6 +35,9 @@ import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.DistinctOperation
+import com.mongodb.operation.FindAndRemoveOperation
+import com.mongodb.operation.FindAndReplaceOperation
+import com.mongodb.operation.FindAndUpdateOperation
 import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.QueryOperation
 import com.mongodb.operation.ReplaceOperation
@@ -392,4 +398,83 @@ class NewMongoCollectionSpecification extends Specification {
         executor.readPreference == secondary()
         result == explainResultDocument
     }
+
+    def 'findOneAndRemove should use FindAndRemoveOperation correctly'() {
+        given:
+        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def model = new FindOneAndRemoveModel<>(new Document('cold', true))
+                .projection(new Document('field', 1))
+                .sort(new Document('sort', -1))
+
+        when:
+        def result = collection.findOneAndRemove(model)
+
+        then:
+        def operation = executor.getWriteOperation() as FindAndRemoveOperation
+        operation.getCriteria() == new BsonDocument('cold', new BsonBoolean(true))
+        operation.getProjection() == new BsonDocument('field', new BsonInt32(1))
+        operation.getSort() == new BsonDocument('sort', new BsonInt32(-1))
+    }
+
+    def 'findOneAndReplace should use FindOneAndReplaceOperation correctly'() {
+        given:
+        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null), new AcknowledgedWriteResult(1, false, null)])
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def model = new FindOneAndReplaceModel<>(new Document('cold', true), new Document('hot', false))
+                .projection(new Document('field', 1))
+                .sort(new Document('sort', -1))
+
+        when:
+        collection.findOneAndReplace(model)
+
+        then:
+        def operation = executor.getWriteOperation() as FindAndReplaceOperation
+        operation.getCriteria() == new BsonDocument('cold', new BsonBoolean(true))
+        operation.getReplacement() == new BsonDocument('hot', new BsonBoolean(false))
+        operation.getProjection() == new BsonDocument('field', new BsonInt32(1))
+        operation.getSort() == new BsonDocument('sort', new BsonInt32(-1))
+        operation.isUpsert() == false
+        operation.isReturnReplaced() == false
+
+        when:
+        model.upsert(true).returnReplaced(true)
+        collection.findOneAndReplace(model)
+
+        then:
+        def operation2 = executor.getWriteOperation() as FindAndReplaceOperation
+        operation2.isUpsert() == true
+        operation2.isReturnReplaced() == true
+    }
+
+    def 'findOneAndUpdate should use FindOneAndUpdateOperation correctly'() {
+        given:
+        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null), new AcknowledgedWriteResult(1, false, null)])
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def model = new FindOneAndUpdateModel<>(new Document('cold', true), new Document('hot', false))
+                .projection(new Document('field', 1))
+                .sort(new Document('sort', -1))
+
+        when:
+        collection.findOneAndUpdate(model)
+
+        then:
+        def operation = executor.getWriteOperation() as FindAndUpdateOperation
+        operation.getCriteria() == new BsonDocument('cold', new BsonBoolean(true))
+        operation.getUpdate() == new BsonDocument('hot', new BsonBoolean(false))
+        operation.getProjection() == new BsonDocument('field', new BsonInt32(1))
+        operation.getSort() == new BsonDocument('sort', new BsonInt32(-1))
+        operation.isUpsert() == false
+        operation.isReturnUpdated() == false
+
+        when:
+        model.upsert(true).returnUpdated(true)
+        collection.findOneAndUpdate(model)
+
+        then:
+        def operation2 = executor.getWriteOperation() as FindAndUpdateOperation
+        operation2.isUpsert() == true
+        operation2.isReturnUpdated() == true
+    }
+
 }
