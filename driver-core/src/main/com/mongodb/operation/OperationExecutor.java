@@ -27,19 +27,19 @@ public interface OperationExecutor {
     /**
      * Execute the read operation with the given read preference.
      *
-     * @param operation the read operation
-     * @param readPreference the read preference
-     * @param <T> the operation return value type
-     * @return the result of executing the opereration
+     * @param operation the read operation.
+     * @param readPreference the read preference.
+     * @param <T> the operations result type.
+     * @return the result of executing the operation.
      */
     <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference);
 
     /**
      * Execute the write operation.
      *
-     * @param operation the write operation
-     * @param <T> the operation return value type
-     * @return the result of executing the opereration
+     * @param operation the write operation.
+     * @param <T> the operations result type.
+     * @return the result of executing the operation.
      */
     <T> T execute(final WriteOperation<T> operation);
 }

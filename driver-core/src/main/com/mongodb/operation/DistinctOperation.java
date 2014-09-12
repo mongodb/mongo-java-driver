@@ -50,8 +50,8 @@ public class DistinctOperation implements AsyncReadOperation<BsonArray>, ReadOpe
     /**
      * Construct an instance.
      *
-     * @param namespace the database and collection to run the query against
-     * @param fieldName the field that needs to be distinct
+     * @param namespace the database and collection namespace for the operation.
+     * @param fieldName the name of the field to return distinct values.
      */
     public DistinctOperation(final MongoNamespace namespace, final String fieldName) {
         this.namespace = notNull("namespace", namespace);

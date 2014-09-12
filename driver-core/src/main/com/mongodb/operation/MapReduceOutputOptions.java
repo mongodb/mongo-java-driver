@@ -40,7 +40,7 @@ public class MapReduceOutputOptions {
     private boolean nonAtomic;
 
     /**
-     * Constructs a new instance of the {@code MapReduceOutput}.
+     * Construct a new instance. of the {@code MapReduceOutput}.
      *
      * @param collectionName the name of the collection that you want the map-reduce operation to write its output.
      */
@@ -52,7 +52,7 @@ public class MapReduceOutputOptions {
     /**
      * Specify the name of the database that you want the map-reduce operation to write its output.
      *
-     * @param databaseName the name of the database.
+     * @param databaseName the name of the database for the operation.
      * @return the same {@code MapReduceOutput} instance as used for the method invocation for chaining
      */
     public MapReduceOutputOptions database(final String databaseName) {

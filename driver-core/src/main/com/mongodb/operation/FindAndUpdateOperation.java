@@ -43,7 +43,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * An operation that atomically finds and updates a single document.
  *
- * @param <T> The document type
+ * @param <T> the operations result type.
  * @since 3.0
  */
 public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
@@ -58,11 +58,11 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
     private boolean upsert = false;
 
     /**
-     * Construct a new instance
+     * Construct a new instance.
      *
-     * @param namespace the namespace to execute the query in
-     * @param decoder the decoder to decode the results with
-     * @param update the document containing update operators
+     * @param namespace the database and collection namespace for the operation.
+     * @param decoder the decoder for the result documents.
+     * @param update the document containing update operators.
      */
     public FindAndUpdateOperation(final MongoNamespace namespace, final Decoder<T> decoder, final BsonDocument update) {
         this.namespace = notNull("namespace", namespace);

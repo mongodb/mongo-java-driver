@@ -51,9 +51,9 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
     private final String userName;
 
     /**
-     * Construct a new instance
+     * Construct a new instance.
      *
-     * @param databaseName the name of the database to check for the user.
+     * @param databaseName the name of the database for the operation.
      * @param userName the name of the user to check if they exist.
      */
     public UserExistsOperation(final String databaseName, final String userName) {

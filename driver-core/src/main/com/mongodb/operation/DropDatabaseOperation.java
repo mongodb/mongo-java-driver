@@ -38,9 +38,9 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
     private final String databaseName;
 
     /**
-     * Constructs a new instance.
+     * Construct a new instance.
      *
-     * @param databaseName the database to be dropped.
+     * @param databaseName the name of the database for the operation.
      */
     public DropDatabaseOperation(final String databaseName) {
         this.databaseName = notNull("databaseName", databaseName);

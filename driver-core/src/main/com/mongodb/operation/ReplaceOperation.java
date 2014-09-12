@@ -39,10 +39,10 @@ public class ReplaceOperation extends BaseWriteOperation {
     /**
      * Construct an instance.
      *
-     * @param namespace the namespace
-     * @param ordered whether the inserts are ordered
-     * @param writeConcern the write concern to apply
-     * @param replaceRequests the list of replace requests
+     * @param namespace the database and collection namespace for the operation.
+     * @param ordered whether the requests are ordered.
+     * @param writeConcern the write concern for the operation.
+     * @param replaceRequests the list of replace requests.
      */
     public ReplaceOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                             final List<ReplaceRequest> replaceRequests) {

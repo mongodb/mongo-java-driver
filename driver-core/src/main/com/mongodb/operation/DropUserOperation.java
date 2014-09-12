@@ -48,9 +48,9 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
     private final String userName;
 
     /**
-     * Constructs a new instance.
+     * Construct a new instance.
      *
-     * @param databaseName the name of the database that contains the user to be dropped.
+     * @param databaseName the name of the database for the operation.
      * @param userName the name of the user to be dropped.
      */
     public DropUserOperation(final String databaseName, final String userName) {

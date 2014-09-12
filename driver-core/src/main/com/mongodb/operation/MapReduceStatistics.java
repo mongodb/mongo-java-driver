@@ -31,9 +31,9 @@ public class MapReduceStatistics {
     /**
      * Construct a new instance.
      *
-     * @param inputCount  the input count
-     * @param outputCount the output count
-     * @param emitCount   the emit count
+     * @param inputCount  the input count.
+     * @param outputCount the output count.
+     * @param emitCount   the emit count.
      * @param duration    the duration.
      */
     public MapReduceStatistics(final int inputCount, final int outputCount, final int emitCount, final int duration) {

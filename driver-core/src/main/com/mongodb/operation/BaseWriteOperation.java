@@ -63,9 +63,9 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
 
     /**
      * Construct an instance
-     * @param namespace the namespace
-     * @param ordered whether the writes are ordered
-     * @param writeConcern the write concern
+     * @param namespace the database and collection namespace for the operation.
+     * @param ordered whether the writes are ordered.
+     * @param writeConcern the write concern for the operation.
      */
     public BaseWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern) {
         this.ordered = ordered;

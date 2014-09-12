@@ -37,7 +37,7 @@ import static com.mongodb.operation.QueryOperationHelper.queryResultToListAsync;
  * An operation that gets the indexes that have been created on a collection.  For flexibility,
  * the type of each document returned is generic.
  *
- * @param <T> the document type for each index
+ * @param <T> the operations result type.
  *
  * @since 3.0
  */
@@ -48,8 +48,8 @@ public class GetIndexesOperation<T> implements AsyncReadOperation<List<T>>, Read
     /**
      * Construct a new instance.
      *
-     * @param namespace the namespace of the collection to get the indexes for.
-     * @param decoder the decoder for the indexes.
+     * @param namespace the database and collection namespace for the operation.
+     * @param decoder the decoder for the result documents.
      */
     public GetIndexesOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
