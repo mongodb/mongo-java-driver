@@ -178,5 +178,5 @@ public interface NewMongoCollection<T> {
      * @return
      * @mongodb.server.release 2.8
      */
-    Document explain(ExplainableModel explainableModel, ExplainVerbosity verbosity);
+    <D> Document explain(ExplainableModel<D> explainableModel, ExplainVerbosity verbosity);
 }
