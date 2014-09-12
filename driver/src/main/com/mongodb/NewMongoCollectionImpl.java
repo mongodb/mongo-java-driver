@@ -76,6 +76,7 @@ import org.mongodb.WriteResult;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
 import static java.lang.String.format;
@@ -354,13 +355,36 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
         return new QueryOperation<D>(namespace, decoder)
                .criteria(asBson(model.getCriteria()))
                .batchSize(model.getBatchSize())
-               .cursorFlags(model.getCursorFlags())
+               .cursorFlags(getCursorFlags(model))
                .skip(model.getSkip())
                .limit(model.getLimit())
                .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS)
                .modifiers(asBson(model.getModifiers()))
                .projection(asBson(model.getProjection()))
                .sort(asBson(model.getSort()));
+    }
+
+    private <F> EnumSet<CursorFlag> getCursorFlags(final FindModel<F> model) {
+        EnumSet<CursorFlag> cursorFlags = EnumSet.noneOf(CursorFlag.class);
+        if (model.isAwaitData()) {
+            cursorFlags.add(CursorFlag.AWAIT_DATA);
+        }
+        if (model.isExhaust()) {
+            cursorFlags.add(CursorFlag.EXHAUST);
+        }
+        if (model.isNoCursorTimeout()) {
+            cursorFlags.add(CursorFlag.NO_CURSOR_TIMEOUT);
+        }
+        if (model.isOplogReplay()) {
+            cursorFlags.add(CursorFlag.OPLOG_REPLAY);
+        }
+        if (model.isPartial()) {
+            cursorFlags.add(CursorFlag.PARTIAL);
+        }
+        if (model.isTailable()) {
+            cursorFlags.add(CursorFlag.TAILABLE);
+        }
+        return cursorFlags;
     }
 
     private <D> CountOperation createCountOperation(final CountModel<D> model) {

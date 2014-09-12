@@ -17,7 +17,6 @@
 package com.mongodb.async.rx.client;
 
 import com.mongodb.Block;
-import com.mongodb.CursorFlag;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
@@ -30,7 +29,6 @@ import org.mongodb.WriteResult;
 import rx.Observable;
 import rx.Subscriber;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import static com.mongodb.async.rx.client.OnSubscribeAdapter.FutureFunction;
@@ -108,12 +106,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         private MongoCollectionView(final Document filter) {
             wrappedView = wrapped.find(filter);
-        }
-
-        @Override
-        public MongoView<T> cursorFlags(final EnumSet<CursorFlag> flags) {
-            wrappedView.cursorFlags(flags);
-            return this;
         }
 
         @Override

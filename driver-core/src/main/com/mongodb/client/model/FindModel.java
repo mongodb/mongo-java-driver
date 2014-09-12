@@ -16,9 +16,6 @@
 
 package com.mongodb.client.model;
 
-import com.mongodb.CursorFlag;
-
-import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -29,6 +26,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/query-documents/ Find
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
  */
 public final class FindModel<D> implements ExplainableModel<D> {
     private D criteria;
@@ -36,10 +34,15 @@ public final class FindModel<D> implements ExplainableModel<D> {
     private int limit;
     private D modifiers;
     private D projection;
-    private EnumSet<CursorFlag> cursorFlags = EnumSet.noneOf(CursorFlag.class);
     private long maxTimeMS;
     private int skip;
     private D sort;
+    private boolean awaitData;
+    private boolean exhaust;
+    private boolean noCursorTimeout;
+    private boolean oplogReplay;
+    private boolean partial;
+    private boolean tailable;
 
     /**
      * Construct a new instance.
@@ -57,10 +60,15 @@ public final class FindModel<D> implements ExplainableModel<D> {
         limit = from.limit;
         modifiers = from.modifiers;
         projection = from.projection;
-        cursorFlags = from.cursorFlags;
         maxTimeMS = from.maxTimeMS;
         skip = from.skip;
         sort = from.sort;
+        awaitData = from.awaitData;
+        exhaust = from.exhaust;
+        noCursorTimeout = from.noCursorTimeout;
+        oplogReplay = from.oplogReplay;
+        partial = from.partial;
+        tailable = from.tailable;
     }
 
     /**
@@ -126,26 +134,6 @@ public final class FindModel<D> implements ExplainableModel<D> {
      */
     public FindModel<D> skip(final int skip) {
         this.skip = skip;
-        return this;
-    }
-
-    /**
-     * Gets the cursor flags.
-     *
-     * @return the cursor flags
-     */
-    public EnumSet<CursorFlag> getCursorFlags() {
-        return cursorFlags;
-    }
-
-    /**
-     * Sets the cursor flags.
-     *
-     * @param cursorFlags the cursor flags
-     * @return this
-     */
-    public FindModel<D> cursorFlags(final EnumSet<CursorFlag> cursorFlags) {
-        this.cursorFlags = cursorFlags;
         return this;
     }
 
@@ -262,6 +250,143 @@ public final class FindModel<D> implements ExplainableModel<D> {
      */
     public FindModel<D> sort(final D sort) {
         this.sort = sort;
+        return this;
+    }
+
+    /**
+     * Use with the tailable property. If there are no more matching documents, the server will block for a
+     * while rather than returning no documents.
+     *
+     * @return whether the cursor will wait for more documents that match the criteria
+     * @see FindModel#isTailable()
+     */
+    public boolean isAwaitData() {
+        return awaitData;
+    }
+
+    /**
+     * Use with the tailable property. If there are no more matching documents, the server will block for a
+     * while rather than returning no documents.
+     *
+     * @param awaitData whether the cursor will wait for more documents that match the criteria
+     * @return this
+     */
+    public FindModel<D> awaitData(final boolean awaitData) {
+        this.awaitData = awaitData;
+        return this;
+    }
+
+    /**
+     * If true, stream the data down full blast in multiple “more” packages, on the assumption that
+     * the client will fully read all data queried. Faster when you are pulling a lot of
+     * data and know you want to pull it all down, but note that it is not currently supported in sharded clusters.
+     *
+     * @return whether exhaust mode is enabled
+     */
+    public boolean isExhaust() {
+        return exhaust;
+    }
+
+    /**
+     * If true, stream the data down full blast in multiple “more” packages, on the assumption that
+     * the client will fully read all data queried. Faster when you are pulling a lot of
+     * data and know you want to pull it all down, but note that it is not currently supported in sharded clusters.
+     *
+     * @param exhaust whether exhaust mode is enabled
+     * @return this
+     */
+    public FindModel<D> exhaust(final boolean exhaust) {
+        this.exhaust = exhaust;
+        return this;
+    }
+
+    /**
+     * The server normally times out idle cursors after an inactivity period (10 minutes)
+     * to prevent excess memory use.  If true, that timeout is disabled.
+     *
+     * @return true if cursor timeout is disabled
+     */
+    public boolean isNoCursorTimeout() {
+        return noCursorTimeout;
+    }
+
+    /**
+     * The server normally times out idle cursors after an inactivity period (10 minutes)
+     * to prevent excess memory use. Set this option to prevent that.
+     *
+     * @param noCursorTimeout true if cursor timeout is disabled
+     * @return this
+     */
+    public FindModel<D> noCursorTimeout(final boolean noCursorTimeout) {
+        this.noCursorTimeout = noCursorTimeout;
+        return this;
+    }
+
+    /**
+     * Users should not set this under normal circumstances.
+     *
+     * @return if oplog replay is enabled
+     */
+    public boolean isOplogReplay() {
+        return oplogReplay;
+    }
+
+    /**
+     * Users should not set this under normal circumstances.
+     *
+     * @param oplogReplay if oplog replay is enabled
+     * @return this
+     */
+    public FindModel<D> oplogReplay(final boolean oplogReplay) {
+        this.oplogReplay = oplogReplay;
+        return this;
+    }
+
+    /**
+     * Get partial results from a sharded cluster if one or more shards are unreachable (instead of throwing an error).
+     *
+     * @return if partial results for sharded clusters is enabled
+     */
+    public boolean isPartial() {
+        return partial;
+    }
+
+    /**
+     * Get partial results from a sharded cluster if one or more shards are unreachable (instead of throwing an error).
+     *
+     * @param partial if partial results for sharded clusters is enabled
+     * @return this
+     */
+    public FindModel<D> partial(final boolean partial) {
+        this.partial = partial;
+        return this;
+    }
+
+    /**
+     * Tailable means the cursor is not closed when the last data is retrieved.
+     * Rather, the cursor marks the final documents’s position. You can resume
+     * using the cursor later, from where it was located, if more data were
+     * received. Like any “latent cursor”, the cursor may become invalid at
+     * some point -– for example if the final document it references is deleted.
+     *
+     * @return true if tailable is enabled
+     */
+    public boolean isTailable() {
+        return tailable;
+    }
+
+    /**
+     * Tailable means the cursor is not closed when the last data is retrieved.
+     * Rather, the cursor marks the final documents’s position. You can resume
+     * using the cursor later, from where it was located, if more data were
+     * received. Like any “latent cursor”, the cursor may become invalid at
+     * some point -– for example if the final document it references is deleted.
+     * *
+     * @param tailable if tailable is enabled
+     * @return this
+     */
+    public FindModel<D> tailable(final boolean tailable) {
+        this.tailable = tailable;
         return this;
     }
 }

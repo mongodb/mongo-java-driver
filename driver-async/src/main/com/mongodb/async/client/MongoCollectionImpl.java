@@ -17,7 +17,6 @@
 package com.mongodb.async.client;
 
 import com.mongodb.Block;
-import com.mongodb.CursorFlag;
 import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
@@ -49,7 +48,6 @@ import org.mongodb.WriteResult;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -148,12 +146,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         private final FindModel<BsonDocument> find = new FindModel<BsonDocument>();
         private final ReadPreference readPreference = options.getReadPreference();
         private boolean upsert;
-
-        @Override
-        public MongoView<T> cursorFlags(final EnumSet<CursorFlag> flags) {
-            find.cursorFlags(flags);
-            return this;
-        }
 
         @Override
         public MongoFuture<T> one() {
@@ -358,7 +350,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return new QueryOperation<T>(getNamespace(), getCodec())
                        .criteria(asBson(find.getCriteria()))
                        .batchSize(find.getBatchSize())
-                       .cursorFlags(find.getCursorFlags())
                        .skip(find.getSkip())
                        .limit(find.getLimit())
                        .maxTime(find.getMaxTime(MILLISECONDS), MILLISECONDS)
