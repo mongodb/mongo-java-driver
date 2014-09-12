@@ -40,21 +40,21 @@ import java.util.List;
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated.</li>
  * </ul>
- * <p>
- * The following options are supported (case insensitive):
- * <p>
- * Replica set configuration:
- * </p>
+ * <p>The following options are supported (case insensitive):</p>
+ * 
+ * <p>Replica set configuration:</p>
  * <ul>
  * <li>{@code replicaSet=name}: Implies that the hosts given are a seed list, and the driver will attempt to find
  * all members of the set.</li>
  * </ul>
+ * 
  * <p>Connection Configuration:</p>
  * <ul>
  * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
  * </ul>
+ * 
  * <p>Connection pool configuration:</p>
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
@@ -64,29 +64,31 @@ import java.util.List;
  * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
  * become available.</li>
  * </ul>
+ * 
  * <p>Write concern configuration:</p>
  * <ul>
- * <li>{@code safe=true|false}
- * <ul>
- * <li>{@code true}: the driver sends a getLastError command after every update to ensure that the update succeeded
+ *  <li>{@code safe=true|false}
+ *      <ul>
+ *          <li>{@code true}: the driver sends a getLastError command after every update to ensure that the update succeeded
  * (see also {@code w} and {@code wtimeoutMS}).</li>
- * <li>{@code false}: the driver does not send a getLastError command after every update.</li>
- * </ul>
- * </li>
- * <li>{@code w=wValue}
- * <ul>
- * <li>The driver adds { w : wValue } to the getLastError command. Implies {@code safe=true}.</li>
- * <li>wValue is typically a number, but can be any string in order to allow for specifications like
+ *          <li>{@code false}: the driver does not send a getLastError command after every update.</li>
+ *      </ul>
+ *  </li>
+ *  <li>{@code w=wValue}
+ *      <ul>
+ *          <li>The driver adds { w : wValue } to the getLastError command. Implies {@code safe=true}.</li>
+ *          <li>wValue is typically a number, but can be any string in order to allow for specifications like
  * {@code "majority"}</li>
+ *      </ul>
+ *  </li>
+ *  <li>{@code wtimeoutMS=ms}
+ *      <ul>
+ *          <li>The driver adds { wtimeout : ms } to the getlasterror command. Implies {@code safe=true}.</li>
+ *          <li>Used in combination with {@code w}</li>
+ *      </ul>
+ *  </li>
  * </ul>
- * </li>
- * <li>{@code wtimeoutMS=ms}
- * <ul>
- * <li>The driver adds { wtimeout : ms } to the getlasterror command. Implies {@code safe=true}.</li>
- * <li>Used in combination with {@code w}</li>
- * </ul>
- * </li>
- * </ul>
+ * 
  * <p>Read preference configuration:</p>
  * <ul>
  * <li>{@code slaveOk=true|false}: Whether a driver connected to a replica set will send reads to slaves/secondaries.</li>
@@ -126,10 +128,10 @@ import java.util.List;
  * </li>
  * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name..
  * </li>
- * <ul>
- * <p>
- * Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in
- * behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.
+ * </ul>
+ * 
+ * <p>Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in
+ * behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.</p>
  *
  * @mongodb.driver.manual reference/connection-string Connection String URI Format
  * @see MongoClientOptions for the default values for all options

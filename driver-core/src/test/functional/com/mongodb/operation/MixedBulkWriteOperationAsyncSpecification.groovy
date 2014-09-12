@@ -33,7 +33,6 @@ import org.junit.experimental.categories.Category
 import org.mongodb.BulkWriteException
 import org.mongodb.BulkWriteUpsert
 import org.mongodb.Document
-import spock.lang.Ignore
 import spock.lang.IgnoreIf
 
 import static ClusterFixture.getAsyncBinding
@@ -45,7 +44,6 @@ import static com.mongodb.operation.WriteRequest.Type.REMOVE
 import static com.mongodb.operation.WriteRequest.Type.UPDATE
 
 @Category(Async)
-@Ignore('Temporary Ignore, grasping at straws')
 class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpecification {
 
     def 'when no document with the same id exists, should insert the document'() {

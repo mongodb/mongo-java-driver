@@ -38,7 +38,7 @@ public final class NativeAuthenticationHelper {
 
     /**
      * Creates a hash of the given user name and password, which is the hex encoding of
-     * MD5( <userName> + ":mongo:" + <password>.
+     * {@code MD5( <userName> + ":mongo:" + <password> )}.
      *
      * @param userName the user name
      * @param password the password

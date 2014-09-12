@@ -21,7 +21,7 @@ import org.bson.BsonBinary;
 import java.util.UUID;
 
 /**
- * A transformer from Binary to UUID.
+ * A transformer from {@code BsonBinary} to {@code UUID}.
  *
  * @since 3.0
  */

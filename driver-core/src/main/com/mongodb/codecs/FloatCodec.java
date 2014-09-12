@@ -23,7 +23,9 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
 /**
- * Float codec
+ * Encodes and decodes {@code Float} objects.
+ *
+ * @since 3.0
  */
 public class FloatCodec implements Codec<Float> {
     @Override

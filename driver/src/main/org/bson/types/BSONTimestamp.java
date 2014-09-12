@@ -20,8 +20,8 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * This is used for internal increment values. For normal dates you should use java.util.Date <b>time</b> is seconds since epoch <b>inc<b>
- * is an ordinal.
+ * This is used for internal increment values. For normal dates you should use java.util.Date <em>time</em> is seconds since epoch
+ * <em>inc</em> is an ordinal.
  */
 public final class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
 

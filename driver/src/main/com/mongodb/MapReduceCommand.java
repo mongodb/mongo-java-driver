@@ -217,7 +217,7 @@ public class MapReduceCommand {
     /**
      * Sets the max execution time for this command, in the given time unit.
      *
-     * @param maxTime  the maximum execution time. A non-zero value requires a server version >= 2.6
+     * @param maxTime  the maximum execution time. A non-zero value requires a server version &gt;= 2.6
      * @param timeUnit the time unit that maxTime is specified in
      * @mongodb.server.release 2.6
      * @since 2.12.0

@@ -30,11 +30,20 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A globally unique identifier for objects. <p>Consists of 12 bytes, divided as follows: <table border="1"> <tr>
- * <td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td> <td>7</td><td>8</td><td>9</td><td>10</td><td>11</td> </tr> <tr>
- * <td colspan="4">time</td><td colspan="3">machine</td> <td colspan="2">pid</td><td colspan="3">inc</td> </tr> </table>
- * <p/>
- * Instances of this class are immutable.
+ * <p>A globally unique identifier for objects.</p>
+ * 
+ * <p>Consists of 12 bytes, divided as follows:</p> 
+ * <table border="1">
+ *     <caption>ObjectID layout</caption>
+ *     <tr>
+ *         <td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td> 
+ *     </tr> 
+ *     <tr>
+ *         <td colspan="4">time</td><td colspan="3">machine</td> <td colspan="2">pid</td><td colspan="3">inc</td> 
+ *     </tr> 
+ * </table>
+ * 
+ * <p>Instances of this class are immutable.</p>
  *
  * @mongodb.driver.manual core/object-id ObjectId
  */
@@ -124,15 +133,16 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     }
 
     /**
-     * Creates an ObjectId using time, machine and inc values.  The Java driver used to create all ObjectIds this way, but it does not match
+     * <p>Creates an ObjectId using time, machine and inc values.  The Java driver used to create all ObjectIds this way, 
+     * but it does not match
      * the <a href="http://docs.mongodb.org/manual/reference/object-id/">ObjectId specification</a>, which requires four values, not three.
      * This major release of the Java driver conforms to the specification, but still supports clients that are relying on the behavior of
-     * the previous major release by providing this explicit factory method that takes three parameters instead of four.
-     * <p/>
-     * Ordinary users of the driver will not need this method.  It's only for those that have written there own BSON decoders.
-     * <p/>
-     * NOTE: This will not break any application that use ObjectIds.  The 12-byte representation will be round-trippable from old to new
-     * driver releases.
+     * the previous major release by providing this explicit factory method that takes three parameters instead of four.</p>
+     * 
+     * <p>Ordinary users of the driver will not need this method.  It's only for those that have written there own BSON decoders.</p>
+     * 
+     * <p>NOTE: This will not break any application that use ObjectIds.  The 12-byte representation will be round-trippable from old to new
+     * driver releases.</p>
      *
      * @param time    time in seconds
      * @param machine machine ID

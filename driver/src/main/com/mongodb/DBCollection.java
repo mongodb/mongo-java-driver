@@ -1514,7 +1514,7 @@ public class DBCollection {
      * @param update      the modifications to apply
      * @param upsert      when true, operation creates a new document if the query returns no documents
      * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
-     *                    a server version >= 2.6
+     *                    a server version &gt;= 2.6
      * @param maxTimeUnit the unit that maxTime is specified in
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
@@ -1602,8 +1602,8 @@ public class DBCollection {
     }
 
     /**
-     * Sets the {@link ReadPreference} for this collection. Will be used as default for reads from this collection; overrides DB &
-     * Connection level settings. See the * documentation for {@link ReadPreference} for more information.
+     * Sets the {@link ReadPreference} for this collection. Will be used as default for reads from this collection; overrides DB and
+     * Connection level settings. See the documentation for {@link ReadPreference} for more information.
      *
      * @param preference ReadPreference to use
      */
@@ -1839,16 +1839,16 @@ public class DBCollection {
     }
 
     /**
-     * Creates a builder for an ordered bulk write operation, consisting of an ordered collection of write requests, which can be any
+     * <p>Creates a builder for an ordered bulk write operation, consisting of an ordered collection of write requests, which can be any
      * combination of inserts, updates, replaces, or removes. Write requests included in the bulk operations will be executed in order, and
-     * will halt on the first failure.
-     * <p/>
-     * Note: While this bulk write operation will execute on MongoDB 2.4 servers and below, the writes will be performed one at a time, as
-     * that is the only way to preserve the semantics of the value returned from execution or the exception thrown.
-     * <p/>
-     * Note: While a bulk write operation with a mix of inserts, updates, replaces, and removes is supported, the implementation will batch
-     * up consecutive requests of the same type and send them to the server one at a time.  For example, if a bulk write operation consists
-     * of 10 inserts followed by 5 updates, followed by 10 more inserts, it will result in three round trips to the server.
+     * will halt on the first failure.</p>
+     *
+     * <p>Note: While this bulk write operation will execute on MongoDB 2.4 servers and below, the writes will be performed one at a time,
+     * as that is the only way to preserve the semantics of the value returned from execution or the exception thrown.</p>
+     *
+     * <p>Note: While a bulk write operation with a mix of inserts, updates, replaces, and removes is supported, the implementation will
+     * batch up consecutive requests of the same type and send them to the server one at a time.  For example, if a bulk write operation
+     * consists of 10 inserts followed by 5 updates, followed by 10 more inserts, it will result in three round trips to the server.</p>
      *
      * @return the builder
      * @since 2.12
@@ -1858,12 +1858,12 @@ public class DBCollection {
     }
 
     /**
-     * Creates a builder for an unordered bulk operation, consisting of an unordered collection of write requests, which can be any
+     * <p>Creates a builder for an unordered bulk operation, consisting of an unordered collection of write requests, which can be any
      * combination of inserts, updates, replaces, or removes. Write requests included in the bulk operation will be executed in an undefined
-     * order, and all requests will be executed even if some fail.
-     * <p/>
-     * Note: While this bulk write operation will execute on MongoDB 2.4 servers and below, the writes will be performed one at a time, as
-     * that is the only way to preserve the semantics of the value returned from execution or the exception thrown.
+     * order, and all requests will be executed even if some fail.</p>
+     *
+     * <p>Note: While this bulk write operation will execute on MongoDB 2.4 servers and below, the writes will be performed one at a time,
+     * as that is the only way to preserve the semantics of the value returned from execution or the exception thrown.</p>
      *
      * @return the builder
      * @since 2.12

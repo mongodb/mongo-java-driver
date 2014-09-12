@@ -93,9 +93,9 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
     }
 
     /**
-     * Returns a JSON serialization of this object
-     * <p/>
-     * The output will look like: {@code  {"a":1, "b":["x","y","z"]} }
+     * <p>Returns a JSON serialization of this object</p>
+     * 
+     * <p>The output will look like: {@code  {"a":1, "b":["x","y","z"]} }</p>
      *
      * @return JSON serialization
      */

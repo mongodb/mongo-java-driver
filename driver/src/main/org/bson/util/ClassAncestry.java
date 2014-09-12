@@ -27,12 +27,11 @@ import static org.bson.util.CopyOnWriteMap.newHashMap;
 class ClassAncestry {
 
     /**
-     * getAncestry
-     * <p/>
-     * Walks superclass and interface graph, superclasses first, then interfaces, to compute an ancestry list. Supertypes are visited left
-     * to right. Duplicates are removed such that no Class will appear in the list before one of its subtypes.
-     * <p/>
-     * Does not need to be synchronized, races are harmless as the Class graph does not change at runtime.
+     * <p>Walks superclass and interface graph, superclasses first, then interfaces, to compute an ancestry list. Supertypes are visited 
+     * left
+     * to right. Duplicates are removed such that no Class will appear in the list before one of its subtypes.</p>
+     * 
+     * <p>Does not need to be synchronized, races are harmless as the Class graph does not change at runtime.</p>
      */
     public static <T> List<Class<?>> getAncestry(final Class<T> c) {
         ConcurrentMap<Class<?>, List<Class<?>>> cache = getClassAncestryCache();
@@ -46,7 +45,7 @@ class ClassAncestry {
     }
 
     /**
-     * computeAncestry, starting with children and going back to parents
+     * Starting with children and going back to parents
      */
     private static List<Class<?>> computeAncestry(final Class<?> c) {
         List<Class<?>> result = new ArrayList<Class<?>>();

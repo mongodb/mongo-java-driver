@@ -51,9 +51,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  *
  * <p>For example, to get an array of the 1000-1100th elements of a cursor, use</p>
  *
- * <pre>
+ * <pre>{@code
  *    List<DBObject> obj = collection.find(query).skip(1000).limit(100).toArray();
- * </pre>
+ * }</pre>
  *
  * @mongodb.driver.manual core/read-operations Read Operations
  */
@@ -403,7 +403,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * Set the maximum execution time for operations on this cursor.
      *
      * @param maxTime  the maximum time that the server will allow the query to run, before killing the operation. A non-zero value requires
-     *                 a server version >= 2.6
+     *                 a server version &gt;= 2.6
      * @param timeUnit the time unit
      * @return same DBCursor for chaining operations
      * @mongodb.server.release 2.6

@@ -431,7 +431,7 @@ public class DB {
      * Evaluates JavaScript functions on the database server. This is useful if you need to touch a lot of data lightly, in which case
      * network transfer could be a bottleneck.
      *
-     * @param code @{code String} representation of JavaScript function
+     * @param code {@code String} representation of JavaScript function
      * @param args arguments to pass to the JavaScript function
      * @return result of the command execution
      * @throws MongoException
@@ -445,7 +445,7 @@ public class DB {
      * Calls {@link DB#doEval(java.lang.String, java.lang.Object[]) }. If the command is successful, the "retval" field is extracted and
      * returned. Otherwise an exception is thrown.
      *
-     * @param code @{code String} representation of JavaScript function
+     * @param code {@code String} representation of JavaScript function
      * @param args arguments to pass to the JavaScript function
      * @return result of the execution
      * @throws MongoException

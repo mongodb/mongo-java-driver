@@ -28,23 +28,24 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Utility class to allow array {@code DBObject}s to be created. <p> Note: MongoDB will also create arrays from {@code java.util.List}s.
- * </p> <p>
- * <blockquote><pre>
+ * <p>Utility class to allow array {@code DBObject}s to be created. <p> Note: MongoDB will also create arrays from {@code java.util
+ * .List}s.</p>
+ * <pre>
  * BSONObject obj = new BasicBSONList();
  * obj.put( "0", value1 );
  * obj.put( "4", value2 );
  * obj.put( 2, value3 );
- * </pre></blockquote>
- * This simulates the array [ value1, null, value3, null, value2 ] by creating the {@code DBObject} {@code { "0" : value1, "1" : null, "2" :
- * value3, "3" : null, "4" : value2 }}. </p> <p> BasicBSONList only supports numeric keys.  Passing strings that cannot be converted to ints
- * will cause an IllegalArgumentException.
- * <blockquote><pre>
+ * </pre>
+ * <p>This simulates the array [ value1, null, value3, null, value2 ] by creating the {@code DBObject} {@code { "0" : value1, "1" : null, 
+ * "2" : value3, "3" : null, "4" : value2 }}. </p> 
+ * 
+ * <p>BasicBSONList only supports numeric keys.  Passing strings that cannot be converted to ints
+ * will cause an IllegalArgumentException.</p>
+ * <pre>
  * BasicBSONList list = new BasicBSONList();
  * list.put("1", "bar"); // ok
  * list.put("1E1", "bar"); // throws exception
- * </pre></blockquote>
- * </p>
+ * </pre>
  */
 @SuppressWarnings("rawtypes")
 public class BasicBSONList extends ArrayList<Object> implements BSONObject {

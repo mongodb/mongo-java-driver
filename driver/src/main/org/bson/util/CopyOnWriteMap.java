@@ -24,32 +24,31 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * A thread-safe variant of {@link java.util.Map} in which all mutative operations (the "destructive" operations described by {@link
- * java.util.Map} put, remove and so on) are implemented by making a fresh copy of the underlying map.
- * <p/>
- * This is ordinarily too costly, but may be <em>more</em> efficient than alternatives when traversal operations vastly out-number
+ * <p>A thread-safe variant of {@link java.util.Map} in which all mutative operations (the "destructive" operations described by {@link
+ * java.util.Map} put, remove and so on) are implemented by making a fresh copy of the underlying map.</p>
+ *
+ * <p>This is ordinarily too costly, but may be <em>more</em> efficient than alternatives when traversal operations vastly out-number
  * mutations, and is useful when you cannot or don't want to synchronize traversals, yet need to preclude interference among concurrent
  * threads. The "snapshot" style iterators on the collections returned by {@link #entrySet()}, {@link #keySet()} and {@link #values()} use a
  * reference to the internal map at the point that the iterator was created. This map never changes during the lifetime of the iterator, so
  * interference is impossible and the iterator is guaranteed not to throw <tt>ConcurrentModificationException</tt>. The iterators will not
  * reflect additions, removals, or changes to the list since the iterator was created. Removing elements via these iterators is not
  * supported. The mutable operations on these collections (remove, retain etc.) are supported but as with the {@link java.util.Map}
- * interface, add and addAll are not and throw {@link UnsupportedOperationException}.
- * <p/>
- * The actual copy is performed by an abstract {@link #copy(java.util.Map)} method. The method is responsible for the underlying Map
- * implementation (for instance a {@link java.util.HashMap}, {@link java.util.TreeMap}, {@link java.util.LinkedHashMap} etc.) and therefore
- * the semantics of what this map will cope with as far as null keys and values, iteration ordering etc. See the note below about suitable
- * candidates for underlying Map implementations
- * <p/>
- * There are supplied implementations for the common j.u.c {@link java.util.Map} implementations via the {@link CopyOnWriteMap} static
- * {@link Builder}.
- * <p/>
- * Collection views of the keys, values and entries are optionally {@link View.Type#LIVE live} or {@link View.Type#STABLE stable}. Live
+ * interface, add and addAll are not and throw {@link UnsupportedOperationException}.</p> <p>The actual copy is performed by an abstract
+ * {@link #copy(java.util.Map)} method. The method is responsible for the underlying Map implementation (for instance a {@link
+ * java.util.HashMap}, {@link java.util.TreeMap}, {@link java.util.LinkedHashMap} etc.) and therefore the semantics of what this map will
+ * cope with as far as null keys and values, iteration ordering etc. See the note below about suitable candidates for underlying Map
+ * implementations </p>
+ *
+ * <p>There are supplied implementations for the common j.u.c {@link java.util.Map} implementations via the {@link CopyOnWriteMap} static
+ * {@link Builder}. </p>
+ *
+ * <p>Collection views of the keys, values and entries are optionally {@link View.Type#LIVE live} or {@link View.Type#STABLE stable}. Live
  * views are modifiable will cause a copy if a modifying method is called on them. Methods on these will reflect the current state of the
  * collection, although iterators will be snapshot style. If the collection views are stable they are unmodifiable, and will be a snapshot
- * of the state of the map at the time the collection was asked for.
- * <p/>
- * <strong>Please note</strong> that the thread-safety guarantees are limited to the thread-safety of the non-mutative (non-destructive)
+ * of the state of the map at the time the collection was asked for. </p>
+ *
+ * <p><strong>Please note</strong> that the thread-safety guarantees are limited to the thread-safety of the non-mutative (non-destructive)
  * operations of the underlying map implementation. For instance some implementations such as {@link java.util.WeakHashMap} and {@link
  * java.util.LinkedHashMap} with access ordering are actually structurally modified by the {@link #get(Object)} method and are therefore not
  * suitable candidates as delegates for this class.
@@ -120,9 +119,8 @@ abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, 
     }
 
     /**
-     * Creates a new {@link CopyOnWriteMap} with an underlying {@link HashMap}.
-     * <p/>
-     * This map has {@link View.Type#STABLE stable} views.
+     * <p> Creates a new {@link CopyOnWriteMap} with an underlying {@link HashMap}. </p> This map has {@link View.Type#STABLE stable}
+     * views.
      */
     public static <K, V> CopyOnWriteMap<K, V> newHashMap() {
         Builder<K, V> builder = builder();
@@ -130,9 +128,8 @@ abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, 
     }
 
     /**
-     * Creates a new {@link CopyOnWriteMap} with an underlying {@link HashMap} using the supplied map as the initial values.
-     * <p/>
-     * This map has {@link View.Type#STABLE stable} views.
+     * <p> Creates a new {@link CopyOnWriteMap} with an underlying {@link HashMap} using the supplied map as the initial values. </p> This
+     * map has {@link View.Type#STABLE stable} views.
      */
     public static <K, V> CopyOnWriteMap<K, V> newHashMap(final Map<? extends K, ? extends V> map) {
         Builder<K, V> builder = builder();
@@ -140,10 +137,8 @@ abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, 
     }
 
     /**
-     * Creates a new {@link CopyOnWriteMap} with an underlying {@link java.util.LinkedHashMap}. Iterators for this map will be return
-     * elements in insertion order.
-     * <p/>
-     * This map has {@link View.Type#STABLE stable} views.
+     * <p>Creates a new {@link CopyOnWriteMap} with an underlying {@link java.util.LinkedHashMap}. Iterators for this map will be return
+     * elements in insertion order. </p> This map has {@link View.Type#STABLE stable} views.
      */
     public static <K, V> CopyOnWriteMap<K, V> newLinkedMap() {
         Builder<K, V> builder = builder();
@@ -151,10 +146,8 @@ abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, 
     }
 
     /**
-     * Creates a new {@link CopyOnWriteMap} with an underlying {@link java.util.LinkedHashMap} using the supplied map as the initial values.
-     * Iterators for this map will be return elements in insertion order.
-     * <p/>
-     * This map has {@link View.Type#STABLE stable} views.
+     * <p>Creates a new {@link CopyOnWriteMap} with an underlying {@link java.util.LinkedHashMap} using the supplied map as the initial
+     * values. Iterators for this map will be return elements in insertion order. </p> This map has {@link View.Type#STABLE stable} views.
      */
     public static <K, V> CopyOnWriteMap<K, V> newLinkedMap(final Map<? extends K, ? extends V> map) {
         Builder<K, V> builder = builder();

@@ -18,9 +18,7 @@ package com.mongodb.connection.netty
 
 import com.mongodb.connection.SimpleBufferProvider
 import spock.lang.Specification
-import spock.lang.Unroll
 
-@Unroll
 class NettyByteBufSpecification extends Specification {
     def 'should put a byte'() {
         given:

@@ -99,13 +99,11 @@ class JsonScanner {
 
     /**
      * Reads {@code RegularExpressionToken} from source. The following variants of lexemes are possible:
-     * <p/>
      * <pre>
      *  /pattern/
      *  /\(pattern\)/
      *  /pattern/ims
      * </pre>
-     * <p/>
      * Options can include 'i','m','x','s'
      *
      * @return The regular expression token.
@@ -196,7 +194,6 @@ class JsonScanner {
 
     /**
      * Reads number token from source. The following variants of lexemes are possible:
-     * <p/>
      * <pre>
      *  12
      *  123

@@ -23,6 +23,11 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
+/**
+ * Encodes and decodes byte arrays.
+ *
+ * @since 3.0
+ */
 public class ByteArrayCodec implements Codec<byte[]> {
     @Override
     public void encode(final BsonWriter writer, final byte[] value, final EncoderContext encoderContext) {

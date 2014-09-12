@@ -34,18 +34,18 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Implementation of GridFS - a specification for storing and retrieving files that exceed the BSON-document size limit of 16MB.
- * <p/>
- * Instead of storing a file in a single document, GridFS divides a file into parts, or chunks, and stores each of those chunks as a
+ * <p> Implementation of GridFS - a specification for storing and retrieving files that exceed the BSON-document size limit of 16MB. </p>
+ *
+ * <p>Instead of storing a file in a single document, GridFS divides a file into parts, or chunks, and stores each of those chunks as a
  * separate document. By default GridFS limits chunk size to 256k. GridFS uses two collections to store files. One collection stores the
- * file chunks, and the other stores file metadata.
- * <p/>
- * When you query a GridFS store for a file, the driver or client will reassemble the chunks as needed. You can perform range queries on
- * files stored through GridFS. You also can access information from arbitrary sections of files, which allows you to “skip” into the
- * middle of a video or audio file.
- * <p/>
- * GridFS is useful not only for storing files that exceed 16MB but also for storing any files for which you want access without having to
- * load the entire file into memory. For more information on the indications of GridFS, see MongoDB official documentation.
+ * file chunks, and the other stores file metadata. </p>
+ *
+ * <p>When you query a GridFS store for a file, the driver or client will reassemble the chunks as needed. You can perform range queries on
+ * files stored through GridFS. You also can access information from arbitrary sections of files, which allows you to “skip” into the middle
+ * of a video or audio file. </p>
+ *
+ * <p>GridFS is useful not only for storing files that exceed 16MB but also for storing any files for which you want access without having
+ * to load the entire file into memory. For more information on the indications of GridFS, see MongoDB official documentation.</p>
  *
  * @mongodb.driver.manual core/gridfs/ GridFS
  */
@@ -60,7 +60,7 @@ public class GridFS {
      * File's max chunk size
      *
      * @deprecated You can calculate max chunkSize with a similar formula {@link com.mongodb.MongoClient#getMaxBsonObjectSize()} - 500*1000.
-     *             Please ensure that you left enough space for metadata (500kb is enough).
+     * Please ensure that you left enough space for metadata (500kb is enough).
      */
     @Deprecated
     public static final long MAX_CHUNKSIZE = (long) (3.5 * 1000 * 1000);

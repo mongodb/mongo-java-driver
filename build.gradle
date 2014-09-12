@@ -100,7 +100,6 @@ configure(subprojects.findAll { it.name != 'util' }) {
     /* Testing */
     tasks.withType(Test) {
         maxParallelForks = 1
-        jvmArgs '-XX:MaxPermSize=1024m'
 
         systemProperties(
                 'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri', null),
@@ -137,6 +136,9 @@ configure(subprojects.findAll { it.name != 'util' }) {
         useJUnit {
             if (!project.buildingWith('rs.enabled')) {
                 excludeCategories 'category.ReplicaSet'
+            }
+            if (project.buildingWith('quicktest')) {
+                excludeCategories 'category.Slow'
             }
         }
 

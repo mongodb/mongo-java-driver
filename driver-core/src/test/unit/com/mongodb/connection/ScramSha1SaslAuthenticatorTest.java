@@ -16,12 +16,14 @@
 
 package com.mongodb.connection;
 
+import category.Slow;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
 import org.bson.io.InputBuffer;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 import java.util.List;
 
@@ -90,6 +92,7 @@ public class ScramSha1SaslAuthenticatorTest {
     }
 
     @Test
+    @Category(Slow.class)
     public void testSuccessfulAuthentication() {
         ResponseBuffers firstReply = MessageHelper.buildSuccessfulReply(
                 "{conversationId: 1, "

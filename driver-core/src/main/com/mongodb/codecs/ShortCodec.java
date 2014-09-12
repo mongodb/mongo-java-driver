@@ -22,6 +22,11 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
+/**
+ * Encodes and decodes {@code Short} objects.
+ *
+ * @since 3.0
+ */
 public class ShortCodec implements Codec<Short> {
     @Override
     public void encode(final BsonWriter writer, final Short value, final EncoderContext encoderContext) {

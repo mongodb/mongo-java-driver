@@ -49,7 +49,7 @@ public class PatternCodec implements Codec<Pattern> {
         return Pattern.class;
     }
 
-    public static String getOptionsAsString(final Pattern pattern) {
+    private static String getOptionsAsString(final Pattern pattern) {
         int flags = pattern.flags();
         StringBuilder buf = new StringBuilder();
 
@@ -67,7 +67,7 @@ public class PatternCodec implements Codec<Pattern> {
         return buf.toString();
     }
 
-    public static int getOptionsAsInt(final BsonRegularExpression regularExpression) {
+    private static int getOptionsAsInt(final BsonRegularExpression regularExpression) {
         int optionsInt = 0;
 
         String optionsString = regularExpression.getOptions();
@@ -82,12 +82,10 @@ public class PatternCodec implements Codec<Pattern> {
             RegexFlag flag = RegexFlag.getByCharacter(optionsString.charAt(i));
             if (flag != null) {
                 optionsInt |= flag.javaFlag;
-                //CHECKSTYLE:OFF
                 if (flag.unsupported != null) {
                     // TODO: deal with logging
                     // warnUnsupportedRegex( flag.unsupported );
                 }
-                //CHECKSTYLE:ON
             } else {
                 // TODO: throw a better exception here
                 throw new IllegalArgumentException("unrecognized flag [" + optionsString.charAt(i) + "] " + (int) optionsString.charAt(i));

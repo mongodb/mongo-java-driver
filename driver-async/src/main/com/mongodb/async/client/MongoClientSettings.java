@@ -203,9 +203,9 @@ public final class MongoClientSettings {
 
 
     /**
-     * The read preference to use for queries, map-reduce, aggregation, and count.
-     * <p/>
-     * Default is {@code ReadPreference.primary()}.
+     * <p>The read preference to use for queries, map-reduce, aggregation, and count. </p>
+     *
+     * <p>Default is {@code ReadPreference.primary()}.</p>
      *
      * @return the read preference
      * @see com.mongodb.ReadPreference#primary()
@@ -224,9 +224,9 @@ public final class MongoClientSettings {
     }
 
     /**
-     * The write concern to use.
-     * <p/>
-     * Default is {@code WriteConcern.ACKNOWLEDGED}.
+     * <p>The write concern to use. </p>
+     *
+     * <p>Default is {@code WriteConcern.ACKNOWLEDGED}.</p>
      *
      * @return the write concern
      * @see com.mongodb.WriteConcern#ACKNOWLEDGED

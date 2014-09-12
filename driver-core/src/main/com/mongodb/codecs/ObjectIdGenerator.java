@@ -18,6 +18,11 @@ package com.mongodb.codecs;
 
 import org.bson.types.ObjectId;
 
+/**
+ * Creates new {@code ObjectId} instances as IDs for MongoDB Documents.
+ *
+ * @since 3.0
+ */
 public class ObjectIdGenerator implements IdGenerator {
     @Override
     public Object generate() {

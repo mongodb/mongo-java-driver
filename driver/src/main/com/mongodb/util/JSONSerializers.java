@@ -49,11 +49,12 @@ public class JSONSerializers {
     }
 
     /**
-     * Returns an {@code ObjectSerializer} that mostly conforms to the strict JSON format defined in <a
-     * href="http://www.mongodb.org/display/DOCS/Mongo+Extended+JSON", but with a few differences to keep compatibility with previous
-     * versions of the driver.  Clients should generally prefer {@code getStrict} in preference to this method.
+     * Returns an {@code ObjectSerializer} that mostly conforms to the strict JSON format defined in 
+     * <a href="http://docs.mongodb.org/manual/reference/mongodb-extended-json/">extended JSON</a>, but with a few differences to keep
+     * compatibility with previous versions of the driver.  Clients should generally prefer {@code getStrict} in preference to this method.
      *
      * @return object serializer
+     * @mongodb.driver.manual reference/mongodb-extended-json/ MongoDB Extended JSON
      * @see #getStrict()
      */
     public static ObjectSerializer getLegacy() {
@@ -68,10 +69,11 @@ public class JSONSerializers {
     }
 
     /**
-     * Returns an {@code ObjectSerializer} that conforms to the strict JSON format defined in <a
-     * href="http://www.mongodb.org/display/DOCS/Mongo+Extended+JSON".
+     * Returns an {@code ObjectSerializer} that conforms to the strict JSON format defined in 
+     * <a href="http://docs.mongodb.org/manual/reference/mongodb-extended-json/">extended JSON</a>.
      *
      * @return object serializer
+     * @mongodb.driver.manual reference/mongodb-extended-json/ MongoDB Extended JSON
      */
     public static ObjectSerializer getStrict() {
 

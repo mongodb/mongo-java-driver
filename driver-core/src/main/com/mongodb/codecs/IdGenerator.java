@@ -16,6 +16,16 @@
 
 package com.mongodb.codecs;
 
+/**
+ * Classes that implement this interface define a way to create IDs for MongoDB documents.
+ *
+ * @since 3.0
+ */
 public interface IdGenerator {
+    /**
+     * Generates an ID for a MongoDB Document.
+     *
+     * @return any type of Object representing an ID.
+     */
     Object generate();
 }

@@ -1,6 +1,7 @@
 package com.mongodb.operation
 
 import category.Async
+import category.Slow
 import com.mongodb.Block
 import com.mongodb.MongoCursor
 import com.mongodb.OperationFunctionalSpecification
@@ -19,6 +20,7 @@ import static java.util.Arrays.asList
 import static org.junit.Assert.assertTrue
 
 @IgnoreIf( { isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) } )
+@Category(Slow)
 class ParallelScanOperationSpecification extends OperationFunctionalSpecification {
     Set<Integer> ids = [] as Set
 

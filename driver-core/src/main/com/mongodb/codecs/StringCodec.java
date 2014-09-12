@@ -22,6 +22,11 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
+/**
+ * Encodes and decodes {@code String} objects.
+ *
+ * @since 3.0
+ */
 public class StringCodec implements Codec<String> {
     @Override
     public void encode(final BsonWriter writer, final String value, final EncoderContext encoderContext) {

@@ -1004,7 +1004,7 @@ public class MongoClientOptions {
          *
          * @param heartbeatThreadCount the heartbeat thread count
          * @return {@code this}
-         * @throws IllegalArgumentException if heartbeatThreadCount < 1
+         * @throws IllegalArgumentException if heartbeatThreadCount &lt; 1
          * @see MongoClientOptions#getHeartbeatThreadCount()
          * @since 2.12.0
          */
@@ -1018,7 +1018,7 @@ public class MongoClientOptions {
          *
          * @param acceptableLatencyDifference the acceptable latency difference, in milliseconds
          * @return {@code this}
-         * @throws IllegalArgumentException if acceptableLatencyDifference < 0
+         * @throws IllegalArgumentException if acceptableLatencyDifference &lt; 0
          * @see com.mongodb.MongoClientOptions#getAcceptableLatencyDifference()
          * @since 2.12.0
          */

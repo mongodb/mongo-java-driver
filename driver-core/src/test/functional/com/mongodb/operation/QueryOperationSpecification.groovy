@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
+import category.Slow
 import com.mongodb.Block
 import com.mongodb.ClusterFixture
 import com.mongodb.ExplainVerbosity
@@ -250,6 +251,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @IgnoreIf({ isSharded() })
+    @Category(Slow)
     def 'should exhaust'() {
         (1..500).each {
             collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', it))
@@ -274,7 +276,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         count == 500
     }
 
-    @Category(Async)
+    @Category([Async, Slow])
     @IgnoreIf({ isSharded() })
     def 'should iterate asynchronously'() {
         given:
@@ -298,7 +300,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         count == 500
     }
 
-    @Category(Async)
+    @Category([Async, Slow])
     @IgnoreIf({ isSharded() })
     def 'should exhaust asynchronously'() {
         (1..500).each {

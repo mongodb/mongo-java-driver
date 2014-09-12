@@ -17,12 +17,14 @@
 package com.mongodb.operation
 
 import category.Async
+import category.Slow
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonSerializationException
 import org.bson.codecs.BsonDocumentCodec
+import org.junit.experimental.categories.Category
 import org.mongodb.Document
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
@@ -46,7 +48,7 @@ class ReplaceOperationSpecification extends OperationFunctionalSpecification {
         !result.isUpdateOfExisting()
     }
 
-    @org.junit.experimental.categories.Category(Async)
+    @Category(Async)
     def 'should return correct result asynchronously'() {
         given:
         def replacement = new ReplaceRequest(new BsonDocument(), new BsonDocument('_id', new BsonInt32(1)))
@@ -83,7 +85,7 @@ class ReplaceOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().find().get(0).keySet().iterator().next() == '_id'
     }
 
-    @org.junit.experimental.categories.Category(Async)
+    @Category(Async)
     def 'should replace a single document asynchronously'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
@@ -131,6 +133,7 @@ class ReplaceOperationSpecification extends OperationFunctionalSpecification {
         asList(replacement.getReplacement()) == getCollectionHelper().find(new BsonDocumentCodec())
     }
 
+    @Category(Slow)
     def 'should throw exception if document is too large'() {
         given:
         byte[] hugeByteArray = new byte[1024 * 1024 * 16];
@@ -144,6 +147,7 @@ class ReplaceOperationSpecification extends OperationFunctionalSpecification {
         thrown(BsonSerializationException)
     }
 
+    @Category(Slow)
     def 'should throw exception if document is too large asynchronously'() {
         given:
         byte[] hugeByteArray = new byte[1024 * 1024 * 16];
