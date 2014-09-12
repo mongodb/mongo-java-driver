@@ -16,7 +16,12 @@
 
 package org.bson;
 
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.EncoderContext;
+import org.bson.json.JsonWriter;
+
 import java.io.Serializable;
+import java.io.StringWriter;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -483,6 +488,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
      * BsonInt32.
      *
      * @param key the key
+     * @param defaultValue the default value
      * @return the value of the key as a BsonInt32
      * @throws org.bson.BsonInvalidOperationException if the document contains the key but the value is not of the expected type
      */
@@ -697,29 +703,33 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof BsonDocument)) {
             return false;
         }
 
         BsonDocument that = (BsonDocument) o;
 
-        if (!map.equals(that.map)) {
-            return false;
-        }
-
-        return true;
+        return entrySet().equals(that.entrySet());
     }
 
     @Override
     public int hashCode() {
-        return map.hashCode();
+        return entrySet().hashCode();
+    }
+
+    /**
+     * Gets a JSON representation of this document
+     * @return a JSON representation of this document
+     */
+    public String toJson() {
+        StringWriter writer = new StringWriter();
+        new BsonDocumentCodec().encode(new JsonWriter(writer), this, EncoderContext.builder().build());
+        return writer.toString();
     }
 
     @Override
     public String toString() {
-        return "BsonDocument{"
-               + "map=" + map
-               + '}';
+        return toJson();
     }
 
     private void throwIfKeyAbsent(final Object key) {
