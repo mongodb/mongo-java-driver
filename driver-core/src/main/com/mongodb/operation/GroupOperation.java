@@ -85,7 +85,7 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @param key the document containing the field or fields to group.
      * @return this
      */
-    public GroupOperation key(final BsonDocument key) {
+    public GroupOperation<T> key(final BsonDocument key) {
         this.key = key;
         return this;
     }
@@ -106,7 +106,7 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @param keyFunction the function that creates a "key object" for use as the grouping key.
      * @return this
      */
-    public GroupOperation keyFunction(final BsonJavaScript keyFunction) {
+    public GroupOperation<T> keyFunction(final BsonJavaScript keyFunction) {
         this.keyFunction = keyFunction;
         return this;
     }
@@ -144,7 +144,7 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @param criteria the selection criteria to determine which documents in the collection to process.
      * @return this
      */
-    public GroupOperation criteria(final BsonDocument criteria) {
+    public GroupOperation<T> criteria(final BsonDocument criteria) {
         this.criteria = criteria;
         return this;
     }
@@ -164,7 +164,7 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @param finalizeFunction the function that runs each item in the result set before returning the final value.
      * @return this
      */
-    public GroupOperation finalizeFunction(final BsonJavaScript finalizeFunction) {
+    public GroupOperation<T> finalizeFunction(final BsonJavaScript finalizeFunction) {
         this.finalizeFunction = finalizeFunction;
         return this;
     }
