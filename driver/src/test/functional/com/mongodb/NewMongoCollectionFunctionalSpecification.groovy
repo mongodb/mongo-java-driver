@@ -15,6 +15,7 @@
  */
 
 package com.mongodb
+
 import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.AggregateModel
 import com.mongodb.client.model.CountModel
@@ -55,14 +56,14 @@ class NewMongoCollectionFunctionalSpecification extends FunctionalSpecification 
 
     def 'should explain a find model'() {
         when:
-        def model = new FindModel<>().criteria(new Document('cold', true))
-                                     .batchSize(4)
-                                     .maxTime(1, TimeUnit.SECONDS)
-                                     .skip(5)
-                                     .limit(100)
-                                     .modifiers(new Document('$hint', 'i1'))
-                                     .projection(new Document('x', 1))
-                                     .sort(new Document('y', 1))
+        def model = new FindModel().criteria(new Document('cold', true))
+                                   .batchSize(4)
+                                   .maxTime(1, TimeUnit.SECONDS)
+                                   .skip(5)
+                                   .limit(100)
+                                   .modifiers(new Document('$hint', 'i1'))
+                                   .projection(new Document('x', 1))
+                                   .sort(new Document('y', 1))
         def result = collection.explain(model, ExplainVerbosity.ALL_PLANS_EXECUTIONS)
 
         then:
@@ -71,7 +72,7 @@ class NewMongoCollectionFunctionalSpecification extends FunctionalSpecification 
 
     def 'should explain an aggregate model'() {
         given:
-        def model = new AggregateModel<>([new Document('$match', new Document('job', 'plumber'))])
+        def model = new AggregateModel([new Document('$match', new Document('job', 'plumber'))])
                 .allowDiskUse(true)
                 .batchSize(10)
                 .maxTime(1, TimeUnit.SECONDS)
@@ -86,7 +87,7 @@ class NewMongoCollectionFunctionalSpecification extends FunctionalSpecification 
 
     def 'should explain a count model'() {
         when:
-        def result = collection.explain(new CountModel<>(), ExplainVerbosity.ALL_PLANS_EXECUTIONS)
+        def result = collection.explain(new CountModel(), ExplainVerbosity.ALL_PLANS_EXECUTIONS)
 
         then:
         result

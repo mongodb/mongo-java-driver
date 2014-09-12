@@ -109,12 +109,12 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public <D> MongoIterable<Document> aggregate(final AggregateModel<D> model) {
+    public MongoIterable<Document> aggregate(final AggregateModel model) {
         return aggregate(model, Document.class);
     }
 
     @Override
-    public <D, C> MongoIterable<C> aggregate(final AggregateModel<D> model, final Class<C> clazz) {
+    public <C> MongoIterable<C> aggregate(final AggregateModel model, final Class<C> clazz) {
         List<BsonDocument> aggregateList = createBsonDocumentList(model.getPipeline());
 
         BsonValue outCollection = aggregateList.size() == 0 ? null : aggregateList.get(aggregateList.size() - 1).get("$out");
@@ -135,12 +135,12 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public <D> long count(final CountModel<D> model) {
+    public long count(final CountModel model) {
         return operationExecutor.execute(createCountOperation(model), options.getReadPreference());
     }
 
     @Override
-    public <D> List<Object> distinct(final DistinctModel<D> model) {
+    public List<Object> distinct(final DistinctModel model) {
         DistinctOperation operation = new DistinctOperation(namespace, model.getFieldName())
                                       .criteria(asBson(model.getCriteria()))
                                       .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS);
@@ -157,28 +157,28 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public <F> MongoIterable<T> find(final FindModel<F> model) {
+    public MongoIterable<T> find(final FindModel model) {
         return find(model, clazz);
     }
 
     @Override
-    public <F, D> MongoIterable<D> find(final FindModel<F> model, final Class<D> clazz) {
-        return new OperationIterable<D>(createQueryOperation(model, options.getCodecRegistry().get(clazz)), options.getReadPreference());
+    public <C> MongoIterable<C> find(final FindModel model, final Class<C> clazz) {
+        return new OperationIterable<C>(createQueryOperation(model, options.getCodecRegistry().get(clazz)), options.getReadPreference());
     }
 
     @Override
-    public <D> BulkWriteResult bulkWrite(final BulkWriteModel<? extends T, D> model) {
+    public BulkWriteResult bulkWrite(final BulkWriteModel<? extends T> model) {
         List<WriteRequest> requests = new ArrayList<WriteRequest>();
-        for (WriteModel<? extends T, D> writeModel : model.getRequests()) {
+        for (WriteModel<? extends T> writeModel : model.getRequests()) {
             WriteRequest writeRequest;
             if (writeModel instanceof InsertOneModel) {
-                InsertOneModel<T, D> insertOneModel = (InsertOneModel<T, D>) writeModel;
+                InsertOneModel<T> insertOneModel = (InsertOneModel<T>) writeModel;
                 if (getCodec() instanceof CollectibleCodec) {
                     ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(insertOneModel.getDocument());
                 }
                 writeRequest = new InsertRequest(asBson(insertOneModel.getDocument()));
             } else if (writeModel instanceof ReplaceOneModel) {
-                ReplaceOneModel<T, D> replaceOneModel = (ReplaceOneModel<T, D>) writeModel;
+                ReplaceOneModel<T> replaceOneModel = (ReplaceOneModel<T>) writeModel;
                 writeRequest = new ReplaceRequest(asBson(replaceOneModel.getCriteria()), asBson(replaceOneModel.getReplacement()))
                                .upsert(replaceOneModel.isUpsert());
             } else if (writeModel instanceof UpdateOneModel) {
@@ -229,7 +229,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public <D> DeleteResult deleteOne(final DeleteOneModel<T, D> model) {
+    public DeleteResult deleteOne(final DeleteOneModel<T> model) {
         WriteResult writeResult = operationExecutor.execute(new RemoveOperation(namespace, true, options.getWriteConcern(),
                                                                                 asList(new RemoveRequest(asBson(model.getCriteria()))
                                                                                       .multi(false))));
@@ -237,7 +237,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public <D> DeleteResult deleteMany(final DeleteManyModel<T, D> model) {
+    public DeleteResult deleteMany(final DeleteManyModel<T> model) {
         WriteResult writeResult = operationExecutor.execute(new RemoveOperation(namespace, true, options.getWriteConcern(),
                                                                                 asList(new RemoveRequest(asBson(model.getCriteria()))
                                                                                        .multi(true))));
@@ -245,7 +245,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public <D> UpdateResult replaceOne(final ReplaceOneModel<T, D> model) {
+    public UpdateResult replaceOne(final ReplaceOneModel<T> model) {
         List<ReplaceRequest> requests = new ArrayList<ReplaceRequest>();
         requests.add(new ReplaceRequest(asBson(model.getCriteria()), asBson(model.getReplacement()))
                      .upsert(model.isUpsert()));
@@ -254,7 +254,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public <D> UpdateResult updateOne(final UpdateOneModel<T, D> model) {
+    public UpdateResult updateOne(final UpdateOneModel<T> model) {
         WriteResult writeResult = operationExecutor
                                   .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
                                                                asList(new UpdateRequest(asBson(model.getCriteria()),
@@ -265,7 +265,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public <D> UpdateResult updateMany(final UpdateManyModel<T, D> model) {
+    public UpdateResult updateMany(final UpdateManyModel<T> model) {
         WriteResult writeResult = operationExecutor
                                   .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
                                                                asList(new UpdateRequest(asBson(model.getCriteria()),
@@ -281,7 +281,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public <D> T findOneAndDelete(final FindOneAndDeleteModel<D> model) {
+    public T findOneAndDelete(final FindOneAndDeleteModel model) {
         FindAndRemoveOperation<T> operation = new FindAndRemoveOperation<T>(namespace, getCodec())
                                               .criteria(asBson(model.getCriteria()))
                                               .projection(asBson(model.getProjection()))
@@ -290,7 +290,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public <D> T findOneAndUpdate(final FindOneAndUpdateModel<D> model) {
+    public T findOneAndUpdate(final FindOneAndUpdateModel model) {
         FindAndUpdateOperation<T> operation = new FindAndUpdateOperation<T>(namespace, getCodec(), asBson(model.getUpdate()))
                                               .criteria(asBson(model.getCriteria()))
                                               .projection(asBson(model.getProjection()))
@@ -301,7 +301,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public <D> T findOneAndReplace(final FindOneAndReplaceModel<T, D> model) {
+    public T findOneAndReplace(final FindOneAndReplaceModel<T> model) {
         FindAndReplaceOperation<T> operation = new FindAndReplaceOperation<T>(namespace, getCodec(), asBson(model.getReplacement()))
                                                .criteria(asBson(model.getCriteria()))
                                                .projection(asBson(model.getProjection()))
@@ -312,33 +312,33 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public <D> Document explain(final ExplainableModel<D> explainableModel, final ExplainVerbosity verbosity) {
+    public Document explain(final ExplainableModel explainableModel, final ExplainVerbosity verbosity) {
         if (explainableModel instanceof AggregateModel) {
-            return explainAggregate((AggregateModel<D>) explainableModel, verbosity);
+            return explainAggregate((AggregateModel) explainableModel, verbosity);
         } else if (explainableModel instanceof FindModel) {
-            return explainFind((FindModel<D>) explainableModel, verbosity);
+            return explainFind((FindModel) explainableModel, verbosity);
         } else if (explainableModel instanceof CountModel) {
-            return explainCount((CountModel<D>) explainableModel, verbosity);
+            return explainCount((CountModel) explainableModel, verbosity);
         } else {
             throw new UnsupportedOperationException(format("Unsupported explainable model type %s", explainableModel.getClass()));
         }
     }
 
-    private <D> Document explainCount(final CountModel<D> countModel, final ExplainVerbosity verbosity) {
+    private Document explainCount(final CountModel countModel, final ExplainVerbosity verbosity) {
         CountOperation countOperation = createCountOperation(countModel);
         BsonDocument bsonDocument = operationExecutor.execute(countOperation.asExplainableOperation(verbosity),
                                                               options.getReadPreference());
         return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
     }
 
-    private <D> Document explainFind(final FindModel<D> findModel, final ExplainVerbosity verbosity) {
+    private Document explainFind(final FindModel findModel, final ExplainVerbosity verbosity) {
         QueryOperation<BsonDocument> queryOperation = createQueryOperation(findModel, new BsonDocumentCodec());
         BsonDocument bsonDocument = operationExecutor.execute(queryOperation.asExplainableOperation(verbosity),
                                                               options.getReadPreference());
         return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
     }
 
-    private <D> Document explainAggregate(final AggregateModel<D> aggregateModel, final ExplainVerbosity verbosity) {
+    private Document explainAggregate(final AggregateModel aggregateModel, final ExplainVerbosity verbosity) {
         AggregateOperation<BsonDocument> operation = createAggregateOperation(aggregateModel, new BsonDocumentCodec(),
                                                                               createBsonDocumentList(aggregateModel.getPipeline()));
         BsonDocument bsonDocument = operationExecutor.execute(operation.asExplainableOperation(verbosity), options.getReadPreference());
@@ -361,8 +361,8 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
         }
     }
 
-    private <F, D> QueryOperation<D> createQueryOperation(final FindModel<F> model, final Decoder<D> decoder) {
-        return new QueryOperation<D>(namespace, decoder)
+    private <C> QueryOperation<C> createQueryOperation(final FindModel model, final Decoder<C> decoder) {
+        return new QueryOperation<C>(namespace, decoder)
                .criteria(asBson(model.getCriteria()))
                .batchSize(model.getBatchSize())
                .cursorFlags(getCursorFlags(model))
@@ -374,7 +374,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
                .sort(asBson(model.getSort()));
     }
 
-    private <F> EnumSet<CursorFlag> getCursorFlags(final FindModel<F> model) {
+    private EnumSet<CursorFlag> getCursorFlags(final FindModel model) {
         EnumSet<CursorFlag> cursorFlags = EnumSet.noneOf(CursorFlag.class);
         if (model.isAwaitData()) {
             cursorFlags.add(CursorFlag.AWAIT_DATA);
@@ -397,7 +397,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
         return cursorFlags;
     }
 
-    private <D> CountOperation createCountOperation(final CountModel<D> model) {
+    private CountOperation createCountOperation(final CountModel model) {
         CountOperation operation = new CountOperation(namespace)
                                    .criteria(asBson(model.getCriteria()))
                                    .skip(model.getSkip())
@@ -411,7 +411,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
         return operation;
     }
 
-    private <D, C> AggregateOperation<C> createAggregateOperation(final AggregateModel<D> model, final Decoder<C> decoder,
+    private <C> AggregateOperation<C> createAggregateOperation(final AggregateModel model, final Decoder<C> decoder,
                                                                   final List<BsonDocument> aggregateList) {
         return new AggregateOperation<C>(namespace, aggregateList, decoder)
                .maxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS)

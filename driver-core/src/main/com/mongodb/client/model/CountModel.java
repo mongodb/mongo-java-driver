@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoObjectB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -9,7 +9,7 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WITHOUT WARRANTIES OR CONObjectITIONS OF ANY KINObject, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -23,13 +23,12 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * A model describing a count operation.
  *
- * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/count/ Count
  */
-public class CountModel<D> implements ExplainableModel<D> {
-    private D criteria;
-    private D hint;
+public class CountModel implements ExplainableModel {
+    private Object criteria;
+    private Object hint;
     private String hintString;
     private long limit;
     private long maxTimeMS;
@@ -41,7 +40,7 @@ public class CountModel<D> implements ExplainableModel<D> {
      * @return the query criteria
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public D getCriteria() {
+    public Object getCriteria() {
         return criteria;
     }
 
@@ -52,7 +51,7 @@ public class CountModel<D> implements ExplainableModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public CountModel<D> criteria(final D criteria) {
+    public CountModel criteria(final Object criteria) {
         this.criteria = criteria;
         return this;
     }
@@ -62,7 +61,7 @@ public class CountModel<D> implements ExplainableModel<D> {
      *
      * @return the hint, which should describe an existing
      */
-    public D getHint() {
+    public Object getHint() {
         return hint;
     }
 
@@ -81,7 +80,7 @@ public class CountModel<D> implements ExplainableModel<D> {
      * @param hint a document describing the index which should be used for this operation.
      * @return this
      */
-    public CountModel<D> hint(final D hint) {
+    public CountModel hint(final Object hint) {
         this.hint = hint;
         return this;
     }
@@ -92,7 +91,7 @@ public class CountModel<D> implements ExplainableModel<D> {
      * @param hint the name of the index which should be used for the operation
      * @return this
      */
-    public CountModel<D> hintString(final String hint) {
+    public CountModel hintString(final String hint) {
         this.hintString = hint;
         return this;
     }
@@ -114,7 +113,7 @@ public class CountModel<D> implements ExplainableModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
      */
-    public CountModel<D> limit(final long limit) {
+    public CountModel limit(final long limit) {
         this.limit = limit;
         return this;
     }
@@ -136,7 +135,7 @@ public class CountModel<D> implements ExplainableModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
      */
-    public CountModel<D> skip(final long skip) {
+    public CountModel skip(final long skip) {
         this.skip = skip;
         return this;
     }
@@ -159,7 +158,7 @@ public class CountModel<D> implements ExplainableModel<D> {
      * @param timeUnit the time unit, which may not be null
      * @return this
      */
-    public CountModel<D> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public CountModel maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;

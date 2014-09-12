@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright (c) 2008-2014 MongoObjectB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -9,7 +9,7 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WITHOUT WARRANTIES OR CONObjectITIONS OF ANY KINObject, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
@@ -21,12 +21,11 @@ package com.mongodb.client.model;
  *
  * @param <T> the type of document to update.  In practice this doesn't actually apply to updates but is here for consistency with the
  *           other write models
- * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/remove-documents/ Remove
  */
-public class DeleteOneModel<T, D> extends WriteModel<T, D> {
-    private final D criteria;
+public class DeleteOneModel<T> extends WriteModel<T> {
+    private final Object criteria;
 
     /**
      * Construct a new instance.
@@ -34,7 +33,7 @@ public class DeleteOneModel<T, D> extends WriteModel<T, D> {
      * @param criteria a document describing the query criteria, which may not be null. The criteria can be of any type for which a
      * {@code Codec} is registered
      */
-    public DeleteOneModel(final D criteria) {
+    public DeleteOneModel(final Object criteria) {
         this.criteria = criteria;
     }
 
@@ -43,7 +42,7 @@ public class DeleteOneModel<T, D> extends WriteModel<T, D> {
      *
      * @return the query criteria
      */
-    public D getCriteria() {
+    public Object getCriteria() {
         return criteria;
     }
 }

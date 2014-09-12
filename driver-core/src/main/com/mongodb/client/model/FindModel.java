@@ -23,20 +23,19 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * A model describing a find operation (also commonly referred to as a query).
  *
- * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/query-documents/ Find
  * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
  */
-public final class FindModel<D> implements ExplainableModel<D> {
-    private D criteria;
+public final class FindModel implements ExplainableModel {
+    private Object criteria;
     private int batchSize;
     private int limit;
-    private D modifiers;
-    private D projection;
+    private Object modifiers;
+    private Object projection;
     private long maxTimeMS;
     private int skip;
-    private D sort;
+    private Object sort;
     private boolean awaitData;
     private boolean exhaust;
     private boolean noCursorTimeout;
@@ -54,7 +53,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * Construct a new instance by making a shallow copy of the given model.
      * @param from model to copy
      */
-    public FindModel(final FindModel<D> from) {
+    public FindModel(final FindModel from) {
         criteria = from.criteria;
         batchSize = from.batchSize;
         limit = from.limit;
@@ -78,7 +77,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public FindModel<D> criteria(final D criteria) {
+    public FindModel criteria(final Object criteria) {
         this.criteria = criteria;
         return this;
     }
@@ -89,7 +88,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @return the query criteria
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public D getCriteria() {
+    public Object getCriteria() {
         return criteria;
     }
 
@@ -110,7 +109,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
      */
-    public FindModel<D> limit(final int limit) {
+    public FindModel limit(final int limit) {
         this.limit = limit;
         return this;
     }
@@ -132,7 +131,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
      */
-    public FindModel<D> skip(final int skip) {
+    public FindModel skip(final int skip) {
         this.skip = skip;
         return this;
     }
@@ -157,7 +156,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
-    public FindModel<D> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public FindModel maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
@@ -181,7 +180,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    public FindModel<D> batchSize(final int batchSize) {
+    public FindModel batchSize(final int batchSize) {
         this.batchSize = batchSize;
         return this;
     }
@@ -192,7 +191,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @return the query modifiers, which may be null
      * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
      */
-    public D getModifiers() {
+    public Object getModifiers() {
         return modifiers;
     }
 
@@ -203,7 +202,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
      */
-    public FindModel<D> modifiers(final D modifiers) {
+    public FindModel modifiers(final Object modifiers) {
         this.modifiers = modifiers;
         return this;
     }
@@ -214,7 +213,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @return the project document, which may be null
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
      */
-    public D getProjection() {
+    public Object getProjection() {
         return projection;
     }
 
@@ -225,7 +224,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
      */
-    public FindModel<D> projection(final D projection) {
+    public FindModel projection(final Object projection) {
         this.projection = projection;
         return this;
     }
@@ -237,7 +236,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @return a document describing the sort criteria
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public D getSort() {
+    public Object getSort() {
         return sort;
     }
 
@@ -248,7 +247,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public FindModel<D> sort(final D sort) {
+    public FindModel sort(final Object sort) {
         this.sort = sort;
         return this;
     }
@@ -271,7 +270,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @param awaitData whether the cursor will wait for more documents that match the criteria
      * @return this
      */
-    public FindModel<D> awaitData(final boolean awaitData) {
+    public FindModel awaitData(final boolean awaitData) {
         this.awaitData = awaitData;
         return this;
     }
@@ -295,7 +294,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @param exhaust whether exhaust mode is enabled
      * @return this
      */
-    public FindModel<D> exhaust(final boolean exhaust) {
+    public FindModel exhaust(final boolean exhaust) {
         this.exhaust = exhaust;
         return this;
     }
@@ -317,7 +316,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @param noCursorTimeout true if cursor timeout is disabled
      * @return this
      */
-    public FindModel<D> noCursorTimeout(final boolean noCursorTimeout) {
+    public FindModel noCursorTimeout(final boolean noCursorTimeout) {
         this.noCursorTimeout = noCursorTimeout;
         return this;
     }
@@ -337,7 +336,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @param oplogReplay if oplog replay is enabled
      * @return this
      */
-    public FindModel<D> oplogReplay(final boolean oplogReplay) {
+    public FindModel oplogReplay(final boolean oplogReplay) {
         this.oplogReplay = oplogReplay;
         return this;
     }
@@ -357,7 +356,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @param partial if partial results for sharded clusters is enabled
      * @return this
      */
-    public FindModel<D> partial(final boolean partial) {
+    public FindModel partial(final boolean partial) {
         this.partial = partial;
         return this;
     }
@@ -385,7 +384,7 @@ public final class FindModel<D> implements ExplainableModel<D> {
      * @param tailable if tailable is enabled
      * @return this
      */
-    public FindModel<D> tailable(final boolean tailable) {
+    public FindModel tailable(final boolean tailable) {
         this.tailable = tailable;
         return this;
     }

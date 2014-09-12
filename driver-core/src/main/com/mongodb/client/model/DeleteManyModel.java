@@ -23,12 +23,11 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @param <T> the type of document to update.  In practice this doesn't actually apply to updates but is here for consistency with the
  *           other write models
- * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/remove-documents/ Remove
  */
-public final class DeleteManyModel<T, D> extends WriteModel<T, D> {
-    private final D criteria;
+public final class DeleteManyModel<T> extends WriteModel<T> {
+    private final Object criteria;
 
     /**
      * Construct a new instance.
@@ -36,7 +35,7 @@ public final class DeleteManyModel<T, D> extends WriteModel<T, D> {
      * @param criteria a document describing the query criteria, which may not be null. The criteria can be of any type for which a
      * {@code Codec} is registered
      */
-    public DeleteManyModel(final D criteria) {
+    public DeleteManyModel(final Object criteria) {
         this.criteria = notNull("criteria", criteria);
     }
 
@@ -45,7 +44,7 @@ public final class DeleteManyModel<T, D> extends WriteModel<T, D> {
      *
      * @return the query criteria
      */
-    public D getCriteria() {
+    public Object getCriteria() {
         return criteria;
     }
 }

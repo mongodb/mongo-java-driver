@@ -22,12 +22,11 @@ import static com.mongodb.assertions.Assertions.notNull;
  * A model describing the replacement of at most one document that matches the query criteria.
  *
  * @param <T> the type of document to replace. This can be of any type for which a {@code Codec} is registered
- * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/modify-documents/#replace-the-document Replace
  */
-public final class ReplaceOneModel<T, D> extends WriteModel<T, D> {
-    private final D criteria;
+public final class ReplaceOneModel<T> extends WriteModel<T> {
+    private final Object criteria;
     private final T replacement;
     private boolean upsert;
 
@@ -38,7 +37,7 @@ public final class ReplaceOneModel<T, D> extends WriteModel<T, D> {
      * {@code Codec} is registered
      * @param replacement the replacement document
      */
-    public ReplaceOneModel(final D criteria, final T replacement) {
+    public ReplaceOneModel(final Object criteria, final T replacement) {
         this.criteria = notNull("criteria", criteria);
         this.replacement = notNull("replacement", replacement);
     }
@@ -48,7 +47,7 @@ public final class ReplaceOneModel<T, D> extends WriteModel<T, D> {
      *
      * @return the query criteria
      */
-    public D getCriteria() {
+    public Object getCriteria() {
         return criteria;
     }
 
@@ -76,7 +75,7 @@ public final class ReplaceOneModel<T, D> extends WriteModel<T, D> {
      * @param upsert true if a new document should be inserted if there are no matches to the query criteria
      * @return this
      */
-    public ReplaceOneModel<T, D> upsert(final boolean upsert) {
+    public ReplaceOneModel<T> upsert(final boolean upsert) {
         this.upsert = upsert;
         return this;
     }

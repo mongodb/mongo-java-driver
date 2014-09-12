@@ -70,7 +70,7 @@ public interface NewMongoCollection<T> {
      * @param model the model describing the count
      * @return the number of documents in the collection
      */
-    <D> long count(CountModel<D> model);
+     long count(CountModel model);
 
     /**
      * Gets the distinct values of the specified field name.
@@ -79,7 +79,7 @@ public interface NewMongoCollection<T> {
      * @return a non-null list of distict values
      * @mongodb.driver.manual manual/reference/command/distinct/ Distinct
      */
-    <D> List<Object> distinct(DistinctModel<D> model);
+     List<Object> distinct(DistinctModel model);
 
     /**
      * Finds documents according to the specified criteria.
@@ -88,7 +88,7 @@ public interface NewMongoCollection<T> {
      * @return an iterable containing the result of the find operation
      * @mongodb.driver.manual manual/tutorial/query-documents/ Find
      */
-    <D> MongoIterable<T> find(FindModel<D> model);
+     MongoIterable<T> find(FindModel model);
 
     /**
      * Finds documents according to the specified criteria.
@@ -98,7 +98,7 @@ public interface NewMongoCollection<T> {
      * @return an iterable containing the result of the find operation
      * @mongodb.driver.manual manual/tutorial/query-documents/ Find
      */
-    <D, C> MongoIterable<C> find(FindModel<D> model, Class<C> clazz);
+    <C> MongoIterable<C> find(FindModel model, Class<C> clazz);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.
@@ -108,7 +108,7 @@ public interface NewMongoCollection<T> {
      * @mongodb.driver.manual manual/aggregation/ Aggregation
      * @mongodb.server.release 2.2
      */
-    <D> MongoIterable<Document> aggregate(AggregateModel<D> model);
+     MongoIterable<Document> aggregate(AggregateModel model);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.
@@ -119,7 +119,7 @@ public interface NewMongoCollection<T> {
      * @mongodb.driver.manual manual/aggregation/ Aggregation
      * @mongodb.server.release 2.2
      */
-    <D, C> MongoIterable<C> aggregate(AggregateModel<D> model, Class<C> clazz);
+    <C> MongoIterable<C> aggregate(AggregateModel model, Class<C> clazz);
 
     /**
      *
@@ -128,7 +128,7 @@ public interface NewMongoCollection<T> {
      * @throws com.mongodb.MongoException
      * @return the result of the bulk write
      */
-    <D> BulkWriteResult bulkWrite(BulkWriteModel<? extends T, D> model);
+     BulkWriteResult bulkWrite(BulkWriteModel<? extends T> model);
 
     /**
      * Inserts the provided document. If the document is missing an identifier,
@@ -160,7 +160,7 @@ public interface NewMongoCollection<T> {
      * @return the result of the remove one operation
      * @throws com.mongodb.MongoException
      */
-    <D> DeleteResult deleteOne(DeleteOneModel<T, D> model);
+     DeleteResult deleteOne(DeleteOneModel<T> model);
 
     /**
      * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
@@ -169,7 +169,7 @@ public interface NewMongoCollection<T> {
      * @return the result of the remove many operation
      * @throws com.mongodb.MongoException
      */
-    <D> DeleteResult deleteMany(DeleteManyModel<T, D> model);
+     DeleteResult deleteMany(DeleteManyModel<T> model);
 
     /**
      * Replace a document in the collection according to the specified arguments.
@@ -178,7 +178,7 @@ public interface NewMongoCollection<T> {
      * @return the result of the replace one operation
      * @mongodb.driver.manual manual/tutorial/modify-documents/#replace-the-document Replace
      */
-    <D> UpdateResult replaceOne(ReplaceOneModel<T, D> model);
+     UpdateResult replaceOne(ReplaceOneModel<T> model);
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -188,7 +188,7 @@ public interface NewMongoCollection<T> {
      * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
      * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
      */
-    <D> UpdateResult updateOne(UpdateOneModel<T, D> model);
+     UpdateResult updateOne(UpdateOneModel<T> model);
 
     /**
      * Update all documents in the collection according to the specified arguments.
@@ -198,7 +198,7 @@ public interface NewMongoCollection<T> {
      * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
      * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
      */
-    <D> UpdateResult updateMany(UpdateManyModel<T, D> model);
+     UpdateResult updateMany(UpdateManyModel<T> model);
 
     /**
      * Atomically find a document and remove it.
@@ -206,7 +206,7 @@ public interface NewMongoCollection<T> {
      * @param model the model describing the find one and remove
      * @return the document that was removed.  If no documents matched the criteria, then null will be returned
      */
-    <D> T findOneAndDelete(FindOneAndDeleteModel<D> model);
+     T findOneAndDelete(FindOneAndDeleteModel model);
 
     /**
      * Atomically find a document and replace it.
@@ -216,7 +216,7 @@ public interface NewMongoCollection<T> {
      * this will either be the document as it was before the update or as it is after the update.  If no documents matched the criteria,
      * then null will be returned
      */
-    <D> T findOneAndReplace(FindOneAndReplaceModel<T, D> model);
+     T findOneAndReplace(FindOneAndReplaceModel<T> model);
 
     /**
      * Atomically find a document and update it.
@@ -226,7 +226,7 @@ public interface NewMongoCollection<T> {
      * this will either be the document as it was before the update or as it is after the update.  If no documents matched the criteria,
      * then null will be returned
      */
-    <D> T findOneAndUpdate(FindOneAndUpdateModel<D> model);
+     T findOneAndUpdate(FindOneAndUpdateModel model);
 
     /**
      * Explain the specified operation with the specified verbosity.
@@ -236,5 +236,5 @@ public interface NewMongoCollection<T> {
      * @return a document explaining how the server would perform the given operation
      * @mongodb.server.release 2.8
      */
-    <D> Document explain(ExplainableModel<D> explainableModel, ExplainVerbosity verbosity);
+     Document explain(ExplainableModel explainableModel, ExplainVerbosity verbosity);
 }

@@ -266,14 +266,14 @@ class NewMongoCollectionSpecification extends Specification {
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        def model = new FindModel<>().criteria(new Document('cold', true))
-                                     .batchSize(4)
-                                     .maxTime(1, TimeUnit.SECONDS)
-                                     .skip(5)
-                                     .limit(100)
-                                     .modifiers(new Document('$hint', 'i1'))
-                                     .projection(new Document('x', 1))
-                                     .sort(new Document('y', 1))
+        def model = new FindModel().criteria(new Document('cold', true))
+                                   .batchSize(4)
+                                   .maxTime(1, TimeUnit.SECONDS)
+                                   .skip(5)
+                                   .limit(100)
+                                   .modifiers(new Document('$hint', 'i1'))
+                                   .projection(new Document('x', 1))
+                                   .sort(new Document('y', 1))
 
         def result = collection.find(model).into([])
 
@@ -294,12 +294,12 @@ class NewMongoCollectionSpecification extends Specification {
         result == [document]
 
         when: 'all the boolean properties are enabled'
-        model = new FindModel<>().awaitData(true)
-                                 .exhaust(true)
-                                 .noCursorTimeout(true)
-                                 .partial(true)
-                                 .tailable(true)
-                                 .oplogReplay(true)
+        model = new FindModel().awaitData(true)
+                               .exhaust(true)
+                               .noCursorTimeout(true)
+                               .partial(true)
+                               .tailable(true)
+                               .oplogReplay(true)
 
         collection.find(model).into([])
 
@@ -314,11 +314,11 @@ class NewMongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([42L])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
-        def model = new CountModel<>().criteria(new Document('cold', true))
-                                      .maxTime(1, TimeUnit.SECONDS)
-                                      .skip(5)
-                                      .limit(100)
-                                      .hint(new Document('x', 1))
+        def model = new CountModel().criteria(new Document('cold', true))
+                                    .maxTime(1, TimeUnit.SECONDS)
+                                    .skip(5)
+                                    .limit(100)
+                                    .hint(new Document('x', 1))
 
         when:
         def result = collection.count(model)
@@ -339,7 +339,7 @@ class NewMongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([42L])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
-        def model = new CountModel<>().hintString('idx1')
+        def model = new CountModel().hintString('idx1')
 
         when:
         collection.count(model)
@@ -354,8 +354,8 @@ class NewMongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([new BsonArray(Arrays.asList(new BsonString('foo'), new BsonInt32(42)))])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
-        def model = new DistinctModel<>('fieldName1').criteria(new Document('cold', true))
-                                                     .maxTime(1, TimeUnit.SECONDS)
+        def model = new DistinctModel('fieldName1').criteria(new Document('cold', true))
+                                                   .maxTime(1, TimeUnit.SECONDS)
 
         when:
         def result = collection.distinct(model)
@@ -448,7 +448,7 @@ class NewMongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
-        def model = new AggregateModel<>([new Document('$match', new Document('job', 'plumber'))])
+        def model = new AggregateModel([new Document('$match', new Document('job', 'plumber'))])
                 .allowDiskUse(true)
                 .batchSize(10)
                 .maxTime(1, TimeUnit.SECONDS)
@@ -476,8 +476,8 @@ class NewMongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([null, cursor])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
-        def model = new AggregateModel<>([new Document('$match', new Document('job', 'plumber')),
-                                          new Document('$out', 'outCollection')])
+        def model = new AggregateModel([new Document('$match', new Document('job', 'plumber')),
+                                        new Document('$out', 'outCollection')])
                 .allowDiskUse(true)
                 .batchSize(10)
                 .maxTime(1, TimeUnit.SECONDS)
@@ -507,7 +507,7 @@ class NewMongoCollectionSpecification extends Specification {
         def returnedDocument = new Document('_id', 1).append('cold', true)
         def executor = new TestOperationExecutor([returnedDocument])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
-        def model = new FindOneAndDeleteModel<>(new Document('cold', true))
+        def model = new FindOneAndDeleteModel(new Document('cold', true))
                 .projection(new Document('field', 1))
                 .sort(new Document('sort', -1))
 
@@ -528,7 +528,7 @@ class NewMongoCollectionSpecification extends Specification {
         def returnedDocument = new Document('_id', 1).append('cold', true)
         def executor = new TestOperationExecutor([returnedDocument, returnedDocument])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
-        def model = new FindOneAndReplaceModel<>(new Document('cold', true), new Document('hot', false))
+        def model = new FindOneAndReplaceModel(new Document('cold', true), new Document('hot', false))
                 .projection(new Document('field', 1))
                 .sort(new Document('sort', -1))
 
@@ -561,7 +561,7 @@ class NewMongoCollectionSpecification extends Specification {
         def returnedDocument = new Document('_id', 1).append('cold', true)
         def executor = new TestOperationExecutor([returnedDocument, returnedDocument])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
-        def model = new FindOneAndUpdateModel<>(new Document('cold', true), new Document('hot', false))
+        def model = new FindOneAndUpdateModel(new Document('cold', true), new Document('hot', false))
                 .projection(new Document('field', 1))
                 .sort(new Document('sort', -1))
 
