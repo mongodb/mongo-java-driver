@@ -17,10 +17,12 @@
 package com.mongodb
 
 import com.mongodb.client.MongoCollectionOptions
+import com.mongodb.client.model.BulkWriteModel
 import com.mongodb.client.model.CountModel
 import com.mongodb.client.model.DistinctModel
 import com.mongodb.client.model.FindModel
 import com.mongodb.client.model.InsertManyModel
+import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.codecs.DocumentCodecProvider
 import com.mongodb.operation.CountOperation
@@ -227,6 +229,19 @@ class NewMongoCollectionSpecification extends Specification {
         operation.getMaxTime(TimeUnit.SECONDS) == 1
         executor.readPreference == secondary()
         result == ['foo', 42]
+    }
+
+    def 'bulk insert should generate _id'() {
+        given:
+        def executor = new TestOperationExecutor(new com.mongodb.protocol.AcknowledgedBulkWriteResult(1, 0, 0, 0, []))
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def document = new Document();
+
+        when:
+        collection.bulkWrite(new BulkWriteModel<>([new InsertOneModel<>(document)]))
+
+        then:
+        document.containsKey('_id')
     }
 
 }
