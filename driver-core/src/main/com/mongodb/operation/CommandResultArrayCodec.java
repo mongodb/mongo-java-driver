@@ -27,17 +27,17 @@ import org.bson.codecs.configuration.CodecRegistry;
 import static org.bson.BsonType.DOCUMENT;
 
 class CommandResultArrayCodec<T> extends BsonArrayCodec {
-    private final Decoder<T> payloadDecoder;
+    private final Decoder<T> decoder;
 
-    CommandResultArrayCodec(final CodecRegistry registry, final Decoder<T> payloadDecoder) {
+    CommandResultArrayCodec(final CodecRegistry registry, final Decoder<T> decoder) {
         super(registry);
-        this.payloadDecoder = payloadDecoder;
+        this.decoder = decoder;
     }
 
     @Override
     protected BsonValue readValue(final BsonReader reader, final DecoderContext decoderContext) {
         if (reader.getCurrentBsonType() == DOCUMENT) {
-            return new BsonDocumentWrapper<T>(payloadDecoder.decode(reader, decoderContext), null);
+            return new BsonDocumentWrapper<T>(decoder.decode(reader, decoderContext), null);
         } else {
             return super.readValue(reader, decoderContext);
         }

@@ -44,11 +44,17 @@ import static java.util.Arrays.asList;
  * @since 3.0
  */
 public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private final String database;
+    private final String databaseName;
     private final String userName;
 
-    public DropUserOperation(final String source, final String userName) {
-        this.database = notNull("source", source);
+    /**
+     * Constructs a new instance.
+     *
+     * @param databaseName the name of the database that contains the user to be dropped.
+     * @param userName the name of the user to be dropped.
+     */
+    public DropUserOperation(final String databaseName, final String userName) {
+        this.databaseName = notNull("databaseName", databaseName);
         this.userName = notNull("userName", userName);
     }
 
@@ -58,7 +64,7 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
             @Override
             public Void call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    executeWrappedCommandProtocol(database, getCommand(), connection);
+                    executeWrappedCommandProtocol(databaseName, getCommand(), connection);
                 } else {
                     getCollectionBasedProtocol().execute(connection);
                 }
@@ -73,7 +79,7 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
             @Override
             public MongoFuture<Void> call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    return executeWrappedCommandProtocolAsync(database, getCommand(), connection, new VoidTransformer<BsonDocument>());
+                    return executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, new VoidTransformer<BsonDocument>());
                 } else {
                     return executeProtocolAsync(getCollectionBasedProtocol(), connection, new VoidTransformer<WriteResult>());
                 }
@@ -82,7 +88,7 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
     }
 
     private DeleteProtocol getCollectionBasedProtocol() {
-        MongoNamespace namespace = new MongoNamespace(database, "system.users");
+        MongoNamespace namespace = new MongoNamespace(databaseName, "system.users");
         return new DeleteProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
                                   asList(new RemoveRequest(new BsonDocument("user", new BsonString(userName))))
         );

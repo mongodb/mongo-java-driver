@@ -39,8 +39,8 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  * @since 3.0
  */
 public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
-    private final MapReduce mapReduce;
     private final MongoNamespace namespace;
+    private final MapReduce mapReduce;
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute

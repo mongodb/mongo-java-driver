@@ -39,10 +39,10 @@ public class InsertOperation extends BaseWriteOperation {
     /**
      * Construct an instance.
      *
-     * @param namespace the namespace
-     * @param ordered whether the inserts are ordered
-     * @param writeConcern the write concern to apply
-     * @param insertRequests the list of inserts
+     * @param namespace the namespace.
+     * @param ordered whether the inserts are ordered.
+     * @param writeConcern the write concern to apply.
+     * @param insertRequests the list of inserts.
      */
     public InsertOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                            final List<InsertRequest> insertRequests) {
