@@ -21,6 +21,7 @@ package com.mongodb.client.model;
  *
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/explain/ Explain
+ * @param <D> the document type. This can be of any type for which a {@code Codec} is registered
  */
-public interface ExplainableModel {
+public interface ExplainableModel<D> {
 }
