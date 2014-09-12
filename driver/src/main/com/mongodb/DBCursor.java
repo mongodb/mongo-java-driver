@@ -723,9 +723,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Sets the factory that will create the appropriate {@code DBDecoder} for converting MongoDB documents to the Java objects in the
-     * collection. Instead of using custom decoders, consider constructing a {@link org.bson.codecs.configuration.CodecRegistry} containing
-     * {@link org.bson.codecs.Codec} implementations for the classes that need custom encoding and decoding.
+     * Sets the factory that will be used create a {@code DBDecoder} that will be used to decode BSON documents into DBObject instances.
      *
      * @param factory the DBDecoderFactory
      * @return {@code this} so calls can be chained
