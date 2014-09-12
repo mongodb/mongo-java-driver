@@ -23,7 +23,6 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
-import com.mongodb.operation.CreateCollectionOptions;
 import com.mongodb.operation.CreateUserOperation;
 import com.mongodb.operation.DropUserOperation;
 import com.mongodb.operation.QueryOperation;
@@ -269,18 +268,11 @@ public class DB {
      * @throws MongoException
      */
     public DBCollection createCollection(final String collectionName, final DBObject options) {
-        CreateCollectionOptions createOptions = toCreateCollectionOptions(collectionName, options);
-        CreateCollectionOperation operation = new CreateCollectionOperation(getName(), createOptions.getCollectionName())
-                                                   .capped(createOptions.isCapped())
-                                                   .sizeInBytes(createOptions.getSizeInBytes())
-                                                   .autoIndex(createOptions.isAutoIndex())
-                                                   .maxDocuments(createOptions.getMaxDocuments())
-                                                   .setUsePowerOf2Sizes(createOptions.isUsePowerOf2Sizes());
-        execute(operation);
+        execute(getCreateCollectionOperation(collectionName, options));
         return getCollection(collectionName);
     }
 
-    private CreateCollectionOptions toCreateCollectionOptions(final String collectionName, final DBObject options) {
+    private CreateCollectionOperation getCreateCollectionOperation(final String collectionName, final DBObject options) {
         if (options.get("size") != null && !(options.get("size") instanceof Number)) {
             throw new IllegalArgumentException("'size' should be Number");
         }
@@ -315,7 +307,12 @@ public class DB {
             usePowerOfTwoSizes = (Boolean) options.get("usePowerOfTwoSizes");
         }
 
-        return new CreateCollectionOptions(collectionName, capped, sizeInBytes, autoIndex, maxDocuments, usePowerOfTwoSizes);
+        return new CreateCollectionOperation(getName(), collectionName)
+                   .capped(capped)
+                   .sizeInBytes(sizeInBytes)
+                   .autoIndex(autoIndex)
+                   .maxDocuments(maxDocuments)
+                   .setUsePowerOf2Sizes(usePowerOfTwoSizes);
     }
 
     /**
