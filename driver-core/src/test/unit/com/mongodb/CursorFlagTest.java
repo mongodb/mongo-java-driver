@@ -26,16 +26,16 @@ public class CursorFlagTest {
     @Test
     public void testToSet() {
         assertEquals(EnumSet.noneOf(CursorFlag.class), CursorFlag.toSet(0));
-        assertEquals(EnumSet.of(CursorFlag.Tailable), CursorFlag.toSet(2));
-        assertEquals(EnumSet.of(CursorFlag.Tailable, CursorFlag.SLAVE_OK), CursorFlag.toSet(6));
+        assertEquals(EnumSet.of(CursorFlag.TAILABLE), CursorFlag.toSet(2));
+        assertEquals(EnumSet.of(CursorFlag.TAILABLE, CursorFlag.SLAVE_OK), CursorFlag.toSet(6));
         assertEquals(EnumSet.allOf(CursorFlag.class), CursorFlag.toSet(0xFE));
     }
 
     @Test
     public void testFromSet() {
         assertEquals(0, CursorFlag.fromSet(EnumSet.noneOf(CursorFlag.class)));
-        assertEquals(2, CursorFlag.fromSet(EnumSet.of(CursorFlag.Tailable)));
-        assertEquals(6, CursorFlag.fromSet(EnumSet.of(CursorFlag.Tailable, CursorFlag.SLAVE_OK)));
+        assertEquals(2, CursorFlag.fromSet(EnumSet.of(CursorFlag.TAILABLE)));
+        assertEquals(6, CursorFlag.fromSet(EnumSet.of(CursorFlag.TAILABLE, CursorFlag.SLAVE_OK)));
         assertEquals(0xFE, CursorFlag.fromSet(EnumSet.allOf(CursorFlag.class)));
     }
 }
