@@ -16,56 +16,42 @@
 
 package com.mongodb.client.model;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-/**
- * A model describing a distinct operation.
- *
- * @since 3.0
- * @mongodb.driver.manual manual/reference/command/distinct/ Distinct
- */
-public class DistinctModel<D> implements ExplainableModel {
-    private final String fieldName;
-    private D filter;
+public class AggregateModel<D> {
+    private final List<D> pipeline;
+    private Boolean allowDiskUse;
+    private Integer batchSize;
     private Long maxTimeMS;
+    private Boolean useCursor;
 
-    /**
-     * Construct a new instance.
-     *
-     * @param fieldName the non-null field name to get the distinct values of
-     */
-    public DistinctModel(final String fieldName) {
-        this.fieldName = notNull("fieldName", fieldName);
+    public AggregateModel(final List<D> pipeline) {
+        this.pipeline = pipeline;
     }
 
-    /**
-     * Gets the field name to get the distinct values of
-     * @return the field name, which may not be null
-     */
-    public String getFieldName() {
-        return fieldName;
+    public List<D> getPipeline() {
+        return pipeline;
     }
 
-    /**
-     * Set the query filter to apply.
-     *
-     * @param filter a document describing the query filter, which may be null
-     * @return this
-     */
-    public DistinctModel<D> filter(final D filter) {
-        this.filter = filter;
+    public Boolean getAllowDiskUse() {
+        return allowDiskUse;
+    }
+
+    public AggregateModel<D> allowDiskUse(final Boolean allowDiskUse) {
+        this.allowDiskUse = allowDiskUse;
         return this;
     }
 
-    /**
-     * Gets the query filter.
-     *
-     * @return the query filter
-     */
-    public D getFilter() {
-        return filter;
+    public Integer getBatchSize() {
+        return batchSize;
+    }
+
+    public AggregateModel<D> batchSize(final Integer batchSize) {
+        this.batchSize = batchSize;
+        return this;
     }
 
     /**
@@ -75,6 +61,9 @@ public class DistinctModel<D> implements ExplainableModel {
      * @return the maximum execution time in the given time unit
      */
     public Long getMaxTime(final TimeUnit timeUnit) {
+        if (maxTimeMS == null) {
+            return null;
+        }
         notNull("timeUnit", timeUnit);
         return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
     }
@@ -86,13 +75,22 @@ public class DistinctModel<D> implements ExplainableModel {
      * @param timeUnit the time unit, which may only be null if maxTime is
      * @return this
      */
-    public DistinctModel<D> maxTimeMS(final Long maxTime, final TimeUnit timeUnit) {
+    public AggregateModel<D> maxTimeMS(final Long maxTime, final TimeUnit timeUnit) {
         if (maxTime == null) {
             maxTimeMS = null;
         } else {
             notNull("timeUnit", timeUnit);
             this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         }
+        return this;
+    }
+
+    public Boolean getUseCursor() {
+        return useCursor;
+    }
+
+    public AggregateModel<D> useCursor(final Boolean useCursor) {
+        this.useCursor = useCursor;
         return this;
     }
 }

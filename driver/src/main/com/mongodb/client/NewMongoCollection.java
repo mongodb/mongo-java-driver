@@ -19,11 +19,15 @@ package com.mongodb.client;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.client.model.AggregateModel;
 import com.mongodb.client.model.BulkWriteModel;
 import com.mongodb.client.model.CountModel;
 import com.mongodb.client.model.DistinctModel;
 import com.mongodb.client.model.ExplainableModel;
 import com.mongodb.client.model.FindModel;
+import com.mongodb.client.model.FindOneAndRemoveModel;
+import com.mongodb.client.model.FindOneAndReplaceModel;
+import com.mongodb.client.model.FindOneAndUpdateModel;
 import com.mongodb.client.model.InsertManyModel;
 import com.mongodb.client.model.RemoveManyModel;
 import com.mongodb.client.model.RemoveOneModel;
@@ -75,13 +79,13 @@ public interface NewMongoCollection<T> {
      * @param model the model describing the find operation
      * @return an iterable containing the result of the find operation
      */
-    <F> MongoIterable<T> find(FindModel<F> model);
+    <D> MongoIterable<T> find(FindModel<D> model);
 
-    <F, D> MongoIterable<D> find(FindModel<F> model, Class<D> clazz);
+    <D, C> MongoIterable<C> find(FindModel<D> model, Class<C> clazz);
 
-    MongoIterable<Document> aggregate(List<?> pipeline);
+    <D> MongoIterable<Document> aggregate(AggregateModel<D> model);
 
-    <D> MongoIterable<D> aggregate(List<?> pipeline, Class<D> clazz);
+    <D, C> MongoIterable<C> aggregate(AggregateModel<D> model, Class<C> clazz);
 
     // WRITE
 
@@ -158,6 +162,11 @@ public interface NewMongoCollection<T> {
      */
     <D> UpdateResult updateMany(UpdateManyModel<T, D> model);
 
+    <D> T findOneAndRemove(FindOneAndRemoveModel<D> model);
+
+    <D> T findOneAndUpdate(FindOneAndUpdateModel<D> model);
+
+    <D> T findOneAndReplace(FindOneAndReplaceModel<T, D> model);
 
 
     // explain
