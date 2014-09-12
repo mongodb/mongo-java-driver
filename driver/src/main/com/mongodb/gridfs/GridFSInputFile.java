@@ -30,15 +30,12 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
 /**
- * This class represents a GridFS file to be written to the database Operations include: <ul> <li>Writing data obtained from an
- * InputStream</li> <li>Getting an OutputStream to stream the data out to</li> </ul>
- * This class represents a GridFS file to be written to the database Operations include:
+ * <p>This class represents a GridFS file to be written to the database. Operations include:</p>
+ * 
  * <ul>
  *     <li>Writing data obtained from an InputStream</li>
  *     <li>Getting an OutputStream to stream the data out to</li>
  * </ul>
- *
- * @author Eliot Horowitz and Guy K. Kloss
  */
 public class GridFSInputFile extends GridFSFile {
 

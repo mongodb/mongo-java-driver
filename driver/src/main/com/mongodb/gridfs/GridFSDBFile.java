@@ -30,7 +30,6 @@ import java.io.OutputStream;
  * This class enables retrieving a GridFS file metadata and content. Operations include: 
  * <ul>
  *     <li>Writing data to a file on disk or an OutputStream </li>
- *     <li>Getting each chunk as a byte array</li>
  *     <li>Creating an {@code InputStream} to stream the data into</li>
  * </ul>
  */
@@ -63,7 +62,6 @@ public class GridFSDBFile extends GridFSFile {
      * @throws IOException if there are problems writing to the {@code file}
      */
     public long writeTo(final File file) throws IOException {
-
         FileOutputStream out = null;
         try {
             out = new FileOutputStream(file);
@@ -90,14 +88,14 @@ public class GridFSDBFile extends GridFSFile {
         return length;
     }
 
-    private byte[] getChunk(final int i) {
+    private byte[] getChunk(final int chunkNumber) {
         if (fs == null) {
             throw new IllegalStateException("No GridFS instance defined!");
         }
 
-        DBObject chunk = fs.getChunksCollection().findOne(new BasicDBObject("files_id", id).append("n", i));
+        DBObject chunk = fs.getChunksCollection().findOne(new BasicDBObject("files_id", id).append("n", chunkNumber));
         if (chunk == null) {
-            throw new MongoException("Can't find a chunk!  file id: " + id + " chunk: " + i);
+            throw new MongoException("Can't find a chunk!  file id: " + id + " chunk: " + chunkNumber);
         }
 
         return (byte[]) chunk.get("data");
