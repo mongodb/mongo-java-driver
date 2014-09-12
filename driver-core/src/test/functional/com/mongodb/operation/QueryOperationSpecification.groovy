@@ -20,6 +20,7 @@ import category.Async
 import category.Slow
 import com.mongodb.Block
 import com.mongodb.ClusterFixture
+import com.mongodb.ExplainVerbosity
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
@@ -321,5 +322,29 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         count == 500
+    }
+
+    @Category(Async)
+    def 'should explain'() {
+        given:
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+
+        when:
+        BsonDocument result = queryOperation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER).execute(getBinding())
+
+        then:
+        result
+    }
+
+    def 'should explain asynchronously'() {
+        given:
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+
+        when:
+        BsonDocument result = queryOperation.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER).executeAsync(getAsyncBinding())
+                                            .get()
+
+        then:
+        result
     }
 }

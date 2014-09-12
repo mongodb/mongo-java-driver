@@ -16,7 +16,9 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.Block;
 import com.mongodb.CursorFlag;
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoCursor;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
@@ -34,8 +36,10 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.protocol.QueryProtocol;
 import com.mongodb.protocol.QueryResult;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
 import java.util.EnumSet;
@@ -70,7 +74,7 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * Construct a new instance.
      *
      * @param namespace the namespace to execute the query in
-     * @param decoder the decoder to decode the results with
+     * @param decoder   the decoder to decode the results with
      */
     public QueryOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
@@ -118,8 +122,7 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     }
 
     /**
-     * Gets the number of documents to return per batch.  Default to 0, which indicates that the server chooses an appropriate batch
-     * size.
+     * Gets the number of documents to return per batch.  Default to 0, which indicates that the server chooses an appropriate batch size.
      *
      * @return the batch size, which may be null
      * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
@@ -342,6 +345,73 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
                 return future;
             }
         });
+    }
+
+
+    /**
+     * Gets an operation whose execution explains this operation.
+     *
+     * @param explainVerbosity the explain verbosity
+     * @return a read operation that when executed will explain this operation
+     */
+    public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
+        final QueryOperation<BsonDocument> explainableQueryOperation = createExplainableQueryOperation();
+        return new ReadOperation<BsonDocument>() {
+            @Override
+            public BsonDocument execute(final ReadBinding binding) {
+                return explainableQueryOperation.execute(binding).next();
+            }
+        };
+    }
+
+    /**
+     * Gets an operation whose execution explains this operation.
+     *
+     * @param explainVerbosity the explain verbosity
+     * @return a read operation that when executed will explain this operation
+     */
+    public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
+        final QueryOperation<BsonDocument> explainableQueryOperation = createExplainableQueryOperation();
+        return new AsyncReadOperation<BsonDocument>() {
+            @Override
+            public MongoFuture<BsonDocument> executeAsync(final AsyncReadBinding binding) {
+                final SingleResultFuture<BsonDocument> retVal = new SingleResultFuture<BsonDocument>();
+                explainableQueryOperation.executeAsync(binding).register(new SingleResultCallback<MongoAsyncCursor<BsonDocument>>() {
+                    @Override
+                    public void onResult(final MongoAsyncCursor<BsonDocument> cursor, final MongoException e) {
+                        if (e != null) {
+                            retVal.init(null, e);
+                        } else {
+                            cursor.forEach(new Block<BsonDocument>() {
+                                @Override
+                                public void apply(final BsonDocument explainDocument) {
+                                    retVal.init(explainDocument, null);
+                                }
+                            });
+                        }
+                    }
+                });
+                return retVal;
+            }
+        };
+    }
+
+    private QueryOperation<BsonDocument> createExplainableQueryOperation() {
+        final QueryOperation<BsonDocument> explainQueryOperation = new QueryOperation<BsonDocument>(namespace, new BsonDocumentCodec());
+
+        BsonDocument explainModifiers = new BsonDocument();
+        if (modifiers != null) {
+            explainModifiers.putAll(modifiers);
+        }
+        explainModifiers.append("$explain", BsonBoolean.TRUE);
+
+        return explainQueryOperation.criteria(criteria)
+                             .projection(projection)
+                             .sort(sort)
+                             .skip(skip)
+                             .limit(limit)
+                             .modifiers(explainModifiers);
+
     }
 
     private QueryProtocol<T> asQueryProtocol(final ServerDescription serverDescription, final ReadPreference readPreference) {

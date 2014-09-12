@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;
 import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
@@ -50,9 +51,9 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * An operation that executes an aggregation query.
  *
  * @param <T> the type to deserialize the results to
- * @since 3.0
  * @mongodb.driver.manual manual/aggregation/ Aggregation
  * @mongodb.server.release 2.2
+ * @since 3.0
  */
 public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoCursor<T>> {
     private static final String RESULT = "result";
@@ -70,8 +71,8 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      * Construct a new instance.
      *
      * @param namespace the namespace of the collection to aggregate
-     * @param pipeline the pipeline of operators
-     * @param decoder the decoder to decode the result documents
+     * @param pipeline  the pipeline of operators
+     * @param decoder   the decoder to decode the result documents
      */
     public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
@@ -114,8 +115,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
     }
 
     /**
-     * Gets the number of documents to return per batch.  Default to 0, which indicates that the server chooses an appropriate batch
-     * size.
+     * Gets the number of documents to return per batch.  Default to 0, which indicates that the server chooses an appropriate batch size.
      *
      * @return the batch size, which may be null
      * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
@@ -163,8 +163,8 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
     }
 
     /**
-     * Gets whether the server should use a cursor to return results.  The default value is null, in which case
-     * a cursor will be used if the server supports it.
+     * Gets whether the server should use a cursor to return results.  The default value is null, in which case a cursor will be used if the
+     * server supports it.
      *
      * @return whether the server should use a cursor to return results
      * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
@@ -212,6 +212,30 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
                                                           binding, asyncTransformer(source, connection));
             }
         });
+    }
+
+    /**
+     * Gets an operation whose execution explains this operation.
+     *
+     * @param explainVerbosity the explain verbosity
+     * @return a read operation that when executed will explain this operation
+     */
+    public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
+        return new AggregateExplainOperation(namespace, pipeline)
+               .allowDiskUse(allowDiskUse)
+               .maxTime(maxTimeMS, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Gets an operation whose execution explains this operation.
+     *
+     * @param explainVerbosity the explain verbosity
+     * @return a read operation that when executed will explain this operation
+     */
+    public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
+        return new AggregateExplainOperation(namespace, pipeline)
+               .allowDiskUse(allowDiskUse)
+               .maxTime(maxTimeMS, TimeUnit.MILLISECONDS);
     }
 
     private boolean isInline(final Connection connection) {

@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
@@ -176,6 +177,33 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     public MongoFuture<Long> executeAsync(final AsyncReadBinding binding) {
         return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), asCommandDocument(),
                                                   new BsonDocumentCodec(), binding, transformer());
+    }
+
+
+    /**
+     * Gets an operation whose execution explains this operation.
+     *
+     * @param explainVerbosity the explain verbosity
+     * @return a read operation that when executed will explain this operation
+     */
+    public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
+        return createExplainableOperation(explainVerbosity);
+    }
+
+    /**
+     * Gets an operation whose execution explains this operation.
+     *
+     * @param explainVerbosity the explain verbosity
+     * @return a read operation that when executed will explain this operation
+     */
+    public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
+        return createExplainableOperation(explainVerbosity);
+    }
+
+    private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
+        return new CommandReadOperation<BsonDocument>(namespace.getDatabaseName(),
+                                                      ExplainHelper.asExplainCommand(asCommandDocument(), explainVerbosity),
+                                                      new BsonDocumentCodec());
     }
 
     private Function<BsonDocument, Long> transformer() {

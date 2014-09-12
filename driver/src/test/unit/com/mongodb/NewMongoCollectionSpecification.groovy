@@ -30,7 +30,6 @@ import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.codecs.DocumentCodecProvider
-import com.mongodb.operation.AggregateExplainOperation
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.CountOperation
@@ -308,87 +307,6 @@ class NewMongoCollectionSpecification extends Specification {
 
         executor.readPreference == secondary()
         result == [document]
-    }
-
-    def 'should explain an aggregate model'() {
-        given:
-        def explainResultDocument = new BsonDocument('explain', new BsonString('yeah, it works'))
-        def executor = new TestOperationExecutor([explainResultDocument])
-        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-        def model = new AggregateModel<>([new Document('$match', new Document('job', 'plumber'))])
-                .allowDiskUse(true)
-                .batchSize(10)
-                .maxTime(1, TimeUnit.SECONDS)
-                .useCursor(true)
-
-        when:
-        def result = collection.explain(model, ExplainVerbosity.ALL_PLANS_EXECUTIONS)
-
-        then:
-        def operation = executor.getReadOperation() as AggregateExplainOperation
-        operation != null
-        operation.pipeline == [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber')))]
-        operation.getMaxTime(TimeUnit.SECONDS) == 1
-        executor.readPreference == secondary()
-        result == new Document('explain', 'yeah, it works')
-    }
-
-    def 'should explain a find model with existing modifiers'() {
-        given:
-        def explainResultDocument = new Document('explain', 'yeah, it works')
-        def cursor = Stub(MongoCursor)
-        cursor.hasNext() >>> [true, false]
-        cursor.next() >> explainResultDocument
-        def executor = new TestOperationExecutor([cursor])
-        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-        when: 'the model already contains modifiers'
-        def model = new FindModel<>().criteria(new Document('cold', true))
-                                     .batchSize(4)
-                                     .cursorFlags(EnumSet.of(CursorFlag.PARTIAL, CursorFlag.NO_CURSOR_TIMEOUT))
-                                     .maxTime(1, TimeUnit.SECONDS)
-                                     .skip(5)
-                                     .limit(100)
-                                     .modifiers(new Document('$hint', 'i1'))
-                                     .projection(new Document('x', 1))
-                                     .sort(new Document('y', 1))
-        def result = collection.explain(model, ExplainVerbosity.ALL_PLANS_EXECUTIONS)
-
-        then: '$explain is added to the modifiers'
-        def operation = executor.getReadOperation() as QueryOperation
-        operation != null
-        operation.criteria == new BsonDocument('cold', BsonBoolean.TRUE)
-        operation.batchSize == 4
-        operation.cursorFlags == EnumSet.of(CursorFlag.PARTIAL, CursorFlag.NO_CURSOR_TIMEOUT)
-        operation.getMaxTime(TimeUnit.SECONDS) == 1
-        operation.skip == 5
-        operation.limit == 100
-        operation.modifiers == new BsonDocument('$hint', new BsonString('i1')).append('$explain', BsonBoolean.TRUE)
-        operation.projection == new BsonDocument('x', new BsonInt32(1))
-        operation.sort == new BsonDocument('y', new BsonInt32(1))
-        executor.readPreference == secondary()
-        result == explainResultDocument
-    }
-
-    def 'should explain a find model without existing modifiers'() {
-        given:
-        def explainResultDocument = new Document('explain', 'yeah, it works')
-        def cursor = Stub(MongoCursor)
-        cursor.hasNext() >>> [true, false]
-        cursor.next() >> explainResultDocument
-        def executor = new TestOperationExecutor([cursor])
-        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
-
-        when:
-        def result = collection.explain(new FindModel<>(), ExplainVerbosity.ALL_PLANS_EXECUTIONS)
-
-        then:
-        def operation2 = executor.getReadOperation() as QueryOperation
-        operation2 != null
-        operation2.modifiers == new BsonDocument('$explain', BsonBoolean.TRUE)
-        executor.readPreference == secondary()
-        result == explainResultDocument
     }
 
     def 'findOneAndRemove should use FindAndRemoveOperation correctly'() {

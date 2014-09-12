@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.ExplainVerbosity
 import com.mongodb.MongoException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
@@ -222,4 +223,33 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         then:
         notThrown(MongoException)
     }
+
+    @Category(Async)
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 6)) })
+    def 'should explain'() {
+        given:
+        def countOperation = new CountOperation(getNamespace())
+                .criteria(new BsonDocument('a', new BsonInt32(1)))
+
+        when:
+        BsonDocument result = countOperation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER).execute(getBinding())
+
+        then:
+        result.getNumber('ok').intValue() == 1
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 6)) })
+    def 'should explain asynchronously'() {
+        given:
+        def countOperation = new CountOperation(getNamespace())
+                .criteria(new BsonDocument('a', new BsonInt32(1)))
+
+        when:
+        BsonDocument result = countOperation.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER).executeAsync(getAsyncBinding())
+                                            .get()
+
+        then:
+        result.getNumber('ok').intValue() == 1
+    }
+
 }
