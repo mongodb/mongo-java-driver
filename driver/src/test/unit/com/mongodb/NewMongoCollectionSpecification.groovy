@@ -71,12 +71,10 @@ class NewMongoCollectionSpecification extends Specification {
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        def result = collection.insertOne(new Document('_id', 1))
+        collection.insertOne(new Document('_id', 1))
 
         then:
         executor.getWriteOperation() as InsertOperation
-        !result.insertedId
-        result.insertedCount == 1
     }
 
     def 'insert should add _id to document'() {
@@ -87,14 +85,12 @@ class NewMongoCollectionSpecification extends Specification {
 
         def document = new Document()
         when:
-        def result = collection.insertOne(document)
+        collection.insertOne(document)
 
         then:
         document.containsKey('_id')
         document.get('_id') instanceof ObjectId
         executor.getWriteOperation() as InsertOperation
-        !result.insertedId
-        result.insertedCount == 1
     }
 
     def 'insertMany should use InsertOperation properly'() {
@@ -103,12 +99,10 @@ class NewMongoCollectionSpecification extends Specification {
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        def result = collection.insertMany(new InsertManyModel<Document>([new Document('_id', 1), new Document('_id', 2)]));
+        collection.insertMany(new InsertManyModel<Document>([new Document('_id', 1), new Document('_id', 2)]));
 
         then:
         executor.getWriteOperation() as InsertOperation
-        !result.insertedIds
-        result.insertedCount == 2
     }
 
     def 'insertMany should add _id to documents'() {
@@ -118,7 +112,7 @@ class NewMongoCollectionSpecification extends Specification {
 
         def documents = [new Document(), new Document()]
         when:
-        def result = collection.insertMany(new InsertManyModel<Document>(documents));
+        collection.insertMany(new InsertManyModel<Document>(documents));
 
         then:
         documents[0].containsKey('_id')
@@ -126,8 +120,6 @@ class NewMongoCollectionSpecification extends Specification {
         documents[1].containsKey('_id')
         documents[1].get('_id') instanceof ObjectId
         executor.getWriteOperation() as InsertOperation
-        !result.insertedIds
-        result.insertedCount == 2
     }
 
     def 'replace should use ReplaceOperation properly'() {

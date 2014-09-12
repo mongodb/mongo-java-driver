@@ -36,8 +36,6 @@ import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.WriteModel;
-import com.mongodb.client.result.InsertManyResult;
-import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.RemoveResult;
 import com.mongodb.client.result.ReplaceOneResult;
 import com.mongodb.client.result.UpdateResult;
@@ -224,18 +222,17 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public InsertOneResult insertOne(final T document) {
+    public void insertOne(final T document) {
         if (getCodec() instanceof CollectibleCodec) {
             ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
         }
         List<InsertRequest> requests = new ArrayList<InsertRequest>();
         requests.add(new InsertRequest(asBson(document)));
         operationExecutor.execute(new InsertOperation(namespace, true, options.getWriteConcern(), requests));
-        return new InsertOneResult(null, 1); // TODO: insertedId
     }
 
     @Override
-    public InsertManyResult insertMany(final InsertManyModel<T> model) {
+    public void insertMany(final InsertManyModel<T> model) {
         List<InsertRequest> requests = new ArrayList<InsertRequest>();
         for (T document : model.getDocuments()) {
             if (getCodec() instanceof CollectibleCodec) {
@@ -244,7 +241,6 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
             requests.add(new InsertRequest(asBson(document)));
         }
         operationExecutor.execute(new InsertOperation(namespace, model.isOrdered(), options.getWriteConcern(), requests));
-        return new InsertManyResult(null, model.getDocuments().size()); // TODO: insertedId
     }
 
     @Override
