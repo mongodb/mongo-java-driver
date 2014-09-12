@@ -20,24 +20,50 @@ import org.bson.BsonDocument;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-public class RemoveRequest extends WriteRequest {
-    private final BsonDocument filter;
+/**
+ * A representation of a remove.
+ *
+ * @since 3.0
+ */
+public final class RemoveRequest extends WriteRequest {
+    private final BsonDocument criteria;
     private boolean isMulti = true;
 
-    public RemoveRequest(final BsonDocument filter) {
+    /**
+     * Construct a new instance.
+     *
+     * @param criteria the non-null query criteria
+     */
+    public RemoveRequest(final BsonDocument criteria) {
         super();
-        this.filter = notNull("filter", filter);
+        this.criteria = notNull("criteria", criteria);
     }
 
-    public BsonDocument getFilter() {
-        return filter;
+    /**
+     * Gets the query criteria.
+     *
+     * @return the criteria
+     */
+    public BsonDocument getCriteria() {
+        return criteria;
     }
 
+    /**
+     * Sets whether all documents matching the query criteria will be removed.
+     *
+     * @param isMulti true if all documents matching the query criteria will be removed
+     * @return this
+     */
     public RemoveRequest multi(final boolean isMulti) {
         this.isMulti = isMulti;
         return this;
     }
 
+    /**
+     * Gets whether all documents matching the query criteria will be removed.  The default is true.
+     *
+     * @return whether all documents matching the query criteria will be removed
+     */
     public boolean isMulti() {
         return isMulti;
     }

@@ -605,11 +605,11 @@ public class MixedBulkWriteOperation<T> implements AsyncWriteOperation<BulkWrite
                         if (baseUpdateRequest instanceof ReplaceRequest) {
                             ReplaceRequest<T> replaceRequest = (ReplaceRequest<T>) baseUpdateRequest;
                             update = new BsonDocumentWrapper<T>(replaceRequest.getReplacement(), encoder);
-                            filter = replaceRequest.getFilter();
+                            filter = replaceRequest.getCriteria();
                         } else {
                             UpdateRequest updateRequest = (UpdateRequest) baseUpdateRequest;
                             update = updateRequest.getUpdateOperations();
-                            filter = updateRequest.getFilter();
+                            filter = updateRequest.getCriteria();
                         }
 
                         if (update.containsKey("_id")) {

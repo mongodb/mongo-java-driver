@@ -20,27 +20,50 @@ import org.bson.BsonDocument;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ * A base class for a representation of an update.
+ *
+ * @since 3.0
+ */
 public abstract class BaseUpdateRequest extends WriteRequest {
-    private final BsonDocument filter;
+    private final BsonDocument criteria;
     private boolean isUpsert = false;
 
-    public BaseUpdateRequest(final BsonDocument filter) {
+    BaseUpdateRequest(final BsonDocument criteria) {
         super();
-        this.filter = notNull("filter", filter);
+        this.criteria = notNull("criteria", criteria);
     }
 
-    public BsonDocument getFilter() {
-        return filter;
+    /**
+     * Gets the query criteria for the update.
+     *
+     * @return the criteria
+     */
+    public BsonDocument getCriteria() {
+        return criteria;
     }
 
+    /**
+     * Gets whether this update will insert a new document if no documents match the criteria.  The default is false.
+     * @return whether this update will insert a new document if no documents match the criteria
+     */
     public boolean isUpsert() {
         return isUpsert;
     }
 
+    /**
+     * Sets whether this update will insert a new document if no documents match the criteria.
+     * @param isUpsert whether this update will insert a new document if no documents match the criteria
+     * @return this
+     */
     public BaseUpdateRequest upsert(final boolean isUpsert) {
         this.isUpsert = isUpsert;
         return this;
     }
 
+    /**
+     * Gets whether this update will update all documents matching the criteria.  The default is update-dependent.
+     * @return whether this update will update all documents matching the criteria
+     */
     public abstract boolean isMulti();
 }

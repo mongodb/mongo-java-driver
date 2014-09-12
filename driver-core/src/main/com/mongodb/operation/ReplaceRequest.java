@@ -20,14 +20,30 @@ import org.bson.BsonDocument;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-public class ReplaceRequest<T> extends BaseUpdateRequest {
+/**
+ * A representation of an update where the update is a document that completely replaces the existing document.
+ *
+ * @since 3.0
+ */
+public final class ReplaceRequest<T> extends BaseUpdateRequest {
     private final T replacement;
 
-    public ReplaceRequest(final BsonDocument filter, final T replacement) {
-        super(filter);
+    /**
+     * Construct an instance.
+     *
+     * @param criteria the non-null query criteria
+     * @param replacement the non-null replacement document
+     */
+    public ReplaceRequest(final BsonDocument criteria, final T replacement) {
+        super(criteria);
         this.replacement = notNull("replacement", replacement);
     }
 
+    /**
+     * Get the document to replace the existing one with.
+     *
+     * @return the replacement
+     */
     public T getReplacement() {
         return replacement;
     }
