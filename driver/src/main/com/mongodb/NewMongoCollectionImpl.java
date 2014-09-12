@@ -257,6 +257,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel updateOneModel = (UpdateOneModel) writeModel;
                 writeRequest = new UpdateRequest(asBson(updateOneModel.getCriteria()), asBson(updateOneModel.getUpdate()))
+                               .multi(false)
                                .upsert(updateOneModel.getOptions().isUpsert());
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel updateManyModel = (UpdateManyModel) writeModel;

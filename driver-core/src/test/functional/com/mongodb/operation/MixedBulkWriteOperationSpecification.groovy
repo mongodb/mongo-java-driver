@@ -122,7 +122,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true));
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
-                                                                new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))))],
+                                                                new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))))
+                                                      .multi(false)],
                                              ordered, ACKNOWLEDGED)
 
         when:
@@ -202,6 +203,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         def op = new MixedBulkWriteOperation(getNamespace(),
                                              [new UpdateRequest(new BsonDocument('x', BsonBoolean.TRUE),
                                                                 new BsonDocument('$set', new BsonDocument('y', new BsonInt32(1))))
+                                                      .multi(false)
                                                       .upsert(true)],
                                              ordered, ACKNOWLEDGED)
 
