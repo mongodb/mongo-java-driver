@@ -20,42 +20,45 @@ import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @SuppressWarnings("rawtypes")
 class TestOperationExecutor implements OperationExecutor {
 
-    private final Object response;
-    private ReadPreference readPreference;
-    private ReadOperation readOperation;
-    private WriteOperation writeOperation;
+    private final List<Object> responses;
+    private List<ReadPreference> readPreferences = new ArrayList<ReadPreference>();
+    private List<ReadOperation> readOperations = new ArrayList<ReadOperation>();
+    private List<WriteOperation> writeOperations = new ArrayList<WriteOperation>();
 
-    TestOperationExecutor(final Object response) {
-        this.response = response;
+    TestOperationExecutor(final List<Object> responses) {
+        this.responses = responses;
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-        this.readOperation = operation;
-        this.readPreference = readPreference;
-        return (T) response;
+        readOperations.add(operation);
+        readPreferences.add(readPreference);
+        return (T) responses.remove(0);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> T execute(final WriteOperation<T> operation) {
-        this.writeOperation = operation;
-        return (T) response;
+        writeOperations.add(operation);
+        return (T) responses.remove(0);
     }
 
     ReadOperation getReadOperation() {
-        return readOperation;
+        return readOperations.isEmpty() ? null : readOperations.remove(0);
     }
 
     ReadPreference getReadPreference() {
-        return readPreference;
+        return readPreferences.isEmpty() ? null : readPreferences.remove(0);
     }
 
     WriteOperation getWriteOperation() {
-       return writeOperation;
+       return writeOperations.isEmpty() ? null : writeOperations.remove(0);
     }
 }

@@ -24,10 +24,8 @@ import com.mongodb.protocol.message.CollectibleDocumentFieldNameValidator;
 import com.mongodb.protocol.message.MappedFieldNameValidator;
 import com.mongodb.protocol.message.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentWrapper;
 import org.bson.BsonString;
 import org.bson.FieldNameValidator;
-import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 
 import java.util.HashMap;

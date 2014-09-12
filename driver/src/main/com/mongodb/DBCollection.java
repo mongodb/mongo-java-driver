@@ -27,11 +27,8 @@ import com.mongodb.operation.CreateIndexesOperation;
 import com.mongodb.operation.DistinctOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropIndexOperation;
-import com.mongodb.operation.FindAndRemove;
 import com.mongodb.operation.FindAndRemoveOperation;
-import com.mongodb.operation.FindAndReplace;
 import com.mongodb.operation.FindAndReplaceOperation;
-import com.mongodb.operation.FindAndUpdate;
 import com.mongodb.operation.FindAndUpdateOperation;
 import com.mongodb.operation.GetIndexesOperation;
 import com.mongodb.operation.GroupOperation;
@@ -75,6 +72,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.AggregationOptions.OutputMode.CURSOR;
 import static com.mongodb.AggregationOptions.OutputMode.INLINE;
 import static com.mongodb.BulkWriteHelper.translateBulkWriteResult;
 import static com.mongodb.BulkWriteHelper.translateWriteRequestsToNew;
@@ -301,7 +299,8 @@ public class DBCollection {
         return dbEncoder != null ? new DBEncoderAdapter(dbEncoder) : objectCodec;
     }
 
-    private WriteResult insert(final List<InsertRequest> insertRequestList, final WriteConcern writeConcern, final boolean continueOnError) {
+    private WriteResult insert(final List<InsertRequest> insertRequestList, final WriteConcern writeConcern,
+                               final boolean continueOnError) {
         return executeWriteOperation(new InsertOperation(getNamespace(), !continueOnError, writeConcern, insertRequestList));
     }
 
@@ -1261,16 +1260,22 @@ public class DBCollection {
         BsonValue outCollection = stages.get(stages.size() - 1).get("$out");
 
         if (outCollection != null) {
-            execute(new AggregateToCollectionOperation(getNamespace(), stages, options.toNew()));
+            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), stages);
+            operation.setMaxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
+            operation.setAllowDiskUse(options.getAllowDiskUse());
+            execute(operation);
             if (returnCursorForOutCollection) {
                 return new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(), null, primary());
             } else {
                 return null;
             }
         } else {
-            MongoCursor<DBObject> cursor = execute(new AggregateOperation<DBObject>(getNamespace(), stages, objectCodec,
-                                                                                    options.toNew()),
-                                                   readPreference);
+            AggregateOperation<DBObject> operation = new AggregateOperation<DBObject>(getNamespace(), stages, objectCodec);
+            operation.setMaxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
+            operation.setAllowDiskUse(options.getAllowDiskUse());
+            operation.setBatchSize(options.getBatchSize());
+            operation.setUseCursor(options.getOutputMode() == CURSOR);
+            MongoCursor<DBObject> cursor = execute(operation, readPreference);
             return new MongoCursorAdapter(cursor);
         }
     }
@@ -1286,8 +1291,10 @@ public class DBCollection {
      * @mongodb.server.release 2.6
      */
     public CommandResult explainAggregate(final List<DBObject> pipeline, final AggregationOptions options) {
-        return new CommandResult(execute(new AggregateExplainOperation(getNamespace(), preparePipeline(pipeline), options.toNew()),
-                                         primaryPreferred()));
+        AggregateExplainOperation operation = new AggregateExplainOperation(getNamespace(), preparePipeline(pipeline));
+        operation.setMaxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
+        operation.setAllowDiskUse(options.getAllowDiskUse());
+        return new CommandResult(execute(operation, primaryPreferred()));
     }
 
     @SuppressWarnings("unchecked")

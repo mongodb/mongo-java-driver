@@ -43,13 +43,11 @@ import com.mongodb.client.result.ReplaceOneResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.operation.AggregateOperation;
+import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.DistinctOperation;
-import com.mongodb.operation.FindAndRemove;
 import com.mongodb.operation.FindAndRemoveOperation;
-import com.mongodb.operation.FindAndReplace;
 import com.mongodb.operation.FindAndReplaceOperation;
-import com.mongodb.operation.FindAndUpdate;
 import com.mongodb.operation.FindAndUpdateOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
@@ -119,9 +117,27 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
         for (D obj : model.getPipeline()) {
             aggregateList.add(asBson(obj));
         }
-        return new OperationIterable<C>(new AggregateOperation<C>(namespace, aggregateList, options.getCodecRegistry().get(clazz),
-                                                                  com.mongodb.operation.AggregationOptions.builder().build()),
-                                        options.getReadPreference());
+
+        BsonValue outCollection = aggregateList.size() == 0 ? null : aggregateList.get(aggregateList.size() - 1).get("$out");
+
+        if (outCollection != null) {
+            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList);
+            operation.setMaxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS);
+            operation.setAllowDiskUse(model.getAllowDiskUse());
+            operationExecutor.execute(operation);
+            return new OperationIterable<C>(new QueryOperation<C>(new MongoNamespace(namespace.getDatabaseName(),
+                                                                                     outCollection.asString().getValue()),
+                                                                  options.getCodecRegistry().get(clazz)),
+                                            options.getReadPreference());
+        } else {
+            AggregateOperation<C> operation = new AggregateOperation<C>(namespace, aggregateList, options.getCodecRegistry().get(clazz));
+            operation.setMaxTime(model.getMaxTime(MILLISECONDS), MILLISECONDS);
+            operation.setAllowDiskUse(model.getAllowDiskUse());
+            operation.setBatchSize(model.getBatchSize());
+            operation.setUseCursor(model.getUseCursor());
+
+            return new OperationIterable<C>(operation, options.getReadPreference());
+        }
     }
 
     @Override
@@ -335,7 +351,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
         }
     }
 
-    private class OperationIterable<D> implements MongoIterable<D> {
+    private final class OperationIterable<D> implements MongoIterable<D> {
         private final ReadOperation<MongoCursor<D>> operation;
         private final ReadPreference readPreference;
 

@@ -27,13 +27,9 @@ import com.mongodb.client.model.FindModel;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.operation.AggregateOperation;
-import com.mongodb.operation.AggregationOptions;
 import com.mongodb.operation.CountOperation;
-import com.mongodb.operation.FindAndRemove;
 import com.mongodb.operation.FindAndRemoveOperation;
-import com.mongodb.operation.FindAndReplace;
 import com.mongodb.operation.FindAndReplaceOperation;
-import com.mongodb.operation.FindAndUpdate;
 import com.mongodb.operation.FindAndUpdateOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
@@ -590,8 +586,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         @SuppressWarnings("unchecked")
         public MongoCursor<T> iterator() {
-            return execute(new AggregateOperation<T>(getNamespace(), pipeline, getCodec(), AggregationOptions.builder().build()),
-                           options.getReadPreference());
+            return execute(new AggregateOperation<T>(getNamespace(), pipeline, getCodec()), options.getReadPreference());
         }
 
         @Override

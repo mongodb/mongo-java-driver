@@ -17,6 +17,7 @@
 package com.mongodb
 
 import com.mongodb.client.MongoCollectionOptions
+import com.mongodb.client.model.AggregateModel
 import com.mongodb.client.model.BulkWriteModel
 import com.mongodb.client.model.CountModel
 import com.mongodb.client.model.DistinctModel
@@ -24,7 +25,10 @@ import com.mongodb.client.model.FindModel
 import com.mongodb.client.model.InsertManyModel
 import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.ReplaceOneModel
+import com.mongodb.codecs.DocumentCodec
 import com.mongodb.codecs.DocumentCodecProvider
+import com.mongodb.operation.AggregateOperation
+import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.DistinctOperation
 import com.mongodb.operation.InsertOperation
@@ -56,7 +60,7 @@ class NewMongoCollectionSpecification extends Specification {
 
     def 'insertOne should use InsertOperation properly'() {
         given:
-        def executor = new TestOperationExecutor(new AcknowledgedWriteResult(1, false, null))
+        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
@@ -70,7 +74,7 @@ class NewMongoCollectionSpecification extends Specification {
 
     def 'insert should add _id to document'() {
         given:
-        def executor = new TestOperationExecutor(new AcknowledgedWriteResult(1, false, null))
+        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
 
@@ -88,7 +92,7 @@ class NewMongoCollectionSpecification extends Specification {
 
     def 'insertMany should use InsertOperation properly'() {
         given:
-        def executor = new TestOperationExecutor(new AcknowledgedWriteResult(2, false, null))
+        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(2, false, null)])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
@@ -102,7 +106,7 @@ class NewMongoCollectionSpecification extends Specification {
 
     def 'insertMany should add _id to documents'() {
         given:
-        def executor = new TestOperationExecutor(new AcknowledgedWriteResult(2, false, null))
+        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(2, false, null)])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         def documents = [new Document(), new Document()]
@@ -121,7 +125,7 @@ class NewMongoCollectionSpecification extends Specification {
 
     def 'replace should use ReplaceOperation properly'() {
         given:
-        def executor = new TestOperationExecutor(new AcknowledgedWriteResult(1, false, null))
+        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
@@ -141,7 +145,7 @@ class NewMongoCollectionSpecification extends Specification {
         def cursor = Stub(MongoCursor)
         cursor.hasNext() >>> [true, false]
         cursor.next() >> document
-        def executor = new TestOperationExecutor(cursor)
+        def executor = new TestOperationExecutor([cursor])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         def model = new FindModel<>().criteria(new Document('cold', true))
@@ -174,7 +178,7 @@ class NewMongoCollectionSpecification extends Specification {
 
     def 'count should use CountOperation properly'() {
         given:
-        def executor = new TestOperationExecutor(42L)
+        def executor = new TestOperationExecutor([42L])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         def model = new CountModel<>().criteria(new Document('cold', true))
@@ -199,7 +203,7 @@ class NewMongoCollectionSpecification extends Specification {
 
     def 'count should use CountOperation properly with hint string'() {
         given:
-        def executor = new TestOperationExecutor(42L)
+        def executor = new TestOperationExecutor([42L])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         def model = new CountModel<>().hintString('idx1')
@@ -214,7 +218,7 @@ class NewMongoCollectionSpecification extends Specification {
 
     def 'distinct should use DistinctOperation properly'() {
         given:
-        def executor = new TestOperationExecutor(new BsonArray(Arrays.asList(new BsonString('foo'), new BsonInt32(42))))
+        def executor = new TestOperationExecutor([new BsonArray(Arrays.asList(new BsonString('foo'), new BsonInt32(42)))])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         def model = new DistinctModel<>('fieldName1').criteria(new Document('cold', true))
@@ -233,7 +237,7 @@ class NewMongoCollectionSpecification extends Specification {
 
     def 'bulk insert should generate _id'() {
         given:
-        def executor = new TestOperationExecutor(new com.mongodb.protocol.AcknowledgedBulkWriteResult(1, 0, 0, 0, []))
+        def executor = new TestOperationExecutor([new com.mongodb.protocol.AcknowledgedBulkWriteResult(1, 0, 0, 0, [])])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
         def document = new Document();
 
@@ -244,4 +248,66 @@ class NewMongoCollectionSpecification extends Specification {
         document.containsKey('_id')
     }
 
+    def 'aggregate should use AggregationOperation properly'() {
+        given:
+        def document = new Document('_id', 1)
+        def cursor = Stub(MongoCursor)
+        cursor.hasNext() >>> [true, false]
+        cursor.next() >> document
+        def executor = new TestOperationExecutor([cursor])
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        def model = new AggregateModel<>([new Document('$match', new Document('job', 'plumber'))])
+                .allowDiskUse(true)
+                .batchSize(10)
+                .maxTime(1, TimeUnit.SECONDS)
+                .useCursor(true)
+
+        when:
+        def result = collection.aggregate(model).into([])
+
+        then:
+        def operation = executor.getReadOperation() as AggregateOperation
+        operation.pipeline == [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber')))]
+        operation.batchSize == 10
+        operation.getMaxTime(TimeUnit.SECONDS) == 1
+        operation.useCursor
+        executor.readPreference == secondary()
+        result == [document]
+    }
+
+    def 'aggregate should use AggregationToCollectionOperation properly'() {
+        given:
+        def document = new Document('_id', 1)
+        def cursor = Stub(MongoCursor)
+        cursor.hasNext() >>> [true, false]
+        cursor.next() >> document
+        def executor = new TestOperationExecutor([null, cursor])
+        collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        def model = new AggregateModel<>([new Document('$match', new Document('job', 'plumber')),
+                                          new Document('$out', 'outCollection')])
+                .allowDiskUse(true)
+                .batchSize(10)
+                .maxTime(1, TimeUnit.SECONDS)
+                .useCursor(true)
+
+        when:
+        def result = collection.aggregate(model).into([])
+
+        then:
+        def aggregateToCollectionOperation = executor.getWriteOperation() as AggregateToCollectionOperation
+        aggregateToCollectionOperation != null
+        aggregateToCollectionOperation.pipeline == [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
+                               new BsonDocument('$out', new BsonString('outCollection'))]
+        aggregateToCollectionOperation.getMaxTime(TimeUnit.SECONDS) == 1
+
+        def queryOperation = executor.getReadOperation() as QueryOperation
+        queryOperation != null
+        queryOperation.namespace == new MongoNamespace(namespace.getDatabaseName(), 'outCollection')
+        queryOperation.decoder instanceof DocumentCodec
+
+        executor.readPreference == secondary()
+        result == [document]
+    }
 }

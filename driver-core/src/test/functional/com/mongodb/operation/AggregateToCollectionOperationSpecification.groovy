@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.client.test.CollectionHelper
@@ -27,10 +28,13 @@ import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
+import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class AggregateToCollectionOperationSpecification extends OperationFunctionalSpecification {
 
@@ -46,7 +50,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
 
     def 'should not accept an empty pipeline'() {
         when:
-        new AggregateToCollectionOperation(getNamespace(), [], AggregationOptions.builder().build())
+        new AggregateToCollectionOperation(getNamespace(), [])
 
 
         then:
@@ -55,9 +59,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
 
     def 'should not accept a pipeline without the last stage specifying an output-collection'() {
         when:
-        new AggregateToCollectionOperation(getNamespace(), [new BsonDocument('$match',
-                                                                             new BsonDocument('job', new BsonString('plumber')))],
-                                           AggregationOptions.builder().build())
+        new AggregateToCollectionOperation(getNamespace(), [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber')))])
 
 
         then:
@@ -69,8 +71,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         when:
         AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
-                                                   [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
-                                                   AggregationOptions.builder().build())
+                                                   [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
         operation.execute(getBinding());
 
         then:
@@ -83,8 +84,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         when:
         AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
-                                                   [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
-                                                   AggregationOptions.builder().build())
+                                                   [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
         operation.executeAsync(getAsyncBinding()).get();
 
         then:
@@ -97,8 +97,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
-                                                    new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
-                                                   AggregationOptions.builder().build())
+                                                    new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
         operation.execute(getBinding());
 
         then:
@@ -112,12 +111,53 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
-                                                    new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
-                                                   AggregationOptions.builder().build())
+                                                    new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
         operation.executeAsync(getAsyncBinding()).get();
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 1
+    }
+
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should throw execution timeout exception from execute'() {
+        given:
+        AggregateToCollectionOperation operation =
+                new AggregateToCollectionOperation(getNamespace(),
+                                                   [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
+                                                    new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
+        operation.setMaxTime(1, SECONDS)
+        enableMaxTimeFailPoint()
+
+        when:
+        operation.execute(getBinding())
+
+        then:
+        thrown(MongoExecutionTimeoutException)
+
+        cleanup:
+        disableMaxTimeFailPoint()
+    }
+
+    @Category(Async)
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should throw execution timeout exception from executeAsync'() {
+        given:
+        AggregateToCollectionOperation operation =
+                new AggregateToCollectionOperation(getNamespace(),
+                                                   [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
+                                                    new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
+        operation.setMaxTime(1, SECONDS)
+        enableMaxTimeFailPoint()
+
+        when:
+        operation.executeAsync(getAsyncBinding()).get()
+
+        then:
+        thrown(MongoExecutionTimeoutException)
+
+        cleanup:
+        disableMaxTimeFailPoint()
     }
 
 }
