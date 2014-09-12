@@ -36,10 +36,27 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class UpdateOperation extends BaseWriteOperation {
     private final List<UpdateRequest> updates;
 
+    /**
+     * Construct an instance.
+     *
+     * @param namespace the non-null namespace
+     * @param ordered whether the writes are ordered
+     * @param writeConcern the write concern to apply
+     * @param updates the write requests
+     */
     public UpdateOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                            final List<UpdateRequest> updates) {
         super(namespace, ordered, writeConcern);
         this.updates = notNull("update", updates);
+    }
+
+    /**
+     * Gets the list of update requests.
+     *
+     * @return the update requests
+     */
+    public List<UpdateRequest> getUpdateRequests() {
+        return updates;
     }
 
     @Override

@@ -50,6 +50,14 @@ public class ReplaceOperation extends BaseWriteOperation {
         this.replaceRequests = notNull("replace", replaceRequests);
     }
 
+    /**
+     * Get the replace requests.
+     * @return the list of replace requests
+     */
+    public List<ReplaceRequest> getReplaceRequests() {
+        return replaceRequests;
+    }
+
     @Override
     protected WriteProtocol getWriteProtocol() {
         return new ReplaceProtocol(getNamespace(), isOrdered(), getWriteConcern(), replaceRequests);
