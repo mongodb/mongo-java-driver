@@ -401,7 +401,8 @@ class NewMongoCollectionSpecification extends Specification {
 
     def 'findOneAndRemove should use FindAndRemoveOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
+        def returnedDocument = new Document('_id', 1).append('cold', true)
+        def executor = new TestOperationExecutor([returnedDocument])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
         def model = new FindOneAndRemoveModel<>(new Document('cold', true))
                 .projection(new Document('field', 1))
@@ -415,18 +416,21 @@ class NewMongoCollectionSpecification extends Specification {
         operation.getCriteria() == new BsonDocument('cold', new BsonBoolean(true))
         operation.getProjection() == new BsonDocument('field', new BsonInt32(1))
         operation.getSort() == new BsonDocument('sort', new BsonInt32(-1))
+
+        result == returnedDocument
     }
 
     def 'findOneAndReplace should use FindOneAndReplaceOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null), new AcknowledgedWriteResult(1, false, null)])
+        def returnedDocument = new Document('_id', 1).append('cold', true)
+        def executor = new TestOperationExecutor([returnedDocument, returnedDocument])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
         def model = new FindOneAndReplaceModel<>(new Document('cold', true), new Document('hot', false))
                 .projection(new Document('field', 1))
                 .sort(new Document('sort', -1))
 
         when:
-        collection.findOneAndReplace(model)
+        def result = collection.findOneAndReplace(model)
 
         then:
         def operation = executor.getWriteOperation() as FindAndReplaceOperation
@@ -434,8 +438,10 @@ class NewMongoCollectionSpecification extends Specification {
         operation.getReplacement() == new BsonDocument('hot', new BsonBoolean(false))
         operation.getProjection() == new BsonDocument('field', new BsonInt32(1))
         operation.getSort() == new BsonDocument('sort', new BsonInt32(-1))
-        operation.isUpsert() == false
-        operation.isReturnReplaced() == false
+        !operation.isUpsert()
+        !operation.isReturnReplaced()
+
+        result == returnedDocument
 
         when:
         model.upsert(true).returnReplaced(true)
@@ -443,20 +449,21 @@ class NewMongoCollectionSpecification extends Specification {
 
         then:
         def operation2 = executor.getWriteOperation() as FindAndReplaceOperation
-        operation2.isUpsert() == true
-        operation2.isReturnReplaced() == true
+        operation2.isUpsert()
+        operation2.isReturnReplaced()
     }
 
     def 'findOneAndUpdate should use FindOneAndUpdateOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null), new AcknowledgedWriteResult(1, false, null)])
+        def returnedDocument = new Document('_id', 1).append('cold', true)
+        def executor = new TestOperationExecutor([returnedDocument, returnedDocument])
         collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor)
         def model = new FindOneAndUpdateModel<>(new Document('cold', true), new Document('hot', false))
                 .projection(new Document('field', 1))
                 .sort(new Document('sort', -1))
 
         when:
-        collection.findOneAndUpdate(model)
+        def result = collection.findOneAndUpdate(model)
 
         then:
         def operation = executor.getWriteOperation() as FindAndUpdateOperation
@@ -464,8 +471,10 @@ class NewMongoCollectionSpecification extends Specification {
         operation.getUpdate() == new BsonDocument('hot', new BsonBoolean(false))
         operation.getProjection() == new BsonDocument('field', new BsonInt32(1))
         operation.getSort() == new BsonDocument('sort', new BsonInt32(-1))
-        operation.isUpsert() == false
-        operation.isReturnUpdated() == false
+        !operation.isUpsert()
+        !operation.isReturnUpdated()
+
+        result == returnedDocument
 
         when:
         model.upsert(true).returnUpdated(true)
@@ -473,8 +482,8 @@ class NewMongoCollectionSpecification extends Specification {
 
         then:
         def operation2 = executor.getWriteOperation() as FindAndUpdateOperation
-        operation2.isUpsert() == true
-        operation2.isReturnUpdated() == true
+        operation2.isUpsert()
+        operation2.isReturnUpdated()
     }
 
 }
