@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 package com.mongodb
 
 import spock.lang.Specification

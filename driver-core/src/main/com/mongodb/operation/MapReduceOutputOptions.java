@@ -40,7 +40,7 @@ public class MapReduceOutputOptions {
     private boolean nonAtomic;
 
     /**
-     * Construct a new instance. of the {@code MapReduceOutput}.
+     * Construct a new instance of the {@code MapReduceOutput}.
      *
      * @param collectionName the name of the collection that you want the map-reduce operation to write its output.
      */
