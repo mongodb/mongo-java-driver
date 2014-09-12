@@ -38,7 +38,7 @@ import static ClusterFixture.getBinding
 import static ClusterFixture.getCluster
 import static ClusterFixture.isSharded
 import static ClusterFixture.serverVersionAtLeast
-import static com.mongodb.operation.QueryFlag.Exhaust
+import static com.mongodb.CursorFlag.EXHAUST
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class QueryOperationSpecification extends OperationFunctionalSpecification {
@@ -203,7 +203,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         for (i in 1..500) {
             collectionHelper.insertDocuments(new Document('_id', i))
         }
-        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find().addFlags(EnumSet.of(Exhaust)),
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find().addFlags(EnumSet.of(EXHAUST)),
                                                           new DocumentCodec())
 
         when:
@@ -253,7 +253,7 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         for (i in 1..500) {
             collectionHelper.insertDocuments(new Document('_id', i))
         }
-        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find().addFlags(EnumSet.of(Exhaust)),
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find().addFlags(EnumSet.of(EXHAUST)),
                                                           new DocumentCodec())
 
         when:

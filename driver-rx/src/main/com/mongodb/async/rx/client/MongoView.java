@@ -16,8 +16,8 @@
 
 package com.mongodb.async.rx.client;
 
+import com.mongodb.CursorFlag;
 import com.mongodb.annotations.NotThreadSafe;
-import com.mongodb.operation.QueryFlag;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
 
@@ -45,7 +45,7 @@ public interface MongoView<T> extends MongoWritableView<T>, MongoReadableView<T>
      * @param flags the flags to be added
      * @return a view on this collection with the query with the query flag set
      */
-    MongoView<T> cursorFlags(final EnumSet<QueryFlag> flags);
+    MongoView<T> cursorFlags(final EnumSet<CursorFlag> flags);
 
     /**
      * Updates the filter applied to the documents in the view.

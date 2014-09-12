@@ -17,6 +17,7 @@
 package com.mongodb.async.client;
 
 import com.mongodb.Block;
+import com.mongodb.CursorFlag;
 import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
@@ -32,7 +33,6 @@ import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.Find;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
-import com.mongodb.operation.QueryFlag;
 import com.mongodb.operation.QueryOperation;
 import com.mongodb.operation.RemoveOperation;
 import com.mongodb.operation.RemoveRequest;
@@ -147,7 +147,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         private boolean upsert;
 
         @Override
-        public MongoView<T> cursorFlags(final EnumSet<QueryFlag> flags) {
+        public MongoView<T> cursorFlags(final EnumSet<CursorFlag> flags) {
             find.addFlags(flags);
             return this;
         }

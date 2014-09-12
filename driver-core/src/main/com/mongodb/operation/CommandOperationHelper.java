@@ -17,6 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.CommandFailureException;
+import com.mongodb.CursorFlag;
 import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
@@ -344,11 +345,11 @@ final class CommandOperationHelper {
         }
     }
 
-    static EnumSet<QueryFlag> getQueryFlags(final ReadPreference readPreference) {
+    static EnumSet<CursorFlag> getQueryFlags(final ReadPreference readPreference) {
         if (readPreference.isSlaveOk()) {
-            return EnumSet.of(QueryFlag.SlaveOk);
+            return EnumSet.of(CursorFlag.SLAVE_OK);
         } else {
-            return EnumSet.noneOf(QueryFlag.class);
+            return EnumSet.noneOf(CursorFlag.class);
         }
     }
 

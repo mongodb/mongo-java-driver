@@ -68,6 +68,7 @@ import org.mongodb.WriteResult;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
 
@@ -144,7 +145,18 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
 
     @Override
     public MongoIterable<T> find(final FindModel model) {
-        return new OperationIterable<T>(new QueryOperation<T>(namespace, new Find(), getCodec()), options.getReadPreference());
+        QueryOperation<T> operation = new QueryOperation<T>(namespace, getCodec());
+        operation.setCriteria(asBson(model.getCriteria()));
+        operation.setProjection(asBson(model.getProjection()));
+        operation.setSort(asBson(model.getSort()));
+        operation.setSkip(model.getSkip());
+        operation.setLimit(model.getLimit());
+        operation.setCursorFlags(model.getCursorFlags());
+        operation.setModifiers(asBson(model.getModifiers()));
+        operation.setBatchSize(model.getBatchSize());
+        operation.setMaxTime(model.getMaxTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS);
+
+        return new OperationIterable<T>(operation, options.getReadPreference());
     }
 
     @Override

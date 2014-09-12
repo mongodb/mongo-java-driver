@@ -16,9 +16,9 @@
 
 package com.mongodb.client;
 
+import com.mongodb.CursorFlag;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.operation.QueryFlag;
 import com.mongodb.operation.QueryOptions;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
@@ -27,7 +27,7 @@ import java.util.EnumSet;
 
 public interface MongoView<T> extends MongoWritableView<T>, MongoReadableView<T>, MongoIterable<T> {
 
-    MongoView<T> cursorFlags(final EnumSet<QueryFlag> flags);
+    MongoView<T> cursorFlags(final EnumSet<CursorFlag> flags);
 
     MongoView<T> find(Document filter);
 

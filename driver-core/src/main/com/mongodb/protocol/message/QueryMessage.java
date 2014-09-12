@@ -16,7 +16,7 @@
 
 package com.mongodb.protocol.message;
 
-import com.mongodb.operation.QueryFlag;
+import com.mongodb.CursorFlag;
 import org.bson.BsonDocument;
 import org.bson.io.OutputBuffer;
 
@@ -26,10 +26,10 @@ public class QueryMessage extends BaseQueryMessage {
     private final BsonDocument queryDocument;
     private final BsonDocument fields;
 
-    public QueryMessage(final String collectionName, final EnumSet<QueryFlag> queryFlags, final int skip,
+    public QueryMessage(final String collectionName, final EnumSet<CursorFlag> cursorFlags, final int skip,
                         final int numberToReturn, final BsonDocument queryDocument,
                         final BsonDocument fields, final MessageSettings settings) {
-        super(collectionName, queryFlags, skip, numberToReturn, settings);
+        super(collectionName, cursorFlags, skip, numberToReturn, settings);
         this.queryDocument = queryDocument;
         this.fields = fields;
     }

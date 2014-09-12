@@ -16,27 +16,27 @@
 
 package com.mongodb.protocol.message;
 
-import com.mongodb.operation.QueryFlag;
+import com.mongodb.CursorFlag;
 import org.bson.io.OutputBuffer;
 
 import java.util.EnumSet;
 
 public abstract class BaseQueryMessage extends RequestMessage {
 
-    private final EnumSet<QueryFlag> queryFlags;
+    private final EnumSet<CursorFlag> cursorFlags;
     private final int skip;
     private final int numberToReturn;
 
-    public BaseQueryMessage(final String collectionName, final EnumSet<QueryFlag> queryFlags,
+    public BaseQueryMessage(final String collectionName, final EnumSet<CursorFlag> cursorFlags,
                             final int skip, final int numberToReturn, final MessageSettings settings) {
         super(collectionName, OpCode.OP_QUERY, settings);
-        this.queryFlags = queryFlags;
+        this.cursorFlags = cursorFlags;
         this.skip = skip;
         this.numberToReturn = numberToReturn;
     }
 
     protected void writeQueryPrologue(final OutputBuffer buffer) {
-        buffer.writeInt(QueryFlag.fromSet(queryFlags));
+        buffer.writeInt(CursorFlag.fromSet(cursorFlags));
         buffer.writeCString(getCollectionName());
         buffer.writeInt(skip);
         buffer.writeInt(numberToReturn);

@@ -16,7 +16,7 @@
 
 package com.mongodb.protocol.message;
 
-import com.mongodb.operation.QueryFlag;
+import com.mongodb.CursorFlag;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.io.OutputBuffer;
@@ -26,26 +26,26 @@ import java.util.EnumSet;
 import static com.mongodb.protocol.message.RequestMessage.OpCode.OP_QUERY;
 
 public class CommandMessage extends RequestMessage {
-    private final EnumSet<QueryFlag> queryFlags;
+    private final EnumSet<CursorFlag> cursorFlags;
     private final BsonDocument command;
     private final FieldNameValidator validator;
 
-    public CommandMessage(final String collectionName, final BsonDocument command, final EnumSet<QueryFlag> queryFlags,
+    public CommandMessage(final String collectionName, final BsonDocument command, final EnumSet<CursorFlag> cursorFlags,
                           final MessageSettings settings) {
-        this(collectionName, command, queryFlags, new NoOpFieldNameValidator(), settings);
+        this(collectionName, command, cursorFlags, new NoOpFieldNameValidator(), settings);
     }
 
-    public CommandMessage(final String collectionName, final BsonDocument command, final EnumSet<QueryFlag> queryFlags,
+    public CommandMessage(final String collectionName, final BsonDocument command, final EnumSet<CursorFlag> cursorFlags,
                           final FieldNameValidator validator, final MessageSettings settings) {
         super(collectionName, OP_QUERY, settings);
-        this.queryFlags = queryFlags;
+        this.cursorFlags = cursorFlags;
         this.command = command;
         this.validator = validator;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
-        buffer.writeInt(QueryFlag.fromSet(queryFlags));
+        buffer.writeInt(CursorFlag.fromSet(cursorFlags));
         buffer.writeCString(getCollectionName());
 
         buffer.writeInt(0);
