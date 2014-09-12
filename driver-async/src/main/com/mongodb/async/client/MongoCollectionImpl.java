@@ -26,11 +26,11 @@ import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
+import com.mongodb.client.model.FindModel;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.operation.CountOperation;
-import com.mongodb.operation.Find;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
 import com.mongodb.operation.QueryOperation;
@@ -54,6 +54,7 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
     private final MongoNamespace namespace;
@@ -142,20 +143,23 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private class MongoCollectionView implements MongoView<T> {
-        private final Find find = new Find();
+        private final FindModel<BsonDocument> find = new FindModel<BsonDocument>();
         private final ReadPreference readPreference = options.getReadPreference();
         private boolean upsert;
 
         @Override
         public MongoView<T> cursorFlags(final EnumSet<CursorFlag> flags) {
-            find.addFlags(flags);
+            find.cursorFlags(flags);
             return this;
         }
 
         @Override
         public MongoFuture<T> one() {
+            QueryOperation<T> queryOperation = createQueryOperation();
+            queryOperation.setBatchSize(-1);
+
             final SingleResultFuture<T> retVal = new SingleResultFuture<T>();
-            execute(new QueryOperation<T>(getNamespace(), find.batchSize(-1), getCodec()), readPreference)
+            execute(queryOperation, readPreference)
             .register(new
                       SingleResultCallback<MongoAsyncCursor<T>>() {
                           @Override
@@ -184,12 +188,17 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoFuture<Long> count() {
-            return execute(new CountOperation(namespace, find), readPreference);
+            CountOperation operation = new CountOperation(getNamespace());
+            operation.setCriteria(find.getCriteria());
+            operation.setSkip(find.getSkip());
+            operation.setLimit(find.getLimit());
+            operation.setMaxTime(find.getMaxTime(MILLISECONDS), MILLISECONDS);
+            return execute(operation, readPreference);
         }
 
         @Override
         public MongoView<T> find(final Document filter) {
-            find.filter(new BsonDocumentWrapper<Document>(filter, options.getDocumentCodec()));
+            find.criteria(new BsonDocumentWrapper<Document>(filter, options.getDocumentCodec()));
             return this;
         }
 
@@ -199,13 +208,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         MongoView<T> find(final BsonDocument filter) {
-            find.filter(filter);
+            find.criteria(filter);
             return this;
         }
 
         @Override
         public MongoView<T> sort(final Document sortCriteria) {
-            find.order(new BsonDocumentWrapper<Document>(sortCriteria, options.getDocumentCodec()));
+            find.sort(new BsonDocumentWrapper<Document>(sortCriteria, options.getDocumentCodec()));
             return this;
         }
 
@@ -228,7 +237,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoView<T> fields(final Document selector) {
-            find.select(new BsonDocumentWrapper<Document>(selector, options.getDocumentCodec()));
+            find.projection(new BsonDocumentWrapper<Document>(selector, options.getDocumentCodec()));
             return this;
         }
 
@@ -246,7 +255,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<Void> forEach(final Block<? super T> block) {
             final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
-            execute(new QueryOperation<T>(getNamespace(), find, getCodec()), readPreference)
+            execute(createQueryOperation(), readPreference)
             .register(new
                       SingleResultCallback<MongoAsyncCursor<T>>() {
                           @Override
@@ -306,7 +315,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> replace(final T replacement) {
             notNull("replacement", replacement);
             return execute(new ReplaceOperation<T>(getNamespace(), true, options.getWriteConcern(),
-                                                   asList(new ReplaceRequest<T>(find.getFilter(), replacement).upsert(upsert)),
+                                                   asList(new ReplaceRequest<T>(find.getCriteria(), replacement).upsert(upsert)),
                                                    getCodec()));
         }
 
@@ -314,7 +323,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> update(final Document updateOperations) {
             notNull("updateOperations", updateOperations);
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new UpdateRequest(find.getFilter(),
+                                               asList(new UpdateRequest(find.getCriteria(),
                                                                         new BsonDocumentWrapper<Document>(updateOperations,
                                                                                                           options.getDocumentCodec()))
                                                       .upsert(upsert).multi(true))
@@ -325,7 +334,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> updateOne(final Document updateOperations) {
             notNull("updateOperations", updateOperations);
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new UpdateRequest(find.getFilter(),
+                                               asList(new UpdateRequest(find.getCriteria(),
                                                                         new BsonDocumentWrapper<Document>(updateOperations,
                                                                                                           options.getDocumentCodec()))
                                                       .upsert(upsert).multi(false))
@@ -335,13 +344,43 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<WriteResult> remove() {
             return execute(new RemoveOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new RemoveRequest(find.getFilter()).multi(true))));
+                                               asList(new RemoveRequest(find.getCriteria()).multi(true))));
         }
 
         @Override
         public MongoFuture<WriteResult> removeOne() {
             return execute(new RemoveOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new RemoveRequest(find.getFilter()).multi(false))));
+                                               asList(new RemoveRequest(find.getCriteria()).multi(false))));
         }
+
+        private QueryOperation<T> createQueryOperation() {
+            QueryOperation<T> operation = new QueryOperation<T>(getNamespace(), getCodec());
+            operation.setCriteria(asBson(find.getCriteria()));
+            operation.setBatchSize(find.getBatchSize());
+            operation.setCursorFlags(find.getCursorFlags());
+            operation.setSkip(find.getSkip());
+            operation.setLimit(find.getLimit());
+            operation.setMaxTime(find.getMaxTime(MILLISECONDS), MILLISECONDS);
+            operation.setModifiers(asBson(find.getModifiers()));
+            operation.setProjection(asBson(find.getProjection()));
+            operation.setSort(asBson(find.getSort()));
+            return operation;
+        }
+
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        private BsonDocument asBson(final Object document) {
+            if (document == null) {
+                return null;
+            }
+            if (document instanceof BsonDocument) {
+                return (BsonDocument) document;
+            } else if (document instanceof Document) {
+                return new BsonDocumentWrapper(document, options.getDocumentCodec());
+            } else {
+                throw new IllegalArgumentException("No encoder for class " + document.getClass());
+            }
+
+        }
+
     }
 }

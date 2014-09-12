@@ -34,11 +34,8 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.protocol.QueryProtocol;
 import com.mongodb.protocol.QueryResult;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
 import org.bson.BsonInt64;
-import org.bson.BsonString;
 import org.bson.codecs.Decoder;
 
 import java.util.EnumSet;
@@ -68,28 +65,6 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     private long maxTimeMS;
     private int skip;
     private BsonDocument sort;
-
-    /**
-     * Going away soon.
-     *
-     * @param namespace n
-     * @param find    f
-     * @param decoder  d
-     */
-    public QueryOperation(final MongoNamespace namespace, final Find find, final Decoder<T> decoder) {
-        this(namespace, decoder);
-        criteria = find.getFilter();
-        batchSize = (find.getBatchSize());
-        limit = (find.getLimit());
-        projection = (find.getFields());
-        maxTimeMS = (find.getOptions().getMaxTimeMS());
-        limit = (find.getLimit());
-        skip = (find.getSkip());
-        sort = (find.getOrder());
-        cursorFlags = (find.getFlags(primary()));
-        modifiers = new BsonDocument();
-        addToModifiers(find, modifiers);
-    }
 
     /**
      * Construct a new instance.
@@ -389,43 +364,6 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
             return retVal;
         } else {
             return cursorFlags;
-        }
-    }
-
-    private void addToModifiers(final Find find, final BsonDocument modifiers) {
-        if (find.isSnapshotMode()) {
-            modifiers.put("$snapshot", BsonBoolean.TRUE);
-        }
-        if (find.isExplain()) {
-            modifiers.put("$explain", BsonBoolean.TRUE);
-        }
-        if (find.getHint() != null) {
-            modifiers.put("$hint", find.getHint());
-        }
-
-        if (find.getOptions().getComment() != null) {
-            modifiers.put("$comment", new BsonString(find.getOptions().getComment()));
-        }
-
-        if (find.getOptions().getMax() != null) {
-            modifiers.put("$max", find.getOptions().getMax());
-        }
-
-        if (find.getOptions().getMin() != null) {
-            modifiers.put("$min", find.getOptions().getMin());
-        }
-
-        if (find.getOptions().isReturnKey()) {
-            modifiers.put("$returnKey", BsonBoolean.TRUE);
-        }
-
-        if (find.getOptions().isShowDiskLoc()) {
-            modifiers.put("$showDiskLoc", BsonBoolean.TRUE);
-        }
-
-        int maxScan = find.getOptions().getMaxScan();
-        if (maxScan > 0) {
-            modifiers.put("$maxScan", new BsonInt32(maxScan));
         }
     }
 
