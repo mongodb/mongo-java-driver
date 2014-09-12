@@ -27,8 +27,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @param <T>
  * @since 3.0
  */
-public final class BulkWriteModel<T> {
-    private final List<? extends WriteModel<? extends T>> operations;
+public final class BulkWriteModel<T, D> {
+    private final List<? extends WriteModel<? extends T, D>> operations;
     private boolean ordered;
 
     /**
@@ -36,7 +36,7 @@ public final class BulkWriteModel<T> {
      *
      * @param operations a non-null, non-empty list of write models
      */
-    public BulkWriteModel(final List<? extends WriteModel<? extends T>> operations) {
+    public BulkWriteModel(final List<? extends WriteModel<? extends T, D>> operations) {
         this.operations = notNull("operations", operations);
         isTrueArgument("operations list is not empty", operations.isEmpty());
     }
@@ -46,7 +46,7 @@ public final class BulkWriteModel<T> {
      *
      * @return a non-null, non-empty list of write models
      */
-    public List<? extends WriteModel<? extends T>> getOperations() {
+    public List<? extends WriteModel<? extends T, D>> getOperations() {
         return operations;
     }
 
@@ -69,7 +69,7 @@ public final class BulkWriteModel<T> {
      * @param ordered true if the writes should be ordered
      * @return this
      */
-    public BulkWriteModel<T> ordered(final boolean ordered) {
+    public BulkWriteModel<T, D> ordered(final boolean ordered) {
         this.ordered = ordered;
         return this;
     }

@@ -16,8 +16,6 @@
 
 package com.mongodb.client.model;
 
-import org.mongodb.Document;
-
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -28,8 +26,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
  * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
  */
-public final class ReplaceOneModel<T> extends WriteModel<T> {
-    private final Object filter;
+public final class ReplaceOneModel<T, D> extends WriteModel<T, D> {
+    private final D filter;
     private final T replacement;
     private boolean upsert;
 
@@ -40,19 +38,9 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
      * {@code Codec} is registered
      * @param replacement the replacement document
      */
-    public ReplaceOneModel(final Object filter, final T replacement) {
+    public ReplaceOneModel(final D filter, final T replacement) {
         this.filter = notNull("filter", filter);
         this.replacement = notNull("replacement", replacement);
-    }
-
-    /**
-     * Construct a new instance.
-     *
-     * @param filter a document describing the query filter, which may not be null.
-     * @param replacement the replacement document
-     */
-    public ReplaceOneModel(final Document filter, final T replacement) {
-        this((Object) filter, replacement);
     }
 
     /**
@@ -60,7 +48,7 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
      *
      * @return the query filter
      */
-    public Object getFilter() {
+    public D getFilter() {
         return filter;
     }
 
@@ -88,7 +76,7 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
      * @param upsert true if a new document should be inserted if there are no matches to the query filter
      * @return this
      */
-    public ReplaceOneModel<T> upsert(final boolean upsert) {
+    public ReplaceOneModel<T, D> upsert(final boolean upsert) {
         this.upsert = upsert;
         return this;
     }

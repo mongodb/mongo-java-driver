@@ -113,18 +113,8 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public long count() {
-        return count(new CountModel());
-    }
-
-    @Override
     public long count(final CountModel model) {
         return operationExecutor.execute(new CountOperation(namespace, new Find()), options.getReadPreference());
-    }
-
-    @Override
-    public List<Object> distinct(final String fieldName) {
-        return distinct(new DistinctModel(fieldName));
     }
 
     @Override
@@ -156,20 +146,15 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends T>> operations) {
-        return bulkWrite(new BulkWriteModel<T>(operations));
-    }
-
-    @Override
-    public BulkWriteResult bulkWrite(final BulkWriteModel<? extends T> model) {
+    public <D> BulkWriteResult bulkWrite(final BulkWriteModel<? extends T, D> model) {
         List<WriteRequest> requests = new ArrayList<WriteRequest>();
-        for (WriteModel<? extends T> writeModel : model.getOperations()) {
+        for (WriteModel<? extends T, D> writeModel : model.getOperations()) {
             WriteRequest writeRequest;
             if (writeModel instanceof InsertOneModel) {
-                InsertOneModel<T> insertOneModel = (InsertOneModel<T>) writeModel;
+                InsertOneModel<T, D> insertOneModel = (InsertOneModel<T, D>) writeModel;
                 writeRequest = new InsertRequest<T>(insertOneModel.getDocument());
             } else if (writeModel instanceof ReplaceOneModel) {
-                ReplaceOneModel<T> replaceOneModel = (ReplaceOneModel<T>) writeModel;
+                ReplaceOneModel<T, D> replaceOneModel = (ReplaceOneModel<T, D>) writeModel;
                 writeRequest = new ReplaceRequest<T>(asBson(replaceOneModel.getFilter()), replaceOneModel.getReplacement())
                                .upsert(replaceOneModel.isUpsert());
             } else if (writeModel instanceof UpdateOneModel) {
@@ -208,11 +193,6 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public InsertManyResult insertMany(final List<? extends T> documents) {
-        return insertMany(new InsertManyModel<T>(documents));
-    }
-
-    @Override
     public InsertManyResult insertMany(final InsertManyModel<T> model) {
         List<InsertRequest<T>> requests = new ArrayList<InsertRequest<T>>();
         for (T document : model.getDocuments()) {
@@ -223,26 +203,22 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public RemoveResult removeOne(final Object filter) {
+    public <D> RemoveResult removeOne(final RemoveOneModel<T, D> model) {
         WriteResult writeResult = operationExecutor.execute(new RemoveOperation(namespace, true, options.getWriteConcern(),
-                                                                                asList(new RemoveRequest(asBson(filter)))));
+                                                                                asList(new RemoveRequest(asBson(model.getFilter())))));
         return new RemoveResult(writeResult.getCount());
     }
 
     @Override
-    public RemoveResult removeMany(final Object filter) {
+    public <D> RemoveResult removeMany(final RemoveManyModel<T, D> model) {
         WriteResult writeResult = operationExecutor.execute(new RemoveOperation(namespace, true, options.getWriteConcern(),
-                                                                                asList(new RemoveRequest(asBson(filter)).multi(true))));
+                                                                                asList(new RemoveRequest(asBson(model.getFilter()))
+                                                                                       .multi(true))));
         return new RemoveResult(writeResult.getCount());
     }
 
     @Override
-    public ReplaceOneResult replaceOne(final Object filter, final T replacement) {
-        return replaceOne(new ReplaceOneModel<T>(filter, replacement));
-    }
-
-    @Override
-    public ReplaceOneResult replaceOne(final ReplaceOneModel<T> model) {
+    public <D> ReplaceOneResult replaceOne(final ReplaceOneModel<T, D> model) {
         List<ReplaceRequest<T>> requests = new ArrayList<ReplaceRequest<T>>();
         requests.add(new ReplaceRequest<T>(asBson(model.getFilter()), model.getReplacement()));
         WriteResult writeResult = operationExecutor.execute(new ReplaceOperation<T>(namespace, true, options.getWriteConcern(),
@@ -251,12 +227,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public UpdateResult updateOne(final Object filter, final Object update) {
-        return updateOne(new UpdateOneModel<T>(filter, update));
-    }
-
-    @Override
-    public UpdateResult updateOne(final UpdateOneModel<T> model) {
+    public <D> UpdateResult updateOne(final UpdateOneModel<T, D> model) {
         WriteResult writeResult = operationExecutor
                                   .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
                                                                asList(new UpdateRequest(asBson(model.getFilter()),
@@ -265,12 +236,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     @Override
-    public UpdateResult updateMany(final Object filter, final Object update) {
-        return updateMany(new UpdateManyModel<T>(filter, update));
-    }
-
-    @Override
-    public UpdateResult updateMany(final UpdateManyModel<T> model) {
+    public <D> UpdateResult updateMany(final UpdateManyModel<T, D> model) {
         WriteResult writeResult = operationExecutor
                                   .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
                                                                asList(new UpdateRequest(asBson(model.getFilter()),

@@ -16,8 +16,6 @@
 
 package com.mongodb.client.model;
 
-import org.mongodb.Document;
-
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -28,8 +26,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/remove-documents/ Remove
  */
-public final class RemoveManyModel<T> extends WriteModel<T> {
-    private final Object filter;
+public final class RemoveManyModel<T, D> extends WriteModel<T, D> {
+    private final D filter;
 
     /**
      * Construct a new instance.
@@ -37,26 +35,16 @@ public final class RemoveManyModel<T> extends WriteModel<T> {
      * @param filter a document describing the query filter, which may not be null. The filter can be of any type for which a
      * {@code Codec} is registered
      */
-    public RemoveManyModel(final Object filter) {
+    public RemoveManyModel(final D filter) {
         this.filter = notNull("filter", filter);
     }
-
-    /**
-     * Construct a new instance.
-     *
-     * @param filter a document describing the query filter, which may not be null.
-     */
-    public RemoveManyModel(final Document filter) {
-       this((Object) filter);
-    }
-
 
     /**
      * Gets the query filter.
      *
      * @return the query filter
      */
-    public Object getFilter() {
+    public D getFilter() {
         return filter;
     }
 }

@@ -16,8 +16,6 @@
 
 package com.mongodb.client.model;
 
-import org.mongodb.Document;
-
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -28,9 +26,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/distinct/ Distinct
  */
-public class DistinctModel implements ExplainableModel {
+public class DistinctModel<D> implements ExplainableModel {
     private final String fieldName;
-    private Object filter;
+    private D filter;
     private Long maxTimeMS;
 
     /**
@@ -56,18 +54,7 @@ public class DistinctModel implements ExplainableModel {
      * @param filter a document describing the query filter, which may be null
      * @return this
      */
-    public DistinctModel filter(final Object filter) {
-        this.filter = filter;
-        return this;
-    }
-
-    /**
-     * Set the query filter to apply.
-     *
-     * @param filter a document describing the query filter, which may be null
-     * @return this
-     */
-    public DistinctModel filter(final Document filter) {
+    public DistinctModel filter(final D filter) {
         this.filter = filter;
         return this;
     }

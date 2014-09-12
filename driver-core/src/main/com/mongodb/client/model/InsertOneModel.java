@@ -24,7 +24,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/insert-documents/ Insert
  */
-public final class InsertOneModel<T> extends WriteModel<T> {
+public final class InsertOneModel<T, D> extends WriteModel<T, D> {
     private final T document;
 
     /**

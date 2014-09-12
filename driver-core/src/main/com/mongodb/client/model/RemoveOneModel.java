@@ -16,8 +16,6 @@
 
 package com.mongodb.client.model;
 
-import org.mongodb.Document;
-
 /**
  * A model describing the removal of at most one document matching the query filter.
  *
@@ -26,8 +24,8 @@ import org.mongodb.Document;
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/remove-documents/ Remove
  */
-public class RemoveOneModel<T> extends WriteModel<T> {
-    private final Object filter;
+public class RemoveOneModel<T, D> extends WriteModel<T, D> {
+    private final D filter;
 
     /**
      * Construct a new instance.
@@ -35,26 +33,16 @@ public class RemoveOneModel<T> extends WriteModel<T> {
      * @param filter a document describing the query filter, which may not be null. The filter can be of any type for which a
      * {@code Codec} is registered
      */
-    public RemoveOneModel(final Object filter) {
+    public RemoveOneModel(final D filter) {
         this.filter = filter;
     }
-
-    /**
-     * Construct a new instance.
-     *
-     * @param filter a document describing the query filter, which may not be null.
-     */
-    public RemoveOneModel(final Document filter) {
-        this((Object) filter);
-    }
-
 
     /**
      * Gets the query filter.
      *
      * @return the query filter
      */
-    public Object getFilter() {
+    public D getFilter() {
         return filter;
     }
 }
