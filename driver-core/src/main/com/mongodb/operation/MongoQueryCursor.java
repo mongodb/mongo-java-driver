@@ -16,8 +16,8 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoTailableCursor;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.NotThreadSafe;
@@ -38,7 +38,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 @NotThreadSafe
-class MongoQueryCursor<T> implements MongoCursor<T> {
+class MongoQueryCursor<T> implements MongoTailableCursor<T> {
     private final Connection exhaustConnection;
     private final MongoNamespace namespace;
     private final int limit;
@@ -144,7 +144,18 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
     }
 
     @Override
-    public boolean tryHasNext() {
+    public T tryNext() {
+        if (closed) {
+            throw new IllegalStateException("Iterator has been closed");
+        }
+
+        if (!tryHasNext()) {
+            return null;
+        }
+        return next();
+    }
+
+    boolean tryHasNext() {
         if (closed) {
             throw new IllegalStateException("Cursor has been closed");
         }

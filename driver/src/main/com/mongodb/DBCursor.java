@@ -65,7 +65,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private int numSeen;
     private boolean closed;
     private final List<DBObject> all = new ArrayList<DBObject>();
-    private MongoCursor<DBObject> cursor;
+    private MongoTailableCursor<DBObject> cursor;
     // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
     @SuppressWarnings("UnusedDeclaration")// IDEs will say it can be converted to a local variable, resist the urge
     private final OptionalFinalizer optionalFinalizer;
@@ -172,13 +172,10 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
         if (cursor == null) {
             cursor = collection.execute(new QueryOperation<DBObject>(collection.getNamespace(), find,
-                                                                     resultDecoder), getReadPreference());
+                                                                        resultDecoder), getReadPreference());
         }
 
-        if (!cursor.tryHasNext()) {
-            return null;
-        }
-        return cursor.next();
+        return cursor.tryNext();
     }
 
 

@@ -16,9 +16,9 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.MongoCursor;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoTailableCursor;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
@@ -51,11 +51,18 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @param <T> the document type
  * @since 3.0
  */
-public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoCursor<T>> {
+public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoTailableCursor<T>> {
     private final Find find;
     private final Decoder<T> resultDecoder;
     private final MongoNamespace namespace;
 
+    /**
+     * Constructs a new instance
+     *
+     * @param namespace the namespace
+     * @param find the find Query
+     * @param resultDecoder the codec to decode the results
+     */
     public QueryOperation(final MongoNamespace namespace, final Find find, final Decoder<T> resultDecoder) {
         this.namespace = notNull("namespace", namespace);
         this.find = notNull("find", find);
@@ -63,10 +70,10 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     }
 
     @Override
-    public MongoCursor<T> execute(final ReadBinding binding) {
-        return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<MongoCursor<T>>() {
+    public MongoTailableCursor<T> execute(final ReadBinding binding) {
+        return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<MongoTailableCursor<T>>() {
             @Override
-            public MongoCursor<T> call(final ConnectionSource source, final Connection connection) {
+            public MongoTailableCursor<T> call(final ConnectionSource source, final Connection connection) {
                 QueryResult<T> queryResult = asQueryProtocol(connection.getServerDescription(), binding.getReadPreference())
                                              .execute(connection);
                 if (isExhaustCursor()) {

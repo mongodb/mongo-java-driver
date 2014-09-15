@@ -56,11 +56,6 @@ class MapReduceInlineResultsCursor<T> implements MapReduceCursor<T> {
     }
 
     @Override
-    public boolean tryHasNext() {
-        return hasNext();
-    }
-
-    @Override
     public ServerCursor getServerCursor() {
         return null;
     }

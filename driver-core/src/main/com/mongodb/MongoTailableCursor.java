@@ -16,40 +16,23 @@
 
 package com.mongodb;
 
-
 import com.mongodb.annotations.NotThreadSafe;
 
-import java.io.Closeable;
-import java.util.Iterator;
-
 /**
- * The Mongo Cursor interface implementing the iterator protocol
+ * The Mongo Tailable Cursor interface extending Mongo Cursors and adding support for handling tailable cursors.
  *
  * @since 3.0
  * @param <T> The type of documents the cursor contains
  */
 @NotThreadSafe
-public interface MongoCursor<T> extends Iterator<T>, Closeable {
-    @Override
-    void close();
-
-    @Override
-    boolean hasNext();
-
-    @Override
-    T next();
+public interface MongoTailableCursor<T> extends MongoCursor<T> {
 
     /**
-     * Returns the server cursor
+     * A special {@code next()} case for tailable cursors providing a non blocking check to see if there are any results available.
+     * Returns true if there are more elements available and false if currently there are no more results available.
      *
-     * @return ServerCursor
+     * @return {@code true} if the iteration has more elements readily available.
      */
-    ServerCursor getServerCursor();
+    T tryNext();
 
-    /**
-     * Returns the server address
-     *
-     * @return ServerAddress
-     */
-    ServerAddress getServerAddress();
 }
