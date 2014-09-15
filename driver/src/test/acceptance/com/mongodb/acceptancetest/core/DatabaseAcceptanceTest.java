@@ -111,7 +111,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         //given
         String originalCollectionName = "originalCollection";
         MongoCollection<Document> originalCollection = database.getCollection(originalCollectionName);
-        originalCollection.insert(new Document("someKey", "someValue"));
+        originalCollection.insertOne(new Document("someKey", "someValue"));
 
         assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(true));
 
@@ -125,7 +125,7 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
         MongoCollection<Document> renamedCollection = database.getCollection(newCollectionName);
         assertThat("Renamed collection should have the same number of documents as original",
-                   renamedCollection.find().count(), is(1L));
+                   renamedCollection.count(), is(1L));
     }
 
     @Test
@@ -137,12 +137,12 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         MongoCollection<Document> originalCollection = database.getCollection(originalCollectionName);
         String keyInOriginalCollection = "someKey";
         String valueInOriginalCollection = "someValue";
-        originalCollection.insert(new Document(keyInOriginalCollection, valueInOriginalCollection));
+        originalCollection.insertOne(new Document(keyInOriginalCollection, valueInOriginalCollection));
 
         MongoCollection<Document> existingCollection = database.getCollection(existingCollectionName);
         String keyInExistingCollection = "aDifferentDocument";
         String valueInExistingCollection = "withADifferentValue";
-        existingCollection.insert(new Document(keyInExistingCollection, valueInExistingCollection));
+        existingCollection.insertOne(new Document(keyInExistingCollection, valueInExistingCollection));
 
         assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(true));
         assertThat(database.tools().getCollectionNames().contains(existingCollectionName), is(true));
@@ -155,8 +155,8 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         assertThat(database.tools().getCollectionNames().contains(existingCollectionName), is(true));
 
         MongoCollection<Document> replacedCollection = database.getCollection(existingCollectionName);
-        assertThat(replacedCollection.find().getOne().get(keyInExistingCollection), is(nullValue()));
-        assertThat(replacedCollection.find().getOne().get(keyInOriginalCollection).toString(), is(valueInOriginalCollection));
+        assertThat(replacedCollection.find().iterator().next().get(keyInExistingCollection), is(nullValue()));
+        assertThat(replacedCollection.find().iterator().next().get(keyInOriginalCollection).toString(), is(valueInOriginalCollection));
     }
 
     @Test
@@ -174,8 +174,8 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
         try {
             // given
-            firstDatabase.getCollection("coll").insert(new Document("aDoc", "to force database creation"));
-            secondDatabase.getCollection("coll").insert(new Document("aDoc", "to force database creation"));
+            firstDatabase.getCollection("coll").insertOne(new Document("aDoc", "to force database creation"));
+            secondDatabase.getCollection("coll").insertOne(new Document("aDoc", "to force database creation"));
 
             //when
             List<String> databaseNames = mongoClient.getDatabaseNames();

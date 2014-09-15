@@ -19,6 +19,7 @@ package com.mongodb.acceptancetest.atomicoperations;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCollectionOptions;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.test.Worker;
 import com.mongodb.client.test.WorkerCodecProvider;
 import com.mongodb.codecs.DocumentCodecProvider;
@@ -44,13 +45,12 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldUpdateDocumentAndReturnOriginal() {
         Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT).append("someNumber", 11);
-        collection.insert(documentInserted);
+        collection.insertOne(documentInserted);
 
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
 
         Document updateOperation = new Document("$inc", new Document("someNumber", 1));
-        Document documentBeforeChange = collection.find(new Document(KEY, VALUE_TO_CARE_ABOUT))
-                                                  .getOneAndUpdate(updateOperation);
+        Document documentBeforeChange = collection.findOneAndUpdate(new Document(KEY, VALUE_TO_CARE_ABOUT), updateOperation);
 
         assertThat("Document returned from getOneAndUpdate should be the original document",
                    (Integer) documentBeforeChange.get("someNumber"), equalTo(11));
@@ -59,13 +59,14 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldUpdateDocumentAndReturnNew() {
         Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT).append("someNumber", 11);
-        collection.insert(documentInserted);
+        collection.insertOne(documentInserted);
 
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
 
         Document updateOperation = new Document("$inc", new Document("someNumber", 1));
-        Document updatedDocument = collection.find(new Document(KEY, VALUE_TO_CARE_ABOUT))
-                                             .updateOneAndGet(updateOperation);
+        Document updatedDocument = collection.findOneAndUpdate(new Document(KEY, VALUE_TO_CARE_ABOUT),
+                                                               updateOperation,
+                                                               new FindOneAndUpdateOptions().returnUpdated(true));
 
         assertThat("Document returned from updateOneAndGet should be the updated document",
                    (Integer) updatedDocument.get("someNumber"), equalTo(12));
@@ -76,15 +77,15 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
         Worker pat = new Worker(new ObjectId(), "Pat", "Sales", new Date(), 7);
         List<CodecProvider> codecs = Arrays.asList(new DocumentCodecProvider(), new WorkerCodecProvider());
         MongoCollectionOptions options =
-                MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
+            MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         MongoCollection<Worker> collection = database.getCollection(getCollectionName(), Worker.class, options);
-        collection.insert(pat);
+        collection.insertOne(pat);
 
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
 
         Document updateOperation = new Document("$inc", new Document("numberOfJobs", 1));
-        Worker updatedDocument = collection.find(new Document("name", "Pat"))
-                                           .updateOneAndGet(updateOperation);
+        Worker updatedDocument = collection.findOneAndUpdate(new Document("name", "Pat"), updateOperation,
+                                                             new FindOneAndUpdateOptions().returnUpdated(true));
 
         assertThat("Worker returned from updateOneAndGet should have the",
                    updatedDocument.getNumberOfJobs(), equalTo(8));
@@ -93,13 +94,12 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldReturnNullWhenNothingToUpdate() {
         Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT).append("someNumber", 11);
-        collection.insert(documentInserted);
+        collection.insertOne(documentInserted);
 
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
 
         Document updateOperation = new Document("$inc", new Document("someNumber", 1));
-        Document document = collection.find(new Document(KEY, "someValueThatDoesNotExist"))
-                                      .getOneAndUpdate(updateOperation);
+        Document document = collection.findOneAndUpdate(new Document(KEY, "someValueThatDoesNotExist"), updateOperation);
 
         assertNull("Document retrieved from getOneAndUpdate should be null", document);
     }
@@ -107,17 +107,17 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldInsertDocumentWhenFilterDoesNotMatchAnyDocumentsAndUpsertSelected() {
         Document originalDocument = new Document(KEY, VALUE_TO_CARE_ABOUT).append("someNumber", 11);
-        collection.insert(originalDocument);
+        collection.insertOne(originalDocument);
 
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
 
         String newValueThatDoesNotMatchAnythingInDatabase = "valueThatDoesNotMatch";
         Document updateOperation = new Document("$inc", new Document("someNumber", 1));
-        Document document = collection.find(new Document(KEY, newValueThatDoesNotMatchAnythingInDatabase))
-                                      .upsert()
-                                      .updateOneAndGet(updateOperation);
+        Document document = collection.findOneAndUpdate(new Document(KEY, newValueThatDoesNotMatchAnythingInDatabase),
+                                                        updateOperation,
+                                                        new FindOneAndUpdateOptions().upsert(true).returnUpdated(true));
 
-        assertThat(collection.find().count(), is(2L));
+        assertThat(collection.count(), is(2L));
         assertThat("Document retrieved from updateOneAndGet and upsert true should have the new values",
                    (Integer) document.get("someNumber"), equalTo(1));
         assertThat("Document retrieved from updateOneAndGet and upsert true should have the new values",

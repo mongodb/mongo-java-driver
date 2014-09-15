@@ -28,37 +28,37 @@ import static org.junit.Assert.assertThat;
  *
  * @since 3.0
  */
-public class RemoveAcceptanceTest extends DatabaseTestCase {
+public class DeleteAcceptanceTest extends DatabaseTestCase {
     @Test
-    public void shouldRemoveOnlyOneMatchingDocumentWithRemoveOne() {
+    public void shouldDeleteOnlyOneMatchingDocumentWithDeleteOne() {
         // Given
         Document firstDocument = new Document("_id", 1).append("a", 1);
-        collection.insert(firstDocument);
+        collection.insertOne(firstDocument);
         Document secondDocument = new Document("_id", 2).append("a", 1);
-        collection.insert(secondDocument);
+        collection.insertOne(secondDocument);
 
         // When
         Document searchCriteria = new Document("a", 1);
-        collection.find(searchCriteria).removeOne();
+        collection.deleteOne(searchCriteria);
 
         // Then
-        assertThat(collection.find(searchCriteria).count(), is(1L));
+        assertThat(collection.count(), is(1L));
     }
 
     @Test
-    public void shouldRemoveAllMatchingDocumentsWithRemove() {
+    public void shouldDeleteAllMatchingDocumentsWithDeleteMany() {
         // Given
         Document firstDocument = new Document("_id", 1).append("a", 1);
-        collection.insert(firstDocument);
+        collection.insertOne(firstDocument);
         Document secondDocument = new Document("_id", 2).append("a", 1);
-        collection.insert(secondDocument);
+        collection.insertOne(secondDocument);
 
         // When
         Document searchCriteria = new Document("a", 1);
-        collection.find(searchCriteria).remove();
+        collection.deleteMany(searchCriteria);
 
         // Then
-        assertThat(collection.find(searchCriteria).count(), is(0L));
+        assertThat(collection.count(), is(0L));
     }
 
 }

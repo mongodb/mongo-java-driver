@@ -18,7 +18,8 @@ package com.mongodb.acceptancetest.crud;
 
 import com.mongodb.WriteConcernException;
 import com.mongodb.client.DatabaseTestCase;
-import com.mongodb.client.MongoView;
+import com.mongodb.client.model.FindOptions;
+import com.mongodb.client.model.ReplaceOneOptions;
 import org.junit.Test;
 import org.mongodb.Document;
 
@@ -29,71 +30,69 @@ import static org.junit.Assert.fail;
 
 public class ReplaceAcceptanceTest extends DatabaseTestCase {
     @Test
-    public void shouldUpdateASingleDocumentMatchingTheSelectorWhenUsingUpdateOne() {
+    public void shouldReplaceASingleDocumentMatchingTheSelectorWhenUsingReplaceOne() {
         // Given
         Document firstDocument = new Document("_id", 1).append("a", 1).append("x", 3);
-        collection.insert(firstDocument);
+        collection.insertOne(firstDocument);
         Document secondDocument = new Document("_id", 2).append("a", 1).append("x", 3);
-        collection.insert(secondDocument);
+        collection.insertOne(secondDocument);
 
         // When
         Document searchCriteria = new Document("_id", 2);
         Document newDocumentWithoutFieldForA = new Document("_id", 2).append("x", 7);
-        collection.find(searchCriteria).replace(newDocumentWithoutFieldForA);
+        collection.replaceOne(searchCriteria, newDocumentWithoutFieldForA);
 
         // Then
-        MongoView<Document> updatedDocuments = collection.find(searchCriteria);
-        assertThat(updatedDocuments.count(), is(1L));
-        assertThat(updatedDocuments.getOne(), is(newDocumentWithoutFieldForA));
+        Document document = collection.find(new FindOptions().criteria(searchCriteria)).iterator().next();
+        assertThat(document, is(newDocumentWithoutFieldForA));
     }
 
     @Test
     public void shouldInsertTheDocumentIfReplacingWithUpsertAndDocumentNotFoundInCollection() {
         // given
-        assertThat(collection.find().count(), is(0L));
+        assertThat(collection.count(), is(0L));
 
         // when
         Document replacement = new Document("_id", 3).append("x", 2);
-        collection.find(new Document()).upsert().replace(replacement);
+        collection.replaceOne(new Document(), replacement, new ReplaceOneOptions().upsert(true));
 
         // then
-        assertThat(collection.find().count(), is(1L));
-        assertThat(collection.find(new Document("_id", 3)).getOne(), is(replacement));
+        assertThat(collection.count(), is(1L));
+        assertThat(collection.find(new FindOptions().criteria(new Document("_id", 3))).iterator().next(), is(replacement));
     }
 
     @Test
     public void shouldReplaceTheDocumentIfReplacingWithUpsertAndDocumentIsFoundInCollection() {
         // given
         Document originalDocument = new Document("_id", 3).append("x", 2);
-        collection.find(new Document()).upsert().replace(originalDocument);
-        assertThat(collection.find().count(), is(1L));
+        collection.replaceOne(new Document(), originalDocument, new ReplaceOneOptions().upsert(true));
+        assertThat(collection.count(), is(1L));
 
         // when
         Document replacement = originalDocument.append("y", 5);
-        collection.find(new Document()).upsert().replace(replacement);
+        collection.replaceOne(new Document(), replacement, new ReplaceOneOptions().upsert(true));
 
         // then
-        assertThat(collection.find().count(), is(1L));
-        assertThat(collection.find(new Document("_id", 3)).getOne(), is(replacement));
+        assertThat(collection.count(), is(1L));
+        assertThat(collection.find(new FindOptions().criteria(new Document("_id", 3))).iterator().next(), is(replacement));
     }
 
     @Test
     public void shouldThrowExceptionIfTryingToChangeTheIdOfADocument() {
         // Given
         Document firstDocument = new Document("_id", 1).append("a", 1);
-        collection.insert(firstDocument);
+        collection.insertOne(firstDocument);
 
         // When
         Document searchCriteria = new Document("a", 1);
         Document newDocumentWithDifferentId = new Document("_id", 2).append("a", 3);
         try {
-            collection.find(searchCriteria).replace(newDocumentWithDifferentId);
+            collection.replaceOne(searchCriteria, newDocumentWithDifferentId);
             fail("Should have thrown an exception");
         } catch (WriteConcernException e) {
             // Then
             assertThat("Error code should match one of these error codes", e.getCode(), anyOf(is(13596), is(16837)));
         }
     }
-
 
 }

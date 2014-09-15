@@ -36,7 +36,7 @@ import static com.mongodb.ReadPreference.secondary
 
 // Due to the implementation of explain using private classes, it can't be effectively unit tests, so instead there is this integration
 // test.
-class NewMongoCollectionFunctionalSpecification extends FunctionalSpecification {
+class MongoCollectionFunctionalSpecification extends FunctionalSpecification {
     def namespace = new MongoNamespace('db', 'coll')
     def options = MongoCollectionOptions.builder().writeConcern(WriteConcern.JOURNALED)
                                         .readPreference(secondary())
@@ -54,7 +54,7 @@ class NewMongoCollectionFunctionalSpecification extends FunctionalSpecification 
             return operation.execute(getBinding());
         }
     }
-    def collection = new NewMongoCollectionImpl<Document>(namespace, Document, options, executor);
+    def collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor);
 
     def 'should explain a find model'() {
         when:

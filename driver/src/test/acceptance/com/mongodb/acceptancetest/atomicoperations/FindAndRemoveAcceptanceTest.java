@@ -17,7 +17,8 @@
 package com.mongodb.acceptancetest.atomicoperations;
 
 import com.mongodb.client.DatabaseTestCase;
-import com.mongodb.client.MongoView;
+import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.FindOneAndDeleteOptions;
 import org.junit.Test;
 import org.mongodb.Document;
 
@@ -39,16 +40,16 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
     public void shouldRemoveSingleDocument() {
         // given
         Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        collection.insert(documentInserted);
+        collection.insertOne(documentInserted);
 
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
 
         // when
         Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        Document documentRetrieved = collection.find(filter).getOneAndRemove();
+        Document documentRetrieved = collection.findOneAndDelete(filter);
 
         // then
-        assertThat("Document should have been deleted from the collection", collection.find().count(), is(0L));
+        assertThat("Document should have been deleted from the collection", collection.count(), is(0L));
         assertThat("Document retrieved from removeAndGet should match the document that was inserted",
                    documentRetrieved, equalTo(documentInserted));
 
@@ -58,18 +59,18 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
     public void shouldRemoveSingleDocumentWhenMultipleNonMatchingDocumentsExist() {
         // given
         Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        collection.insert(documentInserted);
-        collection.insert(new Document("nonSearchKey", "Value we don't care about"));
-        collection.insert(new Document("anotherKey", "Another value"));
+        collection.insertOne(documentInserted);
+        collection.insertOne(new Document("nonSearchKey", "Value we don't care about"));
+        collection.insertOne(new Document("anotherKey", "Another value"));
 
-        assertThat(collection.find().count(), is(3L));
+        assertThat(collection.count(), is(3L));
 
         // when
         Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        Document documentRetrieved = collection.find(filter).getOneAndRemove();
+        Document documentRetrieved = collection.findOneAndDelete(filter);
 
         // then
-        assertThat("Document should have been deleted from the collection", collection.find().count(), is(2L));
+        assertThat("Document should have been deleted from the collection", collection.count(), is(2L));
         assertThat("Document retrieved from removeAndGet should match the document that was inserted",
                    documentRetrieved, equalTo(documentInserted));
     }
@@ -78,18 +79,18 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
     public void shouldRemoveSingleDocumentWhenMultipleDocumentsWithSameKeyExist() {
         // given
         Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        collection.insert(documentInserted);
-        collection.insert(new Document(KEY, "Value we don't care about"));
-        collection.insert(new Document(KEY, "Another value"));
+        collection.insertOne(documentInserted);
+        collection.insertOne(new Document(KEY, "Value we don't care about"));
+        collection.insertOne(new Document(KEY, "Another value"));
 
-        assertThat(collection.find().count(), is(3L));
+        assertThat(collection.count(), is(3L));
 
         // when
         Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        Document documentRetrieved = collection.find(filter).getOneAndRemove();
+        Document documentRetrieved = collection.findOneAndDelete(filter);
 
         // then
-        assertThat("Document should have been deleted from the collection", collection.find().count(), is(2L));
+        assertThat("Document should have been deleted from the collection", collection.count(), is(2L));
         assertThat("Document retrieved from removeAndGet should match the document that was inserted",
                    documentRetrieved, equalTo(documentInserted));
     }
@@ -98,21 +99,20 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
     public void shouldRemoveOnlyOneDocumentWhenMultipleDocumentsMatchSearch() {
         // given
         Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        collection.insert(documentInserted);
-        collection.insert(new Document(KEY, VALUE_TO_CARE_ABOUT));
-        collection.insert(new Document(KEY, VALUE_TO_CARE_ABOUT));
+        collection.insertOne(documentInserted);
+        collection.insertOne(new Document(KEY, VALUE_TO_CARE_ABOUT));
+        collection.insertOne(new Document(KEY, VALUE_TO_CARE_ABOUT));
 
-        assertThat(collection.find().count(), is(3L));
+        assertThat(collection.count(), is(3L));
 
         // when
         Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        MongoView<Document> resultsOfSearchingByFilter = collection.find(filter);
-        assertThat(resultsOfSearchingByFilter.count(), is(3L));
+        assertThat(collection.count(new CountOptions().criteria(filter)), is(3L));
 
-        Document documentRetrieved = collection.find(filter).getOneAndRemove();
+        Document documentRetrieved = collection.findOneAndDelete(filter);
 
         // then
-        assertThat("Document should have been deleted from the collection", collection.find().count(), is(2L));
+        assertThat("Document should have been deleted from the collection", collection.count(), is(2L));
         assertThat("Document retrieved from removeAndGet should match the document that was inserted",
                    documentRetrieved, equalTo(documentInserted));
     }
@@ -123,20 +123,18 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
         String secondKey = "secondKey";
         Document documentToRemove = new Document(KEY, VALUE_TO_CARE_ABOUT).append(secondKey, 1);
         //inserting in non-ordered fashion
-        collection.insert(new Document(KEY, VALUE_TO_CARE_ABOUT).append(secondKey, 2));
-        collection.insert(new Document(KEY, VALUE_TO_CARE_ABOUT).append(secondKey, 3));
-        collection.insert(documentToRemove);
+        collection.insertOne(new Document(KEY, VALUE_TO_CARE_ABOUT).append(secondKey, 2));
+        collection.insertOne(new Document(KEY, VALUE_TO_CARE_ABOUT).append(secondKey, 3));
+        collection.insertOne(documentToRemove);
 
-        assertThat(collection.find().count(), is(3L));
+        assertThat(collection.count(), is(3L));
 
         // when
         Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        Document documentRetrieved = collection.find(filter)
-                                               .sort(new Document(secondKey, 1))
-                                               .getOneAndRemove();
+        Document documentRetrieved = collection.findOneAndDelete(filter, new FindOneAndDeleteOptions().sort(new Document(secondKey, 1)));
 
         // then
-        assertThat("Document should have been deleted from the collection", collection.find().count(), is(2L));
+        assertThat("Document should have been deleted from the collection", collection.count(), is(2L));
         assertThat("Document retrieved from removeAndGet should match the document that was inserted",
                    documentRetrieved, equalTo(documentToRemove));
     }
@@ -145,7 +143,7 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
     public void shouldReturnNullIfNoDocumentRemoved() {
         // when
         Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        Document documentRetrieved = collection.find(filter).getOneAndRemove();
+        Document documentRetrieved = collection.findOneAndDelete(filter);
 
         // then
         assertThat(documentRetrieved, is(nullValue()));
@@ -157,15 +155,15 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
         Document pete = new Document("name", "Pete").append("job", "handyman");
         Document sam = new Document("name", "Sam").append("job", "plumber");
 
-        collection.insert(pete);
-        collection.insert(sam);
+        collection.insertOne(pete);
+        collection.insertOne(sam);
 
         // when
-        Document removedDocument = collection.find(new Document("name", "Pete")).getOneAndRemove();
+        Document removedDocument = collection.findOneAndDelete(new Document("name", "Pete"));
 
         // then
-        assertThat(collection.find().count(), is(1L));
-        assertThat(collection.find().getOne(), is(sam));
+        assertThat(collection.count(), is(1L));
+        assertThat(collection.find().iterator().next(), is(sam));
         assertThat(removedDocument, is(pete));
     }
 }

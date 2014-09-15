@@ -17,6 +17,10 @@
 package com.mongodb.acceptancetest.crud;
 
 import com.mongodb.client.DatabaseTestCase;
+import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.FindOptions;
+import com.mongodb.client.model.UpdateManyOptions;
+import com.mongodb.client.model.UpdateOneOptions;
 import org.junit.Test;
 import org.mongodb.Document;
 
@@ -33,128 +37,128 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
     public void shouldSetANewFieldOnAnExistingDocument() {
         // given
         Document originalDocument = new Document("_id", 1);
-        collection.insert(originalDocument);
+        collection.insertOne(originalDocument);
 
         // when
-        collection.find(new Document("_id", 1)).update(new Document("$set", new Document("x", 2)));
+        collection.updateOne(new Document("_id", 1), new Document("$set", new Document("x", 2)));
 
         // then
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
         Document expectedDocument = new Document("_id", 1).append("x", 2);
-        assertThat(collection.find().getOne(), is(expectedDocument));
+        assertThat(collection.find().iterator().next(), is(expectedDocument));
     }
 
     @Test
     public void shouldIncrementAnIntValue() {
         // given
         Document originalDocument = new Document("_id", 1).append("x", 2);
-        collection.insert(originalDocument);
+        collection.insertOne(originalDocument);
 
         // when
-        collection.find(new Document("_id", 1)).update(new Document("$inc", new Document("x", 1)));
+        collection.updateOne(new Document("_id", 1), new Document("$inc", new Document("x", 1)));
 
         // then
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
         Document expectedDocument = new Document("_id", 1).append("x", 3);
-        assertThat(collection.find().getOne(), is(expectedDocument));
+        assertThat(collection.find().iterator().next(), is(expectedDocument));
     }
 
     @Test
     public void shouldInsertTheDocumentIfUpdatingAllWithUpsertAndDocumentNotFoundInCollection() {
         // given
         Document originalDocument = new Document("_id", 1).append("x", 2);
-        collection.insert(originalDocument);
+        collection.insertOne(originalDocument);
 
         // when
         Document searchCriteria = new Document("_id", 2);
-        collection.find(searchCriteria).upsert().update(new Document("$set", new Document("x", 5)));
+        collection.updateMany(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateManyOptions().upsert(true));
 
         // then
-        assertThat(collection.find().count(), is(2L));
+        assertThat(collection.count(), is(2L));
         Document expectedDocument = new Document("_id", 2).append("x", 5);
-        assertThat(collection.find(searchCriteria).getOne(), is(expectedDocument));
+        assertThat(collection.find(new FindOptions().criteria(searchCriteria)).iterator().next(), is(expectedDocument));
     }
 
     @Test
     public void shouldInsertTheDocumentIfUpdatingOneWithUpsertAndDocumentNotFoundInCollection() {
         // given
         Document originalDocument = new Document("_id", 1).append("x", 2);
-        collection.insert(originalDocument);
+        collection.insertOne(originalDocument);
 
         // when
         Document searchCriteria = new Document("_id", 2);
-        collection.find(searchCriteria).upsert().updateOne(new Document("$set", new Document("x", 5)));
+        collection.updateOne(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateOneOptions().upsert(true));
 
         // then
-        assertThat(collection.find().count(), is(2L));
+        assertThat(collection.count(), is(2L));
         Document expectedDocument = new Document("_id", 2).append("x", 5);
-        assertThat(collection.find(searchCriteria).getOne(), is(expectedDocument));
+        assertThat(collection.find(new FindOptions().criteria(searchCriteria)).iterator().next(), is(expectedDocument));
     }
 
     @Test
     public void shouldUpdateAllDocumentsIfUpdatingAllWithUpsertAndMultipleDocumentsFoundInCollection() {
         // given
         Document firstDocument = new Document("_id", 1).append("x", 3);
-        collection.insert(firstDocument);
+        collection.insertOne(firstDocument);
         Document secondDocument = new Document("_id", 2).append("x", 3);
-        collection.insert(secondDocument);
+        collection.insertOne(secondDocument);
 
         // when
         Document searchCriteria = new Document("x", 3);
-        collection.find(searchCriteria).upsert().update(new Document("$set", new Document("x", 5)));
+        collection.updateMany(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateManyOptions().upsert(true));
 
         // then
-        assertThat(collection.find(new Document("x", 5)).count(), is(2L));
+        assertThat(collection.count(new CountOptions().criteria(new Document("x", 5))), is(2L));
     }
 
     @Test
     public void shouldUpdateOneDocumentIfUpdatingOneWithUpsertAndMultipleDocumentsFoundInCollection() {
         // given
         Document firstDocument = new Document("_id", 1).append("x", 3);
-        collection.insert(firstDocument);
+        collection.insertOne(firstDocument);
         Document secondDocument = new Document("_id", 2).append("x", 3);
-        collection.insert(secondDocument);
+        collection.insertOne(secondDocument);
 
         // when
         Document searchCriteria = new Document("x", 3);
-        collection.find(searchCriteria).upsert().updateOne(new Document("$set", new Document("x", 5)));
+        collection.updateOne(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateOneOptions().upsert(true));
 
         // then
-        assertThat(collection.find(new Document("x", 5)).count(), is(1L));
+        assertThat(collection.count(new CountOptions().criteria(new Document("x", 5))), is(1L));
     }
 
     @Test
     public void shouldUpdateASingleDocumentMatchingTheSelectorWhenUsingUpdateOne() {
         // Given
         Document firstDocument = new Document("a", 1).append("x", 3);
-        collection.insert(firstDocument);
+        collection.insertOne(firstDocument);
         Document secondDocument = new Document("a", 1).append("x", 3);
-        collection.insert(secondDocument);
+        collection.insertOne(secondDocument);
 
         // When
         Document searchCriteria = new Document("a", 1);
         Document incrementXValueByOne = new Document("$inc", new Document("x", 1));
-        collection.find(searchCriteria).updateOne(incrementXValueByOne);
+        collection.updateOne(searchCriteria, incrementXValueByOne);
 
         // Then
-        assertThat(collection.find(new Document("x", 4)).count(), is(1L));
+        assertThat(collection.count(new CountOptions().criteria(new Document("x", 4))), is(1L));
     }
 
     @Test
     public void shouldUpdateAllDocumentsMatchingTheSelectorWhenUsingUpdate() {
         // Given
         Document firstDocument = new Document("a", 1).append("x", 3);
-        collection.insert(firstDocument);
+        collection.insertOne(firstDocument);
         Document secondDocument = new Document("a", 1).append("x", 3);
-        collection.insert(secondDocument);
+        collection.insertOne(secondDocument);
 
         // When
         Document searchCriteria = new Document("a", 1);
         Document incrementXValueByOne = new Document("$inc", new Document("x", 1));
-        collection.find(searchCriteria).update(incrementXValueByOne);
+        collection.updateMany(searchCriteria, incrementXValueByOne);
 
         // Then
-        assertThat(collection.find(new Document("x", 4)).count(), is(2L));
+        assertThat(collection.count(new CountOptions().criteria(new Document("x", 4))), is(2L));
     }
 
 }

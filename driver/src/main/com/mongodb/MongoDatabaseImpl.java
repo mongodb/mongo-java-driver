@@ -17,10 +17,10 @@
 package com.mongodb;
 
 import com.mongodb.client.DatabaseAdministration;
+import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoDatabaseOptions;
-import com.mongodb.client.NewMongoCollection;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.OperationExecutor;
@@ -50,34 +50,25 @@ class MongoDatabaseImpl implements MongoDatabase {
         return name;
     }
 
-    public MongoCollectionImpl<Document> getCollection(final String collectionName) {
+    @Override
+    public MongoCollection<Document> getCollection(final String collectionName) {
         return getCollection(collectionName, MongoCollectionOptions.builder().build().withDefaults(options));
     }
 
     @Override
-    public MongoCollectionImpl<Document> getCollection(final String collectionName,
-                                                       final MongoCollectionOptions operationOptions) {
-        return getCollection(collectionName, Document.class, operationOptions);
+    public MongoCollection<Document> getCollection(final String collectionName, final MongoCollectionOptions options) {
+        return getCollection(collectionName, Document.class, options);
     }
 
     @Override
-    public <T> MongoCollectionImpl<T> getCollection(final String collectionName,
-                                                    final Class<T> clazz) {
+    public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz) {
         return getCollection(collectionName, clazz, MongoCollectionOptions.builder().build().withDefaults(options));
     }
 
     @Override
-    public <T> MongoCollectionImpl<T> getCollection(final String collectionName,
-                                                    final Class<T> clazz,
-                                                    final MongoCollectionOptions options) {
-        return new MongoCollectionImpl<T>(collectionName, this, clazz, options.withDefaults(this.options), client);
-    }
-
-    @Override
-    public <T> NewMongoCollection<T> getNewCollection(final String collectionName, final Class<T> clazz,
-                                                      final MongoCollectionOptions options) {
-        return new NewMongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, options.withDefaults(this.options),
-                                             getOperationExecutor());
+    public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz, final MongoCollectionOptions options) {
+        return new MongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, options.withDefaults(this.options),
+                                          getOperationExecutor());
     }
 
     private OperationExecutor getOperationExecutor() {

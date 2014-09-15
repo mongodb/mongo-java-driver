@@ -47,7 +47,7 @@ public class GSSAPIAuthenticationTest {
         MongoClient client = new MongoClient(getPrimary());
         MongoCollection<Document> collection = client.getDatabase(getConnectionString().getDatabase()).getCollection("test");
         try {
-            collection.find().count();
+            collection.count();
         } finally {
             client.close();
         }
@@ -56,7 +56,7 @@ public class GSSAPIAuthenticationTest {
     @Test
     public void testSuccessfulAuthenticationAndAuthorization() {
         MongoCollection<Document> collection = getMongoClient().getDatabase(getConnectionString().getDatabase()).getCollection("test");
-        assertTrue(collection.find().count() >= 0); // Really just asserting that the query doesn't throw any security-related exceptions
+        assertTrue(collection.count() >= 0); // Really just asserting that the query doesn't throw any security-related exceptions
     }
 
     @Test(expected = MongoSecurityException.class)
@@ -64,7 +64,7 @@ public class GSSAPIAuthenticationTest {
         MongoClient client = new MongoClient(getPrimary(), asList(createGSSAPICredential("wrongUserName")));
         MongoCollection<Document> collection = client.getDatabase(getConnectionString().getDatabase()).getCollection("test");
         try {
-            collection.find().count();
+            collection.count();
         } finally {
             client.close();
         }

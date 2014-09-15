@@ -19,6 +19,7 @@ package com.mongodb.acceptancetest.atomicoperations;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCollectionOptions;
+import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.test.Worker;
 import com.mongodb.client.test.WorkerCodecProvider;
 import com.mongodb.codecs.DocumentCodecProvider;
@@ -49,12 +50,12 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldReplaceDocumentAndReturnOriginal() {
         Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT).append("someOtherField", "withSomeOtherValue");
-        collection.insert(documentInserted);
+        collection.insertOne(documentInserted);
 
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
 
-        Document document = collection.find(new Document(KEY, VALUE_TO_CARE_ABOUT))
-                                      .getOneAndReplace(new Document("foo", "bar").append("_id", documentInserted.get("_id")));
+        Document document = collection.findOneAndReplace(new Document(KEY, VALUE_TO_CARE_ABOUT),
+                                                         new Document("foo", "bar").append("_id", documentInserted.get("_id")));
 
         assertThat("Document, retrieved from replaceAndGet should match the document inserted before",
                    document, equalTo(documentInserted));
@@ -68,13 +69,12 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
                 MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         MongoCollection<Worker> collection = database.getCollection(getCollectionName(), Worker.class, options);
 
-        collection.insert(pat);
+        collection.insertOne(pat);
 
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
 
         Worker jordan = new Worker(pat.getId(), "Jordan", "Engineer", new Date(), 1);
-        Worker returnedDocument = collection.find(new Document("name", "Pat"))
-                                            .getOneAndReplace(jordan);
+        Worker returnedDocument = collection.findOneAndReplace(new Document("name", "Pat"), jordan);
 
         assertThat("Document, retrieved from getOneAndReplace, should match the document inserted before",
                    returnedDocument, equalTo(pat));
@@ -87,13 +87,13 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
         MongoCollectionOptions options =
                 MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         MongoCollection<Worker> collection = database.getCollection(getCollectionName(), Worker.class, options);
-        collection.insert(pat);
+        collection.insertOne(pat);
 
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
 
         Worker jordan = new Worker(pat.getId(), "Jordan", "Engineer", new Date(), 7);
-        Worker returnedDocument = collection.find(new Document("name", "Pat"))
-                                            .replaceOneAndGet(jordan);
+        Worker returnedDocument = collection.findOneAndReplace(new Document("name", "Pat"), jordan,
+                                                               new FindOneAndReplaceOptions().returnReplaced(true));
 
         assertThat("Worker retrieved from replaceOneAndGet should match the updated Worker",
                    returnedDocument, equalTo(jordan));
@@ -104,12 +104,13 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
         ObjectId id = new ObjectId();
         Document documentInserted = new Document("_id", id).append(KEY, VALUE_TO_CARE_ABOUT);
         Document documentReplacement = new Document("_id", id).append("foo", "bar");
-        collection.insert(documentInserted);
+        collection.insertOne(documentInserted);
 
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
 
-        Document document = collection.find(new Document(KEY, VALUE_TO_CARE_ABOUT))
-                                      .replaceOneAndGet(documentReplacement);
+        Document document = collection.findOneAndReplace(new Document(KEY, VALUE_TO_CARE_ABOUT), documentReplacement,
+                                                         new FindOneAndReplaceOptions().returnReplaced(true));
+
 
         assertThat("Document, retrieved from replaceAndGet after change applied should match the document used as replacement",
                    document, equalTo(documentReplacement));
@@ -118,12 +119,11 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldReturnNullWhenNothingToReplaceForGetOneAndReplace() {
         Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        collection.insert(documentInserted);
+        collection.insertOne(documentInserted);
 
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
 
-        Document document = collection.find(new Document(KEY, "bar"))
-                                      .getOneAndReplace(new Document("foo", "bar"));
+        Document document = collection.findOneAndReplace(new Document(KEY, "bar"), new Document("foo", "bar"));
 
         assertNull("Document retrieved from getOneAndReplace should be null when no matching document found", document);
     }
@@ -131,12 +131,11 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldReturnNullWhenNothingToReplaceForReplaceOneAndGet() {
         Document documentInserted = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        collection.insert(documentInserted);
+        collection.insertOne(documentInserted);
 
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
 
-        Document document = collection.find(new Document(KEY, "bar"))
-                                      .replaceOneAndGet(new Document("foo", "bar"));
+        Document document = collection.findOneAndReplace(new Document(KEY, "bar"), new Document("foo", "bar"));
 
         assertNull("Document retrieved from replaceOneAndGet should be null when no matching document found", document);
     }
@@ -144,17 +143,19 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldInsertDocumentWhenFilterDoesNotMatchAnyDocumentsAndUpsertFlagIsSet() {
         Document originalDocument = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        collection.insert(originalDocument);
+        collection.insertOne(originalDocument);
 
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
 
         Document replacementDocument = new Document("_id", new ObjectId()).append("foo", "bar");
 
-        Document document = collection.find(new Document(KEY, "valueThatDoesNotMatch"))
-                                      .upsert()
-                                      .replaceOneAndGet(replacementDocument);
+        Document document = collection.findOneAndReplace(new Document(KEY, "valueThatDoesNotMatch"),
+                                                         replacementDocument,
+                                                         new FindOneAndReplaceOptions()
+                                                             .upsert(true)
+                                                             .returnReplaced(true));
 
-        assertThat(collection.find().count(), is(2L));
+        assertThat(collection.count(), is(2L));
         assertThat("Document retrieved from replaceOneAndGet with filter that doesn't match should match the replacement document",
                    document, equalTo(replacementDocument));
     }

@@ -61,7 +61,7 @@ public class DatabaseTestCase {
     }
 
     protected String getCollectionName() {
-        return collection.getName();
+        return collection.getNamespace().getCollectionName();
     }
 
     protected MongoNamespace getNamespace() {

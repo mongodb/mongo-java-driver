@@ -23,6 +23,7 @@ import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropIndexOperation;
 import com.mongodb.operation.GetIndexesOperation;
 import com.mongodb.operation.Index;
+import com.mongodb.operation.OperationExecutor;
 import org.mongodb.Document;
 
 import java.util.List;
@@ -35,38 +36,38 @@ import static com.mongodb.ReadPreference.primary;
  */
 class CollectionAdministrationImpl implements CollectionAdministration {
 
-    private final MongoClient client;
     private final MongoNamespace collectionNamespace;
+    private final OperationExecutor operationExecutor;
 
 
-    CollectionAdministrationImpl(final MongoClient client,
-                                 final MongoNamespace collectionNamespace) {
-        this.client = client;
+    CollectionAdministrationImpl(final MongoNamespace collectionNamespace,
+                                 final OperationExecutor operationExecutor) {
         this.collectionNamespace = collectionNamespace;
+        this.operationExecutor = operationExecutor;
     }
 
     @Override
     public void createIndexes(final List<Index> indexes) {
-        client.execute(new CreateIndexesOperation(collectionNamespace, indexes));
+        operationExecutor.execute(new CreateIndexesOperation(collectionNamespace, indexes));
     }
 
     @Override
     public List<Document> getIndexes() {
-        return client.execute(new GetIndexesOperation<Document>(collectionNamespace, new DocumentCodec()), primary());
+        return operationExecutor.execute(new GetIndexesOperation<Document>(collectionNamespace, new DocumentCodec()), primary());
     }
 
     @Override
     public void drop() {
-        client.execute(new DropCollectionOperation(collectionNamespace));
+        operationExecutor.execute(new DropCollectionOperation(collectionNamespace));
     }
 
     @Override
     public void dropIndex(final Index index) {
-        client.execute(new DropIndexOperation(collectionNamespace, index.getName()));
+        operationExecutor.execute(new DropIndexOperation(collectionNamespace, index.getName()));
     }
 
     @Override
     public void dropIndexes() {
-        client.execute(new DropIndexOperation(collectionNamespace, "*"));
+        operationExecutor.execute(new DropIndexOperation(collectionNamespace, "*"));
     }
 }

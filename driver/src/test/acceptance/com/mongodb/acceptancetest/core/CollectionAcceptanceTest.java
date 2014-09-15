@@ -16,10 +16,13 @@
 
 package com.mongodb.acceptancetest.core;
 
+import com.mongodb.Block;
+import com.mongodb.Function;
 import com.mongodb.MongoCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCollectionOptions;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.types.Binary;
@@ -31,10 +34,13 @@ import org.junit.Test;
 import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
@@ -47,6 +53,8 @@ import static org.junit.Assert.assertTrue;
  * Documents the basic functionality of MongoDB Collections available via the Java driver.
  */
 public class CollectionAcceptanceTest extends DatabaseTestCase {
+
+
     @Test
     public void shouldBeAbleToIterateOverACollection() {
         int numberOfDocuments = 10;
@@ -65,7 +73,7 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         int numberOfDocuments = 10;
         initialiseCollectionWithDocuments(numberOfDocuments);
 
-        MongoCursor<Document> cursor = collection.find().get();
+        MongoCursor<Document> cursor = collection.find().iterator();
         int countOfDocumentsInIterator = 0;
         try {
             while (cursor.hasNext()) {
@@ -80,11 +88,11 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCountNumberOfDocumentsInCollection() {
-        assertThat(collection.find().count(), is(0L));
+        assertThat(collection.count(), is(0L));
 
-        collection.insert(new Document("myField", "myValue"));
+        collection.insertOne(new Document("myField", "myValue"));
 
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
     }
 
     @Test
@@ -121,8 +129,8 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         doc.append("list", Arrays.asList(7, 8, 9));
         doc.append("doc list", Arrays.asList(new Document("x", 1), new Document("x", 2)));
 
-        collection.insert(doc);
-        Document found = collection.find().getOne();
+        collection.insertOne(doc);
+        Document found = collection.find().iterator().next();
         assertNotNull(found);
         assertEquals(ObjectId.class, found.get("_id").getClass());
         assertEquals(Boolean.class, found.get("bool").getClass());
@@ -145,18 +153,162 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldRejectDocumentsWithFieldNamesContainingDots() {
-        collection.save(new Document("x.y", 1));
+        collection.insertOne(new Document("x.y", 1));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void shouldRejectNestedDocumentsWithFieldNamesContainingDots() {
-        collection.save(new Document("x", new Document("a.b", 1)));
+        collection.insertOne(new Document("x", new Document("a.b", 1)));
+    }
+
+    @Test
+    public void shouldIterateOverAllDocumentsInCollection() {
+        initialiseCollectionWithDocuments(10);
+        List<Document> iteratedDocuments = new ArrayList<Document>();
+        for (final Document cur : collection.find()) {
+            iteratedDocuments.add(cur);
+        }
+        assertEquals(10, iteratedDocuments.size());
+    }
+
+    @Test
+    public void shouldForEachOverAllDocumentsInCollection() {
+        initialiseCollectionWithDocuments(10);
+        final List<Document> iteratedDocuments = new ArrayList<Document>();
+        collection.find().forEach(new Block<Document>() {
+            @Override
+            public void apply(final Document document) {
+                iteratedDocuments.add(document);
+            }
+        });
+        assertEquals(10, iteratedDocuments.size());
+    }
+
+
+    @Test
+    public void shouldAddAllDocumentsIntoListWhenUsingFind() {
+        initialiseCollectionWithDocuments(10);
+        List<Document> iteratedDocuments = collection.find().into(new ArrayList<Document>());
+        assertEquals(10, iteratedDocuments.size());
+    }
+
+    @Test
+    public void shouldMapAllDocumentsIntoListWhenUsingFind() {
+        initialiseCollectionWithDocuments(5);
+        List<String> iteratedDocuments = collection.find().map(new Function<Document, String>() {
+            @Override
+            public String apply(final Document document) {
+                return document.getInteger("_id").toString();
+            }
+        }).into(new ArrayList<String>());
+        Collections.sort(iteratedDocuments);
+        assertEquals(asList("0", "1", "2", "3", "4"), iteratedDocuments);
+    }
+
+    @Test
+    public void shouldSortDocumentsWhenUsingAggregate() {
+        List<Document> documents = insertAggregationTestDocuments();
+        List<Document> sorted = collection.aggregate(asList(new Document("$sort", new Document("_id", 1)))).into(new ArrayList<Document>());
+        assertEquals(documents, sorted);
+    }
+
+    @Test
+    public void shouldSkipDocumentsWhenUsingAggregate() {
+        List<Document> documents = insertAggregationTestDocuments();
+        List<Document> skipped = collection.aggregate(asList(new Document("$sort", new Document("_id", 1)),
+                                                             new Document("$skip", 1))).into(new ArrayList<Document>());
+        assertEquals(documents.subList(1, 3), skipped);
+    }
+
+    @Test
+    public void shouldLimitDocumentsWhenUsingAggregate() {
+        List<Document> documents = insertAggregationTestDocuments();
+        List<Document> limited = collection.aggregate(asList(new Document("$sort", new Document("_id", 1)),
+                                                             new Document("$limit", 2))).into(new ArrayList<Document>());
+        assertEquals(documents.subList(0, 2), limited);
+    }
+
+    @Test
+    public void shouldFindDocumentsWhenUsingAggregate() {
+        List<Document> documents = insertAggregationTestDocuments();
+        List<Document> matched = collection.aggregate(asList(new Document("$match", new Document("_id", "10012"))))
+                                           .into(new ArrayList<Document>());
+        assertEquals(documents.subList(1, 2), matched);
+    }
+
+    @Test
+    public void shouldProjectDocumentsWhenUsingAggregate() {
+        insertAggregationTestDocuments();
+        List<Document> sorted = collection.aggregate(asList(new Document("$sort", new Document("_id", 1)),
+                                                            new Document("$project", new Document("_id", 0).append("zip", "$_id")))
+                                                    ).into(new ArrayList<Document>());
+        assertEquals(asList(new Document("zip", "01778"), new Document("zip", "10012"), new Document("zip", "94301")), sorted);
+    }
+
+    @Test
+    public void shouldUnwindDocumentsWhenUsingAggregate() {
+        insertAggregationTestDocuments();
+        List<Document> unwound = collection.aggregate(asList(new Document("$sort", new Document("_id", 1)),
+                                                             new Document("$project", new Document("_id", 0).append("tags", 1)),
+                                                             new Document("$unwind", "$tags"))
+                                                     ).into(new ArrayList<Document>());
+        assertEquals(asList(new Document("tags", "driver"),
+                            new Document("tags", "driver"),
+                            new Document("tags", "SA"),
+                            new Document("tags", "CE"),
+                            new Document("tags", "kernel"),
+                            new Document("tags", "driver"),
+                            new Document("tags", "SA"),
+                            new Document("tags", "CE")),
+                     unwound);
+    }
+
+    @Test
+    public void shouldGroupDocumentsWhenUsingAggregate() {
+        insertAggregationTestDocuments();
+        List<Document> grouped = collection.aggregate(asList(new Document("$sort", new Document("_id", 1)),
+                                                             new Document("$project", new Document("_id", 0).append("tags", 1)),
+                                                             new Document("$unwind", "$tags"),
+                                                             new Document("$group", new Document("_id", "$tags")),
+                                                             new Document("$sort", new Document("_id", 1))))
+                                           .into(new ArrayList<Document>());
+        assertEquals(asList(new Document("_id", "CE"),
+                            new Document("_id", "SA"),
+                            new Document("_id", "driver"),
+                            new Document("_id", "kernel")),
+                     grouped);
     }
 
     private void initialiseCollectionWithDocuments(final int numberOfDocuments) {
+        MongoCollection<Document> collection = database.getCollection(getCollectionName(),
+                                                                      Document.class,
+                                                                      MongoCollectionOptions.builder()
+                                                                                            .writeConcern(WriteConcern.ACKNOWLEDGED)
+                                                                                            .build());
         for (int i = 0; i < numberOfDocuments; i++) {
-            collection.withWriteConcern(WriteConcern.ACKNOWLEDGED).insert(new Document("_id", i));
+            collection.insertOne(new Document("_id", i));
         }
+    }
+
+    public List<Document> insertAggregationTestDocuments() {
+        List<Document> documents = new ArrayList<Document>();
+        documents.add(new Document("_id", "01778").append("city", "WAYLAND").append("state", "MA").append("population", 13100)
+                                                  .append("loc", asList(42.3635, 71.3619)).append("tags", asList("driver")));
+        documents.add(new Document("_id", "10012").append("city", "NEW YORK CITY")
+                                                  .append("state", "NY")
+                                                  .append("population", 8245000)
+                                                  .append("loc", asList(40.7260, 71.3619))
+                                                  .append("tags", asList("driver", "SA", "CE", "kernel")));
+        documents.add(new Document("_id", "94301").append("city", "PALO ALTO")
+                                                  .append("state", "CA")
+                                                  .append("population", 65412)
+                                                  .append("loc", asList(37.4419, 122.1419))
+                                                  .append("tags", asList("driver", "SA", "CE")));
+
+        List<Document> shuffledDocuments = new ArrayList<Document>(documents);
+        Collections.shuffle(shuffledDocuments);
+        collection.insertMany(shuffledDocuments);
+        return documents;
     }
 
 }

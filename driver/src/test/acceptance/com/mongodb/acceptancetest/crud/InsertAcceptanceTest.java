@@ -17,6 +17,7 @@
 package com.mongodb.acceptancetest.crud;
 
 import com.mongodb.client.DatabaseTestCase;
+import com.mongodb.client.model.FindOptions;
 import org.junit.Test;
 import org.mongodb.Document;
 
@@ -29,12 +30,12 @@ public class InsertAcceptanceTest extends DatabaseTestCase {
 
         // When
         Document simpleDocument = new Document("name", "Billy");
-        collection.insert(simpleDocument);
+        collection.insertOne(simpleDocument);
 
         // Then
-        assertThat(collection.find().count(), is(1L));
+        assertThat(collection.count(), is(1L));
 
-        Document insertedDocument = collection.find(new Document("name", "Billy")).getOne();
+        Document insertedDocument = collection.find(new FindOptions().criteria(new Document("name", "Billy"))).iterator().next();
         assertThat(insertedDocument.getString("name"), is("Billy"));
     }
 }

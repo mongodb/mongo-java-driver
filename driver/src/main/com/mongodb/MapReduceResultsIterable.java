@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.client.MongoIterable;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
+import com.mongodb.operation.OperationExecutor;
 
 import java.util.Collection;
 
@@ -29,16 +30,19 @@ import java.util.Collection;
  */
 class MapReduceResultsIterable<T, V> implements MongoIterable<V> {
     private final MapReduceWithInlineResultsOperation<V> operation;
-    private final MongoCollectionImpl<T> collection;
+    private final ReadPreference readPreference;
+    private final OperationExecutor operationExecutor;
 
-    MapReduceResultsIterable(final MapReduceWithInlineResultsOperation<V> operation, final MongoCollectionImpl<T> collection) {
+    MapReduceResultsIterable(final MapReduceWithInlineResultsOperation<V> operation, final ReadPreference readPreference,
+                             final OperationExecutor operationExecutor) {
         this.operation = operation;
-        this.collection = collection;
+        this.readPreference = readPreference;
+        this.operationExecutor = operationExecutor;
     }
 
     @Override
     public MongoCursor<V> iterator() {
-        return collection.execute(operation, collection.getOptions().getReadPreference());
+        return operationExecutor.execute(operation, readPreference);
     }
 
     @Override

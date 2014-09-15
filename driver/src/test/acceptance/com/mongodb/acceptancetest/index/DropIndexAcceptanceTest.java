@@ -71,7 +71,7 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
     @Test(expected = CommandFailureException.class)
     public void shouldErrorWhenDroppingAnIndexThatDoesNotExist() {
         //Given
-        collection.insert(new Document("to", "createTheCollection"));
+        collection.insertOne(new Document("to", "createTheCollection"));
 
         // When
         collection.tools().dropIndex(Index.builder().addKey("nonExistentIndex").build());

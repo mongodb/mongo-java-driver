@@ -29,19 +29,17 @@ public interface MongoDatabase {
 
     Document executeCommand(Document command);
 
-    Document executeCommand(final Document command, final ReadPreference readPreference);
+    Document executeCommand(Document command, ReadPreference readPreference);
 
     MongoDatabaseOptions getOptions();
 
-    MongoCollection<Document> getCollection(String name);
+    MongoCollection<Document> getCollection(String collectionName);
 
-    MongoCollection<Document> getCollection(String name, MongoCollectionOptions options);
+    MongoCollection<Document> getCollection(String collectionName, MongoCollectionOptions options);
 
-    <T> MongoCollection<T> getCollection(String name, Class<T> clazz);
+    <T> MongoCollection<T> getCollection(String collectionName, Class<T> clazz);
 
-    <T> MongoCollection<T> getCollection(String name, Class<T> clazz, MongoCollectionOptions options);
-
-    <T> NewMongoCollection<T> getNewCollection(String name, Class<T> clazz, MongoCollectionOptions options);
+    <T> MongoCollection<T> getCollection(String collectionName, Class<T> clazz, MongoCollectionOptions options);
 
     DatabaseAdministration tools();
 }

@@ -43,7 +43,7 @@ public class AddIndexAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldGetExistingIndexesOnDatabase() {
-        collection.insert(new Document("new", "value"));
+        collection.insertOne(new Document("new", "value"));
 
         assertThat("Should have the default index on _id when a document exists",
                    collection.tools().getIndexes().size(), is(1));

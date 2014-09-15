@@ -19,24 +19,52 @@ package com.mongodb;
 import com.mongodb.client.CollectionAdministration;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCollectionOptions;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
-import com.mongodb.client.MongoPipeline;
-import com.mongodb.client.MongoView;
+import com.mongodb.client.model.AggregateModel;
+import com.mongodb.client.model.AggregateOptions;
+import com.mongodb.client.model.BulkWriteModel;
+import com.mongodb.client.model.BulkWriteOptions;
+import com.mongodb.client.model.CountModel;
+import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.DeleteManyModel;
+import com.mongodb.client.model.DeleteOneModel;
+import com.mongodb.client.model.DistinctModel;
+import com.mongodb.client.model.DistinctOptions;
+import com.mongodb.client.model.ExplainableModel;
 import com.mongodb.client.model.FindModel;
+import com.mongodb.client.model.FindOneAndDeleteModel;
+import com.mongodb.client.model.FindOneAndDeleteOptions;
+import com.mongodb.client.model.FindOneAndReplaceModel;
+import com.mongodb.client.model.FindOneAndReplaceOptions;
+import com.mongodb.client.model.FindOneAndUpdateModel;
+import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.FindOptions;
+import com.mongodb.client.model.InsertManyModel;
+import com.mongodb.client.model.InsertManyOptions;
+import com.mongodb.client.model.InsertOneModel;
+import com.mongodb.client.model.ReplaceOneModel;
+import com.mongodb.client.model.ReplaceOneOptions;
+import com.mongodb.client.model.UpdateManyModel;
+import com.mongodb.client.model.UpdateManyOptions;
+import com.mongodb.client.model.UpdateOneModel;
+import com.mongodb.client.model.UpdateOneOptions;
+import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.operation.AggregateOperation;
+import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.CountOperation;
+import com.mongodb.operation.DistinctOperation;
 import com.mongodb.operation.FindAndRemoveOperation;
 import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
+import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
-import com.mongodb.operation.MapReduce;
-import com.mongodb.operation.MapReduceToCollectionOperation;
-import com.mongodb.operation.MapReduceWithInlineResultsOperation;
-import com.mongodb.operation.FindOperation;
+import com.mongodb.operation.MixedBulkWriteOperation;
+import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.RemoveOperation;
 import com.mongodb.operation.RemoveRequest;
@@ -44,105 +72,48 @@ import com.mongodb.operation.ReplaceOperation;
 import com.mongodb.operation.ReplaceRequest;
 import com.mongodb.operation.UpdateOperation;
 import com.mongodb.operation.UpdateRequest;
-import com.mongodb.operation.WriteOperation;
+import com.mongodb.operation.WriteRequest;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWrapper;
-import org.bson.BsonJavaScript;
+import org.bson.BsonString;
+import org.bson.BsonValue;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
-import org.mongodb.ConvertibleToDocument;
+import org.bson.codecs.Decoder;
+import org.bson.codecs.DecoderContext;
+import org.mongodb.BulkWriteResult;
 import org.mongodb.Document;
 import org.mongodb.WriteResult;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class MongoCollectionImpl<T> implements MongoCollection<T> {
-
-    private final CollectionAdministration admin;
-    private final MongoClient client;
-    private final String name;
-    private final MongoDatabase database;
+    private final MongoNamespace namespace;
     private final MongoCollectionOptions options;
-    private final Codec<T> codec;
+    private final Class<T> clazz;
+    private final OperationExecutor operationExecutor;
 
-    public MongoCollectionImpl(final String name, final MongoDatabaseImpl database,
-                               final Class<T> clazz, final MongoCollectionOptions options,
-                               final MongoClient client) {
+    MongoCollectionImpl(final MongoNamespace namespace, final Class<T> clazz,
+                        final MongoCollectionOptions options, final OperationExecutor operationExecutor) {
 
-        this.codec = options.getCodecRegistry().get(clazz);
-        this.name = name;
-        this.database = database;
+        this.namespace = namespace;
+        this.clazz = clazz;
         this.options = options;
-        this.client = client;
-        admin = new CollectionAdministrationImpl(client, getNamespace());
+        this.operationExecutor = operationExecutor;
     }
 
     @Override
-    public WriteResult insert(final T document) {
-        return new MongoCollectionView().insert(document);
-    }
-
-    @Override
-    public WriteResult insert(final List<T> documents) {
-        return new MongoCollectionView().insert(documents);
-    }
-
-    @Override
-    public WriteResult save(final T document) {
-        return new MongoCollectionView().save(document);
-    }
-
-    @Override
-    public MongoPipeline<T> pipe() {
-        return new MongoCollectionPipeline();
-    }
-
-    @Override
-    public CollectionAdministration tools() {
-        return admin;
-    }
-
-    @Override
-    public MongoView<T> find() {
-        return new MongoCollectionView();
-    }
-
-    @Override
-    public MongoView<T> find(final Document filter) {
-        return new MongoCollectionView().find(filter);
-    }
-
-    @Override
-    public MongoView<T> find(final ConvertibleToDocument filter) {
-        return new MongoCollectionView().find(filter);
-    }
-
-    @Override
-    public MongoView<T> withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoCollectionView().withWriteConcern(writeConcern);
-    }
-
-    private Codec<Document> getDocumentCodec() {
-        return getOptions().getCodecRegistry().get(Document.class);
-    }
-
-    @Override
-    public MongoDatabase getDatabase() {
-        return database;
-    }
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public Codec<T> getCodec() {
-        return codec;
+    public MongoNamespace getNamespace() {
+        return namespace;
     }
 
     @Override
@@ -151,440 +122,479 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public MongoNamespace getNamespace() {
-        return new MongoNamespace(getDatabase().getName(), getName());
+    public long count() {
+        return count(new CountModel());
     }
 
-    <V> V execute(final ReadOperation<V> operation, final ReadPreference readPreference) {
-        return client.execute(operation, readPreference);
+    @Override
+    public long count(final CountOptions options) {
+        return operationExecutor.execute(createCountOperation(new CountModel(options)), this.options.getReadPreference());
     }
 
-    <V> V execute(final WriteOperation<V> operation) {
-        return client.execute(operation);
+    private long count(final CountModel model) {
+        return operationExecutor.execute(createCountOperation(model), options.getReadPreference());
     }
 
-    private BsonDocument wrap(final Document command) {
-        return new BsonDocumentWrapper<Document>(command, getDocumentCodec());
+    @Override
+    public List<Object> distinct(final String fieldName) {
+        return distinct(fieldName, new DistinctOptions());
     }
 
-    private final class MongoCollectionView implements MongoView<T> {
-        private final FindModel findModelOp;
-        private ReadPreference readPreference;
-        private WriteConcern writeConcern;
-        private boolean limitSet;
-        private boolean upsert;
+    @Override
+    public List<Object> distinct(final String fieldName, final DistinctOptions options) {
+        return distinct(new DistinctModel(fieldName, options));
+    }
 
-        private MongoCollectionView() {
-            findModelOp = new FindModel();
-            writeConcern = getOptions().getWriteConcern();
-            readPreference = getOptions().getReadPreference();
+    private List<Object> distinct(final DistinctModel model) {
+        DistinctOperation operation = new DistinctOperation(namespace, model.getFieldName())
+                                          .criteria(asBson(model.getOptions().getCriteria()))
+                                          .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
+        BsonArray distinctArray = operationExecutor.execute(operation, options.getReadPreference());
+        List<Object> distinctList = new ArrayList<Object>();
+        for (BsonValue value : distinctArray) {
+            BsonDocument bsonDocument = new BsonDocument("value", value);
+            Document document = options.getCodecRegistry().get(Document.class).decode(new BsonDocumentReader(bsonDocument),
+                                                                                      DecoderContext.builder().build());
+            distinctList.add(document.get("value"));
         }
 
-        @Override
-        public MongoCursor<T> iterator() {
-            return get();
+        return distinctList;
+    }
+
+    @Override
+    public MongoIterable<T> find() {
+        return find(new FindOptions());
+    }
+
+    @Override
+    public <C> MongoIterable<C> find(final Class<C> clazz) {
+        return find(new FindOptions(), clazz);
+    }
+
+    @Override
+    public MongoIterable<T> find(final FindOptions findOptions) {
+        return find(findOptions, clazz);
+    }
+
+    @Override
+    public <C> MongoIterable<C> find(final FindOptions findOptions, final Class<C> clazz) {
+        return find(new FindModel(findOptions), clazz);
+    }
+
+    private <C> MongoIterable<C> find(final FindModel findModel, final Class<C> clazz) {
+        return new OperationIterable<C>(createQueryOperation(findModel, options.getCodecRegistry().get(clazz)),
+                                        options.getReadPreference());
+    }
+
+    @Override
+    public MongoIterable<Document> aggregate(final List<?> pipeline) {
+        return aggregate(pipeline, Document.class);
+    }
+
+    @Override
+    public <C> MongoIterable<C> aggregate(final List<?> pipeline, final Class<C> clazz) {
+        return aggregate(pipeline, new AggregateOptions(), clazz);
+    }
+
+    @Override
+    public MongoIterable<Document> aggregate(final List<?> pipeline, final AggregateOptions options) {
+        return aggregate(pipeline, options, Document.class);
+    }
+
+    @Override
+    public <C> MongoIterable<C> aggregate(final List<?> pipeline, final AggregateOptions options, final Class<C> clazz) {
+        return aggregate(new AggregateModel(pipeline, options), clazz);
+    }
+
+    private MongoIterable<Document> aggregate(final AggregateModel model) {
+        return aggregate(model, Document.class);
+    }
+
+    private <C> MongoIterable<C> aggregate(final AggregateModel model, final Class<C> clazz) {
+        List<BsonDocument> aggregateList = createBsonDocumentList(model.getPipeline());
+
+        BsonValue outCollection = aggregateList.size() == 0 ? null : aggregateList.get(aggregateList.size() - 1).get("$out");
+
+        if (outCollection != null) {
+            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList)
+                                                           .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
+                                                           .allowDiskUse(model.getOptions().getAllowDiskUse());
+            operationExecutor.execute(operation);
+            return new OperationIterable<C>(new FindOperation<C>(new MongoNamespace(namespace.getDatabaseName(),
+                                                                                    outCollection.asString().getValue()),
+                                                                 options.getCodecRegistry().get(clazz)),
+                                            options.getReadPreference());
+        } else {
+            return new OperationIterable<C>(createAggregateOperation(model, options.getCodecRegistry().get(clazz), aggregateList),
+                                            options.getReadPreference());
         }
+    }
 
-        @Override
-        public MongoView<T> find(final Document filter) {
-            findModelOp.getOptions().criteria(new BsonDocumentWrapper<Document>(filter, getDocumentCodec()));
-            return this;
-        }
+    @Override
+    public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends T>> requests) {
+        return bulkWrite(requests, new BulkWriteOptions());
+    }
 
-        MongoView<T> find(final BsonDocument filter) {
-            findModelOp.getOptions().criteria(filter);
-            return this;
-        }
+    @Override
+    public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options) {
+        return bulkWrite(new BulkWriteModel<T>(requests, options));
+    }
 
-        @Override
-        public MongoView<T> find(final ConvertibleToDocument filter) {
-            return find(filter.toDocument());
-        }
-
-        @Override
-        public MongoView<T> sort(final ConvertibleToDocument sortCriteria) {
-            return sort(sortCriteria.toDocument());
-        }
-
-        @Override
-        public MongoView<T> sort(final Document sortCriteria) {
-            findModelOp.getOptions().sort(wrap(sortCriteria));
-            return this;
-        }
-
-        @Override
-        public MongoView<T> fields(final Document selector) {
-            findModelOp.getOptions().projection(wrap(selector));
-            return this;
-        }
-
-        @Override
-        public MongoView<T> fields(final ConvertibleToDocument selector) {
-            return fields(selector.toDocument());
-        }
-
-        @Override
-        public MongoView<T> upsert() {
-            upsert = true;
-            return this;
-        }
-
-        @Override
-        public MongoView<T> skip(final int skip) {
-            findModelOp.getOptions().skip(skip);
-            return this;
-        }
-
-        @Override
-        public MongoView<T> limit(final int limit) {
-            findModelOp.getOptions().limit(limit);
-            limitSet = true;
-            return this;
-        }
-
-        @Override
-        public MongoView<T> withReadPreference(final ReadPreference readPreference) {
-            this.readPreference = readPreference;
-            return this;
-        }
-
-        @Override
-        public MongoCursor<T> get() {
-            return execute(createQueryOperation(), readPreference);
-        }
-
-        @Override
-        public T getOne() {
-            MongoCursor<T> cursor = execute(createQueryOperation().batchSize(-1), readPreference);
-            return cursor.hasNext() ? cursor.next() : null;
-        }
-
-        private FindOperation<T> createQueryOperation() {
-            return new FindOperation<T>(getNamespace(), getCodec())
-                   .criteria(asBson(findModelOp.getOptions().getCriteria()))
-                   .batchSize(findModelOp.getOptions().getBatchSize())
-                   .skip(findModelOp.getOptions().getSkip())
-                   .limit(findModelOp.getOptions().getLimit())
-                   .maxTime(findModelOp.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
-                   .modifiers(asBson(findModelOp.getOptions().getModifiers()))
-                   .projection(asBson(findModelOp.getOptions().getProjection()))
-                   .sort(asBson(findModelOp.getOptions().getSort()));
-        }
-
-
-        @Override
-        public long count() {
-            CountOperation operation = new CountOperation(getNamespace())
-                                       .criteria((BsonDocument) findModelOp.getOptions().getCriteria())
-                                       .skip(findModelOp.getOptions().getSkip())
-                                       .limit(findModelOp.getOptions().getLimit())
-                                       .maxTime(findModelOp.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
-            return execute(operation, readPreference);
-        }
-
-        @Override
-        public MongoIterable<Document> mapReduce(final String map, final String reduce) {
-            //TODO: support supplied read preferences?
-            MapReduce mapReduce = new MapReduce(new BsonJavaScript(map), new BsonJavaScript(reduce))
-                                  .filter((BsonDocument) findModelOp.getOptions().getCriteria())
-                                  .limit(findModelOp.getOptions().getLimit());
-
-            if (mapReduce.isInline()) {
-                MapReduceWithInlineResultsOperation<Document> operation =
-                new MapReduceWithInlineResultsOperation<Document>(getNamespace(), mapReduce, new DocumentCodec());
-                return new MapReduceResultsIterable<T, Document>(operation, MongoCollectionImpl.this);
+    @SuppressWarnings("unchecked")
+    private BulkWriteResult bulkWrite(final BulkWriteModel<? extends T> model) {
+        List<WriteRequest> requests = new ArrayList<WriteRequest>();
+        for (WriteModel<? extends T> writeModel : model.getRequests()) {
+            WriteRequest writeRequest;
+            if (writeModel instanceof InsertOneModel) {
+                InsertOneModel<T> insertOneModel = (InsertOneModel<T>) writeModel;
+                if (getCodec() instanceof CollectibleCodec) {
+                    ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(insertOneModel.getDocument());
+                }
+                writeRequest = new InsertRequest(asBson(insertOneModel.getDocument()));
+            } else if (writeModel instanceof ReplaceOneModel) {
+                ReplaceOneModel<T> replaceOneModel = (ReplaceOneModel<T>) writeModel;
+                writeRequest = new ReplaceRequest(asBson(replaceOneModel.getCriteria()), asBson(replaceOneModel.getReplacement()))
+                                   .upsert(replaceOneModel.getOptions().isUpsert());
+            } else if (writeModel instanceof UpdateOneModel) {
+                UpdateOneModel<T> updateOneModel = (UpdateOneModel<T>) writeModel;
+                writeRequest = new UpdateRequest(asBson(updateOneModel.getCriteria()), asBson(updateOneModel.getUpdate()))
+                                   .multi(false)
+                                   .upsert(updateOneModel.getOptions().isUpsert());
+            } else if (writeModel instanceof UpdateManyModel) {
+                UpdateManyModel<T> updateManyModel = (UpdateManyModel<T>) writeModel;
+                writeRequest = new UpdateRequest(asBson(updateManyModel.getCriteria()), asBson(updateManyModel.getUpdate()))
+                                   .multi(true)
+                                   .upsert(updateManyModel.getOptions().isUpsert());
+            } else if (writeModel instanceof DeleteOneModel) {
+                DeleteOneModel<T> deleteOneModel = (DeleteOneModel<T>) writeModel;
+                writeRequest = new RemoveRequest(asBson(deleteOneModel.getCriteria())).multi(false);
+            } else if (writeModel instanceof DeleteManyModel) {
+                DeleteManyModel<T> deleteManyModel = (DeleteManyModel<T>) writeModel;
+                writeRequest = new RemoveRequest(asBson(deleteManyModel.getCriteria())).multi(true);
             } else {
-                execute(new MapReduceToCollectionOperation(getNamespace(), mapReduce));
-                return client.getDatabase(mapReduce.getOutput().getDatabaseName()).getCollection(mapReduce.getOutput().getCollectionName())
-                             .find();
+                throw new UnsupportedOperationException(format("WriteModel of type %s is not supported", writeModel.getClass()));
             }
+
+            requests.add(writeRequest);
         }
 
-        @Override
-        public void forEach(final Block<? super T> block) {
-            MongoCursor<T> cursor = get();
-            try {
-                while (cursor.hasNext()) {
-                    block.apply(cursor.next());
-                }
-            } finally {
-                cursor.close();
-            }
+        return operationExecutor.execute(new MixedBulkWriteOperation(namespace, requests, model.getOptions().isOrdered(),
+                                                                     options.getWriteConcern()));
+    }
+
+    @Override
+    public void insertOne(final T document) {
+        if (getCodec() instanceof CollectibleCodec) {
+            ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
         }
+        List<InsertRequest> requests = new ArrayList<InsertRequest>();
+        requests.add(new InsertRequest(asBson(document)));
+        operationExecutor.execute(new InsertOperation(namespace, true, options.getWriteConcern(), requests));
+    }
 
+    @Override
+    public void insertMany(final List<? extends T> documents) {
+        insertMany(documents, new InsertManyOptions());
+    }
 
-        @Override
-        public <A extends Collection<? super T>> A into(final A target) {
-            forEach(new Block<T>() {
-                @Override
-                public void apply(final T t) {
-                    target.add(t);
-                }
-            });
-            return target;
-        }
+    @Override
+    public void insertMany(final List<? extends T> documents, final InsertManyOptions options) {
+        insertMany(new InsertManyModel<T>(documents, options));
+    }
 
-        @Override
-        public <U> MongoIterable<U> map(final Function<T, U> mapper) {
-            return new MappingIterable<T, U>(this, mapper);
-        }
-
-        @Override
-        public MongoView<T> withWriteConcern(final WriteConcern writeConcernForThisOperation) {
-            writeConcern = writeConcernForThisOperation;
-            return this;
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public WriteResult insert(final T document) {
+    private void insertMany(final InsertManyModel<T> model) {
+        List<InsertRequest> requests = new ArrayList<InsertRequest>();
+        for (T document : model.getDocuments()) {
             if (getCodec() instanceof CollectibleCodec) {
                 ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
             }
-            return execute(new InsertOperation(getNamespace(), true, writeConcern,
-                                               asList(new InsertRequest(new BsonDocumentWrapper<T>(document, getCodec())))));
+            requests.add(new InsertRequest(asBson(document)));
         }
+        operationExecutor.execute(new InsertOperation(namespace, model.getOptions().isOrdered(), options.getWriteConcern(), requests));
+    }
 
-        @Override
-        public WriteResult insert(final List<T> documents) {
-            List<InsertRequest> insertRequestList = new ArrayList<InsertRequest>(documents.size());
-            for (T cur : documents) {
-                if (getCodec() instanceof CollectibleCodec) {
-                    ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(cur);
-                }
-                insertRequestList.add(new InsertRequest(new BsonDocumentWrapper<T>(cur, getCodec())));
-            }
-            return execute(new InsertOperation(getNamespace(), true, writeConcern, insertRequestList));
-        }
+    @Override
+    public DeleteResult deleteOne(final Object criteria) {
+        WriteResult writeResult = operationExecutor.execute(new RemoveOperation(namespace, true, options.getWriteConcern(),
+                                                                                asList(new RemoveRequest(asBson(criteria))
+                                                                                           .multi(false))));
+        return new DeleteResult(writeResult.getCount());
+    }
 
-        @Override
-        public WriteResult save(final T document) {
-            if (!(codec instanceof CollectibleCodec)) {
-                throw new UnsupportedOperationException();
-            }
-            CollectibleCodec<T> collectibleCodec = (CollectibleCodec<T>) codec;
-            if (!collectibleCodec.documentHasId(document)) {
-                return insert(document);
-            } else {
-                return find(new BsonDocument("_id", collectibleCodec.getDocumentId(document))).upsert().replace(document);
-            }
-        }
+    @Override
+    public DeleteResult deleteMany(final Object criteria) {
+        WriteResult writeResult = operationExecutor.execute(new RemoveOperation(namespace, true, options.getWriteConcern(),
+                                                                                asList(new RemoveRequest(asBson(criteria))
+                                                                                           .multi(true))));
+        return new DeleteResult(writeResult.getCount());
+    }
 
-        @Override
-        public WriteResult remove() {
-            RemoveRequest removeRequest = new RemoveRequest((BsonDocument) findModelOp.getOptions().getCriteria())
-                                          .multi(getMultiFromLimit());
-            return execute(new RemoveOperation(getNamespace(), true, writeConcern, asList(removeRequest)
-            ));
-        }
+    @Override
+    public UpdateResult replaceOne(final Object criteria, final T replacement) {
+        return replaceOne(criteria, replacement, new ReplaceOneOptions());
+    }
 
-        @Override
-        public WriteResult removeOne() {
-            RemoveRequest removeRequest = new RemoveRequest((BsonDocument) findModelOp.getOptions().getCriteria()).multi(false);
-            return execute(new RemoveOperation(getNamespace(), true, writeConcern, asList(removeRequest)
-            ));
-        }
+    @Override
+    public UpdateResult replaceOne(final Object criteria, final T replacement, final ReplaceOneOptions options) {
+        return replaceOne(new ReplaceOneModel<T>(criteria, replacement, options));
+    }
 
-        @Override
-        public WriteResult update(final Document updateOperations) {
-            UpdateRequest update = new UpdateRequest((BsonDocument) findModelOp.getOptions().getCriteria(),
-                                                     wrap(updateOperations)).upsert(upsert)
-                                                                            .multi(getMultiFromLimit());
-            return execute(new UpdateOperation(getNamespace(), true, writeConcern, asList(update)
-            ));
-        }
+    private UpdateResult replaceOne(final ReplaceOneModel<T> model) {
+        List<ReplaceRequest> requests = new ArrayList<ReplaceRequest>();
+        requests.add(new ReplaceRequest(asBson(model.getCriteria()), asBson(model.getReplacement()))
+                         .upsert(model.getOptions().isUpsert()));
+        WriteResult writeResult = operationExecutor.execute(new ReplaceOperation(namespace, true, options.getWriteConcern(), requests));
+        return createUpdateResult(writeResult);
+    }
 
-        @Override
-        public WriteResult update(final ConvertibleToDocument updateOperations) {
-            return update(updateOperations.toDocument());
-        }
+    @Override
+    public UpdateResult updateOne(final Object criteria, final Object update) {
+        return updateOne(criteria, update, new UpdateOneOptions());
+    }
 
-        @Override
-        public WriteResult updateOne(final Document updateOperations) {
-            UpdateRequest update = new UpdateRequest((BsonDocument) findModelOp.getOptions().getCriteria(), wrap(updateOperations))
-                                   .upsert(upsert)
-                                   .multi(false);
-            return execute(new UpdateOperation(getNamespace(), true, writeConcern, asList(update)));
-        }
+    @Override
+    public UpdateResult updateOne(final Object criteria, final Object update, final UpdateOneOptions options) {
+        return updateOne(new UpdateOneModel<T>(criteria, update, options));
+    }
 
-        @Override
-        public WriteResult updateOne(final ConvertibleToDocument updateOperations) {
-            return updateOne(updateOperations.toDocument());
-        }
+    @Override
+    public UpdateResult updateOne(final UpdateOneModel<T> model) {
+        WriteResult writeResult = operationExecutor
+                                      .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
+                                                                   asList(new UpdateRequest(asBson(model.getCriteria()),
+                                                                                            asBson(model.getUpdate()))
+                                                                              .multi(false)
+                                                                              .upsert(model.getOptions().isUpsert()))));
+        return createUpdateResult(writeResult);
+    }
 
-        @Override
-        @SuppressWarnings("unchecked")
-        public WriteResult replace(final T replacement) {
-            ReplaceRequest replaceRequest = new ReplaceRequest((BsonDocument) findModelOp.getOptions().getCriteria(),
-                                                               asBson(replacement)).upsert(upsert);
-            return execute(new ReplaceOperation(getNamespace(), true, writeConcern, asList(replaceRequest)));
-        }
+    @Override
+    public UpdateResult updateMany(final Object criteria, final Object update) {
+        return updateMany(criteria, update, new UpdateManyOptions());
+    }
 
-        @Override
-        public T updateOneAndGet(final Document updateOperations) {
-            return updateOneAndGet(updateOperations, Get.AfterChangeApplied);
-        }
+    @Override
+    public UpdateResult updateMany(final Object criteria, final Object update, final UpdateManyOptions options) {
+        return updateMany(new UpdateManyModel<T>(criteria, update, options));
+    }
 
-        @Override
-        public T updateOneAndGet(final ConvertibleToDocument updateOperations) {
-            return updateOneAndGet(updateOperations.toDocument());
-        }
+    private UpdateResult updateMany(final UpdateManyModel<T> model) {
+        WriteResult writeResult = operationExecutor
+                                      .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
+                                                                   asList(new UpdateRequest(asBson(model.getCriteria()),
+                                                                                            asBson(model.getUpdate()))
+                                                                              .multi(true)
+                                                                              .upsert(model.getOptions().isUpsert()))));
+        return createUpdateResult(writeResult);
+    }
 
-        @Override
-        public T replaceOneAndGet(final T replacement) {
-            return replaceOneAndGet(replacement, Get.AfterChangeApplied);
-        }
+    @Override
+    public T findOneAndDelete(final Object criteria) {
+        return findOneAndDelete(criteria, new FindOneAndDeleteOptions());
+    }
 
-        @Override
-        public T getOneAndUpdate(final Document updateOperations) {
-            return updateOneAndGet(updateOperations, Get.BeforeChangeApplied);
-        }
+    @Override
+    public T findOneAndDelete(final Object criteria, final FindOneAndDeleteOptions options) {
+        return findOneAndDelete(new FindOneAndDeleteModel(criteria, options));
+    }
 
-        @Override
-        public T getOneAndUpdate(final ConvertibleToDocument updateOperations) {
-            return getOneAndUpdate(updateOperations.toDocument());
-        }
+    // TODO modifiedCount
+    private UpdateResult createUpdateResult(final WriteResult writeResult) {
+        return new UpdateResult(writeResult.getCount(), 0, writeResult.getUpsertedId());
+    }
 
-        @Override
-        public T getOneAndReplace(final T replacement) {
-            return replaceOneAndGet(replacement, Get.BeforeChangeApplied);
-        }
+    private T findOneAndDelete(final FindOneAndDeleteModel model) {
+        FindAndRemoveOperation<T> operation = new FindAndRemoveOperation<T>(namespace, getCodec())
+                                                  .criteria(asBson(model.getCriteria()))
+                                                  .projection(asBson(model.getOptions().getProjection()))
+                                                  .sort(asBson(model.getOptions().getSort()));
+        return operationExecutor.execute(operation);
+    }
 
-        public T updateOneAndGet(final Document updateOperations, final Get beforeOrAfter) {
-            FindAndUpdateOperation<T> operation = new FindAndUpdateOperation<T>(getNamespace(), getCodec(), wrap(updateOperations))
-                                                  .criteria((BsonDocument) findModelOp.getOptions().getCriteria())
-                                                  .projection((BsonDocument) findModelOp.getOptions().getProjection())
-                                                  .sort((BsonDocument) findModelOp.getOptions().getSort())
-                                                  .returnUpdated(asBoolean(beforeOrAfter))
-                                                  .upsert(upsert);
-            return execute(operation);
-        }
+    @Override
+    public T findOneAndReplace(final Object criteria, final T replacement) {
+        return findOneAndReplace(criteria, replacement, new FindOneAndReplaceOptions());
+    }
 
-        public T replaceOneAndGet(final T replacement, final Get beforeOrAfter) {
-            FindAndReplaceOperation<T> operation = new FindAndReplaceOperation<T>(getNamespace(), getCodec(),
-                                                                                  new BsonDocumentWrapper<T>(replacement, getCodec()))
-                                                   .criteria((BsonDocument) findModelOp.getOptions().getCriteria())
-                                                   .projection((BsonDocument) findModelOp.getOptions().getProjection())
-                                                   .sort((BsonDocument) findModelOp.getOptions().getSort())
-                                                   .returnReplaced(asBoolean(beforeOrAfter))
-                                                   .upsert(upsert);
-            return execute(operation);
-        }
+    @Override
+    public T findOneAndReplace(final Object criteria, final T replacement, final FindOneAndReplaceOptions options) {
+        return findOneAndReplace(new FindOneAndReplaceModel<T>(criteria, replacement, options));
+    }
 
-        @Override
-        public T getOneAndRemove() {
-            FindAndRemoveOperation<T> operation = new FindAndRemoveOperation<T>(getNamespace(), getCodec())
-                                                  .criteria((BsonDocument) findModelOp.getOptions().getCriteria())
-                                                  .projection((BsonDocument) findModelOp.getOptions().getProjection())
-                                                  .sort((BsonDocument) findModelOp.getOptions().getSort());
-            return execute(operation);
-        }
+    T findOneAndUpdate(final FindOneAndUpdateModel model) {
+        FindAndUpdateOperation<T> operation = new FindAndUpdateOperation<T>(namespace, getCodec(), asBson(model.getUpdate()))
+                                                  .criteria(asBson(model.getCriteria()))
+                                                  .projection(asBson(model.getOptions().getProjection()))
+                                                  .sort(asBson(model.getOptions().getSort()))
+                                                  .returnUpdated(model.getOptions().getReturnUpdated())
+                                                  .upsert(model.getOptions().isUpsert());
+        return operationExecutor.execute(operation);
+    }
 
-        boolean asBoolean(final Get get) {
-            return get == Get.AfterChangeApplied;
-        }
+    private T findOneAndReplace(final FindOneAndReplaceModel<T> model) {
+        FindAndReplaceOperation<T> operation = new FindAndReplaceOperation<T>(namespace, getCodec(), asBson(model.getReplacement()))
+                                                   .criteria(asBson(model.getCriteria()))
+                                                   .projection(asBson(model.getOptions().getProjection()))
+                                                   .sort(asBson(model.getOptions().getSort()))
+                                                   .returnReplaced(model.getOptions().getReturnReplaced())
+                                                   .upsert(model.getOptions().isUpsert());
+        return operationExecutor.execute(operation);
+    }
 
-        private boolean getMultiFromLimit() {
-            if (limitSet) {
-                if (findModelOp.getOptions().getLimit() == 1) {
-                    return false;
-                } else if (findModelOp.getOptions().getLimit() == 0) {
-                    return true;
-                } else {
-                    throw new IllegalArgumentException("Update currently only supports a limit of either none or 1");
-                }
-            } else {
-                return true;
-            }
-        }
+    @Override
+    public T findOneAndUpdate(final Object criteria, final Object update) {
+        return findOneAndUpdate(criteria, update, new FindOneAndUpdateOptions());
+    }
 
-        @SuppressWarnings({"rawtypes", "unchecked"})
-        private BsonDocument asBson(final Object document) {
-            if (document == null) {
-                return null;
-            }
-            if (document instanceof BsonDocument) {
-                return (BsonDocument) document;
-            } else {
-                return new BsonDocumentWrapper(document, options.getCodecRegistry().get(document.getClass()));
-            }
+    @Override
+    public T findOneAndUpdate(final Object criteria, final Object update, final FindOneAndUpdateOptions options) {
+        return findOneAndUpdate(new FindOneAndUpdateModel(criteria, update, options));
+    }
+
+    @Override
+    public Document explain(final ExplainableModel explainableModel, final ExplainVerbosity verbosity) {
+        if (explainableModel instanceof AggregateModel) {
+            return explainAggregate((AggregateModel) explainableModel, verbosity);
+        } else if (explainableModel instanceof FindModel) {
+            return explainFind((FindModel) explainableModel, verbosity);
+        } else if (explainableModel instanceof CountModel) {
+            return explainCount((CountModel) explainableModel, verbosity);
+        } else {
+            throw new UnsupportedOperationException(format("Unsupported explainable model type %s", explainableModel.getClass()));
         }
     }
 
-    private class MongoCollectionPipeline implements MongoPipeline<T> {
-        private final List<BsonDocument> pipeline;
+    @Override
+    public CollectionAdministration tools() {
+        return new CollectionAdministrationImpl(getNamespace(), operationExecutor);
+    }
 
-        private MongoCollectionPipeline() {
-            pipeline = new ArrayList<BsonDocument>();
+    private Document explainCount(final CountModel countModel, final ExplainVerbosity verbosity) {
+        CountOperation countOperation = createCountOperation(countModel);
+        BsonDocument bsonDocument = operationExecutor.execute(countOperation.asExplainableOperation(verbosity),
+                                                              options.getReadPreference());
+        return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
+    }
+
+    private Document explainFind(final FindModel findModel, final ExplainVerbosity verbosity) {
+        FindOperation<BsonDocument> findOperation = createQueryOperation(findModel, new BsonDocumentCodec());
+        BsonDocument bsonDocument = operationExecutor.execute(findOperation.asExplainableOperation(verbosity),
+                                                              options.getReadPreference());
+        return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
+    }
+
+    private Document explainAggregate(final AggregateModel aggregateModel, final ExplainVerbosity verbosity) {
+        AggregateOperation<BsonDocument> operation = createAggregateOperation(aggregateModel, new BsonDocumentCodec(),
+                                                                              createBsonDocumentList(aggregateModel.getPipeline()));
+        BsonDocument bsonDocument = operationExecutor.execute(operation.asExplainableOperation(verbosity), options.getReadPreference());
+        return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
+    }
+
+    private Codec<T> getCodec() {
+        return options.getCodecRegistry().get(clazz);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private BsonDocument asBson(final Object document) {
+        if (document == null) {
+            return null;
         }
+        if (document instanceof BsonDocument) {
+            return (BsonDocument) document;
+        } else {
+            return new BsonDocumentWrapper(document, options.getCodecRegistry().get(document.getClass()));
+        }
+    }
 
-        public MongoCollectionPipeline(final MongoCollectionPipeline from) {
-            pipeline = new ArrayList<BsonDocument>(from.pipeline);
+    private <C> FindOperation<C> createQueryOperation(final FindModel model, final Decoder<C> decoder) {
+        return new FindOperation<C>(namespace, decoder)
+                   .criteria(asBson(model.getOptions().getCriteria()))
+                   .batchSize(model.getOptions().getBatchSize())
+                   .cursorFlags(getCursorFlags(model))
+                   .skip(model.getOptions().getSkip())
+                   .limit(model.getOptions().getLimit())
+                   .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
+                   .modifiers(asBson(model.getOptions().getModifiers()))
+                   .projection(asBson(model.getOptions().getProjection()))
+                   .sort(asBson(model.getOptions().getSort()));
+    }
+
+    private EnumSet<CursorFlag> getCursorFlags(final FindModel model) {
+        EnumSet<CursorFlag> cursorFlags = EnumSet.noneOf(CursorFlag.class);
+        if (model.getOptions().isAwaitData()) {
+            cursorFlags.add(CursorFlag.AWAIT_DATA);
+        }
+        if (model.getOptions().isExhaust()) {
+            cursorFlags.add(CursorFlag.EXHAUST);
+        }
+        if (model.getOptions().isNoCursorTimeout()) {
+            cursorFlags.add(CursorFlag.NO_CURSOR_TIMEOUT);
+        }
+        if (model.getOptions().isOplogReplay()) {
+            cursorFlags.add(CursorFlag.OPLOG_REPLAY);
+        }
+        if (model.getOptions().isPartial()) {
+            cursorFlags.add(CursorFlag.PARTIAL);
+        }
+        if (model.getOptions().isTailable()) {
+            cursorFlags.add(CursorFlag.TAILABLE);
+        }
+        return cursorFlags;
+    }
+
+    private CountOperation createCountOperation(final CountModel model) {
+        CountOperation operation = new CountOperation(namespace)
+                                       .criteria(asBson(model.getOptions().getCriteria()))
+                                       .skip(model.getOptions().getSkip())
+                                       .limit(model.getOptions().getLimit())
+                                       .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
+        if (model.getOptions().getHint() != null) {
+            operation.hint(asBson(model.getOptions().getHint()));
+        } else if (model.getOptions().getHintString() != null) {
+            operation.hint(new BsonString(model.getOptions().getHintString()));
+        }
+        return operation;
+    }
+
+    private <C> AggregateOperation<C> createAggregateOperation(final AggregateModel model, final Decoder<C> decoder,
+                                                               final List<BsonDocument> aggregateList) {
+        return new AggregateOperation<C>(namespace, aggregateList, decoder)
+                   .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
+                   .allowDiskUse(model.getOptions().getAllowDiskUse())
+                   .batchSize(model.getOptions().getBatchSize())
+                   .useCursor(model.getOptions().getUseCursor());
+    }
+
+    private <D> List<BsonDocument> createBsonDocumentList(final List<D> pipeline) {
+        List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(pipeline.size());
+        for (D obj : pipeline) {
+            aggregateList.add(asBson(obj));
+        }
+        return aggregateList;
+    }
+
+    private final class OperationIterable<D> implements MongoIterable<D> {
+        private final ReadOperation<MongoCursor<D>> operation;
+        private final ReadPreference readPreference;
+
+        private OperationIterable(final ReadOperation<MongoCursor<D>> operation, final ReadPreference readPreference) {
+            this.operation = operation;
+            this.readPreference = readPreference;
         }
 
         @Override
-        public MongoPipeline<T> find(final Document criteria) {
-            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(wrap(new Document("$match", criteria)));
-            return newPipeline;
+        public <U> MongoIterable<U> map(final Function<D, U> mapper) {
+            return new MappingIterable<D, U>(this, mapper);
         }
 
         @Override
-        public MongoPipeline<T> sort(final Document sortCriteria) {
-            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(wrap(new Document("$sort", sortCriteria)));
-            return newPipeline;
+        public MongoCursor<D> iterator() {
+            return operationExecutor.execute(operation, readPreference);
         }
 
         @Override
-        public MongoPipeline<T> skip(final long skip) {
-            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(wrap(new Document("$skip", skip)));
-            return newPipeline;
-        }
-
-        @Override
-        public MongoPipeline<T> limit(final long limit) {
-            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(wrap(new Document("$limit", limit)));
-            return newPipeline;
-        }
-
-        @Override
-        public MongoPipeline<T> project(final Document projection) {
-            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(wrap(new Document("$project", projection)));
-            return newPipeline;
-        }
-
-        @Override
-        public MongoPipeline<T> group(final Document group) {
-            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(wrap(new Document("$group", group)));
-            return newPipeline;
-        }
-
-        @Override
-        public MongoPipeline<T> unwind(final String field) {
-            MongoCollectionPipeline newPipeline = new MongoCollectionPipeline(this);
-            newPipeline.pipeline.add(wrap(new Document("$unwind", field)));
-            return newPipeline;
-        }
-
-        @Override
-        public <U> MongoIterable<U> map(final Function<T, U> mapper) {
-            return new MappingIterable<T, U>(this, mapper);
-        }
-
-        @Override
-        @SuppressWarnings("unchecked")
-        public MongoCursor<T> iterator() {
-            return execute(new AggregateOperation<T>(getNamespace(), pipeline, getCodec()), options.getReadPreference());
-        }
-
-        @Override
-        public void forEach(final Block<? super T> block) {
-            MongoCursor<T> cursor = iterator();
+        public void forEach(final Block<? super D> block) {
+            MongoCursor<D> cursor = iterator();
             try {
                 while (cursor.hasNext()) {
                     block.apply(cursor.next());
@@ -592,14 +602,15 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             } finally {
                 cursor.close();
             }
+
         }
 
         @Override
-        public <A extends Collection<? super T>> A into(final A target) {
-            forEach(new Block<T>() {
+        public <A extends Collection<? super D>> A into(final A target) {
+            forEach(new Block<D>() {
                 @Override
-                public void apply(final T t) {
-                    target.add(t);
+                public void apply(final D document) {
+                    target.add(document);
                 }
             });
             return target;

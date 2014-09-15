@@ -21,6 +21,7 @@ import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.QueryBuilder;
+import com.mongodb.client.model.FindOptions;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.codecs.DocumentCodecProvider;
 import org.bson.BsonObjectId;
@@ -52,20 +53,20 @@ import static org.junit.Assert.assertThat;
 public class QueryAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldBeAbleToQueryWithDocumentSpecification() {
-        collection.insert(new Document("name", "Bob"));
+        collection.insertOne(new Document("name", "Bob"));
 
         Document query = new Document("name", "Bob");
-        MongoCursor<Document> results = collection.find(query).get();
+        MongoCursor<Document> results = collection.find(new FindOptions().criteria(query)).iterator();
 
         assertThat(results.next().get("name").toString(), is("Bob"));
     }
 
     @Test
     public void shouldBeAbleToQueryWithDocument() {
-        collection.insert(new Document("name", "Bob"));
+        collection.insertOne(new Document("name", "Bob"));
 
         Document query = new Document("name", "Bob");
-        MongoCursor<Document> results = collection.find(query).get();
+        MongoCursor<Document> results = collection.find(new FindOptions().criteria(query)).iterator();
 
         assertThat(results.next().get("name").toString(), is("Bob"));
     }
@@ -76,24 +77,24 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
         MongoCollectionOptions options =
                 MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         MongoCollection<Person> personCollection = database.getCollection(getCollectionName(), Person.class, options);
-        personCollection.insert(new Person("Bob"));
+        personCollection.insertOne(new Person("Bob"));
 
-        MongoCursor<Person> results = personCollection.find(new Document("name", "Bob")).get();
+        MongoCursor<Person> results = personCollection.find(new FindOptions().criteria(new Document("name", "Bob"))).iterator();
 
         assertThat(results.next().name, is("Bob"));
     }
 
     @Test
     public void shouldBeAbleToFilterByType() {
-        collection.insert(new Document("product", "Book").append("numTimesOrdered", "some"));
-        collection.insert(new Document("product", "CD").append("numTimesOrdered", "6"));
-        collection.insert(new Document("product", "DVD").append("numTimesOrdered", 9));
-        collection.insert(new Document("product", "SomethingElse").append("numTimesOrdered", 10));
+        collection.insertOne(new Document("product", "Book").append("numTimesOrdered", "some"));
+        collection.insertOne(new Document("product", "CD").append("numTimesOrdered", "6"));
+        collection.insertOne(new Document("product", "DVD").append("numTimesOrdered", 9));
+        collection.insertOne(new Document("product", "SomethingElse").append("numTimesOrdered", 10));
 
         List<Document> results = new ArrayList<Document>();
-        collection.find(new Document("numTimesOrdered", new Document("$type", 16)))
-                  .sort(new Document("numTimesOrdered", -1))
-                  .into(results);
+        collection.find(new FindOptions()
+                            .criteria(new Document("numTimesOrdered", new Document("$type", 16)))
+                            .sort(new Document("numTimesOrdered", -1))).into(results);
 
         assertThat(results.size(), is(2));
         assertThat(results.get(0).get("product").toString(), is("SomethingElse"));
@@ -102,19 +103,19 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldUseFriendlyQueryType() {
-        collection.insert(new Document("product", "Book").append("numTimesOrdered", "some"));
-        collection.insert(new Document("product", "CD").append("numTimesOrdered", "6"));
-        collection.insert(new Document("product", "DVD").append("numTimesOrdered", 9));
-        collection.insert(new Document("product", "SomethingElse").append("numTimesOrdered", 10));
-        collection.insert(new Document("product", "VeryPopular").append("numTimesOrdered", 7843273657286478L));
+        collection.insertOne(new Document("product", "Book").append("numTimesOrdered", "some"));
+        collection.insertOne(new Document("product", "CD").append("numTimesOrdered", "6"));
+        collection.insertOne(new Document("product", "DVD").append("numTimesOrdered", 9));
+        collection.insertOne(new Document("product", "SomethingElse").append("numTimesOrdered", 10));
+        collection.insertOne(new Document("product", "VeryPopular").append("numTimesOrdered", 7843273657286478L));
 
         List<Document> results = new ArrayList<Document>();
         //TODO make BSON type serializable
         Document filter = new Document("$or", asList(new Document("numTimesOrdered", new Document("$type", INT32.getValue())),
                                                      new Document("numTimesOrdered", new Document("$type", INT64.getValue()))));
-        collection.find(filter)
-                  .sort(new Document("numTimesOrdered", -1))
-                  .into(results);
+        collection.find(new FindOptions()
+                            .criteria(filter)
+                            .sort(new Document("numTimesOrdered", -1))).into(results);
 
         assertThat(results.size(), is(3));
         assertThat(results.get(0).get("product").toString(), is("VeryPopular"));
@@ -124,13 +125,12 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldBeAbleToSortAscending() {
-        collection.insert(new Document("product", "Book"));
-        collection.insert(new Document("product", "DVD"));
-        collection.insert(new Document("product", "CD"));
+        collection.insertOne(new Document("product", "Book"));
+        collection.insertOne(new Document("product", "DVD"));
+        collection.insertOne(new Document("product", "CD"));
 
         List<Document> results = new ArrayList<Document>();
-        collection.find().sort(new Document("product", 1))
-                  .into(results);
+        collection.find(new FindOptions().sort(new Document("product", 1))).into(results);
 
         assertThat(results.size(), is(3));
         assertThat(results.get(0).get("product").toString(), is("Book"));
@@ -140,20 +140,18 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldBeAbleToUseQueryBuilderForFilter() {
-        collection.insert(new Document("product", "Book").append("numTimesOrdered", "some"));
-        collection.insert(new Document("product", "CD").append("numTimesOrdered", "6"));
-        collection.insert(new Document("product", "DVD").append("numTimesOrdered", 9));
-        collection.insert(new Document("product", "SomethingElse").append("numTimesOrdered", 10));
-        collection.insert(new Document("product", "VeryPopular").append("numTimesOrdered", 7843273657286478L));
+        collection.insertOne(new Document("product", "Book").append("numTimesOrdered", "some"));
+        collection.insertOne(new Document("product", "CD").append("numTimesOrdered", "6"));
+        collection.insertOne(new Document("product", "DVD").append("numTimesOrdered", 9));
+        collection.insertOne(new Document("product", "SomethingElse").append("numTimesOrdered", 10));
+        collection.insertOne(new Document("product", "VeryPopular").append("numTimesOrdered", 7843273657286478L));
 
         List<Document> results = new ArrayList<Document>();
 
         Document filter = new QueryBuilder().or(query("numTimesOrdered").is(query(TYPE).is(INT32.getValue())))
                                             .or(query("numTimesOrdered").is(query(TYPE).is(INT64.getValue())))
                                             .toDocument();
-        collection.find(filter)
-                  .sort(new Document("numTimesOrdered", -1))
-                  .into(results);
+        collection.find(new FindOptions().criteria(filter).sort(new Document("numTimesOrdered", -1))).into(results);
 
         assertThat(results.size(), is(3));
         assertThat(results.get(0).get("product").toString(), is("VeryPopular"));
