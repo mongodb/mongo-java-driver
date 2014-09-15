@@ -29,6 +29,7 @@ import java.io.UnsupportedEncodingException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.HashMap;
 import java.util.Random;
@@ -304,7 +305,7 @@ class ScramSha1Authenticator extends SaslAuthenticator {
             int high = 126;
             int range = high - low;
 
-            Random random = new Random();
+            Random random = new SecureRandom();
             char[] text = new char[length];
             for (int i = 0; i < length; i++) {
                 int next = random.nextInt(range) + low;
