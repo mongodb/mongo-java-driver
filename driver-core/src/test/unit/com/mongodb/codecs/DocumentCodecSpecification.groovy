@@ -27,8 +27,8 @@ import org.bson.BsonUndefined
 import org.bson.ByteBufNIO
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
-import org.bson.io.BasicInputBuffer
 import org.bson.io.BasicOutputBuffer
+import org.bson.io.ByteBufferBsonInputStream
 import org.bson.types.Binary
 import org.bson.types.Code
 import org.bson.types.MaxKey
@@ -70,10 +70,12 @@ class DocumentCodecSpecification extends Specification {
             put('array', asList(1, 1L, true, [1, 2, 3], new Document('a', 1), null))
             put('document', new Document('a', 2))
         }
+
         when:
-        BsonBinaryWriter writer = new BsonBinaryWriter(new BasicOutputBuffer(), false)
+        def buffer = new BasicOutputBuffer()
+        BsonBinaryWriter writer = new BsonBinaryWriter(buffer, false)
         new DocumentCodec().encode(writer, originalDocument, EncoderContext.builder().build())
-        BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(writer.buffer.toByteArray()))),
+        BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray()))),
                                                        true)
         def decodedDoc = new DocumentCodec().decode(reader, DecoderContext.builder().build())
 

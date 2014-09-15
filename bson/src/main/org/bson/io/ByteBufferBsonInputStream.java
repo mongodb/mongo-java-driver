@@ -23,12 +23,21 @@ import org.bson.types.ObjectId;
 import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
-public class BasicInputBuffer implements InputBuffer {
+/**
+ * An implementation of {@code BsonInputStream} that is backed by a {@code ByteBuf}.
+ * @since 3.0
+ */
+public class ByteBufferBsonInputStream implements BsonInputStream {
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
     private ByteBuf buffer;
 
-    public BasicInputBuffer(final ByteBuf buffer) {
+    /**
+     * Construct an instance with the given byte buffer.  The stream takes over ownership of the buffer and closes it when this instance
+     * is closed.
+     * @param buffer the byte buffer
+     */
+    public ByteBufferBsonInputStream(final ByteBuf buffer) {
         this.buffer = buffer;
         buffer.order(ByteOrder.LITTLE_ENDIAN);
     }

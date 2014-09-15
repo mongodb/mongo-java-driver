@@ -22,8 +22,8 @@ import org.bson.BsonBinaryWriter;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.RawBsonDocument;
-import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
+import org.bson.io.ByteBufferBsonInputStream;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -44,7 +44,7 @@ public class RawBsonDocumentCodec implements Codec<RawBsonDocument> {
 
     @Override
     public void encode(final BsonWriter writer, final RawBsonDocument value, final EncoderContext encoderContext) {
-        BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(value.getByteBuffer()), true);
+        BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInputStream(value.getByteBuffer()), true);
         try {
             writer.pipe(reader);
         } finally {

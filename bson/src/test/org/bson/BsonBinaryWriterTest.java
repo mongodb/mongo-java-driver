@@ -16,8 +16,8 @@
 
 package org.bson;
 
-import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
+import org.bson.io.ByteBufferBsonInputStream;
 import org.bson.types.ObjectId;
 import org.junit.After;
 import org.junit.Before;
@@ -383,7 +383,7 @@ public class BsonBinaryWriterTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         buffer.pipe(baos);
 
-        BasicInputBuffer basicInputBuffer = new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray())));
+        ByteBufferBsonInputStream basicInputBuffer = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray())));
 
         BsonBinaryReader reader = new BsonBinaryReader(basicInputBuffer, false);
 
@@ -466,7 +466,7 @@ public class BsonBinaryWriterTest {
 
         BsonBinaryWriter newWriter = new BsonBinaryWriter(new BasicOutputBuffer(), true);
         try {
-            BsonBinaryReader reader = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+            BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
             try {
                 newWriter.pipe(reader);
             } finally {
@@ -494,7 +494,7 @@ public class BsonBinaryWriterTest {
         byte[] bytes = writer.getBuffer().toByteArray();
 
         BsonBinaryWriter newWriter = new BsonBinaryWriter(new BasicOutputBuffer(), true);
-        BsonBinaryReader reader1 = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+        BsonBinaryReader reader1 = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
         reader1.readStartDocument();
         reader1.readName();
 
@@ -504,7 +504,7 @@ public class BsonBinaryWriterTest {
         assertEquals("b", reader1.readName());
         assertEquals(2, reader1.readInt32());
 
-        BsonBinaryReader reader2 = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
+        BsonBinaryReader reader2 = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
                                                                                                                      .toByteArray()))),
                                                         true);
 
@@ -524,7 +524,7 @@ public class BsonBinaryWriterTest {
         byte[] bytes = writer.getBuffer().toByteArray();
 
         BsonBinaryWriter newWriter = new BsonBinaryWriter(new BasicOutputBuffer(), true);
-        BsonBinaryReader reader1 = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+        BsonBinaryReader reader1 = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
 
         newWriter.writeStartDocument();
         newWriter.writeStartArray("a");
@@ -532,7 +532,7 @@ public class BsonBinaryWriterTest {
         newWriter.writeEndArray();
         newWriter.writeEndDocument();
 
-        BsonBinaryReader reader2 = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
+        BsonBinaryReader reader2 = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
                                                                                                                      .toByteArray()))),
                                                         true);
 
@@ -554,14 +554,14 @@ public class BsonBinaryWriterTest {
         byte[] bytes = writer.getBuffer().toByteArray();
 
         BsonBinaryWriter newWriter = new BsonBinaryWriter(new BasicOutputBuffer(), true);
-        BsonBinaryReader reader1 = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+        BsonBinaryReader reader1 = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
 
         newWriter.writeStartDocument();
         newWriter.writeName("doc");
         newWriter.pipe(reader1);
         newWriter.writeEndDocument();
 
-        BsonBinaryReader reader2 = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
+        BsonBinaryReader reader2 = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
                                                                                                                      .toByteArray()))),
                                                         true);
 
@@ -583,11 +583,11 @@ public class BsonBinaryWriterTest {
         byte[] bytes = writer.getBuffer().toByteArray();
 
         BsonBinaryWriter newWriter = new BsonBinaryWriter(new BasicOutputBuffer(), true);
-        BsonBinaryReader reader1 = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+        BsonBinaryReader reader1 = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
 
         newWriter.pipe(reader1);
 
-        BsonBinaryReader reader2 = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
+        BsonBinaryReader reader2 = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
                                                                                                                      .toByteArray()))),
                                                         true);
 
@@ -606,14 +606,14 @@ public class BsonBinaryWriterTest {
         byte[] bytes = writer.getBuffer().toByteArray();
 
         BsonBinaryWriter newWriter = new BsonBinaryWriter(new BasicOutputBuffer(), true);
-        BsonBinaryReader reader1 = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+        BsonBinaryReader reader1 = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
 
         newWriter.writeStartDocument();
         newWriter.writeJavaScriptWithScope("js", "i++");
         newWriter.pipe(reader1);
         newWriter.writeEndDocument();
 
-        BsonBinaryReader reader2 = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
+        BsonBinaryReader reader2 = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(newWriter.getBuffer()
                                                                                                                      .toByteArray()))),
                                                         true);
 
@@ -654,7 +654,7 @@ public class BsonBinaryWriterTest {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         buffer.pipe(baos);
 
-        BasicInputBuffer basicInputBuffer = new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray())));
+        ByteBufferBsonInputStream basicInputBuffer = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray())));
 
         BsonBinaryReader reader = new BsonBinaryReader(basicInputBuffer, true);
 
@@ -683,6 +683,6 @@ public class BsonBinaryWriterTest {
     // CHECKSTYLE:ON
 
     private BsonBinaryReader createReaderForBytes(final byte[] bytes) {
-        return new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+        return new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
     }
 }

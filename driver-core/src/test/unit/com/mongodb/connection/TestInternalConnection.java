@@ -21,8 +21,8 @@ import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
-import org.bson.io.BasicInputBuffer;
-import org.bson.io.InputBuffer;
+import org.bson.io.BsonInputStream;
+import org.bson.io.ByteBufferBsonInputStream;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -35,7 +35,7 @@ class TestInternalConnection implements InternalConnection {
     private final BufferProvider bufferProvider;
     private final String id;
     private final Deque<ResponseBuffers> replies;
-    private final List<InputBuffer> sent;
+    private final List<BsonInputStream> sent;
 
     public TestInternalConnection(final String id, final ServerAddress address) {
         this.id = id;
@@ -43,14 +43,14 @@ class TestInternalConnection implements InternalConnection {
         this.bufferProvider = new SimpleBufferProvider();
 
         this.replies = new LinkedList<ResponseBuffers>();
-        this.sent = new LinkedList<InputBuffer>();
+        this.sent = new LinkedList<BsonInputStream>();
     }
 
     public void enqueueReply(final ResponseBuffers buffers) {
         this.replies.add(buffers);
     }
 
-    public List<InputBuffer> getSent() {
+    public List<BsonInputStream> getSent() {
         return sent;
     }
 
@@ -83,7 +83,7 @@ class TestInternalConnection implements InternalConnection {
         ReplyHeader header = replaceResponseTo(nextToReceive.getReplyHeader(), lastRequestId);
         replies.addFirst(new ResponseBuffers(header, nextToReceive.getBodyByteBuffer()));
 
-        sent.add(new BasicInputBuffer(new ByteBufNIO(combined)));
+        sent.add(new ByteBufferBsonInputStream(new ByteBufNIO(combined)));
     }
 
     private ReplyHeader replaceResponseTo(final ReplyHeader header, final int responseTo) {
@@ -99,7 +99,7 @@ class TestInternalConnection implements InternalConnection {
         headerByteBuffer.putInt(header.getNumberReturned());
         headerByteBuffer.flip();
 
-        BasicInputBuffer headerInputBuffer = new BasicInputBuffer(new ByteBufNIO(headerByteBuffer));
+        ByteBufferBsonInputStream headerInputBuffer = new ByteBufferBsonInputStream(new ByteBufNIO(headerByteBuffer));
         return new ReplyHeader(headerInputBuffer);
     }
 

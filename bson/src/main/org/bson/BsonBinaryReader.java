@@ -16,7 +16,7 @@
 
 package org.bson;
 
-import org.bson.io.InputBuffer;
+import org.bson.io.BsonInputStream;
 import org.bson.types.ObjectId;
 
 import static java.lang.String.format;
@@ -28,10 +28,10 @@ import static java.lang.String.format;
  */
 public class BsonBinaryReader extends AbstractBsonReader {
 
-    private final InputBuffer buffer;
+    private final BsonInputStream buffer;
     private final boolean closeBuffer;
 
-    public BsonBinaryReader(final InputBuffer buffer, final boolean closeBuffer) {
+    public BsonBinaryReader(final BsonInputStream buffer, final boolean closeBuffer) {
         super();
         if (buffer == null) {
             throw new IllegalArgumentException("buffer is null");
@@ -54,7 +54,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
      *
      * @return the input buffer
      */
-    public InputBuffer getBuffer() {
+    public BsonInputStream getBuffer() {
         return buffer;
     }
 

@@ -20,7 +20,7 @@ import category.Slow;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
-import org.bson.io.InputBuffer;
+import org.bson.io.BsonInputStream;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -116,7 +116,7 @@ public class ScramSha1SaslAuthenticatorTest {
 
         this.subject.authenticate();
 
-        List<InputBuffer> sent = connection.getSent();
+        List<BsonInputStream> sent = connection.getSent();
         String firstCommand = MessageHelper.decodeCommandAsJson(sent.get(0));
         String expectedFirstCommand = "{ \"saslStart\" : 1, "
                 + "\"mechanism\" : \"SCRAM-SHA-1\", "

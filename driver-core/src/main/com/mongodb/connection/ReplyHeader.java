@@ -17,7 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoInternalException;
-import org.bson.io.InputBuffer;
+import org.bson.io.BsonInputStream;
 
 import static java.lang.String.format;
 
@@ -48,21 +48,21 @@ public class ReplyHeader {
     /**
      * Creates a new {@code ReplyHeader}, populated with values from the {@code headerInputBuffer}.
      *
-     * @param headerInputBuffer the {@code InputBuffer} containing the reply from the MongoDB server.
+     * @param header the {@code InputBuffer} containing the reply from the MongoDB server.
      */
-    public ReplyHeader(final InputBuffer headerInputBuffer) {
-        messageLength = headerInputBuffer.readInt32();
-        requestId = headerInputBuffer.readInt32();
-        responseTo = headerInputBuffer.readInt32();
-        int opCode = headerInputBuffer.readInt32();
+    public ReplyHeader(final BsonInputStream header) {
+        messageLength = header.readInt32();
+        requestId = header.readInt32();
+        responseTo = header.readInt32();
+        int opCode = header.readInt32();
         if (opCode != OP_REPLY_OP_CODE) {
             throw new MongoInternalException(format("The opCode (%d) in the response does not match the expected opCode (%d)",
                                                     opCode, OP_REPLY_OP_CODE));
         }
-        responseFlags = headerInputBuffer.readInt32();
-        cursorId = headerInputBuffer.readInt64();
-        startingFrom = headerInputBuffer.readInt32();
-        numberReturned = headerInputBuffer.readInt32();
+        responseFlags = header.readInt32();
+        cursorId = header.readInt64();
+        startingFrom = header.readInt32();
+        numberReturned = header.readInt32();
     }
 
     /**

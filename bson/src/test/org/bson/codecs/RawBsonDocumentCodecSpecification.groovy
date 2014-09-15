@@ -23,7 +23,7 @@ import org.bson.BsonDocumentWriter
 import org.bson.BsonElement
 import org.bson.ByteBufNIO
 import org.bson.RawBsonDocument
-import org.bson.io.BasicInputBuffer
+import org.bson.io.ByteBufferBsonInputStream
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -53,7 +53,7 @@ class RawBsonDocumentCodecSpecification extends Specification {
 
     def 'should decode'() {
         given:
-        def reader = new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(documentBytes))), false)
+        def reader = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(documentBytes))), false)
 
         when:
         RawBsonDocument buffer = codec.decode(reader, DecoderContext.builder().build())

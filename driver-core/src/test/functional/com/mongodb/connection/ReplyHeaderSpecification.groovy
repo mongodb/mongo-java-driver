@@ -19,9 +19,9 @@
 package com.mongodb.connection
 
 import com.mongodb.MongoInternalException
-import org.bson.io.BasicInputBuffer
 import org.bson.io.BasicOutputBuffer
-import org.bson.io.InputBuffer
+import org.bson.io.BsonInputStream
+import org.bson.io.ByteBufferBsonInputStream
 import spock.lang.Specification
 
 class ReplyHeaderSpecification extends Specification {
@@ -38,7 +38,7 @@ class ReplyHeaderSpecification extends Specification {
             writeInt(4)
             writeInt(30)
         }
-        InputBuffer buffer = new BasicInputBuffer(outputBuffer.byteBuffers.get(0));
+        BsonInputStream buffer = new ByteBufferBsonInputStream(outputBuffer.byteBuffers.get(0));
 
         when:
         def replyHeader = new ReplyHeader(buffer);
@@ -67,7 +67,7 @@ class ReplyHeaderSpecification extends Specification {
             writeInt(0)
             writeInt(0)
         }
-        InputBuffer buffer = new BasicInputBuffer(outputBuffer.byteBuffers.get(0));
+        BsonInputStream buffer = new ByteBufferBsonInputStream(outputBuffer.byteBuffers.get(0));
 
         when:
         new ReplyHeader(buffer);

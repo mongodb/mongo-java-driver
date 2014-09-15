@@ -8,9 +8,9 @@ import org.bson.ByteBufNIO;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
-import org.bson.io.BasicInputBuffer;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.io.InputBuffer;
+import org.bson.io.BsonInputStream;
+import org.bson.io.ByteBufferBsonInputStream;
 import org.bson.io.OutputBuffer;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
@@ -49,21 +49,21 @@ final class MessageHelper {
         headerByteBuffer.putInt(numDocuments); //numberReturned
         headerByteBuffer.flip();
 
-        BasicInputBuffer headerInputBuffer = new BasicInputBuffer(new ByteBufNIO(headerByteBuffer));
+        ByteBufferBsonInputStream headerInputBuffer = new ByteBufferBsonInputStream(new ByteBufNIO(headerByteBuffer));
         return new ReplyHeader(headerInputBuffer);
     }
 
-    public static String decodeCommandAsJson(final InputBuffer inputBuffer) {
-        inputBuffer.readInt32(); // length
-        inputBuffer.readInt32(); //requestId
-        inputBuffer.readInt32(); //responseTo
-        inputBuffer.readInt32(); // opcode
-        inputBuffer.readInt32(); // flags
-        inputBuffer.readCString(); //collectionName
-        inputBuffer.readInt32(); // numToSkip
-        inputBuffer.readInt32(); // numToReturn
+    public static String decodeCommandAsJson(final BsonInputStream bsonInputStream) {
+        bsonInputStream.readInt32(); // length
+        bsonInputStream.readInt32(); //requestId
+        bsonInputStream.readInt32(); //responseTo
+        bsonInputStream.readInt32(); // opcode
+        bsonInputStream.readInt32(); // flags
+        bsonInputStream.readCString(); //collectionName
+        bsonInputStream.readInt32(); // numToSkip
+        bsonInputStream.readInt32(); // numToReturn
 
-        BsonBinaryReader reader = new BsonBinaryReader(inputBuffer, true);
+        BsonBinaryReader reader = new BsonBinaryReader(bsonInputStream, true);
         BsonDocumentCodec codec = new BsonDocumentCodec();
         BsonDocument document = codec.decode(reader, DecoderContext.builder().build());
         StringWriter writer = new StringWriter();

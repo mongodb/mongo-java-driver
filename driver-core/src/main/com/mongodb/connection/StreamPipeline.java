@@ -32,7 +32,7 @@ import com.mongodb.event.ConnectionListener;
 import com.mongodb.event.ConnectionMessageReceivedEvent;
 import com.mongodb.event.ConnectionMessagesSentEvent;
 import org.bson.ByteBuf;
-import org.bson.io.BasicInputBuffer;
+import org.bson.io.ByteBufferBsonInputStream;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -240,7 +240,7 @@ class StreamPipeline {
     private ResponseBuffers receiveResponseBuffers() throws IOException {
         ByteBuf headerByteBuffer = stream.read(REPLY_HEADER_LENGTH);
         ReplyHeader replyHeader;
-        BasicInputBuffer headerInputBuffer = new BasicInputBuffer(headerByteBuffer);
+        ByteBufferBsonInputStream headerInputBuffer = new ByteBufferBsonInputStream(headerByteBuffer);
         try {
             replyHeader = new ReplyHeader(headerInputBuffer);
         } finally {
@@ -268,7 +268,7 @@ class StreamPipeline {
                 callback.onResult(null, e);
             } else {
                 ReplyHeader replyHeader;
-                BasicInputBuffer headerInputBuffer = new BasicInputBuffer(result);
+                ByteBufferBsonInputStream headerInputBuffer = new ByteBufferBsonInputStream(result);
                 try {
                     replyHeader = new ReplyHeader(headerInputBuffer);
                 } finally {

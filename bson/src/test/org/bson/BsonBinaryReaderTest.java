@@ -16,7 +16,7 @@
 
 package org.bson;
 
-import org.bson.io.BasicInputBuffer;
+import org.bson.io.ByteBufferBsonInputStream;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -42,6 +42,6 @@ public class BsonBinaryReaderTest {
     }
 
     private BsonBinaryReader createReaderForBytes(final byte[] bytes) {
-        return new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
+        return new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
     }
 }

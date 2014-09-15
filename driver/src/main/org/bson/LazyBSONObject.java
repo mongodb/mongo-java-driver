@@ -17,7 +17,7 @@
 package org.bson;
 
 import org.bson.io.BSONByteBuffer;
-import org.bson.io.BasicInputBuffer;
+import org.bson.io.ByteBufferBsonInputStream;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -221,7 +221,7 @@ public class LazyBSONObject implements BSONObject {
 
     BsonBinaryReader getBsonReader() {
         ByteBuffer buffer = getBufferForInternalBytes();
-        return new BsonBinaryReader(new BasicInputBuffer(new ByteBufNIO(buffer)), true);
+        return new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(buffer)), true);
     }
 
     private ByteBuffer getBufferForInternalBytes() {
