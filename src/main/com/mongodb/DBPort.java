@@ -49,6 +49,7 @@ import java.net.UnknownHostException;
 import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,7 +57,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.StringTokenizer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -737,7 +737,7 @@ public class DBPort implements Connection {
                 final int high = 126;
                 final int range = high - low;
 
-                Random random = new Random();
+                Random random = new SecureRandom();
                 char[] text = new char[randomLength];
                 for (int i = 0; i < randomLength; i++)
                 {
