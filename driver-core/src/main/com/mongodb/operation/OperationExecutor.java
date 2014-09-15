@@ -32,7 +32,7 @@ public interface OperationExecutor {
      * @param <T> the operations result type.
      * @return the result of executing the operation.
      */
-    <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference);
+    <T> T execute(ReadOperation<T> operation, ReadPreference readPreference);
 
     /**
      * Execute the write operation.
@@ -41,5 +41,5 @@ public interface OperationExecutor {
      * @param <T> the operations result type.
      * @return the result of executing the operation.
      */
-    <T> T execute(final WriteOperation<T> operation);
+    <T> T execute(WriteOperation<T> operation);
 }
