@@ -17,16 +17,17 @@
 package com.mongodb;
 
 import org.bson.BsonDocumentWrapper;
+import org.bson.codecs.Encoder;
 
 class UpdateRequest extends WriteRequest {
     private final DBObject query;
     private final DBObject update;
     private final boolean multi;
     private final boolean upsert;
-    private final DBObjectCodec codec;
+    private final Encoder<DBObject> codec;
 
     public UpdateRequest(final DBObject query, final DBObject update, final boolean multi, final boolean upsert,
-                         final DBObjectCodec codec) {
+                         final Encoder<DBObject> codec) {
         this.query = query;
         this.update = update;
         this.multi = multi;

@@ -16,11 +16,16 @@
 
 package com.mongodb;
 
+import org.bson.BsonDocumentWrapper;
+import org.bson.codecs.Encoder;
+
 class InsertRequest extends WriteRequest {
     private final DBObject document;
+    private final Encoder<DBObject> codec;
 
-    public InsertRequest(final DBObject document) {
+    public InsertRequest(final DBObject document, final Encoder<DBObject> codec) {
         this.document = document;
+        this.codec = codec;
     }
 
     public DBObject getDocument() {
@@ -29,6 +34,6 @@ class InsertRequest extends WriteRequest {
 
     @Override
     com.mongodb.operation.WriteRequest toNew() {
-        return new com.mongodb.operation.InsertRequest<DBObject>(document);
+        return new com.mongodb.operation.InsertRequest(new BsonDocumentWrapper<DBObject>(document, codec));
     }
 }

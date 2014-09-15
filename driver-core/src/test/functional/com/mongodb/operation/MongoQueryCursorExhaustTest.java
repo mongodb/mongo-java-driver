@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.CursorFlag;
 import com.mongodb.FunctionalTest;
 import com.mongodb.ReadPreference;
 import com.mongodb.binding.ConnectionSource;
@@ -25,8 +26,9 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.protocol.QueryProtocol;
 import com.mongodb.protocol.QueryResult;
+import org.bson.BsonBinary;
 import org.bson.BsonDocument;
-import org.bson.types.Binary;
+import org.bson.BsonInt32;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -42,8 +44,8 @@ import static org.junit.Assume.assumeFalse;
 
 public class MongoQueryCursorExhaustTest extends FunctionalTest {
 
-    private final Binary binary = new Binary(new byte[10000]);
-    private EnumSet<QueryFlag> exhaustFlag = EnumSet.of(QueryFlag.Exhaust);
+    private final BsonBinary binary = new BsonBinary(new byte[10000]);
+    private EnumSet<CursorFlag> exhaustFlag = EnumSet.of(CursorFlag.EXHAUST);
     private QueryResult<Document> firstBatch;
     private Connection exhaustConnection;
     private ConnectionSource readConnectionSource;
@@ -55,7 +57,7 @@ public class MongoQueryCursorExhaustTest extends FunctionalTest {
         super.setUp();
 
         for (int i = 0; i < 1000; i++) {
-            getCollectionHelper().insertDocuments(new Document("_id", i).append("bytes", binary));
+            getCollectionHelper().insertDocuments(new BsonDocument("_id", new BsonInt32(i)).append("bytes", binary));
         }
 
         readConnectionSource = getBinding().getReadConnectionSource();
@@ -104,7 +106,7 @@ public class MongoQueryCursorExhaustTest extends FunctionalTest {
             cursor.next();
             cursor.close();
 
-            new QueryProtocol<Document>(getNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, new BsonDocument(), null,
+            new QueryProtocol<Document>(getNamespace(), EnumSet.noneOf(CursorFlag.class), 0, 0, new BsonDocument(), null,
                                         new DocumentCodec())
             .execute(connection);
 

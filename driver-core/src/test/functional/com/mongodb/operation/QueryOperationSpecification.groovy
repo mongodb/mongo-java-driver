@@ -20,51 +20,104 @@ import category.Async
 import category.Slow
 import com.mongodb.Block
 import com.mongodb.ClusterFixture
+import com.mongodb.ExplainVerbosity
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.binding.ClusterBinding
 import com.mongodb.codecs.DocumentCodec
+import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import spock.lang.IgnoreIf
 
-import static ClusterFixture.disableMaxTimeFailPoint
-import static ClusterFixture.enableMaxTimeFailPoint
-import static ClusterFixture.getAsyncBinding
-import static ClusterFixture.getBinding
-import static ClusterFixture.getCluster
-import static ClusterFixture.isSharded
-import static ClusterFixture.serverVersionAtLeast
-import static com.mongodb.operation.QueryFlag.Exhaust
+import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
+import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
+import static com.mongodb.ClusterFixture.getAsyncBinding
+import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isSharded
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.CursorFlag.EXHAUST
+import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class QueryOperationSpecification extends OperationFunctionalSpecification {
 
-    def 'should query with no filter'() {
-        def document = new Document()
+    def 'should query with default values'() {
+        def document = new Document('_id', 1)
         given:
-        getCollectionHelper().insertDocuments(document);
+        getCollectionHelper().insertDocuments(new DocumentCodec(), document);
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
 
         when:
-        def cursor = new QueryOperation<Document>(getNamespace(), new Find().filter(null), new DocumentCodec()).execute(getBinding())
+        def cursor = queryOperation.execute(getBinding())
 
         then:
         cursor.next() == document
     }
 
+    def 'should apply criteria'() {
+        given:
+        def document = new Document('_id', 1)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), document, new Document());
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+                .criteria(new BsonDocument('_id', new BsonInt32(1)))
+
+        when:
+        def cursor = queryOperation.execute(getBinding())
+
+        then:
+        cursor.next() == document
+        !cursor.hasNext()
+    }
+
+    def 'should apply sort'() {
+        given:
+        def documents = [new Document('_id', 3), new Document('_id', 1), new Document('_id', 2), new Document('_id', 5),
+                         new Document('_id', 4)]
+        getCollectionHelper().insertDocuments(new DocumentCodec(), documents);
+
+
+        when: 'ascending'
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+                .sort(new BsonDocument('_id', new BsonInt32(1)))
+        def cursor = queryOperation.execute(getBinding())
+        def list = []
+        while (cursor.hasNext()) {
+            list += cursor.next()
+        }
+
+        then:
+        list == [new Document('_id', 1), new Document('_id', 2), new Document('_id', 3), new Document('_id', 4), new Document('_id', 5)]
+    }
+
+    def 'should apply projection'() {
+        given:
+        def document = new Document('_id', 1).append('x', 5).append('y', 10)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), document, new Document());
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+                .projection(new BsonDocument('_id', new BsonInt32(0)).append('x', new BsonInt32(1)))
+
+        when:
+        def cursor = queryOperation.execute(getBinding())
+
+        then:
+        cursor.next() == new Document('x', 5)
+    }
+
     @IgnoreIf({ isSharded() || !serverVersionAtLeast([2, 6, 0]) })
     def 'should throw execution timeout exception from execute'() {
         given:
-        getCollectionHelper().insertDocuments(new Document())
-        def find = new Find().maxTime(1, SECONDS)
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
+        def operation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+                .maxTime(1000, MILLISECONDS)
+
         enableMaxTimeFailPoint()
 
         when:
-        queryOperation.execute(getBinding())
+        operation.execute(getBinding())
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -77,9 +130,10 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ isSharded() || !serverVersionAtLeast([2, 6, 0]) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
-        getCollectionHelper().insertDocuments(new Document())
-        def find = new Find().maxTime(1, SECONDS)
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+                .maxTime(1000, MILLISECONDS)
+
         enableMaxTimeFailPoint()
 
         when:
@@ -94,14 +148,14 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
 
     def '$max should limit items returned'() {
         given:
-        for ( i in 1..100) {
-            collectionHelper.insertDocuments(new Document('x', 'y').append('count', i))
+        (1..100).each {
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('x', 'y').append('count', it))
         }
         collectionHelper.createIndexes([Index.builder().addKey('count').build()])
         def count = 0;
-        def find = new Find()
-        find.getOptions().max(new BsonDocument('count', new BsonInt32(11)))
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+                .modifiers(new BsonDocument('$max', new BsonDocument('count', new BsonInt32(11))))
+
         when:
         queryOperation.execute(getBinding()).each {
             count++
@@ -113,14 +167,14 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
 
     def '$min should limit items returned'() {
         given:
-        for ( i in 1..100) {
-            collectionHelper.insertDocuments(new Document('x', 'y').append('count', i))
+        (1..100).each {
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('x', 'y').append('count', it))
         }
         collectionHelper.createIndexes([Index.builder().addKey('count').build()])
         def count = 0;
-        def find = new Find()
-        find.getOptions().min(new BsonDocument('count', new BsonInt32(10)))
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+                .modifiers(new BsonDocument('$min', new BsonDocument('count', new BsonInt32(10))))
+
         when:
         queryOperation.execute(getBinding()).each {
             count++
@@ -132,13 +186,13 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
 
     def '$maxScan should limit items returned'() {
         given:
-        for ( i in 1..100) {
-            collectionHelper.insertDocuments(new Document('x', 'y'))
+        (1..100).each {
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('x', 'y'))
         }
         def count = 0;
-        def find = new Find()
-        find.getOptions().maxScan(34)
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+                .modifiers(new BsonDocument('$maxScan', new BsonInt32(34)))
+
         when:
         queryOperation.execute(getBinding()).each {
             count++
@@ -150,14 +204,14 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
 
     def '$returnKey should only return the field that was in an index used to perform the find'() {
         given:
-        for (i in 1..13) {
-            collectionHelper.insertDocuments(new Document('x', i))
+        (1..13).each {
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('x', it))
         }
         collectionHelper.createIndexes([Index.builder().addKey('x').build()])
 
-        def find = new Find(new BsonDocument('x', new BsonInt32(7)))
-        find.getOptions().returnKey()
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+                .criteria(new BsonDocument('x', new BsonInt32(7)))
+                .modifiers(new BsonDocument('$returnKey', BsonBoolean.TRUE))
 
         when:
         def cursor = queryOperation.execute(getBinding())
@@ -170,13 +224,13 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
 
     def '$showDiskLoc should return disk locations'() {
         given:
-        for (i in 1..100) {
-            collectionHelper.insertDocuments(new Document('x', 'y'))
+        (1..100).each {
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('x', 'y'))
         }
         def found = true;
-        def find = new Find()
-        find.getOptions().showDiskLoc()
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+                .modifiers(new BsonDocument('$showDiskLoc', BsonBoolean.TRUE))
+
         when:
         queryOperation.execute(getBinding()).each {
             found &= it['$diskLoc'] != null
@@ -188,9 +242,8 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
 
     @IgnoreIf({ !ClusterFixture.isDiscoverableReplicaSet() })
     def 'should read from a secondary'() {
-        collectionHelper.insertDocuments(new Document())
-        def find = new Find()
-        def queryOperation = new QueryOperation<Document>(getNamespace(), find, new DocumentCodec())
+        collectionHelper.insertDocuments(new DocumentCodec(), new Document())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
         def binding = new ClusterBinding(getCluster(), ReadPreference.secondary(), 1, SECONDS)
 
         expect:
@@ -200,11 +253,11 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ isSharded() })
     @Category(Slow)
     def 'should exhaust'() {
-        for (i in 1..500) {
-            collectionHelper.insertDocuments(new Document('_id', i))
+        (1..500).each {
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', it))
         }
-        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find().addFlags(EnumSet.of(Exhaust)),
-                                                          new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+                .cursorFlags(EnumSet.of(EXHAUST))
 
         when:
         def count = 0;
@@ -227,10 +280,10 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ isSharded() })
     def 'should iterate asynchronously'() {
         given:
-        for (i in 1..500) {
-            collectionHelper.insertDocuments(new Document('_id', i))
+        (1..500).each {
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', it))
         }
-        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find(), new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
 
         when:
         def count = 0;
@@ -250,11 +303,11 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
     @Category([Async, Slow])
     @IgnoreIf({ isSharded() })
     def 'should exhaust asynchronously'() {
-        for (i in 1..500) {
-            collectionHelper.insertDocuments(new Document('_id', i))
+        (1..500).each {
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', it))
         }
-        def queryOperation = new QueryOperation<Document>(getNamespace(), new Find().addFlags(EnumSet.of(Exhaust)),
-                                                          new DocumentCodec())
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+                .cursorFlags(EnumSet.of(EXHAUST))
 
         when:
         def count = 0;
@@ -271,4 +324,27 @@ class QueryOperationSpecification extends OperationFunctionalSpecification {
         count == 500
     }
 
+    @Category(Async)
+    def 'should explain'() {
+        given:
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+
+        when:
+        BsonDocument result = queryOperation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER).execute(getBinding())
+
+        then:
+        result
+    }
+
+    def 'should explain asynchronously'() {
+        given:
+        def queryOperation = new QueryOperation<Document>(getNamespace(), new DocumentCodec())
+
+        when:
+        BsonDocument result = queryOperation.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER).executeAsync(getAsyncBinding())
+                                            .get()
+
+        then:
+        result
+    }
 }

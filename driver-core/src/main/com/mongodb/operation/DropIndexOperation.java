@@ -38,6 +38,12 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
     private final MongoNamespace namespace;
     private final String indexName;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param indexName the name of the index to be dropped.
+     */
     public DropIndexOperation(final MongoNamespace namespace, final String indexName) {
         this.namespace = notNull("namespace", namespace);
         this.indexName = notNull("indexName", indexName);

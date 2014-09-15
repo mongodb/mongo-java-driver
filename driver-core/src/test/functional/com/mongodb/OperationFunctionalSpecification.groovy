@@ -25,6 +25,7 @@ import com.mongodb.codecs.DocumentCodec
 import com.mongodb.connection.ServerHelper
 import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.InsertRequest
+import org.bson.BsonDocument
 import org.mongodb.Document
 import spock.lang.Specification
 
@@ -65,13 +66,13 @@ class OperationFunctionalSpecification extends Specification {
 
     void acknowledgeWrite(PinnedBinding binding) {
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
-                                      [new InsertRequest<Document>(new Document())], new DocumentCodec()).execute(binding);
+                                      [new InsertRequest(new BsonDocument())]).execute(binding);
         binding.release();
     }
 
     void acknowledgeWrite(AsyncSingleConnectionBinding binding) {
         new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
-                                      [new InsertRequest<Document>(new Document())], new DocumentCodec()).executeAsync(binding).get();
+                                      [new InsertRequest(new BsonDocument())]).executeAsync(binding).get();
         binding.release();
     }
 

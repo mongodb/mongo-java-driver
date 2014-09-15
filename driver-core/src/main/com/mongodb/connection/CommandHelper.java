@@ -17,9 +17,9 @@
 package com.mongodb.connection;
 
 import com.mongodb.CommandFailureException;
+import com.mongodb.CursorFlag;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.operation.QueryFlag;
 import com.mongodb.protocol.message.CommandMessage;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.ReplyMessage;
@@ -47,7 +47,7 @@ final class CommandHelper {
         ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(internalConnection);
         try {
             CommandMessage message = new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
-                                                        command, EnumSet.noneOf(QueryFlag.class), MessageSettings.builder().build());
+                                                        command, EnumSet.noneOf(CursorFlag.class), MessageSettings.builder().build());
             message.encode(buffer);
             internalConnection.sendMessage(buffer.getByteBuffers(), message.getId());
             return message;

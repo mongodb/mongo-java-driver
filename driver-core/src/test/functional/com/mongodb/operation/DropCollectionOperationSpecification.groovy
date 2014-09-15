@@ -19,6 +19,7 @@ package com.mongodb.operation
 import category.Async
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 
@@ -29,7 +30,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
 
     def 'should drop a collection that exists'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('documentTo', 'createTheCollection'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))
         assert collectionNameExists(getCollectionName())
 
         when:
@@ -42,7 +43,7 @@ class DropCollectionOperationSpecification extends OperationFunctionalSpecificat
     @Category(Async)
     def 'should drop a collection that exists asynchronously'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('documentTo', 'createTheCollection'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))
         assert collectionNameExists(getCollectionName())
 
         when:

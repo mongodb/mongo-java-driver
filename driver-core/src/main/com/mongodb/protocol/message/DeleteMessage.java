@@ -50,7 +50,7 @@ public class DeleteMessage extends RequestMessage {
             buffer.writeInt(1);
         }
 
-        addDocument(removeRequest.getFilter(), getBsonDocumentCodec(), buffer, new NoOpFieldNameValidator());
+        addDocument(removeRequest.getCriteria(), getBsonDocumentCodec(), buffer, new NoOpFieldNameValidator());
     }
 }
 

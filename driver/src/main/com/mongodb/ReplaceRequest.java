@@ -17,18 +17,22 @@
 package com.mongodb;
 
 import org.bson.BsonDocumentWrapper;
+import org.bson.codecs.Encoder;
 
 class ReplaceRequest extends WriteRequest {
     private final DBObject query;
     private final DBObject document;
     private final boolean upsert;
-    private final DBObjectCodec codec;
+    private final Encoder<DBObject> codec;
+    private final Encoder<DBObject> replacementCodec;
 
-    public ReplaceRequest(final DBObject query, final DBObject document, final boolean upsert, final DBObjectCodec codec) {
+    public ReplaceRequest(final DBObject query, final DBObject document, final boolean upsert, final Encoder<DBObject> codec,
+                          final Encoder<DBObject> replacementCodec) {
         this.query = query;
         this.document = document;
         this.upsert = upsert;
         this.codec = codec;
+        this.replacementCodec = replacementCodec;
     }
 
     public DBObject getQuery() {
@@ -45,7 +49,8 @@ class ReplaceRequest extends WriteRequest {
 
     @Override
     com.mongodb.operation.WriteRequest toNew() {
-        return new com.mongodb.operation.ReplaceRequest<DBObject>(new BsonDocumentWrapper<DBObject>(query, codec), document)
+        return new com.mongodb.operation.ReplaceRequest(new BsonDocumentWrapper<DBObject>(query, codec),
+                                                        new BsonDocumentWrapper<DBObject>(document, replacementCodec))
                .upsert(isUpsert());
     }
 }

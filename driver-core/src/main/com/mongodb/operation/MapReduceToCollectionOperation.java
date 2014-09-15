@@ -39,14 +39,14 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  * @since 3.0
  */
 public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapReduceStatistics>, WriteOperation<MapReduceStatistics> {
-    private final MapReduce mapReduce;
     private final MongoNamespace namespace;
+    private final MapReduce mapReduce;
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute
      *
-     * @param namespace the database and collection to perform the map reduce on
-     * @param mapReduce the bean containing all the details of the Map Reduce operation to perform
+     * @param namespace the database and collection namespace for the operation.
+     * @param mapReduce the bean containing all the details of the Map Reduce operation to perform.
      */
     public MapReduceToCollectionOperation(final MongoNamespace namespace, final MapReduce mapReduce) {
         this.namespace = notNull("namespace", namespace);

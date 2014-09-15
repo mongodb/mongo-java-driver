@@ -16,6 +16,7 @@
 
 package com.mongodb.protocol;
 
+import com.mongodb.CursorFlag;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
@@ -24,7 +25,6 @@ import com.mongodb.connection.ByteBufferOutputBuffer;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.operation.QueryFlag;
 import com.mongodb.protocol.message.CommandMessage;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.ReplyMessage;
@@ -67,7 +67,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
             CommandMessage getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                                                                                        COMMAND_COLLECTION_NAME).getFullName(),
                                                                     createGetLastErrorCommandDocument(),
-                                                                    EnumSet.noneOf(QueryFlag.class),
+                                                                    EnumSet.noneOf(CursorFlag.class),
                                                                     getMessageSettings(connection.getServerDescription())
             );
             encodeMessageToBuffer(getLastErrorMessage, buffer);
@@ -116,7 +116,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
             if (writeConcern.isAcknowledged()) {
                 getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                                                                             COMMAND_COLLECTION_NAME).getFullName(),
-                                                         createGetLastErrorCommandDocument(), EnumSet.noneOf(QueryFlag.class),
+                                                         createGetLastErrorCommandDocument(), EnumSet.noneOf(CursorFlag.class),
                                                          getMessageSettings(connection.getServerDescription())
                 );
                 getLastErrorMessage.encode(buffer);

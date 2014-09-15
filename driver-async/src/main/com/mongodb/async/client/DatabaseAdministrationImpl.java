@@ -38,6 +38,12 @@ public class DatabaseAdministrationImpl implements DatabaseAdministration {
     private final String databaseName;
     private final MongoClientImpl client;
 
+    /**
+     * Constructs a new instance.
+     *
+     * @param databaseName the name of the database
+     * @param client the MongoClient
+     */
     public DatabaseAdministrationImpl(final String databaseName, final MongoClientImpl client) {
         this.databaseName = databaseName;
         this.client = client;
@@ -59,8 +65,13 @@ public class DatabaseAdministrationImpl implements DatabaseAdministration {
     }
 
     @Override
-    public MongoFuture<Void> createCollection(final CreateCollectionOptions createCollectionOptions) {
-        return client.execute(new CreateCollectionOperation(databaseName, createCollectionOptions));
+    public MongoFuture<Void> createCollection(final CreateCollectionOptions options) {
+        return client.execute(new CreateCollectionOperation(databaseName, options.getCollectionName())
+                                  .capped(options.isCapped())
+                                  .sizeInBytes(options.getSizeInBytes())
+                                  .autoIndex(options.isAutoIndex())
+                                  .maxDocuments(options.getMaxDocuments())
+                                  .setUsePowerOf2Sizes(options.isUsePowerOf2Sizes()));
     }
 
     @Override

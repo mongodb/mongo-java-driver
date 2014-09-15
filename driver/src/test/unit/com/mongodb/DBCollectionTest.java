@@ -348,6 +348,25 @@ public class DBCollectionTest extends DatabaseTestCase {
     }
 
     @Test
+    public void testSaveWithDBEncoder() {
+        try {
+            DBObject document = new BasicDBObject("_id", 1).append("x", 1);
+            collection.setDBEncoderFactory(new MyEncoderFactory());
+            collection.save(document);
+
+            assertEquals(1, collection.count());
+            assertThat(collection.find(), hasItem(MyEncoder.getConstantObject()));
+
+            collection.save(document);
+
+            assertEquals(1, collection.count());
+            assertThat(collection.find(), hasItem(MyEncoder.getConstantObject()));
+        } finally {
+            collection.setDBEncoderFactory(null);
+        }
+    }
+
+    @Test
     public void testFindAndRemove() {
         DBObject doc = new BasicDBObject("_id", 1).append("x", true);
         collection.insert(doc);
@@ -708,6 +727,38 @@ public class DBCollectionTest extends DatabaseTestCase {
                                              new BasicDBObject("_id", upsertTwoId).append("y", 2)),
 
                      collection.find().sort(new BasicDBObject("_id", 1)).toArray());
+
+        // when
+        try {
+            bulkWriteOperation.insert(new BasicDBObject());
+            fail();
+        } catch (IllegalStateException e) {
+            // then should throw
+        }
+
+        // when
+        try {
+            bulkWriteOperation.find(new BasicDBObject());
+            fail();
+        } catch (IllegalStateException e) {
+            // then should throw
+        }
+
+        // when
+        try {
+            bulkWriteOperation.execute();
+            fail();
+        } catch (IllegalStateException e) {
+            // then should throw
+        }
+
+        // when
+        try {
+            bulkWriteOperation.execute(WriteConcern.ACKNOWLEDGED);
+            fail();
+        } catch (IllegalStateException e) {
+            // then should throw
+        }
     }
 
     @Test
@@ -755,6 +806,20 @@ public class DBCollectionTest extends DatabaseTestCase {
                      collection.find().sort(new BasicDBObject("_id", 1)).toArray());
 
     }
+
+    @Test
+    public void bulkWriteOperationShouldGenerateIdsForInserts() {
+        // when
+        BulkWriteOperation bulkWriteOperation = collection.initializeOrderedBulkOperation();
+        BasicDBObject document = new BasicDBObject();
+        bulkWriteOperation.insert(document);
+        bulkWriteOperation.execute();
+
+        // then
+        assertTrue(document.containsField("_id"));
+        assertTrue(document.get("_id") instanceof ObjectId);
+    }
+
 
     @Test(expected = BulkWriteException.class)
     public void testBulkWriteException() {

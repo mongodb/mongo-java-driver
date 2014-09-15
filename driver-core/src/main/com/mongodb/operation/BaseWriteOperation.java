@@ -50,22 +50,52 @@ import static com.mongodb.operation.WriteRequest.Type.REPLACE;
 import static com.mongodb.operation.WriteRequest.Type.UPDATE;
 
 
+/**
+ * Abstract base class for write operations.
+ *
+ * @since 3.0
+ */
 public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteResult>, WriteOperation<WriteResult> {
 
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
     private final boolean ordered;
 
+    /**
+     * Construct an instance
+     * @param namespace the database and collection namespace for the operation.
+     * @param ordered whether the writes are ordered.
+     * @param writeConcern the write concern for the operation.
+     */
     public BaseWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern) {
         this.ordered = ordered;
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = notNull("writeConcern", writeConcern);
     }
 
+    /**
+     * Gets the namespace of the collection to write to.
+     *
+     * @return the namespace
+     */
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    /**
+     * Gets the write concern to apply
+     *
+     * @return the write concern
+     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
+    /**
+     * Gets whether the writes are ordered.  If true, no more writes will be executed after the first failure.
+     *
+     * @return whether the writes are ordered
+     */
     public boolean isOrdered() {
         return ordered;
     }
@@ -122,10 +152,6 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
                 return future;
             }
         });
-    }
-
-    public MongoNamespace getNamespace() {
-        return namespace;
     }
 
     protected abstract WriteProtocol getWriteProtocol();

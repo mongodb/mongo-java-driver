@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.CursorFlag;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncReadBinding;
@@ -36,22 +37,22 @@ import static com.mongodb.operation.QueryOperationHelper.queryResultToListAsync;
  * An operation that gets the indexes that have been created on a collection.  For flexibility,
  * the type of each document returned is generic.
  *
- * @param <T> the document type for each index
+ * @param <T> the operations result type.
  *
  * @since 3.0
  */
 public class GetIndexesOperation<T> implements AsyncReadOperation<List<T>>, ReadOperation<List<T>> {
-    private final MongoNamespace collectionNamespace;
+    private final MongoNamespace namespace;
     private final Decoder<T> decoder;
 
     /**
-     * Construct a new instance
+     * Construct a new instance.
      *
-     * @param collectionNamespace the namespace of the collection to get the indexes for
-     * @param decoder the decoder for the indexes
+     * @param namespace the database and collection namespace for the operation.
+     * @param decoder the decoder for the result documents.
      */
-    public GetIndexesOperation(final MongoNamespace collectionNamespace, final Decoder<T> decoder) {
-        this.collectionNamespace = notNull("collectionNamespace", collectionNamespace);
+    public GetIndexesOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
+        this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
     }
 
@@ -66,15 +67,15 @@ public class GetIndexesOperation<T> implements AsyncReadOperation<List<T>>, Read
     }
 
     private BsonDocument asQueryDocument() {
-        return new BsonDocument("ns", new BsonString(collectionNamespace.getFullName()));
+        return new BsonDocument("ns", new BsonString(namespace.getFullName()));
     }
 
     private MongoNamespace getIndexNamespace() {
-        return new MongoNamespace(collectionNamespace.getDatabaseName(), "system.indexes");
+        return new MongoNamespace(namespace.getDatabaseName(), "system.indexes");
     }
 
     private QueryProtocol<T> getProtocol() {
-        return new QueryProtocol<T>(getIndexNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, asQueryDocument(), null, decoder);
+        return new QueryProtocol<T>(getIndexNamespace(), EnumSet.noneOf(CursorFlag.class), 0, 0, asQueryDocument(), null, decoder);
     }
 
 }

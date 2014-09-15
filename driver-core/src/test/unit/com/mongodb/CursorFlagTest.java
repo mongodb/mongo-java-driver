@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.operation;
+package com.mongodb;
 
 import org.junit.Test;
 
@@ -22,20 +22,20 @@ import java.util.EnumSet;
 
 import static org.junit.Assert.assertEquals;
 
-public class QueryFlagTest {
+public class CursorFlagTest {
     @Test
     public void testToSet() {
-        assertEquals(EnumSet.noneOf(QueryFlag.class), QueryFlag.toSet(0));
-        assertEquals(EnumSet.of(QueryFlag.Tailable), QueryFlag.toSet(2));
-        assertEquals(EnumSet.of(QueryFlag.Tailable, QueryFlag.SlaveOk), QueryFlag.toSet(6));
-        assertEquals(EnumSet.allOf(QueryFlag.class), QueryFlag.toSet(0xFE));
+        assertEquals(EnumSet.noneOf(CursorFlag.class), CursorFlag.toSet(0));
+        assertEquals(EnumSet.of(CursorFlag.TAILABLE), CursorFlag.toSet(2));
+        assertEquals(EnumSet.of(CursorFlag.TAILABLE, CursorFlag.SLAVE_OK), CursorFlag.toSet(6));
+        assertEquals(EnumSet.allOf(CursorFlag.class), CursorFlag.toSet(0xFE));
     }
 
     @Test
     public void testFromSet() {
-        assertEquals(0, QueryFlag.fromSet(EnumSet.noneOf(QueryFlag.class)));
-        assertEquals(2, QueryFlag.fromSet(EnumSet.of(QueryFlag.Tailable)));
-        assertEquals(6, QueryFlag.fromSet(EnumSet.of(QueryFlag.Tailable, QueryFlag.SlaveOk)));
-        assertEquals(0xFE, QueryFlag.fromSet(EnumSet.allOf(QueryFlag.class)));
+        assertEquals(0, CursorFlag.fromSet(EnumSet.noneOf(CursorFlag.class)));
+        assertEquals(2, CursorFlag.fromSet(EnumSet.of(CursorFlag.TAILABLE)));
+        assertEquals(6, CursorFlag.fromSet(EnumSet.of(CursorFlag.TAILABLE, CursorFlag.SLAVE_OK)));
+        assertEquals(0xFE, CursorFlag.fromSet(EnumSet.allOf(CursorFlag.class)));
     }
 }

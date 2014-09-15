@@ -30,11 +30,12 @@ public class CreateCollectionOptions {
     private final long maxDocuments;
     private final boolean capped;
     private final long sizeInBytes;
+    private final Boolean usePowerOf2Sizes;
 
     /**
      * Construct a new instance.
      *
-     * @param collectionName the collection name
+     * @param collectionName the collection name.
      */
     public CreateCollectionOptions(final String collectionName) {
         this(collectionName, false, 0, true);
@@ -43,8 +44,21 @@ public class CreateCollectionOptions {
     /**
      * Construct a new instance.
      *
-     * @param collectionName the collection name
-     * @param capped whether the collection is capped
+     * @param collectionName the collection name.
+     * @param usePowerOf2Sizes use the usePowerOf2Sizes allocation strategy for this collection.
+     *
+     * @mongodb.driver.manual manual/reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
+     * @mongodb.server.release 2.6
+     */
+    public CreateCollectionOptions(final String collectionName, final boolean usePowerOf2Sizes) {
+        this(collectionName, false, 0, true, 0, usePowerOf2Sizes);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param collectionName the collection name.
+     * @param capped whether the collection is capped.
      * @param sizeInBytes the maximum size of the collection in bytes.  Only applies to capped collections.
      */
     public CreateCollectionOptions(final String collectionName, final boolean capped, final long sizeInBytes) {
@@ -54,13 +68,12 @@ public class CreateCollectionOptions {
     /**
      * Construct a new instance.
      *
-     * @param collectionName the collection name
-     * @param capped whether the collection is capped
+     * @param collectionName the collection name.
+     * @param capped whether the collection is capped.
      * @param sizeInBytes the maximum size of the collection in bytes.  Only applies to capped collections.
-     * @param autoIndex whether the _id field of the collection is indexed.  Only applies to capped collections
+     * @param autoIndex whether the _id field of the collection is indexed.  Only applies to capped collections.
      */
-    public CreateCollectionOptions(final String collectionName, final boolean capped, final long sizeInBytes,
-                                   final boolean autoIndex) {
+    public CreateCollectionOptions(final String collectionName, final boolean capped, final long sizeInBytes, final boolean autoIndex) {
         this(collectionName, capped, sizeInBytes, autoIndex, 0);
     }
 
@@ -73,13 +86,32 @@ public class CreateCollectionOptions {
      * @param autoIndex whether the _id field of the collection is indexed.  Only applies to capped collections
      * @param maxDocuments the maximum number of documents in the collection.  Only applies to capped collections
      */
-    public CreateCollectionOptions(final String collectionName, final boolean capped, final long sizeInBytes,
-                                   final boolean autoIndex, final long maxDocuments) {
+    public CreateCollectionOptions(final String collectionName, final boolean capped, final long sizeInBytes, final boolean autoIndex,
+                                   final long maxDocuments) {
+        this(collectionName, capped, sizeInBytes, autoIndex, maxDocuments, null);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param collectionName the collection name
+     * @param capped whether the collection is capped
+     * @param sizeInBytes the maximum size of the collection in bytes.  Only applies to capped collections.
+     * @param autoIndex whether the _id field of the collection is indexed.  Only applies to capped collections
+     * @param maxDocuments the maximum number of documents in the collection.  Only applies to capped collections
+     * @param usePowerOf2Sizes use the usePowerOf2Sizes allocation strategy for this collection.
+     *
+     * @mongodb.driver.manual manual/reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
+     * @mongodb.server.release 2.6
+     */
+    public CreateCollectionOptions(final String collectionName, final boolean capped, final long sizeInBytes, final boolean autoIndex,
+                                   final long maxDocuments, final Boolean usePowerOf2Sizes) {
         this.collectionName = notNull("collectionName", collectionName);
         this.capped = capped;
         this.sizeInBytes = sizeInBytes;
         this.autoIndex = autoIndex;
         this.maxDocuments = maxDocuments;
+        this.usePowerOf2Sizes = usePowerOf2Sizes;
     }
 
     /**
@@ -124,5 +156,16 @@ public class CreateCollectionOptions {
      */
     public long getSizeInBytes() {
         return sizeInBytes;
+    }
+
+    /**
+     * Gets whether the usePowerOf2Sizes allocation strategy is turned on for this collection.
+     *
+     * @return true if the usePowerOf2Sizes allocation strategy is turned on for this collection
+     * @mongodb.driver.manual manual/reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
+     * @mongodb.server.release 2.6
+     */
+    public Boolean isUsePowerOf2Sizes() {
+        return usePowerOf2Sizes;
     }
 }

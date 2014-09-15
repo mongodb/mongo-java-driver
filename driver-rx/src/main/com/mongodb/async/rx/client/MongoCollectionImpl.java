@@ -20,9 +20,8 @@ import com.mongodb.Block;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.async.client.MongoCollectionOptions;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.operation.QueryFlag;
+import com.mongodb.async.client.MongoCollectionOptions;
 import org.bson.codecs.Codec;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.Document;
@@ -30,7 +29,6 @@ import org.mongodb.WriteResult;
 import rx.Observable;
 import rx.Subscriber;
 
-import java.util.EnumSet;
 import java.util.List;
 
 import static com.mongodb.async.rx.client.OnSubscribeAdapter.FutureFunction;
@@ -108,12 +106,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         private MongoCollectionView(final Document filter) {
             wrappedView = wrapped.find(filter);
-        }
-
-        @Override
-        public MongoView<T> cursorFlags(final EnumSet<QueryFlag> flags) {
-            wrappedView.cursorFlags(flags);
-            return this;
         }
 
         @Override

@@ -54,7 +54,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document replacement = new Document("_id", 3).append("x", 2);
-        collection.find().upsert().replace(replacement);
+        collection.find(new Document()).upsert().replace(replacement);
 
         // then
         assertThat(collection.find().count(), is(1L));
@@ -65,12 +65,12 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
     public void shouldReplaceTheDocumentIfReplacingWithUpsertAndDocumentIsFoundInCollection() {
         // given
         Document originalDocument = new Document("_id", 3).append("x", 2);
-        collection.find().upsert().replace(originalDocument);
+        collection.find(new Document()).upsert().replace(originalDocument);
         assertThat(collection.find().count(), is(1L));
 
         // when
         Document replacement = originalDocument.append("y", 5);
-        collection.find().upsert().replace(replacement);
+        collection.find(new Document()).upsert().replace(replacement);
 
         // then
         assertThat(collection.find().count(), is(1L));

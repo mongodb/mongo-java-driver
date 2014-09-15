@@ -21,8 +21,7 @@ import com.mongodb.binding.ReadBinding;
 /**
  * An operation that reads from a MongoDB server.
  *
- * @param <T> the return type of the execute method
- *
+ * @param <T> the operations result type.
  * @since 3.0
  */
 public interface ReadOperation<T> {

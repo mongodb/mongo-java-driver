@@ -46,10 +46,11 @@ import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSou
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
- * Return a list of cursors over the collection that can be used to scan it in parallel. <p> Note: As of MongoDB 2.6, this operation will
- * work against a mongod, but not a mongos. </p>
+ * Return a list of cursors over the collection that can be used to scan it in parallel.
  *
- * @param <T> the document type for each cursor
+ * <p> Note: As of MongoDB 2.6, this operation will work against a mongod, but not a mongos. </p>
+ *
+ * @param <T> the operations result type.
  * @mongodb.server.release 2.6
  * @since 3.0
  */
@@ -61,9 +62,9 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
     /**
      * Construct a new instance.
      *
-     * @param namespace the namespace
-     * @param decoder   the decoder
-     * @param options   the options to apply
+     * @param namespace the database and collection namespace for the operation.
+     * @param decoder the decoder for the result documents.
+     * @param options   the options to apply.
      */
     public ParallelScanOperation(final MongoNamespace namespace, final ParallelScanOptions options, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);

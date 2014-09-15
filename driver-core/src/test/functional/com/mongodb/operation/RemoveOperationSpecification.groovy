@@ -18,6 +18,7 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -32,7 +33,7 @@ import static com.mongodb.WriteConcern.ACKNOWLEDGED
 class RemoveOperationSpecification extends OperationFunctionalSpecification {
     def 'should remove a document'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('_id', 1))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
                                      [new RemoveRequest(new BsonDocument('_id', new BsonInt32(1)))]
         )
@@ -47,7 +48,7 @@ class RemoveOperationSpecification extends OperationFunctionalSpecification {
     @Category(Async)
     def 'should remove a document asynchronously'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('_id', 1))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
         def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
                                      [new RemoveRequest(new BsonDocument('_id', new BsonInt32(1)))]
         )

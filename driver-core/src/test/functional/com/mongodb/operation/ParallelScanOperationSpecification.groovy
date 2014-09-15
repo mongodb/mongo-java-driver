@@ -27,7 +27,7 @@ class ParallelScanOperationSpecification extends OperationFunctionalSpecificatio
     def 'setup'() {
         (1..2000).each {
             ids.add(it)
-            getCollectionHelper().insertDocuments(new Document('_id', it))
+            getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', it))
         }
     }
 

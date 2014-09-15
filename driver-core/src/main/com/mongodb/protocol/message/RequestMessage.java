@@ -18,6 +18,7 @@ package com.mongodb.protocol.message;
 
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBinaryWriterSettings;
+import org.bson.BsonDocument;
 import org.bson.BsonWriterSettings;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
@@ -29,6 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Abstract base class for all MongoDB Wire Protocol request messages.
+ *
+ * @since 3.0
  */
 public abstract class RequestMessage {
 
@@ -101,9 +104,14 @@ public abstract class RequestMessage {
                     settings.getMaxDocumentSize() + QUERY_DOCUMENT_HEADROOM);
     }
 
-    protected <T> void addCollectibleDocument(final T obj, final Encoder<T> encoder, final OutputBuffer buffer,
+    protected <T> void addCollectibleDocument(final BsonDocument document, final OutputBuffer buffer, final FieldNameValidator validator) {
+        addDocument(document, getBsonDocumentCodec(), EncoderContext.builder().isEncodingCollectibleDocument(true).build(), buffer,
+                    validator, settings.getMaxDocumentSize());
+    }
+
+    protected <T> void addCollectibleDocument(final T document, final Encoder<T> encoder, final OutputBuffer buffer,
                                               final FieldNameValidator validator) {
-        addDocument(obj, encoder, EncoderContext.builder().isEncodingCollectibleDocument(true).build(), buffer, validator,
+        addDocument(document, encoder, EncoderContext.builder().isEncodingCollectibleDocument(true).build(), buffer, validator,
                     settings.getMaxDocumentSize());
     }
 

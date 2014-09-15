@@ -17,17 +17,44 @@
 package com.mongodb.operation;
 
 /**
+ * An abstract base class for a write request.
  *
  * @since 3.0
  */
 public abstract class WriteRequest {
 
+    /**
+     * The type of write.
+     */
     public enum Type {
+        /**
+         * An insert.
+         */
         INSERT,
+
+        /**
+         * An update that uses update operators.
+         */
         UPDATE,
+
+        /**
+         * An update that replaces the existing document.
+         */
         REPLACE,
+
+        /**
+         * A remove.
+         */
         REMOVE
     }
 
+    WriteRequest() {
+    }
+
+    /**
+     * Gets the type of the write.
+     *
+     * @return the type
+     */
     public abstract Type getType();
 }

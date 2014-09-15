@@ -27,7 +27,6 @@ import com.mongodb.operation.CreateCollectionOptions;
 import com.mongodb.operation.CreateIndexesOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.Find;
 import com.mongodb.operation.Index;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
@@ -35,6 +34,7 @@ import com.mongodb.operation.QueryOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
+import org.bson.codecs.Decoder;
 import org.mongodb.Document;
 
 import java.util.ArrayList;
@@ -67,7 +67,12 @@ public final class CollectionHelper<T> {
 
     public void create(final CreateCollectionOptions options) {
         drop(namespace);
-        new CreateCollectionOperation(namespace.getDatabaseName(), options).execute(getBinding());
+        new CreateCollectionOperation(namespace.getDatabaseName(), options.getCollectionName())
+            .capped(options.isCapped())
+            .sizeInBytes(options.getSizeInBytes())
+            .autoIndex(options.isAutoIndex())
+            .maxDocuments(options.getMaxDocuments())
+            .setUsePowerOf2Sizes(options.isUsePowerOf2Sizes()).execute(getBinding());
     }
 
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
@@ -76,32 +81,43 @@ public final class CollectionHelper<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public void insertDocuments(final T... documents) {
-        for (T document : documents) {
-            new InsertOperation<T>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                   asList(new InsertRequest<T>(document)), codec).execute(getBinding());
+    public void insertDocuments(final BsonDocument... documents) {
+        for (BsonDocument document : documents) {
+            new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                   asList(new InsertRequest(document))).execute(getBinding());
         }
     }
 
     @SuppressWarnings("unchecked")
-    public void insertDocuments(final List<T> documents) {
-        for (T document : documents) {
-            new InsertOperation<T>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                   asList(new InsertRequest<T>(document)), codec).execute(getBinding());
+    public void insertDocuments(final List<BsonDocument> documents) {
+        for (BsonDocument document : documents) {
+            new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                   asList(new InsertRequest(document))).execute(getBinding());
         }
     }
 
     @SuppressWarnings("unchecked")
     public <I> void insertDocuments(final Codec<I> iCodec, final I... documents) {
         for (I document : documents) {
-            new InsertOperation<I>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                   asList(new InsertRequest<I>(document)), iCodec).execute(getBinding());
+            new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                   asList(new InsertRequest(new BsonDocumentWrapper<I>(document, iCodec)))).execute(getBinding());
+        }
+    }
+
+    public <I> void insertDocuments(final Codec<I> iCodec, final List<I> documents) {
+        for (I document : documents) {
+            new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                   asList(new InsertRequest(new BsonDocumentWrapper<I>(document, iCodec)))).execute(getBinding());
         }
     }
 
     public List<T> find() {
-        MongoCursor<T> cursor = new QueryOperation<T>(namespace, new Find(), codec).execute(getBinding());
-        List<T> results = new ArrayList<T>();
+        return find(codec);
+    }
+
+    public <D> List<D> find(final Codec<D> codec) {
+        MongoCursor<D> cursor = new QueryOperation<D>(namespace, codec).execute(getBinding());
+        List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
             results.add(cursor.next());
         }
@@ -109,8 +125,12 @@ public final class CollectionHelper<T> {
     }
 
     public List<T> find(final Document filter) {
-        MongoCursor<T> cursor = new QueryOperation<T>(namespace, new Find(wrap(filter)), codec).execute(getBinding());
-        List<T> results = new ArrayList<T>();
+        return find(new BsonDocumentWrapper<Document>(filter, new DocumentCodec()), codec);
+    }
+
+    public <D> List<D> find(final BsonDocument filter, final Decoder<D> decoder) {
+        MongoCursor<D> cursor = new QueryOperation<D>(namespace, decoder).criteria(filter).execute(getBinding());
+        List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
             results.add(cursor.next());
         }
@@ -118,11 +138,11 @@ public final class CollectionHelper<T> {
     }
 
     public long count() {
-        return new CountOperation(namespace, new Find()).execute(getBinding());
+        return new CountOperation(namespace).execute(getBinding());
     }
 
-    public long count(final Document filter) {
-        return new CountOperation(namespace, new Find(wrap(filter))).execute(getBinding());
+    public long count(final Document criteria) {
+        return new CountOperation(namespace).criteria(wrap(criteria)).execute(getBinding());
     }
 
     public BsonDocument wrap(final Document document) {

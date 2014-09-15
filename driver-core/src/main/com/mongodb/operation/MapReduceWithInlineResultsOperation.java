@@ -38,22 +38,22 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  *
  * <p>To run a map reduce operation into a given collection, use {@code MapReduceToCollectionOperation}.</p>
  *
- * @param <T> the type contained in the collection
+ * @param <T> the operations result type.
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0
  */
 public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperation<MapReduceAsyncCursor<T>>,
                                                                ReadOperation<MapReduceCursor<T>> {
-    private final MapReduce mapReduce;
     private final MongoNamespace namespace;
+    private final MapReduce mapReduce;
     private final Decoder<T> decoder;
 
     /**
-     * Construct a MapReduceOperation with all the criteria it needs to execute
+     * Construct a MapReduceOperation with all the criteria it needs to execute.
      *
-     * @param namespace the database and collection to perform the map reduce on
-     * @param mapReduce the bean containing all the details of the Map Reduce operation to perform
-     * @param decoder   the decoder to use for decoding the documents in the results of the map-reduce operation
+     * @param namespace the database and collection namespace for the operation.
+     * @param mapReduce the bean containing all the details of the Map Reduce operation to perform.
+     * @param decoder the decoder for the result documents.
      */
     public MapReduceWithInlineResultsOperation(final MongoNamespace namespace, final MapReduce mapReduce,
                                                final Decoder<T> decoder) {

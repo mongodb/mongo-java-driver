@@ -20,34 +20,45 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.connection.Connection;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.SingleResultFuture;
+import com.mongodb.connection.Connection;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.operation.InsertRequest;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.protocol.message.InsertMessage;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
-import org.bson.codecs.Encoder;
 import org.mongodb.WriteResult;
 
 import java.util.List;
 
 import static java.lang.String.format;
 
-public class InsertProtocol<T> extends WriteProtocol {
+/**
+ * An implementation of the insert wire protocol.  This class also takes care of applying the write concern.
+ *
+ * @since 3.0
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-insert OP_INSERT
+ */
+public class InsertProtocol extends WriteProtocol {
 
     private static final Logger LOGGER = Loggers.getLogger("protocol.insert");
 
-    private final List<InsertRequest<T>> insertRequestList;
-    private final Encoder<T> encoder;
+    private final List<InsertRequest> insertRequestList;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the namespace
+     * @param ordered whether the inserts are ordered
+     * @param writeConcern the write concern
+     * @param insertRequestList the list of documents to insert
+     */
     public InsertProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                          final List<InsertRequest<T>> insertRequestList, final Encoder<T> encoder) {
+                          final List<InsertRequest> insertRequestList) {
         super(namespace, ordered, writeConcern);
         this.insertRequestList = insertRequestList;
-        this.encoder = encoder;
     }
 
     @Override
@@ -77,7 +88,7 @@ public class InsertProtocol<T> extends WriteProtocol {
     }
 
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new InsertMessage<T>(getNamespace().getFullName(), isOrdered(), getWriteConcern(), insertRequestList, encoder, settings);
+        return new InsertMessage(getNamespace().getFullName(), isOrdered(), getWriteConcern(), insertRequestList, settings);
     }
 
     @Override

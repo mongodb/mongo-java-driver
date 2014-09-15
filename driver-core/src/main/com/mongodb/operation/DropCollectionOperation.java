@@ -39,9 +39,9 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
     private final MongoNamespace namespace;
 
     /**
-     * Create the Operation to drop a Collection from MongoDB.
+     * Construct a new instance.
      *
-     * @param namespace the database/collection namespace for the collection to be dropped
+     * @param namespace the database and collection namespace for the operation.
      */
     public DropCollectionOperation(final MongoNamespace namespace) {
         this.namespace = notNull("namespace", namespace);

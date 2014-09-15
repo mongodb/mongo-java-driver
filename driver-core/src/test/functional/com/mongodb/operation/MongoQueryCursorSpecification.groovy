@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Slow
+import com.mongodb.CursorFlag
 import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerCursor
@@ -48,7 +49,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
 
     def setup() {
         for ( int i = 0; i < 10; i++) {
-            collectionHelper.insertDocuments(new Document('_id', i))
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', i))
         }
         connectionSource = getBinding().getReadConnectionSource()
     }
@@ -222,9 +223,9 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
     def 'test tailable'() {
         collectionHelper.create(new CreateCollectionOptions(collectionName, true, 1000))
 
-        collectionHelper.insertDocuments(new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
+        collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2,
-                                      EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData))
+                                      EnumSet.of(CursorFlag.TAILABLE, CursorFlag.AWAIT_DATA))
 
         when:
         cursor = new MongoQueryCursor<Document>(getNamespace(),
@@ -243,7 +244,8 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
                 try {
                     Thread.sleep(500)
                     MongoQueryCursorSpecification.this.collectionHelper
-                                                 .insertDocuments(new Document('_id', 2).append('ts', new BsonTimestamp(6, 0)))
+                                                 .insertDocuments(new DocumentCodec(),
+                                                                  new Document('_id', 2).append('ts', new BsonTimestamp(6, 0)))
                 } catch (ignored) {
                 }
                 latch.countDown()
@@ -264,10 +266,10 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
     def 'test tailable interrupt'() throws InterruptedException {
         collectionHelper.create(new CreateCollectionOptions(collectionName, true, 1000))
 
-        collectionHelper.insertDocuments(new Document('_id', 1))
+        collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1))
 
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2,
-                                      EnumSet.of(QueryFlag.Tailable, QueryFlag.AwaitData))
+                                      EnumSet.of(CursorFlag.TAILABLE, CursorFlag.AWAIT_DATA))
 
         when:
         cursor = new MongoQueryCursor<Document>(getNamespace(),
@@ -368,7 +370,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
         String bigString = new String(array)
 
         for (int i = 11; i < 1000; i++) {
-            collectionHelper.insertDocuments(new Document('_id', i).append('s', bigString))
+            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', i).append('s', bigString))
         }
 
         def firstBatch = executeQuery()
@@ -459,10 +461,10 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
     }
 
     private QueryResult<Document> executeQuery(int numToReturn) {
-        executeQuery(new BsonDocument(), numToReturn, EnumSet.noneOf(QueryFlag))
+        executeQuery(new BsonDocument(), numToReturn, EnumSet.noneOf(CursorFlag))
     }
 
-    private QueryResult<Document> executeQuery(BsonDocument query, int numberToReturn, EnumSet<QueryFlag> queryFlag) {
+    private QueryResult<Document> executeQuery(BsonDocument query, int numberToReturn, EnumSet<CursorFlag> queryFlag) {
         def connection = connectionSource.getConnection()
         try {
             new QueryProtocol<Document>(getNamespace(), queryFlag, 0, numberToReturn, query, null, new DocumentCodec())

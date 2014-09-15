@@ -22,7 +22,7 @@ import com.mongodb.binding.AsyncWriteBinding;
 /**
  * An operation which asynchronously writes to a MongoDB server.
  *
- * @param <T> the return type of the execute method
+ * @param <T> the operations result type.
  *
  * @since 3.0
  */

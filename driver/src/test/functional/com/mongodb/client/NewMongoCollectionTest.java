@@ -37,7 +37,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 
-public class MongoCollectionTest extends DatabaseTestCase {
+public class NewMongoCollectionTest extends DatabaseTestCase {
     @Test
     public void testInsertMultiple() {
 
@@ -83,10 +83,10 @@ public class MongoCollectionTest extends DatabaseTestCase {
         }
         collection.insert(documents);
 
-        WriteResult res = collection.find().update(new Document("$set", new Document("x", 1)));
+        WriteResult res = collection.find(new Document()).update(new Document("$set", new Document("x", 1)));
         assertEquals(10, res.getCount());
 
-        res = collection.find().limit(0).update(new Document("$set", new Document("x", 1)));
+        res = collection.find(new Document()).limit(0).update(new Document("$set", new Document("x", 1)));
         assertEquals(10, res.getCount());
     }
 
@@ -99,7 +99,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         }
         collection.insert(documents);
 
-        WriteResult res = collection.find().limit(1).update(new Document("$set", new Document("x", 1)));
+        WriteResult res = collection.find(new Document()).limit(1).update(new Document("$set", new Document("x", 1)));
         assertEquals(1, res.getCount());
     }
 

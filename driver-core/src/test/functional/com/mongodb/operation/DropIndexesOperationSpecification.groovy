@@ -55,7 +55,7 @@ class DropIndexesOperationSpecification extends OperationFunctionalSpecification
     def 'should error when dropping non-existent index on existing collection'() {
         given:
         def operation = new DropIndexOperation(getNamespace(), 'made_up_index_1')
-        getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
         operation.execute(getBinding())
@@ -68,7 +68,7 @@ class DropIndexesOperationSpecification extends OperationFunctionalSpecification
     def 'should error when dropping non-existent index  on existing collection asynchronously'() {
         given:
         def operation = new DropIndexOperation(getNamespace(), 'made_up_index_1')
-        getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
         operation.executeAsync(getAsyncBinding()).get()

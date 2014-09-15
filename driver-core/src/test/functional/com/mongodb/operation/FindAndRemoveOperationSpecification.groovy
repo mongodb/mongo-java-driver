@@ -39,13 +39,11 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
 
-        getCollectionHelper().insertDocuments(pete, sam)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
-        FindAndRemove findAndRemove = new FindAndRemove().where(new BsonDocument('name', new BsonString('Pete')));
-
-        FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), findAndRemove,
-                                                                                          documentCodec)
+        FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), documentCodec)
+                .criteria(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.execute(getBinding())
 
         then:
@@ -61,13 +59,11 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
 
-        getCollectionHelper().insertDocuments(pete, sam)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
-        FindAndRemove findAndRemove = new FindAndRemove().where(new BsonDocument('name', new BsonString('Pete')));
-
-        FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), findAndRemove,
-                                                                                          documentCodec)
+        FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), documentCodec)
+                .criteria(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:
@@ -80,13 +76,11 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
         given:
         Worker pete = new Worker('Pete', 'handyman', new Date(), 3)
         Worker sam = new Worker('Sam', 'plumber', new Date(), 7)
-        getWorkerCollectionHelper().insertDocuments(pete, sam)
+        getWorkerCollectionHelper().insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
-        FindAndRemove<Worker> findAndRemove = new FindAndRemove<Worker>().where(new BsonDocument('name', new BsonString('Pete')));
-
-        FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Worker>(getNamespace(), findAndRemove,
-                                                                                      workerCodec)
+        FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Document>(getNamespace(), workerCodec)
+                .criteria(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 
         then:
@@ -100,13 +94,11 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
         given:
         Worker pete = new Worker('Pete', 'handyman', new Date(), 3)
         Worker sam = new Worker('Sam', 'plumber', new Date(), 7)
-        getWorkerCollectionHelper().insertDocuments(pete, sam)
+        getWorkerCollectionHelper().insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
-        FindAndRemove<Worker> findAndRemove = new FindAndRemove<Worker>().where(new BsonDocument('name', new BsonString('Pete')));
-
-        FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Worker>(getNamespace(), findAndRemove,
-                                                                                      workerCodec)
+        FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Document>(getNamespace(), workerCodec)
+                .criteria(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 
         then:

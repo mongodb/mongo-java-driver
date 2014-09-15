@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.CursorFlag;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
@@ -46,10 +47,15 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @since 3.0
  */
 public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOperation<Boolean> {
-
     private final String databaseName;
     private final String userName;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param databaseName the name of the database for the operation.
+     * @param userName the name of the user to check if they exist.
+     */
     public UserExistsOperation(final String databaseName, final String userName) {
         this.databaseName = notNull("databaseName", databaseName);
         this.userName = notNull("userName", userName);
@@ -104,7 +110,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
 
     private QueryProtocol<BsonDocument> getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(databaseName, "system.users");
-        return new QueryProtocol<BsonDocument>(namespace, EnumSet.noneOf(QueryFlag.class), 0, 1,
+        return new QueryProtocol<BsonDocument>(namespace, EnumSet.noneOf(CursorFlag.class), 0, 1,
                                                new BsonDocument("user", new BsonString(userName)), null, new BsonDocumentCodec());
     }
 

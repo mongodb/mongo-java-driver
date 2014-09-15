@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoCredential;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
@@ -24,7 +25,6 @@ import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.protocol.ReplaceProtocol;
 import org.bson.BsonDocument;
-import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.WriteResult;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -47,10 +47,36 @@ import static java.util.Arrays.asList;
  * @since 3.0
  */
 public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private final User user;
+    private final MongoCredential credential;
+    private final boolean readOnly;
 
-    public UpdateUserOperation(final User user) {
-        this.user = notNull("user", user);
+    /**
+     * Construct a new instance.
+     *
+     * @param credential the users credentials.
+     * @param readOnly true if the user is a readOnly user.
+     */
+    public UpdateUserOperation(final MongoCredential credential, final boolean readOnly) {
+        this.credential = notNull("credential", credential);
+        this.readOnly = readOnly;
+    }
+
+    /**
+     * Gets the users credentials.
+     *
+     * @return the users credentials.
+     */
+    public MongoCredential getCredential() {
+        return credential;
+    }
+
+    /**
+     * Returns true if the user is a readOnly user.
+     *
+     * @return true if the user is a readOnly user.
+     */
+    public boolean isReadOnly() {
+        return readOnly;
     }
 
     @Override
@@ -59,7 +85,7 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
             @Override
             public Void call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    executeWrappedCommandProtocol(user.getCredential().getSource(), getCommand(), connection);
+                    executeWrappedCommandProtocol(credential.getSource(), getCommand(), connection);
                 } else {
                     getCollectionBasedProtocol().execute(connection);
                 }
@@ -74,7 +100,7 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
             @Override
             public MongoFuture<Void> call(final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
-                    return executeWrappedCommandProtocolAsync(user.getCredential().getSource(), getCommand(), connection,
+                    return executeWrappedCommandProtocolAsync(credential.getSource(), getCommand(), connection,
                                                               new VoidTransformer<BsonDocument>());
                 } else {
                     return executeProtocolAsync(getCollectionBasedProtocol(), connection, new VoidTransformer<WriteResult>());
@@ -84,16 +110,15 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
     }
 
     @SuppressWarnings("unchecked")
-    private ReplaceProtocol<BsonDocument> getCollectionBasedProtocol() {
-        MongoNamespace namespace = new MongoNamespace(user.getCredential().getSource(), "system.users");
-        return new ReplaceProtocol<BsonDocument>(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                                 asList(new ReplaceRequest<BsonDocument>(asCollectionQueryDocument(user),
-                                                                                         asCollectionDocument(user))),
-                                                 new BsonDocumentCodec());
+    private ReplaceProtocol getCollectionBasedProtocol() {
+        MongoNamespace namespace = new MongoNamespace(credential.getSource(), "system.users");
+        return new ReplaceProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                   asList(new ReplaceRequest(asCollectionQueryDocument(credential),
+                                                             asCollectionDocument(credential, readOnly))));
     }
 
     private BsonDocument getCommand() {
-        return asCommandDocument(user, "updateUser");
+        return asCommandDocument(credential, readOnly, "updateUser");
     }
 
 }

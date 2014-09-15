@@ -28,6 +28,7 @@ import org.mongodb.Document
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 
@@ -38,8 +39,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                               new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))
-                                                                      .append('y', new BsonInt32(1)))),
-                                     new DocumentCodec())
+                                                                      .append('y', new BsonInt32(1)))))
 
         when:
         op.execute(getBinding())
@@ -48,12 +48,12 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         thrown(IllegalArgumentException)
     }
 
-    def 'should return correct result for update '() {
+    def 'should update nothing if no documents match'() {
         given:
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
-                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))))),
-                                     new DocumentCodec())
+                                     asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
+                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))))
+                                                    .multi(false)))
 
         when:
         def result = op.execute(getBinding())
@@ -63,17 +63,64 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         result.count == 0
         result.upsertedId == null
         !result.isUpdateOfExisting()
+        getCollectionHelper().count() == 0
+    }
 
+    def 'when multi is false should update one matching document'() {
+        given:
+        getCollectionHelper().insertDocuments(new DocumentCodec(),
+                                              new Document('x', 1),
+                                              new Document('x', 1))
+        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
+                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))))
+                                                    .multi(false)))
         when:
-        getCollectionHelper().insertDocuments(new Document('_id', 1))
-        result = op.execute(getBinding())
+        def result = op.execute(getBinding())
 
         then:
         result.wasAcknowledged()
         result.count == 1
         result.upsertedId == null
         result.isUpdateOfExisting()
+        getCollectionHelper().count(new Document('y', 2)) == 1
+   }
 
+    def 'when multi is true should update all matching documents'() {
+        given:
+        getCollectionHelper().insertDocuments(new DocumentCodec(),
+                                              new Document('x', 1),
+                                              new Document('x', 1))
+        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
+                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))))
+                                                    .multi(true)))
+        when:
+        def result = op.execute(getBinding())
+
+        then:
+        result.wasAcknowledged()
+        result.count == 2
+        result.upsertedId == null
+        result.isUpdateOfExisting()
+        getCollectionHelper().count(new Document('y', 2)) == 2
+    }
+
+    def 'when upsert is true should insert a document if there are no matching documents'() {
+        given:
+        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))))
+                                                    .upsert(true)))
+        when:
+        def result = op.execute(getBinding())
+
+        then:
+        result.wasAcknowledged()
+        result.count == 1
+        result.upsertedId == (serverVersionAtLeast(asList(2, 6, 0)) ? new BsonInt32(1) : null)
+        !result.isUpdateOfExisting()
+        getCollectionHelper().count(new Document('y', 2)) == 1
     }
 
     @Category(Async)
@@ -81,8 +128,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         given:
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
-                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))))),
-                                     new DocumentCodec())
+                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))))))
 
         when:
         def result = op.executeAsync(getAsyncBinding()).get()
@@ -94,7 +140,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         !result.isUpdateOfExisting()
 
         when:
-        getCollectionHelper().insertDocuments(new Document('_id', 1))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
         result = op.execute(getBinding())
 
         then:
@@ -110,8 +156,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
                                                               new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))).
-                                                    upsert(true)),
-                                     new DocumentCodec())
+                                                    upsert(true)))
 
         when:
         def result = op.execute(getBinding())
@@ -130,8 +175,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
                                                               new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))).
-                                                    upsert(true)),
-                                     new DocumentCodec())
+                                                    upsert(true)))
 
         when:
         def result = op.executeAsync(getAsyncBinding()).get()
@@ -148,8 +192,8 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         new UpdateOperation(getNamespace(), ordered, ACKNOWLEDGED,
                             [new UpdateRequest(new BsonDocument(),
                                                new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2)))
-                                                       .append('y', new BsonInt32(2)))],
-                            new DocumentCodec()).execute(getBinding())
+                                                       .append('y', new BsonInt32(2)))])
+                .execute(getBinding())
 
         then:
         thrown(IllegalArgumentException)

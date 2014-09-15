@@ -18,6 +18,7 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import spock.lang.IgnoreIf
@@ -31,7 +32,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
     @IgnoreIf({ isSharded() })
     def 'should drop a database that exists'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('documentTo', 'createTheCollection'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))
         assert databaseNameExists(databaseName)
 
         when:
@@ -45,7 +46,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
     @IgnoreIf({ isSharded() })
     def 'should drop a database that exists asynchronously'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('documentTo', 'createTheCollection'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))
         assert databaseNameExists(databaseName)
 
         when:

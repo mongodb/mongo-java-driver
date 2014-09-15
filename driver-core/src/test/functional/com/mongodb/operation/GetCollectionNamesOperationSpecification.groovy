@@ -18,6 +18,7 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 
@@ -60,7 +61,7 @@ class GetCollectionNamesOperationSpecification extends OperationFunctionalSpecif
     def 'should return default system.index and collection names if a Collection exists'() {
         given:
         def operation = new GetCollectionNamesOperation(databaseName)
-        getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
         List<String> names = operation.execute(getBinding())
@@ -73,7 +74,7 @@ class GetCollectionNamesOperationSpecification extends OperationFunctionalSpecif
     def 'should return default system.index and collection names if a Collection exists asynchronously'() {
         given:
         def operation = new GetCollectionNamesOperation(databaseName)
-        getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
         List<String> names = operation.executeAsync(getAsyncBinding()).get()

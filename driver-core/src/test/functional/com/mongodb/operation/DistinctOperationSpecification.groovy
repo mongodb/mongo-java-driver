@@ -17,16 +17,24 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
+import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static java.util.Arrays.asList
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
@@ -35,10 +43,10 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document pete = new Document('name', 'Pete').append('age', 38)
         Document sam = new Document('name', 'Sam').append('age', 21)
         Document pete2 = new Document('name', 'Pete').append('age', 25)
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', new Find())
+        DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
         def result = op.execute(getBinding());
 
         then:
@@ -51,10 +59,10 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document pete = new Document('name', 'Pete').append('age', 38)
         Document sam = new Document('name', 'Sam').append('age', 21)
         Document pete2 = new Document('name', 'Pete').append('age', 25)
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', new Find())
+        DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
@@ -66,10 +74,11 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document pete = new Document('name', 'Pete').append('age', 38)
         Document sam = new Document('name', 'Sam').append('age', 21)
         Document pete2 = new Document('name', 'Pete').append('age', 25)
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', new Find(new BsonDocument('age', new BsonInt32(25))))
+        DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
+        op.criteria = new BsonDocument('age', new BsonInt32(25))
         def result = op.execute(getBinding());
 
         then:
@@ -82,13 +91,49 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document pete = new Document('name', 'Pete').append('age', 38)
         Document sam = new Document('name', 'Sam').append('age', 21)
         Document pete2 = new Document('name', 'Pete').append('age', 25)
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
 
         when:
-        DistinctOperation op = new DistinctOperation(getNamespace(), 'name', new Find(new BsonDocument('age', new BsonInt32(25))))
+        DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
+        op.criteria = new BsonDocument('age', new BsonInt32(25))
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
         result == new BsonArray([new BsonString('Pete')])
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should throw execution timeout exception from execute'() {
+        given:
+        def op = new DistinctOperation(getNamespace(), 'name')
+        op.maxTime(1, SECONDS)
+        enableMaxTimeFailPoint()
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        thrown(MongoExecutionTimeoutException)
+
+        cleanup:
+        disableMaxTimeFailPoint()
+    }
+
+    @Category(Async)
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should throw execution timeout exception from executeAsync'() {
+        given:
+        def op = new DistinctOperation(getNamespace(), 'name')
+        op.maxTime(1, SECONDS)
+        enableMaxTimeFailPoint()
+
+        when:
+        op.executeAsync(getAsyncBinding()).get()
+
+        then:
+        thrown(MongoExecutionTimeoutException)
+
+        cleanup:
+        disableMaxTimeFailPoint()
     }
 }

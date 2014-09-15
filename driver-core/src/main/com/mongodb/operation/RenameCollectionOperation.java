@@ -37,13 +37,13 @@ import static com.mongodb.operation.OperationHelper.VoidTransformer;
  * @since 3.0
  */
 public class RenameCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+    private final String databaseName;
     private final String originalCollectionName;
     private final String newCollectionName;
     private final boolean dropTarget;
-    private final String databaseName;
 
     /**
-     * @param databaseName           the name of the database containing the collection to rename
+     * @param databaseName the name of the database for the operation.
      * @param originalCollectionName the name of the collection to rename
      * @param newCollectionName      the desired new name for the collection
      * @param dropTarget             set to true if you want any existing database with newCollectionName to be dropped during the rename

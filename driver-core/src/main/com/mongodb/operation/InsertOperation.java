@@ -18,12 +18,10 @@ package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.protocol.InsertCommandProtocol;
 import com.mongodb.protocol.InsertProtocol;
 import com.mongodb.protocol.WriteCommandProtocol;
 import com.mongodb.protocol.WriteProtocol;
-import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
 
 import java.util.List;
@@ -33,34 +31,42 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * An operation that inserts one or more documents into a collection.
  *
- * @param <T> the document type
- *
  * @since 3.0
  */
-public class InsertOperation<T> extends BaseWriteOperation {
-    private final List<InsertRequest<T>> insertRequestList;
-    private final Encoder<T> encoder;
+public class InsertOperation extends BaseWriteOperation {
+    private final List<InsertRequest> insertRequests;
 
+    /**
+     * Construct an instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param ordered whether the inserts are ordered.
+     * @param writeConcern the write concern for the operation.
+     * @param insertRequests the list of inserts.
+     */
     public InsertOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<InsertRequest<T>> insertRequestList, final Encoder<T> encoder) {
+                           final List<InsertRequest> insertRequests) {
         super(namespace, ordered, writeConcern);
-        this.insertRequestList = notNull("insertList", insertRequestList);
-        this.encoder = notNull("encoder", encoder);
-        if (encoder instanceof CollectibleCodec) {
-            for (InsertRequest<T> cur : insertRequestList) {
-                ((CollectibleCodec<T>) encoder).generateIdIfAbsentFromDocument(cur.getDocument());
-            }
-        }
+        this.insertRequests = notNull("insertRequests", insertRequests);
+    }
+
+    /**
+     * Gets the list of insert requests.
+     *
+     * @return the list of insert requests.
+     */
+    public List<InsertRequest> getInsertRequests() {
+        return insertRequests;
     }
 
     @Override
     protected WriteProtocol getWriteProtocol() {
-        return new InsertProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList, encoder);
+        return new InsertProtocol(getNamespace(), isOrdered(), getWriteConcern(), insertRequests);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol() {
-        return new InsertCommandProtocol<T>(getNamespace(), isOrdered(), getWriteConcern(), insertRequestList, encoder);
+        return new InsertCommandProtocol(getNamespace(), isOrdered(), getWriteConcern(), insertRequests);
     }
 
     @Override

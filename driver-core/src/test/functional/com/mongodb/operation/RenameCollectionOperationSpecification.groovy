@@ -20,6 +20,7 @@ import category.Async
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoServerException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 import spock.lang.IgnoreIf
@@ -37,7 +38,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
 
     def 'should return rename a collection'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
         assert collectionNameExists(getCollectionName())
 
         when:
@@ -51,7 +52,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
     @Category(Async)
     def 'should return rename a collection asynchronously'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
         assert collectionNameExists(getCollectionName())
 
         when:
@@ -64,7 +65,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
 
     def 'should throw if not drop and collection exists'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
         assert collectionNameExists(getCollectionName())
 
         when:
@@ -78,7 +79,7 @@ class RenameCollectionOperationSpecification extends OperationFunctionalSpecific
     @Category(Async)
     def 'should throw if not drop and collection exists asynchronously'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
         assert collectionNameExists(getCollectionName())
 
         when:

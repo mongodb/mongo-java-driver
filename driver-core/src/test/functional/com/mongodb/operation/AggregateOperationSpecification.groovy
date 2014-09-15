@@ -18,18 +18,24 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.Block
+import com.mongodb.ExplainVerbosity
+import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonDocument
 import org.bson.BsonString
+import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 
-import java.util.concurrent.TimeUnit
-
+import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
+import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static java.util.Arrays.asList
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
@@ -37,12 +43,12 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
-        getCollectionHelper().insertDocuments(pete, sam, pete2)
+        getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
     }
 
     def 'should be able to aggregate'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec(), aggregateOptions)
+        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).useCursor(useCursor)
         def result = op.execute(getBinding());
 
         then:
@@ -51,15 +57,15 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         results.containsAll(['Pete', 'Sam'])
 
         where:
-        aggregateOptions << generateOptions()
+        useCursor << useCursorOptions()
     }
 
     @Category(Async)
     def 'should be able to aggregate asynchronously'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec(), aggregateOptions)
+        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).useCursor(useCursor)
         List<Document> docList = []
-        def cursor = op.executeAsync(getAsyncBinding()).get(1, TimeUnit.SECONDS)
+        def cursor = op.executeAsync(getAsyncBinding()).get(1, SECONDS)
         cursor.forEach(new Block<Document>() {
             @Override
             void apply(final Document value) {
@@ -67,7 +73,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
                     docList += value
                 }
             }
-        }).get(1, TimeUnit.SECONDS)
+        }).get(1, SECONDS)
 
         then:
         List<String> results = docList.iterator()*.getString('name')
@@ -75,7 +81,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         results.containsAll(['Pete', 'Sam'])
 
         where:
-        aggregateOptions << generateOptions()
+        useCursor << useCursorOptions()
     }
 
     def 'should be able to aggregate with pipeline'() {
@@ -83,7 +89,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         AggregateOperation op = new AggregateOperation<Document>(getNamespace(),
                                                                  [new BsonDocument('$match',
                                                                                    new BsonDocument('job', new BsonString('plumber')))],
-                                                                 new DocumentCodec(), aggregateOptions)
+                                                                 new DocumentCodec()).useCursor(useCursor)
         def result = op.execute(getBinding());
 
         then:
@@ -92,7 +98,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         results == ['Sam']
 
         where:
-        aggregateOptions << generateOptions()
+        useCursor << useCursorOptions()
     }
 
     @Category(Async)
@@ -101,9 +107,9 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         AggregateOperation op = new AggregateOperation<Document>(getNamespace(),
                                                                  [new BsonDocument('$match',
                                                                                    new BsonDocument('job', new BsonString('plumber')))],
-                                                                 new DocumentCodec(), aggregateOptions)
+                                                                 new DocumentCodec()).useCursor(useCursor)
         List<Document> docList = []
-        def cursor = op.executeAsync(getAsyncBinding()).get(1, TimeUnit.SECONDS)
+        def cursor = op.executeAsync(getAsyncBinding()).get(1, SECONDS)
         cursor.forEach(new Block<Document>() {
             @Override
             void apply(final Document value) {
@@ -111,7 +117,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
                     docList += value
                 }
             }
-        }).get(1, TimeUnit.SECONDS)
+        }).get(1, SECONDS)
 
         then:
         List<String> results = docList.iterator()*.getString('name')
@@ -119,14 +125,95 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         results == ['Sam']
 
         where:
-        aggregateOptions << generateOptions()
+        useCursor << useCursorOptions()
     }
 
-    private static List<AggregationOptions> generateOptions() {
-        def options = [AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.INLINE).build()]
-        if ((serverVersionAtLeast([2, 6, 0]))) {
-            options += AggregationOptions.builder().outputMode(AggregationOptions.OutputMode.CURSOR).build()
-        }
-        options
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should allow disk usage'() {
+        when:
+        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).allowDiskUse(allowDiskUse)
+        def cursor = op.execute(getBinding())
+
+        then:
+        cursor*.getString('name') == ['Pete', 'Sam', 'Pete']
+
+        where:
+        allowDiskUse << [null, true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should allow batch size'() {
+        when:
+        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).batchSize(batchSize)
+        def cursor = op.execute(getBinding())
+
+        then:
+        cursor*.getString('name') == ['Pete', 'Sam', 'Pete']
+
+        where:
+        batchSize << [null, 0, 10]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should throw execution timeout exception from execute'() {
+        given:
+        def op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).maxTime(1, SECONDS)
+        enableMaxTimeFailPoint()
+
+        when:
+        op.execute(getBinding())
+
+        then:
+        thrown(MongoExecutionTimeoutException)
+
+        cleanup:
+        disableMaxTimeFailPoint()
+    }
+
+    @Category(Async)
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should throw execution timeout exception from executeAsync'() {
+        given:
+        def op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).maxTime(1, SECONDS)
+        enableMaxTimeFailPoint()
+
+        when:
+        op.executeAsync(getAsyncBinding()).get()
+
+        then:
+        thrown(MongoExecutionTimeoutException)
+
+        cleanup:
+        disableMaxTimeFailPoint()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    def 'should be able to explain an empty pipeline'() {
+        given:
+        AggregateOperation op = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
+
+        when:
+        def result = op.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER).execute(getBinding());
+
+        then:
+        result.containsKey('stages')
+    }
+
+    @Category(Async)
+    @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
+    def 'should be able to explain an empty pipeline asynchronously'() {
+        given:
+        AggregateOperation op = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
+
+        when:
+        def result = op.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER).executeAsync(getAsyncBinding()).get();
+
+        then:
+        result.containsKey('stages')
+    }
+
+
+    private static List<Boolean> useCursorOptions() {
+        [null, true, false]
     }
 }

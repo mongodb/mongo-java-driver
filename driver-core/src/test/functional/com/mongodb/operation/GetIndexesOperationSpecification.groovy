@@ -31,7 +31,7 @@ class GetIndexesOperationSpecification extends OperationFunctionalSpecification 
     def 'should return default index on Collection that exists'() {
         given:
         def operation = new GetIndexesOperation(getNamespace(), new DocumentCodec())
-        getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
         List<Document> indexes = operation.execute(getBinding())
@@ -45,7 +45,7 @@ class GetIndexesOperationSpecification extends OperationFunctionalSpecification 
     def 'should return default index on Collection that exists asynchronously'() {
         given:
         def operation = new GetIndexesOperation(getNamespace(), new DocumentCodec())
-        getCollectionHelper().insertDocuments(new Document('documentThat', 'forces creation of the Collection'))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
         List<Document> indexes = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)

@@ -16,6 +16,9 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.Block;
+import com.mongodb.CursorFlag;
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoCursor;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
@@ -34,32 +37,263 @@ import com.mongodb.protocol.QueryProtocol;
 import com.mongodb.protocol.QueryResult;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
 import org.bson.BsonInt64;
-import org.bson.BsonString;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
+
+import java.util.EnumSet;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * An operation that queries a collection using the provided criteria.
  *
- * @param <T> the document type
+ * @param <T> the operations result type.
  * @since 3.0
  */
 public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoCursor<T>> {
-    private final Find find;
-    private final Decoder<T> resultDecoder;
     private final MongoNamespace namespace;
+    private final Decoder<T> decoder;
+    private BsonDocument criteria;
+    private int batchSize;
+    private int limit;
+    private BsonDocument modifiers;
+    private BsonDocument projection;
+    private EnumSet<CursorFlag> cursorFlags = EnumSet.noneOf(CursorFlag.class);
+    private long maxTimeMS;
+    private int skip;
+    private BsonDocument sort;
 
-    public QueryOperation(final MongoNamespace namespace, final Find find, final Decoder<T> resultDecoder) {
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param decoder the decoder for the result documents.
+     */
+    public QueryOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
-        this.find = notNull("find", find);
-        this.resultDecoder = notNull("resultDecoder", resultDecoder);
+        this.decoder = notNull("decoder", decoder);
+    }
+
+    /**
+     * Gets the namespace.
+     *
+     * @return the namespace
+     */
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    /**
+     * Gets the decoder used to decode the result documents.
+     *
+     * @return the decoder
+     */
+    public Decoder<T> getDecoder() {
+        return decoder;
+    }
+
+    /**
+     * Gets the query criteria.
+     *
+     * @return the query criteria
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     */
+    public BsonDocument getCriteria() {
+        return criteria;
+    }
+
+    /**
+     * Sets the criteria to apply to the query.
+     *
+     * @param criteria the criteria, which may be null.
+     * @return this
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     */
+    public QueryOperation<T> criteria(final BsonDocument criteria) {
+        this.criteria = criteria;
+        return this;
+    }
+
+    /**
+     * Gets the number of documents to return per batch.  Default to 0, which indicates that the server chooses an appropriate batch size.
+     *
+     * @return the batch size, which may be null
+     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     */
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    /**
+     * Sets the number of documents to return per batch.
+     *
+     * @param batchSize the batch size
+     * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     */
+    public QueryOperation<T> batchSize(final int batchSize) {
+        this.batchSize = batchSize;
+        return this;
+    }
+
+    /**
+     * Gets the limit to apply.  The default is null.
+     *
+     * @return the limit
+     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
+     */
+    public int getLimit() {
+        return limit;
+    }
+
+    /**
+     * Sets the limit to apply.
+     *
+     * @param limit the limit, which may be null
+     * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
+     */
+    public QueryOperation<T> limit(final int limit) {
+        this.limit = limit;
+        return this;
+    }
+
+    /**
+     * Gets the query modifiers to apply to this operation.  The default is not to apply any modifiers.
+     *
+     * @return the query modifiers, which may be null
+     * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
+     */
+    public BsonDocument getModifiers() {
+        return modifiers;
+    }
+
+    /**
+     * Sets the query modifiers to apply to this operation.
+     *
+     * @param modifiers the query modifiers to apply, which may be null.
+     * @return this
+     * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
+     */
+    public QueryOperation<T> modifiers(final BsonDocument modifiers) {
+        this.modifiers = modifiers;
+        return this;
+    }
+
+    /**
+     * Gets a document describing the fields to return for all matching documents.
+     *
+     * @return the project document, which may be null
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
+     */
+    public BsonDocument getProjection() {
+        return projection;
+    }
+
+    /**
+     * Sets a document describing the fields to return for all matching documents.
+     *
+     * @param projection the project document, which may be null.
+     * @return this
+     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
+     */
+    public QueryOperation<T> projection(final BsonDocument projection) {
+        this.projection = projection;
+        return this;
+    }
+
+    /**
+     * Gets the cursor flags.
+     *
+     * @return the cursor flags
+     */
+    public EnumSet<CursorFlag> getCursorFlags() {
+        return cursorFlags;
+    }
+
+    /**
+     * Sets the cursor flags.
+     *
+     * @param cursorFlags the cursor flags
+     * @return this
+     */
+    public QueryOperation<T> cursorFlags(final EnumSet<CursorFlag> cursorFlags) {
+        this.cursorFlags = cursorFlags;
+        return this;
+    }
+
+    /**
+     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
+     *
+     * @param timeUnit the time unit to return the result in
+     * @return the maximum execution time in the given time unit
+     */
+    public long getMaxTime(final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Sets the maximum execution time on the server for this operation.
+     *
+     * @param maxTime  the max time
+     * @param timeUnit the time unit, which may not be null
+     * @return this
+     */
+    public QueryOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
+    }
+
+    /**
+     * Gets the number of documents to skip.  The default is 0.
+     *
+     * @return the number of documents to skip, which may be null
+     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
+     */
+    public int getSkip() {
+        return skip;
+    }
+
+    /**
+     * Sets the number of documents to skip.
+     *
+     * @param skip the number of documents to skip
+     * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
+     */
+    public QueryOperation<T> skip(final int skip) {
+        this.skip = skip;
+        return this;
+    }
+
+    /**
+     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
+     * order.
+     *
+     * @return a document describing the sort criteria
+     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     */
+    public BsonDocument getSort() {
+        return sort;
+    }
+
+    /**
+     * Sets the sort criteria to apply to the query.
+     *
+     * @param sort the sort criteria, which may be null.
+     * @return this
+     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     */
+    public QueryOperation<T> sort(final BsonDocument sort) {
+        this.sort = sort;
+        return this;
     }
 
     @Override
@@ -70,11 +304,11 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
                 QueryResult<T> queryResult = asQueryProtocol(connection.getServerDescription(), binding.getReadPreference())
                                              .execute(connection);
                 if (isExhaustCursor()) {
-                    return new MongoQueryCursor<T>(namespace, queryResult, find.getLimit(), find.getBatchSize(),
-                                                   resultDecoder, connection);
+                    return new MongoQueryCursor<T>(namespace, queryResult, limit, batchSize,
+                                                   decoder, connection);
                 } else {
-                    return new MongoQueryCursor<T>(namespace, queryResult, find.getLimit(), find.getBatchSize(),
-                                                   resultDecoder, source);
+                    return new MongoQueryCursor<T>(namespace, queryResult, limit, batchSize,
+                                                   decoder, source);
                 }
             }
         });
@@ -94,11 +328,13 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
                                       future.init(null, e);
                                   } else {
                                       if (isExhaustCursor()) {
-                                          future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, find.getLimit(),
-                                                                                   find.getBatchSize(), resultDecoder, connection), null);
+                                          future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, limit,
+                                                                                   batchSize, decoder,
+                                                                                   connection), null);
                                       } else {
-                                          future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, find.getLimit(),
-                                                                                   find.getBatchSize(), resultDecoder, source), null);
+                                          future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, limit,
+                                                                                   batchSize, decoder,
+                                                                                   source), null);
                                       }
                                   }
                               }
@@ -109,70 +345,134 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
         });
     }
 
+
+    /**
+     * Gets an operation whose execution explains this operation.
+     *
+     * @param explainVerbosity the explain verbosity
+     * @return a read operation that when executed will explain this operation
+     */
+    public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
+        final QueryOperation<BsonDocument> explainableQueryOperation = createExplainableQueryOperation();
+        return new ReadOperation<BsonDocument>() {
+            @Override
+            public BsonDocument execute(final ReadBinding binding) {
+                return explainableQueryOperation.execute(binding).next();
+            }
+        };
+    }
+
+    /**
+     * Gets an operation whose execution explains this operation.
+     *
+     * @param explainVerbosity the explain verbosity
+     * @return a read operation that when executed will explain this operation
+     */
+    public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
+        final QueryOperation<BsonDocument> explainableQueryOperation = createExplainableQueryOperation();
+        return new AsyncReadOperation<BsonDocument>() {
+            @Override
+            public MongoFuture<BsonDocument> executeAsync(final AsyncReadBinding binding) {
+                final SingleResultFuture<BsonDocument> retVal = new SingleResultFuture<BsonDocument>();
+                explainableQueryOperation.executeAsync(binding).register(new SingleResultCallback<MongoAsyncCursor<BsonDocument>>() {
+                    @Override
+                    public void onResult(final MongoAsyncCursor<BsonDocument> cursor, final MongoException e) {
+                        if (e != null) {
+                            retVal.init(null, e);
+                        } else {
+                            cursor.forEach(new Block<BsonDocument>() {
+                                @Override
+                                public void apply(final BsonDocument explainDocument) {
+                                    retVal.init(explainDocument, null);
+                                }
+                            });
+                        }
+                    }
+                });
+                return retVal;
+            }
+        };
+    }
+
+    private QueryOperation<BsonDocument> createExplainableQueryOperation() {
+        final QueryOperation<BsonDocument> explainQueryOperation = new QueryOperation<BsonDocument>(namespace, new BsonDocumentCodec());
+
+        BsonDocument explainModifiers = new BsonDocument();
+        if (modifiers != null) {
+            explainModifiers.putAll(modifiers);
+        }
+        explainModifiers.append("$explain", BsonBoolean.TRUE);
+
+        return explainQueryOperation.criteria(criteria)
+                             .projection(projection)
+                             .sort(sort)
+                             .skip(skip)
+                             .limit(limit)
+                             .modifiers(explainModifiers);
+
+    }
+
     private QueryProtocol<T> asQueryProtocol(final ServerDescription serverDescription, final ReadPreference readPreference) {
-        return new QueryProtocol<T>(namespace, find.getFlags(readPreference), find.getSkip(),
-                                    find.getNumberToReturn(), asDocument(serverDescription, readPreference),
-                                    find.getFields(), resultDecoder);
+        return new QueryProtocol<T>(namespace, getFlags(readPreference), skip,
+                                    getNumberToReturn(), asDocument(serverDescription, readPreference),
+                                    projection, decoder);
+    }
+
+    /**
+     * Gets the limit of the number of documents in the first OP_REPLY response to the query. A value of zero tells the server to use the
+     * default size. A negative value tells the server to return no more than that number and immediately close the cursor.  Otherwise, the
+     * server will return no more than that number and return a cursorId to allow the rest of the documents to be fetched, if it turns out
+     * there are more documents.
+     * <p/>
+     * The value returned by this method is based on the limit and the batch size, both of which can be positive, negative, or zero.
+     *
+     * @return the value for numberToReturn in the OP_QUERY wire protocol message.
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    private int getNumberToReturn() {
+        if (limit < 0) {
+            return limit;
+        } else if (limit == 0) {
+            return batchSize;
+        } else if (batchSize == 0) {
+            return limit;
+        } else if (limit < Math.abs(batchSize)) {
+            return limit;
+        } else {
+            return batchSize;
+        }
+    }
+
+    private EnumSet<CursorFlag> getFlags(final ReadPreference readPreference) {
+        if (readPreference.isSlaveOk()) {
+            EnumSet<CursorFlag> retVal = EnumSet.copyOf(cursorFlags);
+            retVal.add(CursorFlag.SLAVE_OK);
+            return retVal;
+        } else {
+            return cursorFlags;
+        }
     }
 
     private BsonDocument asDocument(final ServerDescription serverDescription, final ReadPreference readPreference) {
-        BsonDocument document = new BsonDocument();
-        document.put("$query", find.getFilter() == null ? new BsonDocument() : find.getFilter());
-        if (find.getOrder() != null) {
-            document.put("$orderby", find.getOrder());
+        BsonDocument document = modifiers != null ? modifiers : new BsonDocument();
+        document.put("$query", criteria != null ? criteria : new BsonDocument());
+        if (sort != null) {
+            document.put("$orderby", sort);
         }
-        if (find.isSnapshotMode()) {
-            document.put("$snapshot", BsonBoolean.TRUE);
+
+        if (maxTimeMS > 0) {
+            document.put("$maxTimeMS", new BsonInt64(maxTimeMS));
         }
-        if (find.isExplain()) {
-            document.put("$explain", BsonBoolean.TRUE);
-        }
+
         if (serverDescription.getType() == SHARD_ROUTER && !readPreference.equals(primary())) {
             document.put("$readPreference", readPreference.toDocument());
-        }
-
-        if (find.getHint() != null) {
-            document.put("$hint", find.getHint());
-        }
-
-        if (find.getOptions().getComment() != null) {
-            document.put("$comment", new BsonString(find.getOptions().getComment()));
-        }
-
-        if (find.getOptions().getMax() != null) {
-            document.put("$max", find.getOptions().getMax());
-        }
-
-        if (find.getOptions().getMin() != null) {
-            document.put("$min", find.getOptions().getMin());
-        }
-
-        if (find.getOptions().isReturnKey()) {
-            document.put("$returnKey", BsonBoolean.TRUE);
-        }
-
-        if (find.getOptions().isShowDiskLoc()) {
-            document.put("$showDiskLoc", BsonBoolean.TRUE);
-        }
-
-        if (find.getOptions().isSnapshot()) {
-            document.put("$snapshot", BsonBoolean.TRUE);
-        }
-
-        long maxTime = find.getOptions().getMaxTime(MILLISECONDS);
-        if (maxTime != 0) {
-            document.put("$maxTimeMS", new BsonInt64(maxTime));
-        }
-
-        int maxScan = find.getOptions().getMaxScan();
-        if (maxScan > 0) {
-            document.put("$maxScan", new BsonInt32(maxScan));
         }
 
         return document;
     }
 
+
     private boolean isExhaustCursor() {
-        return find.getFlags(primary()).contains(QueryFlag.Exhaust);
+        return cursorFlags.contains(CursorFlag.EXHAUST);
     }
 }

@@ -40,7 +40,7 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Operati
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
-        helper.insertDocuments(pete, sam, pete2)
+        helper.insertDocuments(new DocumentCodec(), pete, sam, pete2)
     }
 
 

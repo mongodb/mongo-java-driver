@@ -39,7 +39,7 @@ public final class BsonArray extends BsonValue implements List<BsonValue>, Seria
      *
      * @param values the list of values, none of whose members may be null.
      */
-    public BsonArray(final List<BsonValue> values) {
+    public BsonArray(final List<? extends BsonValue> values) {
         this.values = new ArrayList<BsonValue>(values);
     }
 

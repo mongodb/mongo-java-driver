@@ -20,29 +20,54 @@ import org.bson.BsonDocument;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-public class UpdateRequest extends BaseUpdateRequest {
+/**
+ * An update that uses update operators to perform partial updates of a document.
+ *
+ * @since 3.0
+ */
+public final class UpdateRequest extends BaseUpdateRequest {
     private final BsonDocument updateOperations;
-    private boolean isMulti = false;
+    private boolean isMulti = true;
 
-    public UpdateRequest(final BsonDocument filter, final BsonDocument updateOperations) {
-        super(filter);
+    /**
+     * Construct a new instance.
+     *
+     * @param criteria the non-null query criteria
+     * @param updateOperations the non-null update operations
+     */
+    public UpdateRequest(final BsonDocument criteria, final BsonDocument updateOperations) {
+        super(criteria);
         this.updateOperations = notNull("updateOperations", updateOperations);
     }
 
+    /**
+     * Gets the update operations.
+     *
+     * @return the update operations
+     */
     public BsonDocument getUpdateOperations() {
         return updateOperations;
     }
 
+    /**
+     * Gets whether this update will update all documents matching the criteria.  The default is true.
+     *
+     * @return whether this update will update all documents matching the criteria
+     */
     public boolean isMulti() {
         return isMulti;
     }
 
-    //CHECKSTYLE:OFF
+    /**
+     * Sets whether this will update all documents matching the query criteria.
+     *
+     * @param isMulti whether this will update all documents matching the query criteria
+     * @return this
+     */
     public UpdateRequest multi(final boolean isMulti) {
         this.isMulti = isMulti;
         return this;
     }
-    //CHECKSTYLE:ON
 
     @Override
     public UpdateRequest upsert(final boolean isUpsert) {

@@ -41,9 +41,9 @@ class CommandResultDocumentCodec<T> extends BsonDocumentCodec {
         this.fieldContainingPayload = fieldContainingPayload;
     }
 
-    static <P> Codec<BsonDocument> create(final Decoder<P> payloadDecoder, final String fieldContainingPayload) {
-        CodecRegistry registry = new RootCodecRegistry(Arrays.<CodecProvider>asList(new CommandResultCodecProvider<P>(payloadDecoder,
-                                                                                                                  fieldContainingPayload)));
+    static <P> Codec<BsonDocument> create(final Decoder<P> decoder, final String fieldContainingPayload) {
+        CodecRegistry registry = new RootCodecRegistry(Arrays.<CodecProvider>asList(
+            new CommandResultCodecProvider<P>(decoder, fieldContainingPayload)));
         return registry.get(BsonDocument.class);
     }
 

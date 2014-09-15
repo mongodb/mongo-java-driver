@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.CursorFlag;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
@@ -40,6 +41,11 @@ import static com.mongodb.operation.QueryOperationHelper.queryResultToListAsync;
 public class GetCollectionNamesOperation implements AsyncReadOperation<List<String>>, ReadOperation<List<String>> {
     private final String databaseName;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param databaseName the name of the database for the operation.
+     */
     public GetCollectionNamesOperation(final String databaseName) {
         this.databaseName = notNull("databaseName", databaseName);
     }
@@ -72,7 +78,7 @@ public class GetCollectionNamesOperation implements AsyncReadOperation<List<Stri
     }
 
     private QueryProtocol<BsonDocument> getProtocol() {
-        return new QueryProtocol<BsonDocument>(getNamespace(), EnumSet.noneOf(QueryFlag.class), 0, 0, new BsonDocument(), null,
+        return new QueryProtocol<BsonDocument>(getNamespace(), EnumSet.noneOf(CursorFlag.class), 0, 0, new BsonDocument(), null,
                                                new BsonDocumentCodec());
     }
 

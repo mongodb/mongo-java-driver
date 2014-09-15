@@ -23,14 +23,11 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
-import com.mongodb.operation.CreateCollectionOptions;
 import com.mongodb.operation.CreateUserOperation;
 import com.mongodb.operation.DropUserOperation;
-import com.mongodb.operation.Find;
 import com.mongodb.operation.QueryOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.UpdateUserOperation;
-import com.mongodb.operation.User;
 import com.mongodb.operation.UserExistsOperation;
 import com.mongodb.operation.WriteOperation;
 import org.bson.BsonDocument;
@@ -233,9 +230,9 @@ public class DB {
      * @return the names of collections in this database
      * @throws MongoException
      */
-    public Set<String> getCollectionNames() {
+        public Set<String> getCollectionNames() {
         MongoCursor<BsonDocument> cursor = execute(new QueryOperation<BsonDocument>(new MongoNamespace(name, "system.namespaces"),
-                                                                                    new Find(), new BsonDocumentCodec()), primary());
+                                                                                    new BsonDocumentCodec()), primary());
         HashSet<String> collections = new HashSet<String>();
         int lengthOfDatabaseName = getName().length();
         while (cursor.hasNext()) {
@@ -270,11 +267,11 @@ public class DB {
      * @throws MongoException
      */
     public DBCollection createCollection(final String collectionName, final DBObject options) {
-        execute(new CreateCollectionOperation(getName(), toCreateCollectionOptions(collectionName, options)));
+        execute(getCreateCollectionOperation(collectionName, options));
         return getCollection(collectionName);
     }
 
-    private CreateCollectionOptions toCreateCollectionOptions(final String collectionName, final DBObject options) {
+    private CreateCollectionOperation getCreateCollectionOperation(final String collectionName, final DBObject options) {
         if (options.get("size") != null && !(options.get("size") instanceof Number)) {
             throw new IllegalArgumentException("'size' should be Number");
         }
@@ -292,6 +289,7 @@ public class DB {
         boolean autoIndex = true;
         long sizeInBytes = 0;
         long maxDocuments = 0;
+        Boolean usePowerOfTwoSizes = null;
         if (options.get("capped") != null) {
             capped = (Boolean) options.get("capped");
         }
@@ -304,7 +302,16 @@ public class DB {
         if (options.get("max") != null) {
             maxDocuments = ((Number) options.get("max")).longValue();
         }
-        return new CreateCollectionOptions(collectionName, capped, sizeInBytes, autoIndex, maxDocuments);
+        if (options.get("usePowerOfTwoSizes") != null) {
+            usePowerOfTwoSizes = (Boolean) options.get("usePowerOfTwoSizes");
+        }
+
+        return new CreateCollectionOperation(getName(), collectionName)
+                   .capped(capped)
+                   .sizeInBytes(sizeInBytes)
+                   .autoIndex(autoIndex)
+                   .maxDocuments(maxDocuments)
+                   .setUsePowerOf2Sizes(usePowerOfTwoSizes);
     }
 
     /**
@@ -492,13 +499,13 @@ public class DB {
      */
     @Deprecated
     public WriteResult addUser(final String userName, final char[] password, final boolean readOnly) {
-        User user = new User(createMongoCRCredential(userName, getName(), password), readOnly);
+        MongoCredential credential = createMongoCRCredential(userName, getName(), password);
         if (execute(new UserExistsOperation(getName(), userName), primary())) {
-            execute(new UpdateUserOperation(user));
+            execute(new UpdateUserOperation(credential, readOnly));
             return new WriteResult(1, false, null);
 
         } else {
-            execute(new CreateUserOperation(user));
+            execute(new CreateUserOperation(credential, readOnly));
             return new WriteResult(1, true, null);
         }
     }

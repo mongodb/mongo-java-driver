@@ -18,6 +18,7 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 
@@ -29,7 +30,7 @@ class GetDatabaseNamesOperationSpecification extends OperationFunctionalSpecific
 
     def 'should return a list of database names'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('_id', 1))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
         def operation = new GetDatabaseNamesOperation()
 
         when:
@@ -42,7 +43,7 @@ class GetDatabaseNamesOperationSpecification extends OperationFunctionalSpecific
     @Category(Async)
     def 'should return a list of database names asynchronously'() {
         given:
-        getCollectionHelper().insertDocuments(new Document('_id', 1))
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
         def operation = new GetDatabaseNamesOperation()
 
         when:
