@@ -30,9 +30,9 @@ import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.operation.CountOperation;
+import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
-import com.mongodb.operation.QueryOperation;
 import com.mongodb.operation.RemoveOperation;
 import com.mongodb.operation.RemoveRequest;
 import com.mongodb.operation.ReplaceOperation;
@@ -149,10 +149,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoFuture<T> one() {
-            QueryOperation<T> queryOperation = createQueryOperation().batchSize(-1);
+            FindOperation<T> findOperation = createQueryOperation().batchSize(-1);
 
             final SingleResultFuture<T> retVal = new SingleResultFuture<T>();
-            execute(queryOperation, readPreference)
+            execute(findOperation, readPreference)
             .register(new
                       SingleResultCallback<MongoAsyncCursor<T>>() {
                           @Override
@@ -350,8 +350,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                       .multi(false))));
         }
 
-        private QueryOperation<T> createQueryOperation() {
-            return new QueryOperation<T>(getNamespace(), getCodec())
+        private FindOperation<T> createQueryOperation() {
+            return new FindOperation<T>(getNamespace(), getCodec())
                        .criteria(asBson(findModel.getOptions().getCriteria()))
                        .batchSize(findModel.getOptions().getBatchSize())
                        .skip(findModel.getOptions().getSkip())

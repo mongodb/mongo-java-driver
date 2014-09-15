@@ -47,7 +47,7 @@ import com.mongodb.operation.FindAndReplaceOperation
 import com.mongodb.operation.FindAndUpdateOperation
 import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.MixedBulkWriteOperation
-import com.mongodb.operation.QueryOperation
+import com.mongodb.operation.FindOperation
 import com.mongodb.operation.RemoveOperation
 import com.mongodb.operation.ReplaceOperation
 import com.mongodb.operation.UpdateOperation
@@ -292,7 +292,7 @@ class NewMongoCollectionSpecification extends Specification {
         def result = collection.find(options).into([])
 
         then:
-        def operation = executor.getReadOperation() as QueryOperation
+        def operation = executor.getReadOperation() as FindOperation
         operation.with {
             criteria == new BsonDocument('cold', BsonBoolean.TRUE)
             batchSize == 4
@@ -319,7 +319,7 @@ class NewMongoCollectionSpecification extends Specification {
         collection.find(options).into([])
 
         then: 'cursor flags contains all flags'
-        def operation2 = executor.getReadOperation() as QueryOperation
+        def operation2 = executor.getReadOperation() as FindOperation
         operation2.cursorFlags == EnumSet.of(CursorFlag.AWAIT_DATA, CursorFlag.EXHAUST, CursorFlag.NO_CURSOR_TIMEOUT, CursorFlag.PARTIAL,
                                              CursorFlag.TAILABLE, CursorFlag.OPLOG_REPLAY);
     }
@@ -501,10 +501,10 @@ class NewMongoCollectionSpecification extends Specification {
                                                     new BsonDocument('$out', new BsonString('outCollection'))]
         aggregateToCollectionOperation.getMaxTime(TimeUnit.SECONDS) == 1
 
-        def queryOperation = executor.getReadOperation() as QueryOperation
-        queryOperation != null
-        queryOperation.namespace == new MongoNamespace(namespace.getDatabaseName(), 'outCollection')
-        queryOperation.decoder instanceof DocumentCodec
+        def findOperation = executor.getReadOperation() as FindOperation
+        findOperation != null
+        findOperation.namespace == new MongoNamespace(namespace.getDatabaseName(), 'outCollection')
+        findOperation.decoder instanceof DocumentCodec
 
         executor.readPreference == secondary()
         result == [document]

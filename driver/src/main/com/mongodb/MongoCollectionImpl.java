@@ -36,7 +36,7 @@ import com.mongodb.operation.InsertRequest;
 import com.mongodb.operation.MapReduce;
 import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
-import com.mongodb.operation.QueryOperation;
+import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.RemoveOperation;
 import com.mongodb.operation.RemoveRequest;
@@ -259,8 +259,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return cursor.hasNext() ? cursor.next() : null;
         }
 
-        private QueryOperation<T> createQueryOperation() {
-            return new QueryOperation<T>(getNamespace(), getCodec())
+        private FindOperation<T> createQueryOperation() {
+            return new FindOperation<T>(getNamespace(), getCodec())
                    .criteria(asBson(findModelOp.getOptions().getCriteria()))
                    .batchSize(findModelOp.getOptions().getBatchSize())
                    .skip(findModelOp.getOptions().getSkip())

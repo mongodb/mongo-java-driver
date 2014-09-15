@@ -43,7 +43,7 @@ import static com.mongodb.operation.OperationHelper.IdentityTransformer;
 import static com.mongodb.operation.OperationHelper.executeProtocol;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
-final class QueryOperationHelper {
+final class FindOperationHelper {
     static <T> List<T> queryResultToList(final MongoNamespace namespace, final QueryProtocol<T> queryProtocol, final Decoder<T> decoder,
                                          final ReadBinding binding) {
         return queryResultToList(namespace, queryProtocol, decoder, binding, new Function<T, T>() {
@@ -169,6 +169,6 @@ final class QueryOperationHelper {
         }
     }
 
-    private QueryOperationHelper() {
+    private FindOperationHelper() {
     }
 }

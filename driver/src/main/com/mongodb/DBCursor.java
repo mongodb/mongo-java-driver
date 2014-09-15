@@ -19,7 +19,7 @@ package com.mongodb;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.client.model.FindModel;
 import com.mongodb.client.model.FindOptions;
-import com.mongodb.operation.QueryOperation;
+import com.mongodb.operation.FindOperation;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -449,8 +449,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return collection.execute(getQueryOperation(explainModel, collection.getObjectCodec()), getReadPreference()).next();
     }
 
-    private QueryOperation<DBObject> getQueryOperation(final FindModel findModel, final Decoder<DBObject> decoder) {
-        return new QueryOperation<DBObject>(collection.getNamespace(), decoder)
+    private FindOperation<DBObject> getQueryOperation(final FindModel findModel, final Decoder<DBObject> decoder) {
+        return new FindOperation<DBObject>(collection.getNamespace(), decoder)
                    .criteria((BsonDocument) findModel.getOptions().getCriteria())
                    .batchSize(findModel.getOptions().getBatchSize())
                    .cursorFlags(cursorFlags)

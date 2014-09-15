@@ -41,7 +41,7 @@ import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import com.mongodb.operation.OrderBy;
 import com.mongodb.operation.ParallelScanOperation;
-import com.mongodb.operation.QueryOperation;
+import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.RemoveOperation;
 import com.mongodb.operation.RemoveRequest;
@@ -684,13 +684,13 @@ public class DBCollection {
      */
     DBObject findOne(final DBObject query, final DBObject projection, final DBObject sort,
                      final ReadPreference readPreference, final long maxTime, final TimeUnit maxTimeUnit) {
-        QueryOperation<DBObject> queryOperation = new QueryOperation<DBObject>(getNamespace(), objectCodec)
+        FindOperation<DBObject> findOperation = new FindOperation<DBObject>(getNamespace(), objectCodec)
                                                       .criteria(wrapAllowNull(query))
                                                       .projection(wrapAllowNull(projection))
                                                       .sort(wrapAllowNull(sort))
                                                       .batchSize(-1)
                                                       .maxTime(maxTime, maxTimeUnit);
-        MongoCursor<DBObject> cursor = execute(queryOperation, readPreference);
+        MongoCursor<DBObject> cursor = execute(findOperation, readPreference);
         return cursor.hasNext() ? cursor.next() : null;
     }
 

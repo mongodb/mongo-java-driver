@@ -30,7 +30,7 @@ import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.Index;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
-import com.mongodb.operation.QueryOperation;
+import com.mongodb.operation.FindOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
@@ -116,7 +116,7 @@ public final class CollectionHelper<T> {
     }
 
     public <D> List<D> find(final Codec<D> codec) {
-        MongoCursor<D> cursor = new QueryOperation<D>(namespace, codec).execute(getBinding());
+        MongoCursor<D> cursor = new FindOperation<D>(namespace, codec).execute(getBinding());
         List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
             results.add(cursor.next());
@@ -129,7 +129,7 @@ public final class CollectionHelper<T> {
     }
 
     public <D> List<D> find(final BsonDocument filter, final Decoder<D> decoder) {
-        MongoCursor<D> cursor = new QueryOperation<D>(namespace, decoder).criteria(filter).execute(getBinding());
+        MongoCursor<D> cursor = new FindOperation<D>(namespace, decoder).criteria(filter).execute(getBinding());
         List<D> results = new ArrayList<D>();
         while (cursor.hasNext()) {
             results.add(cursor.next());

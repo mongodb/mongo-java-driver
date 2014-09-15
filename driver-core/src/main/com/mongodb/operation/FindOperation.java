@@ -56,8 +56,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @param <T> the operations result type.
  * @since 3.0
  */
-public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoTailableCursor<T>> {
-
+public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoTailableCursor<T>> {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private BsonDocument criteria;
@@ -76,7 +75,7 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @param namespace the database and collection namespace for the operation.
      * @param decoder the decoder for the result documents.
      */
-    public QueryOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
+    public FindOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
     }
@@ -116,7 +115,7 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public QueryOperation<T> criteria(final BsonDocument criteria) {
+    public FindOperation<T> criteria(final BsonDocument criteria) {
         this.criteria = criteria;
         return this;
     }
@@ -138,7 +137,7 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
-    public QueryOperation<T> batchSize(final int batchSize) {
+    public FindOperation<T> batchSize(final int batchSize) {
         this.batchSize = batchSize;
         return this;
     }
@@ -160,7 +159,7 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
      */
-    public QueryOperation<T> limit(final int limit) {
+    public FindOperation<T> limit(final int limit) {
         this.limit = limit;
         return this;
     }
@@ -182,7 +181,7 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @return this
      * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
      */
-    public QueryOperation<T> modifiers(final BsonDocument modifiers) {
+    public FindOperation<T> modifiers(final BsonDocument modifiers) {
         this.modifiers = modifiers;
         return this;
     }
@@ -204,7 +203,7 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
      */
-    public QueryOperation<T> projection(final BsonDocument projection) {
+    public FindOperation<T> projection(final BsonDocument projection) {
         this.projection = projection;
         return this;
     }
@@ -224,7 +223,7 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @param cursorFlags the cursor flags
      * @return this
      */
-    public QueryOperation<T> cursorFlags(final EnumSet<CursorFlag> cursorFlags) {
+    public FindOperation<T> cursorFlags(final EnumSet<CursorFlag> cursorFlags) {
         this.cursorFlags = cursorFlags;
         return this;
     }
@@ -247,7 +246,7 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @param timeUnit the time unit, which may not be null
      * @return this
      */
-    public QueryOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public FindOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
@@ -270,7 +269,7 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
      */
-    public QueryOperation<T> skip(final int skip) {
+    public FindOperation<T> skip(final int skip) {
         this.skip = skip;
         return this;
     }
@@ -293,7 +292,7 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public QueryOperation<T> sort(final BsonDocument sort) {
+    public FindOperation<T> sort(final BsonDocument sort) {
         this.sort = sort;
         return this;
     }
@@ -355,11 +354,11 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @return a read operation that when executed will explain this operation
      */
     public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        final QueryOperation<BsonDocument> explainableQueryOperation = createExplainableQueryOperation();
+        final FindOperation<BsonDocument> explainableFindOperation = createExplainableQueryOperation();
         return new ReadOperation<BsonDocument>() {
             @Override
             public BsonDocument execute(final ReadBinding binding) {
-                return explainableQueryOperation.execute(binding).next();
+                return explainableFindOperation.execute(binding).next();
             }
         };
     }
@@ -371,12 +370,12 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
      * @return a read operation that when executed will explain this operation
      */
     public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
-        final QueryOperation<BsonDocument> explainableQueryOperation = createExplainableQueryOperation();
+        final FindOperation<BsonDocument> explainableFindOperation = createExplainableQueryOperation();
         return new AsyncReadOperation<BsonDocument>() {
             @Override
             public MongoFuture<BsonDocument> executeAsync(final AsyncReadBinding binding) {
                 final SingleResultFuture<BsonDocument> retVal = new SingleResultFuture<BsonDocument>();
-                explainableQueryOperation.executeAsync(binding).register(new SingleResultCallback<MongoAsyncCursor<BsonDocument>>() {
+                explainableFindOperation.executeAsync(binding).register(new SingleResultCallback<MongoAsyncCursor<BsonDocument>>() {
                     @Override
                     public void onResult(final MongoAsyncCursor<BsonDocument> cursor, final MongoException e) {
                         if (e != null) {
@@ -396,8 +395,8 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
         };
     }
 
-    private QueryOperation<BsonDocument> createExplainableQueryOperation() {
-        final QueryOperation<BsonDocument> explainQueryOperation = new QueryOperation<BsonDocument>(namespace, new BsonDocumentCodec());
+    private FindOperation<BsonDocument> createExplainableQueryOperation() {
+        FindOperation<BsonDocument> explainFindOperation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec());
 
         BsonDocument explainModifiers = new BsonDocument();
         if (modifiers != null) {
@@ -405,7 +404,7 @@ public class QueryOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
         }
         explainModifiers.append("$explain", BsonBoolean.TRUE);
 
-        return explainQueryOperation.criteria(criteria)
+        return explainFindOperation.criteria(criteria)
                              .projection(projection)
                              .sort(sort)
                              .skip(skip)

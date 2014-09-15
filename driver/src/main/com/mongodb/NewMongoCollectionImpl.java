@@ -59,11 +59,11 @@ import com.mongodb.operation.DistinctOperation;
 import com.mongodb.operation.FindAndRemoveOperation;
 import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
+import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import com.mongodb.operation.OperationExecutor;
-import com.mongodb.operation.QueryOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.RemoveOperation;
 import com.mongodb.operation.RemoveRequest;
@@ -219,7 +219,7 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
                                                        .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
                                                        .allowDiskUse(model.getOptions().getAllowDiskUse());
             operationExecutor.execute(operation);
-            return new OperationIterable<C>(new QueryOperation<C>(new MongoNamespace(namespace.getDatabaseName(),
+            return new OperationIterable<C>(new FindOperation<C>(new MongoNamespace(namespace.getDatabaseName(),
                                                                                      outCollection.asString().getValue()),
                                                                   options.getCodecRegistry().get(clazz)),
                                             options.getReadPreference());
@@ -472,8 +472,8 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
     }
 
     private Document explainFind(final FindModel findModel, final ExplainVerbosity verbosity) {
-        QueryOperation<BsonDocument> queryOperation = createQueryOperation(findModel, new BsonDocumentCodec());
-        BsonDocument bsonDocument = operationExecutor.execute(queryOperation.asExplainableOperation(verbosity),
+        FindOperation<BsonDocument> findOperation = createQueryOperation(findModel, new BsonDocumentCodec());
+        BsonDocument bsonDocument = operationExecutor.execute(findOperation.asExplainableOperation(verbosity),
                                                               options.getReadPreference());
         return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
     }
@@ -501,8 +501,8 @@ class NewMongoCollectionImpl<T> implements NewMongoCollection<T> {
         }
     }
 
-    private <C> QueryOperation<C> createQueryOperation(final FindModel model, final Decoder<C> decoder) {
-        return new QueryOperation<C>(namespace, decoder)
+    private <C> FindOperation<C> createQueryOperation(final FindModel model, final Decoder<C> decoder) {
+        return new FindOperation<C>(namespace, decoder)
                .criteria(asBson(model.getOptions().getCriteria()))
                .batchSize(model.getOptions().getBatchSize())
                .cursorFlags(getCursorFlags(model))
