@@ -90,7 +90,6 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
         return this;
     }
 
-
     /**
      * Gets the function that creates a "key object" for use as the grouping key.
      *
@@ -231,7 +230,7 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
         if (getKey() != null) {
             document.put("key", getKey());
         } else if (getKeyFunction() != null) {
-            document.put("keyf", getKeyFunction());
+            document.put("$keyf", getKeyFunction());
         }
 
         document.put("initial", getInitial());
