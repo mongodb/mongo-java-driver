@@ -1313,11 +1313,11 @@ public class DBCollection {
     public List<Cursor> parallelScan(final ParallelScanOptions options) {
         List<Cursor> cursors = new ArrayList<Cursor>();
 
-        List<MongoCursor<DBObject>> mongoCursors = execute(new ParallelScanOperation<DBObject>(getNamespace(), options.toNew(),
-                                                                                               objectCodec),
-                                                           options.getReadPreference() != null
-                                                           ? options.getReadPreference() : getReadPreference()
-                                                          );
+        ParallelScanOperation<DBObject> operation = new ParallelScanOperation<DBObject>(getNamespace(),
+                                                                                        options.getNumCursors(),
+                                                                                        objectCodec).batchSize(options.getBatchSize());
+        List<MongoCursor<DBObject>> mongoCursors = execute(operation, options.getReadPreference() != null ? options.getReadPreference()
+                                                                                                          : getReadPreference());
 
         for (MongoCursor<DBObject> mongoCursor : mongoCursors) {
             cursors.add(new MongoCursorAdapter(mongoCursor));

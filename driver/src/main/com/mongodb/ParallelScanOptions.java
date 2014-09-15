@@ -41,10 +41,6 @@ public final class ParallelScanOptions {
         return new Builder();
     }
 
-    com.mongodb.operation.ParallelScanOptions toNew() {
-        return com.mongodb.operation.ParallelScanOptions.builder().numCursors(numCursors).batchSize(batchSize).build();
-    }
-
     /**
      * A builder for the options
      */

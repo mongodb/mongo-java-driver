@@ -38,6 +38,7 @@ import org.bson.codecs.Decoder;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
@@ -51,25 +52,61 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * <p> Note: As of MongoDB 2.6, this operation will work against a mongod, but not a mongos. </p>
  *
  * @param <T> the operations result type.
+ * @mongodb.driver.manual manual/reference/command/parallelCollectionScan/ parallelCollectionScan
  * @mongodb.server.release 2.6
  * @since 3.0
  */
 public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAsyncCursor<T>>>, ReadOperation<List<MongoCursor<T>>> {
     private final MongoNamespace namespace;
-    private final ParallelScanOptions options;
+    private final int numCursors;
+    private int batchSize = 0;
     private final Decoder<T> decoder;
 
     /**
      * Construct a new instance.
      *
      * @param namespace the database and collection namespace for the operation.
+     * @param numCursors The maximum number of cursors to return. Must be between 1 and 10000, inclusive.
      * @param decoder the decoder for the result documents.
-     * @param options   the options to apply.
+
      */
-    public ParallelScanOperation(final MongoNamespace namespace, final ParallelScanOptions options, final Decoder<T> decoder) {
+    public ParallelScanOperation(final MongoNamespace namespace, final int numCursors, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
-        this.options = notNull("options", options);
+        isTrue("numCursors >= 1", numCursors >= 1);
+        this.numCursors = numCursors;
         this.decoder = notNull("decoder", decoder);
+    }
+
+    /**
+     * Gets the number of cursors requested.
+     *
+     * @return number of cursors requested.
+     */
+    public int getNumCursors() {
+        return numCursors;
+    }
+
+    /**
+     * Gets the batch size to use for each cursor.  The default value is 0, which tells the server to use its own default batch size.
+     *
+     * @return batch size
+     * @mongodb.driver.manual manual/core/cursors/#cursor-batches BatchSize
+     */
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    /**
+     * The batch size to use for each cursor.
+     *
+     * @param batchSize the batch size, which must be greater than or equal to  0
+     * @return this
+     * @mongodb.driver.manual manual/core/cursors/#cursor-batches BatchSize
+     */
+    public ParallelScanOperation<T> batchSize(final int batchSize) {
+        isTrue("batchSize >= 0", batchSize >= 0);
+        this.batchSize = batchSize;
+        return this;
     }
 
     @Override
@@ -85,7 +122,6 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
             }
         });
     }
-
 
     @Override
     public MongoFuture<List<MongoAsyncCursor<T>>> executeAsync(final AsyncReadBinding binding) {
@@ -109,7 +145,7 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
                 for (BsonValue cursorValue : getCursorDocuments(result)) {
                     cursors.add(new MongoQueryCursor<T>(namespace, createQueryResult(getCursorDocument(cursorValue.asDocument()),
                                                                                      source.getServerDescription().getAddress()),
-                                                        0, options.getBatchSize(), decoder, source));
+                                                        0, getBatchSize(), decoder, source));
                 }
                 return cursors;
             }
@@ -124,7 +160,7 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
                 for (BsonValue cursorValue : getCursorDocuments(result)) {
                     cursors.add(new MongoAsyncQueryCursor<T>(namespace, createQueryResult(getCursorDocument(cursorValue.asDocument()),
                                                                                           source.getServerDescription().getAddress()),
-                                                             0, options.getBatchSize(), decoder, source
+                                                             0, getBatchSize(), decoder, source
                     ));
                 }
                 return cursors;
@@ -149,7 +185,6 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
 
     private BsonDocument asCommandDocument() {
         return new BsonDocument("parallelCollectionScan", new BsonString(namespace.getCollectionName()))
-               .append("numCursors", new BsonInt32(options.getNumCursors()));
+               .append("numCursors", new BsonInt32(getNumCursors()));
     }
 }
-
