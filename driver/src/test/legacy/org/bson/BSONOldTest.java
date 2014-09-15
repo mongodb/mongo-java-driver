@@ -19,6 +19,8 @@ package org.bson;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.types.CodeWScope;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
@@ -27,17 +29,30 @@ import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Vector;
 
 import static com.mongodb.util.Util.hexMD5;
+import static java.util.Arrays.asList;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThat;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class BSONOldTest {
+
+    @Before
+    public void setUp() {
+        BSON.clearAllHooks();        
+    }
+
+    @After
+    public void tearDown() {
+        BSON.clearAllHooks();
+    }
 
     private void test(final BSONObject o, final int size, final String hash) throws IOException {
         BSONEncoder e = new BasicBSONEncoder();
@@ -58,7 +73,6 @@ public class BSONOldTest {
         e.putObject((BSONObject) cb.get());
         assertEquals(size, buf2.size());
         assertEquals(hash, hexMD5(buf2.toByteArray()));
-
     }
 
     @Test
@@ -128,97 +142,162 @@ public class BSONOldTest {
         return data;
     }
 
-    @Test
-    public void testCustomEncoders()
-        throws IOException {
-        // If clearEncodingHooks isn't working the first test will fail.
-        Transformer transformer = new TestDateTransformer();
-        BSON.addEncodingHook(TestDate.class, transformer);
-        BSON.clearEncodingHooks();
-        TestDate testDate = new TestDate(2009, 1, 23, 10, 53, 42);
-        BSONObject document = new BasicBSONObject("date", testDate);
+    @Test(expected = IllegalArgumentException.class)
+    public void shouldClearCustomEncoders() throws IOException {
+        // given
+        BSON.addEncodingHook(TestDate.class, new TestDateTransformer());
         BSONEncoder encoder = new BasicBSONEncoder();
-        BSONDecoder decoder = new BasicBSONDecoder();
-        BSONCallback callback = new BasicBSONCallback();
-        OutputBuffer outputBuffer = new BasicOutputBuffer();
-        encoder.set(outputBuffer);
-        boolean encodeFailed = false;
-        try {
-            encoder.putObject(document);
-        } catch (IllegalArgumentException ieE) {
-            encodeFailed = true;
-        }
-        assertTrue("Expected encoding to fail but it didn't.", encodeFailed);
-        // Reset the outputBuffer
-        outputBuffer = new BasicOutputBuffer();
-        encoder = new BasicBSONEncoder();
-        encoder.set(outputBuffer);
-        assertTrue("Transforming a TestDate should yield a JDK Date", transformer.transform(testDate) instanceof java.util.Date);
-
-        BSON.addEncodingHook(TestDate.class, transformer);
-        encoder.putObject(document);
-        encoder.done();
-
-        decoder.decode(new ByteArrayInputStream(outputBuffer.toByteArray()), callback);
-        Object result = callback.get();
-        assertTrue("Expected to retrieve a BSONObject but got '" + result.getClass() + "' instead.", result instanceof BSONObject);
-        BSONObject bson = (BSONObject) result;
-        assertNotNull(bson.get("date"));
-        assertTrue(bson.get("date") instanceof java.util.Date);
-
-        // Check that the hooks registered
-        assertNotNull(BSON.getEncodingHooks(TestDate.class));
-        Vector expect = new Vector(1);
-        expect.add(transformer);
-        assertEquals(BSON.getEncodingHooks(TestDate.class), expect);
-        assertTrue(BSON.getEncodingHooks(TestDate.class).contains(transformer));
-        BSON.removeEncodingHook(TestDate.class, transformer);
-        assertFalse(BSON.getEncodingHooks(TestDate.class).contains(transformer));
+        encoder.set(new BasicOutputBuffer());
+        
+        // when
+        BSON.clearEncodingHooks();
+        encoder.putObject(new BasicBSONObject("date", new TestDate(2009, 1, 23, 10, 53, 42)));
     }
 
     @Test
-    public void testCustomDecoders()
-        throws IOException {
-        // If clearDecodingHooks isn't working this whole test will fail.
-        Transformer tf = new TestDateTransformer();
-        BSON.addDecodingHook(Date.class, tf);
+    public void shouldTransformTestDateToUtilDateWithTestDateTransformer() throws IOException {
+        // given
+        Transformer transformer = new TestDateTransformer();
+
+        // when
+        Object transformedDate = transformer.transform(new TestDate(2009, 1, 23, 10, 53, 42));
+        
+        // then
+        assertThat(transformedDate, is(instanceOf(java.util.Date.class)));
+    }
+
+    @Test
+    public void shouldUseCustomEncodersWhenDecodingObjectOfRegisteredClass() throws IOException {
+        // given
+        StubTransformer stubTransformer = new StubTransformer();
+        BSON.addEncodingHook(TestDate.class, stubTransformer);
+        BSONEncoder encoder = new BasicBSONEncoder();
+        encoder.set(new BasicOutputBuffer());
+        
+        BSONObject document = new BasicBSONObject("date", new TestDate(2009, 1, 23, 10, 53, 42));
+        
+        // when
+        encoder.putObject(document);
+        encoder.done();
+        
+        // then
+        assertThat(stubTransformer.transformCalled, is(true));
+    }
+
+    @Test
+    public void shouldReturnRegisteredCustomEncoders() throws IOException {
+        // when
+        Transformer transformer = new TestDateTransformer();
+        BSON.addEncodingHook(TestDate.class, transformer);
+
+        // then
+        assertThat(BSON.hasEncodeHooks(), is(true));
+
+        List<Transformer> encodingHooks = BSON.getEncodingHooks(TestDate.class);
+        assertThat(encodingHooks, is(notNullValue()));
+        assertThat(encodingHooks, is(asList(transformer)));
+    }
+
+    @Test
+    public void shouldRemoveSpecificRegisteredCustomEncoders() throws IOException {
+        Transformer transformer = new TestDateTransformer();
+        BSON.addEncodingHook(TestDate.class, transformer);
+
+        // when
+        BSON.removeEncodingHook(TestDate.class, transformer);
+        
+        // then
+        assertThat(BSON.getEncodingHooks(TestDate.class), not(contains(transformer)));
+    }
+
+    @Test
+    public void shouldClearCustomDecoders() throws IOException {
+        // given
+        BSON.addDecodingHook(Date.class, new TestDateTransformer());
+        byte[] encodedDocument = encodeDocumentToByteArray(new BasicBSONObject("date", new Date()));
+        BSONCallback bsonCallback = new BasicBSONCallback();
+
+        // when
         BSON.clearDecodingHooks();
-        TestDate td = new TestDate(2009, 01, 23, 10, 53, 42);
+        new BasicBSONDecoder().decode(new ByteArrayInputStream(encodedDocument), bsonCallback);
+
+        // then
+        BSONObject decodedDocument = (BSONObject) bsonCallback.get();
+        assertThat(decodedDocument.get("date"), is(instanceOf(java.util.Date.class)));
+    }
+
+    @Test
+    public void shouldUseCustomDecodersWhenDecodingObjectOfRegisteredClass() throws IOException {
+        // given
         @SuppressWarnings("deprecation")
-        Date dt = new Date(2009, 01, 23, 10, 53, 42);
-        BSONObject o = new BasicBSONObject("date", dt);
-        BSONDecoder d = new BasicBSONDecoder();
-        BSONEncoder e = new BasicBSONEncoder();
-        BSONCallback cb = new BasicBSONCallback();
-        OutputBuffer buf = new BasicOutputBuffer();
-        e.set(buf);
-        e.putObject(o);
-        e.done();
+        byte[] encodedDocument = encodeDocumentToByteArray(new BasicBSONObject("date", new Date(2009, 01, 23, 10, 53, 42)));
+        BSONCallback bsonCallback = new BasicBSONCallback();
 
-        d.decode(new ByteArrayInputStream(buf.toByteArray()), cb);
-        Object result = cb.get();
-        assertTrue("Expected to retrieve a BSONObject but got '" + result.getClass() + "' instead.", result instanceof BSONObject);
-        BSONObject bson = (BSONObject) result;
-        assertNotNull(bson.get("date"));
-        assertTrue(bson.get("date") instanceof java.util.Date);
+        // when
+        BSON.addDecodingHook(Date.class, new TestDateTransformer());
+        new BasicBSONDecoder().decode(new ByteArrayInputStream(encodedDocument), bsonCallback);
 
-        BSON.addDecodingHook(Date.class, tf);
+        // then
+        BSONObject decodedDocument = (BSONObject) bsonCallback.get();
+        assertThat(decodedDocument.get("date"), is(instanceOf(TestDate.class)));
+        assertThat((TestDate) decodedDocument.get("date"), is(new TestDate(2009, 01, 23, 10, 53, 42)));
+    }
 
-        d.decode(new ByteArrayInputStream(buf.toByteArray()), cb);
-        bson = (BSONObject) cb.get();
-        assertNotNull(bson.get("date"));
-        assertTrue(bson.get("date") instanceof TestDate);
-        assertEquals(bson.get("date"), td);
+    @Test
+    public void shouldReturnRegisteredCustomDecoders() throws IOException {
+        // when
+        Transformer transformer = new TestDateTransformer();
+        BSON.addDecodingHook(Date.class, transformer);
 
-        // Check that the hooks registered
-        assertNotNull(BSON.getDecodingHooks(Date.class));
-        Vector expect = new Vector(1);
-        expect.add(tf);
-        assertEquals(BSON.getDecodingHooks(Date.class), expect);
-        assertTrue(BSON.getDecodingHooks(Date.class).contains(tf));
-        BSON.removeDecodingHook(Date.class, tf);
-        assertFalse(BSON.getDecodingHooks(Date.class).contains(tf));
+        // then
+        assertThat(BSON.hasDecodeHooks(), is(true));
+        
+        List<Transformer> decodingHooks = BSON.getDecodingHooks(Date.class);
+        assertThat(decodingHooks, is(notNullValue()));
+        assertThat(decodingHooks, is(asList(transformer)));
+    }
 
+    @Test
+    public void shouldRemoveSpecificRegisteredCustomDecoders() throws IOException {
+        // given
+        Transformer transformer = new TestDateTransformer();
+        BSON.addDecodingHook(Date.class, transformer);
+
+        // when
+        BSON.removeDecodingHook(Date.class, transformer);
+
+        // expect
+        assertThat(BSON.getDecodingHooks(Date.class), not(contains(transformer)));
+    }
+
+    @Test
+    public void testEquals() {
+        assertNotEquals(new BasicBSONObject("a", 1111111111111111111L), new BasicBSONObject("a", 1111111111111111112L));
+        assertNotEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.2D));
+        assertNotEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.2F));
+        assertEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.1D));
+        assertEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.1F));
+        assertEquals(new BasicBSONObject("a", 100L), new BasicBSONObject("a", 100L));
+    }
+
+    @Test
+    public void testRandomRoundTrips() {
+        roundTrip(new BasicBSONObject("a", ""));
+        roundTrip(new BasicBSONObject("a", "a"));
+        roundTrip(new BasicBSONObject("a", "b"));
+    }
+
+    private byte[] encodeDocumentToByteArray(final BSONObject document) {
+        OutputBuffer outputBuffer = new BasicOutputBuffer();
+        BSONEncoder encoder = new BasicBSONEncoder();
+        encoder.set(outputBuffer);
+        encoder.putObject(document);
+        encoder.done();
+        return outputBuffer.toByteArray();
+    }
+
+    private void roundTrip(final BSONObject o) {
+        assertEquals(o, BSON.decode(BSON.encode(o)));
     }
 
     private class TestDate {
@@ -273,16 +352,16 @@ public class BSONOldTest {
             return year + "-" + month + "-" + date + " " + hour + ":" + minute + ":" + second;
         }
     }
+    
+    private static class StubTransformer implements Transformer {
+        private boolean transformCalled = false;
 
-    @Test
-    public void testEquals() {
-        assertNotEquals(new BasicBSONObject("a", 1111111111111111111L), new BasicBSONObject("a", 1111111111111111112L));
-        assertNotEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.2D));
-        assertNotEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.2F));
-        assertEquals(new BasicBSONObject("a", 100.1D), new BasicBSONObject("a", 100.1D));
-        assertEquals(new BasicBSONObject("a", 100.1F), new BasicBSONObject("a", 100.1F));
-        assertEquals(new BasicBSONObject("a", 100L), new BasicBSONObject("a", 100L));
-    }
+        @Override
+        public Object transform(final Object o) {
+            transformCalled = true;
+            return true;
+        }
+    } 
 
     private class TestDateTransformer implements Transformer {
         @SuppressWarnings("deprecation")
@@ -297,16 +376,5 @@ public class BSONOldTest {
                 return o;
             }
         }
-    }
-
-    private void roundTrip(final BSONObject o) {
-        assertEquals(o, BSON.decode(BSON.encode(o)));
-    }
-
-    @Test
-    public void testRandomRoundTrips() {
-        roundTrip(new BasicBSONObject("a", ""));
-        roundTrip(new BasicBSONObject("a", "a"));
-        roundTrip(new BasicBSONObject("a", "b"));
     }
 }
