@@ -74,7 +74,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
             throwInvalidState("ReadBSONType", State.TYPE);
         }
 
-        setCurrentBsonType(buffer.readBSONType());
+        setCurrentBsonType(BsonType.findByValue(buffer.readByte()));
 
         if (getCurrentBsonType() == BsonType.END_OF_DOCUMENT) {
             switch (getContext().getContextType()) {
@@ -124,7 +124,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
 
     @Override
     protected boolean doReadBoolean() {
-        return buffer.readBoolean();
+        return buffer.readByte() == 0x1;
     }
 
     @Override

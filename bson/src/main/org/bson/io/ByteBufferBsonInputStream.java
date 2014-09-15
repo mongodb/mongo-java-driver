@@ -16,7 +16,6 @@
 
 package org.bson.io;
 
-import org.bson.BsonType;
 import org.bson.ByteBuf;
 import org.bson.types.ObjectId;
 
@@ -45,11 +44,6 @@ public class ByteBufferBsonInputStream implements BsonInputStream {
     @Override
     public int getPosition() {
         return buffer.position();
-    }
-
-    @Override
-    public boolean readBoolean() {
-        return buffer.get() == 0x1;
     }
 
     @Override
@@ -90,11 +84,6 @@ public class ByteBufferBsonInputStream implements BsonInputStream {
     @Override
     public ObjectId readObjectId() {
         return new ObjectId(readBytes(12));
-    }
-
-    @Override
-    public BsonType readBSONType() {
-        return BsonType.findByValue(buffer.get());
     }
 
     @Override

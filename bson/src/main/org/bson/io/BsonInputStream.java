@@ -16,7 +16,6 @@
 
 package org.bson.io;
 
-import org.bson.BsonType;
 import org.bson.types.ObjectId;
 
 import java.io.Closeable;
@@ -33,13 +32,6 @@ public interface BsonInputStream extends Closeable {
      * @return the current position
      */
     int getPosition();
-
-    /**
-     * Reads a BSON boolean value from the stream.
-     *
-     * @return the boolean value
-     */
-    boolean readBoolean();
 
     /**
      * Reads a single byte from the stream
@@ -90,13 +82,6 @@ public interface BsonInputStream extends Closeable {
      * @return the ObjectId
      */
     ObjectId readObjectId();
-
-    /**
-     * Reads a BSON type from the stream.
-     *
-     * @return the BSON type
-     */
-    BsonType readBSONType();
 
     /**
      * Reads a BSON CString value from the stream.
