@@ -130,6 +130,12 @@ final class NettyByteBuf implements ByteBuf {
     }
 
     @Override
+    public ByteBuf get(final byte[] bytes, final int offset, final int length) {
+        proxied.readBytes(bytes, offset, length);
+        return this;
+    }
+
+    @Override
     public long getLong() {
         return proxied.readLong();
     }

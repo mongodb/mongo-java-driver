@@ -202,6 +202,57 @@ public interface ByteBuf extends Closeable {
     ByteBuf get(byte[] bytes);
 
     /**
+     * Relative bulk <i>get</i> method.
+     *
+     * <p> This method transfers bytes from this buffer into the given
+     * destination array.  If there are fewer bytes remaining in the
+     * buffer than are required to satisfy the request, that is, if
+     * <tt>length</tt>&nbsp;<tt>&gt;</tt>&nbsp;<tt>remaining()</tt>, then no
+     * bytes are transferred and a {@link java.nio.BufferUnderflowException} is
+     * thrown.
+     *
+     * <p> Otherwise, this method copies <tt>length</tt> bytes from this
+     * buffer into the given array, starting at the current position of this
+     * buffer and at the given offset in the array.  The position of this
+     * buffer is then incremented by <tt>length</tt>.
+     *
+     * <p> In other words, an invocation of this method of the form
+     * <tt>src.get(dst,&nbsp;off,&nbsp;len)</tt> has exactly the same effect as
+     * the loop
+     *
+     * <pre>
+     *     for (int i = off; i < off + len; i++)
+     *         dst[i] = src.get(); </pre>
+     *
+     * except that it first checks that there are sufficient bytes in
+     * this buffer and it is potentially much more efficient. </p>
+     *
+     * @param  dst
+     *         The array into which bytes are to be written
+     *
+     * @param  offset
+     *         The offset within the array of the first byte to be
+     *         written; must be non-negative and no larger than
+     *         <tt>dst.length</tt>
+     *
+     * @param  length
+     *         The maximum number of bytes to be written to the given
+     *         array; must be non-negative and no larger than
+     *         <tt>dst.length - offset</tt>
+     *
+     * @return  This buffer
+     *
+     * @throws java.nio.BufferUnderflowException
+     *          If there are fewer than <tt>length</tt> bytes
+     *          remaining in this buffer
+     *
+     * @throws  IndexOutOfBoundsException
+     *          If the preconditions on the <tt>offset</tt> and <tt>length</tt>
+     *          parameters do not hold
+     */
+    ByteBuf get(byte[] bytes, int offset, int length);
+
+    /**
      * <p> Relative <em>get</em> method for reading a long value. </p> <p>Reads the next eight bytes at this buffer's current position,
      * composing them into a long value according to the current byte order, and then increments the position by eight.  </p>
      *

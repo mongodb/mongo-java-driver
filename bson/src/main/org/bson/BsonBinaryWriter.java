@@ -276,7 +276,9 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
             BsonInputStream bsonInputStream = binaryReader.getBuffer();
             int size = bsonInputStream.readInt32();
             buffer.writeInt(size);
-            buffer.write(bsonInputStream.readBytes(size - 4));
+            byte[] bytes = new byte[size - 4];
+            bsonInputStream.readBytes(bytes);
+            buffer.write(bytes);
             binaryReader.setState(AbstractBsonReader.State.TYPE);
 
             if (getContext() == null) {

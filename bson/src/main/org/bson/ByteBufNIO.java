@@ -115,6 +115,12 @@ public class ByteBufNIO implements ByteBuf {
     }
 
     @Override
+    public ByteBuf get(final byte[] bytes, final int offset, final int length) {
+        buf.get(bytes, offset, length);
+        return this;
+    }
+
+    @Override
     public long getLong() {
         return buf.getLong();
     }

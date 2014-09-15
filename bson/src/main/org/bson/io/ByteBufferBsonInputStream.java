@@ -52,11 +52,13 @@ public class ByteBufferBsonInputStream implements BsonInputStream {
     }
 
     @Override
-    public byte[] readBytes(final int size) {
-        // TODO: should we really allocate byte array here?
-        byte[] bytes = new byte[size];
+    public void readBytes(final byte[] bytes) {
         buffer.get(bytes);
-        return bytes;
+    }
+
+    @Override
+    public void readBytes(final byte[] bytes, final int offset, final int length) {
+       buffer.get(bytes, offset, length);
     }
 
     @Override
@@ -77,13 +79,16 @@ public class ByteBufferBsonInputStream implements BsonInputStream {
     @Override
     public String readString() {
         int size = readInt32();
-        byte[] bytes = readBytes(size);
+        byte[] bytes = new byte[size];
+        readBytes(bytes);
         return new String(bytes, 0, size - 1, UTF8_CHARSET);
     }
 
     @Override
     public ObjectId readObjectId() {
-        return new ObjectId(readBytes(12));
+        byte[] bytes = new byte[12];
+        readBytes(bytes);
+        return new ObjectId(bytes);
     }
 
     @Override
@@ -94,7 +99,8 @@ public class ByteBufferBsonInputStream implements BsonInputStream {
         int size = buffer.position() - mark - 1;
         buffer.position(mark);
 
-        byte[] bytes = readBytes(size);
+        byte[] bytes = new byte[size];
+        readBytes(bytes);
         readByte();  // read the trailing null byte
 
         return new String(bytes, UTF8_CHARSET);

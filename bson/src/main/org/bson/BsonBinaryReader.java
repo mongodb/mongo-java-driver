@@ -118,8 +118,9 @@ public class BsonBinaryReader extends AbstractBsonReader {
             buffer.readInt32();
             numBytes -= 4;
         }
-
-        return new BsonBinary(type, buffer.readBytes(numBytes));
+        byte[] bytes = new byte[numBytes];
+        buffer.readBytes(bytes);
+        return new BsonBinary(type, bytes);
     }
 
     @Override

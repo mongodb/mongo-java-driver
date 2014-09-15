@@ -41,12 +41,20 @@ public interface BsonInputStream extends Closeable {
     byte readByte();
 
     /**
-     * Reads the specified number of bytes into a byte array.
+     * Reads the specified number of bytes into the given byte array. This is equivalent to to {@code readBytes(bytes, 0, bytes.length)}.
      *
-     * @param size the number of bytes
-     * @return the byte array
+     * @param bytes the byte array to write into
      */
-    byte[] readBytes(int size);
+    void readBytes(byte[] bytes);
+
+    /**
+     * Reads the specified number of bytes into the given byte array starting at the specified offset.
+     *
+     * @param bytes the byte array to write into
+     * @param offset the offset to start writing
+     * @param length the number of bytes to write
+     */
+    void readBytes(byte[] bytes, int offset, int length);
 
     /**
      * Reads a BSON Int64 value from the stream.
