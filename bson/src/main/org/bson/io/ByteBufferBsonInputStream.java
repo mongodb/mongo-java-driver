@@ -30,6 +30,7 @@ public class ByteBufferBsonInputStream implements BsonInputStream {
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
     private ByteBuf buffer;
+    private int mark = -1;
 
     /**
      * Construct an instance with the given byte buffer.  The stream takes over ownership of the buffer and closes it when this instance
@@ -122,6 +123,24 @@ public class ByteBufferBsonInputStream implements BsonInputStream {
     @Override
     public void skip(final int numBytes) {
         buffer.position(buffer.position() + numBytes);
+    }
+
+    @Override
+    public void mark(final int readLimit) {
+        mark = buffer.position();
+    }
+
+    @Override
+    public void reset() {
+        if (mark == -1) {
+            throw new IllegalStateException("Mark not set");
+        }
+        buffer.position(mark);
+    }
+
+    @Override
+    public boolean hasRemaining() {
+        return !buffer.hasRemaining();
     }
 
     public void close() {

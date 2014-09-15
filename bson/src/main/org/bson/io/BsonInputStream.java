@@ -111,6 +111,25 @@ public interface BsonInputStream extends Closeable {
      */
     void skip(int numBytes);
 
+    /**
+     * Marks the current position in the stream. This method obeys the contract as specified in the same method in {@code InputStream}.
+     *
+     * @param readLimit the maximum limit of bytes that can be read before the mark position becomes invalid
+     */
+    void mark(int readLimit);
+
+    /**
+     * Resets the stream to the current mark. This method obeys the contract as specified in the same method in {@code InputStream}.
+     */
+    void reset();
+
+    /**
+     * Returns true if there are more bytes left in the stream.
+     *
+     * @return true if there are more bytes left in the stream.
+     */
+    boolean hasRemaining();
+
     @Override
     void close();
 }
