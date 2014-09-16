@@ -574,10 +574,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private final class OperationIterable<D> implements MongoIterable<D> {
-        private final ReadOperation<MongoCursor<D>> operation;
+        private final ReadOperation<? extends MongoCursor<D>> operation;
         private final ReadPreference readPreference;
 
-        private OperationIterable(final ReadOperation<MongoCursor<D>> operation, final ReadPreference readPreference) {
+        private OperationIterable(final ReadOperation<? extends MongoCursor<D>> operation, final ReadPreference readPreference) {
             this.operation = operation;
             this.readPreference = readPreference;
         }
@@ -590,6 +590,15 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoCursor<D> iterator() {
             return operationExecutor.execute(operation, readPreference);
+        }
+
+        @Override
+        public D first() {
+            MongoCursor<D> iterator = iterator();
+            if (!iterator.hasNext()) {
+                return null;
+            }
+            return iterator.next();
         }
 
         @Override

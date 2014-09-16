@@ -22,13 +22,48 @@ import com.mongodb.MongoCursor;
 
 import java.util.Collection;
 
+/**
+ *The MongoIterable is the results from an operation, such as a query.
+ *
+ * @param <T> The type that this iterable will decode documents to.
+ * @since 3.0
+ */
 public interface MongoIterable<T> extends Iterable<T> {
-    <U> MongoIterable<U> map(Function<T, U> mapper);
 
     @Override
     MongoCursor<T> iterator();
 
+    /**
+     * Helper to return the first item in the iterator or null.
+     *
+     * @return T the first item or null.
+     */
+    T first();
+
+    /**
+     * Maps this iterable from the source document type to the target document type.
+     *
+     * @param mapper a function that maps from the source to the target document type
+     * @param <U> the target document type
+     * @return an iterable which maps T to U
+     */
+    <U> MongoIterable<U> map(Function<T, U> mapper);
+
+    /**
+     * Iterates over all documents in the view, applying the given block to each.
+     *
+     * <p>Similar to {@code map} but the function is fully encapsulated with no returned result.</p>
+     *
+     * @param block the block to apply to each document of type T.
+     */
     void forEach(Block<? super T> block);
 
+    /**
+     * Iterates over all the documents, adding each to the given target.
+     *
+     * @param target the collection to insert into
+     * @param <A> the collection type
+     * @return the target
+     */
     <A extends Collection<? super T>> A into(A target);
 }

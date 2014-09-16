@@ -43,7 +43,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
         collection.replaceOne(searchCriteria, newDocumentWithoutFieldForA);
 
         // Then
-        Document document = collection.find(new FindOptions().criteria(searchCriteria)).iterator().next();
+        Document document = collection.find(new FindOptions().criteria(searchCriteria)).first();
         assertThat(document, is(newDocumentWithoutFieldForA));
     }
 

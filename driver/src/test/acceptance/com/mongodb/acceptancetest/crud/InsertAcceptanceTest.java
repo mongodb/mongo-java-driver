@@ -35,7 +35,7 @@ public class InsertAcceptanceTest extends DatabaseTestCase {
         // Then
         assertThat(collection.count(), is(1L));
 
-        Document insertedDocument = collection.find(new FindOptions().criteria(new Document("name", "Billy"))).iterator().next();
+        Document insertedDocument = collection.find(new FindOptions().criteria(new Document("name", "Billy"))).first();
         assertThat(insertedDocument.getString("name"), is("Billy"));
     }
 }

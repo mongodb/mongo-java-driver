@@ -137,7 +137,7 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
     @Test(expected = MongoQueryFailureException.class)
     public void shouldThrowQueryFailureException() {
         collection.insertOne(new Document("loc", asList(0.0, 0.0)));
-        collection.find(new FindOptions().criteria(new Document("loc", new Document("$near", asList(0.0, 0.0))))).iterator().next();
+        collection.find(new FindOptions().criteria(new Document("loc", new Document("$near", asList(0.0, 0.0))))).first();
     }
 
     private void initialiseCollectionWithDocuments(final int numberOfDocuments) {

@@ -36,6 +36,15 @@ class MappingIterable<U, V> implements MongoIterable<V> {
     }
 
     @Override
+    public V first() {
+        MongoCursor<V> iterator = iterator();
+        if (!iterator.hasNext()) {
+            return null;
+        }
+        return iterator.next();
+    }
+
+    @Override
     public void forEach(final Block<? super V> block) {
         iterable.forEach(new Block<U>() {
             @Override

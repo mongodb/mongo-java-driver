@@ -19,7 +19,6 @@ package com.mongodb.operation;
 import com.mongodb.Block;
 import com.mongodb.CursorFlag;
 import com.mongodb.ExplainVerbosity;
-import com.mongodb.MongoCursor;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoTailableCursor;
