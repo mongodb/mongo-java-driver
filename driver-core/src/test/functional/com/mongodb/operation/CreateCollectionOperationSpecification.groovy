@@ -52,7 +52,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         assert !collectionNameExists(getCollectionName())
 
         when:
-        makeCreateCollectionOperation(new CreateCollectionOptions(getCollectionName())).executeAsync(getAsyncBinding())
+        makeCreateCollectionOperation(new CreateCollectionOptions(getCollectionName())).executeAsync(getAsyncBinding()).get()
 
         then:
         collectionNameExists(getCollectionName())
