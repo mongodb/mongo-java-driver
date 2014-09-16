@@ -75,6 +75,7 @@ class MongoCollectionFunctionalSpecification extends FunctionalSpecification {
         result
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should explain an aggregate model'() {
         given:
         def model = new AggregateModel([new Document('$match', new Document('job', 'plumber'))],
