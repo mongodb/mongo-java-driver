@@ -38,47 +38,58 @@ public class ByteBufferBsonInputStream implements BsonInputStream {
      * @param buffer the byte buffer
      */
     public ByteBufferBsonInputStream(final ByteBuf buffer) {
+        if (buffer == null) {
+            throw new IllegalArgumentException("buffer can not be null");
+        }
         this.buffer = buffer;
         buffer.order(ByteOrder.LITTLE_ENDIAN);
     }
 
     @Override
     public int getPosition() {
+        ensureOpen();
         return buffer.position();
     }
 
     @Override
     public byte readByte() {
+        ensureOpen();
         return buffer.get();
     }
 
     @Override
     public void readBytes(final byte[] bytes) {
+        ensureOpen();
         buffer.get(bytes);
     }
 
     @Override
     public void readBytes(final byte[] bytes, final int offset, final int length) {
-       buffer.get(bytes, offset, length);
+        ensureOpen();
+        buffer.get(bytes, offset, length);
     }
 
     @Override
     public long readInt64() {
+        ensureOpen();
         return buffer.getLong();
     }
 
     @Override
     public double readDouble() {
+        ensureOpen();
         return buffer.getDouble();
     }
 
     @Override
     public int readInt32() {
+        ensureOpen();
         return buffer.getInt();
     }
 
     @Override
     public String readString() {
+        ensureOpen();
         int size = readInt32();
         byte[] bytes = new byte[size];
         readBytes(bytes);
@@ -87,6 +98,7 @@ public class ByteBufferBsonInputStream implements BsonInputStream {
 
     @Override
     public ObjectId readObjectId() {
+        ensureOpen();
         byte[] bytes = new byte[12];
         readBytes(bytes);
         return new ObjectId(bytes);
@@ -94,6 +106,8 @@ public class ByteBufferBsonInputStream implements BsonInputStream {
 
     @Override
     public String readCString() {
+        ensureOpen();
+
         // TODO: potentially optimize this
         int mark = buffer.position();
         readUntilNullByte();
@@ -117,21 +131,25 @@ public class ByteBufferBsonInputStream implements BsonInputStream {
 
     @Override
     public void skipCString() {
+        ensureOpen();
         readUntilNullByte();
     }
 
     @Override
     public void skip(final int numBytes) {
+        ensureOpen();
         buffer.position(buffer.position() + numBytes);
     }
 
     @Override
     public void mark(final int readLimit) {
+        ensureOpen();
         mark = buffer.position();
     }
 
     @Override
     public void reset() {
+        ensureOpen();
         if (mark == -1) {
             throw new IllegalStateException("Mark not set");
         }
@@ -140,11 +158,18 @@ public class ByteBufferBsonInputStream implements BsonInputStream {
 
     @Override
     public boolean hasRemaining() {
-        return !buffer.hasRemaining();
+        ensureOpen();
+        return buffer.hasRemaining();
     }
 
     public void close() {
         buffer.close();
         buffer = null;
+    }
+
+    private void ensureOpen() {
+        if (buffer == null) {
+            throw new IllegalStateException("Stream is closed");
+        }
     }
 }
