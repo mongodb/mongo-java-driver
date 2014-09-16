@@ -33,6 +33,7 @@ import spock.lang.IgnoreIf
 import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ReadPreference.secondary
 import static java.util.Arrays.asList
@@ -92,7 +93,7 @@ class MongoCollectionFunctionalSpecification extends FunctionalSpecification {
         result.containsKey('stages')
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 7)) })
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 7)) || isSharded() })
     def 'should explain a count model'() {
         when:
         def result = collection.explain(new CountModel(), ExplainVerbosity.ALL_PLANS_EXECUTIONS)

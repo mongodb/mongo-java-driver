@@ -33,6 +33,7 @@ import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.operation.OrderBy.ASC
 import static java.util.Arrays.asList
@@ -224,8 +225,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         notThrown(MongoException)
     }
 
-    @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 6)) })
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 7)) || isSharded() })
     def 'should explain'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -238,7 +238,8 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         result.getNumber('ok').intValue() == 1
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 6)) })
+    @Category(Async)
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 7)) || isSharded() })
     def 'should explain asynchronously'() {
         given:
         def countOperation = new CountOperation(getNamespace())
