@@ -23,9 +23,9 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.codecs.CollectibleCodec;
-import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.SingleResultFuture;
+import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.operation.CountOperation;
@@ -38,7 +38,6 @@ import com.mongodb.operation.RemoveOperation;
 import com.mongodb.operation.RemoveRequest;
 import com.mongodb.operation.ReplaceOperation;
 import com.mongodb.operation.ReplaceRequest;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.operation.UpdateOperation;
 import com.mongodb.operation.UpdateRequest;
 import org.bson.BsonDocument;
@@ -318,8 +317,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                asList(new UpdateRequest(find.getFilter(),
                                                                         new BsonDocumentWrapper<Document>(updateOperations,
                                                                                                           options.getDocumentCodec()))
-                                                      .upsert(upsert).multi(true)),
-                                               new DocumentCodec()));
+                                                      .upsert(upsert).multi(true))
+            ));
         }
 
         @Override
@@ -329,8 +328,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                asList(new UpdateRequest(find.getFilter(),
                                                                         new BsonDocumentWrapper<Document>(updateOperations,
                                                                                                           options.getDocumentCodec()))
-                                                      .upsert(upsert).multi(false)),
-                                               new DocumentCodec()));
+                                                      .upsert(upsert).multi(false))
+            ));
         }
 
         @Override

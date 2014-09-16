@@ -22,9 +22,7 @@ import com.mongodb.protocol.UpdateCommandProtocol;
 import com.mongodb.protocol.UpdateProtocol;
 import com.mongodb.protocol.WriteCommandProtocol;
 import com.mongodb.protocol.WriteProtocol;
-import org.bson.codecs.Encoder;
 import org.mongodb.BulkWriteResult;
-import org.mongodb.Document;
 
 import java.util.List;
 
@@ -37,13 +35,11 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public class UpdateOperation extends BaseWriteOperation {
     private final List<UpdateRequest> updates;
-    private final Encoder<Document> queryEncoder;
 
     public UpdateOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<UpdateRequest> updates, final Encoder<Document> queryEncoder) {
+                           final List<UpdateRequest> updates) {
         super(namespace, ordered, writeConcern);
         this.updates = notNull("update", updates);
-        this.queryEncoder = notNull("queryEncoder", queryEncoder);
     }
 
     @Override
@@ -53,7 +49,7 @@ public class UpdateOperation extends BaseWriteOperation {
 
     @Override
     protected WriteCommandProtocol getCommandProtocol() {
-        return new UpdateCommandProtocol(getNamespace(), isOrdered(), getWriteConcern(), updates, queryEncoder);
+        return new UpdateCommandProtocol(getNamespace(), isOrdered(), getWriteConcern(), updates);
     }
 
     @Override
