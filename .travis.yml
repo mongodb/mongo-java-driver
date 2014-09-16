@@ -13,19 +13,37 @@ notifications:
   flowdock:
     secure: "Ziw1Be2tV0QAYuiYDrepfdNH/oBfNhnXFMji3AdRi6MePVpc6CtOOT/b9Fra\nQgMMrX3AHk/QIDo6QQx9/aVB3FS1fzOPGQkSsEZmiljZU7wZCct1sSSyttf/\nsRG0lyTnmgFNTHyTSDT3JbXAkyF/vJmG/JJJoBUZhmFxzR2fM0Q="
 
-env:
-  - TERM=dumb
-
-services:
-- mongodb
-
-before_script:
-  - "mongo admin --eval 'db.runCommand({setParameter : 1, textSearchEnabled : true})'"
-
 branches:
   only:
   - master
   - 3.0.x
 
-install: ./gradlew -q assemble
-script: ./gradlew check -i -S -Pquicktest=true
+env:
+    - MONGO_REPO="http://repo.mongodb.com/apt/ubuntu"
+    - REPO_TYPE="precise/mongodb-enterprise/2.6 multiverse"
+    - SOURCES_LOC="/etc/apt/sources.list.d/mongodb-enterprise.list"
+    - KEY_SERVER="hkp://keyserver.ubuntu.com:80"
+    - MONGOD_PARAMS="--setParameter=enableTestCommands=1"
+    - MONGOD_OPTS="--dbpath ./data --fork --logpath mongod.log ${MONGOD_PARAMS}"
+    - TERM=dumb
+
+before_install:
+    # MongoDB Enterprise Edition 2.6
+    - sudo apt-key adv --keyserver ${KEY_SERVER} --recv 7F0CEB10
+    - echo "deb ${MONGO_REPO} ${REPO_TYPE}" | sudo tee ${SOURCES_LOC}
+
+    # Update all the repositories
+    - sudo apt-get update -qq
+
+install:
+    # Install MongoDB Enterprise
+    - sudo apt-get install mongodb-enterprise-server
+    - sudo stop mongod
+    - mkdir data
+
+before_script:
+    - mongod ${MONGOD_OPTS}
+
+script:
+  - ./gradlew -q assemble
+  - ./gradlew check -i -S -Pquicktest=true
