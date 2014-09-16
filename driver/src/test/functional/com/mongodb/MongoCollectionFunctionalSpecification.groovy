@@ -49,12 +49,12 @@ class MongoCollectionFunctionalSpecification extends FunctionalSpecification {
     def executor = new OperationExecutor() {
         @Override
         def <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-            return operation.execute(getBinding())
+            operation.execute(getBinding())
         }
 
         @Override
         def <T> T execute(final WriteOperation<T> operation) {
-            return operation.execute(getBinding());
+            operation.execute(getBinding());
         }
     }
     def collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor);

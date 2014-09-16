@@ -292,7 +292,7 @@ project(':driver') {
 
     sourceSets {
         test {
-            groovy.srcDirs = ['src/test/unit']
+            groovy.srcDirs = ['src/test/functional', 'src/test/unit']
             java.srcDirs = ['src/test/functional', 'src/test/acceptance', 'src/test/unit', 'src/test/legacy', 'src/examples']
         }
     }
