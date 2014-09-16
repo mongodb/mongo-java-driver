@@ -17,16 +17,16 @@
 package com.mongodb.protocol.message;
 
 import com.mongodb.operation.BaseUpdateRequest;
-import org.bson.io.OutputBuffer;
+import org.bson.io.BsonOutputStream;
 
 public abstract class BaseUpdateMessage extends RequestMessage {
     public BaseUpdateMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
         super(collectionName, opCode, settings);
     }
 
-    protected void writeBaseUpdate(final OutputBuffer buffer) {
-        buffer.writeInt(0); // reserved
-        buffer.writeCString(getCollectionName());
+    protected void writeBaseUpdate(final BsonOutputStream outputStream) {
+        outputStream.writeInt32(0); // reserved
+        outputStream.writeCString(getCollectionName());
 
         int flags = 0;
         if (getUpdateBase().isUpsert()) {
@@ -35,9 +35,9 @@ public abstract class BaseUpdateMessage extends RequestMessage {
         if (getUpdateBase().isMulti()) {
             flags |= 2;
         }
-        buffer.writeInt(flags);
+        outputStream.writeInt32(flags);
 
-        addDocument(getUpdateBase().getCriteria(), getBsonDocumentCodec(), buffer, new NoOpFieldNameValidator());
+        addDocument(getUpdateBase().getCriteria(), getBsonDocumentCodec(), outputStream, new NoOpFieldNameValidator());
     }
 
     protected abstract BaseUpdateRequest getUpdateBase();

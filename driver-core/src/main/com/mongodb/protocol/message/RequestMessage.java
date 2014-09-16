@@ -24,7 +24,7 @@ import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
-import org.bson.io.OutputBuffer;
+import org.bson.io.BsonOutputStream;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -61,11 +61,11 @@ public abstract class RequestMessage {
         this(null, opCode, settings);
     }
 
-    protected void writeMessagePrologue(final OutputBuffer buffer) {
-        buffer.writeInt(0); // length: will set this later
-        buffer.writeInt(id);
-        buffer.writeInt(0); // response to
-        buffer.writeInt(opCode.getValue());
+    protected void writeMessagePrologue(final BsonOutputStream outputStream) {
+        outputStream.writeInt32(0); // length: will set this later
+        outputStream.writeInt32(id);
+        outputStream.writeInt32(0); // response to
+        outputStream.writeInt32(opCode.getValue());
     }
 
     public static int getCurrentGlobalId() {
@@ -89,36 +89,38 @@ public abstract class RequestMessage {
         return settings;
     }
 
-    public RequestMessage encode(final OutputBuffer buffer) {
-        int messageStartPosition = buffer.getPosition();
-        writeMessagePrologue(buffer);
-        RequestMessage nextMessage = encodeMessageBody(buffer, messageStartPosition);
-        backpatchMessageLength(messageStartPosition, buffer);
+    public RequestMessage encode(final BsonOutputStream outputStream) {
+        int messageStartPosition = outputStream.getPosition();
+        writeMessagePrologue(outputStream);
+        RequestMessage nextMessage = encodeMessageBody(outputStream, messageStartPosition);
+        backpatchMessageLength(messageStartPosition, outputStream);
         return nextMessage;
     }
 
-    protected abstract RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition);
+    protected abstract RequestMessage encodeMessageBody(final BsonOutputStream outputStream, final int messageStartPosition);
 
-    protected <T> void addDocument(final T obj, final Encoder<T> encoder, final OutputBuffer buffer, final FieldNameValidator validator) {
-        addDocument(obj, encoder, EncoderContext.builder().build(), buffer, validator,
+    protected <T> void addDocument(final T obj, final Encoder<T> encoder, final BsonOutputStream outputStream,
+                                   final FieldNameValidator validator) {
+        addDocument(obj, encoder, EncoderContext.builder().build(), outputStream, validator,
                     settings.getMaxDocumentSize() + QUERY_DOCUMENT_HEADROOM);
     }
 
-    protected <T> void addCollectibleDocument(final BsonDocument document, final OutputBuffer buffer, final FieldNameValidator validator) {
-        addDocument(document, getBsonDocumentCodec(), EncoderContext.builder().isEncodingCollectibleDocument(true).build(), buffer,
+    protected <T> void addCollectibleDocument(final BsonDocument document, final BsonOutputStream outputStream,
+                                              final FieldNameValidator validator) {
+        addDocument(document, getBsonDocumentCodec(), EncoderContext.builder().isEncodingCollectibleDocument(true).build(), outputStream,
                     validator, settings.getMaxDocumentSize());
     }
 
-    protected <T> void addCollectibleDocument(final T document, final Encoder<T> encoder, final OutputBuffer buffer,
+    protected <T> void addCollectibleDocument(final T document, final Encoder<T> encoder, final BsonOutputStream outputStream,
                                               final FieldNameValidator validator) {
-        addDocument(document, encoder, EncoderContext.builder().isEncodingCollectibleDocument(true).build(), buffer, validator,
+        addDocument(document, encoder, EncoderContext.builder().isEncodingCollectibleDocument(true).build(), outputStream, validator,
                     settings.getMaxDocumentSize());
     }
 
-    private <T> void addDocument(final T obj, final Encoder<T> encoder, final EncoderContext encoderContext, final OutputBuffer buffer,
-                                 final FieldNameValidator validator, final int maxDocumentSize) {
+    private <T> void addDocument(final T obj, final Encoder<T> encoder, final EncoderContext encoderContext,
+                                 final BsonOutputStream outputStream, final FieldNameValidator validator, final int maxDocumentSize) {
         BsonBinaryWriter writer = new BsonBinaryWriter(new BsonWriterSettings(),
-                                                       new BsonBinaryWriterSettings(maxDocumentSize), buffer, validator);
+                                                       new BsonBinaryWriterSettings(maxDocumentSize), outputStream, validator);
         try {
             encoder.encode(writer, obj, encoderContext);
         } finally {
@@ -126,9 +128,9 @@ public abstract class RequestMessage {
         }
     }
 
-    protected void backpatchMessageLength(final int startPosition, final OutputBuffer buffer) {
-        int messageLength = buffer.getPosition() - startPosition;
-        buffer.backpatchSize(messageLength);
+    protected void backpatchMessageLength(final int startPosition, final BsonOutputStream outputStream) {
+        int messageLength = outputStream.getPosition() - startPosition;
+        outputStream.writeInt32(outputStream.getPosition() - messageLength, messageLength);
     }
 
     protected String getCollectionName() {

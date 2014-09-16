@@ -54,11 +54,13 @@ public class RawBsonDocumentCodec implements Codec<RawBsonDocument> {
 
     @Override
     public RawBsonDocument decode(final BsonReader reader, final DecoderContext decoderContext) {
-        BsonBinaryWriter writer = new BsonBinaryWriter(new BasicOutputBuffer(), true);
+        BasicOutputBuffer buffer = new BasicOutputBuffer();
+        BsonBinaryWriter writer = new BsonBinaryWriter(buffer, true);
         try {
             writer.pipe(reader);
-            BufferExposingByteArrayOutputStream byteArrayOutputStream = new BufferExposingByteArrayOutputStream(writer.getBuffer().size());
-            writer.getBuffer().pipe(byteArrayOutputStream);
+            BufferExposingByteArrayOutputStream byteArrayOutputStream = new BufferExposingByteArrayOutputStream(writer.getBuffer()
+                                                                                                                      .getSize());
+            buffer.pipe(byteArrayOutputStream);
             return new RawBsonDocument(byteArrayOutputStream.getInternalBytes());
         } catch (IOException e) {
             // impossible with a byte array output stream

@@ -20,7 +20,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.operation.InsertRequest;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
-import org.bson.io.OutputBuffer;
+import org.bson.io.BsonOutputStream;
 
 import java.util.List;
 
@@ -54,14 +54,14 @@ public class InsertMessage extends RequestMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
-        writeInsertPrologue(buffer);
+    protected RequestMessage encodeMessageBody(final BsonOutputStream outputStream, final int messageStartPosition) {
+        writeInsertPrologue(outputStream);
         for (int i = 0; i < insertRequestList.size(); i++) {
             BsonDocument document = insertRequestList.get(i).getDocument();
-            int pos = buffer.getPosition();
-            addCollectibleDocument(document, buffer, createValidator());
-            if (buffer.getPosition() - messageStartPosition > getSettings().getMaxMessageSize()) {
-                buffer.truncateToPosition(pos);
+            int pos = outputStream.getPosition();
+            addCollectibleDocument(document, outputStream, createValidator());
+            if (outputStream.getPosition() - messageStartPosition > getSettings().getMaxMessageSize()) {
+                outputStream.truncateToPosition(pos);
                 return new InsertMessage(getCollectionName(), ordered, writeConcern,
                                          insertRequestList.subList(i, insertRequestList.size()), getSettings());
             }
@@ -77,12 +77,12 @@ public class InsertMessage extends RequestMessage {
         }
     }
 
-    private void writeInsertPrologue(final OutputBuffer buffer) {
+    private void writeInsertPrologue(final BsonOutputStream outputStream) {
         int flags = 0;
         if (!ordered) {
             flags |= 1;
         }
-        buffer.writeInt(flags);
-        buffer.writeCString(getCollectionName());
+        outputStream.writeInt32(flags);
+        outputStream.writeCString(getCollectionName());
     }
 }

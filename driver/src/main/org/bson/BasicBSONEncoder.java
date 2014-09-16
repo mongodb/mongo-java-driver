@@ -45,6 +45,7 @@ import static org.bson.BSON.regexFlags;
 public class BasicBSONEncoder implements BSONEncoder {
 
     private BsonBinaryWriter bsonWriter;
+    private OutputBuffer outputBuffer;
 
     @Override
     public byte[] encode(final BSONObject document) {
@@ -66,11 +67,12 @@ public class BasicBSONEncoder implements BSONEncoder {
         if (this.bsonWriter != null) {
             throw new IllegalStateException("Performing another operation at this moment");
         }
+        outputBuffer = buffer;
         this.bsonWriter = new BsonBinaryWriter(buffer, false);
     }
 
     protected OutputBuffer getOutputBuffer() {
-        return bsonWriter.getBuffer();
+        return outputBuffer;
     }
 
     protected BsonBinaryWriter getBsonWriter() {

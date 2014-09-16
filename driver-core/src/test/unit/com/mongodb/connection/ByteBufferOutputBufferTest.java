@@ -32,13 +32,13 @@ public class ByteBufferOutputBufferTest {
     private final Random random = new Random();
 
     @Test
-    public void testBackpatch() throws IOException {
+    public void testWriteAtAbsolutePosition() throws IOException {
         ByteBufferOutputBuffer buf = new ByteBufferOutputBuffer(new SimpleBufferProvider());
         buf.writeInt(0);
         byte[] randomBytes = getRandomBytes(10000);
         buf.write(randomBytes, 0, 10000);
 
-        buf.backpatchSize(randomBytes.length + 4);
+        buf.writeInt32(buf.getPosition() - (randomBytes.length + 4), randomBytes.length + 4);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         buf.pipe(out);
@@ -55,7 +55,7 @@ public class ByteBufferOutputBufferTest {
 
         buf.writeInt(0);
         buf.write(randomBytes, 0, randomBytes.length);
-        buf.backpatchSize(randomBytes.length + 4);
+        buf.writeInt32(buf.getPosition() - (randomBytes.length + 4), randomBytes.length + 4);
         int pos = buf.getPosition();
 
         buf.write(randomBytes, 0, randomBytes.length);
@@ -66,7 +66,7 @@ public class ByteBufferOutputBufferTest {
         byte[] randomBytesTwo = getRandomBytes(1000);
         buf.writeInt(0);
         buf.write(randomBytesTwo, 0, randomBytesTwo.length);
-        buf.backpatchSize(randomBytesTwo.length + 4);
+        buf.writeInt32(buf.getPosition() - (randomBytesTwo.length + 4), randomBytesTwo.length + 4);
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         buf.pipe(out);

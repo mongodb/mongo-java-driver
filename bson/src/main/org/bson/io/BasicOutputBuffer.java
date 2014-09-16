@@ -35,26 +35,32 @@ public class BasicOutputBuffer extends OutputBuffer {
     }
 
     @Override
-    public void write(final byte[] b, final int off, final int len) {
-        ensure(len);
-        System.arraycopy(b, off, buffer, position, len);
-        position += len;
+    public void writeBytes(final byte[] bytes, final int offset, final int length) {
+        ensure(length);
+        System.arraycopy(bytes, offset, buffer, position, length);
+        position += length;
     }
 
     @Override
-    public void write(final int b) {
+    public void writeByte(final int value) {
         ensure(1);
-        buffer[position++] = (byte) (0xFF & b);
+        buffer[position++] = (byte) (0xFF & value);
     }
 
     @Override
-    public void backpatchSize(final int messageSize) {
-        writeInt(getPosition() - messageSize, messageSize);
-    }
+    protected void write(final int absolutePosition, final int value) {
+        if (absolutePosition < 0) {
+            throw new IllegalArgumentException(String.format("position must be >= 0 but was %d", absolutePosition));
+        }
+        if (absolutePosition > position) {
+            throw new IllegalArgumentException(String.format("position must be <= %d but was %d", position, absolutePosition));
+        }
 
-    @Override
-    protected void backpatchSize(final int messageSize, final int additionalOffset) {
-        writeInt(getPosition() - messageSize - additionalOffset, messageSize);
+        if (absolutePosition == position) {
+            ensure(1);
+        }
+
+        buffer[absolutePosition] = (byte) (0xFF & value);
     }
 
     @Override
@@ -66,7 +72,7 @@ public class BasicOutputBuffer extends OutputBuffer {
      * @return size of data so far
      */
     @Override
-    public int size() {
+    public int getSize() {
         return position;
     }
 
@@ -107,12 +113,5 @@ public class BasicOutputBuffer extends OutputBuffer {
 
     private void setPosition(final int position) {
         this.position = position;
-    }
-
-    private void writeInt(final int pos, final int x) {
-        int save = getPosition();
-        setPosition(pos);
-        writeInt(x);
-        setPosition(save);
     }
 }

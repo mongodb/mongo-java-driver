@@ -145,7 +145,8 @@ class BasicBSONEncoderSpecification extends Specification {
         bsonEncoder.putObject(~['i': 0])
 
         then:
-        (1.._) * buffer.write(_)
+        (1.._) * buffer.writeCString(_)
+        (1.._) * buffer.writeInt32(_)
     }
 
     def 'should throw IllegalStateException on setting buffer while encoder in use'() {
@@ -171,10 +172,10 @@ class BasicBSONEncoderSpecification extends Specification {
 
         then:
         1 * buffer.writeCString('_id')
-        1 * buffer.writeInt(1)
+        1 * buffer.writeInt32(1)
 
         then:
         1 * buffer.writeCString('a')
-        1 * buffer.writeInt(2)
+        1 * buffer.writeInt32(2)
     }
 }

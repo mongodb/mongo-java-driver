@@ -22,7 +22,7 @@ import com.mongodb.operation.RemoveRequest;
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
-import org.bson.io.OutputBuffer;
+import org.bson.io.BsonOutputStream;
 
 import java.util.Collections;
 import java.util.List;
@@ -56,7 +56,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
     }
 
     @Override
-    protected BaseWriteCommandMessage writeTheWrites(final OutputBuffer buffer, final int commandStartPosition,
+    protected BaseWriteCommandMessage writeTheWrites(final BsonOutputStream outputStream, final int commandStartPosition,
                                                      final BsonBinaryWriter writer) {
         DeleteCommandMessage nextMessage = null;
         writer.writeStartArray("deletes");
@@ -70,7 +70,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
             writer.writeInt32("limit", removeRequest.isMulti() ? 0 : 1);
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
-            if (exceedsLimits(buffer.getPosition() - commandStartPosition, i + 1)) {
+            if (exceedsLimits(outputStream.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
                 nextMessage = new DeleteCommandMessage(getWriteNamespace(),
                                                        isOrdered(), getWriteConcern(), deletes.subList(i, deletes.size()),

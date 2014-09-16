@@ -19,7 +19,7 @@ package com.mongodb.protocol.message;
 import com.mongodb.CursorFlag;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
-import org.bson.io.OutputBuffer;
+import org.bson.io.BsonOutputStream;
 
 import java.util.EnumSet;
 
@@ -44,13 +44,13 @@ public class CommandMessage extends RequestMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
-        buffer.writeInt(CursorFlag.fromSet(cursorFlags));
-        buffer.writeCString(getCollectionName());
+    protected RequestMessage encodeMessageBody(final BsonOutputStream outputStream, final int messageStartPosition) {
+        outputStream.writeInt32(CursorFlag.fromSet(cursorFlags));
+        outputStream.writeCString(getCollectionName());
 
-        buffer.writeInt(0);
-        buffer.writeInt(-1);
-        addDocument(command, getBsonDocumentCodec(), buffer, validator);
+        outputStream.writeInt32(0);
+        outputStream.writeInt32(-1);
+        addDocument(command, getBsonDocumentCodec(), outputStream, validator);
         return null;
     }
 }

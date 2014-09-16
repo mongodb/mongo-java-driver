@@ -18,7 +18,7 @@ package com.mongodb.protocol.message;
 
 import com.mongodb.ServerCursor;
 import com.mongodb.protocol.KillCursor;
-import org.bson.io.OutputBuffer;
+import org.bson.io.BsonOutputStream;
 
 public class KillCursorsMessage extends RequestMessage {
     private final KillCursor killCursor;
@@ -29,16 +29,16 @@ public class KillCursorsMessage extends RequestMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
-        writeKillCursorsPrologue(killCursor.getServerCursors().size(), buffer);
+    protected RequestMessage encodeMessageBody(final BsonOutputStream outputStream, final int messageStartPosition) {
+        writeKillCursorsPrologue(killCursor.getServerCursors().size(), outputStream);
         for (final ServerCursor cur : killCursor.getServerCursors()) {
-            buffer.writeLong(cur.getId());
+            outputStream.writeInt64(cur.getId());
         }
         return null;
     }
 
-    private void writeKillCursorsPrologue(final int numCursors, final OutputBuffer buffer) {
-        buffer.writeInt(0); // reserved
-        buffer.writeInt(numCursors);
+    private void writeKillCursorsPrologue(final int numCursors, final BsonOutputStream outputStream) {
+        outputStream.writeInt32(0); // reserved
+        outputStream.writeInt32(numCursors);
     }
 }

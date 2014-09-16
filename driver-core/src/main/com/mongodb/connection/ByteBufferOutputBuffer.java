@@ -28,6 +28,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * This class should not be considered as part of the public API, and it may change or be removed at any time.
+ * @since 3.0
  */
 public class ByteBufferOutputBuffer extends OutputBuffer {
 
@@ -39,27 +40,32 @@ public class ByteBufferOutputBuffer extends OutputBuffer {
     private int curBufferIndex = 0;
     private int position = 0;
 
+    /**
+     * Construct an instance that uses the given buffer provider to allocate byte buffers as needs as it grows.
+     *
+     * @param bufferProvider the non-null buffer provider
+     */
     public ByteBufferOutputBuffer(final BufferProvider bufferProvider) {
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
     }
 
     @Override
-    public void write(final byte[] b, final int offset, final int len) {
+    public void writeBytes(final byte[] bytes, final int offset, final int length) {
         int currentOffset = offset;
-        int remainingLen = len;
+        int remainingLen = length;
         while (remainingLen > 0) {
             ByteBuf buf = getCurrentByteBuffer();
             int bytesToPutInCurrentBuffer = Math.min(buf.remaining(), remainingLen);
-            buf.put(b, currentOffset, bytesToPutInCurrentBuffer);
+            buf.put(bytes, currentOffset, bytesToPutInCurrentBuffer);
             remainingLen -= bytesToPutInCurrentBuffer;
             currentOffset += bytesToPutInCurrentBuffer;
         }
-        position += len;
+        position += length;
     }
 
     @Override
-    public void write(final int b) {
-        getCurrentByteBuffer().put((byte) b);
+    public void writeByte(final int value) {
+        getCurrentByteBuffer().put((byte) value);
         position++;
     }
 
@@ -85,19 +91,20 @@ public class ByteBufferOutputBuffer extends OutputBuffer {
         return position;
     }
 
-    /**
-     * Backpatches the size of a document or message by writing the size into the four bytes starting at getPosition() - size.
-     *
-     * @param size the size of the document or message
-     */
     @Override
-    public void backpatchSize(final int size) {
-        backpatchSizeWithOffset(size, 0);
+    public int getSize() {
+        return position;
     }
 
-    @Override
-    protected void backpatchSize(final int size, final int additionalOffset) {
-        backpatchSizeWithOffset(size, additionalOffset);
+    protected void write(final int absolutePosition, final int value) {
+        if (absolutePosition < 0) {
+            throw new IllegalArgumentException(String.format("position must be >= 0 but was %d", absolutePosition));
+        }
+        if (absolutePosition > position) {
+            throw new IllegalArgumentException(String.format("position must be <= %d but was %d", position, absolutePosition));
+        }
+
+        getBufferPositionPair(absolutePosition).put((byte) value);
     }
 
     @Override

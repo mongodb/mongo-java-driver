@@ -69,10 +69,11 @@ public class RawBsonDocument extends BsonDocument {
      * @param codec    the codec to facilitate the transformation
      */
     public <T> RawBsonDocument(final T document, final Codec<T> codec) {
-        BsonBinaryWriter writer = new BsonBinaryWriter(new BasicOutputBuffer(), true);
+        BasicOutputBuffer buffer = new BasicOutputBuffer();
+        BsonBinaryWriter writer = new BsonBinaryWriter(buffer, true);
         try {
             codec.encode(writer, document, EncoderContext.builder().build());
-            this.bytes = writer.getBuffer().toByteArray();
+            this.bytes = buffer.toByteArray();
         } finally {
             writer.close();
         }

@@ -23,7 +23,7 @@ import org.bson.BsonBinaryWriterSettings;
 import org.bson.BsonWriterSettings;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
-import org.bson.io.OutputBuffer;
+import org.bson.io.BsonOutputStream;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.protocol.message.RequestMessage.OpCode.OP_QUERY;
@@ -57,26 +57,26 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         return ordered;
     }
 
-    public BaseWriteCommandMessage encode(final OutputBuffer buffer) {
-        return (BaseWriteCommandMessage) super.encode(buffer);
+    public BaseWriteCommandMessage encode(final BsonOutputStream outputStream) {
+        return (BaseWriteCommandMessage) super.encode(outputStream);
     }
 
     public abstract int getItemCount();
 
     @Override
-    protected BaseWriteCommandMessage encodeMessageBody(final OutputBuffer buffer, final int messageStartPosition) {
+    protected BaseWriteCommandMessage encodeMessageBody(final BsonOutputStream outputStream, final int messageStartPosition) {
         BaseWriteCommandMessage nextMessage = null;
 
-        writeCommandHeader(buffer);
+        writeCommandHeader(outputStream);
 
-        int commandStartPosition = buffer.getPosition();
+        int commandStartPosition = outputStream.getPosition();
         BsonBinaryWriter writer = new BsonBinaryWriter(new BsonWriterSettings(),
                                                        new BsonBinaryWriterSettings(getSettings().getMaxDocumentSize() + HEADROOM),
-                                                       buffer, getFieldNameValidator());
+                                                       outputStream, getFieldNameValidator());
         try {
             writer.writeStartDocument();
             writeCommandPrologue(writer);
-            nextMessage = writeTheWrites(buffer, commandStartPosition, writer);
+            nextMessage = writeTheWrites(outputStream, commandStartPosition, writer);
             writer.writeEndDocument();
         } finally {
             writer.close();
@@ -86,17 +86,17 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
 
     protected abstract FieldNameValidator getFieldNameValidator();
 
-    private void writeCommandHeader(final OutputBuffer buffer) {
-        buffer.writeInt(0);
-        buffer.writeCString(getCollectionName());
+    private void writeCommandHeader(final BsonOutputStream outputStream) {
+        outputStream.writeInt32(0);
+        outputStream.writeCString(getCollectionName());
 
-        buffer.writeInt(0);
-        buffer.writeInt(-1);
+        outputStream.writeInt32(0);
+        outputStream.writeInt32(-1);
     }
 
     protected abstract String getCommandName();
 
-    protected abstract BaseWriteCommandMessage writeTheWrites(final OutputBuffer buffer, final int commandStartPosition,
+    protected abstract BaseWriteCommandMessage writeTheWrites(final BsonOutputStream outputStream, final int commandStartPosition,
                                                               final BsonBinaryWriter writer);
 
     protected boolean exceedsLimits(final int batchLength, final int batchItemCount) {
