@@ -20,8 +20,12 @@ import com.mongodb.client.DatabaseAdministration;
 import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoDatabaseOptions;
+import com.mongodb.client.NewMongoCollection;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
+import com.mongodb.operation.OperationExecutor;
+import com.mongodb.operation.ReadOperation;
+import com.mongodb.operation.WriteOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.mongodb.Document;
@@ -67,6 +71,27 @@ class MongoDatabaseImpl implements MongoDatabase {
                                                     final Class<T> clazz,
                                                     final MongoCollectionOptions options) {
         return new MongoCollectionImpl<T>(collectionName, this, clazz, options.withDefaults(this.options), client);
+    }
+
+    @Override
+    public <T> NewMongoCollection<T> getNewCollection(final String collectionName, final Class<T> clazz,
+                                                      final MongoCollectionOptions options) {
+        return new NewMongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, options.withDefaults(this.options),
+                                             getOperationExecutor());
+    }
+
+    private OperationExecutor getOperationExecutor() {
+        return new OperationExecutor() {
+            @Override
+            public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
+                return client.execute(operation, readPreference);
+            }
+
+            @Override
+            public <T> T execute(final WriteOperation<T> operation) {
+                return client.execute(operation);
+            }
+        };
     }
 
     @Override
