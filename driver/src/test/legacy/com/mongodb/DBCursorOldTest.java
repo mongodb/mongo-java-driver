@@ -18,6 +18,8 @@ package com.mongodb;
 
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -384,10 +386,11 @@ public class DBCursorOldTest extends DatabaseTestCase {
     }
 
     private void insertTestData(final DBCollection dbCollection, final int numberOfDocuments) {
-        for (int i = 0; i < numberOfDocuments - 1; i++) {
-            dbCollection.insert(new BasicDBObject("x", i), WriteConcern.UNACKNOWLEDGED);
+        List<DBObject> documents = new ArrayList<DBObject>();
+        for (int i = 0; i < numberOfDocuments; i++) {
+            documents.add(new BasicDBObject("x", i));
         }
-        dbCollection.insert(new BasicDBObject("x", numberOfDocuments - 1), WriteConcern.ACKNOWLEDGED);
+        dbCollection.insert(documents);
     }
 
     //TODO: why is this commented out?
