@@ -19,6 +19,7 @@ branches:
   - 3.0.x
 
 env:
+  global:
     - MONGO_REPO="http://repo.mongodb.com/apt/ubuntu"
     - REPO_TYPE="precise/mongodb-enterprise/2.6 multiverse"
     - SOURCES_LOC="/etc/apt/sources.list.d/mongodb-enterprise.list"
