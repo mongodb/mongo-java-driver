@@ -718,16 +718,16 @@ public class Mongo {
         return credentialsList;
     }
 
-    WriteBinding getWriteBinding() {
-        return getReadWriteBinding(primary());
+    WriteBinding getWriteBinding(final boolean allowPinning) {
+        return getReadWriteBinding(primary(), allowPinning);
     }
 
-    ReadBinding getReadBinding(final ReadPreference readPreference) {
-        return getReadWriteBinding(readPreference);
+    ReadBinding getReadBinding(final ReadPreference readPreference, final boolean allowPinning) {
+        return getReadWriteBinding(readPreference, allowPinning);
     }
 
-    private ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference) {
-        if (pinnedBinding.get() != null) {
+    private ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final boolean allowPinning) {
+        if (allowPinning && pinnedBinding.get() != null) {
             PinnedBinding binding = pinnedBinding.get().binding;
             binding.setReadPreference(readPreference);
             return binding.retain(); // retain since caller will release
@@ -762,7 +762,16 @@ public class Mongo {
     }
 
     <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-        ReadBinding binding = getReadBinding(readPreference);
+        return execute(operation, readPreference, true);
+    }
+
+
+    <T> T execute(final WriteOperation<T> operation) {
+        return execute(operation, true);
+    }
+
+    <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final boolean allowPinning) {
+        ReadBinding binding = getReadBinding(readPreference, allowPinning);
         try {
             return operation.execute(binding);
         } finally {
@@ -771,8 +780,8 @@ public class Mongo {
     }
 
 
-    <T> T execute(final WriteOperation<T> operation) {
-        WriteBinding binding = getWriteBinding();
+    <T> T execute(final WriteOperation<T> operation, final boolean allowPinning) {
+        WriteBinding binding = getWriteBinding(allowPinning);
         try {
             return operation.execute(binding);
         } finally {

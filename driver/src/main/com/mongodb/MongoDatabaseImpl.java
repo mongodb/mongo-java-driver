@@ -24,8 +24,6 @@ import com.mongodb.client.MongoDatabaseOptions;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.OperationExecutor;
-import com.mongodb.operation.ReadOperation;
-import com.mongodb.operation.WriteOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.mongodb.Document;
@@ -35,14 +33,14 @@ import static com.mongodb.assertions.Assertions.notNull;
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoDatabaseOptions options;
     private final String name;
-    private final MongoClient client;
+    private final OperationExecutor executor;
     private final DatabaseAdministration admin;
 
-    public MongoDatabaseImpl(final String name, final MongoClient client, final MongoDatabaseOptions options) {
+    MongoDatabaseImpl(final String name, final MongoDatabaseOptions options, final OperationExecutor executor) {
         this.name = name;
-        this.client = client;
+        this.executor = executor;
         this.options = options;
-        this.admin = new DatabaseAdministrationImpl(name, client);
+        this.admin = new DatabaseAdministrationImpl(name, executor);
     }
 
     @Override
@@ -67,22 +65,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz, final MongoCollectionOptions options) {
-        return new MongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, options.withDefaults(this.options),
-                                          getOperationExecutor());
-    }
-
-    private OperationExecutor getOperationExecutor() {
-        return new OperationExecutor() {
-            @Override
-            public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-                return client.execute(operation, readPreference);
-            }
-
-            @Override
-            public <T> T execute(final WriteOperation<T> operation) {
-                return client.execute(operation);
-            }
-        };
+        return new MongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, options.withDefaults(this.options), executor);
     }
 
     @Override
@@ -92,15 +75,16 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public Document executeCommand(final Document command) {
-        return client.execute(new CommandWriteOperation<Document>(getName(), wrap(command),
-                                                                  options.getCodecRegistry().get(Document.class)));
+        return executor.execute(new CommandWriteOperation<Document>(getName(), wrap(command),
+                                                                    options.getCodecRegistry().get(Document.class)));
     }
 
     @Override
     public Document executeCommand(final Document command, final ReadPreference readPreference) {
         notNull("readPreference", readPreference);
-        return client.execute(new CommandReadOperation<Document>(getName(), wrap(command), options.getCodecRegistry().get(Document.class)),
-                              readPreference);
+        return executor.execute(new CommandReadOperation<Document>(getName(), wrap(command),
+                                                                   options.getCodecRegistry().get(Document.class)),
+                                readPreference);
     }
 
     @Override

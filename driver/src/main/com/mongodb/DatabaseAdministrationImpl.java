@@ -21,6 +21,7 @@ import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateCollectionOptions;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.GetCollectionNamesOperation;
+import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.RenameCollectionOperation;
 
 import java.util.List;
@@ -30,33 +31,31 @@ import static com.mongodb.ReadPreference.primary;
 /**
  * The administrative commands that can be run against a selected database.  Application developers should not normally need to call these
  * methods.
- *
- * @since 3.0
  */
 class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     private final String databaseName;
-    private final MongoClient client;
+    private final OperationExecutor executor;
 
     /**
      * Constructs a new instance.
      *
      * @param databaseName the name of the database
-     * @param client the MongoClient
+     * @param executor the operation executor
      */
-    public DatabaseAdministrationImpl(final String databaseName, final MongoClient client) {
+    public DatabaseAdministrationImpl(final String databaseName, final OperationExecutor executor) {
         this.databaseName = databaseName;
-        this.client = client;
+        this.executor = executor;
     }
 
     @Override
     public void drop() {
-        client.execute(new DropDatabaseOperation(databaseName));
+        executor.execute(new DropDatabaseOperation(databaseName));
     }
 
     @Override
     public List<String> getCollectionNames() {
-        return client.execute(new GetCollectionNamesOperation(databaseName), primary());
+        return executor.execute(new GetCollectionNamesOperation(databaseName), primary());
     }
 
     @Override
@@ -66,7 +65,7 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public void createCollection(final CreateCollectionOptions options) {
-        client.execute(new CreateCollectionOperation(databaseName, options.getCollectionName())
+        executor.execute(new CreateCollectionOperation(databaseName, options.getCollectionName())
                            .capped(options.isCapped())
                            .sizeInBytes(options.getSizeInBytes())
                            .autoIndex(options.isAutoIndex())
@@ -76,12 +75,12 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public void renameCollection(final String oldCollectionName, final String newCollectionName) {
-        client.execute(new RenameCollectionOperation(databaseName, oldCollectionName, newCollectionName, false));
+        executor.execute(new RenameCollectionOperation(databaseName, oldCollectionName, newCollectionName, false));
     }
 
     @Override
     public void renameCollection(final String oldCollectionName, final String newCollectionName, final boolean dropTarget) {
-        client.execute(new RenameCollectionOperation(databaseName, oldCollectionName, newCollectionName, dropTarget));
+        executor.execute(new RenameCollectionOperation(databaseName, oldCollectionName, newCollectionName, dropTarget));
     }
 
 }

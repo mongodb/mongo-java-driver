@@ -18,6 +18,9 @@ package com.mongodb;
 
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoDatabaseOptions;
+import com.mongodb.operation.OperationExecutor;
+import com.mongodb.operation.ReadOperation;
+import com.mongodb.operation.WriteOperation;
 
 import java.util.List;
 
@@ -268,11 +271,11 @@ public class MongoClient extends Mongo {
      * @return a {@code MongoDatabase} representing the specified database
      */
     public MongoDatabase getDatabase(final String databaseName) {
-        return new MongoDatabaseImpl(databaseName, this, MongoDatabaseOptions.builder()
+        return new MongoDatabaseImpl(databaseName, MongoDatabaseOptions.builder()
                                                                              .writeConcern(getWriteConcern())
                                                                              .readPreference(getReadPreference())
                                                                              .codecRegistry(getMongoClientOptions().getCodecRegistry())
-                                                                             .build());
+                                                                             .build(), createOperationExecutor());
     }
 
     /**
@@ -281,6 +284,20 @@ public class MongoClient extends Mongo {
      * @return a {@code MongoDatabase} representing the specified database
      */
     public MongoDatabase getDatabase(final String databaseName, final MongoDatabaseOptions options) {
-        return new MongoDatabaseImpl(databaseName, this, options);
+        return new MongoDatabaseImpl(databaseName, options, createOperationExecutor());
+    }
+
+    private OperationExecutor createOperationExecutor() {
+        return new OperationExecutor() {
+            @Override
+            public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
+                return MongoClient.this.execute(operation, readPreference, false);
+            }
+
+            @Override
+            public <T> T execute(final WriteOperation<T> operation) {
+                return MongoClient.this.execute(operation, false);
+            }
+        };
     }
 }
