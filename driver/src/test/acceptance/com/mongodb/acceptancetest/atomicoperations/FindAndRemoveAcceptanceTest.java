@@ -163,7 +163,7 @@ public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
 
         // then
         assertThat(collection.count(), is(1L));
-        assertThat(collection.find().iterator().next(), is(sam));
+        assertThat(collection.find().first(), is(sam));
         assertThat(removedDocument, is(pete));
     }
 }

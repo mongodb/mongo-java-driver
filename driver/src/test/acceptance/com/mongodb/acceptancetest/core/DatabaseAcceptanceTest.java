@@ -155,8 +155,8 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         assertThat(database.tools().getCollectionNames().contains(existingCollectionName), is(true));
 
         MongoCollection<Document> replacedCollection = database.getCollection(existingCollectionName);
-        assertThat(replacedCollection.find().iterator().next().get(keyInExistingCollection), is(nullValue()));
-        assertThat(replacedCollection.find().iterator().next().get(keyInOriginalCollection).toString(), is(valueInOriginalCollection));
+        assertThat(replacedCollection.find().first().get(keyInExistingCollection), is(nullValue()));
+        assertThat(replacedCollection.find().first().get(keyInOriginalCollection).toString(), is(valueInOriginalCollection));
     }
 
     @Test

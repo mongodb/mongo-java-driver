@@ -45,7 +45,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         // then
         assertThat(collection.count(), is(1L));
         Document expectedDocument = new Document("_id", 1).append("x", 2);
-        assertThat(collection.find().iterator().next(), is(expectedDocument));
+        assertThat(collection.find().first(), is(expectedDocument));
     }
 
     @Test
@@ -60,7 +60,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         // then
         assertThat(collection.count(), is(1L));
         Document expectedDocument = new Document("_id", 1).append("x", 3);
-        assertThat(collection.find().iterator().next(), is(expectedDocument));
+        assertThat(collection.find().first(), is(expectedDocument));
     }
 
     @Test
