@@ -17,11 +17,11 @@
 package com.mongodb.operation
 
 import category.Async
-import com.mongodb.CommandFailureException
 import com.mongodb.CursorFlag
 import com.mongodb.MongoCredential
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoSecurityException
+import com.mongodb.MongoServerException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.connection.ClusterSettings
 import com.mongodb.connection.Connection
@@ -249,7 +249,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
                             asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
 
         then:
-        thrown(CommandFailureException)
+        thrown(MongoServerException)
 
         cleanup:
         new DropUserOperation(databaseName, credential.userName).execute(getBinding())
@@ -287,7 +287,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
                             asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
 
         then:
-        thrown(CommandFailureException)
+        thrown(MongoServerException)
 
         cleanup:
         new DropUserOperation('admin', roCredential.userName).execute(getBinding())
