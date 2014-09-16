@@ -510,7 +510,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'should throw bulk write exception with a write concern error when wtimeout is exceeded'() {
         given:
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new InsertRequest(new Document('_id', 1))],
+                                             [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))],
                                              false, new WriteConcern(5, 1)
         )
         when:
@@ -526,8 +526,8 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         given:
         getCollectionHelper().insertDocuments(getTestInserts())
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new InsertRequest(new Document('_id', 7)),
-                                              new InsertRequest(new Document('_id', 1))   // duplicate key
+                                             [new InsertRequest(new BsonDocument('_id', new BsonInt32(7))),
+                                              new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))   // duplicate key
                                              ], ordered, new WriteConcern(4, 1))
 
         when:
