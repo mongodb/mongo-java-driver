@@ -22,10 +22,10 @@ import spock.lang.Specification
 
 import java.nio.ByteBuffer
 
-class ByteBufferBsonInputStreamSpecification extends Specification {
+class ByteBufferBsonInputSpecification extends Specification {
     def 'constructor should throw of buffer is null'() {
         when:
-        new ByteBufferBsonInputStream(null)
+        new ByteBufferBsonInput(null)
 
         then:
         thrown(IllegalArgumentException)
@@ -33,7 +33,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'position should start at 0'() {
         when:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(new byte[4])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(new byte[4])))
 
         then:
         stream.position == 0
@@ -41,7 +41,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should read a byte'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([11] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([11] as byte[])))
 
         expect:
         stream.readByte() == 11
@@ -51,7 +51,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
     def 'should read into a byte array'() {
         given:
         def bytes = [11, 12, 13] as byte[]
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(bytes)))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(bytes)))
         def bytesRead = new byte[bytes.length]
         stream.readBytes(bytesRead)
 
@@ -64,7 +64,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
     def 'should read into a byte array at offset until length'() {
         given:
         def bytes = [11, 12, 13] as byte[]
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(bytes)))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(bytes)))
         def bytesRead = new byte[bytes.length + 2]
         stream.readBytes(bytesRead, 1, 3)
 
@@ -75,7 +75,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should read a little endian Int32'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([4, 3, 2, 1] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([4, 3, 2, 1] as byte[])))
 
         expect:
         stream.readInt32() == 16909060
@@ -84,7 +84,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should read a little endian Int64'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([8, 7, 6, 5, 4, 3, 2, 1] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([8, 7, 6, 5, 4, 3, 2, 1] as byte[])))
 
         expect:
         stream.readInt64() == 72623859790382856
@@ -93,7 +93,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should read a double'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([8, 7, 6, 5, 4, 3, 2, 1] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([8, 7, 6, 5, 4, 3, 2, 1] as byte[])))
 
         expect:
         stream.readDouble() == Double.longBitsToDouble(72623859790382856)
@@ -103,7 +103,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
     def 'should read ObjectId'() {
         given:
         def objectIdAsByteArray = [12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1] as byte[]
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(objectIdAsByteArray)))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(objectIdAsByteArray)))
 
         expect:
         stream.readObjectId() == new ObjectId(objectIdAsByteArray)
@@ -112,7 +112,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should read an empty string'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([1, 0, 0, 0, 0] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([1, 0, 0, 0, 0] as byte[])))
 
         expect:
         stream.readString() == ''
@@ -121,7 +121,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should read an ASCII string'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([5, 0, 0, 0, 0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([5, 0, 0, 0, 0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
 
         expect:
         stream.readString() == 'Java'
@@ -130,7 +130,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should read a UTF-8 string'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([4, 0, 0, 0, 0xe0, 0xa4, 0x80, 0] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([4, 0, 0, 0, 0xe0, 0xa4, 0x80, 0] as byte[])))
 
         expect:
         stream.readString() == '\u0900'
@@ -139,7 +139,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should read an empty CString'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([0] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0] as byte[])))
 
         expect:
         stream.readCString() == ''
@@ -148,7 +148,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should read an ASCII CString'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
 
         expect:
         stream.readCString() == 'Java'
@@ -157,7 +157,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should read a UTF-8 CString'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([0xe0, 0xa4, 0x80, 0] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0xe0, 0xa4, 0x80, 0] as byte[])))
 
         expect:
         stream.readCString() == '\u0900'
@@ -166,7 +166,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should read from position'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([4, 3, 2, 1] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([4, 3, 2, 1] as byte[])))
 
         expect:
         stream.readByte() == 4
@@ -177,7 +177,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should skip CString'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
 
         when:
         stream.skipCString()
@@ -188,7 +188,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should skip'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
 
         when:
         stream.skip(5)
@@ -199,7 +199,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'reset should throw when there is no mark'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
 
         when:
         stream.reset()
@@ -210,7 +210,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should reset to the mark'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
 
         when:
         stream.with {
@@ -228,7 +228,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should have remaining when there are more bytes'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
 
         expect:
         stream.hasRemaining()
@@ -236,7 +236,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should not have remaining when there are no more bytes'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([] as byte[])))
 
         expect:
         !stream.hasRemaining()
@@ -244,7 +244,7 @@ class ByteBufferBsonInputStreamSpecification extends Specification {
 
     def 'should close the stream'() {
         given:
-        def stream = new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap([] as byte[])))
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([] as byte[])))
 
         when:
         stream.close()

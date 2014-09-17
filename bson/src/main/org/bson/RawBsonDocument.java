@@ -24,7 +24,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.io.ByteBufferBsonInputStream;
+import org.bson.io.ByteBufferBsonInput;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -261,7 +261,7 @@ public class RawBsonDocument extends BsonDocument {
     }
 
     private BsonBinaryReader createReader() {
-        return new BsonBinaryReader(new ByteBufferBsonInputStream(getByteBuffer()), true);
+        return new BsonBinaryReader(new ByteBufferBsonInput(getByteBuffer()), true);
     }
 
     private BsonDocument toBsonDocument() {

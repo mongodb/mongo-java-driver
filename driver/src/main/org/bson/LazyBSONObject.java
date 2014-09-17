@@ -17,7 +17,7 @@
 package org.bson;
 
 import org.bson.io.BSONByteBuffer;
-import org.bson.io.ByteBufferBsonInputStream;
+import org.bson.io.ByteBufferBsonInput;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
@@ -203,13 +203,13 @@ public class LazyBSONObject implements BSONObject {
     }
 
     private Object readArray(final BsonBinaryReader reader) {
-        int position = reader.getBuffer().getPosition();
+        int position = reader.getBsonInput().getPosition();
         reader.skipValue();
         return callback.createArray(bytes, offset + position);
     }
 
     private Object readDocument(final BsonBinaryReader reader) {
-        int position = reader.getBuffer().getPosition();
+        int position = reader.getBsonInput().getPosition();
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             reader.skipName();
@@ -221,7 +221,7 @@ public class LazyBSONObject implements BSONObject {
 
     BsonBinaryReader getBsonReader() {
         ByteBuffer buffer = getBufferForInternalBytes();
-        return new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(buffer)), true);
+        return new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(buffer)), true);
     }
 
     private ByteBuffer getBufferForInternalBytes() {

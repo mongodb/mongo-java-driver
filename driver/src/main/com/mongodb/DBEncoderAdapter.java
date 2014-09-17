@@ -22,7 +22,7 @@ import org.bson.ByteBufNIO;
 import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.io.ByteBufferBsonInputStream;
+import org.bson.io.ByteBufferBsonInput;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.nio.ByteBuffer.wrap;
@@ -42,7 +42,7 @@ class DBEncoderAdapter implements Encoder<DBObject> {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
         try {
             encoder.writeObject(buffer, document);
-            BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(wrap(buffer.toByteArray()))), true);
+            BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(wrap(buffer.toByteArray()))), true);
             try {
                 writer.pipe(reader);
             } finally {

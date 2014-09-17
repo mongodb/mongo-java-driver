@@ -19,7 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
-import org.bson.io.BsonInputStream;
+import org.bson.io.BsonInput;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -70,7 +70,7 @@ public class NativeAuthenticatorUnitTest {
 
         subject.authenticate();
 
-        List<BsonInputStream> sent = connection.getSent();
+        List<BsonInput> sent = connection.getSent();
         String firstCommand = MessageHelper.decodeCommandAsJson(sent.get(0));
         String expectedFirstCommand = "{ \"getnonce\" : 1 }";
 

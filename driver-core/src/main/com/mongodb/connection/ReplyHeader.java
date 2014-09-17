@@ -17,7 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoInternalException;
-import org.bson.io.BsonInputStream;
+import org.bson.io.BsonInput;
 
 import static java.lang.String.format;
 
@@ -50,7 +50,7 @@ public class ReplyHeader {
      *
      * @param header the {@code InputBuffer} containing the reply from the MongoDB server.
      */
-    public ReplyHeader(final BsonInputStream header) {
+    public ReplyHeader(final BsonInput header) {
         messageLength = header.readInt32();
         requestId = header.readInt32();
         responseTo = header.readInt32();

@@ -19,7 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
-import org.bson.io.BsonInputStream;
+import org.bson.io.BsonInput;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -65,7 +65,7 @@ public class X509AuthenticatorUnitTest {
 
         subject.authenticate();
 
-        List<BsonInputStream> sent = connection.getSent();
+        List<BsonInput> sent = connection.getSent();
         String command = MessageHelper.decodeCommandAsJson(sent.get(0));
         String expectedCommand = "{ \"authenticate\" : 1, "
                 + "\"user\" : \"CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US\", "

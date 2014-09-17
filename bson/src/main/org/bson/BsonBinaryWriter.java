@@ -16,7 +16,7 @@
 
 package org.bson;
 
-import org.bson.io.BsonInputStream;
+import org.bson.io.BsonInput;
 import org.bson.io.BsonOutputStream;
 import org.bson.types.ObjectId;
 
@@ -273,11 +273,11 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
                 buffer.writeByte(BsonType.DOCUMENT.getValue());
                 writeCurrentName();
             }
-            BsonInputStream bsonInputStream = binaryReader.getBuffer();
-            int size = bsonInputStream.readInt32();
+            BsonInput bsonInput = binaryReader.getBsonInput();
+            int size = bsonInput.readInt32();
             buffer.writeInt32(size);
             byte[] bytes = new byte[size - 4];
-            bsonInputStream.readBytes(bytes);
+            bsonInput.readBytes(bytes);
             buffer.writeBytes(bytes);
             binaryReader.setState(AbstractBsonReader.State.TYPE);
 

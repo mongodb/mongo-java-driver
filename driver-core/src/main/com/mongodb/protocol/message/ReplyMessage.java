@@ -22,8 +22,8 @@ import com.mongodb.connection.ResponseBuffers;
 import org.bson.BsonBinaryReader;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
-import org.bson.io.BsonInputStream;
-import org.bson.io.ByteBufferBsonInputStream;
+import org.bson.io.BsonInput;
+import org.bson.io.ByteBufferBsonInput;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,9 +50,9 @@ public class ReplyMessage<T> {
         this(responseBuffers.getReplyHeader(), requestId);
 
         if (replyHeader.getNumberReturned() > 0) {
-            BsonInputStream bsonInputStream = new ByteBufferBsonInputStream(responseBuffers.getBodyByteBuffer());
+            BsonInput bsonInput = new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer());
             while (documents.size() < replyHeader.getNumberReturned()) {
-                BsonBinaryReader reader = new BsonBinaryReader(bsonInputStream, false);
+                BsonBinaryReader reader = new BsonBinaryReader(bsonInput, false);
                 try {
                     documents.add(decoder.decode(reader, DecoderContext.builder().build()));
                 } finally {

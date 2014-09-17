@@ -25,8 +25,8 @@ import org.bson.ByteBufNIO;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.io.BsonInputStream;
-import org.bson.io.ByteBufferBsonInputStream;
+import org.bson.io.BsonInput;
+import org.bson.io.ByteBufferBsonInput;
 import org.bson.types.Binary;
 import org.bson.types.Code;
 import org.bson.types.MaxKey;
@@ -84,8 +84,8 @@ public class DocumentCodecTest {
 
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
-        BsonInputStream bsonInputStream = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInputStream, false), DecoderContext.builder().build());
+        BsonInput bsonInput = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput, false), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -97,8 +97,8 @@ public class DocumentCodecTest {
 
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
-        BsonInputStream bsonInputStream = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInputStream, false), DecoderContext.builder().build());
+        BsonInput bsonInput = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput, false), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -124,8 +124,8 @@ public class DocumentCodecTest {
 
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
-        BsonInputStream bsonInputStream = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInputStream, false), DecoderContext.builder().build());
+        BsonInput bsonInput = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput, false), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -138,8 +138,8 @@ public class DocumentCodecTest {
 
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
-        BsonInputStream bsonInputStream = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInputStream, false), DecoderContext.builder().build());
+        BsonInput bsonInput = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput, false), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -151,8 +151,8 @@ public class DocumentCodecTest {
 
         documentCodec.encode(writer, doc, EncoderContext.builder().build());
 
-        BsonInputStream bsonInputStream = createInputBuffer();
-        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInputStream, false), DecoderContext.builder().build());
+        BsonInput bsonInput = createInputBuffer();
+        Document decodedDocument = documentCodec.decode(new BsonBinaryReader(bsonInput, false), DecoderContext.builder().build());
         assertEquals(doc, decodedDocument);
     }
 
@@ -177,9 +177,9 @@ public class DocumentCodecTest {
     }
 
     // TODO: factor into common base class;
-    private BsonInputStream createInputBuffer() throws IOException {
+    private BsonInput createInputBuffer() throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         buffer.pipe(baos);
-        return new ByteBufferBsonInputStream(new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray())));
+        return new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(baos.toByteArray())));
     }
 }

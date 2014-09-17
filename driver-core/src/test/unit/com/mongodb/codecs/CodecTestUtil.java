@@ -22,7 +22,7 @@ import org.bson.ByteBufNIO;
 import org.bson.codecs.Codec;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
-import org.bson.io.ByteBufferBsonInputStream;
+import org.bson.io.ByteBufferBsonInput;
 import org.mongodb.Document;
 
 import static java.nio.ByteBuffer.wrap;
@@ -43,7 +43,7 @@ public final class CodecTestUtil {
             writer.close();
         }
 
-        BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(wrap(documentAsByteArrayForReader))),
+        BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(wrap(documentAsByteArrayForReader))),
                                                        false);
 
         //have to read off the wrapper document so the reader is in the correct position for the test
@@ -64,7 +64,7 @@ public final class CodecTestUtil {
             writer.close();
         }
 
-        return new BsonBinaryReader(new ByteBufferBsonInputStream(new ByteBufNIO(wrap(documentAsByteArrayForReader))), false);
+        return new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(wrap(documentAsByteArrayForReader))), false);
     }
 
     private CodecTestUtil() { }

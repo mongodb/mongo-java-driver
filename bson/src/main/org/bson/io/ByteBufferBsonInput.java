@@ -23,10 +23,10 @@ import java.nio.ByteOrder;
 import java.nio.charset.Charset;
 
 /**
- * An implementation of {@code BsonInputStream} that is backed by a {@code ByteBuf}.
+ * An implementation of {@code BsonInput} that is backed by a {@code ByteBuf}.
  * @since 3.0
  */
-public class ByteBufferBsonInputStream implements BsonInputStream {
+public class ByteBufferBsonInput implements BsonInput {
     private static final Charset UTF8_CHARSET = Charset.forName("UTF-8");
 
     private ByteBuf buffer;
@@ -37,7 +37,7 @@ public class ByteBufferBsonInputStream implements BsonInputStream {
      * is closed.
      * @param buffer the byte buffer
      */
-    public ByteBufferBsonInputStream(final ByteBuf buffer) {
+    public ByteBufferBsonInput(final ByteBuf buffer) {
         if (buffer == null) {
             throw new IllegalArgumentException("buffer can not be null");
         }
