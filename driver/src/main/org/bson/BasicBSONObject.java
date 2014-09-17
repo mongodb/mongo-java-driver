@@ -44,6 +44,11 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
     public BasicBSONObject() {
     }
 
+    /**
+     * Creates an empty object.
+     *
+     * @param size the initial capacity for the Map storing this document.
+     */
     public BasicBSONObject(final int size) {
         super(size);
     }
@@ -52,7 +57,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
      * Convenience CTOR
      *
      * @param key   key under which to store
-     * @param value value to stor
+     * @param value value to store
      */
     public BasicBSONObject(final String key, final Object value) {
         put(key, value);

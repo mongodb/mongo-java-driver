@@ -37,6 +37,7 @@ public interface BSONDecoder {
      *
      * @param in the input stream in BSON format
      * @return the BSON object for the given bytes
+     * @throws java.io.IOException if there's a problem reading the object from the {@code InputStream}
      */
     BSONObject readObject(InputStream in) throws IOException;
 
@@ -54,8 +55,8 @@ public interface BSONDecoder {
      *
      * @param in the input stream in BSON format
      * @param callback the callback
-     * @return the number of bytes read from the input tream
-     * @throws IOException
+     * @return the number of bytes read from the input stream
+     * @throws java.io.IOException if there's a problem reading from the {@code InputStream}
      */
     int decode(InputStream in, BSONCallback callback) throws IOException;
 }

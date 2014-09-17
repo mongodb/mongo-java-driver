@@ -59,8 +59,8 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
     }
 
     @Override
-    public void gotDBRef(final String name, final String ns, final ObjectId id) {
-        _put(name, new DBRef(db, ns, id));
+    public void gotDBRef(final String name, final String namespace, final ObjectId id) {
+        _put(name, new DBRef(db, namespace, id));
     }
 
     @Override

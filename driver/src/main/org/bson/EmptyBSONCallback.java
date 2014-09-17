@@ -18,6 +18,9 @@ package org.bson;
 
 import org.bson.types.ObjectId;
 
+/**
+ * Convenience implementation of BSONCallback that throws {@code UnsupportedOperationException} for all methods.
+ */
 public class EmptyBSONCallback implements BSONCallback {
 
     @Override
@@ -91,22 +94,22 @@ public class EmptyBSONCallback implements BSONCallback {
     }
 
     @Override
-    public void gotBoolean(final String name, final boolean v) {
+    public void gotBoolean(final String name, final boolean value) {
         throw new UnsupportedOperationException("Operation is not supported");
     }
 
     @Override
-    public void gotDouble(final String name, final double v) {
+    public void gotDouble(final String name, final double value) {
         throw new UnsupportedOperationException("Operation is not supported");
     }
 
     @Override
-    public void gotInt(final String name, final int v) {
+    public void gotInt(final String name, final int value) {
         throw new UnsupportedOperationException("Operation is not supported");
     }
 
     @Override
-    public void gotLong(final String name, final long v) {
+    public void gotLong(final String name, final long value) {
         throw new UnsupportedOperationException("Operation is not supported");
     }
 
@@ -116,12 +119,12 @@ public class EmptyBSONCallback implements BSONCallback {
     }
 
     @Override
-    public void gotString(final String name, final String v) {
+    public void gotString(final String name, final String value) {
         throw new UnsupportedOperationException("Operation is not supported");
     }
 
     @Override
-    public void gotSymbol(final String name, final String v) {
+    public void gotSymbol(final String name, final String value) {
         throw new UnsupportedOperationException("Operation is not supported");
     }
 
@@ -131,7 +134,7 @@ public class EmptyBSONCallback implements BSONCallback {
     }
 
     @Override
-    public void gotTimestamp(final String name, final int time, final int inc) {
+    public void gotTimestamp(final String name, final int time, final int increment) {
         throw new UnsupportedOperationException("Operation is not supported");
     }
 
@@ -141,7 +144,7 @@ public class EmptyBSONCallback implements BSONCallback {
     }
 
     @Override
-    public void gotDBRef(final String name, final String ns, final ObjectId id) {
+    public void gotDBRef(final String name, final String namespace, final ObjectId id) {
         throw new UnsupportedOperationException("Operation is not supported");
     }
 
