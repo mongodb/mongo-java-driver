@@ -21,6 +21,7 @@ import category.Slow
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.operation.InsertRequest
 import com.mongodb.operation.UpdateRequest
+import com.mongodb.operation.WriteRequest
 import com.mongodb.selector.PrimaryServerSelector
 import org.bson.BsonBinary
 import org.bson.BsonDocument
@@ -203,10 +204,12 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         given:
         def protocol = new UpdateCommandProtocol(getNamespace(), true, ACKNOWLEDGED,
                                                  [new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
-                                                                    new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))))
+                                                                    new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))),
+                                                                    WriteRequest.Type.UPDATE)
                                                           .upsert(true),
                                                   new UpdateRequest(new BsonDocument('_id', new BsonInt32(2)),
-                                                                    new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))))
+                                                                    new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2))),
+                                                                    WriteRequest.Type.UPDATE)
                                                           .upsert(true)]
         );
 

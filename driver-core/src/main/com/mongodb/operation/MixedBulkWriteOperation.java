@@ -628,7 +628,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                             filter = replaceRequest.getCriteria();
                         } else {
                             UpdateRequest updateRequest = (UpdateRequest) baseUpdateRequest;
-                            update = updateRequest.getUpdateOperations();
+                            update = updateRequest.getUpdate();
                             filter = updateRequest.getCriteria();
                         }
 

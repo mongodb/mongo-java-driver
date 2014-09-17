@@ -203,7 +203,7 @@ class MongoCollectionSpecification extends Specification {
         !updateRequest.multi
         updateRequest.upsert
         updateRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
-        updateRequest.updateOperations == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
+        updateRequest.update == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
 
         result.modifiedCount == 0
         result.matchedCount == 1
@@ -227,7 +227,7 @@ class MongoCollectionSpecification extends Specification {
         updateRequest.multi
         updateRequest.upsert
         updateRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
-        updateRequest.updateOperations == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
+        updateRequest.update == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
 
         result.modifiedCount == 0
         result.matchedCount == 1
@@ -411,13 +411,13 @@ class MongoCollectionSpecification extends Specification {
         !updateOneRequest.multi
         updateOneRequest.upsert
         updateOneRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
-        updateOneRequest.updateOperations == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
+        updateOneRequest.update == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
 
         def updateManyRequest = operation.writeRequests[2] as com.mongodb.operation.UpdateRequest
         updateManyRequest.multi
         updateManyRequest.upsert
         updateManyRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
-        updateManyRequest.updateOperations == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
+        updateManyRequest.update == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
 
         def replaceRequest = operation.writeRequests[3] as com.mongodb.operation.ReplaceRequest
         !replaceRequest.multi

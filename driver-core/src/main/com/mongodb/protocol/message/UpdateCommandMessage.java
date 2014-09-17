@@ -48,7 +48,7 @@ public class UpdateCommandMessage extends BaseUpdateCommandMessage<UpdateRequest
     }
 
     protected void writeUpdate(final BsonBinaryWriter writer, final UpdateRequest update) {
-        getBsonDocumentCodec().encode(writer, update.getUpdateOperations(), EncoderContext.builder().build());
+        getBsonDocumentCodec().encode(writer, update.getUpdate(), EncoderContext.builder().build());
     }
 
     protected UpdateCommandMessage createNextMessage(final List<UpdateRequest> remainingUpdates) {

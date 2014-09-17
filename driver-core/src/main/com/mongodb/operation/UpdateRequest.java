@@ -21,32 +21,38 @@ import org.bson.BsonDocument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * An update that uses update operators to perform partial updates of a document.
+ * An update to one or more documents.
  *
  * @since 3.0
  */
 public final class UpdateRequest extends BaseUpdateRequest {
-    private final BsonDocument updateOperations;
+    private final BsonDocument update;
+    private final Type updateType;
     private boolean isMulti = true;
 
     /**
      * Construct a new instance.
-     *
-     * @param criteria the non-null query criteria
-     * @param updateOperations the non-null update operations
+     *  @param criteria the non-null query criteria
+     * @param update the non-null update operations
+     * @param updateType the update type, which must be either UPDATE or REPLACE
      */
-    public UpdateRequest(final BsonDocument criteria, final BsonDocument updateOperations) {
+    public UpdateRequest(final BsonDocument criteria, final BsonDocument update, final Type updateType) {
         super(criteria);
-        this.updateOperations = notNull("updateOperations", updateOperations);
+        this.update = notNull("update", update);
+        if (updateType != Type.UPDATE && updateType != Type.REPLACE) {
+            throw new IllegalArgumentException("Update type must be UPDATE or REPLACE");
+        }
+        this.updateType = updateType;
+        this.isMulti = updateType == Type.UPDATE;
     }
 
     /**
-     * Gets the update operations.
+     * Gets the update.
      *
      * @return the update operations
      */
-    public BsonDocument getUpdateOperations() {
-        return updateOperations;
+    public BsonDocument getUpdate() {
+        return update;
     }
 
     /**
@@ -65,6 +71,9 @@ public final class UpdateRequest extends BaseUpdateRequest {
      * @return this
      */
     public UpdateRequest multi(final boolean isMulti) {
+        if (isMulti && updateType == Type.REPLACE) {
+            throw new IllegalArgumentException("Replacements can not be multi");
+        }
         this.isMulti = isMulti;
         return this;
     }
@@ -77,7 +86,7 @@ public final class UpdateRequest extends BaseUpdateRequest {
 
     @Override
     public Type getType() {
-        return Type.UPDATE;
+        return updateType;
     }
 
 }

@@ -46,7 +46,7 @@ public class UpdateMessage extends BaseUpdateMessage {
     @Override
     protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
         writeBaseUpdate(bsonOutput);
-        addDocument(updates.get(0).getUpdateOperations(), getBsonDocumentCodec(), bsonOutput, new UpdateFieldNameValidator());
+        addDocument(updates.get(0).getUpdate(), getBsonDocumentCodec(), bsonOutput, new UpdateFieldNameValidator());
         if (updates.size() == 1) {
             return null;
         } else {

@@ -39,7 +39,8 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                                               new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))
-                                                                      .append('y', new BsonInt32(1)))))
+                                                                      .append('y', new BsonInt32(1)),
+                                                              WriteRequest.Type.UPDATE)))
 
         when:
         op.execute(getBinding())
@@ -52,7 +53,8 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         given:
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
-                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))))
+                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))),
+                                                              WriteRequest.Type.UPDATE)
                                                     .multi(false)))
 
         when:
@@ -73,7 +75,8 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
                                               new Document('x', 1))
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
-                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))))
+                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))),
+                                                              WriteRequest.Type.UPDATE)
                                                     .multi(false)))
         when:
         def result = op.execute(getBinding())
@@ -93,7 +96,8 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
                                               new Document('x', 1))
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('x', new BsonInt32(1)),
-                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))))
+                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))),
+                                                              WriteRequest.Type.UPDATE)
                                                     .multi(true)))
         when:
         def result = op.execute(getBinding())
@@ -110,7 +114,8 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         given:
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
-                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))))
+                                                              new BsonDocument('$set', new BsonDocument('y', new BsonInt32(2))),
+                                                              WriteRequest.Type.UPDATE)
                                                     .upsert(true)))
         when:
         def result = op.execute(getBinding())
@@ -128,7 +133,8 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         given:
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
-                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))))))
+                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))),
+                                                              WriteRequest.Type.UPDATE)))
 
         when:
         def result = op.executeAsync(getAsyncBinding()).get()
@@ -155,7 +161,8 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         def id = new ObjectId()
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
-                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))).
+                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))),
+                                                              WriteRequest.Type.UPDATE).
                                                     upsert(true)))
 
         when:
@@ -174,7 +181,8 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         def id = new ObjectId()
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
                                      asList(new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)),
-                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))).
+                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))),
+                                                              WriteRequest.Type.UPDATE).
                                                     upsert(true)))
 
         when:
@@ -192,7 +200,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         new UpdateOperation(getNamespace(), ordered, ACKNOWLEDGED,
                             [new UpdateRequest(new BsonDocument(),
                                                new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2)))
-                                                       .append('y', new BsonInt32(2)))])
+                                                       .append('y', new BsonInt32(2)), WriteRequest.Type.UPDATE)])
                 .execute(getBinding())
 
         then:

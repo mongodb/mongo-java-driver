@@ -39,6 +39,7 @@ import com.mongodb.operation.ReplaceOperation;
 import com.mongodb.operation.ReplaceRequest;
 import com.mongodb.operation.UpdateOperation;
 import com.mongodb.operation.UpdateRequest;
+import com.mongodb.operation.WriteRequest;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
@@ -320,7 +321,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
                                                asList(new UpdateRequest((BsonDocument) findModel.getOptions().getCriteria(),
                                                                         new BsonDocumentWrapper<Document>(updateOperations,
-                                                                                                          options.getDocumentCodec()))
+                                                                                                          options.getDocumentCodec()),
+                                                                        WriteRequest.Type.UPDATE)
                                                       .upsert(upsert).multi(true))
             ));
         }
@@ -331,7 +333,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
                                                asList(new UpdateRequest((BsonDocument) findModel.getOptions().getCriteria(),
                                                                         new BsonDocumentWrapper<Document>(updateOperations,
-                                                                                                          options.getDocumentCodec()))
+                                                                                                          options.getDocumentCodec()),
+                                                                        WriteRequest.Type.UPDATE)
                                                       .upsert(upsert).multi(false))
             ));
         }

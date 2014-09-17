@@ -26,13 +26,28 @@ class UpdateRequestSpecification extends Specification {
 
     def 'should have correct type'() {
         expect:
-        new UpdateRequest(new BsonDocument(), new BsonDocument()).getType() == WriteRequest.Type.UPDATE
+        new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.UPDATE).getType() == WriteRequest.Type.UPDATE
+        new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.REPLACE).getType() == WriteRequest.Type.REPLACE
 
+    }
+
+    def 'should throw if type is not update or replace'() {
+        when:
+        new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.INSERT)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.DELETE)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should not allow null criteria'() {
         when:
-        new UpdateRequest(null, new BsonDocument())
+        new UpdateRequest(null, new BsonDocument(), WriteRequest.Type.UPDATE)
 
         then:
         thrown(IllegalArgumentException)
@@ -40,7 +55,7 @@ class UpdateRequestSpecification extends Specification {
 
     def 'should not allow null update'() {
         when:
-        new UpdateRequest(new BsonDocument(), null)
+        new UpdateRequest(new BsonDocument(), null, WriteRequest.Type.UPDATE)
 
         then:
         thrown(IllegalArgumentException)
@@ -52,32 +67,42 @@ class UpdateRequestSpecification extends Specification {
         def update = new BsonDocument('$set', new BsonDocument('x', BsonBoolean.TRUE))
 
         when:
-        def updateRequest = new UpdateRequest(criteria, update)
+        def updateRequest = new UpdateRequest(criteria, update, WriteRequest.Type.UPDATE)
 
         then:
         updateRequest.criteria == criteria
-        updateRequest.updateOperations == update
+        updateRequest.update == update
 
     }
 
     def 'multi property should default to true'() {
         expect:
-        new UpdateRequest(new BsonDocument(), new BsonDocument()).multi
+        new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.UPDATE).multi
+        !new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.REPLACE).multi
     }
 
     def 'should set multi property'() {
         expect:
-        !new UpdateRequest(new BsonDocument(), new BsonDocument()).multi(false).isMulti()
+        !new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.UPDATE).multi(false).isMulti()
+        !new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.REPLACE).multi(false).isMulti()
+    }
+
+    def 'should throw if multi set to true on a replace'() {
+        when:
+        new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.REPLACE).multi(true)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'upsert property should default to false'() {
         expect:
-        !new UpdateRequest(new BsonDocument(), new BsonDocument()).upsert
+        !new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.UPDATE).upsert
     }
 
     def 'should set upsert property'() {
         expect:
-        new UpdateRequest(new BsonDocument(), new BsonDocument()).upsert(true).isUpsert()
+        new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.UPDATE).upsert(true).isUpsert()
     }
 
 }

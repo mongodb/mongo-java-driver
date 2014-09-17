@@ -257,12 +257,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                    .upsert(replaceOneModel.getOptions().isUpsert());
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel<T> updateOneModel = (UpdateOneModel<T>) writeModel;
-                writeRequest = new UpdateRequest(asBson(updateOneModel.getCriteria()), asBson(updateOneModel.getUpdate()))
+                writeRequest = new UpdateRequest(asBson(updateOneModel.getCriteria()), asBson(updateOneModel.getUpdate()),
+                                                 WriteRequest.Type.UPDATE)
                                    .multi(false)
                                    .upsert(updateOneModel.getOptions().isUpsert());
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel<T> updateManyModel = (UpdateManyModel<T>) writeModel;
-                writeRequest = new UpdateRequest(asBson(updateManyModel.getCriteria()), asBson(updateManyModel.getUpdate()))
+                writeRequest = new UpdateRequest(asBson(updateManyModel.getCriteria()), asBson(updateManyModel.getUpdate()),
+                                                 WriteRequest.Type.UPDATE)
                                    .multi(true)
                                    .upsert(updateManyModel.getOptions().isUpsert());
             } else if (writeModel instanceof DeleteOneModel) {
@@ -362,7 +364,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         WriteResult writeResult = operationExecutor
                                       .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
                                                                    asList(new UpdateRequest(asBson(model.getCriteria()),
-                                                                                            asBson(model.getUpdate()))
+                                                                                            asBson(model.getUpdate()),
+                                                                                            WriteRequest.Type.UPDATE)
                                                                               .multi(false)
                                                                               .upsert(model.getOptions().isUpsert()))));
         return createUpdateResult(writeResult);
@@ -382,7 +385,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         WriteResult writeResult = operationExecutor
                                       .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
                                                                    asList(new UpdateRequest(asBson(model.getCriteria()),
-                                                                                            asBson(model.getUpdate()))
+                                                                                            asBson(model.getUpdate()),
+                                                                                            WriteRequest.Type.UPDATE)
                                                                               .multi(true)
                                                                               .upsert(model.getOptions().isUpsert()))));
         return createUpdateResult(writeResult);

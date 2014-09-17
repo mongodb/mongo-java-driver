@@ -418,7 +418,8 @@ public class DBCollection {
 
         try {
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")) {
-                UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, encoder)).upsert(upsert).multi(multi);
+                UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, encoder),
+                                                                com.mongodb.operation.WriteRequest.Type.UPDATE).upsert(upsert).multi(multi);
 
                 return executeWriteOperation(new UpdateOperation(getNamespace(), false, aWriteConcern, asList(updateRequest)));
             } else {
