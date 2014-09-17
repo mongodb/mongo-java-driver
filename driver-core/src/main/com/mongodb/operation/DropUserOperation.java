@@ -90,7 +90,7 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
     private DeleteProtocol getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(databaseName, "system.users");
         return new DeleteProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                  asList(new RemoveRequest(new BsonDocument("user", new BsonString(userName))))
+                                  asList(new DeleteRequest(new BsonDocument("user", new BsonString(userName))))
         );
     }
 

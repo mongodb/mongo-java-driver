@@ -25,7 +25,7 @@ import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.Connection;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.operation.RemoveRequest;
+import com.mongodb.operation.DeleteRequest;
 import com.mongodb.protocol.message.DeleteMessage;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
@@ -44,7 +44,7 @@ import static java.lang.String.format;
 public class DeleteProtocol extends WriteProtocol {
     private static final Logger LOGGER = Loggers.getLogger("protocol.delete");
 
-    private final List<RemoveRequest> deletes;
+    private final List<DeleteRequest> deletes;
 
     /**
      * Construct an instance.
@@ -55,7 +55,7 @@ public class DeleteProtocol extends WriteProtocol {
      * @param deletes      the deletes
      */
     public DeleteProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                          final List<RemoveRequest> deletes) {
+                          final List<DeleteRequest> deletes) {
         super(namespace, ordered, writeConcern);
         this.deletes = deletes;
     }

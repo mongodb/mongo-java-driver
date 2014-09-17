@@ -27,8 +27,8 @@ import org.mongodb.BulkWriteUpsert
 import org.mongodb.WriteConcernError
 import spock.lang.Specification
 
+import static com.mongodb.operation.WriteRequest.Type.DELETE
 import static com.mongodb.operation.WriteRequest.Type.INSERT
-import static com.mongodb.operation.WriteRequest.Type.REMOVE
 import static com.mongodb.operation.WriteRequest.Type.REPLACE
 import static com.mongodb.operation.WriteRequest.Type.UPDATE
 import static com.mongodb.protocol.WriteCommandResultHelper.getBulkWriteException
@@ -74,7 +74,7 @@ class WriteCommandHelperSpecification extends Specification {
 
     def 'should have modified count of 0 for remove with no nModified field in the result'() {
         expect:
-        0 == getBulkWriteResult(REMOVE, new BsonDocument('n', new BsonInt32(1))).getModifiedCount()
+        0 == getBulkWriteResult(DELETE, new BsonDocument('n', new BsonInt32(1))).getModifiedCount()
     }
 
     def 'should not have error if writeErrors is empty and writeConcernError is missing'() {

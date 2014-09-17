@@ -18,7 +18,7 @@ package com.mongodb.protocol.message;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.operation.RemoveRequest;
+import com.mongodb.operation.DeleteRequest;
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
@@ -34,7 +34,7 @@ import java.util.List;
  * @since 3.0
  */
 public class DeleteCommandMessage extends BaseWriteCommandMessage {
-    private final List<RemoveRequest> deletes;
+    private final List<DeleteRequest> deletes;
 
     /**
      * Construct an instance.
@@ -46,7 +46,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
      * @param settings the message settings
      */
     public DeleteCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                final List<RemoveRequest> deletes, final MessageSettings settings) {
+                                final List<DeleteRequest> deletes, final MessageSettings settings) {
         super(namespace, ordered, writeConcern, settings);
         this.deletes = deletes;
     }
@@ -66,7 +66,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
      *
      * @return the list of requests
      */
-    public List<RemoveRequest> getRequests() {
+    public List<DeleteRequest> getRequests() {
         return Collections.unmodifiableList(deletes);
     }
 
@@ -82,12 +82,12 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
         writer.writeStartArray("deletes");
         for (int i = 0; i < deletes.size(); i++) {
             writer.mark();
-            RemoveRequest removeRequest = deletes.get(i);
+            DeleteRequest deleteRequest = deletes.get(i);
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
             writer.writeName("q");
-            getBsonDocumentCodec().encode(writer, removeRequest.getCriteria(), EncoderContext.builder().build());
-            writer.writeInt32("limit", removeRequest.isMulti() ? 0 : 1);
+            getBsonDocumentCodec().encode(writer, deleteRequest.getCriteria(), EncoderContext.builder().build());
+            writer.writeInt32("limit", deleteRequest.isMulti() ? 0 : 1);
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
             if (exceedsLimits(bsonOutput.getPosition() - commandStartPosition, i + 1)) {

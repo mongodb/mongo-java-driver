@@ -44,8 +44,8 @@ import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.WriteRequest.Type.DELETE;
 import static com.mongodb.operation.WriteRequest.Type.INSERT;
-import static com.mongodb.operation.WriteRequest.Type.REMOVE;
 import static com.mongodb.operation.WriteRequest.Type.REPLACE;
 import static com.mongodb.operation.WriteRequest.Type.UPDATE;
 
@@ -217,7 +217,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
         response.put("ok", new BsonInt32(1));
         if (getType() == INSERT) {
             response.put("n", new BsonInt32(0));
-        } else if (getType() == REMOVE) {
+        } else if (getType() == DELETE) {
             response.put("n", new BsonInt32(bulkWriteResult.getRemovedCount()));
         } else if (getType() == UPDATE || getType() == REPLACE) {
             response.put("n", new BsonInt32(bulkWriteResult.getMatchedCount() + bulkWriteResult.getUpserts().size()));

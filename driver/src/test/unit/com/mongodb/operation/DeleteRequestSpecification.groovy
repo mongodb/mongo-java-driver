@@ -22,16 +22,16 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification
 
-class RemoveRequestSpecification extends Specification {
+class DeleteRequestSpecification extends Specification {
 
     def 'should have correct type'() {
         expect:
-        new RemoveRequest(new BsonDocument()).getType() == WriteRequest.Type.REMOVE
+        new DeleteRequest(new BsonDocument()).getType() == WriteRequest.Type.DELETE
     }
 
     def 'should not allow null criteria'() {
         when:
-        new RemoveRequest(null)
+        new DeleteRequest(null)
 
         then:
         thrown(IllegalArgumentException)
@@ -42,7 +42,7 @@ class RemoveRequestSpecification extends Specification {
         def criteria = new BsonDocument('_id', new BsonInt32(1))
 
         when:
-        def removeRequest = new RemoveRequest(criteria)
+        def removeRequest = new DeleteRequest(criteria)
 
         then:
         removeRequest.criteria == criteria
@@ -50,11 +50,11 @@ class RemoveRequestSpecification extends Specification {
 
     def 'multi property should default to true'() {
         expect:
-        new RemoveRequest(new BsonDocument()).multi
+        new DeleteRequest(new BsonDocument()).multi
     }
 
     def 'should set multi property'() {
         expect:
-        !new RemoveRequest(new BsonDocument()).multi(false).isMulti()
+        !new DeleteRequest(new BsonDocument()).multi(false).isMulti()
     }
 }

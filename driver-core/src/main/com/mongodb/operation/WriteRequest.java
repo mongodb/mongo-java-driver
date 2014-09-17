@@ -43,9 +43,9 @@ public abstract class WriteRequest {
         REPLACE,
 
         /**
-         * A remove.
+         * A delete.
          */
-        REMOVE
+        DELETE
     }
 
     WriteRequest() {

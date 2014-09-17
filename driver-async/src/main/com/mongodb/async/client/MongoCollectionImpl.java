@@ -30,11 +30,11 @@ import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.operation.CountOperation;
+import com.mongodb.operation.DeleteOperation;
+import com.mongodb.operation.DeleteRequest;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
-import com.mongodb.operation.RemoveOperation;
-import com.mongodb.operation.RemoveRequest;
 import com.mongodb.operation.ReplaceOperation;
 import com.mongodb.operation.ReplaceRequest;
 import com.mongodb.operation.UpdateOperation;
@@ -338,15 +338,15 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoFuture<WriteResult> remove() {
-            return execute(new RemoveOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new RemoveRequest((BsonDocument) findModel.getOptions().getCriteria())
+            return execute(new DeleteOperation(getNamespace(), true, options.getWriteConcern(),
+                                               asList(new DeleteRequest((BsonDocument) findModel.getOptions().getCriteria())
                                                       .multi(true))));
         }
 
         @Override
         public MongoFuture<WriteResult> removeOne() {
-            return execute(new RemoveOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new RemoveRequest((BsonDocument) findModel.getOptions().getCriteria())
+            return execute(new DeleteOperation(getNamespace(), true, options.getWriteConcern(),
+                                               asList(new DeleteRequest((BsonDocument) findModel.getOptions().getCriteria())
                                                       .multi(false))));
         }
 

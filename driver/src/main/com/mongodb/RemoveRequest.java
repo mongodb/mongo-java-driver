@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.operation.DeleteRequest;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Encoder;
 
@@ -40,6 +41,6 @@ class RemoveRequest extends WriteRequest {
 
     @Override
     com.mongodb.operation.WriteRequest toNew() {
-        return new com.mongodb.operation.RemoveRequest(new BsonDocumentWrapper<DBObject>(query, this.codec)).multi(isMulti());
+        return new DeleteRequest(new BsonDocumentWrapper<DBObject>(query, this.codec)).multi(isMulti());
     }
 }

@@ -32,7 +32,7 @@ import static org.junit.Assert.assertThat;
  * 
  * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
  */
-public class FindAndRemoveAcceptanceTest extends DatabaseTestCase {
+public class FindAndDeleteAcceptanceTest extends DatabaseTestCase {
     private static final String KEY = "searchKey";
     private static final String VALUE_TO_CARE_ABOUT = "Value to match";
 

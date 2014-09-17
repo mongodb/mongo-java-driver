@@ -30,12 +30,12 @@ import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 
-class RemoveOperationSpecification extends OperationFunctionalSpecification {
+class DeleteOperationSpecification extends OperationFunctionalSpecification {
     def 'should remove a document'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
-        def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     [new RemoveRequest(new BsonDocument('_id', new BsonInt32(1)))]
+        def op = new DeleteOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))]
         )
 
         when:
@@ -49,8 +49,8 @@ class RemoveOperationSpecification extends OperationFunctionalSpecification {
     def 'should remove a document asynchronously'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
-        def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     [new RemoveRequest(new BsonDocument('_id', new BsonInt32(1)))]
+        def op = new DeleteOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))]
         )
 
         when:
@@ -66,8 +66,8 @@ class RemoveOperationSpecification extends OperationFunctionalSpecification {
         def smallerDoc = new BsonDocument('bytes', new BsonBinary(new byte[1024 * 16 + 1980]))
         def simpleDoc = new BsonDocument('_id', new BsonInt32(1))
         getCollectionHelper().insertDocuments(new BsonDocumentCodec(), simpleDoc)
-        def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     [new RemoveRequest(bigDoc), new RemoveRequest(smallerDoc), new RemoveRequest(simpleDoc)]
+        def op = new DeleteOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     [new DeleteRequest(bigDoc), new DeleteRequest(smallerDoc), new DeleteRequest(simpleDoc)]
         )
 
         when:
@@ -84,8 +84,8 @@ class RemoveOperationSpecification extends OperationFunctionalSpecification {
         def smallerDoc = new BsonDocument('bytes', new BsonBinary(new byte[1024 * 16 + 1980]))
         def simpleDoc = new BsonDocument('_id', new BsonInt32(1))
         getCollectionHelper().insertDocuments(new BsonDocumentCodec(), simpleDoc)
-        def op = new RemoveOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     [new RemoveRequest(bigDoc), new RemoveRequest(smallerDoc), new RemoveRequest(simpleDoc)]
+        def op = new DeleteOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     [new DeleteRequest(bigDoc), new DeleteRequest(smallerDoc), new DeleteRequest(simpleDoc)]
         )
 
         when:

@@ -16,7 +16,7 @@
 
 package com.mongodb.protocol.message;
 
-import com.mongodb.operation.RemoveRequest;
+import com.mongodb.operation.DeleteRequest;
 import org.bson.io.BsonOutput;
 
 import java.util.List;
@@ -28,7 +28,7 @@ import java.util.List;
  * @since 3.0
  */
 public class DeleteMessage extends RequestMessage {
-    private final List<RemoveRequest> removeRequests;
+    private final List<DeleteRequest> deleteRequests;
 
     /**
      * Construct an instance.
@@ -37,33 +37,33 @@ public class DeleteMessage extends RequestMessage {
      * @param deletes        the list of delete requests
      * @param settings       the message settings
      */
-    public DeleteMessage(final String collectionName, final List<RemoveRequest> deletes,
+    public DeleteMessage(final String collectionName, final List<DeleteRequest> deletes,
                          final MessageSettings settings) {
         super(collectionName, OpCode.OP_DELETE, settings);
-        this.removeRequests = deletes;
+        this.deleteRequests = deletes;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
-        writeDelete(removeRequests.get(0), bsonOutput);
-        if (removeRequests.size() == 1) {
+        writeDelete(deleteRequests.get(0), bsonOutput);
+        if (deleteRequests.size() == 1) {
             return null;
         } else {
-            return new DeleteMessage(getCollectionName(), removeRequests.subList(1, removeRequests.size()), getSettings());
+            return new DeleteMessage(getCollectionName(), deleteRequests.subList(1, deleteRequests.size()), getSettings());
         }
     }
 
-    private void writeDelete(final RemoveRequest removeRequest, final BsonOutput bsonOutput) {
+    private void writeDelete(final DeleteRequest deleteRequest, final BsonOutput bsonOutput) {
         bsonOutput.writeInt32(0); // reserved
         bsonOutput.writeCString(getCollectionName());
 
-        if (removeRequest.isMulti()) {
+        if (deleteRequest.isMulti()) {
             bsonOutput.writeInt32(0);
         } else {
             bsonOutput.writeInt32(1);
         }
 
-        addDocument(removeRequest.getCriteria(), getBsonDocumentCodec(), bsonOutput, new NoOpFieldNameValidator());
+        addDocument(deleteRequest.getCriteria(), getBsonDocumentCodec(), bsonOutput, new NoOpFieldNameValidator());
     }
 }
 

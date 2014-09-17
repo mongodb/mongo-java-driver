@@ -29,7 +29,7 @@ import org.mongodb.Document
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 
-class FindAndRemoveOperationSpecification extends OperationFunctionalSpecification {
+class FindAndDeleteOperationSpecification extends OperationFunctionalSpecification {
     private final DocumentCodec documentCodec = new DocumentCodec()
     private final WorkerCodec workerCodec = new WorkerCodec()
 
@@ -42,7 +42,7 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
-        FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), documentCodec)
+        FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
                 .criteria(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.execute(getBinding())
 
@@ -62,7 +62,7 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam)
 
         when:
-        FindAndRemoveOperation<Document> operation = new FindAndRemoveOperation<Document>(getNamespace(), documentCodec)
+        FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
                 .criteria(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
@@ -79,7 +79,7 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
         getWorkerCollectionHelper().insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
-        FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Document>(getNamespace(), workerCodec)
+        FindAndDeleteOperation<Worker> operation = new FindAndDeleteOperation<Document>(getNamespace(), workerCodec)
                 .criteria(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 
@@ -97,7 +97,7 @@ class FindAndRemoveOperationSpecification extends OperationFunctionalSpecificati
         getWorkerCollectionHelper().insertDocuments(new WorkerCodec(), pete, sam)
 
         when:
-        FindAndRemoveOperation<Worker> operation = new FindAndRemoveOperation<Document>(getNamespace(), workerCodec)
+        FindAndDeleteOperation<Worker> operation = new FindAndDeleteOperation<Document>(getNamespace(), workerCodec)
                 .criteria(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 

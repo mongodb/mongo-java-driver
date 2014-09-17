@@ -58,7 +58,7 @@ public class AcknowledgedBulkWriteResult extends BulkWriteResult {
                                        final List<BulkWriteUpsert> upserts) {
         this(type == WriteRequest.Type.INSERT ? count : 0,
              (type == WriteRequest.Type.UPDATE || type == WriteRequest.Type.REPLACE)  ? count : 0,
-             type == WriteRequest.Type.REMOVE ? count : 0,
+             type == WriteRequest.Type.DELETE ? count : 0,
              modifiedCount, upserts);
     }
 

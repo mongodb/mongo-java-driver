@@ -29,12 +29,12 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * An operation that removes one or more documents from a collection.
+ * An operation that deletes one or more documents from a collection.
  *
  * @since 3.0
  */
-public class RemoveOperation extends BaseWriteOperation {
-    private final List<RemoveRequest> removeRequests;
+public class DeleteOperation extends BaseWriteOperation {
+    private final List<DeleteRequest> deleteRequests;
 
     /**
      * Construct an instance.
@@ -42,12 +42,12 @@ public class RemoveOperation extends BaseWriteOperation {
      * @param namespace the database and collection namespace for the operation.
      * @param ordered whether the writes are ordered.
      * @param writeConcern the write concern for the operation.
-     * @param removeRequests the remove requests.
+     * @param deleteRequests the remove requests.
      */
-    public RemoveOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<RemoveRequest> removeRequests) {
+    public DeleteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                           final List<DeleteRequest> deleteRequests) {
         super(namespace, ordered, writeConcern);
-        this.removeRequests = notNull("removes", removeRequests);
+        this.deleteRequests = notNull("removes", deleteRequests);
     }
 
     /**
@@ -55,23 +55,23 @@ public class RemoveOperation extends BaseWriteOperation {
      *
      * @return the remove requests
      */
-    public List<RemoveRequest> getRemoveRequests() {
-        return removeRequests;
+    public List<DeleteRequest> getDeleteRequests() {
+        return deleteRequests;
     }
 
     @Override
     protected WriteProtocol getWriteProtocol() {
-        return new DeleteProtocol(getNamespace(), isOrdered(), getWriteConcern(), removeRequests);
+        return new DeleteProtocol(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
     }
 
     @Override
     protected WriteCommandProtocol getCommandProtocol() {
-        return new DeleteCommandProtocol(getNamespace(), isOrdered(), getWriteConcern(), removeRequests);
+        return new DeleteCommandProtocol(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
     }
 
     @Override
     protected WriteRequest.Type getType() {
-        return WriteRequest.Type.REMOVE;
+        return WriteRequest.Type.DELETE;
     }
 
     @Override

@@ -22,8 +22,8 @@ import com.mongodb.MongoNamespace
 import com.mongodb.WriteConcern
 import com.mongodb.connection.ByteBufferBsonOutput
 import com.mongodb.connection.SimpleBufferProvider
+import com.mongodb.operation.DeleteRequest
 import com.mongodb.operation.InsertRequest
-import com.mongodb.operation.RemoveRequest
 import com.mongodb.operation.ReplaceRequest
 import com.mongodb.protocol.message.DeleteCommandMessage
 import com.mongodb.protocol.message.InsertCommandMessage
@@ -76,7 +76,7 @@ class WriteCommandLimitsSpecifications extends Specification {
         given:
         def deletes = []
         (1..4).each {
-            deletes.add(new RemoveRequest(new BsonDocument()))
+            deletes.add(new DeleteRequest(new BsonDocument()))
         }
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
@@ -95,7 +95,7 @@ class WriteCommandLimitsSpecifications extends Specification {
         given:
         def deletes = []
         (1..4).each {
-            deletes.add(new RemoveRequest(new BsonDocument('_id', new BsonInt32(it))))
+            deletes.add(new DeleteRequest(new BsonDocument('_id', new BsonInt32(it))))
         }
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());

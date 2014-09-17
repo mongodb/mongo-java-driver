@@ -35,12 +35,12 @@ import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * An operation that atomically finds and removes a single document.
+ * An operation that atomically finds and deletes a single document.
  *
  * @param <T> the operations result type.
  * @since 3.0
  */
-public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
+public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private BsonDocument criteria;
@@ -54,7 +54,7 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
      * @param namespace the database and collection namespace for the operation.
      * @param decoder the decoder for the result documents.
      */
-    public FindAndRemoveOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
+    public FindAndDeleteOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
     }
@@ -94,7 +94,7 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
      * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
      */
-    public FindAndRemoveOperation<T> criteria(final BsonDocument criteria) {
+    public FindAndDeleteOperation<T> criteria(final BsonDocument criteria) {
         this.criteria = criteria;
         return this;
     }
@@ -116,7 +116,7 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
      * @return this
      * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
      */
-    public FindAndRemoveOperation<T> projection(final BsonDocument projection) {
+    public FindAndDeleteOperation<T> projection(final BsonDocument projection) {
         this.projection = projection;
         return this;
     }
@@ -140,7 +140,7 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
      * @param timeUnit the time unit, which may not be null
      * @return this
      */
-    public FindAndRemoveOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public FindAndDeleteOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
         return this;
@@ -164,7 +164,7 @@ public class FindAndRemoveOperation<T> implements AsyncWriteOperation<T>, WriteO
      * @return this
      * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
      */
-    public FindAndRemoveOperation<T> sort(final BsonDocument sort) {
+    public FindAndDeleteOperation<T> sort(final BsonDocument sort) {
         this.sort = sort;
         return this;
     }

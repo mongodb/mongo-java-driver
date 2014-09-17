@@ -20,12 +20,12 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.connection.Connection;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.SingleResultFuture;
+import com.mongodb.connection.Connection;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.operation.RemoveRequest;
-import com.mongodb.async.SingleResultFuture;
+import com.mongodb.operation.DeleteRequest;
 import com.mongodb.operation.WriteRequest;
 import com.mongodb.protocol.message.DeleteCommandMessage;
 import com.mongodb.protocol.message.MessageSettings;
@@ -46,7 +46,7 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
 
     private static final Logger LOGGER = Loggers.getLogger("protocol.delete");
 
-    private final List<RemoveRequest> removeRequests;
+    private final List<DeleteRequest> deleteRequests;
 
     /**
      * Construct an instance.
@@ -57,9 +57,9 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
      * @param deletes      the list of deletes
      */
     public DeleteCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                 final List<RemoveRequest> deletes) {
+                                 final List<DeleteRequest> deletes) {
         super(namespace, ordered, writeConcern);
-        this.removeRequests = notNull("removes", deletes);
+        this.deleteRequests = notNull("removes", deletes);
     }
 
     @Override
@@ -90,12 +90,12 @@ public class DeleteCommandProtocol extends WriteCommandProtocol {
 
     @Override
     protected WriteRequest.Type getType() {
-        return WriteRequest.Type.REMOVE;
+        return WriteRequest.Type.DELETE;
     }
 
     @Override
     protected DeleteCommandMessage createRequestMessage(final MessageSettings messageSettings) {
-        return new DeleteCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), removeRequests, messageSettings);
+        return new DeleteCommandMessage(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests, messageSettings);
     }
 
     @Override

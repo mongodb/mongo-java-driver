@@ -40,7 +40,7 @@ import static ClusterFixture.getAsyncSingleConnectionBinding
 import static ClusterFixture.serverVersionAtLeast
 import static WriteConcern.ACKNOWLEDGED
 import static WriteConcern.UNACKNOWLEDGED
-import static com.mongodb.operation.WriteRequest.Type.REMOVE
+import static com.mongodb.operation.WriteRequest.Type.DELETE
 import static com.mongodb.operation.WriteRequest.Type.UPDATE
 
 @Category(Async)
@@ -85,14 +85,14 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('x', true), new Document('x', true))
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new RemoveRequest(new BsonDocument('x', BsonBoolean.TRUE)).multi(false)],
+                                             [new DeleteRequest(new BsonDocument('x', BsonBoolean.TRUE)).multi(false)],
                                              ordered, ACKNOWLEDGED)
 
         when:
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(REMOVE, 1, [])
+        result == new AcknowledgedBulkWriteResult(DELETE, 1, [])
         getCollectionHelper().count() == 1
 
         where:
@@ -107,14 +107,14 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                                               new Document('x', false))
 
         def op = new MixedBulkWriteOperation(getNamespace(),
-                                             [new RemoveRequest(new BsonDocument('x', BsonBoolean.TRUE))],
+                                             [new DeleteRequest(new BsonDocument('x', BsonBoolean.TRUE))],
                                              ordered, ACKNOWLEDGED)
 
         when:
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:
-        result == new AcknowledgedBulkWriteResult(REMOVE, 2, [])
+        result == new AcknowledgedBulkWriteResult(DELETE, 2, [])
         getCollectionHelper().count() == 1
 
         where:
@@ -566,8 +566,8 @@ class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpeci
                            new BsonDocument('$set', new BsonDocument('x', new BsonInt32(2)))),
          new UpdateRequest(new BsonDocument('_id', new BsonInt32(2)),
                            new BsonDocument('$set', new BsonDocument('x', new BsonInt32(3)))),
-         new RemoveRequest(new BsonDocument('_id', new BsonInt32(3))),
-         new RemoveRequest(new BsonDocument('_id', new BsonInt32(4))),
+         new DeleteRequest(new BsonDocument('_id', new BsonInt32(3))),
+         new DeleteRequest(new BsonDocument('_id', new BsonInt32(4))),
          new ReplaceRequest(new BsonDocument('_id', new BsonInt32(5)),
                             new BsonDocument('_id', new BsonInt32(5)).append('x', new BsonInt32(4))),
          new ReplaceRequest(new BsonDocument('_id', new BsonInt32(6)),

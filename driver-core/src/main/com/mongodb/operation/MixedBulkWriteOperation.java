@@ -62,8 +62,8 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.WriteRequest.Type.DELETE;
 import static com.mongodb.operation.WriteRequest.Type.INSERT;
-import static com.mongodb.operation.WriteRequest.Type.REMOVE;
 import static com.mongodb.operation.WriteRequest.Type.REPLACE;
 import static com.mongodb.operation.WriteRequest.Type.UPDATE;
 import static java.lang.String.format;
@@ -377,8 +377,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 nextWriteResult = getReplacesRunExecutor((List<ReplaceRequest>) runWrites, connection).execute();
             } else if (type == INSERT) {
                 nextWriteResult = getInsertsRunExecutor((List<InsertRequest>) runWrites, connection).execute();
-            } else if (type == REMOVE) {
-                nextWriteResult = getRemovesRunExecutor((List<RemoveRequest>) runWrites, connection).execute();
+            } else if (type == DELETE) {
+                nextWriteResult = getDeletesRunExecutor((List<DeleteRequest>) runWrites, connection).execute();
             } else {
                 throw new UnsupportedOperationException(format("Unsupported write of type %s", type));
             }
@@ -395,8 +395,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 nextWriteResult = getReplacesRunExecutor((List<ReplaceRequest>) runWrites, connection).executeAsync();
             } else if (type == INSERT) {
                 nextWriteResult = getInsertsRunExecutor((List<InsertRequest>) runWrites, connection).executeAsync();
-            } else if (type == REMOVE) {
-                nextWriteResult = getRemovesRunExecutor((List<RemoveRequest>) runWrites, connection).executeAsync();
+            } else if (type == DELETE) {
+                nextWriteResult = getDeletesRunExecutor((List<DeleteRequest>) runWrites, connection).executeAsync();
             } else {
                 throw new UnsupportedOperationException(format("Unsupported write of type %s", type));
             }
@@ -423,21 +423,21 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             };
         }
 
-        RunExecutor getRemovesRunExecutor(final List<RemoveRequest> removeRequests, final Connection connection) {
+        RunExecutor getDeletesRunExecutor(final List<DeleteRequest> deleteRequests, final Connection connection) {
             return new RunExecutor(connection) {
                 WriteProtocol getWriteProtocol(final int index) {
-                    return new DeleteProtocol(namespace, ordered, writeConcern, asList(removeRequests.get(index))
+                    return new DeleteProtocol(namespace, ordered, writeConcern, asList(deleteRequests.get(index))
                     );
                 }
 
                 WriteCommandProtocol getWriteCommandProtocol() {
-                    return new DeleteCommandProtocol(namespace, ordered, writeConcern, removeRequests
+                    return new DeleteCommandProtocol(namespace, ordered, writeConcern, deleteRequests
                     );
                 }
 
                 @Override
                 WriteRequest.Type getType() {
-                    return REMOVE;
+                    return DELETE;
                 }
             };
         }

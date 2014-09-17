@@ -21,11 +21,11 @@ import org.bson.BsonDocument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * A representation of a remove.
+ * A representation of a delete.
  *
  * @since 3.0
  */
-public final class RemoveRequest extends WriteRequest {
+public final class DeleteRequest extends WriteRequest {
     private final BsonDocument criteria;
     private boolean isMulti = true;
 
@@ -34,7 +34,7 @@ public final class RemoveRequest extends WriteRequest {
      *
      * @param criteria the non-null query criteria
      */
-    public RemoveRequest(final BsonDocument criteria) {
+    public DeleteRequest(final BsonDocument criteria) {
         super();
         this.criteria = notNull("criteria", criteria);
     }
@@ -54,7 +54,7 @@ public final class RemoveRequest extends WriteRequest {
      * @param isMulti true if all documents matching the query criteria will be removed
      * @return this
      */
-    public RemoveRequest multi(final boolean isMulti) {
+    public DeleteRequest multi(final boolean isMulti) {
         this.isMulti = isMulti;
         return this;
     }
@@ -70,6 +70,6 @@ public final class RemoveRequest extends WriteRequest {
 
     @Override
     public Type getType() {
-        return Type.REMOVE;
+        return Type.DELETE;
     }
 }
