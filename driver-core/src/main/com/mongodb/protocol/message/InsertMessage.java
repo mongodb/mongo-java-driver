@@ -20,7 +20,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.operation.InsertRequest;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
-import org.bson.io.BsonOutputStream;
+import org.bson.io.BsonOutput;
 
 import java.util.List;
 
@@ -54,7 +54,7 @@ public class InsertMessage extends RequestMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final BsonOutputStream outputStream, final int messageStartPosition) {
+    protected RequestMessage encodeMessageBody(final BsonOutput outputStream, final int messageStartPosition) {
         writeInsertPrologue(outputStream);
         for (int i = 0; i < insertRequestList.size(); i++) {
             BsonDocument document = insertRequestList.get(i).getDocument();
@@ -77,7 +77,7 @@ public class InsertMessage extends RequestMessage {
         }
     }
 
-    private void writeInsertPrologue(final BsonOutputStream outputStream) {
+    private void writeInsertPrologue(final BsonOutput outputStream) {
         int flags = 0;
         if (!ordered) {
             flags |= 1;

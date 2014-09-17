@@ -28,12 +28,12 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class ByteBufferOutputBufferTest {
+public class ByteBufferBsonOutputTest {
     private final Random random = new Random();
 
     @Test
     public void testWriteAtAbsolutePosition() throws IOException {
-        ByteBufferOutputBuffer buf = new ByteBufferOutputBuffer(new SimpleBufferProvider());
+        ByteBufferBsonOutput buf = new ByteBufferBsonOutput(new SimpleBufferProvider());
         buf.writeInt(0);
         byte[] randomBytes = getRandomBytes(10000);
         buf.write(randomBytes, 0, 10000);
@@ -50,7 +50,7 @@ public class ByteBufferOutputBufferTest {
 
     @Test
     public void testTruncate() throws IOException {
-        ByteBufferOutputBuffer buf = new ByteBufferOutputBuffer(new SimpleBufferProvider());
+        ByteBufferBsonOutput buf = new ByteBufferBsonOutput(new SimpleBufferProvider());
         byte[] randomBytes = getRandomBytes(10000);
 
         buf.writeInt(0);
@@ -81,13 +81,13 @@ public class ByteBufferOutputBufferTest {
 
     @Test(expected = BsonSerializationException.class)
     public void nullCharacterInCStringShouldThrowSerializationException() {
-        ByteBufferOutputBuffer buf = new ByteBufferOutputBuffer(new SimpleBufferProvider());
+        ByteBufferBsonOutput buf = new ByteBufferBsonOutput(new SimpleBufferProvider());
         buf.writeCString("hell\u0000world");
     }
 
     @Test
     public void nullCharacterInStringShouldNotThrowSerializationException() {
-        ByteBufferOutputBuffer buf = new ByteBufferOutputBuffer(new SimpleBufferProvider());
+        ByteBufferBsonOutput buf = new ByteBufferBsonOutput(new SimpleBufferProvider());
         buf.writeString("h\u0000i");
         assertArrayEquals(new byte[] {4, 0, 0, 0, 'h', 0, 'i', 0}, buf.toByteArray());
     }

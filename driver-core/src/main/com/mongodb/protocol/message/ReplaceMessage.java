@@ -18,7 +18,7 @@ package com.mongodb.protocol.message;
 
 import com.mongodb.operation.BaseUpdateRequest;
 import com.mongodb.operation.ReplaceRequest;
-import org.bson.io.BsonOutputStream;
+import org.bson.io.BsonOutput;
 
 import java.util.List;
 
@@ -44,9 +44,9 @@ public class ReplaceMessage extends BaseUpdateMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final BsonOutputStream outputStream, final int messageStartPosition) {
-        writeBaseUpdate(outputStream);
-        addCollectibleDocument(replaceRequests.get(0).getReplacement(), outputStream, new CollectibleDocumentFieldNameValidator());
+    protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
+        writeBaseUpdate(bsonOutput);
+        addCollectibleDocument(replaceRequests.get(0).getReplacement(), bsonOutput, new CollectibleDocumentFieldNameValidator());
         if (replaceRequests.size() == 1) {
             return null;
         } else {

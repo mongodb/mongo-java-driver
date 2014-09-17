@@ -21,7 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.codecs.DocumentCodec;
-import com.mongodb.connection.ByteBufferOutputBuffer;
+import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.connection.ServerDescription;
@@ -35,7 +35,7 @@ import org.mongodb.Document;
 
 import java.util.EnumSet;
 
-import static com.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
+import static com.mongodb.protocol.ProtocolHelper.encodeMessage;
 import static com.mongodb.protocol.ProtocolHelper.getMessageSettings;
 import static com.mongodb.protocol.ProtocolHelper.getQueryFailureException;
 import static java.lang.String.format;
@@ -78,18 +78,17 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
                             connection.getServerAddress()));
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
-        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
+        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         QueryMessage message = createQueryMessage(connection.getServerDescription());
-        encodeMessageToBuffer(message, buffer);
+        encodeMessage(message, bsonOutput);
         QueryResultCallback<T> receiveCallback = new QueryResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
                                                                             resultDecoder,
                                                                             message.getId(),
                                                                             connection.getServerAddress());
-        connection.sendMessageAsync(buffer.getByteBuffers(),
+        connection.sendMessageAsync(bsonOutput.getByteBuffers(),
                                     message.getId(),
-                                    new SendMessageCallback<QueryResult<T>>(connection, buffer, message.getId(), retVal,
-                                                                            receiveCallback)
-                                   );
+                                    new SendMessageCallback<QueryResult<T>>(connection, bsonOutput, message.getId(), retVal,
+                                                                            receiveCallback));
         return retVal;
     }
 
@@ -99,14 +98,14 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     private QueryMessage sendMessage(final Connection connection) {
-        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
+        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
             QueryMessage message = createQueryMessage(connection.getServerDescription());
-            message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers(), message.getId());
+            message.encode(bsonOutput);
+            connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             return message;
         } finally {
-            buffer.close();
+            bsonOutput.close();
         }
     }
 

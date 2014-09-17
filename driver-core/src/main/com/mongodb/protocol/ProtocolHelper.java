@@ -23,7 +23,6 @@ import com.mongodb.MongoQueryFailureException;
 import com.mongodb.MongoWriteException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcernException;
-import com.mongodb.connection.ByteBufferOutputBuffer;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
@@ -31,6 +30,7 @@ import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonValue;
+import org.bson.io.BsonOutput;
 import org.mongodb.Document;
 import org.mongodb.WriteResult;
 
@@ -110,14 +110,14 @@ final class ProtocolHelper {
                               .build();
     }
 
-    static RequestMessage encodeMessageToBuffer(final RequestMessage message, final ByteBufferOutputBuffer buffer) {
+    static RequestMessage encodeMessage(final RequestMessage message, final BsonOutput bsonOutput) {
         try {
-            return message.encode(buffer);
+            return message.encode(bsonOutput);
         } catch (RuntimeException e) {
-            buffer.close();
+            bsonOutput.close();
             throw e;
         } catch (Error e) {
-            buffer.close();
+            bsonOutput.close();
             throw e;
         }
     }

@@ -20,7 +20,7 @@ package com.mongodb.protocol
 
 import com.mongodb.MongoNamespace
 import com.mongodb.WriteConcern
-import com.mongodb.connection.ByteBufferOutputBuffer
+import com.mongodb.connection.ByteBufferBsonOutput
 import com.mongodb.connection.SimpleBufferProvider
 import com.mongodb.operation.InsertRequest
 import com.mongodb.operation.RemoveRequest
@@ -41,7 +41,7 @@ class WriteCommandLimitsSpecifications extends Specification {
             inserts.add(new InsertRequest(new BsonDocument()))
         }
 
-        def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
+        def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
         def message = new InsertCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, inserts,
                                                MessageSettings.builder().maxWriteBatchSize(3).build());
 
@@ -60,7 +60,7 @@ class WriteCommandLimitsSpecifications extends Specification {
             inserts.add(new InsertRequest(new BsonDocument('_id', new BsonInt32(it))))
         }
 
-        def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
+        def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
         def message = new InsertCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, inserts,
                                                MessageSettings.builder().maxDocumentSize(113).build());
 
@@ -79,7 +79,7 @@ class WriteCommandLimitsSpecifications extends Specification {
             deletes.add(new RemoveRequest(new BsonDocument()))
         }
 
-        def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
+        def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
         def message = new DeleteCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, deletes,
                                                MessageSettings.builder().maxWriteBatchSize(3).build());
 
@@ -98,7 +98,7 @@ class WriteCommandLimitsSpecifications extends Specification {
             deletes.add(new RemoveRequest(new BsonDocument('_id', new BsonInt32(it))))
         }
 
-        def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
+        def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
         def message = new DeleteCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, deletes,
                                                MessageSettings.builder().maxDocumentSize(187).build());
 
@@ -117,7 +117,7 @@ class WriteCommandLimitsSpecifications extends Specification {
             replaces.add(new ReplaceRequest(new BsonDocument('_id', new BsonInt32(it)), new BsonDocument()))
         }
 
-        def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
+        def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
         def message = new ReplaceCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, replaces,
                                                 MessageSettings.builder().maxWriteBatchSize(3).build());
 
@@ -136,7 +136,7 @@ class WriteCommandLimitsSpecifications extends Specification {
             replaces.add(new ReplaceRequest(new BsonDocument('_id', new BsonInt32(it)), new BsonDocument()))
         }
 
-        def buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
+        def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
         def message = new ReplaceCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, replaces,
                                                 MessageSettings.builder().maxDocumentSize(175).build());
 

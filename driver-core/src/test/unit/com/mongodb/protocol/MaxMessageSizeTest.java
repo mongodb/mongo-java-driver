@@ -16,7 +16,7 @@
 
 package com.mongodb.protocol;
 
-import com.mongodb.connection.ByteBufferOutputBuffer;
+import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.SimpleBufferProvider;
 import com.mongodb.operation.InsertRequest;
 import com.mongodb.protocol.message.InsertMessage;
@@ -35,7 +35,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 public class MaxMessageSizeTest {
-    private ByteBufferOutputBuffer buffer;
+    private ByteBufferBsonOutput buffer;
     private InsertMessage message;
 
     @Before
@@ -47,7 +47,7 @@ public class MaxMessageSizeTest {
                                                   new InsertRequest(new BsonDocument("bytes", binary)),
                                                   new InsertRequest(new BsonDocument("bytes", binary))),
                                     MessageSettings.builder().maxMessageSize(4500).build());
-        buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
+        buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
     }
 
     @After

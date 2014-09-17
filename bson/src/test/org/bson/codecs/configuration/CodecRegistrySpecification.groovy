@@ -81,7 +81,7 @@ class CodecRegistrySpecification extends Specification {
         def writer = new BsonBinaryWriter(new BasicOutputBuffer(), false)
         topCodec.encode(writer, top, EncoderContext.builder().build())
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        writer.getBuffer().pipe(os);
+        writer.getBsonOutput().pipe(os);
         writer.close()
 
         then:

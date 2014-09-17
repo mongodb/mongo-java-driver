@@ -18,7 +18,7 @@ package com.mongodb.protocol.message;
 
 import com.mongodb.CursorFlag;
 import org.bson.BsonDocument;
-import org.bson.io.BsonOutputStream;
+import org.bson.io.BsonOutput;
 
 import java.util.EnumSet;
 
@@ -35,11 +35,11 @@ public class QueryMessage extends BaseQueryMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final BsonOutputStream outputStream, final int messageStartPosition) {
-        writeQueryPrologue(outputStream);
-        addDocument(queryDocument, getBsonDocumentCodec(), outputStream, new NoOpFieldNameValidator());
+    protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
+        writeQueryPrologue(bsonOutput);
+        addDocument(queryDocument, getBsonDocumentCodec(), bsonOutput, new NoOpFieldNameValidator());
         if (fields != null) {
-            addDocument(fields, getBsonDocumentCodec(), outputStream, new NoOpFieldNameValidator());
+            addDocument(fields, getBsonDocumentCodec(), bsonOutput, new NoOpFieldNameValidator());
         }
         return null;
     }

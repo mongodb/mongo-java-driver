@@ -21,7 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultFuture;
-import com.mongodb.connection.ByteBufferOutputBuffer;
+import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.diagnostics.logging.Logger;
@@ -37,7 +37,7 @@ import org.mongodb.WriteResult;
 import java.util.EnumSet;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
-import static com.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
+import static com.mongodb.protocol.ProtocolHelper.encodeMessage;
 import static com.mongodb.protocol.ProtocolHelper.getMessageSettings;
 import static java.lang.String.format;
 
@@ -60,20 +60,19 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
     public MongoFuture<WriteResult> executeAsync(final Connection connection) {
         SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
-        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
+        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         RequestMessage requestMessage = createRequestMessage(getMessageSettings(connection.getServerDescription()));
-        RequestMessage nextMessage = encodeMessageToBuffer(requestMessage, buffer);
+        RequestMessage nextMessage = encodeMessage(requestMessage, bsonOutput);
         if (writeConcern.isAcknowledged()) {
             CommandMessage getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                                                                                        COMMAND_COLLECTION_NAME).getFullName(),
                                                                     createGetLastErrorCommandDocument(),
                                                                     EnumSet.noneOf(CursorFlag.class),
-                                                                    getMessageSettings(connection.getServerDescription())
-            );
-            encodeMessageToBuffer(getLastErrorMessage, buffer);
-            connection.sendMessageAsync(buffer.getByteBuffers(), getLastErrorMessage.getId(),
+                                                                    getMessageSettings(connection.getServerDescription()));
+            encodeMessage(getLastErrorMessage, bsonOutput);
+            connection.sendMessageAsync(bsonOutput.getByteBuffers(), getLastErrorMessage.getId(),
                                         new SendMessageCallback<WriteResult>(connection,
-                                                                             buffer,
+                                                                             bsonOutput,
                                                                              getLastErrorMessage.getId(),
                                                                              retVal,
                                                                              new WriteResultCallback(retVal,
@@ -83,24 +82,21 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
                                                                                                      ordered,
                                                                                                      writeConcern,
                                                                                                      getLastErrorMessage.getId(),
-                                                                                                     connection)
-                                        )
-                                       );
+                                                                                                     connection)));
         } else {
-            connection.sendMessageAsync(buffer.getByteBuffers(), requestMessage.getId(),
-                                        new UnacknowledgedWriteResultCallback(retVal, getNamespace(), nextMessage, ordered, buffer,
-                                                                              connection)
-                                       );
+            connection.sendMessageAsync(bsonOutput.getByteBuffers(), requestMessage.getId(),
+                                        new UnacknowledgedWriteResultCallback(retVal, getNamespace(), nextMessage, ordered, bsonOutput,
+                                                                              connection));
         }
         return retVal;
     }
 
 
     private CommandMessage sendMessage(final Connection connection) {
-        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
+        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
             RequestMessage lastMessage = createRequestMessage(getMessageSettings(connection.getServerDescription()));
-            RequestMessage nextMessage = lastMessage.encode(buffer);
+            RequestMessage nextMessage = lastMessage.encode(bsonOutput);
             int batchNum = 1;
             if (nextMessage != null) {
                 getLogger().debug(format("Sending batch %d", batchNum));
@@ -110,22 +106,21 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
                 batchNum++;
                 getLogger().debug(format("Sending batch %d", batchNum));
                 lastMessage = nextMessage;
-                nextMessage = nextMessage.encode(buffer);
+                nextMessage = nextMessage.encode(bsonOutput);
             }
             CommandMessage getLastErrorMessage = null;
             if (writeConcern.isAcknowledged()) {
                 getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                                                                             COMMAND_COLLECTION_NAME).getFullName(),
                                                          createGetLastErrorCommandDocument(), EnumSet.noneOf(CursorFlag.class),
-                                                         getMessageSettings(connection.getServerDescription())
-                );
-                getLastErrorMessage.encode(buffer);
+                                                         getMessageSettings(connection.getServerDescription()));
+                getLastErrorMessage.encode(bsonOutput);
                 lastMessage = getLastErrorMessage;
             }
-            connection.sendMessage(buffer.getByteBuffers(), lastMessage.getId());
+            connection.sendMessage(bsonOutput.getByteBuffers(), lastMessage.getId());
             return getLastErrorMessage;
         } finally {
-            buffer.close();
+            bsonOutput.close();
         }
     }
 

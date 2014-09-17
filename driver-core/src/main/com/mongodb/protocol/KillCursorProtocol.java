@@ -19,12 +19,12 @@ package com.mongodb.protocol;
 import com.mongodb.MongoException;
 import com.mongodb.ServerCursor;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.connection.ByteBufferOutputBuffer;
-import com.mongodb.connection.Connection;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.SingleResultFuture;
+import com.mongodb.connection.ByteBufferBsonOutput;
+import com.mongodb.connection.Connection;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.protocol.message.KillCursorsMessage;
 
 import static java.lang.String.format;
@@ -42,14 +42,14 @@ public class KillCursorProtocol implements Protocol<Void> {
     public Void execute(final Connection connection) {
         LOGGER.debug(format("Killing cursors [%s] on connection [%s] to server %s", getCursorIdListAsString(), connection.getId(),
                             connection.getServerAddress()));
-        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
+        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
             KillCursorsMessage message = new KillCursorsMessage(killCursor);
-            message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers(), message.getId());
+            message.encode(bsonOutput);
+            connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             return null;
         } finally {
-            buffer.close();
+            bsonOutput.close();
         }
     }
 
@@ -59,13 +59,13 @@ public class KillCursorProtocol implements Protocol<Void> {
                             connection.getId(),
                             connection.getServerAddress()));
         final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
-        final ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
+        final ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         KillCursorsMessage message = new KillCursorsMessage(killCursor);
-        message.encode(buffer);
-        connection.sendMessageAsync(buffer.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
+        message.encode(bsonOutput);
+        connection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final MongoException e) {
-                buffer.close();
+                bsonOutput.close();
                 retVal.init(result, e);
             }
         });

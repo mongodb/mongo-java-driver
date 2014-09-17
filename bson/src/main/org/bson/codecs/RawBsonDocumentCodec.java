@@ -58,7 +58,7 @@ public class RawBsonDocumentCodec implements Codec<RawBsonDocument> {
         BsonBinaryWriter writer = new BsonBinaryWriter(buffer, true);
         try {
             writer.pipe(reader);
-            BufferExposingByteArrayOutputStream byteArrayOutputStream = new BufferExposingByteArrayOutputStream(writer.getBuffer()
+            BufferExposingByteArrayOutputStream byteArrayOutputStream = new BufferExposingByteArrayOutputStream(writer.getBsonOutput()
                                                                                                                       .getSize());
             buffer.pipe(byteArrayOutputStream);
             return new RawBsonDocument(byteArrayOutputStream.getInternalBytes());

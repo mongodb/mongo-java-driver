@@ -26,7 +26,7 @@ import java.io.Closeable;
  * @since 3.0
  */
 
-public interface BsonOutputStream extends Closeable {
+public interface BsonOutput extends Closeable {
 
     /**
      * Gets the current position in the stream.

@@ -22,7 +22,7 @@ import com.mongodb.operation.BaseUpdateRequest;
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
-import org.bson.io.BsonOutputStream;
+import org.bson.io.BsonOutput;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -43,7 +43,7 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
     }
 
     @Override
-    protected BaseUpdateCommandMessage<T> writeTheWrites(final BsonOutputStream outputStream, final int commandStartPosition,
+    protected BaseUpdateCommandMessage<T> writeTheWrites(final BsonOutput bsonOutput, final int commandStartPosition,
                                                          final BsonBinaryWriter writer) {
         BaseUpdateCommandMessage<T> nextMessage = null;
         writer.writeStartArray("updates");
@@ -64,7 +64,7 @@ public abstract class BaseUpdateCommandMessage<T extends BaseUpdateRequest> exte
             }
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
-            if (exceedsLimits(outputStream.getPosition() - commandStartPosition, i + 1)) {
+            if (exceedsLimits(bsonOutput.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
                 nextMessage = createNextMessage(updates.subList(i, updates.size()));
                 break;

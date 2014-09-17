@@ -17,7 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.connection.BufferProvider;
-import com.mongodb.connection.ByteBufferOutputBuffer;
+import com.mongodb.connection.ByteBufferBsonOutput;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonReader;
 import org.bson.codecs.Decoder;
@@ -39,13 +39,13 @@ class DBDecoderAdapter implements Decoder<DBObject> {
 
     @Override
     public DBObject decode(final BsonReader reader, final DecoderContext decoderContext) {
-        ByteBufferOutputBuffer outputBuffer = new ByteBufferOutputBuffer(bufferProvider);
-        BsonBinaryWriter binaryWriter = new BsonBinaryWriter(outputBuffer, true);
+        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(bufferProvider);
+        BsonBinaryWriter binaryWriter = new BsonBinaryWriter(bsonOutput, true);
         try {
             binaryWriter.pipe(reader);
             BufferExposingByteArrayOutputStream byteArrayOutputStream =
-                new BufferExposingByteArrayOutputStream(binaryWriter.getBuffer().getSize());
-            outputBuffer.pipe(byteArrayOutputStream);
+                new BufferExposingByteArrayOutputStream(binaryWriter.getBsonOutput().getSize());
+            bsonOutput.pipe(byteArrayOutputStream);
             return decoder.decode(byteArrayOutputStream.getInternalBytes(), collection);
         } catch (IOException e) {
             // impossible with a byte array output stream

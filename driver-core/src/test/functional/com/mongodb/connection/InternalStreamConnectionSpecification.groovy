@@ -26,9 +26,9 @@ import com.mongodb.MongoSocketClosedException
 import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.async.SingleResultCallback
+import com.mongodb.async.SingleResultFuture
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.event.ConnectionListener
-import com.mongodb.async.SingleResultFuture
 import com.mongodb.protocol.message.CommandMessage
 import com.mongodb.protocol.message.MessageSettings
 import org.bson.BsonBinaryWriter
@@ -720,7 +720,7 @@ class InternalStreamConnectionSpecification extends Specification {
             def okResponse = ['connectionId': 1, 'n': 0, 'syncMillis': 0, 'writtenTo': null, 'err': null, 'ok': 1] as Document
             def binaryResponse = new BsonBinaryWriter(new BasicOutputBuffer(), false)
             new DocumentCodec().encode(binaryResponse, okResponse, EncoderContext.builder().build())
-            binaryResponse.buffer.byteBuffers.get(0)
+            binaryResponse.bsonOutput.byteBuffers.get(0)
         }
 
         def generateHeaders(List<Integer> messageIds) {

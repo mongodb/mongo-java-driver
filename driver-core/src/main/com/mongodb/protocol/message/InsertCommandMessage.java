@@ -22,7 +22,7 @@ import com.mongodb.operation.InsertRequest;
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
-import org.bson.io.BsonOutputStream;
+import org.bson.io.BsonOutput;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -85,7 +85,7 @@ public class InsertCommandMessage extends BaseWriteCommandMessage {
         return "insert";
     }
 
-    protected InsertCommandMessage writeTheWrites(final BsonOutputStream outputStream, final int commandStartPosition,
+    protected InsertCommandMessage writeTheWrites(final BsonOutput bsonOutput, final int commandStartPosition,
                                                   final BsonBinaryWriter writer) {
         InsertCommandMessage nextMessage = null;
         writer.writeStartArray("documents");
@@ -95,7 +95,7 @@ public class InsertCommandMessage extends BaseWriteCommandMessage {
             getBsonDocumentCodec().encode(writer,
                                           insertRequestList.get(i).getDocument(),
                                           EncoderContext.builder().isEncodingCollectibleDocument(true).build());
-            if (exceedsLimits(outputStream.getPosition() - commandStartPosition, i + 1)) {
+            if (exceedsLimits(bsonOutput.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
                 nextMessage = new InsertCommandMessage(getWriteNamespace(), isOrdered(), getWriteConcern(),
                                                           insertRequestList.subList(i, insertRequestList.size()),

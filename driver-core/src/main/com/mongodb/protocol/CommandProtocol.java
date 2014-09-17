@@ -21,7 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultFuture;
-import com.mongodb.connection.ByteBufferOutputBuffer;
+import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.diagnostics.Loggers;
@@ -38,7 +38,7 @@ import org.bson.codecs.DecoderContext;
 import java.util.EnumSet;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.protocol.ProtocolHelper.encodeMessageToBuffer;
+import static com.mongodb.protocol.ProtocolHelper.encodeMessage;
 import static com.mongodb.protocol.ProtocolHelper.getCommandFailureException;
 import static com.mongodb.protocol.ProtocolHelper.getMessageSettings;
 import static java.lang.String.format;
@@ -79,15 +79,15 @@ public class CommandProtocol<T> implements Protocol<T> {
     }
 
     private CommandMessage sendMessage(final Connection connection) {
-        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
+        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
             CommandMessage message = new CommandMessage(namespace.getFullName(), command, cursorFlags, fieldNameValidator,
                                                         getMessageSettings(connection.getServerDescription()));
-            message.encode(buffer);
-            connection.sendMessage(buffer.getByteBuffers(), message.getId());
+            message.encode(bsonOutput);
+            connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             return message;
         } finally {
-            buffer.close();
+            bsonOutput.close();
         }
     }
 
@@ -107,18 +107,18 @@ public class CommandProtocol<T> implements Protocol<T> {
                             namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
         SingleResultFuture<T> retVal = new SingleResultFuture<T>();
 
-        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
+        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         CommandMessage message = new CommandMessage(namespace.getFullName(), command, cursorFlags, fieldNameValidator,
                                                     getMessageSettings(connection.getServerDescription()));
-        encodeMessageToBuffer(message, buffer);
+        encodeMessage(message, bsonOutput);
 
         CommandResultCallback<T> receiveCallback = new CommandResultCallback<T>(new SingleResultFutureCallback<T>(retVal),
                                                                                 commandResultDecoder,
                                                                                 message.getId(),
                                                                                 connection.getServerAddress());
-        connection.sendMessageAsync(buffer.getByteBuffers(),
+        connection.sendMessageAsync(bsonOutput.getByteBuffers(),
                                     message.getId(),
-                                    new SendMessageCallback<T>(connection, buffer, message.getId(), retVal, receiveCallback));
+                                    new SendMessageCallback<T>(connection, bsonOutput, message.getId(), retVal, receiveCallback));
         return retVal;
     }
 

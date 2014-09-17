@@ -44,15 +44,15 @@ final class CommandHelper {
 
     private static CommandMessage sendMessage(final String database, final BsonDocument command,
                                               final InternalConnection internalConnection) {
-        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(internalConnection);
+        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(internalConnection);
         try {
             CommandMessage message = new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
                                                         command, EnumSet.noneOf(CursorFlag.class), MessageSettings.builder().build());
-            message.encode(buffer);
-            internalConnection.sendMessage(buffer.getByteBuffers(), message.getId());
+            message.encode(bsonOutput);
+            internalConnection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             return message;
         } finally {
-            buffer.close();
+            bsonOutput.close();
         }
     }
 

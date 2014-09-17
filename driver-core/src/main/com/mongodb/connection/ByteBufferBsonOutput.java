@@ -28,9 +28,10 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * This class should not be considered as part of the public API, and it may change or be removed at any time.
+ *
  * @since 3.0
  */
-public class ByteBufferOutputBuffer extends OutputBuffer {
+public class ByteBufferBsonOutput extends OutputBuffer {
 
     public static final int INITIAL_BUFFER_SIZE = 1024;
     public static final int MAX_BUFFER_SIZE = 1 << 24;
@@ -45,7 +46,7 @@ public class ByteBufferOutputBuffer extends OutputBuffer {
      *
      * @param bufferProvider the non-null buffer provider
      */
-    public ByteBufferOutputBuffer(final BufferProvider bufferProvider) {
+    public ByteBufferBsonOutput(final BufferProvider bufferProvider) {
         this.bufferProvider = notNull("bufferProvider", bufferProvider);
     }
 

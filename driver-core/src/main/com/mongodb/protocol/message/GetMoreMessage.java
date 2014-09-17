@@ -17,7 +17,7 @@
 package com.mongodb.protocol.message;
 
 import com.mongodb.operation.GetMore;
-import org.bson.io.BsonOutputStream;
+import org.bson.io.BsonOutput;
 
 public class GetMoreMessage extends RequestMessage {
     private final GetMore getMore;
@@ -32,12 +32,12 @@ public class GetMoreMessage extends RequestMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final BsonOutputStream outputStream, final int messageStartPosition) {
-        writeGetMore(outputStream);
+    protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
+        writeGetMore(bsonOutput);
         return null;
     }
 
-    private void writeGetMore(final BsonOutputStream buffer) {
+    private void writeGetMore(final BsonOutput buffer) {
         buffer.writeInt32(0);
         buffer.writeCString(getCollectionName());
         buffer.writeInt32(getMore.getNumberToReturn());

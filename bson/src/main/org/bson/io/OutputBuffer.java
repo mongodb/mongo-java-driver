@@ -27,7 +27,7 @@ import java.util.List;
 
 import static java.lang.String.format;
 
-public abstract class OutputBuffer extends OutputStream implements BsonOutputStream {
+public abstract class OutputBuffer extends OutputStream implements BsonOutput {
 
     public void write(final byte[] b) {
         write(b, 0, b.length);

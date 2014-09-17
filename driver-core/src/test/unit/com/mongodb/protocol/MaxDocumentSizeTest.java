@@ -16,7 +16,7 @@
 
 package com.mongodb.protocol;
 
-import com.mongodb.connection.ByteBufferOutputBuffer;
+import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.SimpleBufferProvider;
 import com.mongodb.operation.InsertRequest;
 import com.mongodb.protocol.message.InsertMessage;
@@ -33,7 +33,7 @@ import static java.util.Arrays.asList;
 
 @SuppressWarnings("unchecked")
 public class MaxDocumentSizeTest {
-    private ByteBufferOutputBuffer buffer;
+    private ByteBufferBsonOutput buffer;
     private InsertMessage message;
 
     @Before
@@ -41,7 +41,7 @@ public class MaxDocumentSizeTest {
         message = new InsertMessage("test.test", true, ACKNOWLEDGED,
                                               asList(new InsertRequest(new BsonDocument("bytes", new BsonBinary(new byte[2048])))),
                                               MessageSettings.builder().maxDocumentSize(1024).build());
-        buffer = new ByteBufferOutputBuffer(new SimpleBufferProvider());
+        buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
     }
 
     @After

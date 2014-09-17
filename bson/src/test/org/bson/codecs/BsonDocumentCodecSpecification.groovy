@@ -86,8 +86,7 @@ class BsonDocumentCodecSpecification extends Specification {
         BsonBinaryWriter writer = new BsonBinaryWriter(new BasicOutputBuffer(), false)
         new BsonDocumentCodec().encode(writer, doc, EncoderContext.builder().build())
         BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(
-                new ByteBufNIO(ByteBuffer.wrap(writer.buffer.toByteArray()))),
-                                                       true)
+                new ByteBufNIO(ByteBuffer.wrap(writer.bsonOutput.toByteArray()))), true)
         def decodedDoc = new BsonDocumentCodec().decode(reader, DecoderContext.builder().build())
 
         then:

@@ -22,7 +22,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
-import com.mongodb.connection.ByteBufferOutputBuffer;
+import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.operation.WriteRequest;
@@ -98,8 +98,8 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
 
         if (message != null && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches()) {
 
-            final ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
-            final BaseWriteCommandMessage nextMessage = message.encode(buffer);
+            final ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
+            final BaseWriteCommandMessage nextMessage = message.encode(bsonOutput);
             final int itemCount = nextMessage != null ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
             final IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
             final int nextBatchNum = batchNum + 1;
@@ -109,10 +109,10 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
                 getLogger().debug(format("Asynchronously sending batch %d", batchNum));
             }
 
-            sendMessageAsync(connection, message.getId(), buffer).register(new SingleResultCallback<BsonDocument>() {
+            sendMessageAsync(connection, message.getId(), bsonOutput).register(new SingleResultCallback<BsonDocument>() {
                 @Override
                 public void onResult(final BsonDocument result, final MongoException e) {
-                    buffer.close();
+                    bsonOutput.close();
                     if (e != null) {
                         future.init(null, e);
                     } else {
@@ -146,16 +146,16 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
     protected abstract BaseWriteCommandMessage createRequestMessage(final MessageSettings messageSettings);
 
     private BaseWriteCommandMessage sendMessage(final Connection connection, final BaseWriteCommandMessage message, final int batchNum) {
-        ByteBufferOutputBuffer buffer = new ByteBufferOutputBuffer(connection);
+        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
-            BaseWriteCommandMessage nextMessage = message.encode(buffer);
+            BaseWriteCommandMessage nextMessage = message.encode(bsonOutput);
             if (nextMessage != null || batchNum > 1) {
                 getLogger().debug(format("Sending batch %d", batchNum));
             }
-            connection.sendMessage(buffer.getByteBuffers(), message.getId());
+            connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             return nextMessage;
         } finally {
-            buffer.close();
+            bsonOutput.close();
         }
     }
 
@@ -177,7 +177,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
     }
 
     private MongoFuture<BsonDocument> sendMessageAsync(final Connection connection, final int messageId,
-                                                       final ByteBufferOutputBuffer buffer) {
+                                                       final ByteBufferBsonOutput buffer) {
         SingleResultFuture<BsonDocument> future = new SingleResultFuture<BsonDocument>();
 
         CommandResultCallback<BsonDocument> receiveCallback =
