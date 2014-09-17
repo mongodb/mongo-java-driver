@@ -25,7 +25,7 @@ import org.bson.codecs.Decoder;
 abstract class CommandResultBaseCallback<T> extends ResponseCallback {
     private final Decoder<T> decoder;
 
-    public CommandResultBaseCallback(final Decoder<T> decoder, final long requestId, final ServerAddress serverAddress) {
+    CommandResultBaseCallback(final Decoder<T> decoder, final long requestId, final ServerAddress serverAddress) {
         super(requestId, serverAddress);
         this.decoder = decoder;
     }

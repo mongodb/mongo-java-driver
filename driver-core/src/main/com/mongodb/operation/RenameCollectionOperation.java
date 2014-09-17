@@ -61,6 +61,7 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
      * Rename the collection with {@code oldCollectionName} in database {@code databaseName} to the {@code newCollectionName}.
      *
      * @param binding the binding
+     * @return a void result
      * @throws com.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection and dropTarget
      *                                          is false, or if the oldCollectionName is the name of a collection that doesn't exist
      */
@@ -73,6 +74,7 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
      * Rename the collection with {@code oldCollectionName} in database {@code databaseName} to the {@code newCollectionName}.
      *
      * @param binding the binding
+     * @return a future for a void result
      * @throws com.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection and dropTarget
      *                                          is false, or if the oldCollectionName is the name of a collection that doesn't exist
      */

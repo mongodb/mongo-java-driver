@@ -22,16 +22,19 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Efficiently maps each integer in a set to another integer in a set, useful for merging bulk write errors when a bulk write must be
- * split into multiple batches. Has the ability to switch from a range-based to a hash-based map depending on the mappings that have been
- * added.
- *
+ * Efficiently maps each integer in a set to another integer in a set, useful for merging bulk write errors when a bulk write must be split
+ * into multiple batches. Has the ability to switch from a range-based to a hash-based map depending on the mappings that have been added.
+ * <p/>
  * This class should not be a part of the public API.
+ *
+ * @since 3.0
  */
 public abstract class IndexMap {
 
     /**
      * Create an empty index map.
+     *
+     * @return a new index map
      */
     public static IndexMap create() {
         return new RangeBased();
@@ -39,13 +42,30 @@ public abstract class IndexMap {
 
     /**
      * Create an index map that maps the integers 0..count to startIndex..startIndex + count.
+     *
+     * @param startIndex the start index
+     * @param count      the count
+     * @return an index map
      */
     public static IndexMap create(final int startIndex, final int count) {
         return new RangeBased(startIndex, count);
     }
 
+    /**
+     * Add a new index to the map
+     *
+     * @param index         the index
+     * @param originalIndex the original index
+     * @return an index map with this index added to it
+     */
     public abstract IndexMap add(int index, int originalIndex);
 
+    /**
+     * Return the index that the specified index is mapped to.
+     *
+     * @param index the index
+     * @return the index it's mapped to
+     */
     public abstract int map(int index);
 
     private static class HashBased extends IndexMap {

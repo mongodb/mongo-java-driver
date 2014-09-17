@@ -17,22 +17,37 @@
 package com.mongodb.protocol;
 
 import com.mongodb.async.MongoFuture;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.codecs.Decoder;
 
+/**
+ * An implementation of the OP_GET_MORE protocol that can be used to receive the next batch of documents from an exhaust cursor.
+ *
+ * @param <T> the type of document to decode query results to
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-get-more OP_GET_MORE
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+ * @since 3.0
+ */
 public class GetMoreReceiveProtocol<T> implements Protocol<QueryResult<T>> {
 
     private final Decoder<T> resultDecoder;
     private final int responseTo;
 
+    /**
+     * Construct an instance.
+     *
+     * @param resultDecoder the decoder for the result documents
+     * @param responseTo    the expected responseTo field for next batch
+     */
     public GetMoreReceiveProtocol(final Decoder<T> resultDecoder, final int responseTo) {
         this.resultDecoder = resultDecoder;
         this.responseTo = responseTo;
     }
 
+    @Override
     public QueryResult<T> execute(final Connection connection) {
         ResponseBuffers responseBuffers = connection.receiveMessage(responseTo);
         try {
@@ -42,6 +57,7 @@ public class GetMoreReceiveProtocol<T> implements Protocol<QueryResult<T>> {
         }
     }
 
+    @Override
     public MongoFuture<QueryResult<T>> executeAsync(final Connection connection) {
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
         connection.receiveMessageAsync(responseTo, new GetMoreResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),

@@ -36,6 +36,13 @@ import static com.mongodb.protocol.ProtocolHelper.encodeMessage;
 import static com.mongodb.protocol.ProtocolHelper.getQueryFailureException;
 import static java.lang.String.format;
 
+/**
+ * An implementation of the OP_GET_MORE protocol.
+ *
+ * @param <T> the type of document to decode query results to
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+ * @since 3.0
+ */
 public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
 
     public static final Logger LOGGER = Loggers.getLogger("protocol.getmore");
@@ -44,6 +51,13 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     private final Decoder<T> resultDecoder;
     private final MongoNamespace namespace;
 
+    /**
+     * Construct an instance.
+     *
+     * @param namespace     the namespace
+     * @param getMore       the values to apply to the OP_GET_MORE
+     * @param resultDecoder the decoder for the result documents.
+     */
     public GetMoreProtocol(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
         this.getMore = getMore;
@@ -59,6 +73,7 @@ public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
         return queryResult;
     }
 
+    @Override
     public MongoFuture<QueryResult<T>> executeAsync(final Connection connection) {
         LOGGER.debug(format("Asynchronously getting more documents from namespace %s with cursor %d on connection [%s] to server %s",
                             namespace, getMore.getServerCursor().getId(), connection.getId(), connection.getServerAddress()));

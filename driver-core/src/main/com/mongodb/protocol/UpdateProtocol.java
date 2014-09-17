@@ -20,11 +20,11 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.connection.Connection;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.SingleResultFuture;
+import com.mongodb.connection.Connection;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.operation.UpdateRequest;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
@@ -35,11 +35,25 @@ import java.util.List;
 
 import static java.lang.String.format;
 
+/**
+ * An implementation of the MongoDB OP_UPDATE wire protocol.
+ *
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-update OP_UPDATE
+ * @since 3.0
+ */
 public class UpdateProtocol extends WriteProtocol {
     private static final com.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.update");
 
     private final List<UpdateRequest> updates;
 
+    /**
+     * Construct an instance.
+     *
+     * @param namespace    the namespace
+     * @param ordered      whether the delete are ordered
+     * @param writeConcern the write concern to apply
+     * @param updates      the updates
+     */
     public UpdateProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                           final List<UpdateRequest> updates) {
         super(namespace, ordered, writeConcern);

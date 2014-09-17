@@ -29,11 +29,21 @@ import com.mongodb.protocol.message.KillCursorsMessage;
 
 import static java.lang.String.format;
 
+/**
+ * An implementation of the OP_KILL_CURSOR protocol.
+ *
+ * @since 3.0
+ */
 public class KillCursorProtocol implements Protocol<Void> {
     public static final Logger LOGGER = Loggers.getLogger("protocol.killcursor");
 
     private final KillCursor killCursor;
 
+    /**
+     * Construct an instance.
+     *
+     * @param killCursor the list of cursors to kill
+     */
     public KillCursorProtocol(final KillCursor killCursor) {
         this.killCursor = killCursor;
     }

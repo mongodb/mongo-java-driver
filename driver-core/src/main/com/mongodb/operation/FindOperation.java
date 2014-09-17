@@ -314,6 +314,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
         });
     }
 
+    @Override
     public MongoFuture<MongoAsyncCursor<T>> executeAsync(final AsyncReadBinding binding) {
         return withConnection(binding, new OperationHelper.AsyncCallableWithConnectionAndSource<MongoAsyncCursor<T>>() {
             @Override

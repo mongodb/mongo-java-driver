@@ -33,6 +33,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 
 /**
  * Execute this operation to return a List of Strings of the names of all the databases for the current MongoDB instance.
+ * @since 3.0
  */
 public class GetDatabaseNamesOperation implements AsyncReadOperation<List<String>>, ReadOperation<List<String>> {
 

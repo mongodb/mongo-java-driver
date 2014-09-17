@@ -33,8 +33,8 @@ class CommandResultCallback<T> extends CommandResultBaseCallback<BsonDocument> {
     private final SingleResultCallback<T> callback;
     private final Decoder<T> decoder;
 
-    public CommandResultCallback(final SingleResultCallback<T> callback, final Decoder<T> decoder,
-                                 final long requestId, final ServerAddress serverAddress) {
+    CommandResultCallback(final SingleResultCallback<T> callback, final Decoder<T> decoder,
+                          final long requestId, final ServerAddress serverAddress) {
         super(new BsonDocumentCodec(), requestId, serverAddress);
         this.callback = callback;
         this.decoder = decoder;

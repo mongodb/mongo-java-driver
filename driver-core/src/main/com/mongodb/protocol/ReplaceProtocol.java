@@ -39,8 +39,8 @@ import static java.lang.String.format;
  * An implementation of the update wire protocol that handles full document replacements.  This class also takes care of applying the write
  * concern.
  *
- * @since 3.0
  * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-update OP_UPDATE
+ * @since 3.0
  */
 public class ReplaceProtocol extends WriteProtocol {
     private static final com.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.replace");
@@ -50,12 +50,13 @@ public class ReplaceProtocol extends WriteProtocol {
     /**
      * Construct a new instance.
      *
-     * @param namespace the namespace
-     * @param ordered whether the inserts are ordered
-     * @param writeConcern the write concern
+     * @param namespace       the namespace
+     * @param ordered         whether the inserts are ordered
+     * @param writeConcern    the write concern
      * @param replaceRequests the list of replace requests
-     */public ReplaceProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                              final List<ReplaceRequest> replaceRequests) {
+     */
+    public ReplaceProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                           final List<ReplaceRequest> replaceRequests) {
         super(namespace, ordered, writeConcern);
         this.replaceRequests = replaceRequests;
     }

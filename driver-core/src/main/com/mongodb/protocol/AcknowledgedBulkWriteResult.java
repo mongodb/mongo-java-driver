@@ -35,6 +35,33 @@ public class AcknowledgedBulkWriteResult extends BulkWriteResult {
     private Integer modifiedCount;
     private final List<BulkWriteUpsert> upserts;
 
+    /**
+     * Construct an instance.
+     *
+     * @param type the type of the write
+     * @param count the number of documents matched
+     * @param upserts the list of upserts
+     */
+    public AcknowledgedBulkWriteResult(final WriteRequest.Type type, final int count, final List<BulkWriteUpsert> upserts) {
+        this(type, count, 0, upserts);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param type the type of the write
+     * @param count the number of documents matched
+     * @param modifiedCount the number of documents modified, which may be null if the server was not able to provide the count
+     * @param upserts the list of upserts
+     */
+    public AcknowledgedBulkWriteResult(final WriteRequest.Type type, final int count, final Integer modifiedCount,
+                                       final List<BulkWriteUpsert> upserts) {
+        this(type == WriteRequest.Type.INSERT ? count : 0,
+             (type == WriteRequest.Type.UPDATE || type == WriteRequest.Type.REPLACE)  ? count : 0,
+             type == WriteRequest.Type.REMOVE ? count : 0,
+             modifiedCount, upserts);
+    }
+
     AcknowledgedBulkWriteResult(final int insertedCount, final int matchedCount, final int removedCount,
                                 final Integer modifiedCount, final List<BulkWriteUpsert> upserts) {
         this.insertedCount = insertedCount;
@@ -42,18 +69,6 @@ public class AcknowledgedBulkWriteResult extends BulkWriteResult {
         this.removedCount = removedCount;
         this.modifiedCount = modifiedCount;
         this.upserts = Collections.unmodifiableList(notNull("upserts", upserts));
-    }
-
-    public AcknowledgedBulkWriteResult(final WriteRequest.Type type, final int count, final List<BulkWriteUpsert> upserts) {
-        this(type, count, 0, upserts);
-    }
-
-    public AcknowledgedBulkWriteResult(final WriteRequest.Type type, final int count, final Integer modifiedCount,
-                                       final List<BulkWriteUpsert> upserts) {
-        this(type == WriteRequest.Type.INSERT ? count : 0,
-             (type == WriteRequest.Type.UPDATE || type == WriteRequest.Type.REPLACE)  ? count : 0,
-             type == WriteRequest.Type.REMOVE ? count : 0,
-             modifiedCount, upserts);
     }
 
     @Override

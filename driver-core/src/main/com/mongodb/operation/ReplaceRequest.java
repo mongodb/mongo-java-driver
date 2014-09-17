@@ -48,6 +48,12 @@ public final class ReplaceRequest extends BaseUpdateRequest {
         return replacement;
     }
 
+    /**
+     * Sets whether this is an upsert.
+     *
+     * @param isUpsert whether this update will insert a new document if no documents match the criteria
+     * @return this
+     */
     public ReplaceRequest upsert(final boolean isUpsert) {
         super.upsert(isUpsert);
         return this;

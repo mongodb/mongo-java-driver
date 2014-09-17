@@ -20,13 +20,20 @@ import org.bson.BsonValue;
 import org.mongodb.WriteResult;
 
 /**
- * This class should be made non-public
+ * This class is not part of the public API.  It may change or be removed at any time.
  */
 public class AcknowledgedWriteResult implements WriteResult {
     private final int documentsAffectedCount;
     private final boolean isUpdateOfExisting;
     private final BsonValue upsertedId;
 
+    /**
+     * Construct an instance
+     *
+     * @param count the count of matched documents
+     * @param isUpdateOfExisting whether an existing document was updated
+     * @param upsertedId if an upsert resulted in an inserted document, this is the _id of that document.  This may be null
+     */
     public AcknowledgedWriteResult(final int count, final boolean isUpdateOfExisting, final BsonValue upsertedId) {
         this.documentsAffectedCount = count;
         this.isUpdateOfExisting = isUpdateOfExisting;

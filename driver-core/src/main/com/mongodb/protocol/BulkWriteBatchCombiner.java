@@ -34,7 +34,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
 
 /**
- * This class is not part of the public API.  Do not use!
+ * This class is not part of the public API.  It may be changed or removed at any time.
  */
 public class BulkWriteBatchCombiner {
     private final ServerAddress serverAddress;
@@ -59,12 +59,25 @@ public class BulkWriteBatchCombiner {
     });
     private final List<WriteConcernError> writeConcernErrors = new ArrayList<WriteConcernError>();
 
+    /**
+     * Construct an instance.
+     *
+     * @param serverAddress the server address
+     * @param ordered       ordered
+     * @param writeConcern  the write concern
+     */
     public BulkWriteBatchCombiner(final ServerAddress serverAddress, final boolean ordered, final WriteConcern writeConcern) {
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.ordered = ordered;
         this.serverAddress = notNull("serverAddress", serverAddress);
     }
 
+    /**
+     * Add a result
+     *
+     * @param result   the result
+     * @param indexMap the index map
+     */
     public void addResult(final BulkWriteResult result, final IndexMap indexMap) {
         insertedCount += result.getInsertedCount();
         matchedCount += result.getMatchedCount();
@@ -77,26 +90,90 @@ public class BulkWriteBatchCombiner {
         mergeUpserts(result.getUpserts(), indexMap);
     }
 
+    /**
+     * Add an error result
+     *
+     * @param exception the exception
+     * @param indexMap  the index map
+     */
     public void addErrorResult(final BulkWriteException exception, final IndexMap indexMap) {
         addResult(exception.getWriteResult(), indexMap);
         mergeWriteErrors(exception.getWriteErrors(), indexMap);
         mergeWriteConcernError(exception.getWriteConcernError());
     }
 
+    /**
+     * Add a write error result
+     *
+     * @param writeError the write error
+     * @param indexMap   the index map
+     */
     public void addWriteErrorResult(final BulkWriteError writeError, final IndexMap indexMap) {
         notNull("writeError", writeError);
         mergeWriteErrors(asList(writeError), indexMap);
     }
 
+    /**
+     * Add a write concern error result
+     *
+     * @param writeConcernError the write concern error
+     */
     public void addWriteConcernErrorResult(final WriteConcernError writeConcernError) {
         notNull("writeConcernError", writeConcernError);
         mergeWriteConcernError(writeConcernError);
     }
 
+    /**
+     * Add a list of error results and a write concern error
+     *
+     * @param writeErrors       the errors
+     * @param writeConcernError the write concern error
+     * @param indexMap          the index map
+     */
     public void addErrorResult(final List<BulkWriteError> writeErrors,
                                final WriteConcernError writeConcernError, final IndexMap indexMap) {
         mergeWriteErrors(writeErrors, indexMap);
         mergeWriteConcernError(writeConcernError);
+    }
+
+    /**
+     * Gets the combined result.
+     *
+     * @return the result
+     */
+    public BulkWriteResult getResult() {
+        throwOnError();
+        return createResult();
+    }
+
+    /**
+     * True if ordered and has write errors.
+     *
+     * @return true if no more batches should be sent
+     */
+    public boolean shouldStopSendingMoreBatches() {
+        return ordered && hasWriteErrors();
+    }
+
+    /**
+     * Gets whether there are errors in the combined result.
+     *
+     * @return whether there are errors in the combined result
+     */
+    public boolean hasErrors() {
+        return hasWriteErrors() || hasWriteConcernErrors();
+    }
+
+    /**
+     * Gets the combined errors as an exception
+     * @return the bulk write exception, or null if there were no errors
+     */
+    public BulkWriteException getError() {
+        return hasErrors() ? new BulkWriteException(createResult(),
+                                                    new ArrayList<BulkWriteError>(writeErrors),
+                                                    writeConcernErrors.isEmpty() ? null
+                                                                                 : writeConcernErrors.get(writeConcernErrors.size() - 1),
+                                                    serverAddress) : null;
     }
 
     private void mergeWriteConcernError(final WriteConcernError writeConcernError) {
@@ -120,27 +197,6 @@ public class BulkWriteBatchCombiner {
         for (BulkWriteUpsert bulkWriteUpsert : upserts) {
             writeUpserts.add(new BulkWriteUpsert(indexMap.map(bulkWriteUpsert.getIndex()), bulkWriteUpsert.getId()));
         }
-    }
-
-    public BulkWriteResult getResult() {
-        throwOnError();
-        return createResult();
-    }
-
-    public boolean shouldStopSendingMoreBatches() {
-        return ordered && hasWriteErrors();
-    }
-
-    public boolean hasErrors() {
-        return hasWriteErrors() || hasWriteConcernErrors();
-    }
-
-    public BulkWriteException getError() {
-        return hasErrors() ? new BulkWriteException(createResult(),
-                                                   new ArrayList<BulkWriteError>(writeErrors),
-                                                   writeConcernErrors.isEmpty() ? null
-                                                                                : writeConcernErrors.get(writeConcernErrors.size() - 1),
-                                                   serverAddress) : null;
     }
 
     private void throwOnError() {

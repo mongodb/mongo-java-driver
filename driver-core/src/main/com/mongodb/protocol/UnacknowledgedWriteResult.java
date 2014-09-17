@@ -20,10 +20,7 @@ import com.mongodb.UnacknowledgedWriteException;
 import org.bson.BsonValue;
 import org.mongodb.WriteResult;
 
-/**
- * This class should not be public.
- */
-public class UnacknowledgedWriteResult implements WriteResult {
+class UnacknowledgedWriteResult implements WriteResult {
     @Override
     public boolean wasAcknowledged() {
         return false;

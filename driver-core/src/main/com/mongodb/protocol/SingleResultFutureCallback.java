@@ -23,7 +23,7 @@ import com.mongodb.async.SingleResultFuture;
 class SingleResultFutureCallback<T> implements SingleResultCallback<T> {
     private final SingleResultFuture<T> retVal;
 
-    public SingleResultFutureCallback(final SingleResultFuture<T> retVal) {
+    SingleResultFutureCallback(final SingleResultFuture<T> retVal) {
         this.retVal = retVal;
     }
 

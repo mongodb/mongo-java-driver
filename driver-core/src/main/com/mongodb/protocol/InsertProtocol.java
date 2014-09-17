@@ -38,8 +38,8 @@ import static java.lang.String.format;
 /**
  * An implementation of the insert wire protocol.  This class also takes care of applying the write concern.
  *
- * @since 3.0
  * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-insert OP_INSERT
+ * @since 3.0
  */
 public class InsertProtocol extends WriteProtocol {
 
@@ -50,9 +50,9 @@ public class InsertProtocol extends WriteProtocol {
     /**
      * Construct a new instance.
      *
-     * @param namespace the namespace
-     * @param ordered whether the inserts are ordered
-     * @param writeConcern the write concern
+     * @param namespace         the namespace
+     * @param ordered           whether the inserts are ordered
+     * @param writeConcern      the write concern
      * @param insertRequestList the list of documents to insert
      */
     public InsertProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,

@@ -35,12 +35,26 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 
+/**
+ * An implementation of the update command.
+ *
+ * @mongodb.driver.manual manual/reference/command/insert/#dbcmd.update Update Command
+ * @since 3.0
+ */
 public class UpdateCommandProtocol extends WriteCommandProtocol {
 
     private static final com.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.update");
 
     private final List<UpdateRequest> updates;
 
+    /**
+     * Construct an instance.
+     *
+     * @param namespace    the namespace
+     * @param ordered      whether the inserts are ordered
+     * @param writeConcern the write concern
+     * @param updates      the list of updates
+     */
     public UpdateCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                  final List<UpdateRequest> updates) {
         super(namespace, ordered, writeConcern);

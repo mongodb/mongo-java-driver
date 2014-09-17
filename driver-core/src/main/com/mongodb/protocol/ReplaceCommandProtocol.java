@@ -39,8 +39,8 @@ import static java.lang.String.format;
 /**
  * An implementation of the update command that handles full document replacements
  *
- * @since 3.0
  * @mongodb.driver.manual manual/reference/command/insert/#dbcmd.update Update Command
+ * @since 3.0
  */
 public class ReplaceCommandProtocol extends WriteCommandProtocol {
 
@@ -51,9 +51,9 @@ public class ReplaceCommandProtocol extends WriteCommandProtocol {
     /**
      * Construct an instance.
      *
-     * @param namespace the namespace
-     * @param ordered whether the inserts are ordered
-     * @param writeConcern the write concern
+     * @param namespace       the namespace
+     * @param ordered         whether the inserts are ordered
+     * @param writeConcern    the write concern
      * @param replaceRequests the list of inserts
      */
     public ReplaceCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,

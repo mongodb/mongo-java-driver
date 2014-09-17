@@ -20,12 +20,12 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.connection.Connection;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.SingleResultFuture;
+import com.mongodb.connection.Connection;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.operation.RemoveRequest;
-import com.mongodb.async.SingleResultFuture;
 import com.mongodb.protocol.message.DeleteMessage;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
@@ -35,11 +35,25 @@ import java.util.List;
 
 import static java.lang.String.format;
 
+/**
+ * An implementation of the MongoDB OP_DELETE wire protocol.
+ *
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-delete OP_DELETE
+ * @since 3.0
+ */
 public class DeleteProtocol extends WriteProtocol {
     private static final Logger LOGGER = Loggers.getLogger("protocol.delete");
 
     private final List<RemoveRequest> deletes;
 
+    /**
+     * Construct an instance.
+     *
+     * @param namespace    the namespace
+     * @param ordered      whether the delete are ordered
+     * @param writeConcern the write concern to apply
+     * @param deletes      the deletes
+     */
     public DeleteProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                           final List<RemoveRequest> deletes) {
         super(namespace, ordered, writeConcern);

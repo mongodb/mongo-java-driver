@@ -41,22 +41,37 @@ import static com.mongodb.protocol.ProtocolHelper.encodeMessage;
 import static com.mongodb.protocol.ProtocolHelper.getMessageSettings;
 import static java.lang.String.format;
 
+/**
+ * Base class for wire protocol messages that perform writes.  In particular, it handles the write followed by the getlasterror command to
+ * apply the write concern.
+ *
+ * @since 3.0
+ */
 public abstract class WriteProtocol implements Protocol<WriteResult> {
 
     private final MongoNamespace namespace;
     private final boolean ordered;
     private final WriteConcern writeConcern;
 
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace    the namespace
+     * @param ordered      whether the inserts are ordered
+     * @param writeConcern the write concern
+     */
     public WriteProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern) {
         this.namespace = namespace;
         this.ordered = ordered;
         this.writeConcern = writeConcern;
     }
 
+    @Override
     public WriteResult execute(final Connection connection) {
         return receiveMessage(connection, sendMessage(connection));
     }
 
+    @Override
     public MongoFuture<WriteResult> executeAsync(final Connection connection) {
         SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
@@ -144,19 +159,45 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
         }
     }
 
+    /**
+     * Create the initial request message for the write.
+     *
+     * @param settings the message settings
+     * @return the request message
+     */
     protected abstract RequestMessage createRequestMessage(final MessageSettings settings);
 
+    /**
+     * Gets the namespace.
+     *
+     * @return the namespace
+     */
     protected MongoNamespace getNamespace() {
         return namespace;
     }
 
+    /**
+     * Gets whether the writes are ordered.
+     *
+     * @return true if ordered
+     */
     protected boolean isOrdered() {
         return ordered;
     }
 
+    /**
+     * Gets the write concern.
+     *
+     * @return the write concern
+     */
     protected WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
+    /**
+     * Gets the logger.
+     *
+     * @return the logger
+     */
     protected abstract Logger getLogger();
 }

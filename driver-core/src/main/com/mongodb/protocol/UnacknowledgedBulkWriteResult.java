@@ -22,13 +22,7 @@ import org.mongodb.BulkWriteUpsert;
 
 import java.util.List;
 
-/**
- * This class should not be public, but has to be for now.
- */
-public class UnacknowledgedBulkWriteResult extends BulkWriteResult {
-
-    UnacknowledgedBulkWriteResult() {
-    }
+class UnacknowledgedBulkWriteResult extends BulkWriteResult {
 
     @Override
     public boolean isAcknowledged() {

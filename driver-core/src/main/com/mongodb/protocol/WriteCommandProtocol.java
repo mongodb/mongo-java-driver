@@ -41,21 +41,39 @@ import static com.mongodb.protocol.WriteCommandResultHelper.getBulkWriteResult;
 import static com.mongodb.protocol.WriteCommandResultHelper.hasError;
 import static java.lang.String.format;
 
+/**
+ * A base class for implementations of the bulk write commands.
+ *
+ * @since 3.0
+ */
 public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
     private final MongoNamespace namespace;
     private final boolean ordered;
     private final WriteConcern writeConcern;
 
+    /**
+     * Construct an instance.
+     *
+     * @param namespace    the namespace
+     * @param ordered      whether the inserts are ordered
+     * @param writeConcern the write concern
+     */
     public WriteCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern) {
         this.namespace = namespace;
         this.ordered = ordered;
         this.writeConcern = writeConcern;
     }
 
+    /**
+     * Gets the write concern.
+     *
+     * @return the write concern
+     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
+    @Override
     public BulkWriteResult execute(final Connection connection) {
         BaseWriteCommandMessage message = createRequestMessage(getMessageSettings(connection.getServerDescription()));
         BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getServerAddress(), ordered, writeConcern);

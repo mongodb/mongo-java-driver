@@ -19,15 +19,15 @@ package com.mongodb.protocol;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
-import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.connection.ResponseBuffers;
 
 abstract class ResponseCallback implements SingleResultCallback<ResponseBuffers> {
     private volatile boolean closed;
     private final ServerAddress serverAddress;
     private final long requestId;
 
-    public ResponseCallback(final long requestId, final ServerAddress serverAddress) {
+    ResponseCallback(final long requestId, final ServerAddress serverAddress) {
         this.serverAddress = serverAddress;
         this.requestId = requestId;
     }

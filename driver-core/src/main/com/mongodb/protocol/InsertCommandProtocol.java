@@ -38,8 +38,8 @@ import static java.lang.String.format;
 /**
  * An implementation of the insert command.
  *
- * @since 3.0
  * @mongodb.driver.manual manual/reference/command/insert/#dbcmd.insert Insert Command
+ * @since 3.0
  */
 public class InsertCommandProtocol extends WriteCommandProtocol {
 
@@ -50,9 +50,9 @@ public class InsertCommandProtocol extends WriteCommandProtocol {
     /**
      * Construct an instance.
      *
-     * @param namespace the namespace
-     * @param ordered whether the inserts are ordered
-     * @param writeConcern the write concern
+     * @param namespace      the namespace
+     * @param ordered        whether the inserts are ordered
+     * @param writeConcern   the write concern
      * @param insertRequests the list of inserts
      */
     public InsertCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,

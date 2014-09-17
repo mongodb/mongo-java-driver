@@ -154,8 +154,18 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
         });
     }
 
+    /**
+     * Gets the write protocol
+     *
+     * @return the write protocol
+     */
     protected abstract WriteProtocol getWriteProtocol();
 
+    /**
+     * Gets the write command protocol.
+     *
+     * @return the write command protocol
+     */
     protected abstract WriteCommandProtocol getCommandProtocol();
 
     private MongoException translateException(final MongoException e) {

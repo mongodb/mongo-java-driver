@@ -40,6 +40,13 @@ import static com.mongodb.protocol.ProtocolHelper.getMessageSettings;
 import static com.mongodb.protocol.ProtocolHelper.getQueryFailureException;
 import static java.lang.String.format;
 
+/**
+ * An implementation of the MongoDB OP_QUERY wire protocol.
+ *
+ * @param <T> the type of document to decode query results to
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+ * @since 3.0
+ */
 public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
 
     public static final Logger LOGGER = Loggers.getLogger("protocol.query");
@@ -52,6 +59,17 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     private final Decoder<T> resultDecoder;
     private final MongoNamespace namespace;
 
+    /**
+     * Construct an instance.
+     *
+     * @param namespace      the namespace
+     * @param cursorFlags    the cursor flags
+     * @param skip           the number of documents to skip
+     * @param numberToReturn the number to return
+     * @param queryDocument  the query document
+     * @param fields         the fields to return in the result documents
+     * @param resultDecoder  the decoder for the result documents
+     */
     public QueryProtocol(final MongoNamespace namespace, final EnumSet<CursorFlag> cursorFlags, final int skip,
                          final int numberToReturn, final BsonDocument queryDocument,
                          final BsonDocument fields, final Decoder<T> resultDecoder) {
