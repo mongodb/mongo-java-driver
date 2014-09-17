@@ -19,14 +19,31 @@ package com.mongodb.protocol.message;
 import com.mongodb.operation.GetMore;
 import org.bson.io.BsonOutput;
 
+/**
+ * An OP_GET_MORE message.
+ *
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-get-more OP_GET_MORE
+ * @since 3.0
+ */
 public class GetMoreMessage extends RequestMessage {
     private final GetMore getMore;
 
+    /**
+     * Construct an instance.
+     *
+     * @param collectionName the collection name
+     * @param getMore        the get-more request
+     */
     public GetMoreMessage(final String collectionName, final GetMore getMore) {
         super(collectionName, OpCode.OP_GETMORE, MessageSettings.builder().build());
         this.getMore = getMore;
     }
 
+    /**
+     * Gets the cursor to get more from.
+     *
+     * @return the cursor id
+     */
     public long getCursorId() {
         return getMore.getServerCursor().getId();
     }

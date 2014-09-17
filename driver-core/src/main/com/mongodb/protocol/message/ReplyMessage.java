@@ -30,22 +30,25 @@ import java.util.List;
 
 import static java.lang.String.format;
 
+/**
+ * An OP_REPLY message.
+ *
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-reply OP_REPLY
+ * @since 3.0
+ * @param <T> the type of the result document
+ */
 public class ReplyMessage<T> {
 
     private final ReplyHeader replyHeader;
     private final List<T> documents;
 
-    public ReplyMessage(final ReplyHeader replyHeader, final long requestId) {
-        if (requestId != replyHeader.getResponseTo()) {
-            throw new MongoInternalException(format("The responseTo (%d) in the response does not match the requestId (%d) in the "
-                                                    + "request", replyHeader.getResponseTo(), requestId));
-        }
-
-        this.replyHeader = replyHeader;
-
-        documents = new ArrayList<T>(replyHeader.getNumberReturned());
-    }
-
+    /**
+     * Construct an instance.
+     *
+     * @param responseBuffers the response buffers containing the reply
+     * @param decoder the decoder for the result documents
+     * @param requestId the expected request id that this is a reply to
+     */
     public ReplyMessage(final ResponseBuffers responseBuffers, final Decoder<T> decoder, final long requestId) {
         this(responseBuffers.getReplyHeader(), requestId);
 
@@ -62,10 +65,31 @@ public class ReplyMessage<T> {
         }
     }
 
+    ReplyMessage(final ReplyHeader replyHeader, final long requestId) {
+        if (requestId != replyHeader.getResponseTo()) {
+            throw new MongoInternalException(format("The responseTo (%d) in the response does not match the requestId (%d) in the "
+                                                    + "request", replyHeader.getResponseTo(), requestId));
+        }
+
+        this.replyHeader = replyHeader;
+
+        documents = new ArrayList<T>(replyHeader.getNumberReturned());
+    }
+
+    /**
+     * Gets the reply header.
+     *
+     * @return the reply header
+     */
     public ReplyHeader getReplyHeader() {
         return replyHeader;
     }
 
+    /**
+     * Gets the documents.
+     *
+     * @return the documents
+     */
     public List<T> getDocuments() {
         return documents;
     }

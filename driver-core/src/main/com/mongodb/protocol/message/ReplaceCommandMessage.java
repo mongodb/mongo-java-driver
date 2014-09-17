@@ -28,18 +28,18 @@ import java.util.List;
 /**
  * An update command message that handles full document replacements.
  *
- * @since 3.0
  * @mongodb.driver.manual manual/reference/command/insert/#dbcmd.update Update Command
+ * @since 3.0
  */
 public class ReplaceCommandMessage extends BaseUpdateCommandMessage<ReplaceRequest> {
     /**
      * Construct an instance.
      *
-     * @param namespace the namespace
-     * @param ordered whether the inserts are ordered
-     * @param writeConcern the write concern
+     * @param namespace       the namespace
+     * @param ordered         whether the inserts are ordered
+     * @param writeConcern    the write concern
      * @param replaceRequests the list of replace requests
-     * @param settings the message settings
+     * @param settings        the message settings
      */
     public ReplaceCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                  final List<ReplaceRequest> replaceRequests,

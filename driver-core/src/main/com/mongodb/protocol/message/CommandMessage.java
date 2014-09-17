@@ -25,16 +25,39 @@ import java.util.EnumSet;
 
 import static com.mongodb.protocol.message.RequestMessage.OpCode.OP_QUERY;
 
+/**
+ * A command message that uses OP_QUERY to send the command.
+ *
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+ * @since 3.0
+ */
 public class CommandMessage extends RequestMessage {
     private final EnumSet<CursorFlag> cursorFlags;
     private final BsonDocument command;
     private final FieldNameValidator validator;
 
+    /**
+     * Construct an instance.
+     *
+     * @param collectionName the collection to execute the command in
+     * @param command        the command
+     * @param cursorFlags    the cursor flags
+     * @param settings       the message settings
+     */
     public CommandMessage(final String collectionName, final BsonDocument command, final EnumSet<CursorFlag> cursorFlags,
                           final MessageSettings settings) {
         this(collectionName, command, cursorFlags, new NoOpFieldNameValidator(), settings);
     }
 
+    /**
+     * Construct an instance.
+     *
+     * @param collectionName the collection to execute the command in
+     * @param command        the command
+     * @param cursorFlags    the cursor flags
+     * @param validator      the field name validator
+     * @param settings       the message settings
+     */
     public CommandMessage(final String collectionName, final BsonDocument command, final EnumSet<CursorFlag> cursorFlags,
                           final FieldNameValidator validator, final MessageSettings settings) {
         super(collectionName, OP_QUERY, settings);

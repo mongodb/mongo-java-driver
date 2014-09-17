@@ -25,11 +25,26 @@ import org.bson.codecs.EncoderContext;
 
 import java.util.List;
 
+/**
+ * A message for the update command.
+ *
+ * @mongodb.driver.manual manual/reference/command/insert/#dbcmd.update Update Command
+ * @since 3.0
+ */
 public class UpdateCommandMessage extends BaseUpdateCommandMessage<UpdateRequest> {
+    /**
+     * Construct an instance.
+     *
+     * @param namespace the namespace
+     * @param ordered whether the writes are ordered
+     * @param writeConcern the write concern
+     * @param updates the list of update requests
+     * @param settings the message settings
+     */
     public UpdateCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                 final List<UpdateRequest> updates,
-                                final MessageSettings messageSettings) {
-        super(namespace, ordered, writeConcern, updates, messageSettings);
+                                final MessageSettings settings) {
+        super(namespace, ordered, writeConcern, updates, settings);
     }
 
     protected void writeUpdate(final BsonBinaryWriter writer, final UpdateRequest update) {

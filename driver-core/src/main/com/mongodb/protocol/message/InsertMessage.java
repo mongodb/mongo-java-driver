@@ -27,8 +27,8 @@ import java.util.List;
 /**
  * An insert message.
  *
- * @since 3.0
  * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-insert OP_INSERT
+ * @since 3.0
  */
 public class InsertMessage extends RequestMessage {
 
@@ -39,11 +39,11 @@ public class InsertMessage extends RequestMessage {
     /**
      * Construct an instance.
      *
-     * @param collectionName the full name of the collection
-     * @param ordered whether the inserts are ordered
-     * @param writeConcern the write concern
+     * @param collectionName    the full name of the collection
+     * @param ordered           whether the inserts are ordered
+     * @param writeConcern      the write concern
      * @param insertRequestList the list of insert requests
-     * @param settings the message settings
+     * @param settings          the message settings
      */
     public InsertMessage(final String collectionName, final boolean ordered, final WriteConcern writeConcern,
                          final List<InsertRequest> insertRequestList, final MessageSettings settings) {

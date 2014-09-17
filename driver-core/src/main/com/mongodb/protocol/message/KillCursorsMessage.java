@@ -20,9 +20,20 @@ import com.mongodb.ServerCursor;
 import com.mongodb.protocol.KillCursor;
 import org.bson.io.BsonOutput;
 
+/**
+ * An OP_KILL_CURSOR message.
+ *
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-kill-cursors OP_KILL_CURSOR
+ * @since 3.0
+ */
 public class KillCursorsMessage extends RequestMessage {
     private final KillCursor killCursor;
 
+    /**
+     * Construct an instance.
+     *
+     * @param killCursor the list of cursors to kill
+     */
     public KillCursorsMessage(final KillCursor killCursor) {
         super(OpCode.OP_KILL_CURSORS, MessageSettings.builder().build());
         this.killCursor = killCursor;

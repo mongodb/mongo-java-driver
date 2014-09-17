@@ -21,12 +21,26 @@ import org.bson.io.BsonOutput;
 
 import java.util.EnumSet;
 
+/**
+ * Base class for OP_QUERY messages.
+ *
+ * @since 3.0
+ */
 public abstract class BaseQueryMessage extends RequestMessage {
 
     private final EnumSet<CursorFlag> cursorFlags;
     private final int skip;
     private final int numberToReturn;
 
+    /**
+     * Construct an instance.
+     *
+     * @param collectionName the collection name
+     * @param cursorFlags    the cursor flags
+     * @param skip           the number of documents to skip
+     * @param numberToReturn the number of documents to return
+     * @param settings       the message settings
+     */
     public BaseQueryMessage(final String collectionName, final EnumSet<CursorFlag> cursorFlags,
                             final int skip, final int numberToReturn, final MessageSettings settings) {
         super(collectionName, OpCode.OP_QUERY, settings);
@@ -35,6 +49,11 @@ public abstract class BaseQueryMessage extends RequestMessage {
         this.numberToReturn = numberToReturn;
     }
 
+    /**
+     * Write the query prologue to the given BSON output.
+     *
+     * @param bsonOutput the BSON output
+     */
     protected void writeQueryPrologue(final BsonOutput bsonOutput) {
         bsonOutput.writeInt32(CursorFlag.fromSet(cursorFlags));
         bsonOutput.writeCString(getCollectionName());

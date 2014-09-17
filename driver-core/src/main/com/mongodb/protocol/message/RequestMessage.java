@@ -46,10 +46,32 @@ public abstract class RequestMessage {
     private final int id;
     private final OpCode opCode;
 
-    protected BsonDocumentCodec getBsonDocumentCodec() {
-        return new BsonDocumentCodec();
+    /**
+     * Gets the next available unique message identifier.
+     *
+     * @return the message identifier
+     */
+    public static int getCurrentGlobalId() {
+        return REQUEST_ID.get();
     }
 
+    /**
+     * Construct an instance without a collection name
+     *
+     * @param opCode   the op code of the message
+     * @param settings the message settings
+     */
+    public RequestMessage(final OpCode opCode, final MessageSettings settings) {
+        this(null, opCode, settings);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param collectionName the collection name
+     * @param opCode         the op code of the message
+     * @param settings       the message settings
+     */
     public RequestMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
         this.collectionName = collectionName;
         this.settings = settings;
@@ -57,38 +79,49 @@ public abstract class RequestMessage {
         this.opCode = opCode;
     }
 
-    public RequestMessage(final OpCode opCode, final MessageSettings settings) {
-        this(null, opCode, settings);
-    }
-
-    protected void writeMessagePrologue(final BsonOutput bsonOutput) {
-        bsonOutput.writeInt32(0); // length: will set this later
-        bsonOutput.writeInt32(id);
-        bsonOutput.writeInt32(0); // response to
-        bsonOutput.writeInt32(opCode.getValue());
-    }
-
-    public static int getCurrentGlobalId() {
-        return REQUEST_ID.get();
-    }
-
+    /**
+     * Gets the message id.
+     *
+     * @return the message id
+     */
     public int getId() {
         return id;
     }
 
+    /**
+     * Gets the op code of the message.
+     *
+     * @return the op code
+     */
     public OpCode getOpCode() {
         return opCode;
     }
 
+    /**
+     * Gets the collection namespace to send the message to.
+     *
+     * @return the namespace, which may be null for some message types
+     */
     public String getNamespace() {
         return getCollectionName() != null ? getCollectionName() : null;
     }
 
-
+    /**
+     * Gets the message settings.
+     *
+     * @return the message settings
+     */
     public MessageSettings getSettings() {
         return settings;
     }
 
+    /**
+     * Encoded the message to the given output.
+     *
+     * @param bsonOutput the output
+     * @return the next message to encode, if the current message is unable to fit all of its contents in a single message due to limits
+     * being exceeded
+     */
     public RequestMessage encode(final BsonOutput bsonOutput) {
         int messageStartPosition = bsonOutput.getPosition();
         writeMessagePrologue(bsonOutput);
@@ -97,24 +130,93 @@ public abstract class RequestMessage {
         return nextMessage;
     }
 
+    /**
+     * Writes the message prologue to the given output.
+     *
+     * @param bsonOutput the output
+     */
+    protected void writeMessagePrologue(final BsonOutput bsonOutput) {
+        bsonOutput.writeInt32(0); // length: will set this later
+        bsonOutput.writeInt32(id);
+        bsonOutput.writeInt32(0); // response to
+        bsonOutput.writeInt32(opCode.getValue());
+    }
+
+    /**
+     * Encode the message body to the given output.
+     *
+     * @param bsonOutput the output
+     * @param messageStartPosition the start position of the message
+     * @return
+     */
     protected abstract RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition);
 
-    protected <T> void addDocument(final T obj, final Encoder<T> encoder, final BsonOutput bsonOutput,
+    /**
+     * Appends a document to the message.
+     *
+     * @param document the document
+     * @param encoder the encoder
+     * @param bsonOutput the output
+     * @param validator the field name validator
+     * @param <T> the document type
+     */
+    protected <T> void addDocument(final T document, final Encoder<T> encoder, final BsonOutput bsonOutput,
                                    final FieldNameValidator validator) {
-        addDocument(obj, encoder, EncoderContext.builder().build(), bsonOutput, validator,
+        addDocument(document, encoder, EncoderContext.builder().build(), bsonOutput, validator,
                     settings.getMaxDocumentSize() + QUERY_DOCUMENT_HEADROOM);
     }
 
+    /**
+     * Appends a document to the message that is intended for storage in a collection.
+     *
+     * @param document the document
+     * @param bsonOutput the output
+     * @param validator the field name validator
+     * @param <T> the document type
+     */
     protected <T> void addCollectibleDocument(final BsonDocument document, final BsonOutput bsonOutput,
                                               final FieldNameValidator validator) {
         addDocument(document, getBsonDocumentCodec(), EncoderContext.builder().isEncodingCollectibleDocument(true).build(), bsonOutput,
                     validator, settings.getMaxDocumentSize());
     }
 
+    /**
+     * Appends a document to the message that is intended for storage in a collection.
+     *
+     * @param document the document
+     * @param encoder the encoder for the document
+     * @param bsonOutput the output
+     * @param validator the field name validator
+     * @param <T> the document type
+     */
     protected <T> void addCollectibleDocument(final T document, final Encoder<T> encoder, final BsonOutput bsonOutput,
                                               final FieldNameValidator validator) {
         addDocument(document, encoder, EncoderContext.builder().isEncodingCollectibleDocument(true).build(), bsonOutput, validator,
                     settings.getMaxDocumentSize());
+    }
+
+    /**
+     * Backpatches the message length into the beginning of the message.
+     *
+     * @param startPosition the start position of the message
+     * @param bsonOutput the output
+     */
+    protected void backpatchMessageLength(final int startPosition, final BsonOutput bsonOutput) {
+        int messageLength = bsonOutput.getPosition() - startPosition;
+        bsonOutput.writeInt32(bsonOutput.getPosition() - messageLength, messageLength);
+    }
+
+    /**
+     * Gets the collection name, which may be null for some message types
+     *
+     * @return the collection name
+     */
+    protected String getCollectionName() {
+        return collectionName;
+    }
+
+    BsonDocumentCodec getBsonDocumentCodec() {
+        return new BsonDocumentCodec();
     }
 
     private <T> void addDocument(final T obj, final Encoder<T> encoder, final EncoderContext encoderContext,
@@ -126,15 +228,6 @@ public abstract class RequestMessage {
         } finally {
             writer.close();
         }
-    }
-
-    protected void backpatchMessageLength(final int startPosition, final BsonOutput bsonOutput) {
-        int messageLength = bsonOutput.getPosition() - startPosition;
-        bsonOutput.writeInt32(bsonOutput.getPosition() - messageLength, messageLength);
-    }
-
-    protected String getCollectionName() {
-        return collectionName;
     }
 
     enum OpCode {

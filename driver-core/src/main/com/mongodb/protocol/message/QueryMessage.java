@@ -22,10 +22,27 @@ import org.bson.io.BsonOutput;
 
 import java.util.EnumSet;
 
+/**
+ * An OP_QUERY message for an actual query (not a command).
+ *
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+ * @since 3.0
+ */
 public class QueryMessage extends BaseQueryMessage {
     private final BsonDocument queryDocument;
     private final BsonDocument fields;
 
+    /**
+     * Construct an instance.
+     *
+     * @param collectionName the collection name
+     * @param cursorFlags    the cursor flags
+     * @param skip           the number of documents to skip
+     * @param numberToReturn the number to return
+     * @param queryDocument  the query document
+     * @param fields         the fields to return in the result documents
+     * @param settings       the message settings
+     */
     public QueryMessage(final String collectionName, final EnumSet<CursorFlag> cursorFlags, final int skip,
                         final int numberToReturn, final BsonDocument queryDocument,
                         final BsonDocument fields, final MessageSettings settings) {

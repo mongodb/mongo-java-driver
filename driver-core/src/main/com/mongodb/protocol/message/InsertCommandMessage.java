@@ -43,11 +43,11 @@ public class InsertCommandMessage extends BaseWriteCommandMessage {
     /**
      * Construct a new instance.
      *
-     * @param namespace the namespace
-     * @param ordered whether the inserts are ordered
-     * @param writeConcern the write concern
+     * @param namespace         the namespace
+     * @param ordered           whether the inserts are ordered
+     * @param writeConcern      the write concern
      * @param insertRequestList the list of inserts
-     * @param settings the message settings
+     * @param settings          the message settings
      */
     public InsertCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                 final List<InsertRequest> insertRequestList, final MessageSettings settings) {
@@ -98,8 +98,8 @@ public class InsertCommandMessage extends BaseWriteCommandMessage {
             if (exceedsLimits(bsonOutput.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
                 nextMessage = new InsertCommandMessage(getWriteNamespace(), isOrdered(), getWriteConcern(),
-                                                          insertRequestList.subList(i, insertRequestList.size()),
-                                                          getSettings());
+                                                       insertRequestList.subList(i, insertRequestList.size()),
+                                                       getSettings());
                 break;
             }
         }

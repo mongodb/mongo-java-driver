@@ -22,9 +22,22 @@ import org.bson.io.BsonOutput;
 
 import java.util.List;
 
+/**
+ * An OP_UPDATE message.
+ *
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-update OP_UPDATE
+ * @since 3.0
+ */
 public class UpdateMessage extends BaseUpdateMessage {
     private final List<UpdateRequest> updates;
 
+    /**
+     * Construct an instance.
+     *
+     * @param collectionName the collection name
+     * @param updates the list of update requests
+     * @param settings the message settings
+     */
     public UpdateMessage(final String collectionName, final List<UpdateRequest> updates, final MessageSettings settings) {
         super(collectionName, OpCode.OP_UPDATE, settings);
         this.updates = updates;

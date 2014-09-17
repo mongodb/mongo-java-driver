@@ -21,13 +21,26 @@ import org.bson.io.BsonOutput;
 
 import java.util.List;
 
+/**
+ * An OP_DELETE message.
+ *
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-delete OP_DELETE
+ * @since 3.0
+ */
 public class DeleteMessage extends RequestMessage {
     private final List<RemoveRequest> removeRequests;
 
-    public DeleteMessage(final String collectionName, final List<RemoveRequest> removeRequests,
+    /**
+     * Construct an instance.
+     *
+     * @param collectionName the collection name
+     * @param deletes        the list of delete requests
+     * @param settings       the message settings
+     */
+    public DeleteMessage(final String collectionName, final List<RemoveRequest> deletes,
                          final MessageSettings settings) {
         super(collectionName, OpCode.OP_DELETE, settings);
-        this.removeRequests = removeRequests;
+        this.removeRequests = deletes;
     }
 
     @Override

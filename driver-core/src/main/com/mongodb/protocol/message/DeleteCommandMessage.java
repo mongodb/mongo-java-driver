@@ -27,9 +27,24 @@ import org.bson.io.BsonOutput;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * A message for the delete command.
+ *
+ * @mongodb.driver.manual manual/reference/command/insert/#dbcmd.delete Delete Command
+ * @since 3.0
+ */
 public class DeleteCommandMessage extends BaseWriteCommandMessage {
     private final List<RemoveRequest> deletes;
 
+    /**
+     * Construct an instance.
+     *
+     * @param namespace the namespace
+     * @param ordered whether the writes are ordered
+     * @param writeConcern the write concern
+     * @param deletes the list of delete requests
+     * @param settings the message settings
+     */
     public DeleteCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                 final List<RemoveRequest> deletes, final MessageSettings settings) {
         super(namespace, ordered, writeConcern, settings);
@@ -46,6 +61,11 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
         return new NoOpFieldNameValidator();
     }
 
+    /**
+     * Gets the list of requests.
+     *
+     * @return the list of requests
+     */
     public List<RemoveRequest> getRequests() {
         return Collections.unmodifiableList(deletes);
     }
@@ -56,7 +76,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
     }
 
     @Override
-    protected BaseWriteCommandMessage writeTheWrites(final BsonOutput outputStream, final int commandStartPosition,
+    protected BaseWriteCommandMessage writeTheWrites(final BsonOutput bsonOutput, final int commandStartPosition,
                                                      final BsonBinaryWriter writer) {
         DeleteCommandMessage nextMessage = null;
         writer.writeStartArray("deletes");
@@ -70,7 +90,7 @@ public class DeleteCommandMessage extends BaseWriteCommandMessage {
             writer.writeInt32("limit", removeRequest.isMulti() ? 0 : 1);
             writer.popMaxDocumentSize();
             writer.writeEndDocument();
-            if (exceedsLimits(outputStream.getPosition() - commandStartPosition, i + 1)) {
+            if (exceedsLimits(bsonOutput.getPosition() - commandStartPosition, i + 1)) {
                 writer.reset();
                 nextMessage = new DeleteCommandMessage(getWriteNamespace(),
                                                        isOrdered(), getWriteConcern(), deletes.subList(i, deletes.size()),

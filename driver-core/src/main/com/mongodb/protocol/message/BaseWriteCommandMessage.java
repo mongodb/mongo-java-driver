@@ -28,6 +28,11 @@ import org.bson.io.BsonOutput;
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.protocol.message.RequestMessage.OpCode.OP_QUERY;
 
+/**
+ * Abstract base class for write command message.  Supports splitting into multiple messages.
+ *
+ * @since 3.0
+ */
 public abstract class BaseWriteCommandMessage extends RequestMessage {
     // Server allows command document to exceed max document size by 16K, so that it can comfortably fit a stored document inside it
     private static final int HEADROOM = 16 * 1024;
@@ -36,6 +41,14 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
     private final boolean ordered;
     private final WriteConcern writeConcern;
 
+    /**
+     * Construct an instance.
+     *
+     * @param writeNamespace the namespace
+     * @param ordered        whether the writes are ordered
+     * @param writeConcern   the write concern
+     * @param settings       the message settings
+     */
     public BaseWriteCommandMessage(final MongoNamespace writeNamespace, final boolean ordered, final WriteConcern writeConcern,
                                    final MessageSettings settings) {
         super(new MongoNamespace(writeNamespace.getDatabaseName(), COMMAND_COLLECTION_NAME).getFullName(), OP_QUERY, settings);
@@ -45,14 +58,29 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         this.writeConcern = writeConcern;
     }
 
+    /**
+     * Gets the namespace to write to.
+     *
+     * @return the namespace
+     */
     public MongoNamespace getWriteNamespace() {
         return writeNamespace;
     }
 
+    /**
+     * Gets the write concern.
+     *
+     * @return the write concern
+     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
+    /**
+     * Gets whether the writes are ordered.
+     *
+     * @return whether the writes are ordered
+     */
     public boolean isOrdered() {
         return ordered;
     }
@@ -61,6 +89,11 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         return (BaseWriteCommandMessage) super.encode(outputStream);
     }
 
+    /**
+     * Gets the number of write requests left to encode.  Note that these may end up being split into multiple messages.
+     *
+     * @return the count of write requests left to encode
+     */
     public abstract int getItemCount();
 
     @Override
@@ -84,6 +117,11 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         return nextMessage;
     }
 
+    /**
+     * Gets the field name validator to apply.
+     *
+     * @return the validator
+     */
     protected abstract FieldNameValidator getFieldNameValidator();
 
     private void writeCommandHeader(final BsonOutput outputStream) {
@@ -94,12 +132,25 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         outputStream.writeInt32(-1);
     }
 
+    /**
+     * Gets the name of the write command
+     *
+     * @return the name of the write command
+     */
     protected abstract String getCommandName();
 
-    protected abstract BaseWriteCommandMessage writeTheWrites(final BsonOutput outputStream, final int commandStartPosition,
+    /**
+     * Write the list of writes to the output after the write command prologue has been written.
+     *
+     * @param bsonOutput the BSON output
+     * @param commandStartPosition the position in the output where the command document starts
+     * @param writer the writer
+     * @return the next message to encode, if this one overflowed.  This may be null, which indicates that we're done
+     */
+    protected abstract BaseWriteCommandMessage writeTheWrites(final BsonOutput bsonOutput, final int commandStartPosition,
                                                               final BsonBinaryWriter writer);
 
-    protected boolean exceedsLimits(final int batchLength, final int batchItemCount) {
+    boolean exceedsLimits(final int batchLength, final int batchItemCount) {
         return (exceedsBatchLengthLimit(batchLength, batchItemCount) || exceedsBatchItemCountLimit(batchItemCount));
     }
 

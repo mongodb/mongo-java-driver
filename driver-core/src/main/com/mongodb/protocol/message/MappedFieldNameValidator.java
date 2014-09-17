@@ -21,8 +21,8 @@ import org.bson.FieldNameValidator;
 import java.util.Map;
 
 /**
- * A field name validator that serves as a root validator for a map of validators that are applied to child fields.  Note that instances
- * of this class can be nested to achieve a wide variety of validation behaviors.
+ * A field name validator that serves as a root validator for a map of validators that are applied to child fields.  Note that instances of
+ * this class can be nested to achieve a wide variety of validation behaviors.
  *
  * @since 3.0
  */
@@ -31,10 +31,10 @@ public class MappedFieldNameValidator implements FieldNameValidator {
     private final Map<String, FieldNameValidator> fieldNameToValidatorMap;
 
     /**
-     * The default validator will be use to validate all fields whose names are not contained int the fieldNameToValidator map.  The map
-     * is used to apply different validators to fields with specific names.
+     * The default validator will be use to validate all fields whose names are not contained int the fieldNameToValidator map.  The map is
+     * used to apply different validators to fields with specific names.
      *
-     * @param defaultValidator the validator to use for any fields not matching any field name in the map
+     * @param defaultValidator        the validator to use for any fields not matching any field name in the map
      * @param fieldNameToValidatorMap a map from field name to FieldNameValidator
      */
     public MappedFieldNameValidator(final FieldNameValidator defaultValidator,

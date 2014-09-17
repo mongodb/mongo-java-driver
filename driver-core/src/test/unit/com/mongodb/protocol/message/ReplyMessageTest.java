@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package com.mongodb.protocol;
+package com.mongodb.protocol.message;
 
 import com.mongodb.MongoInternalException;
 import com.mongodb.connection.ReplyHeader;
-import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.ByteBufNIO;
 import org.bson.io.ByteBufferBsonInput;
 import org.junit.Test;

@@ -25,8 +25,8 @@ import java.util.List;
 /**
  * An update message that handles full document replacements.
  *
- * @since 3.0
  * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-update OP_UPDATE
+ * @since 3.0
  */
 public class ReplaceMessage extends BaseUpdateMessage {
     private final List<ReplaceRequest> replaceRequests;
@@ -34,9 +34,9 @@ public class ReplaceMessage extends BaseUpdateMessage {
     /**
      * Construct an instance.
      *
-     * @param collectionName the full name of the collection
+     * @param collectionName  the full name of the collection
      * @param replaceRequests the list of replace requests
-     * @param settings the message settings
+     * @param settings        the message settings
      */
     public ReplaceMessage(final String collectionName, final List<ReplaceRequest> replaceRequests, final MessageSettings settings) {
         super(collectionName, OpCode.OP_UPDATE, settings);
