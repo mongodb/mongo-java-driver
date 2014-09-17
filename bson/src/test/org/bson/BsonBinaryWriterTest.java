@@ -465,7 +465,7 @@ public class BsonBinaryWriterTest {
         byte[] bytes = buffer.toByteArray();
 
         BasicOutputBuffer newBuffer = new BasicOutputBuffer();
-        BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer, true);
+        BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer, false);
         try {
             BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(bytes))), true);
             try {

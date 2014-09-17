@@ -25,17 +25,40 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * A BSON output stream that stores the output in a single, un-pooled byte array.
+ */
 public class BasicOutputBuffer extends OutputBuffer {
-    private int position;
     private byte[] buffer = new byte[1024];
+    private int position;
+
+    /**
+     * Construct an instance with a default initial byte array size.
+     */
+    public BasicOutputBuffer() {
+        this(1024);
+    }
+
+    /**
+     * Construct an instance with the specified initial byte array size.
+     *
+     * @param initialSize the initial size of the byte array
+     */
+    public BasicOutputBuffer(final int initialSize) {
+        buffer = new byte[initialSize];
+    }
+
 
     @Override
     public void write(final byte[] b) {
+        ensureOpen();
         write(b, 0, b.length);
     }
 
     @Override
     public void writeBytes(final byte[] bytes, final int offset, final int length) {
+        ensureOpen();
+
         ensure(length);
         System.arraycopy(bytes, offset, buffer, position, length);
         position += length;
@@ -43,21 +66,21 @@ public class BasicOutputBuffer extends OutputBuffer {
 
     @Override
     public void writeByte(final int value) {
+        ensureOpen();
+
         ensure(1);
         buffer[position++] = (byte) (0xFF & value);
     }
 
     @Override
     protected void write(final int absolutePosition, final int value) {
+        ensureOpen();
+
         if (absolutePosition < 0) {
             throw new IllegalArgumentException(String.format("position must be >= 0 but was %d", absolutePosition));
         }
-        if (absolutePosition > position) {
-            throw new IllegalArgumentException(String.format("position must be <= %d but was %d", position, absolutePosition));
-        }
-
-        if (absolutePosition == position) {
-            ensure(1);
+        if (absolutePosition > position - 1) {
+            throw new IllegalArgumentException(String.format("position must be <= %d but was %d", position - 1, absolutePosition));
         }
 
         buffer[absolutePosition] = (byte) (0xFF & value);
@@ -65,6 +88,7 @@ public class BasicOutputBuffer extends OutputBuffer {
 
     @Override
     public int getPosition() {
+        ensureOpen();
         return position;
     }
 
@@ -73,17 +97,20 @@ public class BasicOutputBuffer extends OutputBuffer {
      */
     @Override
     public int getSize() {
+        ensureOpen();
         return position;
     }
 
     @Override
     public int pipe(final OutputStream out) throws IOException {
+        ensureOpen();
         out.write(buffer, 0, position);
         return position;
     }
 
     @Override
     public void truncateToPosition(final int newPosition) {
+        ensureOpen();
         if (newPosition > position || newPosition < 0) {
             throw new IllegalArgumentException();
         }
@@ -92,17 +119,29 @@ public class BasicOutputBuffer extends OutputBuffer {
 
     @Override
     public List<ByteBuf> getByteBuffers() {
+        ensureOpen();
         return Arrays.<ByteBuf>asList(new ByteBufNIO(ByteBuffer.wrap(buffer, 0, position).duplicate()));
+    }
+
+    @Override
+    public void close() {
+        buffer = null;
+    }
+
+    private void ensureOpen() {
+        if (buffer == null) {
+            throw new IllegalStateException("The output is closed");
+        }
     }
 
     private void ensure(final int more) {
         int need = position + more;
-        if (need < buffer.length) {
+        if (need <= buffer.length) {
             return;
         }
 
         int newSize = buffer.length * 2;
-        if (newSize <= need) {
+        if (newSize < need) {
             newSize = need + 128;
         }
 
@@ -111,7 +150,4 @@ public class BasicOutputBuffer extends OutputBuffer {
         buffer = n;
     }
 
-    private void setPosition(final int position) {
-        this.position = position;
-    }
 }

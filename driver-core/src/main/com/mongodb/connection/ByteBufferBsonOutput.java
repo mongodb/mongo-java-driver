@@ -40,6 +40,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
     private final List<ByteBuf> bufferList = new ArrayList<ByteBuf>();
     private int curBufferIndex = 0;
     private int position = 0;
+    private boolean closed;
 
     /**
      * Construct an instance that uses the given buffer provider to allocate byte buffers as needs as it grows.
@@ -52,6 +53,8 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
     @Override
     public void writeBytes(final byte[] bytes, final int offset, final int length) {
+        ensureOpen();
+
         int currentOffset = offset;
         int remainingLen = length;
         while (remainingLen > 0) {
@@ -66,6 +69,8 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
     @Override
     public void writeByte(final int value) {
+        ensureOpen();
+
         getCurrentByteBuffer().put((byte) value);
         position++;
     }
@@ -89,32 +94,35 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
     @Override
     public int getPosition() {
+        ensureOpen();
         return position;
     }
 
     @Override
     public int getSize() {
+        ensureOpen();
         return position;
     }
 
     protected void write(final int absolutePosition, final int value) {
+        ensureOpen();
+
         if (absolutePosition < 0) {
             throw new IllegalArgumentException(String.format("position must be >= 0 but was %d", absolutePosition));
         }
-        if (absolutePosition > position) {
-            throw new IllegalArgumentException(String.format("position must be <= %d but was %d", position, absolutePosition));
+        if (absolutePosition > position - 1) {
+            throw new IllegalArgumentException(String.format("position must be <= %d but was %d", position - 1, absolutePosition));
         }
 
-        getBufferPositionPair(absolutePosition).put((byte) value);
-    }
-
-    @Override
-    public int size() {
-        return position;
+        BufferPositionPair bufferPositionPair = getBufferPositionPair(absolutePosition);
+        ByteBuf byteBuffer = getByteBufferAtIndex(bufferPositionPair.bufferIndex);
+        byteBuffer.put(bufferPositionPair.position++, (byte) value);
     }
 
     @Override
     public List<ByteBuf> getByteBuffers() {
+        ensureOpen();
+
         List<ByteBuf> buffers = new ArrayList<ByteBuf>(bufferList.size());
         for (final ByteBuf cur : bufferList) {
             buffers.add(cur.duplicate().flip());
@@ -125,9 +133,10 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
     @Override
     public int pipe(final OutputStream out) throws IOException {
+        ensureOpen();
+
         int total = 0;
-        for (final ByteBuf cur : bufferList) {
-            cur.flip();
+        for (final ByteBuf cur : getByteBuffers()) {
             out.write(cur.array(), 0, cur.limit());
             total += cur.limit();
         }
@@ -136,6 +145,8 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
     @Override
     public void truncateToPosition(final int newPosition) {
+        ensureOpen();
+
         if (newPosition > position || newPosition < 0) {
             throw new IllegalArgumentException();
         }
@@ -159,11 +170,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
             cur.close();
         }
         bufferList.clear();
-    }
-
-    // TODO: desperately seeking unit test
-    private void backpatchSizeWithOffset(final int size, final int additionalOffset) {
-        getBufferPositionPair(position - size - additionalOffset).putInt(size);
+        closed = true;
     }
 
     private BufferPositionPair getBufferPositionPair(final int absolutePosition) {
@@ -181,7 +188,13 @@ public class ByteBufferBsonOutput extends OutputBuffer {
         return new BufferPositionPair(bufferIndex, positionInBuffer);
     }
 
-    class BufferPositionPair {
+    private void ensureOpen() {
+        if (closed) {
+            throw new IllegalStateException("The output is closed");
+        }
+    }
+
+    private static final class BufferPositionPair {
         private int bufferIndex;
         private int position;
 
@@ -189,23 +202,5 @@ public class ByteBufferBsonOutput extends OutputBuffer {
             this.bufferIndex = bufferIndex;
             this.position = position;
         }
-
-        public void putInt(final int val) {
-            put((byte) (val));
-            put((byte) (val >> 8));
-            put((byte) (val >> 16));
-            put((byte) (val >> 24));
-        }
-
-        void put(final byte b) {
-            ByteBuf byteBuffer = getByteBufferAtIndex(bufferIndex);
-            byteBuffer.put(position++, b);
-
-            if (position >= byteBuffer.capacity()) {
-                bufferIndex++;
-                position = 0;
-            }
-        }
     }
-
 }

@@ -16,12 +16,10 @@
 
 package org.bson;
 
-import category.Slow;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.types.CodeWScope;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -128,20 +126,6 @@ public class BSONOldTest {
             data.add(buf.toString());
         }
         return data;
-    }
-
-    @Test
-    @Category(Slow.class)
-    public void testUTF8() {
-        for (int i = 0; i <= Character.MAX_CODE_POINT; i++) {
-            if (!Character.isLetterOrDigit(i)) {
-                continue;
-            }
-            String orig = new String(Character.toChars(i));
-            BSONObject a = new BasicBSONObject(orig, orig);
-            BSONObject b = BSON.decode(BSON.encode(a));
-            assertEquals(a, b);
-        }
     }
 
     @Test
