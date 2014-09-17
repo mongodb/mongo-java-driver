@@ -20,9 +20,7 @@ import org.bson.BSONObject;
 import org.bson.io.OutputBuffer;
 
 /**
- * An interface for encoders of BSONObject to BSON. Instead of using custom Encoders and Decoders, consider constructing a {@link
- * org.bson.codecs.configuration.CodecRegistry} containing {@link org.bson.codecs.Codec} implementations for the classes that need custom
- * encoding and decoding.
+ * An interface for encoders of BSONObject to BSON. 
  */
 public interface DBEncoder {
     /**

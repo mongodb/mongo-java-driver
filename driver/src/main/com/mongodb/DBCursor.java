@@ -737,9 +737,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Gets the decoder factory that creates the decoder this cursor will use to decode objects from MongoDB. Instead of using custom
-     * decoders, consider constructing a {@link org.bson.codecs.configuration.CodecRegistry} containing {@link org.bson.codecs.Codec}
-     * implementations for the classes that need custom encoding and decoding.
+     * Gets the decoder factory that creates the decoder this cursor will use to decode objects from MongoDB. 
      *
      * @return the decoder factory.
      */

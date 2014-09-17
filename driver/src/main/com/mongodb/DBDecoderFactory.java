@@ -17,9 +17,7 @@
 package com.mongodb;
 
 /**
- * Creates concrete DBDecoder instances. Instead of using custom Encoders and Decoders, consider constructing a {@link
- * org.bson.codecs.configuration.CodecRegistry} containing {@link org.bson.codecs.Codec} implementations for the classes that need custom
- * encoding and decoding.
+ * Creates concrete DBDecoder instances. 
  */
 public interface DBDecoderFactory {
     /**
