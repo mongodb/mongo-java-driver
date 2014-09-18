@@ -221,13 +221,16 @@ public interface ByteBuf extends Closeable {
      * the loop
      *
      * <pre>
+     * {@code
      *     for (int i = off; i < off + len; i++)
-     *         dst[i] = src.get(); </pre>
+     *         dst[i] = src.get();
+     * }
+     * </pre>
      *
      * except that it first checks that there are sufficient bytes in
-     * this buffer and it is potentially much more efficient. </p>
+     * this buffer and it is potentially much more efficient.
      *
-     * @param  dst
+     * @param  bytes
      *         The array into which bytes are to be written
      *
      * @param  offset
