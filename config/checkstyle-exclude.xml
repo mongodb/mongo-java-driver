@@ -23,6 +23,7 @@
 <suppressions>
     <!--Ignore the new API folder for javadoc until the specs for the API are finished. Documenting this is JAVA-1411 -->
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]client[\\/]"/>
+    <suppress checks="Javadoc*" files=".*test.*"/>
     
     <!--Classes to be documented later - JAVA-1428 -->
     <suppress checks="Javadoc*" files="LazyBSONCallback"/>
