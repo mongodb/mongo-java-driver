@@ -357,7 +357,7 @@ public class BSONOldTest {
         private boolean transformCalled = false;
 
         @Override
-        public Object transform(final Object o) {
+        public Object transform(final Object objectToTransform) {
             transformCalled = true;
             return true;
         }
@@ -365,15 +365,15 @@ public class BSONOldTest {
 
     private class TestDateTransformer implements Transformer {
         @SuppressWarnings("deprecation")
-        public Object transform(final Object o) {
-            if (o instanceof TestDate) {
-                TestDate td = (TestDate) o;
+        public Object transform(final Object objectToTransform) {
+            if (objectToTransform instanceof TestDate) {
+                TestDate td = (TestDate) objectToTransform;
                 return new java.util.Date(td.year, td.month, td.date, td.hour, td.minute, td.second);
-            } else if (o instanceof java.util.Date) {
-                Date d = (Date) o;
+            } else if (objectToTransform instanceof java.util.Date) {
+                Date d = (Date) objectToTransform;
                 return new TestDate(d.getYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds());
             } else {
-                return o;
+                return objectToTransform;
             }
         }
     }

@@ -54,7 +54,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
     }
 
     /**
-     * Convenience CTOR
+     * Creates a BSONObject initialised with a single key/value pair.
      *
      * @param key   key under which to store
      * @param value value to store
@@ -102,10 +102,8 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
         return super.containsKey(field);
     }
 
-    /**
-     * @deprecated
-     */
     @Deprecated
+    @Override
     public boolean containsKey(final String key) {
         return containsField(key);
     }
@@ -311,12 +309,14 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public void putAll(final Map m) {
         for (final Map.Entry entry : (Set<Map.Entry>) m.entrySet()) {
             put(entry.getKey().toString(), entry.getValue());
         }
     }
 
+    @Override
     public void putAll(final BSONObject o) {
         for (final String k : o.keySet()) {
             put(k, o.get(k));

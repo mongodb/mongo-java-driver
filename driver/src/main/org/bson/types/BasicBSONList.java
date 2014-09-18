@@ -19,7 +19,6 @@
 package org.bson.types;
 
 import org.bson.BSONObject;
-import org.bson.util.StringRangeSet;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -52,9 +51,6 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
 
     private static final long serialVersionUID = -4415279469780082174L;
 
-    public BasicBSONList() {
-    }
-
     /**
      * Puts a value at an index. For interface compatibility.  Must be passed a String that is parsable to an int.
      *
@@ -63,6 +59,7 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
      * @return the value
      * @throws IllegalArgumentException if {@code key} cannot be parsed into an {@code int}
      */
+    @Override
     public Object put(final String key, final Object v) {
         return put(_getInt(key), v);
     }
@@ -71,24 +68,26 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
      * Puts a value at an index. This will fill any unset indexes less than {@code index} with {@code null}.
      *
      * @param key the index at which to insert the value
-     * @param v   the value to insert
+     * @param value   the value to insert
      * @return the value
      */
-    public Object put(final int key, final Object v) {
+    public Object put(final int key, final Object value) {
         while (key >= size()) {
             add(null);
         }
-        set(key, v);
-        return v;
+        set(key, value);
+        return value;
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public void putAll(final Map m) {
         for (final Map.Entry entry : (Set<Map.Entry>) m.entrySet()) {
             put(entry.getKey().toString(), entry.getValue());
         }
     }
 
+    @Override
     public void putAll(final BSONObject o) {
         for (final String k : o.keySet()) {
             put(k, o.get(k));
@@ -113,6 +112,7 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
         return get(i);
     }
 
+    @Override
     public Object removeField(final String key) {
         int i = _getInt(key);
         if (i < 0) {
@@ -124,14 +124,13 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
         return remove(i);
     }
 
-    /**
-     * @deprecated
-     */
+    @Override
     @Deprecated
     public boolean containsKey(final String key) {
         return containsField(key);
     }
 
+    @Override
     public boolean containsField(final String key) {
         int i = _getInt(key, false);
         if (i < 0) {
@@ -140,10 +139,12 @@ public class BasicBSONList extends ArrayList<Object> implements BSONObject {
         return i >= 0 && i < size();
     }
 
+    @Override
     public Set<String> keySet() {
-        return new StringRangeSet(size());
+        return new StringRangeSet(size()).getSet();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Map toMap() {
         Map m = new HashMap();

@@ -16,9 +16,19 @@
 
 package org.bson;
 
+/**
+ * Transforms objects that can be converted to BSON into other Java types, and vice versa.
+ *
+ * @see BSON#addDecodingHook(Class, Transformer)
+ * @see BSON#addEncodingHook(Class, Transformer)
+ */
 public interface Transformer {
     /**
-     * @return the new object.  return passed in object if no change
+     * Turns the {@code objectToTransform} into some other {@code Object}. This can either be turning a simple BSON-friendly object into a
+     * different Java type, or it can be turning a Java type that can't automatically be converted into BSON into something that can.
+     *
+     * @param objectToTransform the object that needs to be transformed.
+     * @return the new transformed object.
      */
-    Object transform(Object o);
+    Object transform(Object objectToTransform);
 }

@@ -42,6 +42,9 @@ public class BasicBSONCallback implements BSONCallback {
     private final LinkedList<BSONObject> stack;
     private final LinkedList<String> nameStack;
 
+    /**
+     * Creates a new instance.
+     */
     public BasicBSONCallback() {
         stack = new LinkedList<BSONObject>();
         nameStack = new LinkedList<String>();
@@ -53,10 +56,20 @@ public class BasicBSONCallback implements BSONCallback {
         return root;
     }
 
+    /**
+     * Factory method for creating a new BSONObject.
+     *
+     * @return a new BasicBSONObject.
+     */
     public BSONObject create() {
         return new BasicBSONObject();
     }
 
+    /**
+     * Factory method for creating a new BSON List.
+     *
+     * @return a new BasicBSONList.
+     */
     protected BSONObject createList() {
         return new BasicBSONList();
     }
@@ -66,6 +79,13 @@ public class BasicBSONCallback implements BSONCallback {
         return new BasicBSONCallback();
     }
 
+    /**
+     * Helper method to create either a BSON Object or a BSON List depending upon whether the {@code array} parameter is true or not.
+     *
+     * @param array set to true to create a new BSON List, otherwise will create a new BSONObject
+     * @param path  a list of field names to navigate to this field in the document
+     * @return the new BSONObject
+     */
     public BSONObject create(final boolean array, final List<String> path) {
         return array ? createList() : create();
     }
@@ -90,6 +110,12 @@ public class BasicBSONCallback implements BSONCallback {
         objectStart(false, name);
     }
 
+    /**
+     * Signals the start of a BSON object, providing a boolean flag to indicate whether this is an array rather than a document object.
+     *
+     * @param array set to true if this is the start of an array
+     * @param name  the name of the field
+     */
     public void objectStart(final boolean array, final String name) {
         nameStack.addLast(name);
         BSONObject o = create(array, nameStack);
@@ -199,6 +225,7 @@ public class BasicBSONCallback implements BSONCallback {
     }
 
     @Deprecated
+    @Override
     public void gotBinaryArray(final String name, final byte[] data) {
         gotBinary(name, BSON.B_GENERAL, data);
     }
@@ -227,22 +254,48 @@ public class BasicBSONCallback implements BSONCallback {
         _put(name, new CodeWScope(code, (BSONObject) scope));
     }
 
-    protected void _put(final String name, final Object o) {
-        cur().put(name, !BSON.hasDecodeHooks() ? o : BSON.applyDecodingHooks(o));
+    /**
+     * Puts a new value into the document.
+     *
+     * @param name  the name of the field
+     * @param value the value
+     */
+    protected void _put(final String name, final Object value) {
+        cur().put(name, !BSON.hasDecodeHooks() ? value : BSON.applyDecodingHooks(value));
     }
 
+    /**
+     * Gets the current value
+     *
+     * @return the current value
+     */
     protected BSONObject cur() {
         return stack.getLast();
     }
 
+    /**
+     * Gets the name of the current field
+     *
+     * @return the name of the current field.
+     */
     protected String curName() {
         return nameStack.peekLast();
     }
 
-    protected void setRoot(final Object o) {
-        this.root = o;
+    /**
+     * Sets the root document for this position
+     *
+     * @param root the new root document
+     */
+    protected void setRoot(final Object root) {
+        this.root = root;
     }
 
+    /**
+     * Returns whether this is the top level or not
+     *
+     * @return true if there's nothing on the stack, and this is the top level of the document.
+     */
     protected boolean isStackEmpty() {
         return stack.size() < 1;
     }

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// BSONCallback.java
-
 package org.bson;
 
 import org.bson.types.ObjectId;
@@ -111,6 +109,7 @@ public interface BSONCallback {
      * Called when reading a field with a {@link org.bson.BsonType#UNDEFINED} value.
      *
      * @param name the name of the field
+     * @see org.bson.BsonType#UNDEFINED
      */
     void gotUndefined(String name);
 
