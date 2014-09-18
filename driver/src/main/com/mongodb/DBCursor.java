@@ -722,6 +722,12 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return readPreference;
     }
 
+    /**
+     * Sets the factory that will be used create a {@code DBDecoder} that will be used to decode BSON documents into DBObject instances.
+     *
+     * @param factory the DBDecoderFactory
+     * @return {@code this} so calls can be chained
+     */
     public DBCursor setDecoderFactory(final DBDecoderFactory factory) {
         this.decoderFactory = factory;
 
@@ -730,6 +736,11 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return this;
     }
 
+    /**
+     * Gets the decoder factory that creates the decoder this cursor will use to decode objects from MongoDB. 
+     *
+     * @return the decoder factory.
+     */
     public DBDecoderFactory getDecoderFactory() {
         return decoderFactory;
     }

@@ -19,6 +19,16 @@ package com.mongodb;
 import org.bson.BSONObject;
 import org.bson.io.OutputBuffer;
 
+/**
+ * An interface for encoders of BSONObject to BSON. 
+ */
 public interface DBEncoder {
+    /**
+     * Encode the BSONObject.
+     *
+     * @param outputBuffer the OutputBuffer to write to
+     * @param document     the BSONObject to write
+     * @return the number of characters in the encoding
+     */
     int writeObject(OutputBuffer outputBuffer, BSONObject document);
 }
