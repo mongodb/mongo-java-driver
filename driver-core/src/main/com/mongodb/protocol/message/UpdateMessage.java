@@ -16,11 +16,12 @@
 
 package com.mongodb.protocol.message;
 
-import com.mongodb.operation.BaseUpdateRequest;
 import com.mongodb.operation.UpdateRequest;
 import org.bson.io.BsonOutput;
 
 import java.util.List;
+
+import static com.mongodb.operation.WriteRequest.Type.REPLACE;
 
 /**
  * An OP_UPDATE message.
@@ -28,7 +29,7 @@ import java.util.List;
  * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-update OP_UPDATE
  * @since 3.0
  */
-public class UpdateMessage extends BaseUpdateMessage {
+public class UpdateMessage extends RequestMessage {
     private final List<UpdateRequest> updates;
 
     /**
@@ -45,8 +46,26 @@ public class UpdateMessage extends BaseUpdateMessage {
 
     @Override
     protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
-        writeBaseUpdate(bsonOutput);
-        addDocument(updates.get(0).getUpdate(), getBsonDocumentCodec(), bsonOutput, new UpdateFieldNameValidator());
+        bsonOutput.writeInt32(0); // reserved
+        bsonOutput.writeCString(getCollectionName());
+
+        UpdateRequest updateRequest = updates.get(0);
+        int flags = 0;
+        if (updateRequest.isUpsert()) {
+            flags |= 1;
+        }
+        if (updateRequest.isMulti()) {
+            flags |= 2;
+        }
+        bsonOutput.writeInt32(flags);
+
+        addDocument(updateRequest.getCriteria(), getBsonDocumentCodec(), bsonOutput, new NoOpFieldNameValidator());
+        if (updateRequest.getType() == REPLACE) {
+            addCollectibleDocument(updateRequest.getUpdate(), bsonOutput, new CollectibleDocumentFieldNameValidator());
+        } else {
+            addDocument(updateRequest.getUpdate(), getBsonDocumentCodec(), bsonOutput, new UpdateFieldNameValidator());
+        }
+
         if (updates.size() == 1) {
             return null;
         } else {
@@ -54,8 +73,4 @@ public class UpdateMessage extends BaseUpdateMessage {
         }
     }
 
-    @Override
-    protected BaseUpdateRequest getUpdateBase() {
-        return updates.get(0);
-    }
 }

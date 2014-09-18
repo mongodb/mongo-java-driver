@@ -68,8 +68,6 @@ import com.mongodb.operation.InsertRequest;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
-import com.mongodb.operation.ReplaceOperation;
-import com.mongodb.operation.ReplaceRequest;
 import com.mongodb.operation.UpdateOperation;
 import com.mongodb.operation.UpdateRequest;
 import com.mongodb.operation.WriteRequest;
@@ -253,7 +251,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 writeRequest = new InsertRequest(asBson(insertOneModel.getDocument()));
             } else if (writeModel instanceof ReplaceOneModel) {
                 ReplaceOneModel<T> replaceOneModel = (ReplaceOneModel<T>) writeModel;
-                writeRequest = new ReplaceRequest(asBson(replaceOneModel.getCriteria()), asBson(replaceOneModel.getReplacement()))
+                writeRequest = new UpdateRequest(asBson(replaceOneModel.getCriteria()), asBson(replaceOneModel.getReplacement()),
+                                                 WriteRequest.Type.REPLACE)
                                    .upsert(replaceOneModel.getOptions().isUpsert());
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel<T> updateOneModel = (UpdateOneModel<T>) writeModel;
@@ -342,10 +341,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private UpdateResult replaceOne(final ReplaceOneModel<T> model) {
-        List<ReplaceRequest> requests = new ArrayList<ReplaceRequest>();
-        requests.add(new ReplaceRequest(asBson(model.getCriteria()), asBson(model.getReplacement()))
+        List<UpdateRequest> requests = new ArrayList<UpdateRequest>();
+        requests.add(new UpdateRequest(asBson(model.getCriteria()), asBson(model.getReplacement()), WriteRequest.Type.REPLACE)
                          .upsert(model.getOptions().isUpsert()));
-        WriteResult writeResult = operationExecutor.execute(new ReplaceOperation(namespace, true, options.getWriteConcern(), requests));
+        WriteResult writeResult = operationExecutor.execute(new UpdateOperation(namespace, true, options.getWriteConcern(), requests));
         return createUpdateResult(writeResult);
     }
 

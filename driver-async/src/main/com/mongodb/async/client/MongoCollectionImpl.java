@@ -35,8 +35,6 @@ import com.mongodb.operation.DeleteRequest;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
-import com.mongodb.operation.ReplaceOperation;
-import com.mongodb.operation.ReplaceRequest;
 import com.mongodb.operation.UpdateOperation;
 import com.mongodb.operation.UpdateRequest;
 import com.mongodb.operation.WriteRequest;
@@ -308,9 +306,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @SuppressWarnings("unchecked")
         public MongoFuture<WriteResult> replace(final T replacement) {
             notNull("replacement", replacement);
-            return execute(new ReplaceOperation(getNamespace(), true, options.getWriteConcern(),
-                                                   asList(new ReplaceRequest((BsonDocument) findModel.getOptions().getCriteria(),
-                                                                             asBson(replacement))
+            return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
+                                                   asList(new UpdateRequest((BsonDocument) findModel.getOptions().getCriteria(),
+                                                                             asBson(replacement), WriteRequest.Type.REPLACE)
                                                           .upsert(upsert))
             ));
         }

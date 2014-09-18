@@ -15,7 +15,6 @@
  */
 
 
-
 package com.mongodb.protocol
 
 import com.mongodb.MongoNamespace
@@ -24,14 +23,16 @@ import com.mongodb.connection.ByteBufferBsonOutput
 import com.mongodb.connection.SimpleBufferProvider
 import com.mongodb.operation.DeleteRequest
 import com.mongodb.operation.InsertRequest
-import com.mongodb.operation.ReplaceRequest
+import com.mongodb.operation.UpdateRequest
 import com.mongodb.protocol.message.DeleteCommandMessage
 import com.mongodb.protocol.message.InsertCommandMessage
 import com.mongodb.protocol.message.MessageSettings
-import com.mongodb.protocol.message.ReplaceCommandMessage
+import com.mongodb.protocol.message.UpdateCommandMessage
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification
+
+import static com.mongodb.operation.WriteRequest.Type.REPLACE
 
 class WriteCommandLimitsSpecifications extends Specification {
     def 'should split an insert command when the number of items exceeds the maximum'() {
@@ -110,16 +111,16 @@ class WriteCommandLimitsSpecifications extends Specification {
         nextMessage.requests == deletes.subList(3, 4)
     }
 
-    def 'should split a replace command when the number of items exceeds the maximum'() {
+    def 'should split an update command when the number of items exceeds the maximum'() {
         given:
         def replaces = []
         (1..4).each {
-            replaces.add(new ReplaceRequest(new BsonDocument('_id', new BsonInt32(it)), new BsonDocument()))
+            replaces.add(new UpdateRequest(new BsonDocument('_id', new BsonInt32(it)), new BsonDocument(), REPLACE))
         }
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
-        def message = new ReplaceCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, replaces,
-                                                MessageSettings.builder().maxWriteBatchSize(3).build());
+        def message = new UpdateCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, replaces,
+                                               MessageSettings.builder().maxWriteBatchSize(3).build());
 
         when:
         def nextMessage = message.encode(buffer)
@@ -133,12 +134,12 @@ class WriteCommandLimitsSpecifications extends Specification {
         given:
         def replaces = []
         (1..4).each {
-            replaces.add(new ReplaceRequest(new BsonDocument('_id', new BsonInt32(it)), new BsonDocument()))
+            replaces.add(new UpdateRequest(new BsonDocument('_id', new BsonInt32(it)), new BsonDocument(), REPLACE))
         }
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
-        def message = new ReplaceCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, replaces,
-                                                MessageSettings.builder().maxDocumentSize(175).build());
+        def message = new UpdateCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, replaces,
+                                               MessageSettings.builder().maxDocumentSize(175).build());
 
         when:
         def nextMessage = message.encode(buffer)

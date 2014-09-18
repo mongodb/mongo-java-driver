@@ -19,11 +19,16 @@ package com.mongodb.protocol.message;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.operation.UpdateRequest;
+import com.mongodb.operation.WriteRequest;
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
+import org.bson.io.BsonOutput;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A message for the update command.
@@ -31,7 +36,9 @@ import java.util.List;
  * @mongodb.driver.manual manual/reference/command/insert/#dbcmd.update Update Command
  * @since 3.0
  */
-public class UpdateCommandMessage extends BaseUpdateCommandMessage<UpdateRequest> {
+public class UpdateCommandMessage extends BaseWriteCommandMessage {
+    private final List<UpdateRequest> updates;
+
     /**
      * Construct an instance.
      *
@@ -44,19 +51,95 @@ public class UpdateCommandMessage extends BaseUpdateCommandMessage<UpdateRequest
     public UpdateCommandMessage(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                 final List<UpdateRequest> updates,
                                 final MessageSettings settings) {
-        super(namespace, ordered, writeConcern, updates, settings);
+        super(namespace, ordered, writeConcern, settings);
+        this.updates = updates;
     }
 
-    protected void writeUpdate(final BsonBinaryWriter writer, final UpdateRequest update) {
-        getBsonDocumentCodec().encode(writer, update.getUpdate(), EncoderContext.builder().build());
-    }
-
-    protected UpdateCommandMessage createNextMessage(final List<UpdateRequest> remainingUpdates) {
-        return new UpdateCommandMessage(getWriteNamespace(), isOrdered(), getWriteConcern(), remainingUpdates, getSettings());
+    /**
+     * Gets the update requests.
+     *
+     * @return the list of update requests
+     */
+    public List<UpdateRequest> getRequests() {
+        return Collections.unmodifiableList(updates);
     }
 
     @Override
-    protected FieldNameValidator getUpdateFieldNameValidator() {
-        return new UpdateFieldNameValidator();
+    protected UpdateCommandMessage writeTheWrites(final BsonOutput bsonOutput, final int commandStartPosition,
+                                                  final BsonBinaryWriter writer) {
+        UpdateCommandMessage nextMessage = null;
+        writer.writeStartArray("updates");
+        for (int i = 0; i < updates.size(); i++) {
+            writer.mark();
+            UpdateRequest update = updates.get(i);
+            writer.writeStartDocument();
+            writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
+            writer.writeName("q");
+            getBsonDocumentCodec().encode(writer, update.getCriteria(), EncoderContext.builder().build());
+            writer.writeName("u");
+            getBsonDocumentCodec().encode(writer, update.getUpdate(), EncoderContext.builder().build());
+            if (update.isMulti()) {
+                writer.writeBoolean("multi", update.isMulti());
+            }
+            if (update.isUpsert()) {
+                writer.writeBoolean("upsert", update.isUpsert());
+            }
+            writer.popMaxDocumentSize();
+            writer.writeEndDocument();
+            if (exceedsLimits(bsonOutput.getPosition() - commandStartPosition, i + 1)) {
+                writer.reset();
+                nextMessage = new UpdateCommandMessage(getWriteNamespace(),
+                                                       isOrdered(),
+                                                       getWriteConcern(),
+                                                       updates.subList(i, updates.size()),
+                                                       getSettings());
+                break;
+            }
+        }
+        writer.writeEndArray();
+        return nextMessage;
+    }
+
+    @Override
+    public int getItemCount() {
+        return updates.size();
+    }
+
+    @Override
+    protected FieldNameValidator getFieldNameValidator() {
+        Map<String, FieldNameValidator> rootMap = new HashMap<String, FieldNameValidator>();
+        rootMap.put("updates", new UpdatesValidator());
+
+        return new MappedFieldNameValidator(new NoOpFieldNameValidator(), rootMap);
+    }
+
+    @Override
+    protected String getCommandName() {
+        return "update";
+    }
+
+    private class UpdatesValidator implements FieldNameValidator {
+        private int i = 0;
+
+        @Override
+        public boolean validate(final String fieldName) {
+            return true;
+        }
+
+        @Override
+        public FieldNameValidator getValidatorForField(final String fieldName) {
+            if (!fieldName.equals("u")) {
+                return new NoOpFieldNameValidator();
+            }
+
+            UpdateRequest updateRequest = getRequests().get(i);
+            i++;
+
+            if (updateRequest.getType() == WriteRequest.Type.REPLACE) {
+                return new CollectibleDocumentFieldNameValidator();
+            } else {
+                return new UpdateFieldNameValidator();
+            }
+        }
     }
 }

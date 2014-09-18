@@ -23,7 +23,7 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
-import com.mongodb.protocol.ReplaceProtocol;
+import com.mongodb.protocol.UpdateProtocol;
 import org.bson.BsonDocument;
 import org.mongodb.WriteResult;
 
@@ -54,7 +54,7 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
      * Construct a new instance.
      *
      * @param credential the users credentials.
-     * @param readOnly true if the user is a readOnly user.
+     * @param readOnly   true if the user is a readOnly user.
      */
     public UpdateUserOperation(final MongoCredential credential, final boolean readOnly) {
         this.credential = notNull("credential", credential);
@@ -110,11 +110,12 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
     }
 
     @SuppressWarnings("unchecked")
-    private ReplaceProtocol getCollectionBasedProtocol() {
+    private UpdateProtocol getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(credential.getSource(), "system.users");
-        return new ReplaceProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                   asList(new ReplaceRequest(asCollectionQueryDocument(credential),
-                                                             asCollectionDocument(credential, readOnly))));
+        return new UpdateProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
+                                   asList(new UpdateRequest(asCollectionQueryDocument(credential),
+                                                            asCollectionDocument(credential, readOnly),
+                                                            WriteRequest.Type.REPLACE)));
     }
 
     private BsonDocument getCommand() {

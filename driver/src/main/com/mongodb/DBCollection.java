@@ -46,8 +46,6 @@ import com.mongodb.operation.OrderBy;
 import com.mongodb.operation.ParallelScanOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.RenameCollectionOperation;
-import com.mongodb.operation.ReplaceOperation;
-import com.mongodb.operation.ReplaceRequest;
 import com.mongodb.operation.UpdateOperation;
 import com.mongodb.operation.UpdateRequest;
 import com.mongodb.operation.WriteOperation;
@@ -368,9 +366,10 @@ public class DBCollection {
     private WriteResult replaceOrInsert(final DBObject obj, final Object id, final WriteConcern writeConcern) {
         DBObject filter = new BasicDBObject(ID_FIELD_NAME, id);
 
-        ReplaceRequest replaceRequest = new ReplaceRequest(wrap(filter), wrap(obj, objectCodec)).upsert(true);
+        UpdateRequest replaceRequest = new UpdateRequest(wrap(filter), wrap(obj, objectCodec),
+                                                         com.mongodb.operation.WriteRequest.Type.REPLACE).upsert(true);
 
-        return executeWriteOperation(new ReplaceOperation(getNamespace(), false, writeConcern, asList(replaceRequest)));
+        return executeWriteOperation(new UpdateOperation(getNamespace(), false, writeConcern, asList(replaceRequest)));
     }
 
     /**
@@ -423,9 +422,10 @@ public class DBCollection {
 
                 return executeWriteOperation(new UpdateOperation(getNamespace(), false, aWriteConcern, asList(updateRequest)));
             } else {
-                ReplaceRequest replaceRequest = new ReplaceRequest(wrap(query), wrap(update, encoder)).upsert(upsert);
-                return executeWriteOperation(new ReplaceOperation(getNamespace(), true, aWriteConcern,
-                                                                  asList(replaceRequest)));
+                UpdateRequest replaceRequest = new UpdateRequest(wrap(query), wrap(update, encoder),
+                                                                 com.mongodb.operation.WriteRequest.Type.REPLACE)
+                                               .upsert(upsert);
+                return executeWriteOperation(new UpdateOperation(getNamespace(), true, aWriteConcern, asList(replaceRequest)));
             }
         } catch (WriteConcernException e) {
             if (e.getWriteResult().getUpsertedId() != null && e.getWriteResult().getUpsertedId() instanceof BsonValue) {

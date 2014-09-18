@@ -34,21 +34,6 @@ import static java.util.Arrays.asList
 
 class UpdateOperationSpecification extends OperationFunctionalSpecification {
 
-    def 'should throw IllegalArgumentException if any top level keys do not start with $'() {
-        given:
-        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
-                                     asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
-                                                              new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))
-                                                                      .append('y', new BsonInt32(1)),
-                                                              WriteRequest.Type.UPDATE)))
-
-        when:
-        op.execute(getBinding())
-
-        then:
-        thrown(IllegalArgumentException)
-    }
-
     def 'should update nothing if no documents match'() {
         given:
         def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
