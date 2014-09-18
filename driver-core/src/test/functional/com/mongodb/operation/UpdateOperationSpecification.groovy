@@ -19,12 +19,14 @@ package com.mongodb.operation
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
+import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonObjectId
 import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
+import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
@@ -72,7 +74,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         result.upsertedId == null
         result.isUpdateOfExisting()
         getCollectionHelper().count(new Document('y', 2)) == 1
-   }
+    }
 
     def 'when multi is true should update all matching documents'() {
         given:
@@ -112,6 +114,28 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         !result.isUpdateOfExisting()
         getCollectionHelper().count(new Document('y', 2)) == 1
     }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
+    def 'should allow update larger than 16MB'() {
+        // small enough so the update document is 16MB, but enough to push the the request as a whole over 16MB
+        def binary = new BsonBinary(new byte[16 * 1024 * 1024 - 24])
+        given:
+        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED,
+                                     asList(new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                                              new BsonDocument('$set', new BsonDocument('y', binary)),
+                                                              WriteRequest.Type.UPDATE)
+                                                    .upsert(true)))
+        when:
+        def result = op.execute(getBinding())
+
+        then:
+        result.wasAcknowledged()
+        result.count == 1
+        result.upsertedId == new BsonInt32(1)
+        !result.isUpdateOfExisting()
+        getCollectionHelper().count(new Document('_id', 1)) == 1
+    }
+
 
     @Category(Async)
     def 'should return correct result for update asynchronously'() {
