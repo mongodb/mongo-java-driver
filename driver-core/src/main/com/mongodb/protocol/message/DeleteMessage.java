@@ -63,7 +63,7 @@ public class DeleteMessage extends RequestMessage {
             bsonOutput.writeInt32(1);
         }
 
-        addDocument(deleteRequest.getCriteria(), getBsonDocumentCodec(), bsonOutput, new NoOpFieldNameValidator());
+        addDocument(deleteRequest.getCriteria(), bsonOutput, new NoOpFieldNameValidator());
     }
 }
 

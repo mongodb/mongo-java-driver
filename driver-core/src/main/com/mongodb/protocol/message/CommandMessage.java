@@ -73,7 +73,7 @@ public class CommandMessage extends RequestMessage {
 
         bsonOutput.writeInt32(0);
         bsonOutput.writeInt32(-1);
-        addDocument(command, getBsonDocumentCodec(), bsonOutput, validator);
+        addDocument(command, bsonOutput, validator);
         return null;
     }
 }

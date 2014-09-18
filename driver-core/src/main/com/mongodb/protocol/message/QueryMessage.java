@@ -54,9 +54,9 @@ public class QueryMessage extends BaseQueryMessage {
     @Override
     protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
         writeQueryPrologue(bsonOutput);
-        addDocument(queryDocument, getBsonDocumentCodec(), bsonOutput, new NoOpFieldNameValidator());
+        addDocument(queryDocument, bsonOutput, new NoOpFieldNameValidator());
         if (fields != null) {
-            addDocument(fields, getBsonDocumentCodec(), bsonOutput, new NoOpFieldNameValidator());
+            addDocument(fields, bsonOutput, new NoOpFieldNameValidator());
         }
         return null;
     }

@@ -147,7 +147,7 @@ public abstract class RequestMessage {
      *
      * @param bsonOutput the output
      * @param messageStartPosition the start position of the message
-     * @return
+     * @return the next message to encode, if the contents of this message need to overflow into the next
      */
     protected abstract RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition);
 
@@ -155,44 +155,28 @@ public abstract class RequestMessage {
      * Appends a document to the message.
      *
      * @param document the document
-     * @param encoder the encoder
      * @param bsonOutput the output
      * @param validator the field name validator
      * @param <T> the document type
      */
-    protected <T> void addDocument(final T document, final Encoder<T> encoder, final BsonOutput bsonOutput,
+    protected <T> void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
                                    final FieldNameValidator validator) {
-        addDocument(document, encoder, EncoderContext.builder().build(), bsonOutput, validator,
+        addDocument(document, getBsonDocumentCodec(), EncoderContext.builder().build(), bsonOutput, validator,
                     settings.getMaxDocumentSize() + QUERY_DOCUMENT_HEADROOM);
     }
 
-    /**
-     * Appends a document to the message that is intended for storage in a collection.
-     *
-     * @param document the document
-     * @param bsonOutput the output
-     * @param validator the field name validator
-     * @param <T> the document type
-     */
-    protected <T> void addCollectibleDocument(final BsonDocument document, final BsonOutput bsonOutput,
-                                              final FieldNameValidator validator) {
-        addDocument(document, getBsonDocumentCodec(), EncoderContext.builder().isEncodingCollectibleDocument(true).build(), bsonOutput,
-                    validator, settings.getMaxDocumentSize());
-    }
 
     /**
      * Appends a document to the message that is intended for storage in a collection.
      *
      * @param document the document
-     * @param encoder the encoder for the document
      * @param bsonOutput the output
      * @param validator the field name validator
-     * @param <T> the document type
      */
-    protected <T> void addCollectibleDocument(final T document, final Encoder<T> encoder, final BsonOutput bsonOutput,
-                                              final FieldNameValidator validator) {
-        addDocument(document, encoder, EncoderContext.builder().isEncodingCollectibleDocument(true).build(), bsonOutput, validator,
-                    settings.getMaxDocumentSize());
+    protected void addCollectibleDocument(final BsonDocument document, final BsonOutput bsonOutput,
+                                          final FieldNameValidator validator) {
+        addDocument(document, getBsonDocumentCodec(), EncoderContext.builder().isEncodingCollectibleDocument(true).build(), bsonOutput,
+                    validator, settings.getMaxDocumentSize());
     }
 
     /**
