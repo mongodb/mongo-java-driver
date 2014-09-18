@@ -36,12 +36,7 @@ abstract class BaseCluster implements Cluster {
 
     private final AtomicReference<CountDownLatch> phase = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
     private final ClusterableServerFactory serverFactory;
-    private final ThreadLocal<Random> random = new ThreadLocal<Random>() {
-        @Override
-        protected Random initialValue() {
-            return new Random();
-        }
-    };
+    private final ThreadLocal<Random> random = new ThreadLocal<Random>();
     private final String clusterId;
     private final ClusterSettings settings;
     private final ClusterListener clusterListener;
@@ -220,8 +215,15 @@ abstract class BaseCluster implements Cluster {
         }
     }
 
-    protected Random getRandom() {
-        return random.get();
+    // it's important that Random instances are created in this way instead of via subclassing ThreadLocal and overriding the
+    // initialValue() method.
+    private Random getRandom() {
+        Random result = random.get();
+        if (result == null) {
+            result = new Random();
+            random.set(result);
+        }
+        return result;
     }
 
     protected ClusterableServer createServer(final ServerAddress serverAddress, final ChangeListener<ServerDescription>
