@@ -42,7 +42,7 @@ import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import com.mongodb.operation.OrderBy;
-import com.mongodb.operation.ParallelScanOperation;
+import com.mongodb.operation.ParallelCollectionScanOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.RenameCollectionOperation;
 import com.mongodb.operation.UpdateOperation;
@@ -1364,7 +1364,7 @@ public class DBCollection {
     public List<Cursor> parallelScan(final ParallelScanOptions options) {
         List<Cursor> cursors = new ArrayList<Cursor>();
 
-        ParallelScanOperation<DBObject> operation = new ParallelScanOperation<DBObject>(getNamespace(),
+        ParallelCollectionScanOperation<DBObject> operation = new ParallelCollectionScanOperation<DBObject>(getNamespace(),
                                                                                         options.getNumCursors(),
                                                                                         objectCodec).batchSize(options.getBatchSize());
         List<MongoCursor<DBObject>> mongoCursors = execute(operation, options.getReadPreference() != null ? options.getReadPreference()

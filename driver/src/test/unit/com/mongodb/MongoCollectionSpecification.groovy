@@ -30,6 +30,7 @@ import com.mongodb.client.model.FindOptions
 import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.MapReduceOptions
+import com.mongodb.client.model.ParallelCollectionScanOptions
 import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.client.model.ReplaceOneOptions
 import com.mongodb.client.model.UpdateManyModel
@@ -52,6 +53,7 @@ import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.MapReduceToCollectionOperation
 import com.mongodb.operation.MapReduceWithInlineResultsOperation
 import com.mongodb.operation.MixedBulkWriteOperation
+import com.mongodb.operation.ParallelCollectionScanOperation
 import com.mongodb.operation.UpdateOperation
 import com.mongodb.protocol.AcknowledgedWriteResult
 import org.bson.BsonArray
@@ -702,4 +704,26 @@ class MongoCollectionSpecification extends Specification {
         operation2.isReturnUpdated()
     }
 
+    def 'parallelScanModel should use ParallelScanOperation properly'() {
+        given:
+        def cursor = Stub(MongoCursor)
+        def executor = new TestOperationExecutor([[cursor], [cursor]])
+        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        collection.parallelCollectionScan(100)
+
+        then:
+        def operation = executor.getReadOperation() as ParallelCollectionScanOperation<Document>
+        operation.getNumCursors() == 100
+        operation.getBatchSize() == 0
+
+        when:
+        collection.parallelCollectionScan(100, new ParallelCollectionScanOptions().batchSize(100))
+
+        then:
+        def operation2 = executor.getReadOperation() as ParallelCollectionScanOperation<Document>
+        operation2.getNumCursors() == 100
+        operation2.getBatchSize() == 100
+    }
 }

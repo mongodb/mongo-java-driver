@@ -56,7 +56,8 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @mongodb.server.release 2.6
  * @since 3.0
  */
-public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAsyncCursor<T>>>, ReadOperation<List<MongoCursor<T>>> {
+public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<List<MongoAsyncCursor<T>>>,
+                                                               ReadOperation<List<MongoCursor<T>>> {
     private final MongoNamespace namespace;
     private final int numCursors;
     private int batchSize = 0;
@@ -70,7 +71,7 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
      * @param decoder the decoder for the result documents.
 
      */
-    public ParallelScanOperation(final MongoNamespace namespace, final int numCursors, final Decoder<T> decoder) {
+    public ParallelCollectionScanOperation(final MongoNamespace namespace, final int numCursors, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
         isTrue("numCursors >= 1", numCursors >= 1);
         this.numCursors = numCursors;
@@ -103,7 +104,7 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
      * @return this
      * @mongodb.driver.manual manual/core/cursors/#cursor-batches BatchSize
      */
-    public ParallelScanOperation<T> batchSize(final int batchSize) {
+    public ParallelCollectionScanOperation<T> batchSize(final int batchSize) {
         isTrue("batchSize >= 0", batchSize >= 0);
         this.batchSize = batchSize;
         return this;

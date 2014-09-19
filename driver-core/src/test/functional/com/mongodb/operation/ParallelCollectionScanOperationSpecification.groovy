@@ -34,9 +34,9 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
 import static org.junit.Assert.assertTrue
 
-@IgnoreIf( { isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) } )
+@IgnoreIf({ isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) })
 @Category(Slow)
-class ParallelScanOperationSpecification extends OperationFunctionalSpecification {
+class ParallelCollectionScanOperationSpecification extends OperationFunctionalSpecification {
     Set<Integer> ids = [] as Set
 
     def 'setup'() {
@@ -48,8 +48,8 @@ class ParallelScanOperationSpecification extends OperationFunctionalSpecificatio
 
     def 'should visit all documents'() {
         when:
-        List<MongoCursor<Document>> cursors = new ParallelScanOperation<Document>(getNamespace(), 3, new DocumentCodec()).batchSize(500)
-                .execute(getBinding())
+        List<MongoCursor<Document>> cursors = new ParallelCollectionScanOperation<Document>(getNamespace(), 3, new DocumentCodec())
+                .batchSize(500).execute(getBinding())
 
         then:
         cursors.size() <= 3
@@ -69,7 +69,7 @@ class ParallelScanOperationSpecification extends OperationFunctionalSpecificatio
     @Category(Async)
     def 'should visit all documents asynchronously'() {
         when:
-        List<MongoAsyncCursor<Document>> cursors = new ParallelScanOperation<Document>(getNamespace(), 3, new DocumentCodec())
+        List<MongoAsyncCursor<Document>> cursors = new ParallelCollectionScanOperation<Document>(getNamespace(), 3, new DocumentCodec())
                 .batchSize(500).executeAsync(getAsyncBinding()).get()
 
         then:
