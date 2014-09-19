@@ -70,7 +70,7 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
                            .sizeInBytes(options.getSizeInBytes())
                            .autoIndex(options.isAutoIndex())
                            .maxDocuments(options.getMaxDocuments())
-                           .setUsePowerOf2Sizes(options.isUsePowerOf2Sizes()));
+                           .usePowerOf2Sizes(options.isUsePowerOf2Sizes()));
     }
 
     @Override

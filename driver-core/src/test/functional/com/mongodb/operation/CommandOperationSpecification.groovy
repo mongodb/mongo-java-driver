@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
+import category.Slow
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonBinary
@@ -37,7 +38,7 @@ import static java.util.Arrays.asList
 
 class CommandOperationSpecification extends OperationFunctionalSpecification {
 
-    def 'should execute command'() {
+    def 'should execute read command'() {
         given:
         def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
                                                                       new BsonDocument('count', new BsonString(getCollectionName())),
@@ -49,23 +50,8 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
         result.getNumber('n').intValue() == 0
     }
 
-    def 'should execute command larger than 16MB'() {
-        when:
-        def result = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
-                                                            new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
-                                                                    .append('query', new BsonDocument('_id', new BsonInt32(42)))
-                                                                    .append('update',
-                                                                            new BsonDocument('_id', new BsonInt32(42))
-                                                                                    .append('b', new BsonBinary(
-                                                                                    new byte[16 * 1024 * 1024 - 30]))),
-                                                            new BsonDocumentCodec())
-                .execute(getBinding())
-
-        then:
-        result.containsKey('value')
-    }
-
-    def 'should execute command asynchronously'() {
+    @Category(Async)
+    def 'should execute read command asynchronously'() {
         given:
         def commandOperation = new CommandReadOperation<BsonDocument>(getNamespace().databaseName,
                                                                       new BsonDocument('count', new BsonString(getCollectionName())),
@@ -76,6 +62,55 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
         then:
         result.getNumber('n').intValue() == 0
 
+    }
+
+    @Category(Slow)
+    def 'should execute write command'() {
+        when:
+        def result = new CommandWriteOperation<BsonDocument>(getNamespace().databaseName,
+                                                             new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
+                                                                     .append('query', new BsonDocument('_id', new BsonInt32(42)))
+                                                                     .append('update',
+                                                                             new BsonDocument('_id', new BsonInt32(42))
+                                                                                     .append('b', new BsonInt32(42))),
+                                                             new BsonDocumentCodec())
+                .execute(getBinding())
+
+        then:
+        result.containsKey('value')
+    }
+
+    @Category(Async)
+    def 'should execute write command asynchronously'() {
+        when:
+        def result = new CommandWriteOperation<BsonDocument>(getNamespace().databaseName,
+                                                             new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
+                                                                     .append('query', new BsonDocument('_id', new BsonInt32(42)))
+                                                                     .append('update',
+                                                                             new BsonDocument('_id', new BsonInt32(42))
+                                                                                     .append('b', new BsonInt32(42))),
+                                                             new BsonDocumentCodec())
+                .executeAsync(getAsyncBinding()).get()
+
+        then:
+        result.containsKey('value')
+    }
+
+    @Category(Slow)
+    def 'should execute command larger than 16MB'() {
+        when:
+        def result = new CommandWriteOperation<BsonDocument>(getNamespace().databaseName,
+                                                             new BsonDocument('findAndModify', new BsonString(getNamespace().fullName))
+                                                                     .append('query', new BsonDocument('_id', new BsonInt32(42)))
+                                                                     .append('update',
+                                                                             new BsonDocument('_id', new BsonInt32(42))
+                                                                                     .append('b', new BsonBinary(
+                                                                                     new byte[16 * 1024 * 1024 - 30]))),
+                                                             new BsonDocumentCodec())
+                .execute(getBinding())
+
+        then:
+        result.containsKey('value')
     }
 
     @IgnoreIf({ isSharded() || !serverVersionAtLeast(asList(2, 6, 0)) })

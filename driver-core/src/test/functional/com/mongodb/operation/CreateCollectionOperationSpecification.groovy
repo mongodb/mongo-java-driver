@@ -19,20 +19,45 @@ package com.mongodb.operation
 import category.Async
 import com.mongodb.MongoServerException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.codecs.DocumentCodec
+import org.bson.BsonDocument
+import org.bson.BsonString
 import org.junit.experimental.categories.Category
+import org.mongodb.Document
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 
 class CreateCollectionOperationSpecification extends OperationFunctionalSpecification {
 
-    def makeCreateCollectionOperation(CreateCollectionOptions options) {
-        new CreateCollectionOperation(getDatabaseName(), options.getCollectionName())
-                .capped(options.isCapped())
-                .sizeInBytes(options.getSizeInBytes())
-                .autoIndex(options.isAutoIndex())
-                .maxDocuments(options.getMaxDocuments())
-                .setUsePowerOf2Sizes(options.isUsePowerOf2Sizes())
+    def 'should have the correct defaults'() {
+        when:
+        CreateCollectionOperation operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+
+        then:
+        !operation.isCapped()
+        operation.sizeInBytes == 0
+        operation.isAutoIndex()
+        operation.getMaxDocuments() == 0
+        operation.usePowerOf2Sizes == null
+    }
+
+    def 'should set optional values correctly'(){
+        when:
+        CreateCollectionOperation operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+            .autoIndex(false)
+            .capped(true)
+            .sizeInBytes(1000)
+            .maxDocuments(1000)
+            .usePowerOf2Sizes(true)
+
+        then:
+        operation.isCapped()
+        operation.sizeInBytes == 1000
+        !operation.isAutoIndex()
+        operation.getMaxDocuments() == 1000
+        operation.usePowerOf2Sizes == true
     }
 
     def 'should create a collection'() {
@@ -40,7 +65,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         assert !collectionNameExists(getCollectionName())
 
         when:
-        makeCreateCollectionOperation(new CreateCollectionOptions(getCollectionName())).execute(getBinding())
+        new CreateCollectionOperation(getDatabaseName(), getCollectionName()).execute(getBinding())
 
         then:
         collectionNameExists(getCollectionName())
@@ -52,7 +77,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         assert !collectionNameExists(getCollectionName())
 
         when:
-        makeCreateCollectionOperation(new CreateCollectionOptions(getCollectionName())).executeAsync(getAsyncBinding()).get()
+        new CreateCollectionOperation(getDatabaseName(), getCollectionName()).executeAsync(getAsyncBinding()).get()
 
         then:
         collectionNameExists(getCollectionName())
@@ -61,7 +86,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     def 'should error when creating a collection that already exists'() {
         given:
         assert !collectionNameExists(getCollectionName())
-        def operation = makeCreateCollectionOperation(new CreateCollectionOptions(getCollectionName()))
+        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
         operation.execute(getBinding())
 
         when:
@@ -76,7 +101,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     def 'should error when creating a collection that already exists asynchronously'() {
         given:
         assert !collectionNameExists(getCollectionName())
-        def operation = makeCreateCollectionOperation(new CreateCollectionOptions(getCollectionName()))
+        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
         operation.execute(getBinding())
 
         when:
@@ -85,6 +110,36 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         then:
         thrown(MongoServerException)
         !collectionNameExists('nonExistingCollection')
+    }
+
+    def 'should create capped collection'() {
+        given:
+        assert !collectionNameExists(getCollectionName())
+
+        when:
+        new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+                .capped(true)
+                .autoIndex(false)
+                .maxDocuments(100)
+                .sizeInBytes(40 * 1024)
+                .usePowerOf2Sizes(true)
+                .execute(getBinding())
+
+        then:
+        collectionNameExists(getCollectionName())
+
+        when:
+        def stats = new CommandWriteOperation<Document>(getDatabaseName(),
+                                                        new BsonDocument('collStats', new BsonString(getCollectionName())),
+                                                        new DocumentCodec()).execute(getBinding())
+        then:
+        stats.getBoolean('capped')
+        stats.getInteger('max') == 100
+        if (serverVersionAtLeast([2, 4, 0])) {
+            stats.getInteger('storageSize') == 40 * 1024
+        } else {
+            stats.getInteger('storageSize') >= 40 * 1024 && stats.getInteger('storageSize') <= 41 * 1024
+        }
     }
 
     def collectionNameExists(String collectionName) {

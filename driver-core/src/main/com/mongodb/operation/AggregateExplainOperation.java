@@ -52,27 +52,6 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
     }
 
     /**
-     * Gets the aggregation pipeline.
-     *
-     * @return the pipeline
-     * @mongodb.driver.manual manual/core/aggregation-introduction/#aggregation-pipelines Aggregation Pipeline
-     */
-    public List<BsonDocument> getPipeline() {
-        return pipeline;
-    }
-
-    /**
-     * Whether writing to temporary files is enabled. A null value indicates that it's unspecified.
-     *
-     * @return true if writing to temporary files is enabled
-     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 2.6
-     */
-    public Boolean getAllowDiskUse() {
-        return allowDiskUse;
-    }
-
-    /**
      * Enables writing to temporary files. A null value indicates that it's unspecified.
      *
      * @param allowDiskUse true if writing to temporary files is enabled
@@ -83,18 +62,6 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
     public AggregateExplainOperation allowDiskUse(final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
         return this;
-    }
-
-    /**
-     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
-     *
-     * @param timeUnit the time unit to return the result in
-     * @return the maximum execution time in the given time unit
-     * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
-     */
-    public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
     }
 
     /**

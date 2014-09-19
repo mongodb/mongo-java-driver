@@ -34,6 +34,7 @@ import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
+import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class AggregateToCollectionOperationSpecification extends OperationFunctionalSpecification {
@@ -46,6 +47,33 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
+    }
+
+    def 'should have the correct defaults'() {
+        given:
+        def pipeline = [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))]
+
+        when:
+        AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), pipeline)
+
+        then:
+        operation.getAllowDiskUse() == null
+        operation.getMaxTime(MILLISECONDS) == 0
+        operation.getPipeline() == pipeline
+    }
+
+    def 'should set optional values correctly'(){
+        given:
+        def pipeline = [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))]
+
+        when:
+        AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), pipeline)
+                .allowDiskUse(true)
+                .maxTime(10, MILLISECONDS)
+
+        then:
+        operation.getAllowDiskUse()
+        operation.getMaxTime(MILLISECONDS) == 10
     }
 
     def 'should not accept an empty pipeline'() {

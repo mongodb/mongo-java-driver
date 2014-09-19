@@ -589,7 +589,7 @@ class MongoCollectionSpecification extends Specification {
         collection.mapReduce('map', 'reduce', options).first()
 
         then:
-        def operation = executor.getWriteOperation() as MapReduceToCollectionOperation<Document>
+        def operation = executor.getWriteOperation() as MapReduceToCollectionOperation
         operation.getMapFunction() == new BsonJavaScript('map')
         operation.getReduceFunction() == new BsonJavaScript('reduce')
         operation.getFinalizeFunction() == new BsonJavaScript('finalize')

@@ -72,7 +72,7 @@ public final class CollectionHelper<T> {
             .sizeInBytes(options.getSizeInBytes())
             .autoIndex(options.isAutoIndex())
             .maxDocuments(options.getMaxDocuments())
-            .setUsePowerOf2Sizes(options.isUsePowerOf2Sizes()).execute(getBinding());
+            .usePowerOf2Sizes(options.isUsePowerOf2Sizes()).execute(getBinding());
     }
 
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {

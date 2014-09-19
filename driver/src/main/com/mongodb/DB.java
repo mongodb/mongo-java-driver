@@ -311,7 +311,7 @@ public class DB {
                    .sizeInBytes(sizeInBytes)
                    .autoIndex(autoIndex)
                    .maxDocuments(maxDocuments)
-                   .setUsePowerOf2Sizes(usePowerOfTwoSizes);
+                   .usePowerOf2Sizes(usePowerOfTwoSizes);
     }
 
     /**

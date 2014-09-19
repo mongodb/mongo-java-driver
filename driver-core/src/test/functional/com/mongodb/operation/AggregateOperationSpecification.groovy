@@ -35,6 +35,7 @@ import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.Arrays.asList
+import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class AggregateOperationSpecification extends OperationFunctionalSpecification {
@@ -46,10 +47,38 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
     }
 
+    def 'should have the correct defaults'() {
+        when:
+        AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
+
+        then:
+        operation.getAllowDiskUse() == null
+        operation.getBatchSize() == null
+        operation.getMaxTime(MILLISECONDS) == 0
+        operation.getPipeline() == []
+        operation.getUseCursor() == null
+    }
+
+    def 'should set optional values correctly'(){
+        when:
+        AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
+                .allowDiskUse(true)
+                .batchSize(10)
+                .maxTime(10, MILLISECONDS)
+                .useCursor(true)
+
+
+        then:
+        operation.getAllowDiskUse()
+        operation.getBatchSize() == 10
+        operation.getMaxTime(MILLISECONDS) == 10
+        operation.getUseCursor()
+    }
+
     def 'should be able to aggregate'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).useCursor(useCursor)
-        def result = op.execute(getBinding());
+        AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).useCursor(useCursor)
+        def result = operation.execute(getBinding());
 
         then:
         List<String> results = result.iterator()*.getString('name')
@@ -63,9 +92,9 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @Category(Async)
     def 'should be able to aggregate asynchronously'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).useCursor(useCursor)
+        AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).useCursor(useCursor)
         List<Document> docList = []
-        def cursor = op.executeAsync(getAsyncBinding()).get(1, SECONDS)
+        def cursor = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
         cursor.forEach(new Block<Document>() {
             @Override
             void apply(final Document value) {
@@ -86,11 +115,11 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should be able to aggregate with pipeline'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(),
+        AggregateOperation operation = new AggregateOperation<Document>(getNamespace(),
                                                                  [new BsonDocument('$match',
                                                                                    new BsonDocument('job', new BsonString('plumber')))],
                                                                  new DocumentCodec()).useCursor(useCursor)
-        def result = op.execute(getBinding());
+        def result = operation.execute(getBinding());
 
         then:
         List<String> results = result.iterator()*.getString('name')
@@ -104,12 +133,12 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @Category(Async)
     def 'should be able to aggregate with pipeline asynchronously'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(),
+        AggregateOperation operation = new AggregateOperation<Document>(getNamespace(),
                                                                  [new BsonDocument('$match',
                                                                                    new BsonDocument('job', new BsonString('plumber')))],
                                                                  new DocumentCodec()).useCursor(useCursor)
         List<Document> docList = []
-        def cursor = op.executeAsync(getAsyncBinding()).get(1, SECONDS)
+        def cursor = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
         cursor.forEach(new Block<Document>() {
             @Override
             void apply(final Document value) {
@@ -131,8 +160,8 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should allow disk usage'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).allowDiskUse(allowDiskUse)
-        def cursor = op.execute(getBinding())
+        AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).allowDiskUse(allowDiskUse)
+        def cursor = operation.execute(getBinding())
 
         then:
         cursor*.getString('name') == ['Pete', 'Sam', 'Pete']
@@ -144,8 +173,8 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should allow batch size'() {
         when:
-        AggregateOperation op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).batchSize(batchSize)
-        def cursor = op.execute(getBinding())
+        AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).batchSize(batchSize)
+        def cursor = operation.execute(getBinding())
 
         then:
         cursor*.getString('name') == ['Pete', 'Sam', 'Pete']
@@ -157,11 +186,11 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw execution timeout exception from execute'() {
         given:
-        def op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).maxTime(1, SECONDS)
+        def operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:
-        op.execute(getBinding())
+        operation.execute(getBinding())
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -174,11 +203,11 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
-        def op = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).maxTime(1, SECONDS)
+        def operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
         when:
-        op.executeAsync(getAsyncBinding()).get()
+        operation.executeAsync(getAsyncBinding()).get()
 
         then:
         thrown(MongoExecutionTimeoutException)
@@ -190,10 +219,10 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
     def 'should be able to explain an empty pipeline'() {
         given:
-        AggregateOperation op = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
+        AggregateOperation operation = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
 
         when:
-        def result = op.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER).execute(getBinding());
+        def result = operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER).execute(getBinding());
 
         then:
         result.containsKey('stages')
@@ -203,10 +232,10 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
     def 'should be able to explain an empty pipeline asynchronously'() {
         given:
-        AggregateOperation op = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
+        AggregateOperation operation = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
 
         when:
-        def result = op.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER).executeAsync(getAsyncBinding()).get();
+        def result = operation.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER).executeAsync(getAsyncBinding()).get();
 
         then:
         result.containsKey('stages')

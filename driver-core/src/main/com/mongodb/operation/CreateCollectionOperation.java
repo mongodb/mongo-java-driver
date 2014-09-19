@@ -169,7 +169,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
      * @mongodb.driver.manual manual/reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
      * @mongodb.server.release 2.6
      */
-    public CreateCollectionOperation setUsePowerOf2Sizes(final Boolean usePowerOf2Sizes) {
+    public CreateCollectionOperation usePowerOf2Sizes(final Boolean usePowerOf2Sizes) {
         this.usePowerOf2Sizes = usePowerOf2Sizes;
         return this;
     }
