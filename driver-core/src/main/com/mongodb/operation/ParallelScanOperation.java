@@ -114,11 +114,9 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
         return withConnection(binding, new CallableWithConnectionAndSource<List<MongoCursor<T>>>() {
             @Override
             public List<MongoCursor<T>> call(final ConnectionSource source, final Connection connection) {
-                return executeWrappedCommandProtocol(namespace.getDatabaseName(),
-                                                     asCommandDocument(),
-                                                     CommandResultDocumentCodec.create(decoder, "firstBatch"),
-                                                     connection, binding.getReadPreference(),
-                                                     transformer(source));
+                return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
+                                                     CommandResultDocumentCodec.create(decoder, "firstBatch"), connection,
+                                                     binding.getReadPreference(), transformer(source));
             }
         });
     }
@@ -128,11 +126,9 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
         return withConnection(binding, new AsyncCallableWithConnectionAndSource<List<MongoAsyncCursor<T>>>() {
             @Override
             public MongoFuture<List<MongoAsyncCursor<T>>> call(final AsyncConnectionSource source, final Connection connection) {
-                return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(),
-                                                          asCommandDocument(),
-                                                          CommandResultDocumentCodec.create(decoder, "firstBatch"),
-                                                          connection, binding.getReadPreference(),
-                                                          asyncTransformer(source));
+                return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(),
+                                                          CommandResultDocumentCodec.create(decoder, "firstBatch"), connection,
+                                                          binding.getReadPreference(), asyncTransformer(source));
             }
         });
     }
@@ -183,7 +179,7 @@ public class ParallelScanOperation<T> implements AsyncReadOperation<List<MongoAs
                                   cursorDocument.getInt64("id").getValue(), serverAddress, 0);
     }
 
-    private BsonDocument asCommandDocument() {
+    private BsonDocument getCommand() {
         return new BsonDocument("parallelCollectionScan", new BsonString(namespace.getCollectionName()))
                .append("numCursors", new BsonInt32(getNumCursors()));
     }

@@ -17,7 +17,6 @@
 package com.mongodb
 
 import com.mongodb.client.MongoCollectionOptions
-import com.mongodb.client.model.AggregateModel
 import com.mongodb.client.model.AggregateOptions
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.CountOptions
@@ -30,6 +29,7 @@ import com.mongodb.client.model.FindOneAndUpdateOptions
 import com.mongodb.client.model.FindOptions
 import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.InsertOneModel
+import com.mongodb.client.model.MapReduceOptions
 import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.client.model.ReplaceOneOptions
 import com.mongodb.client.model.UpdateManyModel
@@ -49,6 +49,8 @@ import com.mongodb.operation.FindAndReplaceOperation
 import com.mongodb.operation.FindAndUpdateOperation
 import com.mongodb.operation.FindOperation
 import com.mongodb.operation.InsertOperation
+import com.mongodb.operation.MapReduceToCollectionOperation
+import com.mongodb.operation.MapReduceWithInlineResultsOperation
 import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.UpdateOperation
 import com.mongodb.protocol.AcknowledgedWriteResult
@@ -56,6 +58,7 @@ import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonJavaScript
 import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.codecs.configuration.RootCodecRegistry
@@ -276,10 +279,8 @@ class MongoCollectionSpecification extends Specification {
 
     def 'find should use FindOperation properly'() {
         given:
-        def document = new Document('_id', 1)
         def cursor = Stub(MongoCursor)
         cursor.hasNext() >>> [true, false]
-        cursor.next() >> document
         def executor = new TestOperationExecutor([cursor, cursor])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
@@ -294,7 +295,7 @@ class MongoCollectionSpecification extends Specification {
                 .projection(new Document('x', 1))
                 .sort(new Document('y', 1))
 
-        def result = collection.find(options).into([])
+        collection.find(options).first()
 
         then:
         def operation = executor.getReadOperation() as FindOperation
@@ -310,7 +311,6 @@ class MongoCollectionSpecification extends Specification {
             cursorFlags == EnumSet.noneOf(CursorFlag)
         }
         executor.readPreference == secondary()
-        result == [document]
 
         when:
         'all the boolean properties are enabled'
@@ -321,7 +321,7 @@ class MongoCollectionSpecification extends Specification {
                                    .tailable(true)
                                    .oplogReplay(true)
 
-        collection.find(options).into([])
+        collection.find(options).first()
 
         then: 'cursor flags contains all flags'
         def operation2 = executor.getReadOperation() as FindOperation
@@ -335,11 +335,11 @@ class MongoCollectionSpecification extends Specification {
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        def result = collection.count(new CountOptions().criteria(new Document('cold', true))
-                                                        .maxTime(1, TimeUnit.SECONDS)
-                                                        .skip(5)
-                                                        .limit(100)
-                                                        .hint(new Document('x', 1)))
+        collection.count(new CountOptions().criteria(new Document('cold', true))
+                                           .maxTime(1, TimeUnit.SECONDS)
+                                           .skip(5)
+                                           .limit(100)
+                                           .hint(new Document('x', 1)))
 
         then:
         def operation = executor.getReadOperation() as CountOperation
@@ -349,7 +349,6 @@ class MongoCollectionSpecification extends Specification {
         operation.limit == 100
         operation.hint == new BsonDocument('x', new BsonInt32(1))
         executor.readPreference == secondary()
-        result == 42
     }
 
     def 'count should use CountOperation properly with hint string'() {
@@ -371,16 +370,14 @@ class MongoCollectionSpecification extends Specification {
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        def result = collection.distinct('fieldName1',
-                                         new DistinctOptions().criteria(new Document('cold', true))
-                                                              .maxTime(1, TimeUnit.SECONDS))
+        collection.distinct('fieldName1', new DistinctOptions().criteria(new Document('cold', true))
+                                                               .maxTime(1, TimeUnit.SECONDS))
 
         then:
         def operation = executor.getReadOperation() as DistinctOperation
         operation.criteria == new BsonDocument('cold', BsonBoolean.TRUE)
         operation.getMaxTime(TimeUnit.SECONDS) == 1
         executor.readPreference == secondary()
-        result == ['foo', 42]
     }
 
     def 'bulk insert should use BulkWriteOperation properly'() {
@@ -459,19 +456,16 @@ class MongoCollectionSpecification extends Specification {
 
     def 'aggregate should use AggregationOperation properly'() {
         given:
-        def document = new Document('_id', 1)
         def cursor = Stub(MongoCursor)
-        cursor.hasNext() >>> [true, false]
-        cursor.next() >> document
         def executor = new TestOperationExecutor([cursor])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        def result = collection.aggregate([new Document('$match', new Document('job', 'plumber'))],
-                                          new AggregateOptions().allowDiskUse(true)
-                                                                .batchSize(10)
-                                                                .maxTime(1, TimeUnit.SECONDS)
-                                                                .useCursor(true)).into([])
+        collection.aggregate([new Document('$match', new Document('job', 'plumber'))],
+                             new AggregateOptions().allowDiskUse(true)
+                                                   .batchSize(10)
+                                                   .maxTime(1, TimeUnit.SECONDS)
+                                                   .useCursor(true)).first()
 
         then:
         def operation = executor.getReadOperation() as AggregateOperation
@@ -480,27 +474,22 @@ class MongoCollectionSpecification extends Specification {
         operation.getMaxTime(TimeUnit.SECONDS) == 1
         operation.useCursor
         executor.readPreference == secondary()
-        result == [document]
     }
 
     def 'aggregate should use AggregationToCollectionOperation properly'() {
         given:
-        def document = new Document('_id', 1)
         def cursor = Stub(MongoCursor)
-        cursor.hasNext() >>> [true, false]
-        cursor.next() >> document
         def executor = new TestOperationExecutor([null, cursor])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
-        def model = new AggregateModel([new Document('$match', new Document('job', 'plumber')),
-                                        new Document('$out', 'outCollection')],
-                                       new AggregateOptions().allowDiskUse(true)
-                                                             .batchSize(10)
-                                                             .maxTime(1, TimeUnit.SECONDS)
-                                                             .useCursor(true))
+        def pipeline = [new Document('$match', new Document('job', 'plumber')), new Document('$out', 'outCollection')]
+        def options = new AggregateOptions().allowDiskUse(true)
+                                            .batchSize(10)
+                                            .maxTime(1, TimeUnit.SECONDS)
+                                            .useCursor(true)
 
         when:
-        def result = collection.aggregate(model).into([])
+        collection.aggregate(pipeline, options).first()
 
         then:
         def aggregateToCollectionOperation = executor.getWriteOperation() as AggregateToCollectionOperation
@@ -515,7 +504,112 @@ class MongoCollectionSpecification extends Specification {
         findOperation.decoder instanceof DocumentCodec
 
         executor.readPreference == secondary()
-        result == [document]
+    }
+
+    def 'mapReduce should use the MapReduceWithInlineResultsOperation properly'() {
+        given:
+        def cursor = Stub(MongoCursor)
+        def executor = new TestOperationExecutor([cursor])
+        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        collection.mapReduce('map', 'reduce').first()
+
+        then:
+        def operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation<Document>
+        operation.getCriteria() == null
+        operation.getFinalizeFunction() == null
+        operation.getLimit() == 0
+        operation.getMapFunction() == new BsonJavaScript('map')
+        operation.getReduceFunction() == new BsonJavaScript('reduce')
+        operation.getScope() == null
+        operation.getSort() == null
+        operation.getMaxTime(TimeUnit.MILLISECONDS) == 0
+        operation.isJsMode() == false
+        operation.isVerbose() == true
+        executor.readPreference == secondary()
+    }
+
+    def 'mapReduce with options should use the MapReduceWithInlineResultsOperation properly'() {
+        given:
+        def cursor = Stub(MongoCursor)
+        def executor = new TestOperationExecutor([cursor])
+        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def options = new MapReduceOptions()
+                .finalizeFunction('finalize')
+                .criteria([criteria: 1] as Document)
+                .limit(10)
+                .scope([scope: 1] as Document)
+                .sort([sort: 1] as Document)
+                .maxTime(10, TimeUnit.MILLISECONDS)
+                .jsMode(true)
+                .verbose(false)
+
+        when:
+        collection.mapReduce('map', 'reduce', options).first()
+
+        then:
+        def operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation<Document>
+        operation.getMapFunction() == new BsonJavaScript('map')
+        operation.getReduceFunction() == new BsonJavaScript('reduce')
+        operation.getFinalizeFunction() == new BsonJavaScript('finalize')
+        operation.getCriteria() == new BsonDocument('criteria', new BsonInt32(1))
+        operation.getLimit() == 10
+        operation.getScope() == new BsonDocument('scope', new BsonInt32(1))
+        operation.getSort() == new BsonDocument('sort', new BsonInt32(1))
+        operation.getMaxTime(TimeUnit.MILLISECONDS) == 10
+        operation.isJsMode() == true
+        operation.isVerbose() == false
+        executor.readPreference == secondary()
+    }
+
+
+    def 'mapReduce with options should use the MapReduceToCollectionOperation properly'() {
+        given:
+        def cursor = Stub(MongoCursor)
+        def executor = new TestOperationExecutor([cursor, cursor])
+        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def options = new MapReduceOptions('out')
+                .action(MapReduceOptions.Action.MERGE)
+                .databaseName('db')
+                .sharded(true)
+                .nonAtomic(true)
+                .finalizeFunction('finalize')
+                .criteria([criteria: 1] as Document)
+                .limit(10)
+                .scope([scope: 1] as Document)
+                .sort([sort: 1] as Document)
+                .maxTime(10, TimeUnit.MILLISECONDS)
+                .jsMode(true)
+                .verbose(false)
+
+        when:
+        collection.mapReduce('map', 'reduce', options).first()
+
+        then:
+        def operation = executor.getWriteOperation() as MapReduceToCollectionOperation<Document>
+        operation.getMapFunction() == new BsonJavaScript('map')
+        operation.getReduceFunction() == new BsonJavaScript('reduce')
+        operation.getFinalizeFunction() == new BsonJavaScript('finalize')
+        operation.getCriteria() == new BsonDocument('criteria', new BsonInt32(1))
+        operation.getLimit() == 10
+        operation.getScope() == new BsonDocument('scope', new BsonInt32(1))
+        operation.getSort() == new BsonDocument('sort', new BsonInt32(1))
+        operation.getMaxTime(TimeUnit.MILLISECONDS) == 10
+        operation.isJsMode() == true
+        operation.isVerbose() == false
+        operation.isJsMode() == true
+        operation.action == 'merge'
+        operation.getDatabaseName() == 'db'
+        operation.isSharded() == true
+        operation.isNonAtomic() == true
+
+        when:
+        def findOperation = executor.getReadOperation() as FindOperation<Document>
+
+        then:
+        findOperation.getNamespace() == new MongoNamespace('db', 'out')
+        executor.readPreference == secondary()
     }
 
     def 'findOneAndDelete should use FindAndDeleteOperation correctly'() {

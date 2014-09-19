@@ -169,16 +169,14 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     @Override
     public Long execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace.getDatabaseName(), asCommandDocument(), new BsonDocumentCodec(),
-                                             binding, transformer());
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding, transformer());
     }
 
     @Override
     public MongoFuture<Long> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), asCommandDocument(),
-                                                  new BsonDocumentCodec(), binding, transformer());
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding,
+                                                  transformer());
     }
-
 
     /**
      * Gets an operation whose execution explains this operation.
@@ -202,7 +200,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return new CommandReadOperation<BsonDocument>(namespace.getDatabaseName(),
-                                                      ExplainHelper.asExplainCommand(asCommandDocument(), explainVerbosity),
+                                                      ExplainHelper.asExplainCommand(getCommand(), explainVerbosity),
                                                       new BsonDocumentCodec());
     }
 
@@ -215,7 +213,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         };
     }
 
-    private BsonDocument asCommandDocument() {
+    private BsonDocument getCommand() {
         BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
         putIfNotNull(document, "query", criteria);
         putIfNotZero(document, "limit", limit);

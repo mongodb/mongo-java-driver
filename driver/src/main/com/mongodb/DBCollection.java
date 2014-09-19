@@ -36,7 +36,6 @@ import com.mongodb.operation.GetIndexesOperation;
 import com.mongodb.operation.Index;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
-import com.mongodb.operation.MapReduce;
 import com.mongodb.operation.MapReduceCursor;
 import com.mongodb.operation.MapReduceStatistics;
 import com.mongodb.operation.MapReduceToCollectionOperation;
@@ -53,6 +52,7 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWrapper;
+import org.bson.BsonJavaScript;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
@@ -1134,28 +1134,78 @@ public class DBCollection {
      */
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
         ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference() : command.getReadPreference();
-        MapReduce mapReduce = command.getMapReduce(getDefaultDBObjectCodec());
-        if (mapReduce.isInline()) {
-            MapReduceCursor<DBObject> executionResult = execute(new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(),
-                                                                                                                  mapReduce,
-                                                                                                                  objectCodec),
-                                                                readPreference);
+        if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
+
+            MapReduceWithInlineResultsOperation<DBObject> operation =
+                new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(),
+                                                                  new BsonJavaScript(command.getMap()),
+                                                                  new BsonJavaScript(command.getReduce()),
+                                                                  getDefaultDBObjectCodec());
+
+                    operation.criteria(wrapAllowNull(command.getQuery()));
+                    operation.limit(command.getLimit());
+                    operation.maxTime(command.getMaxTime(MILLISECONDS), MILLISECONDS);
+                    operation.jsMode(command.getJsMode() == null ? false : command.getJsMode());
+                    operation.sort(wrapAllowNull(command.getSort()));
+                    operation.verbose(command.isVerbose());
+
+            if (command.getScope() != null) {
+                operation.scope(wrap(new BasicDBObject(command.getScope())));
+            }
+            if (command.getFinalize() != null) {
+                operation.finalizeFunction(new BsonJavaScript(command.getFinalize()));
+            }
+            MapReduceCursor<DBObject> executionResult = execute(operation, readPreference);
             return new MapReduceOutput(command.toDBObject(), executionResult);
         } else {
-            MapReduceToCollectionOperation mapReduceOperation = new MapReduceToCollectionOperation(getNamespace(), mapReduce);
-            MapReduceStatistics mapReduceStatistics = execute(mapReduceOperation);
-            DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command.getMapReduce(getDefaultDBObjectCodec()));
+            String action;
+            switch (command.getOutputType()) {
+                case REPLACE:
+                    action = "replace";
+                    break;
+                case MERGE:
+                    action = "merge";
+                    break;
+                case REDUCE:
+                    action = "reduce";
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unexpected output type");
+            }
+
+            MapReduceToCollectionOperation operation =
+                new MapReduceToCollectionOperation(getNamespace(),
+                                                   new BsonJavaScript(command.getMap()),
+                                                   new BsonJavaScript(command.getReduce()),
+                                                   command.getOutputTarget())
+                    .criteria(wrapAllowNull(command.getQuery()))
+                    .limit(command.getLimit())
+                    .maxTime(command.getMaxTime(MILLISECONDS), MILLISECONDS)
+                    .jsMode(command.getJsMode() == null ? false : command.getJsMode())
+                    .sort(wrapAllowNull(command.getSort()))
+                    .verbose(command.isVerbose())
+                    .action(action)
+                    .databaseName(command.getOutputDB());
+
+            if (command.getScope() != null) {
+                operation.scope(wrap(new BasicDBObject(command.getScope())));
+            }
+            if (command.getFinalize() != null) {
+                operation.finalizeFunction(new BsonJavaScript(command.getFinalize()));
+            }
+            MapReduceStatistics mapReduceStatistics = execute(operation);
+            DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command);
             DBCursor executionResult = mapReduceOutputCollection.find();
             return new MapReduceOutput(command.toDBObject(), executionResult, mapReduceStatistics, mapReduceOutputCollection);
         }
     }
 
-    private DBCollection getMapReduceOutputCollection(final MapReduce mapReduce) {
-        String requestedDatabaseName = mapReduce.getOutput().getDatabaseName();
+    private DBCollection getMapReduceOutputCollection(final MapReduceCommand command) {
+        String requestedDatabaseName = command.getOutputDB();
         DB database = requestedDatabaseName != null
                       ? getDB().getSisterDB(requestedDatabaseName)
                       : getDB();
-        return database.getCollection(mapReduce.getOutput().getCollectionName());
+        return database.getCollection(command.getOutputTarget());
     }
 
     /**

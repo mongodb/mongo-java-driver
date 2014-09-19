@@ -22,7 +22,9 @@ import com.mongodb.client.model.AggregateOptions
 import com.mongodb.client.model.CountModel
 import com.mongodb.client.model.FindModel
 import com.mongodb.client.model.FindOptions
+import com.mongodb.client.model.MapReduceModel
 import com.mongodb.codecs.DocumentCodecProvider
+import com.mongodb.operation.Index
 import com.mongodb.operation.OperationExecutor
 import com.mongodb.operation.ReadOperation
 import com.mongodb.operation.WriteOperation
@@ -36,6 +38,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ReadPreference.secondary
+import static com.mongodb.operation.OrderBy.ASC
 import static java.util.Arrays.asList
 
 // Due to the implementation of explain using private classes, it can't be effectively unit tests, so instead there is this integration
@@ -61,13 +64,16 @@ class MongoCollectionFunctionalSpecification extends FunctionalSpecification {
     def collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor);
 
     def 'should explain a find model'() {
+        given:
+        collection.tools().createIndexes([Index.builder().addKey('x', ASC).sparse().build()])
+
         when:
         def model = new FindModel(new FindOptions().criteria(new Document('cold', true))
                                                    .batchSize(4)
                                                    .maxTime(1, TimeUnit.SECONDS)
                                                    .skip(5)
                                                    .limit(100)
-                                                   .modifiers(new Document('$hint', 'i1'))
+                                                   .modifiers(new Document('$hint', 'x_1'))
                                                    .projection(new Document('x', 1))
                                                    .sort(new Document('y', 1)))
         def result = collection.explain(model, ExplainVerbosity.ALL_PLANS_EXECUTIONS)
@@ -102,4 +108,12 @@ class MongoCollectionFunctionalSpecification extends FunctionalSpecification {
         result
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(asList(2, 7, 8)) || isSharded() }) // Todo Scheduled to be supported but currently not (2.7.7)
+    def 'should explain a mapReduce model'() {
+        when:
+        def result = collection.explain(new MapReduceModel('map', 'reduce'), ExplainVerbosity.ALL_PLANS_EXECUTIONS)
+
+        then:
+        result
+    }
 }

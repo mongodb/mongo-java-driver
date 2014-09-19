@@ -24,27 +24,23 @@ import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonJavaScript
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
-import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 
 class MapReduceToCollectionOperationFunctionalSpecification extends OperationFunctionalSpecification {
-    private final documentCodec = new DocumentCodec()
-    def mapReduce = new MapReduce(new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
-                                  new BsonJavaScript('function(key, values){ return values.length; }'),
-                                  new MapReduceOutputOptions('mapReduceOutput'))
+    def mapReduceInputNamespace = new MongoNamespace(getDatabaseName(), 'mapReduceInput')
+    def mapReduceOutputNamespace = new MongoNamespace(getDatabaseName(), 'mapReduceOutput')
+    def mapReduceOperation = new MapReduceToCollectionOperation(mapReduceInputNamespace,
+                                                                new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
+                                                                new BsonJavaScript('function(key, values){ return values.length; }'),
+                                                                mapReduceOutputNamespace.getCollectionName())
     def expectedResults = [['_id': 'Pete', 'value': 2.0] as Document,
                            ['_id': 'Sam', 'value': 1.0] as Document]
-
-    @Shared mapReduceInputNamespace
-    @Shared mapReduceOutputNamespace
+    def helper = new CollectionHelper<Document>(new DocumentCodec(), mapReduceOutputNamespace)
 
     def setup() {
-        mapReduceInputNamespace = new MongoNamespace(getDatabaseName(), 'mapReduceInput')
-        mapReduceOutputNamespace = new MongoNamespace(getDatabaseName(), 'mapReduceOutput')
-
-        CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, mapReduceInputNamespace)
+        CollectionHelper<Document> helper = new CollectionHelper<Document>(new DocumentCodec(), mapReduceInputNamespace)
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
         Document pete2 = new Document('name', 'Pete').append('job', 'electrician')
@@ -57,12 +53,8 @@ class MapReduceToCollectionOperationFunctionalSpecification extends OperationFun
     }
 
     def 'should return the correct statistics and save the results'() {
-        given:
-        def helper = new CollectionHelper<Document>(documentCodec, mapReduceOutputNamespace)
-        def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace, mapReduce)
-
         when:
-        MapReduceStatistics results = operation.execute(getBinding())
+        MapReduceStatistics results = mapReduceOperation.execute(getBinding())
 
         then:
         results.emitCount == 3
@@ -74,12 +66,9 @@ class MapReduceToCollectionOperationFunctionalSpecification extends OperationFun
 
     @Category(Async)
     def 'should return the correct statistics and save the results asynchronously'() {
-        given:
-        def helper = new CollectionHelper<Document>(documentCodec, mapReduceOutputNamespace)
-        def operation = new MapReduceToCollectionOperation(mapReduceInputNamespace, mapReduce)
 
         when:
-        MapReduceStatistics results = operation.executeAsync(getAsyncBinding()).get()
+        MapReduceStatistics results = mapReduceOperation.executeAsync(getAsyncBinding()).get()
 
         then:
         results.emitCount == 3

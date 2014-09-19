@@ -16,12 +16,6 @@
 
 package com.mongodb
 
-import com.mongodb.operation.MapReduce
-import com.mongodb.operation.MapReduceOutputOptions
-import org.bson.BsonDocument
-import org.bson.BsonInt32
-import org.bson.BsonJavaScript
-import org.bson.BsonString
 import spock.lang.Unroll
 
 import static com.mongodb.Fixture.getDefaultDatabase
@@ -68,18 +62,6 @@ class MapReduceCommandSpecification extends FunctionalSpecification {
         'verbose'        | cmd.isVerbose()         | true
     }
 
-    def 'should produce the expected command for defaults'() throws Exception {
-        when:
-        MapReduce expected = new MapReduce(new BsonJavaScript('map'), new BsonJavaScript('reduce'),
-                                           new MapReduceOutputOptions('test').action(MapReduceOutputOptions.Action.REDUCE)).with {
-            verbose()
-            filter([] as BsonDocument)
-        }
-
-        then:
-        cmd.getMapReduce(collection.getDefaultDBObjectCodec()) == expected
-    }
-
     @Unroll
     def 'should be able to change the default for #field'() throws Exception {
 
@@ -99,40 +81,7 @@ class MapReduceCommandSpecification extends FunctionalSpecification {
         'verbose'        | cmd.setVerbose(false)            | cmd.isVerbose()         | false
     }
 
-    def 'should produce the expected command when changed'() throws Exception {
-        given:
-        cmd.with {
-            setFinalize('final')
-            setJsMode(true)
-            setLimit(100)
-            setMaxTime(1, SECONDS)
-            setOutputDB('outDB')
-            setReadPreference(primary())
-            setScope(scope())
-            setSort(sort())
-            setVerbose(true)
-        }
-
-        when:
-        MapReduceOutputOptions options = new MapReduceOutputOptions('test').database('outDB').action(MapReduceOutputOptions.Action.REDUCE)
-        MapReduce expected = new MapReduce(new BsonJavaScript('map'), new BsonJavaScript('reduce'), options).with {
-            verbose()
-            filter([] as BsonDocument)
-            finalize(new BsonJavaScript('final'))
-            jsMode()
-            limit(100)
-            maxTime(1, SECONDS)
-            verbose()
-            scope(new BsonDocument('a', new BsonString('b')))
-            sort(new BsonDocument('a', new BsonInt32(1)))
-        }
-
-        then:
-        cmd.getMapReduce(collection.getDefaultDBObjectCodec()) == expected
-    }
-
-
-    def 'should produce the expected DBobject when changed'() throws Exception {
+    def 'should produce the expected DBObject when changed'() throws Exception {
         given:
         cmd.with {
             setFinalize('final')

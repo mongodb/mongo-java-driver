@@ -16,11 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.operation.MapReduce;
-import com.mongodb.operation.MapReduceOutputOptions;
-import org.bson.BsonDocumentWrapper;
-import org.bson.BsonJavaScript;
-
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -396,54 +391,4 @@ public class MapReduceCommand {
         INLINE
     }
 
-    MapReduce getMapReduce(final DBObjectCodec codec) {
-        MapReduce mapReduce;
-        if (outputType == OutputType.INLINE) {
-            mapReduce = new MapReduce(new BsonJavaScript(map), new BsonJavaScript(reduce));
-        } else {
-            MapReduceOutputOptions output = new MapReduceOutputOptions(outputCollection).database(outputDB);
-            switch (outputType) {
-                case MERGE:
-                    output.action(MapReduceOutputOptions.Action.MERGE);
-                    break;
-                case REDUCE:
-                    output.action(MapReduceOutputOptions.Action.REDUCE);
-                    break;
-                case REPLACE:
-                    output.action(MapReduceOutputOptions.Action.REPLACE);
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unexpected action on target collection");
-            }
-            mapReduce = new MapReduce(new BsonJavaScript(map), new BsonJavaScript(reduce), output);
-        }
-
-        if (query != null) {
-            mapReduce.filter(new BsonDocumentWrapper<DBObject>(query, codec));
-        }
-
-        if (finalize != null) {
-            mapReduce.finalize(new BsonJavaScript(finalize));
-        }
-
-        if (sort != null) {
-            mapReduce.sort(new BsonDocumentWrapper<DBObject>(sort, codec));
-        }
-
-        if (jsMode != null) {
-            mapReduce.jsMode();
-        }
-
-        mapReduce.limit(limit);
-
-        mapReduce.maxTime(maxTimeMS, MILLISECONDS);
-
-        if (scope != null) {
-            mapReduce.scope(new BsonDocumentWrapper<DBObject>(new BasicDBObject(scope), codec));
-        }
-        if (verbose) {
-            mapReduce.verbose();
-        }
-        return mapReduce;
-    }
 }

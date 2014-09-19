@@ -18,6 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.Function;
 import com.mongodb.client.model.FindOptions;
+import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.codecs.DocumentCodecProvider;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
@@ -98,5 +99,28 @@ public class MongoCollectionTest extends DatabaseTestCase {
         // then
         assertThat(listOfObjectIds.size(), is(1));
         assertThat(listOfObjectIds.get(0), is(firstItem.getId()));
+    }
+
+    @Test
+    public void testMapReduceWithGenerics() {
+        // given
+        List<CodecProvider> codecs = Arrays.asList(new DocumentCodecProvider(), new NameCodecProvider());
+        MongoCollectionOptions options =
+            MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
+
+        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document("name", "Pete").append("job", "handyman"),
+                                              new Document("name", "Sam").append("job", "Plumber"),
+                                              new Document("name", "Pete").append("job", "'electrician'"));
+
+        String mapFunction  = "function(){ emit( this.name , 1 ); }";
+        String reduceFunction = "function(key, values){ return values.length; }";
+        MongoCollection<Document> collection = database.getCollection(getCollectionName(), Document.class, options);
+
+        // when
+        List<Name> result = collection.mapReduce(mapFunction, reduceFunction, Name.class).into(new ArrayList<Name>());
+
+        // then
+        assertEquals(new Name("Pete", 2), result.get(0));
+        assertEquals(new Name("Sam", 1), result.get(1));
     }
 }

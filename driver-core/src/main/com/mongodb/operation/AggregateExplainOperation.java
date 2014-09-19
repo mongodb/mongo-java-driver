@@ -113,15 +113,15 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
 
     @Override
     public BsonDocument execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(namespace.getDatabaseName(), asCommandDocument(), binding);
+        return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), binding);
     }
 
     @Override
     public MongoFuture<BsonDocument> executeAsync(final AsyncReadBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), asCommandDocument(), binding);
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding);
     }
 
-    private BsonDocument asCommandDocument() {
+    private BsonDocument getCommand() {
         BsonDocument commandDocument = new BsonDocument("aggregate", new BsonString(namespace.getCollectionName()));
         commandDocument.put("pipeline", new BsonArray(pipeline));
         commandDocument.put("explain", BsonBoolean.TRUE);
@@ -133,6 +133,5 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
         }
         return commandDocument;
     }
-
 
 }

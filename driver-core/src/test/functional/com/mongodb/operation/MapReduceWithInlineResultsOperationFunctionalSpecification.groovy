@@ -30,8 +30,12 @@ import static com.mongodb.ClusterFixture.getBinding
 
 class MapReduceWithInlineResultsOperationFunctionalSpecification extends OperationFunctionalSpecification {
     private final documentCodec = new DocumentCodec()
-    def mapReduce = new MapReduce(new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
-                                  new BsonJavaScript('function(key, values){ return values.length; }'))
+    def mapReduceOperation = new MapReduceWithInlineResultsOperation<Document>(
+            getNamespace(),
+            new BsonJavaScript('function(){ emit( this.name , 1 ); }'),
+            new BsonJavaScript('function(key, values){ return values.length; }'),
+            documentCodec)
+
     def expectedResults = [['_id': 'Pete', 'value': 2.0] as Document,
                            ['_id': 'Sam', 'value': 1.0] as Document]
 
@@ -45,11 +49,8 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Operati
 
 
     def 'should return the correct results'() {
-        given:
-        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec)
-
         when:
-        MapReduceCursor<Document> results = operation.execute(getBinding())
+        MapReduceCursor<Document> results = mapReduceOperation.execute(getBinding())
 
         then:
         results.iterator().toList() == expectedResults
@@ -57,12 +58,9 @@ class MapReduceWithInlineResultsOperationFunctionalSpecification extends Operati
 
     @Category(Async)
     def 'should return the correct results asynchronously'() {
-        given:
-        def operation = new MapReduceWithInlineResultsOperation(namespace, mapReduce, documentCodec)
-
         when:
         List<Document> docList = []
-        operation.executeAsync(getAsyncBinding()).get().forEach(new Block<Document>() {
+        mapReduceOperation.executeAsync(getAsyncBinding()).get().forEach(new Block<Document>() {
             @Override
             void apply(final Document value) {
                 if (value != null) {

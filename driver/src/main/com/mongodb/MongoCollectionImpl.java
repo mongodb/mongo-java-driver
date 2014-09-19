@@ -42,6 +42,8 @@ import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.InsertManyModel;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
+import com.mongodb.client.model.MapReduceModel;
+import com.mongodb.client.model.MapReduceOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReplaceOneOptions;
 import com.mongodb.client.model.UpdateManyModel;
@@ -65,6 +67,8 @@ import com.mongodb.operation.FindAndUpdateOperation;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
+import com.mongodb.operation.MapReduceToCollectionOperation;
+import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
@@ -75,6 +79,7 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.BsonDocumentWrapper;
+import org.bson.BsonJavaScript;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
@@ -180,7 +185,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private <C> MongoIterable<C> find(final FindModel findModel, final Class<C> clazz) {
-        return new OperationIterable<C>(createQueryOperation(findModel, options.getCodecRegistry().get(clazz)),
+        return new OperationIterable<C>(createQueryOperation(findModel, getCodec(clazz)),
                                         options.getReadPreference());
     }
 
@@ -204,10 +209,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         return aggregate(new AggregateModel(pipeline, options), clazz);
     }
 
-    private MongoIterable<Document> aggregate(final AggregateModel model) {
-        return aggregate(model, Document.class);
-    }
-
     private <C> MongoIterable<C> aggregate(final AggregateModel model, final Class<C> clazz) {
         List<BsonDocument> aggregateList = createBsonDocumentList(model.getPipeline());
 
@@ -220,11 +221,54 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             operationExecutor.execute(operation);
             return new OperationIterable<C>(new FindOperation<C>(new MongoNamespace(namespace.getDatabaseName(),
                                                                                     outCollection.asString().getValue()),
-                                                                 options.getCodecRegistry().get(clazz)),
+                                                                 getCodec(clazz)),
                                             options.getReadPreference());
         } else {
-            return new OperationIterable<C>(createAggregateOperation(model, options.getCodecRegistry().get(clazz), aggregateList),
+            return new OperationIterable<C>(createAggregateOperation(model, aggregateList, getCodec(clazz)),
                                             options.getReadPreference());
+        }
+    }
+
+    @Override
+    public MongoIterable<Document> mapReduce(final String mapFunction, final String reduceFunction) {
+        return mapReduce(new MapReduceModel(mapFunction, reduceFunction));
+    }
+
+    @Override
+    public MongoIterable<Document> mapReduce(final String mapFunction, final String reduceFunction, final MapReduceOptions options) {
+        return mapReduce(new MapReduceModel(mapFunction, reduceFunction, options));
+    }
+
+    @Override
+    public <C> MongoIterable<C> mapReduce(final String mapFunction, final String reduceFunction, final Class<C> clazz) {
+        return mapReduce(new MapReduceModel(mapFunction, reduceFunction), clazz);
+    }
+
+    @Override
+    public <C> MongoIterable<C> mapReduce(final String mapFunction, final String reduceFunction, final MapReduceOptions options,
+                                          final Class<C> clazz) {
+        return mapReduce(new MapReduceModel(mapFunction, reduceFunction, options), clazz);
+    }
+
+    private MongoIterable<Document> mapReduce(final MapReduceModel mapReduceModel) {
+        return mapReduce(mapReduceModel, Document.class);
+    }
+
+    private <C> MongoIterable<C> mapReduce(final MapReduceModel mapReduceModel, final Class<C> clazz) {
+        MapReduceOptions mapReduceOptions = mapReduceModel.getOptions();
+        if (mapReduceOptions.isInline()) {
+            MapReduceWithInlineResultsOperation<C> operation =
+                createMapReduceWithInlineResultsOperation(mapReduceModel, getCodec(clazz));
+            return new MapReduceResultsIterable<C>(operation, options.getReadPreference(), operationExecutor);
+        } else {
+            MapReduceToCollectionOperation operation = createMapReduceToCollectionOperation(mapReduceModel);
+            operationExecutor.execute(operation);
+
+            String databaseName = mapReduceOptions.getDatabaseName() != null ? mapReduceOptions.getDatabaseName()
+                                                                             : namespace.getDatabaseName();
+            FindOperation<C> findOperation = createQueryOperation(new MongoNamespace(databaseName, mapReduceOptions.getCollectionName()),
+                                                                  new FindModel(), getCodec(clazz));
+            return new OperationIterable<C>(findOperation, options.getReadPreference());
         }
     }
 
@@ -462,6 +506,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return explainFind((FindModel) explainableModel, verbosity);
         } else if (explainableModel instanceof CountModel) {
             return explainCount((CountModel) explainableModel, verbosity);
+        } else if (explainableModel instanceof MapReduceModel) {
+            return explainMapReduce((MapReduceModel) explainableModel, verbosity);
         } else {
             throw new UnsupportedOperationException(format("Unsupported explainable model type %s", explainableModel.getClass()));
         }
@@ -487,13 +533,31 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private Document explainAggregate(final AggregateModel aggregateModel, final ExplainVerbosity verbosity) {
-        AggregateOperation<BsonDocument> operation = createAggregateOperation(aggregateModel, new BsonDocumentCodec(),
-                                                                              createBsonDocumentList(aggregateModel.getPipeline()));
+        AggregateOperation<BsonDocument> operation = createAggregateOperation(aggregateModel,
+                                                                              createBsonDocumentList(aggregateModel.getPipeline()),
+                                                                              new BsonDocumentCodec());
         BsonDocument bsonDocument = operationExecutor.execute(operation.asExplainableOperation(verbosity), options.getReadPreference());
         return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
     }
 
+    private Document explainMapReduce(final MapReduceModel mapReduceModel, final ExplainVerbosity verbosity) {
+        BsonDocument bsonDocument;
+        if (mapReduceModel.getOptions().isInline()) {
+            MapReduceWithInlineResultsOperation<BsonDocument> operation =
+                createMapReduceWithInlineResultsOperation(mapReduceModel, new BsonDocumentCodec());
+            bsonDocument = operationExecutor.execute(operation.asExplainableOperation(verbosity), options.getReadPreference());
+        } else {
+            MapReduceToCollectionOperation operation = createMapReduceToCollectionOperation(mapReduceModel);
+            bsonDocument = operationExecutor.execute(operation.asExplainableOperation(verbosity), options.getReadPreference());
+        }
+        return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
+    }
+
     private Codec<T> getCodec() {
+        return getCodec(clazz);
+    }
+
+    private <C> Codec<C> getCodec(final Class<C> clazz) {
         return options.getCodecRegistry().get(clazz);
     }
 
@@ -510,6 +574,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private <C> FindOperation<C> createQueryOperation(final FindModel model, final Decoder<C> decoder) {
+        return createQueryOperation(namespace, model, decoder);
+    }
+
+    private <C> FindOperation<C> createQueryOperation(final MongoNamespace namespace, final FindModel model, final Decoder<C> decoder) {
         return new FindOperation<C>(namespace, decoder)
                    .criteria(asBson(model.getOptions().getCriteria()))
                    .batchSize(model.getOptions().getBatchSize())
@@ -559,8 +627,55 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         return operation;
     }
 
-    private <C> AggregateOperation<C> createAggregateOperation(final AggregateModel model, final Decoder<C> decoder,
-                                                               final List<BsonDocument> aggregateList) {
+    private <C> MapReduceWithInlineResultsOperation<C> createMapReduceWithInlineResultsOperation(final MapReduceModel model,
+                                                                                                 final Decoder<C> decoder) {
+        MapReduceOptions mapReduceOptions = model.getOptions();
+        MapReduceWithInlineResultsOperation<C> operation =
+            new MapReduceWithInlineResultsOperation<C>(getNamespace(),
+                                                       new BsonJavaScript(model.getMapFunction()),
+                                                       new BsonJavaScript(model.getReduceFunction()),
+                                                       decoder)
+                .criteria(asBson(mapReduceOptions.getCriteria()))
+                .limit(mapReduceOptions.getLimit())
+                .maxTime(mapReduceOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
+                .jsMode(mapReduceOptions.isJsMode())
+                .scope(asBson(mapReduceOptions.getScope()))
+                .sort(asBson(mapReduceOptions.getSort()))
+                .verbose(mapReduceOptions.isVerbose());
+        if (mapReduceOptions.getFinalizeFunction() != null) {
+            operation.finalizeFunction(new BsonJavaScript(mapReduceOptions.getFinalizeFunction()));
+        }
+        return operation;
+    }
+
+    private MapReduceToCollectionOperation createMapReduceToCollectionOperation(final MapReduceModel model) {
+        MapReduceOptions mapReduceOptions = model.getOptions();
+        MapReduceToCollectionOperation operation =
+            new MapReduceToCollectionOperation(getNamespace(),
+                                               new BsonJavaScript(model.getMapFunction()),
+                                               new BsonJavaScript(model.getReduceFunction()),
+                                               mapReduceOptions.getCollectionName())
+                .criteria(asBson(mapReduceOptions.getCriteria()))
+                .limit(mapReduceOptions.getLimit())
+                .maxTime(mapReduceOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
+                .jsMode(mapReduceOptions.isJsMode())
+                .scope(asBson(mapReduceOptions.getScope()))
+                .sort(asBson(mapReduceOptions.getSort()))
+                .verbose(mapReduceOptions.isVerbose())
+                .action(mapReduceOptions.getAction().getValue())
+                .nonAtomic(mapReduceOptions.isNonAtomic())
+                .sharded(mapReduceOptions.isSharded())
+                .databaseName(mapReduceOptions.getDatabaseName());
+
+        if (mapReduceOptions.getFinalizeFunction() != null) {
+            operation.finalizeFunction(new BsonJavaScript(mapReduceOptions.getFinalizeFunction()));
+        }
+        return operation;
+    }
+
+    private <C> AggregateOperation<C> createAggregateOperation(final AggregateModel model,
+                                                               final List<BsonDocument> aggregateList,
+                                                               final Decoder<C> decoder) {
         return new AggregateOperation<C>(namespace, aggregateList, decoder)
                    .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
                    .allowDiskUse(model.getOptions().getAllowDiskUse())

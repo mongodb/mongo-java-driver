@@ -126,7 +126,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     @SuppressWarnings("unchecked")
     @Override
     public Void execute(final WriteBinding binding) {
-        executeWrappedCommandProtocol(namespace.getDatabaseName(), asCommandDocument(), new BsonDocumentCodec(), binding,
+        executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding,
                                       new VoidTransformer<BsonDocument>());
 
         return null;
@@ -134,11 +134,11 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
 
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), asCommandDocument(), new BsonDocumentCodec(), binding,
+        return executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding,
                                                   new VoidTransformer<BsonDocument>());
     }
 
-    private BsonDocument asCommandDocument() {
+    private BsonDocument getCommand() {
         BsonDocument commandDocument = new BsonDocument("aggregate", new BsonString(namespace.getCollectionName()));
         commandDocument.put("pipeline", new BsonArray(pipeline));
         if (maxTimeMS > 0) {

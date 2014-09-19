@@ -28,7 +28,7 @@ import java.util.Collection;
  * @param <V> the return type of the map reduce
  * @since 3.0
  */
-class MapReduceResultsIterable<T, V> implements MongoIterable<V> {
+class MapReduceResultsIterable<V> implements MongoIterable<V> {
     private final MapReduceWithInlineResultsOperation<V> operation;
     private final ReadPreference readPreference;
     private final OperationExecutor operationExecutor;

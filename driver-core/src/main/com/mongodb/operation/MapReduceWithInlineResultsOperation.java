@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MapReduceAsyncCursor;
@@ -23,14 +24,25 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonJavaScript;
+import org.bson.BsonNull;
+import org.bson.BsonString;
+import org.bson.BsonValue;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
+import java.util.concurrent.TimeUnit;
+
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.operation.CommandDocuments.createMapReduce;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.DocumentHelper.putIfNotZero;
+import static com.mongodb.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.operation.OperationHelper.withConnection;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>Operation that runs a Map Reduce against a MongoDB instance.  This operation only supports "inline" results, i.e. the results will be
@@ -39,32 +51,240 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * <p>To run a map reduce operation into a given collection, use {@code MapReduceToCollectionOperation}.</p>
  *
  * @param <T> the operations result type.
+ * @mongodb.driver.manual reference/command/mapReduce/ mapReduce
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0
  */
 public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperation<MapReduceAsyncCursor<T>>,
                                                                ReadOperation<MapReduceCursor<T>> {
     private final MongoNamespace namespace;
-    private final MapReduce mapReduce;
+    private final BsonJavaScript mapFunction;
+    private final BsonJavaScript reduceFunction;
     private final Decoder<T> decoder;
+    private BsonJavaScript finalizeFunction;
+    private BsonDocument scope;
+    private BsonDocument criteria;
+    private BsonDocument sort;
+    private int limit;
+    private boolean jsMode;
+    private boolean verbose;
+    private long maxTimeMS;
 
     /**
      * Construct a MapReduceOperation with all the criteria it needs to execute.
      *
      * @param namespace the database and collection namespace for the operation.
-     * @param mapReduce the bean containing all the details of the Map Reduce operation to perform.
+     * @param mapFunction a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
+     * @param reduceFunction a JavaScript function that "reduces" to a single object all the values associated with a particular key.
      * @param decoder the decoder for the result documents.
+     * @mongodb.driver.manual reference/command/mapReduce/ mapReduce
      */
-    public MapReduceWithInlineResultsOperation(final MongoNamespace namespace, final MapReduce mapReduce,
-                                               final Decoder<T> decoder) {
+    public MapReduceWithInlineResultsOperation(final MongoNamespace namespace, final BsonJavaScript mapFunction,
+                                               final BsonJavaScript reduceFunction, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
-        this.mapReduce = notNull("mapReduce", mapReduce);
+        this.mapFunction = notNull("mapFunction", mapFunction);
+        this.reduceFunction = notNull("reduceFunction", reduceFunction);
         this.decoder = notNull("decoder", decoder);
+    }
 
-        if (!mapReduce.isInline()) {
-            throw new IllegalArgumentException("This operation can only be used with inline map reduce operations.  Invalid MapReduce: "
-                                               + mapReduce);
-        }
+    /**
+     * Gets the JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
+     *
+     * @return the JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
+     */
+    public BsonJavaScript getMapFunction() {
+        return mapFunction;
+    }
+
+    /**
+     * Gets the JavaScript function that "reduces" to a single object all the values associated with a particular key.
+     *
+     * @return the JavaScript function that "reduces" to a single object all the values associated with a particular key.
+     */
+    public BsonJavaScript getReduceFunction() {
+        return reduceFunction;
+    }
+
+    /**
+     * Gets the JavaScript function that follows the reduce method and modifies the output. Default is null
+     *
+     * @return the JavaScript function that follows the reduce method and modifies the output.
+     * @mongodb.driver.manual reference/command/mapReduce/#mapreduce-finalize-cmd Requirements for the finalize Function
+     */
+    public BsonJavaScript getFinalizeFunction() {
+        return finalizeFunction;
+    }
+
+    /**
+     * Sets the JavaScript function that follows the reduce method and modifies the output.
+     *
+     * @param finalizeFunction the JavaScript function that follows the reduce method and modifies the output.
+     * @return this
+     * @mongodb.driver.manual reference/command/mapReduce/#mapreduce-finalize-cmd Requirements for the finalize Function
+     */
+    public MapReduceWithInlineResultsOperation<T> finalizeFunction(final BsonJavaScript finalizeFunction) {
+        this.finalizeFunction = finalizeFunction;
+        return this;
+    }
+
+    /**
+     * Gets the global variables that are accessible in the map, reduce and finalize functions.
+     *
+     * @return the global variables that are accessible in the map, reduce and finalize functions.
+     * @mongodb.driver.manual reference/command/mapReduce Scope
+     */
+    public BsonDocument getScope() {
+        return scope;
+    }
+
+    /**
+     * Sets the global variables that are accessible in the map, reduce and finalize functions.
+     *
+     * @param scope the global variables that are accessible in the map, reduce and finalize functions.
+     * @return this
+     * @mongodb.driver.manual reference/command/mapReduce mapReduce
+     */
+    public MapReduceWithInlineResultsOperation<T> scope(final BsonDocument scope) {
+        this.scope = scope;
+        return this;
+    }
+
+    /**
+     * Gets the query criteria.
+     *
+     * @return the query criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     */
+    public BsonDocument getCriteria() {
+        return criteria;
+    }
+
+    /**
+     * Sets the criteria to apply to the query.
+     *
+     * @param criteria the criteria to apply to the query.
+     * @return this
+     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     */
+    public MapReduceWithInlineResultsOperation<T> criteria(final BsonDocument criteria) {
+        this.criteria = criteria;
+        return this;
+    }
+
+    /**
+     * Gets the sort criteria to apply to the query. The default is null, which means that the documents will be returned in an undefined
+     * order.
+     *
+     * @return a document describing the sort criteria
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
+     */
+    public BsonDocument getSort() {
+        return sort;
+    }
+
+    /**
+     * Sets the sort criteria to apply to the query.
+     *
+     * @param sort the sort criteria, which may be null.
+     * @return this
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
+     */
+    public MapReduceWithInlineResultsOperation<T> sort(final BsonDocument sort) {
+        this.sort = sort;
+        return this;
+    }
+
+    /**
+     * Gets the limit to apply.  The default is null.
+     *
+     * @return the limit
+     * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
+     */
+    public int getLimit() {
+        return limit;
+    }
+
+    /**
+     * Sets the limit to apply.
+     *
+     * @param limit the limit, which may be null
+     * @return this
+     * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
+     */
+    public MapReduceWithInlineResultsOperation<T> limit(final int limit) {
+        this.limit = limit;
+        return this;
+    }
+
+    /**
+     * Gets the flag that specifies whether to convert intermediate data into BSON format between the execution of the map and reduce
+     * functions. Defaults to false.
+     *
+     * @return jsMode
+     * @mongodb.driver.manual reference/command/mapReduce mapReduce
+     */
+    public boolean isJsMode() {
+        return jsMode;
+    }
+
+    /**
+     * Sets the flag that specifies whether to convert intermediate data into BSON format between the execution of the map and reduce
+     * functions. Defaults to false.
+     *
+     * @param jsMode the flag that specifies whether to convert intermediate data into BSON format between the execution of the map and
+     *               reduce functions
+     * @return jsMode
+     * @mongodb.driver.manual reference/command/mapReduce mapReduce
+     */
+    public MapReduceWithInlineResultsOperation<T> jsMode(final boolean jsMode) {
+        this.jsMode = jsMode;
+        return this;
+    }
+
+    /**
+     * Gets whether to include the timing information in the result information. Defaults to true.
+     *
+     * @return whether to include the timing information in the result information
+     */
+    public boolean isVerbose() {
+        return verbose;
+    }
+
+    /**
+     * Sets whether to include the timing information in the result information.
+     *
+     * @param verbose whether to include the timing information in the result information.
+     * @return this
+     */
+    public MapReduceWithInlineResultsOperation<T> verbose(final boolean verbose) {
+        this.verbose = verbose;
+        return this;
+    }
+
+    /**
+     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
+     *
+     * @param timeUnit the time unit to return the result in
+     * @return the maximum execution time in the given time unit
+     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     */
+    public long getMaxTime(final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Sets the maximum execution time on the server for this operation.
+     *
+     * @param maxTime  the max time
+     * @param timeUnit the time unit, which may not be null
+     * @return this
+     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     */
+    public MapReduceWithInlineResultsOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
     }
 
     /**
@@ -93,6 +313,32 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
                                                   binding, asyncTransformer());
     }
 
+    /**
+     * Gets an operation whose execution explains this operation.
+     *
+     * @param explainVerbosity the explain verbosity
+     * @return a read operation that when executed will explain this operation
+     */
+    public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
+        return createExplainableOperation(explainVerbosity);
+    }
+
+    /**
+     * Gets an operation whose execution explains this operation.
+     *
+     * @param explainVerbosity the explain verbosity
+     * @return a read operation that when executed will explain this operation
+     */
+    public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
+        return createExplainableOperation(explainVerbosity);
+    }
+
+    private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
+        return new CommandReadOperation<BsonDocument>(namespace.getDatabaseName(),
+                                                      ExplainHelper.asExplainCommand(getCommand(), explainVerbosity),
+                                                      new BsonDocumentCodec());
+    }
+
     private Function<BsonDocument, MapReduceCursor<T>> transformer(final Connection connection) {
         return new Function<BsonDocument, MapReduceCursor<T>>() {
             @SuppressWarnings("unchecked")
@@ -116,7 +362,22 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     }
 
     private BsonDocument getCommand() {
-        return createMapReduce(namespace.getCollectionName(), mapReduce);
+        BsonDocument commandDocument = new BsonDocument("mapreduce", new BsonString(namespace.getCollectionName()))
+                                           .append("map", getMapFunction())
+                                           .append("reduce", getReduceFunction())
+                                           .append("out", new BsonDocument("inline", new BsonInt32(1)))
+                                           .append("query", asValueOrNull(getCriteria()))
+                                           .append("sort", asValueOrNull(getSort()))
+                                           .append("finalize", asValueOrNull(getFinalizeFunction()))
+                                           .append("scope", asValueOrNull(getScope()))
+                                           .append("verbose", BsonBoolean.valueOf(isVerbose()));
+        putIfNotZero(commandDocument, "limit", getLimit());
+        putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
+        putIfTrue(commandDocument, "jsMode", isJsMode());
+        return commandDocument;
     }
 
+    private static BsonValue asValueOrNull(final BsonValue value) {
+        return value == null ? BsonNull.VALUE : value;
+    }
 }
