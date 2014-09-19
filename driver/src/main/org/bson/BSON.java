@@ -22,7 +22,12 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
 
-@SuppressWarnings("rawtypes")
+/**
+ * Contains byte representations of all the BSON types (see the <a href="http://bsonspec.org/spec.html">BSON Specification</a>). Also
+ * supports the registration of encoding and decoding hooks to transform BSON types during encoding or decoding.
+ *
+ * @see org.bson.Transformer
+ */
 public class BSON {
 
     public static final byte EOO = 0;
@@ -83,72 +88,110 @@ public class BSON {
     private static final ClassMap<List<Transformer>> encodingHooks = new ClassMap<List<Transformer>>();
     private static final ClassMap<List<Transformer>> decodingHooks = new ClassMap<List<Transformer>>();
 
+    /**
+     * Gets whether any encoding transformers have been registered for any classes.
+     *
+     * @return true if any encoding hooks have been registered.
+     */
     public static boolean hasEncodeHooks() {
         return encodeHooks;
     }
 
+    /**
+     * Gets whether any decoding transformers have been registered for any classes.
+     *
+     * @return true if any decoding hooks have been registered.
+     */
     public static boolean hasDecodeHooks() {
         return decodeHooks;
     }
 
-    public static void addEncodingHook(final Class c, final Transformer t) {
-        encodeHooks = true;
-        List<Transformer> l = encodingHooks.get(c);
-        if (l == null) {
-            l = new CopyOnWriteArrayList<Transformer>();
-            encodingHooks.put(c, l);
-        }
-        l.add(t);
-    }
-
-    public static void addDecodingHook(final Class c, final Transformer t) {
-        decodeHooks = true;
-        List<Transformer> l = decodingHooks.get(c);
-        if (l == null) {
-            l = new CopyOnWriteArrayList<Transformer>();
-            decodingHooks.put(c, l);
-        }
-        l.add(t);
-    }
-
-    public static Object applyEncodingHooks(final Object o) {
-        Object transfomedObject = o;
-        if (!hasEncodeHooks() || o == null || encodingHooks.size() == 0) {
-            return transfomedObject;
-        }
-        List<Transformer> l = encodingHooks.get(o.getClass());
-        if (l != null) {
-            for (final Transformer t : l) {
-                transfomedObject = t.transform(o);
-            }
-        }
-        return transfomedObject;
-    }
-
-    public static Object applyDecodingHooks(final Object o) {
-        Object transfomedObject = o;
-        if (!hasDecodeHooks() || o == null || decodingHooks.size() == 0) {
-            return transfomedObject;
-        }
-
-        List<Transformer> l = decodingHooks.get(o.getClass());
-        if (l != null) {
-            for (final Transformer t : l) {
-                transfomedObject = t.transform(o);
-            }
-        }
-        return transfomedObject;
-    }
-
     /**
-     * Returns the encoding hook(s) associated with the specified class
+     * Registers a {@code Transformer} to use to encode a specific class into BSON.
+     *
+     * @param clazz       the class to be transformed during encoding
+     * @param transformer the transformer to use during encoding
      */
-    public static List<Transformer> getEncodingHooks(final Class c) {
-        return encodingHooks.get(c);
+    public static void addEncodingHook(final Class<?> clazz, final Transformer transformer) {
+        encodeHooks = true;
+        List<Transformer> transformersForClass = encodingHooks.get(clazz);
+        if (transformersForClass == null) {
+            transformersForClass = new CopyOnWriteArrayList<Transformer>();
+            encodingHooks.put(clazz, transformersForClass);
+        }
+        transformersForClass.add(transformer);
     }
 
     /**
-     * Clears *all* encoding hooks.
+     * Registers a {@code Transformer} to use when decoding a specific class from BSON. This class will be one of the basic types supported
+     * by BSON.
+     *
+     * @param clazz       the class to be transformed during decoding
+     * @param transformer the transformer to use during decoding
+     */
+    public static void addDecodingHook(final Class<?> clazz, final Transformer transformer) {
+        decodeHooks = true;
+        List<Transformer> transformersForClass = decodingHooks.get(clazz);
+        if (transformersForClass == null) {
+            transformersForClass = new CopyOnWriteArrayList<Transformer>();
+            decodingHooks.put(clazz, transformersForClass);
+        }
+        transformersForClass.add(transformer);
+    }
+
+    /**
+     * Transforms the {@code objectToEncode} using all transformers registered for the class of this object.
+     *
+     * @param objectToEncode the object being written to BSON.
+     * @return the transformed object
+     */
+    public static Object applyEncodingHooks(final Object objectToEncode) {
+        Object transformedObject = objectToEncode;
+        if (!hasEncodeHooks() || objectToEncode == null || encodingHooks.size() == 0) {
+            return transformedObject;
+        }
+        List<Transformer> transformersForObject = encodingHooks.get(objectToEncode.getClass());
+        if (transformersForObject != null) {
+            for (final Transformer transformer : transformersForObject) {
+                transformedObject = transformer.transform(objectToEncode);
+            }
+        }
+        return transformedObject;
+    }
+
+    /**
+     * Transforms the {@code objectToDecode} using all transformers registered for the class of this object.
+     *
+     * @param objectToDecode the BSON object to decode
+     * @return the transformed object
+     */
+    public static Object applyDecodingHooks(final Object objectToDecode) {
+        Object transformedObject = objectToDecode;
+        if (!hasDecodeHooks() || objectToDecode == null || decodingHooks.size() == 0) {
+            return transformedObject;
+        }
+
+        List<Transformer> transformersForObject = decodingHooks.get(objectToDecode.getClass());
+        if (transformersForObject != null) {
+            for (final Transformer transformer : transformersForObject) {
+                transformedObject = transformer.transform(objectToDecode);
+            }
+        }
+        return transformedObject;
+    }
+
+    /**
+     * Returns the encoding hook(s) associated with the specified class.
+     *
+     * @param clazz the class to fetch the encoding hooks for
+     * @return a List of encoding transformers that apply to the given class
+     */
+    public static List<Transformer> getEncodingHooks(final Class<?> clazz) {
+        return encodingHooks.get(clazz);
+    }
+
+    /**
+     * Clears <em>all</em> encoding hooks.
      */
     public static void clearEncodingHooks() {
         encodeHooks = false;
@@ -157,27 +200,36 @@ public class BSON {
 
     /**
      * Remove all encoding hooks for a specific class.
+     *
+     * @param clazz the class to remove all the decoding hooks for
      */
-    public static void removeEncodingHooks(final Class c) {
-        encodingHooks.remove(c);
+    public static void removeEncodingHooks(final Class<?> clazz) {
+        encodingHooks.remove(clazz);
     }
 
     /**
-     * Remove a specific encoding hook for a specific class.
+     * Remove a specific encoding hook for a specific class. The {@code transformer} passed as the parameter must be {@code equals} to the
+     * transformer to remove.
+     *
+     * @param clazz       the class to remove the encoding hook for
+     * @param transformer the specific encoding hook to remove.
      */
-    public static void removeEncodingHook(final Class c, final Transformer t) {
-        getEncodingHooks(c).remove(t);
+    public static void removeEncodingHook(final Class<?> clazz, final Transformer transformer) {
+        getEncodingHooks(clazz).remove(transformer);
     }
 
     /**
      * Returns the decoding hook(s) associated with the specific class
+     *
+     * @param clazz the class to fetch the decoding hooks for
+     * @return a List of all the decoding Transformers that apply to the given class
      */
-    public static List<Transformer> getDecodingHooks(final Class c) {
-        return decodingHooks.get(c);
+    public static List<Transformer> getDecodingHooks(final Class<?> clazz) {
+        return decodingHooks.get(clazz);
     }
 
     /**
-     * Clears *all* decoding hooks.
+     * Clears <em>all</em> decoding hooks.
      */
     public static void clearDecodingHooks() {
         decodeHooks = false;
@@ -186,19 +238,27 @@ public class BSON {
 
     /**
      * Remove all decoding hooks for a specific class.
+     *
+     * @param clazz the class to remove all the decoding hooks for
      */
-    public static void removeDecodingHooks(final Class c) {
-        decodingHooks.remove(c);
+    public static void removeDecodingHooks(final Class<?> clazz) {
+        decodingHooks.remove(clazz);
     }
 
     /**
-     * Remove a specific encoding hook for a specific class.
+     * Remove a specific encoding hook for a specific class.  The {@code transformer} passed as the parameter must be {@code equals} to the
+     * transformer to remove.
+     *
+     * @param clazz       the class to remove the decoding hook for
+     * @param transformer the specific decoding hook to remove.
      */
-    public static void removeDecodingHook(final Class c, final Transformer t) {
-        getDecodingHooks(c).remove(t);
+    public static void removeDecodingHook(final Class<?> clazz, final Transformer transformer) {
+        getDecodingHooks(clazz).remove(transformer);
     }
 
-
+    /**
+     * Remove all decoding and encoding hooks for all classes.
+     */
     public static void clearAllHooks() {
         clearEncodingHooks();
         clearDecodingHooks();

@@ -39,6 +39,11 @@
             <Bug pattern="MS_PKGPROTECT"/>
         </Class>
     </Match>
+    <Match>
+        <Class name="org.bson.types.StringRangeSet$NumberStringComparator">
+            <Bug pattern="SE_COMPARATOR_SHOULD_BE_SERIALIZABLE"/>
+        </Class>
+    </Match>
 
     <!-- Spock tests seem to fail the serial version ID test when stubbing.  Annoying. -->
     <Match>

@@ -22,6 +22,8 @@ import java.util.Date;
 /**
  * This is used for internal increment values. For normal dates you should use java.util.Date <em>time</em> is seconds since epoch
  * <em>inc</em> is an ordinal.
+ *
+ * @mongodb.driver.manual reference/bson-types/#timestamps Timestamps
  */
 public final class BSONTimestamp implements Comparable<BSONTimestamp>, Serializable {
 
@@ -30,14 +32,24 @@ public final class BSONTimestamp implements Comparable<BSONTimestamp>, Serializa
     private final int inc;
     private final Date time;
 
+    /**
+     * Creates a new instance.
+     */
     public BSONTimestamp() {
         inc = 0;
         time = null;
     }
 
-    public BSONTimestamp(final int time, final int inc) {
+    /**
+     * Creates a new instance.
+     *
+     * @param time      the time in seconds since epoch
+     * @param increment an incrementing ordinal for operations within a given second
+     * @mongodb.driver.manual reference/bson-types/#timestamps Timestamps
+     */
+    public BSONTimestamp(final int time, final int increment) {
         this.time = new Date(time * 1000L);
-        this.inc = inc;
+        this.inc = increment;
     }
 
     /**
@@ -52,10 +64,16 @@ public final class BSONTimestamp implements Comparable<BSONTimestamp>, Serializa
         return (int) (time.getTime() / 1000);
     }
 
+    /**
+     * Gets the incrementing ordinal for operations within a given second.
+     *
+     * @return the increment ordinal
+     */
     public int getInc() {
         return inc;
     }
 
+    @Override
     public String toString() {
         return "TS time:" + time + " inc:" + inc;
     }

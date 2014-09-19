@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 import static org.bson.BSON.regexFlags;
 
 /**
- * This is meant to be pooled or cached There is some per instance memory for string conversion, etc...
+ * This is meant to be pooled or cached. There is some per instance memory for string conversion, etc...
  */
 public class BasicBSONEncoder implements BSONEncoder {
 
@@ -71,10 +71,20 @@ public class BasicBSONEncoder implements BSONEncoder {
         this.bsonWriter = new BsonBinaryWriter(buffer, false);
     }
 
+    /**
+     * Gets the buffer the BSON is being encoded into.
+     *
+     * @return the OutputBuffer
+     */
     protected OutputBuffer getOutputBuffer() {
         return outputBuffer;
     }
 
+    /**
+     * Gets the writer responsible for writing the encoded BSON.
+     *
+     * @return the writer used to write the encoded BSON
+     */
     protected BsonBinaryWriter getBsonWriter() {
         return bsonWriter;
     }
@@ -108,12 +118,23 @@ public class BasicBSONEncoder implements BSONEncoder {
         return bsonWriter.getContext().getParentContext() == null;
     }
 
+    /**
+     * Writes a field name
+     *
+     * @param name the field name
+     */
     protected void putName(final String name) {
         if (bsonWriter.getState() == AbstractBsonWriter.State.NAME) {
             bsonWriter.writeName(name);
         }
     }
 
+    /**
+     * Encodes any Object type
+     *
+     * @param name         the field name
+     * @param initialValue the value to write
+     */
     protected void _putObjectField(final String name, final Object initialValue) {
         if ("_transientFields".equals(name)) {
             return;
@@ -183,65 +204,136 @@ public class BasicBSONEncoder implements BSONEncoder {
 
     }
 
+    /**
+     * Encodes a null value
+     *
+     * @param name the field name
+     * @see org.bson.BsonType#NULL
+     */
     protected void putNull(final String name) {
         putName(name);
         bsonWriter.writeNull();
     }
 
+    /**
+     * Encodes an undefined value
+     *
+     * @param name the field name
+     * @see org.bson.BsonType#UNDEFINED
+     */
     protected void putUndefined(final String name) {
         putName(name);
         bsonWriter.writeUndefined();
     }
 
+    /**
+     * Encodes a BSON timestamp
+     *
+     * @param name      the field name
+     * @param timestamp the timestamp to encode
+     * @see org.bson.BsonType#TIMESTAMP
+     */
     protected void putTimestamp(final String name, final BSONTimestamp timestamp) {
         putName(name);
         bsonWriter.writeTimestamp(new BsonTimestamp(timestamp.getTime(), timestamp.getInc()));
     }
 
+    /**
+     * Encodes a field to a {@link org.bson.BsonType#JAVASCRIPT} value.
+     *
+     * @param name the field name
+     * @param code the value
+     */
     protected void putCode(final String name, final Code code) {
         putName(name);
         bsonWriter.writeJavaScript(code.getCode());
     }
 
+    /**
+     * Encodes a field to a {@link org.bson.BsonType#JAVASCRIPT_WITH_SCOPE} value.
+     *
+     * @param name       the field name
+     * @param codeWScope the value
+     */
     protected void putCodeWScope(final String name, final CodeWScope codeWScope) {
         putName(name);
         bsonWriter.writeJavaScriptWithScope(codeWScope.getCode());
         putObject(codeWScope.getScope());
     }
 
+    /**
+     * Encodes a field with a {@code Boolean} or {@code boolean} value
+     *
+     * @param name  the field name
+     * @param value the value
+     */
     protected void putBoolean(final String name, final Boolean value) {
         putName(name);
         bsonWriter.writeBoolean(value);
     }
 
+    /**
+     * Encodes a field with data and time value.
+     *
+     * @param name the field name
+     * @param date the value
+     * @see org.bson.BsonType#DATE_TIME
+     */
     protected void putDate(final String name, final Date date) {
         putName(name);
         bsonWriter.writeDateTime(date.getTime());
     }
 
-    protected void putNumber(final String name, final Number n) {
+    /**
+     * Encodes any number field.
+     *
+     * @param name   the field name
+     * @param number the value
+     */
+    protected void putNumber(final String name, final Number number) {
         putName(name);
-        if (n instanceof Integer || n instanceof Short || n instanceof Byte || n instanceof AtomicInteger) {
-            bsonWriter.writeInt32(n.intValue());
-        } else if (n instanceof Long || n instanceof AtomicLong) {
-            bsonWriter.writeInt64(n.longValue());
-        } else if (n instanceof Float || n instanceof Double) {
-            bsonWriter.writeDouble(n.doubleValue());
+        if (number instanceof Integer || number instanceof Short || number instanceof Byte || number instanceof AtomicInteger) {
+            bsonWriter.writeInt32(number.intValue());
+        } else if (number instanceof Long || number instanceof AtomicLong) {
+            bsonWriter.writeInt64(number.longValue());
+        } else if (number instanceof Float || number instanceof Double) {
+            bsonWriter.writeDouble(number.doubleValue());
         } else {
-            throw new IllegalArgumentException("Can't serialize " + n.getClass());
+            throw new IllegalArgumentException("Can't serialize " + number.getClass());
         }
     }
 
+    /**
+     * Encodes a byte array field
+     *
+     * @param name  the field name
+     * @param bytes the value
+     * @see org.bson.BsonType#BINARY
+     */
     protected void putBinary(final String name, final byte[] bytes) {
         putName(name);
         bsonWriter.writeBinaryData(new BsonBinary(bytes));
     }
 
+    /**
+     * Encodes a Binary field
+     *
+     * @param name   the field name
+     * @param binary the value
+     * @see org.bson.BsonType#BINARY
+     */
     protected void putBinary(final String name, final Binary binary) {
         putName(name);
         bsonWriter.writeBinaryData(new BsonBinary(binary.getType(), binary.getData()));
     }
 
+    /**
+     * Encodes a field with a {@link java.util.UUID} value.  This is encoded to a binary value of subtype {@link
+     * org.bson.BsonBinarySubType#UUID_LEGACY}
+     *
+     * @param name the field name
+     * @param uuid the value
+     */
     protected void putUUID(final String name, final UUID uuid) {
         putName(name);
         byte[] bytes = new byte[16];
@@ -250,26 +342,60 @@ public class BasicBSONEncoder implements BSONEncoder {
         bsonWriter.writeBinaryData(new BsonBinary(BsonBinarySubType.UUID_LEGACY, bytes));
     }
 
+    /**
+     * Encodes a Symbol field
+     *
+     * @param name   the field name
+     * @param symbol the value
+     * @see org.bson.BsonType#SYMBOL
+     */
     protected void putSymbol(final String name, final Symbol symbol) {
         putName(name);
         bsonWriter.writeSymbol(symbol.getSymbol());
     }
 
+    /**
+     * Encodes a String field
+     *
+     * @param name  the field name
+     * @param value the value
+     * @see org.bson.BsonType#STRING
+     */
     protected void putString(final String name, final String value) {
         putName(name);
         bsonWriter.writeString(value);
     }
 
+    /**
+     * Encodes a Pattern field to a {@link org.bson.BsonType#REGULAR_EXPRESSION}.
+     *
+     * @param name  the field name
+     * @param value the value
+     * @mongodb.driver.manual reference/operator/query/regex/ $regex
+     * @see org.bson.BsonType#BINARY
+     */
     protected void putPattern(final String name, final Pattern value) {
         putName(name);
         bsonWriter.writeRegularExpression(new BsonRegularExpression(value.pattern(), regexFlags(value.flags())));
     }
 
+    /**
+     * Encodes an ObjectId field to a {@link org.bson.BsonType#OBJECT_ID}.
+     *
+     * @param name     the field name
+     * @param objectId the value
+     */
     protected void putObjectId(final String name, final ObjectId objectId) {
         putName(name);
         bsonWriter.writeObjectId(objectId);
     }
 
+    /**
+     * Encodes an array field.
+     *
+     * @param name   the field name
+     * @param object the array, which can be any sort of primitive or String array
+     */
     protected void putArray(final String name, final Object object) {
         putName(name);
         bsonWriter.writeStartArray();
@@ -314,6 +440,12 @@ public class BasicBSONEncoder implements BSONEncoder {
         bsonWriter.writeEndArray();
     }
 
+    /**
+     * Encodes an Iterable, for example {@code List} values
+     *
+     * @param name     the field name
+     * @param iterable the value
+     */
     @SuppressWarnings("rawtypes")
     protected void putIterable(final String name, final Iterable iterable) {
         putName(name);
@@ -325,6 +457,12 @@ public class BasicBSONEncoder implements BSONEncoder {
         bsonWriter.writeEndArray();
     }
 
+    /**
+     * Encodes a map, as a BSON document
+     *
+     * @param name the field name
+     * @param map  the value
+     */
     @SuppressWarnings({"rawtypes", "unchecked"})
     protected void putMap(final String name, final Map map) {
         putName(name);
@@ -335,20 +473,44 @@ public class BasicBSONEncoder implements BSONEncoder {
         bsonWriter.writeEndDocument();
     }
 
+    /**
+     * Encodes any {@code BSONObject}, as a document
+     *
+     * @param name     the field name
+     * @param document the value
+     * @return the number of characters in the encoding
+     */
     protected int putObject(final String name, final BSONObject document) {
         putName(name);
         return putObject(document);
     }
 
+    /**
+     * Special values are not encoded into documents.
+     *
+     * @param name    the field name
+     * @param special the value
+     * @return true if the operation is successful. This implementation always returns false.
+     */
     protected boolean putSpecial(final String name, final Object special) {
         return false;
     }
 
+    /**
+     * Encodes a field to a {@link org.bson.BsonType#MIN_KEY} value.
+     *
+     * @param name the field name
+     */
     protected void putMinKey(final String name) {
         putName(name);
         bsonWriter.writeMinKey();
     }
 
+    /**
+     * Encodes a field to a {@link org.bson.BsonType#MAX_KEY} value.
+     *
+     * @param name the field name
+     */
     protected void putMaxKey(final String name) {
         putName(name);
         bsonWriter.writeMaxKey();

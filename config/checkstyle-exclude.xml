@@ -21,11 +21,13 @@
         "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
 
 <suppressions>
-    <!--Ignore the new API folder for javadoc until the specs for the API are finished-->
+    <!--Ignore the new API folder for javadoc until the specs for the API are finished. Documenting this is JAVA-1411 -->
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]client[\\/]"/>
+    <suppress checks="Javadoc*" files=".*test.*"/>
     
-    <!--Classes to be documented later - JAVA-1428-->
+    <!--Classes to be documented later - JAVA-1428 -->
     <suppress checks="Javadoc*" files="LazyBSONCallback"/>
+    <suppress checks="Javadoc*" files="LazyBSONDecoder"/>
     <suppress checks="Javadoc*" files="LazyBSONObject"/>
     <suppress checks="Javadoc*" files="LazyBSONList"/>
     <suppress checks="Javadoc*" files="LazyDBCallback"/>
