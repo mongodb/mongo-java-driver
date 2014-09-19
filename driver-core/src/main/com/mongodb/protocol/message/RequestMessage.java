@@ -21,11 +21,16 @@ import org.bson.BsonBinaryWriterSettings;
 import org.bson.BsonDocument;
 import org.bson.BsonWriterSettings;
 import org.bson.FieldNameValidator;
-import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.BsonValueCodecProvider;
+import org.bson.codecs.Codec;
 import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.io.BsonOutput;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -40,6 +45,8 @@ public abstract class RequestMessage {
     // Allow an extra 16K to the maximum allowed size of a query or command document, so that, for example,
     // a 16M document can be upserted via findAndModify
     private static final int QUERY_DOCUMENT_HEADROOM = 16 * 1024;
+
+    private static final CodecRegistry REGISTRY = new RootCodecRegistry(Arrays.<CodecProvider>asList(new BsonValueCodecProvider()));
 
     private final String collectionName;
     private final MessageSettings settings;
@@ -161,7 +168,7 @@ public abstract class RequestMessage {
      */
     protected <T> void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
                                    final FieldNameValidator validator) {
-        addDocument(document, getBsonDocumentCodec(), EncoderContext.builder().build(), bsonOutput, validator,
+        addDocument(document, getCodec(document), EncoderContext.builder().build(), bsonOutput, validator,
                     settings.getMaxDocumentSize() + QUERY_DOCUMENT_HEADROOM);
     }
 
@@ -175,7 +182,7 @@ public abstract class RequestMessage {
      */
     protected void addCollectibleDocument(final BsonDocument document, final BsonOutput bsonOutput,
                                           final FieldNameValidator validator) {
-        addDocument(document, getBsonDocumentCodec(), EncoderContext.builder().isEncodingCollectibleDocument(true).build(), bsonOutput,
+        addDocument(document, getCodec(document), EncoderContext.builder().isEncodingCollectibleDocument(true).build(), bsonOutput,
                     validator, settings.getMaxDocumentSize());
     }
 
@@ -199,8 +206,9 @@ public abstract class RequestMessage {
         return collectionName;
     }
 
-    BsonDocumentCodec getBsonDocumentCodec() {
-        return new BsonDocumentCodec();
+    @SuppressWarnings("unchecked")
+    Codec<BsonDocument> getCodec(final BsonDocument document) {
+        return (Codec<BsonDocument>) REGISTRY.get(document.getClass());
     }
 
     private <T> void addDocument(final T obj, final Encoder<T> encoder, final EncoderContext encoderContext,
