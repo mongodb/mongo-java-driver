@@ -50,7 +50,7 @@ public interface BSONCallback {
     void objectStart(boolean array);
 
     /**
-     * Called the end of the document/array, and returns this object.
+     * Called at the end of the document/array, and returns this object.
      *
      * @return the Object that has been read from this section of the document.
      */
