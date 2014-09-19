@@ -119,7 +119,7 @@ public class MongoClientTest {
         Assert.assertEquals(MongoClientOptions.builder().build(), mc.getMongoClientOptions());
         mc.close();
 
-        mc = new MongoClient(new MongoClientURI("mongodb://user1:pwd@127.0.0.1/test?maxPoolSize=500"));
+        mc = new MongoClient(new MongoClientURI("mongodb://user1:pwd@127.0.0.1/test?authMechanism=MONGODB-CR&maxPoolSize=500"));
         Assert.assertEquals(new ServerAddress("127.0.0.1"), mc.getAddress());
         Assert.assertEquals(customOptions, mc.getMongoOptions());
         Assert.assertEquals(credentialsList, mc.getCredentialsList());

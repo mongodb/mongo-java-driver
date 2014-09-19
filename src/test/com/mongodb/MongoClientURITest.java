@@ -100,7 +100,7 @@ public class MongoClientURITest {
         assertEquals(userName, u.getUsername());
         assertArrayEquals(password, u.getPassword());
 
-        assertEquals(MongoCredential.createMongoCRCredential(userName, "bar", password), u.getCredentials());
+        assertEquals(MongoCredential.createCredential(userName, "bar", password), u.getCredentials());
 
         u = new MongoClientURI("mongodb://user@host/?authMechanism=GSSAPI");
         assertEquals(MongoCredential.createGSSAPICredential(userName), u.getCredentials());
@@ -117,14 +117,14 @@ public class MongoClientURITest {
         u = new MongoClientURI("mongodb://bob:pwd@localhost/?authMechanism=PLAIN&authSource=db1");
         assertEquals(MongoCredential.createPlainCredential("bob", "db1", "pwd".toCharArray()), u.getCredentials());
 
-        u = new MongoClientURI("mongodb://user:pass@host/?authSource=test");
-        assertEquals(MongoCredential.createMongoCRCredential(userName, "test", password), u.getCredentials());
-
-        u = new MongoClientURI("mongodb://user:pass@host");
-        assertEquals(MongoCredential.createMongoCRCredential(userName, "admin", password), u.getCredentials());
-
         u = new MongoClientURI("mongodb://bob:pwd@host/?authMechanism=SCRAM-SHA-1");
         assertEquals(MongoCredential.createScramSha1Credential("bob", "admin", "pwd".toCharArray()), u.getCredentials());
+
+        u = new MongoClientURI("mongodb://user:pass@host/?authSource=test");
+        assertEquals(MongoCredential.createCredential(userName, "test", password), u.getCredentials());
+
+        u = new MongoClientURI("mongodb://user:pass@host");
+        assertEquals(MongoCredential.createCredential(userName, "admin", password), u.getCredentials());
     }
 
     @Test
@@ -140,7 +140,7 @@ public class MongoClientURITest {
     @Test
     public void testURIEncoding() {
         MongoClientURI u = new MongoClientURI("mongodb://use%24:he%21%21o@localhost");
-        assertEquals(MongoCredential.createMongoCRCredential("use$", "admin", "he!!o".toCharArray()), u.getCredentials());
+        assertEquals(MongoCredential.createCredential("use$", "admin", "he!!o".toCharArray()), u.getCredentials());
     }
 
     @Test()

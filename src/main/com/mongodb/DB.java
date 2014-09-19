@@ -749,7 +749,7 @@ public abstract class DB {
 
     private CommandResultPair authenticateCommandHelper(String username, char[] password) {
         MongoCredential credentials =
-                MongoCredential.createMongoCRCredential(username, getName(), password);
+                MongoCredential.createCredential(username, getName(), password);
         if (getAuthenticationCredentials() != null) {
             if (getAuthenticationCredentials().equals(credentials)) {
                 if (authenticationTestCommandResult != null) {

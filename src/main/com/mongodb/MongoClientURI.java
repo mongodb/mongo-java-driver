@@ -131,8 +131,8 @@ import java.util.logging.Logger;
  * <p>Authentication configuration:</p>
  * <ul>
  * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN|MONGODB-X509}: The authentication mechanism to use if a credential was supplied.
- * The default is MONGODB-CR, which is the native MongoDB Challenge Response mechanism.  For the GSSAPI and MONGODB-X509 mechanisms,
- * no password is accepted, only the username.
+ * The default is unspecified, in which case the client will pick the most secure mechanism available based on the sever version.  For the
+ * GSSAPI and MONGODB-X509 mechanisms, no password is accepted, only the username.
  * </li>
  * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
  * the credentials have been created.  The value defaults to the database specified in the path portion of the URI.
@@ -421,7 +421,7 @@ public class MongoClientURI {
             database = "admin";
         }
 
-        String mechanism = MongoCredential.MONGODB_CR_MECHANISM;
+        String mechanism = null;
         String authSource = database;
         String gssapiServiceName = null;
 
@@ -441,24 +441,27 @@ public class MongoClientURI {
             }
         }
 
-        if (mechanism.equals(MongoCredential.GSSAPI_MECHANISM)) {
+        if (MongoCredential.GSSAPI_MECHANISM.equals(mechanism)) {
             MongoCredential gssapiCredential = MongoCredential.createGSSAPICredential(userName);
             if (gssapiServiceName != null) {
                 gssapiCredential = gssapiCredential.withMechanismProperty("SERVICE_NAME", gssapiServiceName);
             }
             return gssapiCredential;
         }
-        else if (mechanism.equals(MongoCredential.PLAIN_MECHANISM)) {
+        else if (MongoCredential.PLAIN_MECHANISM.equals(mechanism)) {
             return MongoCredential.createPlainCredential(userName, authSource, password);
         }
-        else if (mechanism.equals(MongoCredential.MONGODB_CR_MECHANISM)) {
+        else if (MongoCredential.MONGODB_CR_MECHANISM.equals(mechanism)) {
             return MongoCredential.createMongoCRCredential(userName, authSource, password);
         }
-        else if (mechanism.equals(MongoCredential.MONGODB_X509_MECHANISM)) {
+        else if (MongoCredential.MONGODB_X509_MECHANISM.equals(mechanism)) {
             return MongoCredential.createMongoX509Credential(userName);
         }
-        else if(mechanism.equals(MongoCredential.SCRAM_SHA_1_MECHANISM)) {
+        else if (MongoCredential.SCRAM_SHA_1_MECHANISM.equals(mechanism)) {
             return MongoCredential.createScramSha1Credential(userName, authSource, password);
+        }
+        else if (mechanism == null) {
+            return MongoCredential.createCredential(userName, authSource, password);
         }
         else {
              throw new IllegalArgumentException("Unsupported authMechanism: " + mechanism);

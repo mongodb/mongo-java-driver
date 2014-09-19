@@ -29,10 +29,44 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
 public class MongoCredentialTest extends TestCase {
 
     @Test
-    public void testCredentials() {
+    public void testMechanismPropertyDefaulting() {
+        // given
+        String firstKey = "firstKey";
+        MongoCredential credential = MongoCredential.createGSSAPICredential("user");
+
+        // then
+        assertEquals("mongodb", credential.getMechanismProperty(firstKey, "mongodb"));
+    }
+
+    @Test
+    public void testMechanismPropertyMapping() {
+        // given
+        String firstKey = "firstKey";
+        String firstValue = "firstValue";
+        String secondKey = "secondKey";
+        Integer secondValue = 2;
+
+        // when
+        MongoCredential credential = MongoCredential.createGSSAPICredential("user").withMechanismProperty(firstKey, firstValue);
+
+        // then
+        assertEquals(firstValue, credential.getMechanismProperty(firstKey, "default"));
+        assertEquals(firstValue, credential.getMechanismProperty(firstKey.toLowerCase(), "default"));
+
+        // when
+        credential = credential.withMechanismProperty(secondKey, secondValue);
+
+        // then
+        assertEquals(firstValue, credential.getMechanismProperty(firstKey, "default"));
+        assertEquals(secondValue, credential.getMechanismProperty(secondKey, 1));
+    }
+
+    @Test
+    public void testMongodbCRMechanism() {
         MongoCredential credentials;
 
         final String mechanism = MongoCredential.MONGODB_CR_MECHANISM;
@@ -50,6 +84,97 @@ public class MongoCredentialTest extends TestCase {
         try {
             MongoCredential.createMongoCRCredential(userName, database, null);
             fail("MONGO-CR must have a password");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
+    }
+
+    @Test
+    public void testPlainMechanism() {
+        MongoCredential credential;
+
+        final String mechanism = MongoCredential.PLAIN_MECHANISM;
+        final String userName = "user";
+        final char[] password = "pwd".toCharArray();
+        final String source = "$external";
+        credential = MongoCredential.createPlainCredential(userName, source, password);
+
+        assertEquals(mechanism, credential.getMechanism());
+        assertEquals(userName, credential.getUserName());
+        assertEquals(source, credential.getSource());
+        assertArrayEquals(password, credential.getPassword());
+    }
+
+    @Test
+    public void testX509Mechanism() {
+        MongoCredential credential;
+
+        final String mechanism = MongoCredential.MONGODB_X509_MECHANISM;
+        final String userName = "user";
+        credential = MongoCredential.createMongoX509Credential(userName);
+
+        assertEquals(mechanism, credential.getMechanism());
+        assertEquals(userName, credential.getUserName());
+        assertEquals("$external", credential.getSource());
+        assertArrayEquals(null, credential.getPassword());
+    }
+
+    @Test
+    public void testScramSha1Mechanism() {
+        MongoCredential credentials;
+
+        final String mechanism = MongoCredential.SCRAM_SHA_1_MECHANISM;
+        final String userName = "user";
+        final String database = "test";
+        final char[] password = "pwd".toCharArray();
+        credentials = MongoCredential.createScramSha1Credential(userName, database, password);
+
+        assertEquals(mechanism, credentials.getMechanism());
+        assertEquals(userName, credentials.getUserName());
+        assertEquals(database, credentials.getSource());
+        assertArrayEquals(password, credentials.getPassword());
+        assertEquals(MongoCredential.SCRAM_SHA_1_MECHANISM, credentials.getMechanism());
+
+        try {
+            MongoCredential.createScramSha1Credential(userName, database, null);
+            fail("SCRAM_SHA_1 must have a password");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
+    }
+
+    @Test
+    public void testGSSAPIMechanism() {
+        MongoCredential credential;
+
+        final String mechanism = MongoCredential.GSSAPI_MECHANISM;
+        final String userName = "user";
+        credential = MongoCredential.createGSSAPICredential(userName);
+
+        assertEquals(mechanism, credential.getMechanism());
+        assertEquals(userName, credential.getUserName());
+        assertEquals("$external", credential.getSource());
+        assertNull(credential.getPassword());
+    }
+
+    @Test
+    public void testUnspecifiedMechanism() {
+        MongoCredential credentials;
+
+        final String userName = "user";
+        final String database = "test";
+        final char[] password = "pwd".toCharArray();
+        credentials = MongoCredential.createCredential(userName, database, password);
+
+        assertNull(credentials.getMechanism());
+        assertEquals(userName, credentials.getUserName());
+        assertEquals(database, credentials.getSource());
+        assertArrayEquals(password, credentials.getPassword());
+        assertNull(credentials.getMechanism());
+
+        try {
+            MongoCredential.createCredential(userName, database, null);
+            fail("Unspecified mechanism credentials must have a password");
         } catch (IllegalArgumentException e) {
             // all good
         }
@@ -100,82 +225,5 @@ public class MongoCredentialTest extends TestCase {
             // expected
         }
     }
-
-    @Test
-    public void testMechanismPropertyDefaulting() {
-        // given
-        String firstKey = "firstKey";
-        MongoCredential credential = MongoCredential.createGSSAPICredential("user");
-
-        // then
-        assertEquals("mongodb", credential.getMechanismProperty(firstKey, "mongodb"));
-    }
-
-    @Test
-    public void testMechanismPropertyMapping() {
-        // given
-        String firstKey = "firstKey";
-        String firstValue = "firstValue";
-        String secondKey = "secondKey";
-        Integer secondValue = 2;
-
-        // when
-        MongoCredential credential = MongoCredential.createGSSAPICredential("user").withMechanismProperty(firstKey, firstValue);
-
-        // then
-        assertEquals(firstValue, credential.getMechanismProperty(firstKey, "default"));
-        assertEquals(firstValue, credential.getMechanismProperty(firstKey.toLowerCase(), "default"));
-
-        // when
-        credential = credential.withMechanismProperty(secondKey, secondValue);
-
-        // then
-        assertEquals(firstValue, credential.getMechanismProperty(firstKey, "default"));
-        assertEquals(secondValue, credential.getMechanismProperty(secondKey, 1));
-    }
-    @Test
-    public void testPlainMechanism() {
-        MongoCredential credential;
-
-        final String mechanism = MongoCredential.PLAIN_MECHANISM;
-        final String userName = "user";
-        final char[] password = "pwd".toCharArray();
-        final String source = "$external";
-        credential = MongoCredential.createPlainCredential(userName, source, password);
-
-        assertEquals(mechanism, credential.getMechanism());
-        assertEquals(userName, credential.getUserName());
-        assertEquals(source, credential.getSource());
-        assertArrayEquals(password, credential.getPassword());
-    }
-
-    @Test
-    public void testX509Mechanism() {
-        MongoCredential credential;
-
-        final String mechanism = MongoCredential.MONGODB_X509_MECHANISM;
-        final String userName = "user";
-        credential = MongoCredential.createMongoX509Credential(userName);
-
-        assertEquals(mechanism, credential.getMechanism());
-        assertEquals(userName, credential.getUserName());
-        assertEquals("$external", credential.getSource());
-        assertArrayEquals(null, credential.getPassword());
-    }
-
-    @Test
-    public void testScramSha1Mechanism() {
-        MongoCredential credential;
-
-        final String mechanism = MongoCredential.SCRAM_SHA_1_MECHANISM;
-        final String userName = "user";
-        final char[] password = "pwd".toCharArray();
-        final String source = "admin";
-        credential = MongoCredential.createScramSha1Credential(userName, source, password);
-
-        assertEquals(mechanism, credential.getMechanism());
-        assertEquals(userName, credential.getUserName());
-        assertEquals(source, credential.getSource());
-        assertArrayEquals(password, credential.getPassword());
-    }
 }
+

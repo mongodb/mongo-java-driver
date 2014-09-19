@@ -35,7 +35,7 @@ public class MongoURITest extends TestCase {
         MongoURI mongoURI = new MongoURI( "mongodb://user:pwd@localhost/test.mongoURITest?safe=false");
         assertEquals("user", mongoURI.getUsername());
         assertEquals("pwd", new String(mongoURI.getPassword()));
-        assertEquals(MongoCredential.createMongoCRCredential("user", "test", "pwd".toCharArray()), mongoURI.getCredentials());
+        assertEquals(MongoCredential.createCredential("user", "test", "pwd".toCharArray()), mongoURI.getCredentials());
         assertEquals(Arrays.asList("localhost"), mongoURI.getHosts());
         assertEquals("test", mongoURI.getDatabase());
         assertEquals("mongoURITest", mongoURI.getCollection());

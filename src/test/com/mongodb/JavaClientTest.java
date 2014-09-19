@@ -674,7 +674,7 @@ public class JavaClientTest extends TestCase {
             assertNull(db.getAuthenticationCredentials());
             assertNull(m.getAuthority().getCredentialsStore().get(db.getName()));
             assertEquals(true, db.authenticate("xx", "e".toCharArray()));
-            assertEquals(MongoCredential.createMongoCRCredential("xx", db.getName(), "e".toCharArray()), db.getAuthenticationCredentials());
+            assertEquals(MongoCredential.createCredential("xx", db.getName(), "e".toCharArray()), db.getAuthenticationCredentials());
             assertEquals(db.getAuthenticationCredentials(), m.getAuthority().getCredentialsStore().get(db.getName()));
 
             assertEquals(true, db.authenticate( "xx" , "e".toCharArray() ) );

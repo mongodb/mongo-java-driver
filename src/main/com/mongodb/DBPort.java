@@ -362,21 +362,34 @@ public class DBPort implements Connection {
 
     CommandResult authenticate(Mongo mongo, final MongoCredential credentials) {
         Authenticator authenticator;
-        if (credentials.getMechanism().equals(MongoCredential.MONGODB_CR_MECHANISM)) {
-            authenticator = new NativeAuthenticator(mongo, credentials);
-        } else if (credentials.getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {
-            authenticator = new GSSAPIAuthenticator(mongo, credentials);
-        } else if (credentials.getMechanism().equals(MongoCredential.PLAIN_MECHANISM)) {
-            authenticator = new PlainAuthenticator(mongo, credentials);
-        } else if (credentials.getMechanism().equals(MongoCredential.MONGODB_X509_MECHANISM)) {
-            authenticator = new X509Authenticator(mongo, credentials);
-        } else if (credentials.getMechanism().equals(MongoCredential.SCRAM_SHA_1_MECHANISM)) {
-            authenticator = new ScramSha1Authenticator(mongo, credentials);
+        MongoCredential actualCredentials;
+        if (credentials.getMechanism() == null) {
+            if (mongo.getConnector().getServerDescription(getAddress()).getVersion().compareTo(new ServerVersion(2, 7)) >= 0) {
+                actualCredentials = MongoCredential.createScramSha1Credential(credentials.getUserName(), credentials.getSource(),
+                                                                              credentials.getPassword());
+            } else {
+                actualCredentials = MongoCredential.createMongoCRCredential(credentials.getUserName(), credentials.getSource(),
+                                                                            credentials.getPassword());
+            }
         } else {
-            throw new IllegalArgumentException("Unsupported authentication protocol: " + credentials.getMechanism());
+            actualCredentials = credentials;
+        }
+
+        if (actualCredentials.getMechanism().equals(MongoCredential.MONGODB_CR_MECHANISM)) {
+            authenticator = new NativeAuthenticator(mongo, actualCredentials);
+        } else if (actualCredentials.getMechanism().equals(MongoCredential.GSSAPI_MECHANISM)) {
+            authenticator = new GSSAPIAuthenticator(mongo, actualCredentials);
+        } else if (actualCredentials.getMechanism().equals(MongoCredential.PLAIN_MECHANISM)) {
+            authenticator = new PlainAuthenticator(mongo, actualCredentials);
+        } else if (actualCredentials.getMechanism().equals(MongoCredential.MONGODB_X509_MECHANISM)) {
+            authenticator = new X509Authenticator(mongo, actualCredentials);
+        } else if (actualCredentials.getMechanism().equals(MongoCredential.SCRAM_SHA_1_MECHANISM)) {
+            authenticator = new ScramSha1Authenticator(mongo, actualCredentials);
+        } else {
+            throw new IllegalArgumentException("Unsupported authentication protocol: " + actualCredentials.getMechanism());
         }
         CommandResult res = authenticator.authenticate();
-        authenticatedDatabases.add(credentials.getSource());
+        authenticatedDatabases.add(actualCredentials.getSource());
         return res;
     }
 
