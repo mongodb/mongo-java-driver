@@ -21,6 +21,8 @@ import org.bson.codecs.Encoder;
 /**
  * A builder for a single write request.
  *
+ * @mongodb.server.release 2.6
+ * @mongodb.driver.manual reference/method/js-bulk/ Bulk Operation Methods
  * @since 2.12
  */
 public class BulkWriteRequestBuilder {

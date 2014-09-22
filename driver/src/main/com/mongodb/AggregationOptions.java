@@ -25,6 +25,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * The options to apply to an aggregate operation.
  *
  * @mongodb.server.release 2.2
+ * @mongodb.driver.manual reference/command/aggregate/ aggregate
  * @since 2.12
  */
 public class AggregationOptions {
@@ -125,6 +126,9 @@ public class AggregationOptions {
 
     /**
      * Builder for creating {@code AggregationOptions}.
+     *
+     * @mongodb.server.release 2.2
+     * @mongodb.driver.manual reference/command/aggregate/ aggregate
      */
     public static class Builder {
         private Integer batchSize;

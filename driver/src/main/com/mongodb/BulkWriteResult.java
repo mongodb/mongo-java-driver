@@ -21,6 +21,8 @@ import java.util.List;
 /**
  * The result of a successful bulk write operation.
  *
+ * @mongodb.server.release 2.6
+ * @mongodb.driver.manual reference/method/BulkWriteResult/ BulkWriteResult()
  * @since 2.12
  */
 public abstract class BulkWriteResult {

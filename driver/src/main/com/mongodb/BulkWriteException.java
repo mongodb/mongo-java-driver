@@ -21,6 +21,8 @@ import java.util.List;
 /**
  * An exception that represents all errors associated with a bulk write operation.
  *
+ * @mongodb.server.release 2.6
+ * @mongodb.driver.manual reference/method/BulkWriteResult/#BulkWriteResult.writeErrors BulkWriteResult.writeErrors
  * @since 2.12
  */
 public class BulkWriteException extends MongoException {
@@ -95,7 +97,7 @@ public class BulkWriteException extends MongoException {
             return false;
         }
 
-        final BulkWriteException that = (BulkWriteException) o;
+        BulkWriteException that = (BulkWriteException) o;
 
         if (!writeErrors.equals(that.writeErrors)) {
             return false;

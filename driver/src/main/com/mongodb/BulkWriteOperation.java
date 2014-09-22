@@ -30,6 +30,8 @@ import static com.mongodb.assertions.Assertions.isTrue;
  * @see DBCollection#initializeOrderedBulkOperation()
  * @see com.mongodb.DBCollection#initializeUnorderedBulkOperation()
  *
+ * @mongodb.server.release 2.6
+ * @mongodb.driver.manual reference/method/js-bulk/ Bulk Operation Methods
  * @since 2.12
  */
 public class BulkWriteOperation {

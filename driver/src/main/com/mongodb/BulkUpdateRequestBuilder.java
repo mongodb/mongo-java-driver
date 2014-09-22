@@ -21,6 +21,8 @@ import org.bson.codecs.Encoder;
 /**
  * A builder for a single update request.
  *
+ * @mongodb.server.release 2.6
+ * @mongodb.driver.manual reference/method/Bulk.find.update/ Bulk Update
  * @since 2.12
  */
 public class BulkUpdateRequestBuilder {
