@@ -73,9 +73,6 @@ public final class ClusterFixture {
         String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
                                 ? DEFAULT_URI : mongoURIProperty;
         connectionString = new ConnectionString(mongoURIString);
-    }
-
-    private ClusterFixture() {
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
     }
 
