@@ -378,8 +378,7 @@ public abstract class DBCollection {
      * @mongodb.driver.manual tutorial/query-documents/ Query
      */
     public DBObject findOne( Object obj, DBObject fields ){
-        Iterator<DBObject> iterator = find(new BasicDBObject("_id", obj), fields, 0, -1, 0, getOptions(), getReadPreference(), getDecoder());
-        return (iterator.hasNext() ? iterator.next() : null);
+        return findOne(new BasicDBObject("_id", obj), fields);
     }
 
     /**
