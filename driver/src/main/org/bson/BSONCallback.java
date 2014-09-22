@@ -194,7 +194,7 @@ public interface BSONCallback {
     void gotRegex(String name, String pattern, String flags);
 
     /**
-     * Called when reading a field with a {@link org.bson.BsonType#TIMESTAMP} value. These are used internally by MongoDB.
+     * Called when reading a field with a {@link org.bson.BsonType#TIMESTAMP} value.
      *
      * @param name      the name of the field
      * @param time      the time in seconds since epoch
