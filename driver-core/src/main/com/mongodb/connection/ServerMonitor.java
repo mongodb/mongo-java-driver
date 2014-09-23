@@ -18,44 +18,20 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerAddress;
-import com.mongodb.Tag;
-import com.mongodb.TagSet;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
-import org.bson.BsonArray;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.bson.BsonString;
-import org.bson.BsonValue;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.connection.CommandHelper.executeCommand;
-import static com.mongodb.connection.ServerConnectionState.CONNECTED;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
-import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
-import static com.mongodb.connection.ServerDescription.getDefaultMaxMessageSize;
-import static com.mongodb.connection.ServerDescription.getDefaultMaxWireVersion;
-import static com.mongodb.connection.ServerDescription.getDefaultMaxWriteBatchSize;
-import static com.mongodb.connection.ServerDescription.getDefaultMinWireVersion;
-import static com.mongodb.connection.ServerType.REPLICA_SET_ARBITER;
-import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
-import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
-import static com.mongodb.connection.ServerType.SHARD_ROUTER;
-import static com.mongodb.connection.ServerType.STANDALONE;
 import static com.mongodb.connection.ServerType.UNKNOWN;
 import static java.lang.String.format;
-import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -246,110 +222,7 @@ class ServerMonitor {
         roundTripTimeSum += System.nanoTime() - start;
 
         BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
-        return createDescription(isMasterResult, buildInfoResult, roundTripTimeSum / count);
-    }
-
-    @SuppressWarnings("unchecked")
-    private ServerDescription createDescription(final BsonDocument isMasterResult, final BsonDocument buildInfoResult,
-                                                final long roundTripTime) {
-        return ServerDescription.builder()
-                                .state(CONNECTED)
-                                .version(getVersion(buildInfoResult))
-                                .address(serverAddress)
-                                .type(getServerType(isMasterResult))
-                                .hosts(listToSet(isMasterResult.getArray("hosts", new BsonArray())))
-                                .passives(listToSet(isMasterResult.getArray("passives", new BsonArray())))
-                                .arbiters(listToSet(isMasterResult.getArray("arbiters", new BsonArray())))
-                                .primary(getString(isMasterResult, "primary"))
-                                .maxDocumentSize(isMasterResult.getInt32("maxBsonObjectSize",
-                                                                         new BsonInt32(getDefaultMaxDocumentSize()))
-                                                              .getValue())
-                                .maxMessageSize(isMasterResult.getInt32("maxMessageSizeBytes",
-                                                                        new BsonInt32(getDefaultMaxMessageSize()))
-                                                             .getValue())
-                                .maxWriteBatchSize(isMasterResult.getInt32("maxWriteBatchSize",
-                                                                           new BsonInt32(getDefaultMaxWriteBatchSize()))
-                                                                .getValue())
-                                .tagSet(getTagSetFromDocument(isMasterResult.getDocument("tags", new BsonDocument())))
-                                .setName(getString(isMasterResult, "setName"))
-                                .minWireVersion(isMasterResult.getInt32("minWireVersion",
-                                                                        new BsonInt32(getDefaultMinWireVersion())).getValue())
-                                .maxWireVersion(isMasterResult.getInt32("maxWireVersion",
-                                                                        new BsonInt32(getDefaultMaxWireVersion())).getValue())
-                                .roundTripTime(roundTripTime, NANOSECONDS)
-                                .ok(true).build();
-    }
-
-    private String getString(final BsonDocument response, final String key) {
-        if (response.containsKey(key)) {
-            return response.getString(key).getValue();
-        } else {
-            return null;
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static ServerVersion getVersion(final BsonDocument buildInfoResult) {
-        List<BsonValue> versionArray = buildInfoResult.getArray("versionArray").subList(0, 3);
-
-        return new ServerVersion(asList(versionArray.get(0).asInt32().getValue(),
-                                        versionArray.get(1).asInt32().getValue(),
-                                        versionArray.get(2).asInt32().getValue()));
-    }
-
-    private Set<String> listToSet(final BsonArray array) {
-        if (array == null || array.isEmpty()) {
-            return Collections.emptySet();
-        } else {
-            Set<String> set = new HashSet<String>();
-            for (BsonValue value : array) {
-                set.add(value.asString().getValue());
-            }
-            return set;
-        }
-    }
-
-    private static ServerType getServerType(final BsonDocument isMasterResult) {
-        if (isReplicaSetMember(isMasterResult)) {
-            if (isMasterResult.getBoolean("ismaster", BsonBoolean.FALSE).getValue()) {
-                return REPLICA_SET_PRIMARY;
-            }
-
-            if (isMasterResult.getBoolean("secondary", BsonBoolean.FALSE).getValue()) {
-                return REPLICA_SET_SECONDARY;
-            }
-
-            if (isMasterResult.getBoolean("arbiterOnly", BsonBoolean.FALSE).getValue()) {
-                return REPLICA_SET_ARBITER;
-            }
-
-            if (isMasterResult.containsKey("setName") && isMasterResult.containsKey("hosts")) {
-                return ServerType.REPLICA_SET_OTHER;
-            }
-
-            return ServerType.REPLICA_SET_GHOST;
-        }
-
-        if (isMasterResult.containsKey("msg") && isMasterResult.get("msg").equals(new BsonString("isdbgrid"))) {
-            return SHARD_ROUTER;
-        }
-
-        return STANDALONE;
-    }
-
-    private static boolean isReplicaSetMember(final BsonDocument isMasterResult) {
-        return isMasterResult.containsKey("setName") || isMasterResult.getBoolean("isreplicaset", BsonBoolean.FALSE).getValue();
-    }
-
-    private static TagSet getTagSetFromDocument(final BsonDocument tagsDocuments) {
-        if (tagsDocuments == null) {
-            return new TagSet();
-        }
-        List<Tag> tagList = new ArrayList<Tag>();
-        for (final Map.Entry<String, BsonValue> curEntry : tagsDocuments.entrySet()) {
-            tagList.add(new Tag(curEntry.getKey(), curEntry.getValue().toString()));
-        }
-        return new TagSet(tagList);
+        return ServerDescriptionHelper.createDescription(serverAddress, isMasterResult, buildInfoResult, roundTripTimeSum / count);
     }
 
     private ServerDescription getConnectingServerDescription() {

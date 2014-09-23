@@ -278,6 +278,11 @@ class DefaultConnectionPool implements ConnectionPool {
         public String getId() {
             return wrapped.getId();
         }
+
+        @Override
+        public ServerDescription getServerDescription() {
+            return wrapped.getServerDescription();
+        }
     }
 
     private class UsageTrackingInternalConnectionItemFactory implements ConcurrentPool.ItemFactory<UsageTrackingInternalConnection> {

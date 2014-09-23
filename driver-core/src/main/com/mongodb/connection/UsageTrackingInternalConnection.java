@@ -96,6 +96,11 @@ class UsageTrackingInternalConnection implements InternalConnection {
         return wrapped.getId();
     }
 
+    @Override
+    public ServerDescription getServerDescription() {
+        return wrapped.getServerDescription();
+    }
+
     /**
      * Gets the generation of this connection.  This can be used by connection pools to track whether the connection is stale.
      *

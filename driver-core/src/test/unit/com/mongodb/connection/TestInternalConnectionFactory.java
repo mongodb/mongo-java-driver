@@ -77,6 +77,11 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         }
 
         @Override
+        public ServerDescription getServerDescription() {
+            throw new UnsupportedOperationException("Not implemented yet!");
+        }
+
+        @Override
         public void close() {
             closed = true;
         }
