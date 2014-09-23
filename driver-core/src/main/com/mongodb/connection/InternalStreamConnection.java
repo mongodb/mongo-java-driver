@@ -81,11 +81,22 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
+    public ServerDescription getServerDescription() {
+        initialize();
+        return connectionInitializer.getServerDescription();
+    }
+
+    @Override
     public ByteBuf getBuffer(final int size) {
         return stream.getBuffer(size);
     }
 
     public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
+        initialize();
+        streamPipeline.sendMessage(byteBuffers, lastRequestId);
+    }
+
+    private void initialize() {
         if (!initializeCalled) {
             try {
                 if (initializing.tryAcquire() && !initializeCalled) {
@@ -105,7 +116,6 @@ class InternalStreamConnection implements InternalConnection {
                 initializing.release();
             }
         }
-        streamPipeline.sendMessage(byteBuffers, lastRequestId);
     }
 
     @Override

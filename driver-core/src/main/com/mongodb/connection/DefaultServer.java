@@ -162,7 +162,7 @@ class DefaultServer implements ClusterableServer {
         @Override
         public ServerDescription getServerDescription() {
             isTrue("open", getCount() > 0);
-            return getDescription();
+            return wrapped.getServerDescription();
         }
 
         @Override

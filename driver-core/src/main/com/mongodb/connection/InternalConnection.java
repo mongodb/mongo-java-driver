@@ -45,6 +45,13 @@ interface InternalConnection extends BufferProvider {
     String getId();
 
     /**
+     * Gets the description of the server that this is connected to.
+     *
+     * @return the server description
+     */
+    ServerDescription getServerDescription();
+
+    /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      *
      * @param byteBuffers   the list of byte buffers to send.
