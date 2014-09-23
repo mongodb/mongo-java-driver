@@ -165,8 +165,10 @@ class PipelinedConnectionInitializer implements ConnectionInitializer, InternalC
 
 
     private void authenticateAll() {
+        if (serverDescription.getType() != ServerType.REPLICA_SET_ARBITER) {
             for (final MongoCredential cur : credentialList) {
                 createAuthenticator(cur).authenticate();
+            }
         }
     }
 
