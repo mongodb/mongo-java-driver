@@ -76,6 +76,9 @@ public final class ClusterFixture {
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
     }
 
+    private ClusterFixture() {
+    }
+
     public static String getDefaultDatabaseName() {
         return DEFAULT_DATABASE_NAME;
     }
