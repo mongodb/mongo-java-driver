@@ -1064,7 +1064,7 @@ public abstract class DBCollection {
 
         resetIndexCache();
         CommandResult res = _db.command( cmd );
-        if (res.ok() || res.getErrorMessage().equals( "ns not found" ))
+        if (res.ok() || res.getErrorMessage().contains( "ns not found" ))
             return;
         res.throwOnError();
     }
@@ -1076,7 +1076,7 @@ public abstract class DBCollection {
     public void drop(){
         resetIndexCache();
         CommandResult res =_db.command( BasicDBObjectBuilder.start().add( "drop" , getName() ).get() );
-        if (res.ok() || res.getErrorMessage().equals( "ns not found" ))
+        if (res.ok() || res.getErrorMessage().contains( "ns not found" ))
             return;
         res.throwOnError();
     }

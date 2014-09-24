@@ -30,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -252,7 +253,33 @@ public class DBCollectionTest extends TestCase {
 
         c.dropIndex( new BasicDBObject( "x" , 1 ) );
         assertEquals( 2 , c.getIndexInfo().size() );
+
+        // Now drop an index that no longer exists.  It should throw an exception
+        try {
+            c.dropIndex( new BasicDBObject( "x" , 1 ) );
+            fail();
+        } catch (CommandFailureException e) {
+            // all good
+        }
+
+        // Now drop an index on a non-existing collection.  It should not throw an exception
+        getDatabase().getCollection("does.not.exist").dropIndex(new BasicDBObject("x", 1));
+
         c.dropIndexes();
+    }
+
+    @Test
+    public void testDrop() {
+        // ensure it exists
+        collection.insert(new BasicDBObject());
+        assertTrue(getDatabase().getCollectionNames().contains(collection.getName()));
+
+        collection.drop();
+        assertFalse(getDatabase().getCollectionNames().contains(collection.getName()));
+
+        // Now drop a collection that no longer exists.  It should not throw
+        collection.drop();
+        assertFalse(getDatabase().getCollectionNames().contains(collection.getName()));
     }
 
     @Test
