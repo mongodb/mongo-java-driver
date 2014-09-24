@@ -110,7 +110,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @ThreadSafe
 @SuppressWarnings({"rawtypes", "deprecation"})
 public class DBCollection {
-    private static final String NAMESPACE_KEY_NAME = "ns";
     public static final String ID_FIELD_NAME = "_id";
     private final DB database;
     private final String name;

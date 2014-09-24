@@ -19,7 +19,6 @@ package com.mongodb;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.BufferProvider;
-import com.mongodb.connection.Cluster;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
@@ -573,10 +572,6 @@ public class DB {
     @Override
     public String toString() {
         return "DB{name='" + name + '\'' + '}';
-    }
-
-    Cluster getCluster() {
-        return getMongo().getCluster();
     }
 
     CommandResult executeCommand(final BsonDocument commandDocument) {
