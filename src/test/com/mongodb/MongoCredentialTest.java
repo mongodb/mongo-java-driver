@@ -124,6 +124,7 @@ public class MongoCredentialTest extends TestCase {
 
         // then
         assertEquals(firstValue, credential.getMechanismProperty(firstKey, "default"));
+        assertEquals(firstValue, credential.getMechanismProperty(firstKey.toLowerCase(), "default"));
 
         // when
         credential = credential.withMechanismProperty(secondKey, secondValue);
