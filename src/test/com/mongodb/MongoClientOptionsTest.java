@@ -55,6 +55,7 @@ public class MongoClientOptionsTest {
         assertEquals(false, options.isAlwaysUseMBeans());
         assertEquals(5000, options.getHeartbeatFrequency());
         assertEquals(10, options.getHeartbeatConnectRetryFrequency());
+        assertEquals(10, options.getMinHeartbeatFrequency());
         assertEquals(20000, options.getHeartbeatConnectTimeout());
         assertEquals(20000, options.getHeartbeatSocketTimeout());
         assertEquals(0, options.getHeartbeatThreadCount());
@@ -159,6 +160,12 @@ public class MongoClientOptionsTest {
             // all good
         }
         try {
+            builder.minHeartbeatFrequency(0);
+            fail("should not get here");
+        } catch (IllegalArgumentException e) {
+            // all good
+        }
+        try {
             builder.heartbeatConnectRetryFrequency(0);
             fail("should not get here");
         } catch (IllegalArgumentException e) {
@@ -224,6 +231,7 @@ public class MongoClientOptionsTest {
         builder.acceptableLatencyDifference(41);
         builder.heartbeatFrequency(51);
         builder.heartbeatConnectRetryFrequency(52);
+        builder.minHeartbeatFrequency(62);
         builder.heartbeatConnectTimeout(53);
         builder.heartbeatSocketTimeout(54);
         builder.heartbeatThreadCount(4);
@@ -264,7 +272,8 @@ public class MongoClientOptionsTest {
         assertEquals(true, options.isAlwaysUseMBeans());
         assertEquals(41, options.getAcceptableLatencyDifference());
         assertEquals(51, options.getHeartbeatFrequency());
-        assertEquals(52, options.getHeartbeatConnectRetryFrequency());
+        assertEquals(62, options.getHeartbeatConnectRetryFrequency());
+        assertEquals(62, options.getMinHeartbeatFrequency());
         assertEquals(53, options.getHeartbeatConnectTimeout());
         assertEquals(54, options.getHeartbeatSocketTimeout());
         assertEquals(4, options.getHeartbeatThreadCount());
