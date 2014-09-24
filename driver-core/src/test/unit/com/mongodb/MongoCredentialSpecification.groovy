@@ -182,6 +182,7 @@ class MongoCredentialSpecification extends Specification {
 
         then:
         credential.getMechanismProperty(firstKey, 'default') == firstValue
+        credential.getMechanismProperty(firstKey.toLowerCase(), 'default') == firstValue
 
         when:
         credential = credential.withMechanismProperty(secondKey, secondValue)

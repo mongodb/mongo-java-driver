@@ -154,7 +154,7 @@ public final class MongoCredential {
     /**
      * Creates a new MongoCredential as a copy of this instance, with the specified mechanism property added.
      *
-     * @param key   the key to the property
+     * @param key   the key to the property, which is treated as case-insensitive
      * @param value the value of the property
      * @param <T>   the property type
      * @return the credential
@@ -205,7 +205,7 @@ public final class MongoCredential {
         this.source = from.source;
         this.password = from.password;
         this.mechanismProperties = new HashMap<String, Object>(from.mechanismProperties);
-        this.mechanismProperties.put(mechanismPropertyKey, mechanismPropertyValue);
+        this.mechanismProperties.put(mechanismPropertyKey.toLowerCase(), mechanismPropertyValue);
     }
 
     /**
@@ -260,7 +260,7 @@ public final class MongoCredential {
     /**
      * Get the value of the given key to a mechanism property, or defaultValue if there is no mapping.
      *
-     * @param key          the mechanism property key
+     * @param key          the mechanism property key, which is treated as case-insensitive
      * @param defaultValue the default value, if no mapping exists
      * @param <T>          the value type
      * @return the mechanism property value
@@ -270,7 +270,7 @@ public final class MongoCredential {
     public <T> T getMechanismProperty(final String key, final T defaultValue) {
         notNull("key", key);
 
-        T value = (T) mechanismProperties.get(key);
+        T value = (T) mechanismProperties.get(key.toLowerCase());
         return (value == null) ? defaultValue : value;
 
     }
