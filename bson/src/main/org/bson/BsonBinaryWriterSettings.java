@@ -16,17 +16,35 @@
 
 package org.bson;
 
+/**
+ * The customisable settings for writing BSON.
+ *
+ * @since 3.0
+ */
 public class BsonBinaryWriterSettings {
     private final int maxDocumentSize;
 
+    /**
+     * Creates a new instance of the settings with the given maximum document size.
+     *
+     * @param maxDocumentSize the maximum document size.
+     */
     public BsonBinaryWriterSettings(final int maxDocumentSize) {
         this.maxDocumentSize = maxDocumentSize;
     }
 
+    /**
+     * Creates a new instance of the settings with {@link java.lang.Integer#MAX_VALUE} as the maximum document size.
+     */
     public BsonBinaryWriterSettings() {
         this(Integer.MAX_VALUE);
     }
 
+    /**
+     * Gets the maximum size for BSON documents.
+     *
+     * @return the maximum size of BSON documents. ???
+     */
     public int getMaxDocumentSize() {
         return maxDocumentSize;
     }

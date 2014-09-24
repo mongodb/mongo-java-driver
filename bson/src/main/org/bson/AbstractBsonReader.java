@@ -37,7 +37,6 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
 
     /**
      * Initializes a new instance of the BsonReader class.
-     *
      */
     protected AbstractBsonReader() {
         state = State.INITIAL;
@@ -56,6 +55,11 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
         return currentName;
     }
 
+    /**
+     * Sets Type of the current value being read.
+     *
+     * @param newType the BSON Type.
+     */
     protected void setCurrentBsonType(final BsonType newType) {
         currentBsonType = newType;
     }
@@ -67,10 +71,20 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
         return state;
     }
 
+    /**
+     * Sets the new current state of this reader.
+     *
+     * @param newState the state to set this reader to.
+     */
     protected void setState(final State newState) {
         state = newState;
     }
 
+    /**
+     * Sets the field name for the key/value pair being read.
+     *
+     * @param newName the field name
+     */
     protected void setCurrentName(final String newName) {
         currentName = newName;
     }
@@ -93,6 +107,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
 
     /**
      * Handles the logic to read binary data
+     *
      * @return the BsonBinary value
      */
     protected abstract BsonBinary doReadBinaryData();
@@ -100,18 +115,21 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
 
     /**
      * Handles the logic to read booleans
+     *
      * @return the boolean value
      */
     protected abstract boolean doReadBoolean();
 
     /**
      * Handles the logic to read date time
+     *
      * @return the long value
      */
     protected abstract long doReadDateTime();
 
     /**
      * Handles the logic to read doubles
+     *
      * @return the double value
      */
     protected abstract double doReadDouble();
@@ -128,24 +146,28 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
 
     /**
      * Handles the logic to read 32 bit ints
+     *
      * @return the int value
      */
     protected abstract int doReadInt32();
 
     /**
      * Handles the logic to read 64 bit ints
+     *
      * @return the long value
      */
     protected abstract long doReadInt64();
 
     /**
      * Handles the logic to read Javascript functions
+     *
      * @return the String value
      */
     protected abstract String doReadJavaScript();
 
     /**
      * Handles the logic to read scoped Javascript functions
+     *
      * @return the String value
      */
     protected abstract String doReadJavaScriptWithScope();
@@ -167,18 +189,21 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
 
     /**
      * Handles the logic to read an ObjectId
+     *
      * @return the ObjectId value
      */
     protected abstract ObjectId doReadObjectId();
 
     /**
      * Handles the logic to read a regular expression
+     *
      * @return the BsonRegularExpression value
      */
     protected abstract BsonRegularExpression doReadRegularExpression();
 
     /**
      * Handles the logic to read a DBPointer
+     *
      * @return the BsonDbPointer value
      */
     protected abstract BsonDbPointer doReadDBPointer();
@@ -195,18 +220,21 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
 
     /**
      * Handles the logic to read a String
+     *
      * @return the String value
      */
     protected abstract String doReadString();
 
     /**
      * Handles the logic to read a Symbol
+     *
      * @return the String value
      */
     protected abstract String doReadSymbol();
 
     /**
      * Handles the logic to read a timestamp
+     *
      * @return the BsonTimestamp value
      */
     protected abstract BsonTimestamp doReadTimestamp();
@@ -634,6 +662,12 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
         }
     }
 
+    /**
+     * Ensures any conditions are met before reading commences.  Throws exceptions if the conditions are not met.
+     *
+     * @param methodName the name of the current method, which will indicate the field being read
+     * @param type       the type of this field
+     */
     protected void checkPreconditions(final String methodName, final BsonType type) {
         if (isClosed()) {
             throw new IllegalStateException("BsonWriter is closed");
@@ -642,14 +676,29 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
         verifyBSONType(methodName, type);
     }
 
+    /**
+     * Get the context, which will indicate which state the reader is in, for example which part of a document it's currently reading.
+     *
+     * @return the context
+     */
     protected Context getContext() {
         return context;
     }
 
+    /**
+     * Set the context, which will indicate which state the reader is in, for example which part of a document it's currently reading.
+     *
+     * @param context the current context.
+     */
     protected void setContext(final Context context) {
         this.context = context;
     }
 
+    /**
+     * Returns the next {@code State} to transition to, based on the {@link org.bson.AbstractBsonReader.Context} of this reader.
+     *
+     * @return the next state
+     */
     protected State getNextState() {
         switch (context.getContextType()) {
             case ARRAY:
@@ -677,24 +726,48 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
         }
     }
 
+    /**
+     * The context for the reader. Records the parent context, creating a bread crumb trail to trace back up to the root context of the
+     * reader. Also records the {@link org.bson.BsonContextType}, indicating whether the reader is reading a document, array, or other
+     * complex sub-structure.
+     */
     protected static class Context {
         private final Context parentContext;
         private final BsonContextType contextType;
 
+        /**
+         * Creates a new instance.
+         *
+         * @param parentContext a possibly null value for the context that came before this one
+         * @param contextType   the type of this context
+         */
         protected Context(final Context parentContext, final BsonContextType contextType) {
             this.parentContext = parentContext;
             this.contextType = contextType;
         }
 
+        /**
+         * Returns the parent context.  Allows users of this context object to transition to this parent context.
+         *
+         * @return the context that came before this one
+         */
         protected Context getParentContext() {
             return parentContext;
         }
 
+        /**
+         * Return the type of this context.
+         *
+         * @return the context type.
+         */
         protected BsonContextType getContextType() {
             return contextType;
         }
     }
 
+    /**
+     * The state of a reader.  Indicates where in a document the reader is.
+     */
     public enum State {
         /**
          * The initial state.

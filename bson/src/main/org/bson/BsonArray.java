@@ -50,6 +50,11 @@ public final class BsonArray extends BsonValue implements List<BsonValue>, Seria
         values = new ArrayList<BsonValue>();
     }
 
+    /**
+     * Gets the values in this array as a list of {@code BsonValue} objects.
+     *
+     * @return the values in this array.
+     */
     public List<BsonValue> getValues() {
         return Collections.unmodifiableList(values);
     }

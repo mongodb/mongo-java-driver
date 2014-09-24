@@ -20,6 +20,11 @@ import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.types.Code;
 
+/**
+ * Encodes and decodes instances of type {@link org.bson.types.Code}.
+ *
+ * @since 3.0
+ */
 public class CodeCodec implements Codec<Code> {
 
     @Override

@@ -18,6 +18,7 @@ package org.bson;
 
 /**
  * The Binary subtype
+ *
  * @since 3.0
  */
 public enum BsonBinarySubType {
@@ -62,6 +63,11 @@ public enum BsonBinarySubType {
         this.value = value;
     }
 
+    /**
+     * Gets the byte representation of this subtype.
+     *
+     * @return this subtype as a byte.
+     */
     public byte getValue() {
         return value;
     }

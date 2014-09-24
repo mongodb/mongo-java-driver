@@ -42,10 +42,18 @@ public class BsonDocumentCodec implements Codec<BsonDocument> {
 
     private final CodecRegistry codecRegistry;
 
+    /**
+     * Creates a new instance with a default {@link org.bson.codecs.configuration.RootCodecRegistry}
+     */
     public BsonDocumentCodec() {
         codecRegistry = DEFAULT_REGISTRY;
     }
 
+    /**
+     * Creates a new instance initialised with the given codec registry.
+     *
+     * @param codecRegistry the {@code CodecRegistry} to use to look up the codecs for encoding and decoding to/from BSON
+     */
     public BsonDocumentCodec(final CodecRegistry codecRegistry) {
         if (codecRegistry == null) {
             throw new IllegalArgumentException("Codec registry can not be null");
@@ -81,7 +89,7 @@ public class BsonDocumentCodec implements Codec<BsonDocument> {
      * This method may be overridden to change the behavior of reading the current value from the given {@code BsonReader}.  It is required
      * that the value be fully consumed before returning.
      *
-     * @param reader the read to read the value from
+     * @param reader         the read to read the value from
      * @param decoderContext the context
      * @return the non-null value read from the reader
      */

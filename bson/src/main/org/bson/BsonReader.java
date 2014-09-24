@@ -225,6 +225,8 @@ public interface BsonReader {
 
     /**
      * Reads a BSON ObjectId from the reader.
+     *
+     * @return the {@code ObjectId} value
      */
     ObjectId readObjectId();
 

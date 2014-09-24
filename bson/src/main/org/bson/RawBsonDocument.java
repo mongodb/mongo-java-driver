@@ -67,6 +67,7 @@ public class RawBsonDocument extends BsonDocument {
      *
      * @param document the document to transform
      * @param codec    the codec to facilitate the transformation
+     * @param <T>      the BSON type that the codec encodes/decodesRootCodecRegistry
      */
     public <T> RawBsonDocument(final T document, final Codec<T> codec) {
         BasicOutputBuffer buffer = new BasicOutputBuffer();
@@ -95,6 +96,7 @@ public class RawBsonDocument extends BsonDocument {
      * Decode this into a document.
      *
      * @param codec the codec to facilitate the transformation
+     * @param <T>   the BSON type that the codec encodes/decodesRootCodecRegistry
      * @return the decoded document
      */
     public <T> T decode(final Codec<T> codec) {

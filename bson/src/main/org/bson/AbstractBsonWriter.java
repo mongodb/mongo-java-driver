@@ -27,7 +27,7 @@ import static java.lang.String.format;
 /**
  * Represents a BSON writer for some external format (see subclasses).
  *
- * @since 3.0.0
+ * @since 3.0
  */
 public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     private final BsonWriterSettings settings;
@@ -61,26 +61,56 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         state = State.INITIAL;
     }
 
+    /**
+     * The name of the field being written.
+     *
+     * @return the name of the field
+     */
     protected String getName() {
         return context.name;
     }
 
+    /**
+     * Returns whether this writer has been closed.
+     *
+     * @return true if the {@link #close()} method has been called.
+     */
     protected boolean isClosed() {
         return closed;
     }
 
+    /**
+     * Sets the current state of the writer. The current state determines what sort of actions are valid for this writer at this time.
+     *
+     * @param state the state to set this writer to.
+     */
     protected void setState(final State state) {
         this.state = state;
     }
 
+    /**
+     * Gets the current state of this writer.  The current state determines what sort of actions are valid for this writer at this time.
+     *
+     * @return the current state of the writer.
+     */
     protected State getState() {
         return state;
     }
 
+    /**
+     * Get the context, which will indicate which state the writer is in, for example which part of a document it's currently writing.
+     *
+     * @return the current context.
+     */
     protected Context getContext() {
         return context;
     }
 
+    /**
+     * Set the context, which will indicate which state the writer is in, for example which part of a document it's currently writing.
+     *
+     * @param context the new context for this writer
+     */
     protected void setContext(final Context context) {
         this.context = context;
     }
@@ -107,58 +137,67 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     /**
      * Handles the logic of writing a {@code BsonBinary} value
+     *
      * @param value the {@code BsonBinary} value to write
      */
-    protected abstract void doWriteBinaryData(final BsonBinary value);
+    protected abstract void doWriteBinaryData(BsonBinary value);
 
 
     /**
      * Handles the logic of writing a boolean value
+     *
      * @param value the {@code boolean} value to write
      */
-    protected abstract void doWriteBoolean(final boolean value);
+    protected abstract void doWriteBoolean(boolean value);
 
     /**
      * Handles the logic of writing a date time value
+     *
      * @param value the {@code long} value to write
      */
-    protected abstract void doWriteDateTime(final long value);
+    protected abstract void doWriteDateTime(long value);
 
     /**
      * Handles the logic of writing a DbPointer value
+     *
      * @param value the {@code BsonDbPointer} value to write
      */
-    protected abstract void doWriteDBPointer(final BsonDbPointer value);
+    protected abstract void doWriteDBPointer(BsonDbPointer value);
 
     /**
      * Handles the logic of writing a Double value
+     *
      * @param value the {@code double} value to write
      */
-    protected abstract void doWriteDouble(final double value);
+    protected abstract void doWriteDouble(double value);
 
     /**
      * Handles the logic of writing an int32 value
+     *
      * @param value the {@code int} value to write
      */
-    protected abstract void doWriteInt32(final int value);
+    protected abstract void doWriteInt32(int value);
 
     /**
      * Handles the logic of writing an int64 value
+     *
      * @param value the {@code long} value to write
      */
-    protected abstract void doWriteInt64(final long value);
+    protected abstract void doWriteInt64(long value);
 
     /**
      * Handles the logic of writing a JavaScript function
+     *
      * @param value the {@code String} value to write
      */
-    protected abstract void doWriteJavaScript(final String value);
+    protected abstract void doWriteJavaScript(String value);
 
     /**
      * Handles the logic of writing a scoped JavaScript function
+     *
      * @param value the {@code boolean} value to write
      */
-    protected abstract void doWriteJavaScriptWithScope(final String value);
+    protected abstract void doWriteJavaScriptWithScope(String value);
 
     /**
      * Handles the logic of writing a Max key
@@ -177,33 +216,38 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
 
     /**
      * Handles the logic of writing an ObjectId
+     *
      * @param value the {@code ObjectId} value to write
      */
-    protected abstract void doWriteObjectId(final ObjectId value);
+    protected abstract void doWriteObjectId(ObjectId value);
 
     /**
      * Handles the logic of writing a regular expression
+     *
      * @param value the {@code BsonRegularExpression} value to write
      */
-    protected abstract void doWriteRegularExpression(final BsonRegularExpression value);
+    protected abstract void doWriteRegularExpression(BsonRegularExpression value);
 
     /**
      * Handles the logic of writing a String
+     *
      * @param value the {@code String} value to write
      */
-    protected abstract void doWriteString(final String value);
+    protected abstract void doWriteString(String value);
 
     /**
      * Handles the logic of writing a Symbol
+     *
      * @param value the {@code boolean} value to write
      */
-    protected abstract void doWriteSymbol(final String value);
+    protected abstract void doWriteSymbol(String value);
 
     /**
      * Handles the logic of writing a timestamp
+     *
      * @param value the {@code BsonTimestamp} value to write
      */
-    protected abstract void doWriteTimestamp(final BsonTimestamp value);
+    protected abstract void doWriteTimestamp(BsonTimestamp value);
 
     /**
      * Handles the logic of writing an Undefined  value
@@ -225,7 +269,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         serializationDepth++;
         if (serializationDepth > settings.getMaxSerializationDepth()) {
             throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being "
-                    + "serialized have a circular reference?).");
+                                                 + "serialized have a circular reference?).");
         }
 
         doWriteStartDocument();
@@ -271,7 +315,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         serializationDepth++;
         if (serializationDepth > settings.getMaxSerializationDepth()) {
             throw new BsonSerializationException("Maximum serialization depth exceeded (does the object being "
-                    + "serialized have a circular reference?).");
+                                                 + "serialized have a circular reference?).");
         }
 
         doWriteStartArray();
@@ -545,6 +589,12 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         setState(getNextState());
     }
 
+    /**
+     * Returns the next valid state for this writer.  For example, transitions from {@link State#VALUE} to {@link State#NAME} once a value
+     * is written.
+     *
+     * @return the next {@code State}
+     */
     protected State getNextState() {
         if (getContext().getContextType() == BsonContextType.ARRAY) {
             return State.VALUE;
@@ -553,6 +603,12 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         }
     }
 
+    /**
+     * Checks if this writer's current state is in the list of given states.
+     *
+     * @param validStates an array of {@code State}s to compare this writer's state to.
+     * @return true if this writer's state is in the given list.
+     */
     protected boolean checkState(final State[] validStates) {
         for (final State cur : validStates) {
             if (cur == getState()) {
@@ -562,9 +618,18 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         return false;
     }
 
+    /**
+     * Checks the writer is in the correct state. If the writer's current state is in the list of given states, this method will complete
+     * without exception.  Throws an {@link java.lang.IllegalStateException} if the writer is closed.  Throws BsonInvalidOperationException
+     * if the method is trying to do something that is not permitted in the current state.
+     *
+     * @param methodName  the name of the method being performed that checks are being performed for
+     * @param validStates the list of valid states for this operation
+     * @see #throwInvalidState(String, org.bson.AbstractBsonWriter.State...)
+     */
     protected void checkPreconditions(final String methodName, final State... validStates) {
         if (isClosed()) {
-            throw new IllegalStateException("BsonWriter");
+            throw new IllegalStateException("BsonWriter is closed");
         }
 
         if (!checkState(validStates)) {
@@ -590,7 +655,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     }
 
     /**
-     * Throws an InvalidOperationException when the method called is not valid for the current state.
+     * Throws a {@link BsonInvalidOperationException} when the method called is not valid for the current state.
      *
      * @param methodName  The name of the method.
      * @param validStates The valid states.
@@ -728,6 +793,9 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         }
     }
 
+    /**
+     * The state of a writer.  Indicates where in a document the writer is.
+     */
     public enum State {
         /**
          * The initial state.
@@ -754,46 +822,84 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
          */
         DONE,
 
-        state, /**
+        /**
          * The writer is closed.
          */
         CLOSED
     }
 
+    /**
+     * The context for the writer. Records the parent context, creating a bread crumb trail to trace back up to the root context of the
+     * reader. Also records the {@link org.bson.BsonContextType}, indicating whether the writer is reading a document, array, or other
+     * complex sub-structure.
+     */
     public class Context {
         private final Context parentContext;
         private final BsonContextType contextType;
         private String name;
 
+        /**
+         * Creates a new instance, copying values from an existing context.
+         *
+         * @param from the {@code Context} to copy values from
+         */
         public Context(final Context from) {
             parentContext = from.parentContext;
             contextType = from.contextType;
         }
 
+        /**
+         * Creates a new instance.
+         *
+         * @param parentContext the context of the parent node
+         * @param contextType   the context type.
+         */
         public Context(final Context parentContext, final BsonContextType contextType) {
             this.parentContext = parentContext;
             this.contextType = contextType;
         }
 
+        /**
+         * Returns the parent context.  Allows users of this context object to transition to this parent context.
+         *
+         * @return the context that came before this one
+         */
         public Context getParentContext() {
             return parentContext;
         }
 
+        /**
+         * Gets the current context type.
+         *
+         * @return the current context type.
+         */
         public BsonContextType getContextType() {
             return contextType;
         }
 
+        /**
+         * Copies the values from this {@code Context} into a new instance.
+         *
+         * @return the new instance with the same values as this context.
+         */
         public Context copy() {
             return new Context(this);
         }
     }
 
+    /**
+     * Capture the current state of this writer - its {@link org.bson.AbstractBsonWriter.Context}, {@link
+     * org.bson.AbstractBsonWriter.State}, field name and depth.
+     */
     protected class Mark {
         private final Context markedContext;
         private final State markedState;
         private final String currentName;
         private final int serializationDepth;
 
+        /**
+         * Creates a new snapshopt of the current state.
+         */
         protected Mark() {
             this.markedContext = AbstractBsonWriter.this.context.copy();
             this.markedState = AbstractBsonWriter.this.state;
@@ -801,6 +907,10 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
             this.serializationDepth = AbstractBsonWriter.this.serializationDepth;
         }
 
+        /**
+         * Resets the {@code AbstractBsonWriter} instance that contains this {@code Mark} to the state the writer was in when the Mark was
+         * created.
+         */
         protected void reset() {
             setContext(markedContext);
             setState(markedState);

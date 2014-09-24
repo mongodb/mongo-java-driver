@@ -21,7 +21,7 @@ package org.bson.types;
 import java.io.Serializable;
 
 /**
- * for using the Code type
+ * For using the Code type.
  */
 public class Code implements Serializable {
 

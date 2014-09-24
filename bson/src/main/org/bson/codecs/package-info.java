@@ -14,36 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson;
-
 /**
- * Used by BsonReader and BsonWriter implementations to represent the current context.
- *
- * @since 3.0
+ * This package contains all the default BSON codecs.
  */
-public enum BsonContextType {
-    /**
-     * The top level of a BSON document.
-     */
-    TOP_LEVEL,
-
-    /**
-     * A (possibly embedded) BSON document.
-     */
-    DOCUMENT,
-
-    /**
-     * A BSON array.
-     */
-    ARRAY,
-
-    /**
-     * A JAVASCRIPT_WITH_SCOPE BSON value.
-     */
-    JAVASCRIPT_WITH_SCOPE,
-
-    /**
-     * The scope document of a JAVASCRIPT_WITH_SCOPE BSON value.
-     */
-    SCOPE_DOCUMENT
-}
+package org.bson.codecs;

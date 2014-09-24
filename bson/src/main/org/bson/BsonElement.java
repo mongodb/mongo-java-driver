@@ -20,7 +20,6 @@ package org.bson;
  * A mapping from a name to a BsonValue.
  *
  * @see BsonDocument
- *
  * @since 3.0
  */
 public class BsonElement {
@@ -29,7 +28,8 @@ public class BsonElement {
 
     /**
      * Construct a new instance with the given key and value
-     * @param name the non-null key
+     *
+     * @param name  the non-null key
      * @param value the non-null value
      */
     public BsonElement(final String name, final BsonValue value) {
@@ -37,10 +37,20 @@ public class BsonElement {
         this.value = value;
     }
 
+    /**
+     * Gets the name of the key/field.
+     *
+     * @return the name of the field.
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Gets the value of this element.
+     *
+     * @return a {@code BsonValue} containing the value of this element.
+     */
     public BsonValue getValue() {
         return value;
     }

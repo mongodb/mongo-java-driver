@@ -234,6 +234,8 @@ public interface BsonWriter {
 
     /**
      * Writes a BSON regular expression to the writer.
+     *
+     * @param regularExpression the regular expression to write.
      */
     void writeRegularExpression(BsonRegularExpression regularExpression);
 
