@@ -23,7 +23,6 @@ import com.mongodb.operation.CommandReadOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
-import spock.lang.IgnoreIf
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -32,10 +31,8 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSSLSettings
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerMonitor.exceptionHasChanged
 import static com.mongodb.connection.ServerMonitor.stateHasChanged
-import static java.util.Arrays.asList
 
 class ServerMonitorSpecification extends OperationFunctionalSpecification {
     ServerDescription newDescription
@@ -87,29 +84,6 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
 
         cleanup:
         serverMonitor.close()
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
-    def 'should set max wire batch size when provided by server'() {
-        given:
-        def commandResult = new CommandReadOperation<BsonDocument>('admin', new BsonDocument('ismaster', new BsonInt32(1)),
-                                                                   new BsonDocumentCodec()).execute(getBinding())
-        def expected = commandResult.getNumber('maxWriteBatchSize').intValue()
-
-        when:
-        latch.await()
-
-        then:
-        newDescription.maxWriteBatchSize == expected
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(asList(2, 6, 0)) })
-    def 'should set default max wire batch size when not provided by server'() {
-        when:
-        latch.await()
-
-        then:
-        newDescription.maxWriteBatchSize == ServerDescription.getDefaultMaxWriteBatchSize()
     }
 
     def 'should report exception has changed when the current and previous are different'() {

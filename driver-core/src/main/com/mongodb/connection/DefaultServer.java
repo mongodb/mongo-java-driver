@@ -160,9 +160,9 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public ServerDescription getServerDescription() {
+        public ConnectionDescription getDescription() {
             isTrue("open", getCount() > 0);
-            return wrapped.getServerDescription();
+            return wrapped.getDescription();
         }
 
         @Override

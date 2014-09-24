@@ -72,12 +72,16 @@ final class OperationHelper {
     }
 
     static boolean serverIsAtLeastVersionTwoDotSix(final Connection connection) {
-        return connection.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0;
+        return serverIsAtLeastVersion(connection, new ServerVersion(2, 6));
     }
 
     static boolean serverIsAtLeastVersionTwoDotEight(final Connection connection) {
-        // Todo update to 2.8 once released
-        return connection.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 7, 7))) >= 0;
+        // TODO: update to 2.8 once released
+        return serverIsAtLeastVersion(connection, new ServerVersion(asList(2, 7, 7)));
+    }
+
+    static boolean serverIsAtLeastVersion(final Connection connection, final ServerVersion serverVersion) {
+        return connection.getDescription().getServerVersion().compareTo(serverVersion) >= 0;
     }
 
     static <T> T executeProtocol(final Protocol<T> protocol, final ConnectionSource source) {

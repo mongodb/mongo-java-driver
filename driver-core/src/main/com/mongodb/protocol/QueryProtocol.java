@@ -23,8 +23,8 @@ import com.mongodb.async.SingleResultFuture;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ResponseBuffers;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.protocol.message.QueryMessage;
@@ -97,7 +97,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
-        QueryMessage message = createQueryMessage(connection.getServerDescription());
+        QueryMessage message = createQueryMessage(connection.getDescription());
         encodeMessage(message, bsonOutput);
         QueryResultCallback<T> receiveCallback = new QueryResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
                                                                             resultDecoder,
@@ -110,15 +110,15 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         return retVal;
     }
 
-    private QueryMessage createQueryMessage(final ServerDescription serverDescription) {
+    private QueryMessage createQueryMessage(final ConnectionDescription connectionDescription) {
         return new QueryMessage(namespace.getFullName(), cursorFlags, skip, numberToReturn, queryDocument, fields,
-                                getMessageSettings(serverDescription));
+                                getMessageSettings(connectionDescription));
     }
 
     private QueryMessage sendMessage(final Connection connection) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
-            QueryMessage message = createQueryMessage(connection.getServerDescription());
+            QueryMessage message = createQueryMessage(connection.getDescription());
             message.encode(bsonOutput);
             connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             return message;

@@ -32,7 +32,7 @@ import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
-import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.protocol.QueryProtocol;
 import com.mongodb.protocol.QueryResult;
 import org.bson.BsonBoolean;
@@ -301,7 +301,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
         return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<MongoTailableCursor<T>>() {
             @Override
             public MongoTailableCursor<T> call(final ConnectionSource source, final Connection connection) {
-                QueryResult<T> queryResult = asQueryProtocol(connection.getServerDescription(), binding.getReadPreference())
+                QueryResult<T> queryResult = asQueryProtocol(connection.getDescription(), binding.getReadPreference())
                                              .execute(connection);
                 if (isExhaustCursor()) {
                     return new MongoQueryCursor<T>(namespace, queryResult, limit, batchSize,
@@ -320,7 +320,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
             @Override
             public MongoFuture<MongoAsyncCursor<T>> call(final AsyncConnectionSource source, final Connection connection) {
                 final SingleResultFuture<MongoAsyncCursor<T>> future = new SingleResultFuture<MongoAsyncCursor<T>>();
-                asQueryProtocol(connection.getServerDescription(), binding.getReadPreference())
+                asQueryProtocol(connection.getDescription(), binding.getReadPreference())
                 .executeAsync(connection)
                 .register(new SingleResultCallback<QueryResult<T>>() {
                               @Override
@@ -413,9 +413,9 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
 
     }
 
-    private QueryProtocol<T> asQueryProtocol(final ServerDescription serverDescription, final ReadPreference readPreference) {
+    private QueryProtocol<T> asQueryProtocol(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
         return new QueryProtocol<T>(namespace, getFlags(readPreference), skip,
-                                    getNumberToReturn(), asDocument(serverDescription, readPreference),
+                                    getNumberToReturn(), asDocument(connectionDescription, readPreference),
                                     projection, decoder);
     }
 
@@ -454,7 +454,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
         }
     }
 
-    private BsonDocument asDocument(final ServerDescription serverDescription, final ReadPreference readPreference) {
+    private BsonDocument asDocument(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
         BsonDocument document = modifiers != null ? modifiers : new BsonDocument();
         document.put("$query", criteria != null ? criteria : new BsonDocument());
         if (sort != null) {
@@ -465,7 +465,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
             document.put("$maxTimeMS", new BsonInt64(maxTimeMS));
         }
 
-        if (serverDescription.getType() == SHARD_ROUTER && !readPreference.equals(primary())) {
+        if (connectionDescription.getServerType() == SHARD_ROUTER && !readPreference.equals(primary())) {
             document.put("$readPreference", readPreference.toDocument());
         }
 

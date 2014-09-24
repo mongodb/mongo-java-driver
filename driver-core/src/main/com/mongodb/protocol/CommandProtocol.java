@@ -93,7 +93,7 @@ public class CommandProtocol<T> implements Protocol<T> {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
             CommandMessage message = new CommandMessage(namespace.getFullName(), command, cursorFlags, fieldNameValidator,
-                                                        getMessageSettings(connection.getServerDescription()));
+                                                        getMessageSettings(connection.getDescription()));
             message.encode(bsonOutput);
             connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             return message;
@@ -121,7 +121,7 @@ public class CommandProtocol<T> implements Protocol<T> {
 
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         CommandMessage message = new CommandMessage(namespace.getFullName(), command, cursorFlags, fieldNameValidator,
-                                                    getMessageSettings(connection.getServerDescription()));
+                                                    getMessageSettings(connection.getDescription()));
         encodeMessage(message, bsonOutput);
 
         CommandResultCallback<T> receiveCallback = new CommandResultCallback<T>(new SingleResultFutureCallback<T>(retVal),

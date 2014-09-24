@@ -27,11 +27,11 @@ import com.mongodb.annotations.Immutable;
 public final class MessageSettings {
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
-    private static final int DEFAULT_MAX_WRITE_BATCH_SIZE = 1000;
+    private static final int DEFAULT_MAX_BATCH_COUNT = 1000;
 
     private final int maxDocumentSize;
     private final int maxMessageSize;
-    private final int maxWriteBatchSize;
+    private final int maxBatchCount;
 
     /**
      * Gets the builder
@@ -48,7 +48,7 @@ public final class MessageSettings {
     public static final class Builder {
         private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
-        private int maxWriteBatchSize = DEFAULT_MAX_WRITE_BATCH_SIZE;
+        private int maxBatchCount = DEFAULT_MAX_BATCH_COUNT;
 
         /**
          * Build it.
@@ -82,13 +82,13 @@ public final class MessageSettings {
         }
 
         /**
-         * Sets the maximum write batch size allowed.
+         * Sets the maximum number of items in a batch allowed.
          *
-         * @param maxWriteBatchSize the maximum write batch size allowed
+         * @param maxBatchCount the maximum number of items in a batch allowed
          * @return this
          */
-        public Builder maxWriteBatchSize(final int maxWriteBatchSize) {
-            this.maxWriteBatchSize = maxWriteBatchSize;
+        public Builder maxBatchCount(final int maxBatchCount) {
+            this.maxBatchCount = maxBatchCount;
             return this;
         }
     }
@@ -112,17 +112,17 @@ public final class MessageSettings {
     }
 
     /**
-     * Gets the maximum write batch size allowed.
+     * Gets the maximum number of items in a batch allowed.
      *
-     * @return the maximum write batch size allowed
+     * @return the maximum number of items in a batch allowed
      */
-    public int getMaxWriteBatchSize() {
-        return maxWriteBatchSize;
+    public int getMaxBatchCount() {
+        return maxBatchCount;
     }
 
     private MessageSettings(final Builder builder) {
         this.maxDocumentSize = builder.maxDocumentSize;
         this.maxMessageSize = builder.maxMessageSize;
-        this.maxWriteBatchSize = builder.maxWriteBatchSize;
+        this.maxBatchCount = builder.maxBatchCount;
     }
 }

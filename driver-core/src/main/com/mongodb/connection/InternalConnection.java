@@ -45,11 +45,11 @@ interface InternalConnection extends BufferProvider {
     String getId();
 
     /**
-     * Gets the description of the server that this is connected to.
+     * Gets the description of this connection.
      *
-     * @return the server description
+     * @return the connection description
      */
-    ServerDescription getServerDescription();
+    ConnectionDescription getDescription();
 
     /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.

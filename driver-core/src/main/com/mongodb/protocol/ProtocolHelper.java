@@ -23,7 +23,7 @@ import com.mongodb.MongoQueryFailureException;
 import com.mongodb.MongoWriteException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcernException;
-import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
 import org.bson.BsonBoolean;
@@ -102,11 +102,11 @@ final class ProtocolHelper {
         return (Integer) errorDocument.get("code");
     }
 
-    static MessageSettings getMessageSettings(final ServerDescription serverDescription) {
+    static MessageSettings getMessageSettings(final ConnectionDescription connectionDescription) {
         return MessageSettings.builder()
-                              .maxDocumentSize(serverDescription.getMaxDocumentSize())
-                              .maxMessageSize(serverDescription.getMaxMessageSize())
-                              .maxWriteBatchSize(serverDescription.getMaxWriteBatchSize())
+                              .maxDocumentSize(connectionDescription.getMaxDocumentSize())
+                              .maxMessageSize(connectionDescription.getMaxMessageSize())
+                              .maxBatchCount(connectionDescription.getMaxBatchCount())
                               .build();
     }
 

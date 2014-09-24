@@ -280,8 +280,8 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public ServerDescription getServerDescription() {
-            return wrapped.getServerDescription();
+        public ConnectionDescription getDescription() {
+            return wrapped.getDescription();
         }
     }
 

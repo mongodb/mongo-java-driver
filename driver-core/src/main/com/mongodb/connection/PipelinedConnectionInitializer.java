@@ -34,6 +34,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.CommandHelper.executeCommand;
+import static com.mongodb.connection.DescriptionHelper.createConnectionDescription;
 
 class PipelinedConnectionInitializer implements ConnectionInitializer, InternalConnection {
     private static final AtomicInteger INCREMENTING_ID = new AtomicInteger();
@@ -47,7 +48,7 @@ class PipelinedConnectionInitializer implements ConnectionInitializer, InternalC
     static final Logger LOGGER = Loggers.getLogger("ConnectionInitializer");
 
     private String id;
-    private ServerDescription serverDescription;
+    private ConnectionDescription connectionDescription;
 
     PipelinedConnectionInitializer(final String clusterId, final Stream stream, final List<MongoCredential> credentialList,
                                    final ConnectionListener connectionListener) {
@@ -70,8 +71,8 @@ class PipelinedConnectionInitializer implements ConnectionInitializer, InternalC
     }
 
     @Override
-    public ServerDescription getServerDescription() {
-        return serverDescription;
+    public ConnectionDescription getDescription() {
+        return connectionDescription;
     }
 
     @Override
@@ -155,17 +156,14 @@ class PipelinedConnectionInitializer implements ConnectionInitializer, InternalC
     }
 
     private void initializeServerDescription() {
-        long start = System.nanoTime();
         BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), this);
-
         BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), this);
-        serverDescription = ServerDescriptionHelper.createDescription(stream.getAddress(), isMasterResult, buildInfoResult,
-                                                                      System.nanoTime() - start);
+        connectionDescription = createConnectionDescription(stream.getAddress(), isMasterResult, buildInfoResult);
     }
 
 
     private void authenticateAll() {
-        if (serverDescription.getType() != ServerType.REPLICA_SET_ARBITER) {
+        if (connectionDescription.getServerType() != ServerType.REPLICA_SET_ARBITER) {
             for (final MongoCredential cur : credentialList) {
                 createAuthenticator(cur).authenticate();
             }

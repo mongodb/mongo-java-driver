@@ -81,9 +81,9 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public ServerDescription getServerDescription() {
+    public ConnectionDescription getDescription() {
         initialize();
-        return connectionInitializer.getServerDescription();
+        return connectionInitializer.getDescription();
     }
 
     @Override

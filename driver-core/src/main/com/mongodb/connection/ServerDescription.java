@@ -46,9 +46,6 @@ public class ServerDescription {
     static final int MAX_DRIVER_WIRE_VERSION = 2;
 
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
-    private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
-
-    private static final int DEFAULT_MAX_WRITE_BATCH_SIZE = 512;
 
     private final ServerAddress address;
 
@@ -58,9 +55,6 @@ public class ServerDescription {
     private final Set<String> arbiters;
     private final String primary;
     private final int maxDocumentSize;
-    private final int maxWriteBatchSize;
-
-    private final int maxMessageSize;
     private final TagSet tagSet;
     private final String setName;
     private final long roundTripTimeNanos;
@@ -91,8 +85,6 @@ public class ServerDescription {
         private Set<String> arbiters = Collections.emptySet();
         private String primary;
         private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
-        private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
-        private int maxWriteBatchSize = DEFAULT_MAX_WRITE_BATCH_SIZE;
         private TagSet tagSet = new TagSet();
         private String setName;
         private long roundTripTimeNanos;
@@ -174,34 +166,11 @@ public class ServerDescription {
         /**
          * The maximum permitted size of a BSON object in bytes for this mongod process. Defaults to 16MB.
          *
-         * @param maxBSONObjectSize the maximum size a document can be
+         * @param maxDocumentSize the maximum size a document can be
          * @return this
          */
-        public Builder maxDocumentSize(final int maxBSONObjectSize) {
-            this.maxDocumentSize = maxBSONObjectSize;
-            return this;
-        }
-
-        /**
-         * The maximum permitted size of a BSON wire protocol message. Defaults to 32MB
-         *
-         * @param maxMessageSize the maximum size of a message in bytes.
-         * @return this
-         * @mongodb.server.release 2.4
-         */
-        public Builder maxMessageSize(final int maxMessageSize) {
-            this.maxMessageSize = maxMessageSize;
-            return this;
-        }
-
-        /**
-         * Sets the maximum size of the write batch.
-         *
-         * @param maxWriteBatchSize the maximum size of a batch write
-         * @return this
-         */
-        public Builder maxWriteBatchSize(final int maxWriteBatchSize) {
-            this.maxWriteBatchSize = maxWriteBatchSize;
+        public Builder maxDocumentSize(final int maxDocumentSize) {
+            this.maxDocumentSize = maxDocumentSize;
             return this;
         }
 
@@ -339,15 +308,6 @@ public class ServerDescription {
     }
 
     /**
-     * Get the maximum size of a wire protocol message
-     *
-     * @return the default maximum message size
-     */
-    public static int getDefaultMaxMessageSize() {
-        return DEFAULT_MAX_MESSAGE_SIZE;
-    }
-
-    /**
      * Get the default minimum wire version
      *
      * @return the default minimum wire version
@@ -363,16 +323,6 @@ public class ServerDescription {
      */
     public static int getDefaultMaxWireVersion() {
         return 0;
-    }
-
-    /**
-     * Get the default maximum size for write batches
-     *
-     * @return the default maximum batch write size
-     */
-
-    public static int getDefaultMaxWriteBatchSize() {
-        return DEFAULT_MAX_WRITE_BATCH_SIZE;
     }
 
     /**
@@ -473,25 +423,6 @@ public class ServerDescription {
      */
     public int getMaxDocumentSize() {
         return maxDocumentSize;
-    }
-
-    /**
-     * The maximum permitted size of a BSON wire protocol message. Defaults to 32MB
-     *
-     * @return the maximum size of a message in bytes.
-     * @mongodb.server.release 2.4
-     */
-    public int getMaxMessageSize() {
-        return maxMessageSize;
-    }
-
-    /**
-     * Sets the maximum size of the write batch.
-     *
-     * @return the maximum size of a batch write
-     */
-    public int getMaxWriteBatchSize() {
-        return maxWriteBatchSize;
     }
 
     /**
@@ -626,12 +557,6 @@ public class ServerDescription {
         if (maxDocumentSize != that.maxDocumentSize) {
             return false;
         }
-        if (maxMessageSize != that.maxMessageSize) {
-            return false;
-        }
-        if (maxWriteBatchSize != that.maxWriteBatchSize) {
-            return false;
-        }
         if (ok != that.ok) {
             return false;
         }
@@ -684,8 +609,6 @@ public class ServerDescription {
         result = 31 * result + arbiters.hashCode();
         result = 31 * result + (primary != null ? primary.hashCode() : 0);
         result = 31 * result + maxDocumentSize;
-        result = 31 * result + maxMessageSize;
-        result = 31 * result + maxWriteBatchSize;
         result = 31 * result + tagSet.hashCode();
         result = 31 * result + (setName != null ? setName.hashCode() : 0);
         result = 31 * result + (ok ? 1 : 0);
@@ -709,8 +632,6 @@ public class ServerDescription {
                   + ", minWireVersion=" + minWireVersion
                   + ", maxWireVersion=" + maxWireVersion
                   + ", maxDocumentSize=" + maxDocumentSize
-                  + ", maxMessageSize=" + maxMessageSize
-                  + ", maxWriteBatchSize=" + maxWriteBatchSize
                   + ", roundTripTimeNanos=" + roundTripTimeNanos
                   : "")
                + (isReplicaSetMember()
@@ -754,8 +675,6 @@ public class ServerDescription {
         arbiters = builder.arbiters;
         primary = builder.primary;
         maxDocumentSize = builder.maxDocumentSize;
-        maxMessageSize = builder.maxMessageSize;
-        maxWriteBatchSize = builder.maxWriteBatchSize;
         tagSet = builder.tagSet;
         setName = builder.setName;
         roundTripTimeNanos = builder.roundTripTimeNanos;

@@ -75,7 +75,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
 
     @Override
     public BulkWriteResult execute(final Connection connection) {
-        BaseWriteCommandMessage message = createRequestMessage(getMessageSettings(connection.getServerDescription()));
+        BaseWriteCommandMessage message = createRequestMessage(getMessageSettings(connection.getDescription()));
         BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getServerAddress(), ordered, writeConcern);
         int batchNum = 0;
         int currentRangeStartIndex = 0;
@@ -105,7 +105,7 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
     @Override
     public MongoFuture<BulkWriteResult> executeAsync(final Connection connection) {
         SingleResultFuture<BulkWriteResult> future = new SingleResultFuture<BulkWriteResult>();
-        executeBatchesAsync(connection, createRequestMessage(getMessageSettings(connection.getServerDescription())),
+        executeBatchesAsync(connection, createRequestMessage(getMessageSettings(connection.getDescription())),
                             new BulkWriteBatchCombiner(connection.getServerAddress(), ordered, writeConcern), 0, 0, future);
         return future;
     }

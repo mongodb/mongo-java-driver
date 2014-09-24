@@ -38,11 +38,11 @@ public interface Connection extends BufferProvider, ReferenceCounted {
     Connection retain();
 
     /**
-     * Gets the description of the server that it's connected to.
+     * Gets the description of the connection.
      *
-     * @return the server description
+     * @return the connection description
      */
-    ServerDescription getServerDescription();
+    ConnectionDescription getDescription();
 
     /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message. <p> This method

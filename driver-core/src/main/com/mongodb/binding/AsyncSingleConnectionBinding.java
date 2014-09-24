@@ -91,7 +91,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         return new SingleResultFuture<AsyncConnectionSource>(new MyConnectionSource(connection));
     }
 
-    private static final class MyConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
+    private final class MyConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
         private final Connection connection;
 
         private MyConnectionSource(final Connection connection) {
@@ -100,12 +100,12 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
         @Override
         public ServerDescription getServerDescription() {
-            return connection.getServerDescription();
+            return server.getDescription();
         }
 
         @Override
         public MongoFuture<Connection> getConnection() {
-            isTrue("open", getCount() > 0);
+            isTrue("open", super.getCount() > 0);
             return new SingleResultFuture<Connection>(connection.retain());
         }
 
@@ -117,7 +117,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         @Override
         public void release() {
             super.release();
-            if (getCount() == 0) {
+            if (super.getCount() == 0) {
                 connection.release();
             }
         }

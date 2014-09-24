@@ -76,14 +76,14 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
         SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
 
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
-        RequestMessage requestMessage = createRequestMessage(getMessageSettings(connection.getServerDescription()));
+        RequestMessage requestMessage = createRequestMessage(getMessageSettings(connection.getDescription()));
         RequestMessage nextMessage = encodeMessage(requestMessage, bsonOutput);
         if (writeConcern.isAcknowledged()) {
             CommandMessage getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                                                                                        COMMAND_COLLECTION_NAME).getFullName(),
                                                                     createGetLastErrorCommandDocument(),
                                                                     EnumSet.noneOf(CursorFlag.class),
-                                                                    getMessageSettings(connection.getServerDescription()));
+                                                                    getMessageSettings(connection.getDescription()));
             encodeMessage(getLastErrorMessage, bsonOutput);
             connection.sendMessageAsync(bsonOutput.getByteBuffers(), getLastErrorMessage.getId(),
                                         new SendMessageCallback<WriteResult>(connection,
@@ -110,7 +110,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
     private CommandMessage sendMessage(final Connection connection) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
-            RequestMessage lastMessage = createRequestMessage(getMessageSettings(connection.getServerDescription()));
+            RequestMessage lastMessage = createRequestMessage(getMessageSettings(connection.getDescription()));
             RequestMessage nextMessage = lastMessage.encode(bsonOutput);
             int batchNum = 1;
             if (nextMessage != null) {
@@ -128,7 +128,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
                 getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                                                                             COMMAND_COLLECTION_NAME).getFullName(),
                                                          createGetLastErrorCommandDocument(), EnumSet.noneOf(CursorFlag.class),
-                                                         getMessageSettings(connection.getServerDescription()));
+                                                         getMessageSettings(connection.getDescription()));
                 getLastErrorMessage.encode(bsonOutput);
                 lastMessage = getLastErrorMessage;
             }

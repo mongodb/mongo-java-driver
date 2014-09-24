@@ -29,6 +29,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.connection.CommandHelper.executeCommand;
+import static com.mongodb.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.connection.ServerType.UNKNOWN;
 import static java.lang.String.format;
@@ -222,7 +223,7 @@ class ServerMonitor {
         roundTripTimeSum += System.nanoTime() - start;
 
         BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
-        return ServerDescriptionHelper.createDescription(serverAddress, isMasterResult, buildInfoResult, roundTripTimeSum / count);
+        return createServerDescription(serverAddress, isMasterResult, buildInfoResult, roundTripTimeSum / count);
     }
 
     private ServerDescription getConnectingServerDescription() {

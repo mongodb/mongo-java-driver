@@ -97,8 +97,8 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
-    public ServerDescription getServerDescription() {
-        return wrapped.getServerDescription();
+    public ConnectionDescription getDescription() {
+        return wrapped.getDescription();
     }
 
     /**

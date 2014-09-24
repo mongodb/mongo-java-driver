@@ -72,8 +72,6 @@ public class ServerDescriptionTest {
         assertEquals(0F, serverDescription.getRoundTripTimeNanos(), 0L);
 
         assertEquals(0x1000000, serverDescription.getMaxDocumentSize());
-        assertEquals(0x2000000, serverDescription.getMaxMessageSize());
-        assertEquals(512, serverDescription.getMaxWriteBatchSize());
 
         assertNull(serverDescription.getPrimary());
         assertEquals(Collections.<String>emptySet(), serverDescription.getHosts());
@@ -94,8 +92,6 @@ public class ServerDescriptionTest {
                                                              .tagSet(new TagSet(asList(new Tag("dc", "ny"))))
                                                                      .setName("test")
                                                                      .maxDocumentSize(100)
-                                                                     .maxMessageSize(200)
-                                                                     .maxWriteBatchSize(1024)
                                                                      .roundTripTime(50000, java.util.concurrent.TimeUnit.NANOSECONDS)
                                                                      .primary("localhost:27017")
                                                                      .hosts(new HashSet<String>(asList("localhost:27017",

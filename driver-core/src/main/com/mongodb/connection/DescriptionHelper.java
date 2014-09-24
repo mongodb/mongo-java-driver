@@ -35,9 +35,7 @@ import java.util.Set;
 
 import static com.mongodb.connection.ServerConnectionState.CONNECTED;
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
-import static com.mongodb.connection.ServerDescription.getDefaultMaxMessageSize;
 import static com.mongodb.connection.ServerDescription.getDefaultMaxWireVersion;
-import static com.mongodb.connection.ServerDescription.getDefaultMaxWriteBatchSize;
 import static com.mongodb.connection.ServerDescription.getDefaultMinWireVersion;
 import static com.mongodb.connection.ServerType.REPLICA_SET_ARBITER;
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
@@ -47,11 +45,22 @@ import static com.mongodb.connection.ServerType.STANDALONE;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
-final class ServerDescriptionHelper {
+final class DescriptionHelper {
 
-    @SuppressWarnings("unchecked")
-    static ServerDescription createDescription(final ServerAddress serverAddress, final BsonDocument isMasterResult,
-                                               final BsonDocument buildInfoResult, final long roundTripTime) {
+    static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
+    static final int DEFAULT_MAX_WRITE_BATCH_SIZE = 512;
+
+
+    static ConnectionDescription createConnectionDescription(final ServerAddress address, final BsonDocument isMasterResult,
+                                                             final BsonDocument buildInfoResult) {
+        return new ConnectionDescription(address, getVersion(buildInfoResult), getServerType(isMasterResult),
+                                         getMaxWriteBatchSize(isMasterResult), getMaxBsonObjectSize(isMasterResult),
+                                         getMaxMessageSizeBytes(isMasterResult));
+
+    }
+
+    static ServerDescription createServerDescription(final ServerAddress serverAddress, final BsonDocument isMasterResult,
+                                                     final BsonDocument buildInfoResult, final long roundTripTime) {
         return ServerDescription.builder()
                                 .state(CONNECTED)
                                 .version(getVersion(buildInfoResult))
@@ -61,15 +70,7 @@ final class ServerDescriptionHelper {
                                 .passives(listToSet(isMasterResult.getArray("passives", new BsonArray())))
                                 .arbiters(listToSet(isMasterResult.getArray("arbiters", new BsonArray())))
                                 .primary(getString(isMasterResult, "primary"))
-                                .maxDocumentSize(isMasterResult.getInt32("maxBsonObjectSize",
-                                                                         new BsonInt32(getDefaultMaxDocumentSize()))
-                                                              .getValue())
-                                .maxMessageSize(isMasterResult.getInt32("maxMessageSizeBytes",
-                                                                        new BsonInt32(getDefaultMaxMessageSize()))
-                                                             .getValue())
-                                .maxWriteBatchSize(isMasterResult.getInt32("maxWriteBatchSize",
-                                                                           new BsonInt32(getDefaultMaxWriteBatchSize()))
-                                                                .getValue())
+                                .maxDocumentSize(getMaxBsonObjectSize(isMasterResult))
                                 .tagSet(getTagSetFromDocument(isMasterResult.getDocument("tags", new BsonDocument())))
                                 .setName(getString(isMasterResult, "setName"))
                                 .minWireVersion(isMasterResult.getInt32("minWireVersion",
@@ -78,6 +79,18 @@ final class ServerDescriptionHelper {
                                                                         new BsonInt32(getDefaultMaxWireVersion())).getValue())
                                 .roundTripTime(roundTripTime, NANOSECONDS)
                                 .ok(true).build();
+    }
+
+    private static int getMaxMessageSizeBytes(final BsonDocument isMasterResult) {
+        return isMasterResult.getInt32("maxMessageSizeBytes", new BsonInt32(DEFAULT_MAX_MESSAGE_SIZE)).getValue();
+    }
+
+    private static int getMaxBsonObjectSize(final BsonDocument isMasterResult) {
+        return isMasterResult.getInt32("maxBsonObjectSize", new BsonInt32(getDefaultMaxDocumentSize())).getValue();
+    }
+
+    private static int getMaxWriteBatchSize(final BsonDocument isMasterResult) {
+        return isMasterResult.getInt32("maxWriteBatchSize", new BsonInt32(DEFAULT_MAX_WRITE_BATCH_SIZE)).getValue();
     }
 
     private static String getString(final BsonDocument response, final String key) {
@@ -152,6 +165,6 @@ final class ServerDescriptionHelper {
         return new TagSet(tagList);
     }
 
-    private ServerDescriptionHelper() {
+    private DescriptionHelper() {
     }
 }

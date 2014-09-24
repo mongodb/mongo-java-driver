@@ -26,7 +26,7 @@ import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
-import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerVersion;
 import com.mongodb.protocol.AcknowledgedBulkWriteResult;
 import com.mongodb.protocol.BulkWriteBatchCombiner;
@@ -145,9 +145,9 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         return withConnection(binding, new CallableWithConnection<BulkWriteResult>() {
             @Override
             public BulkWriteResult call(final Connection connection) {
-                BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getServerDescription().getAddress(),
+                BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(),
                                                                                            ordered, writeConcern);
-                for (Run run : getRunGenerator(connection.getServerDescription())) {
+                for (Run run : getRunGenerator(connection.getDescription())) {
                     try {
                         BulkWriteResult result = run.execute(connection);
                         if (result.isAcknowledged()) {
@@ -180,12 +180,12 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
             @Override
             public MongoFuture<BulkWriteResult> call(final Connection connection) {
-                final BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getServerDescription()
-                                                                                                           .getAddress(),
+                final BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription()
+                                                                                                           .getServerAddress(),
                                                                                                  ordered,
                                                                                                  writeConcern
                 );
-                Iterator<Run> runs = getRunGenerator(connection.getServerDescription()).iterator();
+                Iterator<Run> runs = getRunGenerator(connection.getDescription()).iterator();
                 executeRunsAsync(runs, connection, bulkWriteBatchCombiner, future);
                 return future;
             }
@@ -225,27 +225,27 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     }
 
     private boolean shouldUseWriteCommands(final Connection connection) {
-        return writeConcern.isAcknowledged() && serverSupportsWriteCommands(connection.getServerDescription());
+        return writeConcern.isAcknowledged() && serverSupportsWriteCommands(connection.getDescription());
     }
 
-    private boolean serverSupportsWriteCommands(final ServerDescription serverDescription) {
-        return serverDescription.getVersion().compareTo(new ServerVersion(2, 6)) >= 0;
+    private boolean serverSupportsWriteCommands(final ConnectionDescription connectionDescription) {
+        return connectionDescription.getServerVersion().compareTo(new ServerVersion(2, 6)) >= 0;
     }
 
-    private Iterable<Run> getRunGenerator(final ServerDescription serverDescription) {
+    private Iterable<Run> getRunGenerator(final ConnectionDescription connectionDescription) {
         if (ordered) {
-            return new OrderedRunGenerator(serverDescription);
+            return new OrderedRunGenerator(connectionDescription);
         } else {
-            return new UnorderedRunGenerator(serverDescription);
+            return new UnorderedRunGenerator(connectionDescription);
         }
     }
 
     private class OrderedRunGenerator implements Iterable<Run> {
 
-        private final int maxWriteBatchSize;
+        private final int maxBatchCount;
 
-        public OrderedRunGenerator(final ServerDescription serverDescription) {
-            this.maxWriteBatchSize = serverDescription.getMaxWriteBatchSize();
+        public OrderedRunGenerator(final ConnectionDescription connectionDescription) {
+            this.maxBatchCount = connectionDescription.getMaxBatchCount();
         }
 
         @Override
@@ -272,7 +272,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 private int getNextIndex() {
                     WriteRequest.Type type = writeRequests.get(curIndex).getType();
                     for (int i = curIndex; i < writeRequests.size(); i++) {
-                        if (i == curIndex + maxWriteBatchSize || writeRequests.get(i).getType() != type) {
+                        if (i == curIndex + maxBatchCount || writeRequests.get(i).getType() != type) {
                             return i;
                         }
                     }
@@ -289,10 +289,10 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
 
     private class UnorderedRunGenerator implements Iterable<Run> {
-        private final int maxWriteBatchSize;
+        private final int maxBatchCount;
 
-        public UnorderedRunGenerator(final ServerDescription serverDescription) {
-            this.maxWriteBatchSize = serverDescription.getMaxWriteBatchSize();
+        public UnorderedRunGenerator(final ConnectionDescription connectionDescription) {
+            this.maxBatchCount = connectionDescription.getMaxBatchCount();
         }
 
         @Override
@@ -317,7 +317,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                         }
                         run.add(writeRequest, curIndex);
                         curIndex++;
-                        if (run.size() == maxWriteBatchSize) {
+                        if (run.size() == maxBatchCount) {
                             runs.remove(run);
                             return run;
                         }

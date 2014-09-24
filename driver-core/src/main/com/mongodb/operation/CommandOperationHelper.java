@@ -31,7 +31,7 @@ import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
-import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.protocol.CommandProtocol;
 import com.mongodb.protocol.Protocol;
 import com.mongodb.protocol.message.NoOpFieldNameValidator;
@@ -183,8 +183,7 @@ final class CommandOperationHelper {
                                                   final FieldNameValidator fieldNameValidator, final Decoder<D> decoder,
                                                   final Connection connection, final ReadPreference readPreference,
                                                   final Function<D, T> transformer) {
-        return transformer.apply(new CommandProtocol<D>(database, wrapCommand(command, readPreference,
-                                                                              connection.getServerDescription()),
+        return transformer.apply(new CommandProtocol<D>(database, wrapCommand(command, readPreference, connection.getDescription()),
                                                         getQueryFlags(readPreference), fieldNameValidator, decoder)
                                  .execute(connection));
     }
@@ -291,7 +290,7 @@ final class CommandOperationHelper {
                                                                     final ReadPreference readPreference,
                                                                     final Function<D, T> transformer) {
         final SingleResultFuture<T> future = new SingleResultFuture<T>();
-        new CommandProtocol<D>(database, wrapCommand(command, readPreference, connection.getServerDescription()),
+        new CommandProtocol<D>(database, wrapCommand(command, readPreference, connection.getDescription()),
                                getQueryFlags(readPreference), new NoOpFieldNameValidator(), decoder)
         .executeAsync(connection).register(new SingleResultCallback<D>() {
             @Override
@@ -349,8 +348,8 @@ final class CommandOperationHelper {
     }
 
     static BsonDocument wrapCommand(final BsonDocument command, final ReadPreference readPreference,
-                                    final ServerDescription serverDescription) {
-        if (serverDescription.getType() == SHARD_ROUTER && !readPreference.equals(primary())) {
+                                    final ConnectionDescription connectionDescription) {
+        if (connectionDescription.getServerType() == SHARD_ROUTER && !readPreference.equals(primary())) {
             return new BsonDocument("$query", command).append("$readPreference", readPreference.toDocument());
         } else {
             return command;
@@ -389,8 +388,8 @@ final class CommandOperationHelper {
             this.readPreference = readPreference;
         }
 
-        protected Protocol<D> getProtocol(final ServerDescription serverDescription) {
-            return new CommandProtocol<D>(database, wrapCommand(command, readPreference, serverDescription),
+        protected Protocol<D> getProtocol(final ConnectionDescription connectionDescription) {
+            return new CommandProtocol<D>(database, wrapCommand(command, readPreference, connectionDescription),
                                           getQueryFlags(readPreference), fieldNameValidator, decoder);
         }
 
@@ -405,7 +404,7 @@ final class CommandOperationHelper {
                         if (e != null) {
                             future.init(null, e);
                         } else {
-                            getProtocol(connection.getServerDescription())
+                            getProtocol(connection.getDescription())
                             .executeAsync(connection)
                             .register(new SingleResultCallback<D>() {
                                 @Override

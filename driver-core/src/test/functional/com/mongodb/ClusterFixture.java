@@ -87,6 +87,10 @@ public final class ClusterFixture {
         return getCluster().getDescription(10, SECONDS).getType() == clusterType;
     }
 
+    public static ServerVersion getServerVersion() {
+        return getCluster().getDescription(10, SECONDS).getAny().get(0).getVersion();
+    }
+
     public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
         ClusterDescription clusterDescription = getCluster().getDescription(10, SECONDS);
         int retries = 0;

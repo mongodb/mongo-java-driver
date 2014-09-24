@@ -65,7 +65,7 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
-    public ServerDescription getServerDescription() {
+    public ConnectionDescription getDescription() {
         throw new UnsupportedOperationException("Not implemented yet!");
     }
 

@@ -163,7 +163,7 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
     }
 
     private boolean exceedsBatchItemCountLimit(final int batchItemCount) {
-        return batchItemCount > getSettings().getMaxWriteBatchSize();
+        return batchItemCount > getSettings().getMaxBatchCount();
     }
 
     private void writeCommandPrologue(final BsonBinaryWriter writer) {
