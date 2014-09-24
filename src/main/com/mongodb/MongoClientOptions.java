@@ -157,7 +157,9 @@ public class MongoClientOptions {
          * @throws IllegalArgumentException if heartbeatThreadCount < 1
          * @see MongoClientOptions#getHeartbeatThreadCount()
          * @since 2.12.0
+         * @deprecated this is no longer a configurable property
          */
+        @Deprecated
         public Builder heartbeatThreadCount(final int heartbeatThreadCount) {
             if (heartbeatThreadCount < 1) {
                 throw new IllegalArgumentException("heartbeatThreadCount must be greater than 0");
@@ -814,7 +816,9 @@ public class MongoClientOptions {
      * </p>
      * @return the heartbeat thread count
      * @since 2.12.0
+     * @deprecated this is no longer a configurable property
      */
+    @Deprecated
     public int getHeartbeatThreadCount() {
         return heartbeatThreadCount;
     }
