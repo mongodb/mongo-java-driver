@@ -20,6 +20,11 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
 
+/**
+ *
+ * @deprecated This class is NOT a part of public API and will be dropped in the next major release
+ */
+@Deprecated
 public class StringRangeSet implements Set<String> {
 
     private final int size;
