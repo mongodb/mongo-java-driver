@@ -289,7 +289,7 @@ public final class MongoClientSettings {
 
     /**
      * Gets the server-specific settings wrapped in a settings object.  This settings object uses the heartbeatFrequency and
-     * heartbeatConnectRetryFrequency values from this MongoClientOptions instance.
+     * minHeartbeatFrequency values from this MongoClientOptions instance.
      *
      * @return a ServerSettings
      * @see com.mongodb.connection.ServerSettings

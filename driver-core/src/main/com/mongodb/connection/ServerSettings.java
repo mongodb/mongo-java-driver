@@ -28,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 @Immutable
 public class ServerSettings {
     private final long heartbeatFrequencyMS;
-    private final long heartbeatConnectRetryFrequencyMS;
+    private final long minHeartbeatFrequencyMS;
     private final int heartbeatThreadCount;
 
     /**
@@ -45,7 +45,7 @@ public class ServerSettings {
      */
     public static class Builder {
         private long heartbeatFrequencyMS = 5000;
-        private long heartbeatConnectRetryFrequencyMS = 1000;
+        private long minHeartbeatFrequency = 1000;
         private int heartbeatThreadCount;
 
         /**
@@ -61,14 +61,15 @@ public class ServerSettings {
         }
 
         /**
-         * Sets the frequency that the cluster monitor attempts to reach each server that is currently unreachable.
+         * Sets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability, it will
+         * wait at least this long since the previous check to avoid wasted effort.  The default value is 10 ms.
          *
-         * @param heartbeatConnectRetryFrequency the heartbeat connect retry frequency
-         * @param timeUnit                       the time unit
+         * @param minHeartbeatFrequency the minimum heartbeat frequency
+         * @param timeUnit              the time unit
          * @return this
          */
-        public Builder heartbeatConnectRetryFrequency(final long heartbeatConnectRetryFrequency, final TimeUnit timeUnit) {
-            this.heartbeatConnectRetryFrequencyMS = TimeUnit.MILLISECONDS.convert(heartbeatConnectRetryFrequency, timeUnit);
+        public Builder minHeartbeatFrequency(final long minHeartbeatFrequency, final TimeUnit timeUnit) {
+            this.minHeartbeatFrequency = TimeUnit.MILLISECONDS.convert(minHeartbeatFrequency, timeUnit);
             return this;
         }
 
@@ -104,14 +105,14 @@ public class ServerSettings {
     }
 
     /**
-     * Gets the frequency that the cluster monitor attempts to reach each server that is currently unreachable.  The default is every
-     * second.
+     * Gets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability, it will wait
+     * at least this long since the previous check to avoid wasted effort.  The default value is 10 ms.
      *
      * @param timeUnit the time unit
      * @return the heartbeat reconnect retry frequency
      */
-    public long getHeartbeatConnectRetryFrequency(final TimeUnit timeUnit) {
-        return timeUnit.convert(heartbeatConnectRetryFrequencyMS, TimeUnit.MILLISECONDS);
+    public long getMinHeartbeatFrequency(final TimeUnit timeUnit) {
+        return timeUnit.convert(minHeartbeatFrequencyMS, TimeUnit.MILLISECONDS);
     }
 
     /**
@@ -128,14 +129,14 @@ public class ServerSettings {
     public String toString() {
         return "ServerSettings{"
                + "heartbeatFrequencyMS=" + heartbeatFrequencyMS
-               + ", heartbeatConnectRetryFrequencyMS=" + heartbeatConnectRetryFrequencyMS
+               + ", minHeartbeatFrequencyMS=" + minHeartbeatFrequencyMS
                + ", heartbeatThreadCount=" + heartbeatThreadCount
                + '}';
     }
 
     ServerSettings(final Builder builder) {
         heartbeatFrequencyMS = builder.heartbeatFrequencyMS;
-        heartbeatConnectRetryFrequencyMS = builder.heartbeatConnectRetryFrequencyMS;
+        minHeartbeatFrequencyMS = builder.minHeartbeatFrequency;
         heartbeatThreadCount = builder.heartbeatThreadCount;
     }
 

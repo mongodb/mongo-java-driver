@@ -105,7 +105,7 @@ abstract class BaseCluster implements Cluster {
                 connect();
 
                 currentPhase.await(Math.min(endTimeNanos - curTimeNanos,
-                                            serverFactory.getSettings().getHeartbeatConnectRetryFrequency(NANOSECONDS)),
+                                            serverFactory.getSettings().getMinHeartbeatFrequency(NANOSECONDS)),
                                    NANOSECONDS);
 
                 curTimeNanos = System.nanoTime();
@@ -158,7 +158,7 @@ abstract class BaseCluster implements Cluster {
                 connect();
 
                 currentPhase.await(Math.min(endTimeNanos - curTimeNanos,
-                                            serverFactory.getSettings().getHeartbeatConnectRetryFrequency(NANOSECONDS)),
+                                            serverFactory.getSettings().getMinHeartbeatFrequency(NANOSECONDS)),
                                    NANOSECONDS);
 
                 curTimeNanos = System.nanoTime();

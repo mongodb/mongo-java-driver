@@ -185,7 +185,7 @@ class ServerMonitor {
                 long timeRemaining = waitForSignalOrTimeout();
                 if (timeRemaining > 0) {
                     long timeWaiting = settings.getHeartbeatFrequency(NANOSECONDS) - timeRemaining;
-                    long minimumNanosToWait = settings.getHeartbeatConnectRetryFrequency(NANOSECONDS);
+                    long minimumNanosToWait = settings.getMinHeartbeatFrequency(NANOSECONDS);
                     if (timeWaiting < minimumNanosToWait) {
                         long millisToSleep = MILLISECONDS.convert(minimumNanosToWait - timeWaiting, NANOSECONDS);
                         if (millisToSleep > 0) {

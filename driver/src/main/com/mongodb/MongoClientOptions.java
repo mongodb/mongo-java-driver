@@ -66,7 +66,7 @@ public class MongoClientOptions {
     //CHECKSTYLE:ON
     private final boolean alwaysUseMBeans;
     private final int heartbeatFrequency;
-    private final int heartbeatConnectRetryFrequency;
+    private final int minHeartbeatFrequency;
     private final int heartbeatConnectTimeout;
     private final int heartbeatSocketTimeout;
     private final int heartbeatThreadCount;
@@ -99,7 +99,7 @@ public class MongoClientOptions {
         sslEnabled = builder.sslEnabled;
         alwaysUseMBeans = builder.alwaysUseMBeans;
         heartbeatFrequency = builder.heartbeatFrequency;
-        heartbeatConnectRetryFrequency = builder.heartbeatConnectRetryFrequency;
+        minHeartbeatFrequency = builder.minHeartbeatFrequency;
         heartbeatConnectTimeout = builder.heartbeatConnectTimeout;
         heartbeatSocketTimeout = builder.heartbeatSocketTimeout;
         heartbeatThreadCount = builder.heartbeatThreadCount;
@@ -131,7 +131,7 @@ public class MongoClientOptions {
                                                 .build();
         serverSettings = ServerSettings.builder()
                                        .heartbeatFrequency(getHeartbeatFrequency(), MILLISECONDS)
-                                       .heartbeatConnectRetryFrequency(getHeartbeatConnectRetryFrequency(), MILLISECONDS)
+                                       .minHeartbeatFrequency(getMinHeartbeatFrequency(), MILLISECONDS)
                                        .heartbeatThreadCount(getHeartbeatThreadCount())
                                        .build();
 
@@ -277,14 +277,14 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets the heartbeat frequency. This is the frequency that the driver will attempt to determine the current state of each server in the
-     * cluster, after a previous failed attempt. The default value is 10 milliseconds.
+     * Gets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability,
+     * it will wait at least this long since the previous check to avoid wasted effort.  The default value is 10 ms.
      *
-     * @return the heartbeat frequency, in milliseconds
-     * @since 2.12
+     * @return the minimum heartbeat frequency, in milliseconds
+     * @since 2.13
      */
-    public int getHeartbeatConnectRetryFrequency() {
-        return heartbeatConnectRetryFrequency;
+    public int getMinHeartbeatFrequency() {
+        return minHeartbeatFrequency;
     }
 
     /**
@@ -499,7 +499,7 @@ public class MongoClientOptions {
         if (cursorFinalizerEnabled != that.cursorFinalizerEnabled) {
             return false;
         }
-        if (heartbeatConnectRetryFrequency != that.heartbeatConnectRetryFrequency) {
+        if (minHeartbeatFrequency != that.minHeartbeatFrequency) {
             return false;
         }
         if (heartbeatConnectTimeout != that.heartbeatConnectTimeout) {
@@ -590,7 +590,7 @@ public class MongoClientOptions {
         result = 31 * result + (sslEnabled ? 1 : 0);
         result = 31 * result + (alwaysUseMBeans ? 1 : 0);
         result = 31 * result + heartbeatFrequency;
-        result = 31 * result + heartbeatConnectRetryFrequency;
+        result = 31 * result + minHeartbeatFrequency;
         result = 31 * result + heartbeatConnectTimeout;
         result = 31 * result + heartbeatSocketTimeout;
         result = 31 * result + heartbeatThreadCount;
@@ -622,7 +622,7 @@ public class MongoClientOptions {
                + ", sslEnabled=" + sslEnabled
                + ", alwaysUseMBeans=" + alwaysUseMBeans
                + ", heartbeatFrequency=" + heartbeatFrequency
-               + ", heartbeatConnectRetryFrequency=" + heartbeatConnectRetryFrequency
+               + ", minHeartbeatFrequency=" + minHeartbeatFrequency
                + ", heartbeatConnectTimeout=" + heartbeatConnectTimeout
                + ", heartbeatSocketTimeout=" + heartbeatSocketTimeout
                + ", heartbeatThreadCount=" + heartbeatThreadCount
@@ -665,7 +665,7 @@ public class MongoClientOptions {
         private boolean alwaysUseMBeans = false;
 
         private int heartbeatFrequency = 10000;
-        private int heartbeatConnectRetryFrequency = 10;
+        private int minHeartbeatFrequency = 10;
         private int heartbeatConnectTimeout = 20000;
         private int heartbeatSocketTimeout = 20000;
         private int heartbeatThreadCount;
@@ -682,7 +682,7 @@ public class MongoClientOptions {
          */
         public Builder() {
             heartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalMS", "5000")));
-            heartbeatConnectRetryFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10")));
+            minHeartbeatFrequency(Integer.parseInt(System.getProperty("com.mongodb.updaterIntervalNoMasterMS", "10")));
             heartbeatConnectTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterConnectTimeoutMS", "20000")));
             heartbeatSocketTimeout(Integer.parseInt(System.getProperty("com.mongodb.updaterSocketTimeoutMS", "20000")));
             acceptableLatencyDifference(Integer.parseInt(System.getProperty("com.mongodb.slaveAcceptableLatencyMS", "15")));
@@ -949,27 +949,29 @@ public class MongoClientOptions {
          * Sets the heartbeat frequency. This is the frequency that the driver will attempt to determine the current state of each server in
          * the cluster.
          *
-         * @param heartbeatFrequency the heartbeat frequency for the cluster, in milliseconds
+         * @param heartbeatFrequency the heartbeat frequency for the cluster, in milliseconds, which must be > 0
          * @return {@code this}
          * @see MongoClientOptions#getHeartbeatFrequency()
          * @since 2.12
          */
         public Builder heartbeatFrequency(final int heartbeatFrequency) {
+            isTrueArgument("heartbeatFrequency must be > 0", heartbeatFrequency > 0);
             this.heartbeatFrequency = heartbeatFrequency;
             return this;
         }
 
         /**
-         * Sets the heartbeat connect frequency. This is the frequency that the driver will attempt to determine the current state of each
-         * server in the cluster after a previous failed attempt.
+         * Sets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability,
+         * it will wait at least this long since the previous check to avoid wasted effort.  The default value is 10ms.
          *
-         * @param heartbeatConnectFrequency the heartbeat connect retry frequency for the cluster, in milliseconds
+         * @param minHeartbeatFrequency the minimum heartbeat frequency, in milliseconds, which must be > 0
          * @return {@code this}
-         * @see MongoClientOptions#getHeartbeatFrequency()
-         * @since 2.12
+         * @see MongoClientOptions#getMinHeartbeatFrequency()
+         * @since 2.13
          */
-        public Builder heartbeatConnectRetryFrequency(final int heartbeatConnectFrequency) {
-            this.heartbeatConnectRetryFrequency = heartbeatConnectFrequency;
+        public Builder minHeartbeatFrequency(final int minHeartbeatFrequency) {
+            isTrueArgument("minHeartbeatFrequency must be > 0", minHeartbeatFrequency > 0);
+            this.minHeartbeatFrequency = minHeartbeatFrequency;
             return this;
         }
 

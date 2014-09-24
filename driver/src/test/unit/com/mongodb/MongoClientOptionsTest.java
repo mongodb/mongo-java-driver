@@ -51,11 +51,25 @@ public class MongoClientOptionsTest {
         assertEquals(0, options.getHeartbeatThreadCount());
         assertEquals(15, options.getAcceptableLatencyDifference());
         assertTrue(options.isCursorFinalizerEnabled());
+        assertEquals(10, options.getMinHeartbeatFrequency());
     }
 
     @Test
     public void testIllegalArguments() {
         MongoClientOptions.Builder builder = new MongoClientOptions.Builder();
+
+        try {
+            builder.heartbeatFrequency(0);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            // NOPMD all good
+        }
+        try {
+            builder.minHeartbeatFrequency(0);
+            Assert.fail();
+        } catch (IllegalArgumentException e) {
+            // NOPMD all good
+        }
         try {
             builder.writeConcern(null);
             Assert.fail();
@@ -127,7 +141,7 @@ public class MongoClientOptionsTest {
         builder.sslEnabled(true);
         builder.dbDecoderFactory(LazyDBDecoder.FACTORY);
         builder.heartbeatFrequency(5);
-        builder.heartbeatConnectRetryFrequency(10);
+        builder.minHeartbeatFrequency(11);
         builder.heartbeatConnectTimeout(15);
         builder.heartbeatSocketTimeout(20);
         builder.heartbeatThreadCount(4);
@@ -155,7 +169,7 @@ public class MongoClientOptionsTest {
         assertEquals(LazyDBDecoder.FACTORY, options.getDbDecoderFactory());
         assertEquals(encoderFactory, options.getDbEncoderFactory());
         assertEquals(5, options.getHeartbeatFrequency());
-        assertEquals(10, options.getHeartbeatConnectRetryFrequency());
+        assertEquals(11, options.getMinHeartbeatFrequency());
         assertEquals(15, options.getHeartbeatConnectTimeout());
         assertEquals(20, options.getHeartbeatSocketTimeout());
         assertEquals(4, options.getHeartbeatThreadCount());
@@ -164,7 +178,7 @@ public class MongoClientOptionsTest {
         assertFalse(options.isCursorFinalizerEnabled());
 
         assertEquals(5, options.getServerSettings().getHeartbeatFrequency(MILLISECONDS));
-        assertEquals(10, options.getServerSettings().getHeartbeatConnectRetryFrequency(MILLISECONDS));
+        assertEquals(11, options.getServerSettings().getMinHeartbeatFrequency(MILLISECONDS));
         assertEquals(4, options.getServerSettings().getHeartbeatThreadCount());
     }
 
