@@ -15,13 +15,12 @@
  */
 
 package com.mongodb.operation
-
 import category.Async
 import com.mongodb.CursorFlag
 import com.mongodb.MongoCredential
 import com.mongodb.MongoNamespace
-import com.mongodb.MongoSecurityException
 import com.mongodb.MongoServerException
+import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.connection.ClusterSettings
 import com.mongodb.connection.Connection
@@ -132,11 +131,10 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster()
 
         when:
-        def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
-        sendMessage(server.getConnection())
+        cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
 
         then:
-        thrown(MongoSecurityException)
+        thrown(MongoTimeoutException)
 
         cleanup:
         cluster?.close()
@@ -150,11 +148,10 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster()
 
         when:
-        def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
-        sendMessage(server.getConnection())
+        cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
 
         then:
-        thrown(MongoSecurityException)
+        thrown(MongoTimeoutException)
 
         cleanup:
         cluster?.close()
