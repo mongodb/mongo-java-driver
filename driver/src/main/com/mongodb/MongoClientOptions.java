@@ -69,7 +69,6 @@ public class MongoClientOptions {
     private final int minHeartbeatFrequency;
     private final int heartbeatConnectTimeout;
     private final int heartbeatSocketTimeout;
-    private final int heartbeatThreadCount;
     private final int acceptableLatencyDifference;
 
     private final String requiredReplicaSetName;
@@ -102,7 +101,6 @@ public class MongoClientOptions {
         minHeartbeatFrequency = builder.minHeartbeatFrequency;
         heartbeatConnectTimeout = builder.heartbeatConnectTimeout;
         heartbeatSocketTimeout = builder.heartbeatSocketTimeout;
-        heartbeatThreadCount = builder.heartbeatThreadCount;
         acceptableLatencyDifference = builder.acceptableLatencyDifference;
         requiredReplicaSetName = builder.requiredReplicaSetName;
         dbDecoderFactory = builder.dbDecoderFactory;
@@ -132,7 +130,6 @@ public class MongoClientOptions {
         serverSettings = ServerSettings.builder()
                                        .heartbeatFrequency(getHeartbeatFrequency(), MILLISECONDS)
                                        .minHeartbeatFrequency(getMinHeartbeatFrequency(), MILLISECONDS)
-                                       .heartbeatThreadCount(getHeartbeatThreadCount())
                                        .build();
 
     }
@@ -305,19 +302,6 @@ public class MongoClientOptions {
      */
     public int getHeartbeatSocketTimeout() {
         return heartbeatSocketTimeout;
-    }
-
-    /**
-     * <p>Gets the heartbeat thread count.  This is the number of threads that will be used to monitor the MongoDB servers that the
-     * MongoClient is connected to.</p>
-     *
-     * <p>The default value is the number of servers in the seed list. </p>
-     *
-     * @return the heartbeat thread count
-     * @since 2.12.0
-     */
-    public int getHeartbeatThreadCount() {
-        return heartbeatThreadCount;
     }
 
     /**
@@ -511,9 +495,6 @@ public class MongoClientOptions {
         if (heartbeatSocketTimeout != that.heartbeatSocketTimeout) {
             return false;
         }
-        if (heartbeatThreadCount != that.heartbeatThreadCount) {
-            return false;
-        }
         if (maxConnectionIdleTime != that.maxConnectionIdleTime) {
             return false;
         }
@@ -593,7 +574,6 @@ public class MongoClientOptions {
         result = 31 * result + minHeartbeatFrequency;
         result = 31 * result + heartbeatConnectTimeout;
         result = 31 * result + heartbeatSocketTimeout;
-        result = 31 * result + heartbeatThreadCount;
         result = 31 * result + acceptableLatencyDifference;
         result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
         result = 31 * result + (dbDecoderFactory != null ? dbDecoderFactory.hashCode() : 0);
@@ -625,7 +605,6 @@ public class MongoClientOptions {
                + ", minHeartbeatFrequency=" + minHeartbeatFrequency
                + ", heartbeatConnectTimeout=" + heartbeatConnectTimeout
                + ", heartbeatSocketTimeout=" + heartbeatSocketTimeout
-               + ", heartbeatThreadCount=" + heartbeatThreadCount
                + ", acceptableLatencyDifference=" + acceptableLatencyDifference
                + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
                + ", dbDecoderFactory=" + dbDecoderFactory
@@ -668,7 +647,6 @@ public class MongoClientOptions {
         private int minHeartbeatFrequency = 10;
         private int heartbeatConnectTimeout = 20000;
         private int heartbeatSocketTimeout = 20000;
-        private int heartbeatThreadCount;
         private int acceptableLatencyDifference = 15;
 
         private String requiredReplicaSetName;
@@ -998,20 +976,6 @@ public class MongoClientOptions {
          */
         public Builder heartbeatSocketTimeout(final int socketTimeout) {
             this.heartbeatSocketTimeout = socketTimeout;
-            return this;
-        }
-
-        /**
-         * Sets the heartbeat thread count.
-         *
-         * @param heartbeatThreadCount the heartbeat thread count
-         * @return {@code this}
-         * @throws IllegalArgumentException if heartbeatThreadCount &lt; 1
-         * @see MongoClientOptions#getHeartbeatThreadCount()
-         * @since 2.12.0
-         */
-        public Builder heartbeatThreadCount(final int heartbeatThreadCount) {
-            this.heartbeatThreadCount = heartbeatThreadCount;
             return this;
         }
 

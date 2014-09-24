@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 public class ServerSettings {
     private final long heartbeatFrequencyMS;
     private final long minHeartbeatFrequencyMS;
-    private final int heartbeatThreadCount;
 
     /**
      * Creates a builder for ServerSettings.
@@ -46,7 +45,6 @@ public class ServerSettings {
     public static class Builder {
         private long heartbeatFrequencyMS = 5000;
         private long minHeartbeatFrequency = 1000;
-        private int heartbeatThreadCount;
 
         /**
          * Sets the frequency that the cluster monitor attempts to reach each server.
@@ -70,17 +68,6 @@ public class ServerSettings {
          */
         public Builder minHeartbeatFrequency(final long minHeartbeatFrequency, final TimeUnit timeUnit) {
             this.minHeartbeatFrequency = TimeUnit.MILLISECONDS.convert(minHeartbeatFrequency, timeUnit);
-            return this;
-        }
-
-        /**
-         * If the cluster monitor is implemented with threads, this is the maximum number that it is allowed to create.
-         *
-         * @param heartbeatThreadCount the maximum number of threads to use for monitoring the cluster state.
-         * @return this
-         */
-        public Builder heartbeatThreadCount(final int heartbeatThreadCount) {
-            this.heartbeatThreadCount = heartbeatThreadCount;
             return this;
         }
 
@@ -115,29 +102,17 @@ public class ServerSettings {
         return timeUnit.convert(minHeartbeatFrequencyMS, TimeUnit.MILLISECONDS);
     }
 
-    /**
-     * Gets the maximum number of threads to use for monitoring the state of the cluster.  If this is set to 0 (which is the default) then
-     * the size of the seed list of cluster server addresses will be used as the maximum.
-     *
-     * @return the max thread count
-     */
-    public int getHeartbeatThreadCount() {
-        return heartbeatThreadCount;
-    }
-
     @Override
     public String toString() {
         return "ServerSettings{"
                + "heartbeatFrequencyMS=" + heartbeatFrequencyMS
                + ", minHeartbeatFrequencyMS=" + minHeartbeatFrequencyMS
-               + ", heartbeatThreadCount=" + heartbeatThreadCount
                + '}';
     }
 
     ServerSettings(final Builder builder) {
         heartbeatFrequencyMS = builder.heartbeatFrequencyMS;
         minHeartbeatFrequencyMS = builder.minHeartbeatFrequency;
-        heartbeatThreadCount = builder.heartbeatThreadCount;
     }
 
 }

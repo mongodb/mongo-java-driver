@@ -48,7 +48,6 @@ public class MongoClientOptionsTest {
         assertFalse(options.getSocketFactory() instanceof SSLSocketFactory);
         assertEquals(DefaultDBDecoder.FACTORY, options.getDbDecoderFactory());
         assertEquals(DefaultDBEncoder.FACTORY, options.getDbEncoderFactory());
-        assertEquals(0, options.getHeartbeatThreadCount());
         assertEquals(15, options.getAcceptableLatencyDifference());
         assertTrue(options.isCursorFinalizerEnabled());
         assertEquals(10, options.getMinHeartbeatFrequency());
@@ -144,7 +143,6 @@ public class MongoClientOptionsTest {
         builder.minHeartbeatFrequency(11);
         builder.heartbeatConnectTimeout(15);
         builder.heartbeatSocketTimeout(20);
-        builder.heartbeatThreadCount(4);
         builder.acceptableLatencyDifference(25);
         builder.requiredReplicaSetName("test");
         builder.cursorFinalizerEnabled(false);
@@ -172,14 +170,12 @@ public class MongoClientOptionsTest {
         assertEquals(11, options.getMinHeartbeatFrequency());
         assertEquals(15, options.getHeartbeatConnectTimeout());
         assertEquals(20, options.getHeartbeatSocketTimeout());
-        assertEquals(4, options.getHeartbeatThreadCount());
         assertEquals(25, options.getAcceptableLatencyDifference());
         assertEquals("test", options.getRequiredReplicaSetName());
         assertFalse(options.isCursorFinalizerEnabled());
 
         assertEquals(5, options.getServerSettings().getHeartbeatFrequency(MILLISECONDS));
         assertEquals(11, options.getServerSettings().getMinHeartbeatFrequency(MILLISECONDS));
-        assertEquals(4, options.getServerSettings().getHeartbeatThreadCount());
     }
 
     @Test

@@ -166,7 +166,6 @@ public class MongoOptionsOldTest extends DatabaseTestCase {
         assertFalse(options.isSslEnabled());
         assertEquals(DefaultDBDecoder.FACTORY, options.getDbDecoderFactory());
         assertEquals(DefaultDBEncoder.FACTORY, options.getDbEncoderFactory());
-        assertEquals(0, options.getHeartbeatThreadCount());
         assertEquals(15, options.getAcceptableLatencyDifference());
     }
 }
