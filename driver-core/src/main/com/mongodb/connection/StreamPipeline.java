@@ -65,7 +65,7 @@ class StreamPipeline {
     private final Semaphore writing = new Semaphore(1);
     private final Semaphore reading = new Semaphore(1);
 
-    static final Logger LOGGER = Loggers.getLogger("StreamPipeline");
+    static final Logger LOGGER = Loggers.getLogger("connection");
 
     StreamPipeline(final String clusterId, final Stream stream, final ConnectionListener connectionListener,
                    final InternalConnection internalConnection) {

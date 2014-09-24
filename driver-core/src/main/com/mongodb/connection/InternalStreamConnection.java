@@ -41,7 +41,7 @@ class InternalStreamConnection implements InternalConnection {
     private volatile boolean initializeCalled;
     private volatile boolean isClosed;
 
-    static final Logger LOGGER = Loggers.getLogger("InternalStreamConnection");
+    static final Logger LOGGER = Loggers.getLogger("connection");
 
     InternalStreamConnection(final String clusterId, final Stream stream, final ConnectionInitializer connectionInitializer,
                              final ConnectionListener connectionListener) {
@@ -93,7 +93,6 @@ class InternalStreamConnection implements InternalConnection {
                     streamPipeline.initialized(true);
                 }
             } catch (Exception e) {
-                LOGGER.warn("Exception when trying to initialize the connection", e);
                 streamPipeline.initialized(false);
                 if (e instanceof MongoException) {
                     throw (MongoException) e;
