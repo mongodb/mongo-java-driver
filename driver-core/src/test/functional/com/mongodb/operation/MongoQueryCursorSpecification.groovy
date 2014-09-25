@@ -15,7 +15,6 @@
  */
 
 package com.mongodb.operation
-
 import category.Slow
 import com.mongodb.CursorFlag
 import com.mongodb.MongoCursorNotFoundException
@@ -24,7 +23,6 @@ import com.mongodb.ServerCursor
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.protocol.GetMoreProtocol
-import com.mongodb.protocol.KillCursor
 import com.mongodb.protocol.KillCursorProtocol
 import com.mongodb.protocol.QueryProtocol
 import com.mongodb.protocol.QueryResult
@@ -39,6 +37,7 @@ import java.util.concurrent.CountDownLatch
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assert.assertEquals
 import static org.junit.Assert.fail
@@ -441,7 +440,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
                                                 connectionSource)
 
         def connection = connectionSource.getConnection()
-        new KillCursorProtocol(new KillCursor(cursor.getServerCursor())).execute(connection)
+        new KillCursorProtocol(asList(cursor.getServerCursor())).execute(connection)
         connection.release()
         cursor.next()
         cursor.next()
