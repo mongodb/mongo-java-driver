@@ -18,6 +18,8 @@ package com.mongodb;
 
 /**
  * This exception is thrown when there is an error reported by the underlying client authentication mechanism.
+ *
+ * @since 3.0
  */
 public class MongoSecurityException extends MongoClientException {
     private static final long serialVersionUID = -7044790409935567275L;
@@ -25,8 +27,9 @@ public class MongoSecurityException extends MongoClientException {
     private final MongoCredential credential;
 
     /**
-     * The constructor
+     * Construct an instance
      *
+     * @param credential the credential
      * @param message the message
      * @param cause   the cause
      */
@@ -35,6 +38,12 @@ public class MongoSecurityException extends MongoClientException {
         this.credential = credential;
     }
 
+    /**
+     * Construct an instance
+     *
+     * @param credential the credential
+     * @param message the message
+     */
     public MongoSecurityException(final MongoCredential credential, final String message) {
         super(message);
         this.credential = credential;

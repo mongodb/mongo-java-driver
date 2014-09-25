@@ -29,11 +29,22 @@ public class CodeWithScope extends Code {
 
     private static final long serialVersionUID = -6284832275113680002L;
 
+    /**
+     * Construct an instance.
+     *
+     * @param code the code
+     * @param scope the scope
+     */
     public CodeWithScope(final String code, final Document scope) {
         super(code);
         this.scope = scope;
     }
 
+    /**
+     * Gets the scope, which is is a mapping from identifiers to values, representing the scope in which the code should be evaluated.
+     *
+     * @return the scope
+     */
     public Document getScope() {
         return scope;
     }
@@ -59,6 +70,7 @@ public class CodeWithScope extends Code {
         return true;
     }
 
+    @Override
     public int hashCode() {
         return getCode().hashCode() ^ scope.hashCode();
     }

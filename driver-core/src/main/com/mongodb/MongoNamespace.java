@@ -19,6 +19,8 @@ package com.mongodb;
 import com.mongodb.annotations.Immutable;
 
 /**
+ * A MongoDB namespace, which includes a database name and collection name.
+ *
  * @since 3.0
  */
 @Immutable
@@ -29,6 +31,12 @@ public final class MongoNamespace {
     private final String databaseName;
     private final String collectionName;
 
+    /**
+     * Construct an instance.
+     *
+     * @param databaseName the non-null database name
+     * @param collectionName the non-null collection name
+     */
     public MongoNamespace(final String databaseName, final String collectionName) {
         if (databaseName == null) {
             throw new IllegalArgumentException("database name can not be null");
@@ -41,14 +49,29 @@ public final class MongoNamespace {
         this.collectionName = collectionName;
     }
 
+    /**
+     * Gets the database name.
+     *
+     * @return the database name
+     */
     public String getDatabaseName() {
         return databaseName;
     }
 
+    /**
+     * Gets the collection name.
+     *
+     * @return the collection name
+     */
     public String getCollectionName() {
         return collectionName;
     }
 
+    /**
+     * Gets the full name, which is the database name and the collection name, separated by a period.
+     *
+     * @return the full name
+     */
     public String getFullName() {
         return getDatabaseName() + "." + getCollectionName();
     }
@@ -64,10 +87,10 @@ public final class MongoNamespace {
 
         MongoNamespace that = (MongoNamespace) o;
 
-        if (collectionName != null ? !collectionName.equals(that.collectionName) : that.collectionName != null) {
+        if (!collectionName.equals(that.collectionName)) {
             return false;
         }
-        if (databaseName != null ? !databaseName.equals(that.databaseName) : that.databaseName != null) {
+        if (!databaseName.equals(that.databaseName)) {
             return false;
         }
 
@@ -86,12 +109,8 @@ public final class MongoNamespace {
 
     @Override
     public int hashCode() {
-        int result = databaseName != null ? databaseName.hashCode() : 0;
-        result = 31 * result + (collectionName != null ? collectionName.hashCode() : 0);
+        int result = databaseName.hashCode();
+        result = 31 * result + (collectionName.hashCode());
         return result;
-    }
-
-    public static String asNamespaceString(final String databaseName, final String collectionName) {
-        return String.format(NAMESPACE_TEMPLATE, databaseName, collectionName);
     }
 }

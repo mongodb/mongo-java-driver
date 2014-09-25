@@ -35,12 +35,33 @@ public abstract class ReadPreference {
     ReadPreference() {
     }
 
+    /**
+     * True if this read preference allows reading from a secondary member of a replica set.
+     *
+     * @return if reading from a secondary is ok
+     */
     public abstract boolean isSlaveOk();
 
+    /**
+     * Gets the name of this read preference.
+     *
+     * @return the name
+     */
     public abstract String getName();
 
+    /**
+     * Gets a document representing this read preference in the wire protocol.
+     *
+     * @return the document
+     */
     public abstract BsonDocument toDocument();
 
+    /**
+     * Chooses the servers from the given cluster than match this read preference.
+     *
+     * @param clusterDescription the cluster description
+     * @return a list of matching server descriptions, which may be empty but may not be null
+     */
     public abstract List<ServerDescription> choose(final ClusterDescription clusterDescription);
 
     /**

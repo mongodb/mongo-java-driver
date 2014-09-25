@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
@@ -23,7 +24,6 @@ import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
-import static com.mongodb.MongoNamespace.asNamespaceString;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
@@ -84,8 +84,8 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
     }
 
     private BsonDocument getCommand() {
-        return new BsonDocument("renameCollection", new BsonString(asNamespaceString(databaseName, originalCollectionName)))
-               .append("to", new BsonString(asNamespaceString(databaseName, newCollectionName)))
+        return new BsonDocument("renameCollection", new BsonString(new MongoNamespace(databaseName, originalCollectionName).getFullName()))
+               .append("to", new BsonString(new MongoNamespace(databaseName, newCollectionName).getFullName()))
                .append("dropTarget", BsonBoolean.valueOf(dropTarget));
     }
 

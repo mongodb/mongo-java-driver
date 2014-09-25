@@ -56,6 +56,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         return true;
     }
 
+    @Override
     public BsonDocument toDocument() {
         BsonDocument readPrefObject = new BsonDocument("mode", new BsonString(getName()));
 

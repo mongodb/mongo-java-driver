@@ -44,6 +44,7 @@ public final class BulkWriteModel<T> {
      * Construct a new instance with the given list of write models.
      *
      * @param requests a non-null, non-empty list of write models
+     * @param options the non-null bulk write options
      */
     public BulkWriteModel(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options) {
         this.requests = notNull("requests", requests);

@@ -25,7 +25,13 @@ public class MongoSocketClosedException extends MongoSocketException {
 
     private static final long serialVersionUID = -6855036625330867705L;
 
-    public MongoSocketClosedException(final String message, final ServerAddress serverAddress) {
-        super(message, serverAddress);
+    /**
+     * Construct an instance.
+     *
+     * @param message the message
+     * @param address the server address
+     */
+    public MongoSocketClosedException(final String message, final ServerAddress address) {
+        super(message, address);
     }
 }

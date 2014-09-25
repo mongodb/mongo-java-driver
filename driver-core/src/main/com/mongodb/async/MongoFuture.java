@@ -20,6 +20,12 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+/**
+ * A future that also supports registration of callbacks that are executed on completion of the future.
+ *
+ * @param <T> the type of the future
+ * @since 3.0
+ */
 public interface MongoFuture<T> extends Future<T> {
 
     @Override
@@ -28,5 +34,10 @@ public interface MongoFuture<T> extends Future<T> {
     @Override
     T get(long timeout, TimeUnit unit) throws TimeoutException;
 
+    /**
+     * Register a callback to be executed when the future completes.
+     *
+     * @param newCallback the callback
+     */
     void register(SingleResultCallback<T> newCallback);
 }

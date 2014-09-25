@@ -109,40 +109,105 @@ public class Document implements Map<String, Object>, Serializable {
         return (T) documentAsMap.get(key);
     }
 
+    /**
+     * Gets the value of the given key as an Integer.
+     *
+     * @param key the key
+     * @return the value as an integer, which may be null
+     * @throws java.lang.ClassCastException if the value is not an integer
+     */
     public Integer getInteger(final Object key) {
         return (Integer) get(key);
     }
 
+    /**
+     * Gets the value of the given key as a primitive int.
+     *
+     * @param key          the key
+     * @param defaultValue what to return if the value is null
+     * @return the value as an integer, which may be null
+     * @throws java.lang.ClassCastException if the value is not an integer
+     */
     public int getInteger(final Object key, final int defaultValue) {
         Object value = get(key);
         return value == null ? defaultValue : (Integer) value;
     }
 
+    /**
+     * Gets the value of the given key as a Long.
+     *
+     * @param key the key
+     * @return the value as a long, which may be null
+     * @throws java.lang.ClassCastException if the value is not an long
+     */
     public Long getLong(final Object key) {
         return (Long) get(key);
     }
 
+    /**
+     * Gets the value of the given key as a Double.
+     *
+     * @param key the key
+     * @return the value as a double, which may be null
+     * @throws java.lang.ClassCastException if the value is not an double
+     */
     public Double getDouble(final Object key) {
         return (Double) get(key);
     }
 
+    /**
+     * Gets the value of the given key as a String.
+     *
+     * @param key the key
+     * @return the value as a String, which may be null
+     * @throws java.lang.ClassCastException if the value is not a String
+     */
     public String getString(final Object key) {
         return (String) get(key);
     }
 
+    /**
+     * Gets the value of the given key as a Boolean.
+     *
+     * @param key the key
+     * @return the value as a double, which may be null
+     * @throws java.lang.ClassCastException if the value is not an double
+     */
     public Boolean getBoolean(final Object key) {
         return (Boolean) get(key);
     }
 
+    /**
+     * Gets the value of the given key as a primitive boolean.
+     *
+     * @param key          the key
+     * @param defaultValue what to return if the value is null
+     * @return the value as a double, which may be null
+     * @throws java.lang.ClassCastException if the value is not an double
+     */
     public boolean getBoolean(final Object key, final boolean defaultValue) {
         Object value = get(key);
         return value == null ? defaultValue : (Boolean) value;
     }
 
+    /**
+     * Gets the value of the given key as an ObjectId.
+     *
+     * @param key the key
+     * @return the value as an ObjectId, which may be null
+     * @throws java.lang.ClassCastException if the value is not an ObjectId
+     */
     public ObjectId getObjectId(final Object key) {
         return (ObjectId) get(key);
     }
 
+    /**
+     * Gets the value of the given key as a Date.
+     *
+     * @param key the key
+     * @return the value as a Date, which may be null
+     * @throws java.lang.ClassCastException if the value is not a Date
+     */
     public Date getDate(final Object key) {
         return (Date) get(key);
     }

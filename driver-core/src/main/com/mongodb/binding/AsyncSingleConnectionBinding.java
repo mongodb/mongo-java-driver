@@ -76,6 +76,7 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         return getConnectionSource();
     }
 
+    @Override
     public void release() {
         super.release();
         if (getCount() == 0 && connection != null) {
