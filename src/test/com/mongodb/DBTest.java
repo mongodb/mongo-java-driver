@@ -492,13 +492,13 @@ public class DBTest extends TestCase {
         String userName = "newUser";
         String pwd = "pwd";
         MongoClient mongoClient = new MongoClient(getMongoClientURI());
-        DB adminDB = mongoClient.getDB("admin");
-        adminDB.addUser(userName, pwd.toCharArray(), false);
+        DB database = mongoClient.getDB(getDatabase().getName());
+        database.addUser(userName, pwd.toCharArray(), false);
         try {
-            assertTrue(adminDB.authenticate(userName, pwd.toCharArray()));
-            assertCorrectUserExists(userName, pwd, false, adminDB);
+            assertTrue(database.authenticate(userName, pwd.toCharArray()));
+            assertCorrectUserExists(userName, pwd, false, database);
         } finally {
-            adminDB.removeUser(userName);
+            database.removeUser(userName);
             mongoClient.close();
         }
     }
@@ -510,15 +510,15 @@ public class DBTest extends TestCase {
         String readOnlyUserName = "newUser";
         String pwd = "pwd";
         MongoClient mongoClient = new MongoClient(getMongoClientURI());
-        DB adminDB = mongoClient.getDB("admin");
-        adminDB.addUser(readWriteUserName, pwd.toCharArray(), false);
-        adminDB.authenticate(readWriteUserName, pwd.toCharArray());
-        adminDB.addUser(readOnlyUserName, pwd.toCharArray(), true);
+        DB database = mongoClient.getDB(getDatabase().getName());
+        database.addUser(readWriteUserName, pwd.toCharArray(), false);
+        database.authenticate(readWriteUserName, pwd.toCharArray());
+        database.addUser(readOnlyUserName, pwd.toCharArray(), true);
         try {
-            assertCorrectUserExists(readOnlyUserName, pwd, true, adminDB);
+            assertCorrectUserExists(readOnlyUserName, pwd, true, database);
         } finally {
-            adminDB.removeUser(readOnlyUserName);
-            adminDB.removeUser(readWriteUserName);
+            database.removeUser(readOnlyUserName);
+            database.removeUser(readWriteUserName);
             mongoClient.close();
         }
     }

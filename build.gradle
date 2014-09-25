@@ -80,6 +80,10 @@ tasks.withType(AbstractCompile) {
 }
 
 test {
+    systemProperties(
+            'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri', null)
+    )
+
     jvmArgs '-XX:MaxPermSize=1024m'
     maxHeapSize = "1024m"
 

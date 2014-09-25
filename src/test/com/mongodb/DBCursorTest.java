@@ -31,6 +31,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
+import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -619,7 +620,13 @@ public class DBCursorTest extends TestCase {
 
         // finally, no finalizer if disabled in mongo options
         MongoClientOptions mongoOptions = new MongoClientOptions.Builder().cursorFinalizerEnabled(false).build();
-        Mongo m = new MongoClient("127.0.0.1", mongoOptions);
+        Mongo m;
+        if (getMongoClientURI().getCredentials() != null) {
+            m = new MongoClient(new ServerAddress(getMongoClientURI().getHosts().get(0)), asList(getMongoClientURI().getCredentials()),
+                                mongoOptions);
+        } else {
+            m = new MongoClient(new ServerAddress(getMongoClientURI().getHosts().get(0)), mongoOptions);
+        }
         try {
             c = m.getDB(getDatabase().getName()).getCollection("HasFinalizerTest");
             cursor = c.find();
