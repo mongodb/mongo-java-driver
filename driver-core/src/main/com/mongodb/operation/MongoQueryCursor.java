@@ -26,7 +26,6 @@ import com.mongodb.connection.Connection;
 import com.mongodb.protocol.GetMoreDiscardProtocol;
 import com.mongodb.protocol.GetMoreProtocol;
 import com.mongodb.protocol.GetMoreReceiveProtocol;
-import com.mongodb.protocol.KillCursor;
 import com.mongodb.protocol.KillCursorProtocol;
 import com.mongodb.protocol.QueryResult;
 import org.bson.codecs.Decoder;
@@ -36,6 +35,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import static java.util.Arrays.asList;
 
 @NotThreadSafe
 class MongoQueryCursor<T> implements MongoTailableCursor<T> {
@@ -249,7 +250,7 @@ class MongoQueryCursor<T> implements MongoTailableCursor<T> {
 
     private void killCursor(final Connection connection) {
         if (currentResult.getCursor() != null) {
-            new KillCursorProtocol(new KillCursor(currentResult.getCursor())).execute(connection);
+            new KillCursorProtocol(asList(currentResult.getCursor())).execute(connection);
         }
     }
 
