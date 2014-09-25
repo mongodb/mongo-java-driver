@@ -568,7 +568,7 @@ public class DBTest extends TestCase {
 
 
     private DB getReplicaSetDB() throws UnknownHostException {
-        Mongo mongo = new MongoClient(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27018)));
+        Mongo mongo = new MongoClient(getMongoClientURI());
         return mongo.getDB("database-" + System.nanoTime());
     }
 

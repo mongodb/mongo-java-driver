@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertTrue;
 
 public class SecondaryReadTest extends TestCase {
@@ -163,8 +164,7 @@ public class SecondaryReadTest extends TestCase {
     }
 
     private Mongo loadMongo() throws Exception {
-        return new MongoClient(new MongoClientURI(
-                "mongodb://127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/?connectTimeoutMS=30000;socketTimeoutMS=30000;maxpoolsize=5;autoconnectretry=true"));
+        return new MongoClient(getMongoClientURI());
     }
 
     @SuppressWarnings({"unchecked"})
@@ -180,8 +180,7 @@ public class SecondaryReadTest extends TestCase {
                 hostnameAndPort = hostnameAndPort + ":27017";
             }
 
-            final String stateStr = member.getString("stateStr");
-
+            String stateStr = member.getString("stateStr");
             pHosts.add(new TestHost(hostnameAndPort, stateStr));
         }
 
@@ -237,19 +236,25 @@ public class SecondaryReadTest extends TestCase {
     }
 
     private static void loadQueryCount(final List<TestHost> pHosts, final boolean pBefore) throws Exception {
-        for (final TestHost testHost : pHosts) {
-            final Mongo mongoHost = new MongoClient(new MongoClientURI("mongodb://"+testHost.hostnameAndPort
-                                                                       + "/?connectTimeoutMS=30000;socketTimeoutMS=30000;maxpoolsize=5;"
-                                                                       + "autoconnectretry=true"));
+        for (TestHost testHost : pHosts) {
+            Mongo mongoHost;
+            if (getMongoClientURI().getCredentials() == null || testHost.stateStr.equals("ARBITER")) {
+                mongoHost = new MongoClient(testHost.hostnameAndPort);
+            } else {
+                mongoHost = new MongoClient(new ServerAddress(testHost.hostnameAndPort), asList(getMongoClientURI().getCredentials()));
+            }
             mongoHost.setReadPreference(ReadPreference.nearest());
             try {
-                final CommandResult serverStatusResult
-                = mongoHost.getDB("com_mongodb_unittest_SecondaryReadTest").command(new BasicDBObject("serverStatus", 1));
+                CommandResult serverStatusResult = mongoHost.getDB("com_mongodb_unittest_SecondaryReadTest")
+                                                            .command(new BasicDBObject("serverStatus", 1));
 
-                final BasicDBObject opcounters = (BasicDBObject)serverStatusResult.get("opcounters");
+                BasicDBObject opcounters = (BasicDBObject) serverStatusResult.get("opcounters");
 
-                if (pBefore) testHost.queriesBefore = opcounters.getLong("query");
-                else testHost.queriesAfter = opcounters.getLong("query");
+                if (pBefore) {
+                    testHost.queriesBefore = opcounters.getLong("query");
+                } else {
+                    testHost.queriesAfter = opcounters.getLong("query");
+                }
 
             } finally {
                 mongoHost.close();

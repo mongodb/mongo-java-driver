@@ -20,8 +20,8 @@ import com.mongodb.util.TestCase;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
-import java.util.Arrays;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -122,12 +122,16 @@ public class DBTests extends TestCase {
             return;
         }
 
-        Mongo mongo = new MongoClient(Arrays.asList(new ServerAddress("127.0.0.1"), new ServerAddress("127.0.0.1", 27018)));
+        Mongo mongo = new MongoClient(getMongoClientURI());
 
         try {
             String secondary = getASecondaryAsString(mongo);
             mongo.close();
-            mongo = new MongoClient(secondary);
+            if (getMongoClientURI().getCredentials() == null) {
+                mongo = new MongoClient(secondary);
+            } else {
+                mongo = new MongoClient(new ServerAddress(secondary), asList(getMongoClientURI().getCredentials()));
+            }
             DB db = mongo.getDB("secondaryTest");
             db.setReadPreference(ReadPreference.secondary());
             db.getCollectionNames();

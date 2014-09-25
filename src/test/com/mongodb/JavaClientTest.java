@@ -492,8 +492,8 @@ public class JavaClientTest extends TestCase {
             return;
         }
 
-        Mongo mongo = new MongoClient(asList(new ServerAddress("127.0.0.1", 27017), new ServerAddress("127.0.0.1", 27018)),
-                MongoClientOptions.builder().writeConcern(WriteConcern.UNACKNOWLEDGED).build());
+        Mongo mongo = new MongoClient(getMongoClientURI());
+        mongo.setWriteConcern(WriteConcern.UNACKNOWLEDGED);
 
         int size = getReplicaSetSize(mongo);
         DBCollection c = mongo.getDB(getDatabase().getName()).getCollection( "imr2" );
