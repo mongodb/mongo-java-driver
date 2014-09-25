@@ -23,7 +23,7 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.Connection;
-import com.mongodb.diagnostics.Loggers;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.operation.UpdateRequest;
 import com.mongodb.operation.WriteRequest;
 import com.mongodb.protocol.message.MessageSettings;

@@ -16,8 +16,8 @@
 
 package com.mongodb;
 
-import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;

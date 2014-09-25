@@ -23,8 +23,8 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.Connection;
-import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.protocol.message.KillCursorsMessage;
 
 import java.util.List;

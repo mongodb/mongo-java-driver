@@ -16,8 +16,8 @@
 
 package com.mongodb;
 
-import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.Document;
