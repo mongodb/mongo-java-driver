@@ -176,7 +176,7 @@ public class WriteConcernTest extends TestCase {
     // integration test to ensure that server doesn't mind a getlasterror command with wtimeout but no w.
     @Test
     public void testGetLastError() throws UnknownHostException {
-        MongoClient mc = new MongoClient();
+        MongoClient mc = new MongoClient(getMongoClientURI());
         DB db = mc.getDB("WriteConcernTest");
         DBCollection collection = db.getCollection("testGetLastError");
         try {

@@ -664,7 +664,7 @@ public class JavaClientTest extends TestCase {
     public void testAuthenticate() throws UnknownHostException {
         assertEquals( "26e3d12bd197368526409177b3e8aab6" , getDatabase()._hash( "e" , "j".toCharArray() ) );
 
-        Mongo m = new MongoClient();
+        Mongo m = new MongoClient(getMongoClientURI());
         DB db = m.getDB(getDatabase().getName());
 
         try {

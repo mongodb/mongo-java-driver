@@ -26,7 +26,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
-import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -46,12 +45,7 @@ public class DBTCPConnectorTest extends TestCase {
 
     @BeforeClass
     public static void beforeClass() throws UnknownHostException {
-        if (isStandalone(getMongoClient())) {
-            _mongoClient = new MongoClient();
-        }
-        else {
-            _mongoClient = new MongoClient(Arrays.asList(new ServerAddress("localhost:27017"), new ServerAddress("localhost:27018")));
-        }
+        _mongoClient = new MongoClient(getMongoClientURI());
         _db = _mongoClient.getDB(getDatabase().getName());
         _collection = _db.getCollection(DBTCPConnectorTest.class.getName());
     }

@@ -24,13 +24,14 @@ import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 public class DBPortTest extends TestCase {
     @Test
     @SuppressWarnings("deprecation")
     public void testAuthentication() throws IOException {
-        Mongo m = new MongoClient();
+        Mongo m = new MongoClient(getMongoClientURI());
         DB db1 = m.getDB("DBPortTest1");
         DB db2 = m.getDB("DBPortTest2");
         db1.dropDatabase();
@@ -45,16 +46,16 @@ public class DBPortTest extends TestCase {
 
             Set<String> expected = new HashSet<String>();
 
-            assertEquals(expected, port.getAuthenticatedDatabases());
+            assertFalse(port.getAuthenticatedDatabases().contains("DBPortTest1"));
+            assertFalse(port.getAuthenticatedDatabases().contains("DBPortTest2"));
 
             m.getAuthority().getCredentialsStore().add(MongoCredential.createMongoCRCredential("u1", "DBPortTest1", "e".toCharArray()));
             m.getAuthority().getCredentialsStore().add(MongoCredential.createMongoCRCredential("u2", "DBPortTest2", "e".toCharArray()));
 
             port.checkAuth(m);
 
-            expected.add("DBPortTest1");
-            expected.add("DBPortTest2");
-            assertEquals(expected, port.getAuthenticatedDatabases());
+            assertTrue(port.getAuthenticatedDatabases().contains("DBPortTest1"));
+            assertTrue(port.getAuthenticatedDatabases().contains("DBPortTest2"));
 
             m.getAuthority().getCredentialsStore().add(MongoCredential.createMongoCRCredential("u2", "DBPortTest3", "e".toCharArray()));
 
