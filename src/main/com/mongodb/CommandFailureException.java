@@ -36,10 +36,30 @@ public class CommandFailureException extends MongoException {
     }
 
     /**
-     * Gets the getlasterror command result document.
+     * Gets the address of the server that the command executed on.
+     *
+     * @return the address of the server that the command executed on
+     * @since 2.13
+     */
+    public ServerAddress getServerAddress() {
+        return commandResult.getServerUsed();
+    }
+
+    /**
+     * Gets the error message from the command failure, typically from the "errmsg" property of the document returned from the failed
+     * command.
+     *
+     * @return the error message
+     */
+    public String getErrorMessage() {
+        return commandResult.getErrorMessage();
+    }
+
+    /**
+     * Gets the command result document.
      *
      * @return the command result
-     * @deprecated there is no replacement for this method
+     * @deprecated Use either {@link #getErrorMessage()} or {@link #getCode()} or {@link #getServerAddress()}
      */
     @Deprecated
     public CommandResult getCommandResult() {

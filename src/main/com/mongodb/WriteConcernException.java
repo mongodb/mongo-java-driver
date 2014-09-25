@@ -42,10 +42,29 @@ public class WriteConcernException extends MongoException {
     }
 
     /**
+     * Gets the address of the server that the write executed on.
+     *
+     * @return the address of the server that the write executed on
+     * @since 2.13
+     */
+    public ServerAddress getServerAddress() {
+        return commandResult.getServerUsed();
+    }
+
+    /**
+     * Gets the error message associated with the write failure.
+     *
+     * @return the error message
+     */
+    public String getErrorMessage() {
+        return commandResult.getString("err");
+    }
+
+    /**
      * Gets the getlasterror command result document.
      *
      * @return the command result
-     * @deprecated use the exception message to get details of the exception
+     * @deprecated Use either {@link #getErrorMessage()} or {@link #getCode()} or {@link #getServerAddress()}
      */
     @Deprecated
     public CommandResult getCommandResult() {

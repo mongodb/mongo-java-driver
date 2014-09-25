@@ -117,16 +117,19 @@ public class CommandResultTest extends TestCase {
 
     @Test
     public void testCommandFailure() throws UnknownHostException {
-        CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
-        final DBObject result = new BasicDBObject("ok", 0.0).append("errmsg", "no not found").append("code", 5000);
+        CommandResult commandResult = new CommandResult(new ServerAddress("host1"));
+        String errorMessage = "ns not found";
+        final DBObject result = new BasicDBObject("ok", 0.0).append("errmsg", errorMessage).append("code", 5000);
         commandResult.putAll(result);
         assertEquals(CommandFailureException.class, commandResult.getException().getClass());
         try {
             commandResult.throwOnError();
             fail("Should throw");
         } catch (CommandFailureException e) {
-            assertEquals(commandResult, e.getCommandResult());
+            assertEquals(new ServerAddress("host1"), e.getServerAddress());
+            assertEquals(errorMessage, e.getErrorMessage());
             assertEquals(5000, e.getCode());
+            assertEquals(commandResult, e.getCommandResult());
         }
     }
 }

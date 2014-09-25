@@ -651,6 +651,8 @@ public class DBCollectionTest extends TestCase {
             WriteResult writeResult = localCollection.insert(new BasicDBObject(), new WriteConcern(5, 1, false, false));
             fail("Expected update to error.  Instead, succeeded with: " + writeResult);
         } catch (WriteConcernException e) {
+            assertNotNull(e.getServerAddress());
+            assertNotNull(e.getErrorMessage());
             assertNotNull(e.getCommandResult().get("err"));
             assertEquals(0, e.getCommandResult().get("n"));
         } finally {
@@ -671,6 +673,8 @@ public class DBCollectionTest extends TestCase {
                                                              new WriteConcern(5, 1, false, false));
             fail("Expected update to error.  Instead, succeeded with: " + writeResult);
         } catch (WriteConcernException e) {
+            assertNotNull(e.getServerAddress());
+            assertNotNull(e.getErrorMessage());
             assertNotNull(e.getCommandResult().get("err"));
             assertEquals(1, e.getCommandResult().get("n"));
             assertEquals(id, e.getCommandResult().get("upserted"));
@@ -689,6 +693,8 @@ public class DBCollectionTest extends TestCase {
             WriteResult writeResult = localCollection.remove(new BasicDBObject(), new WriteConcern(5, 1, false, false));
             fail("Expected update to error.  Instead, succeeded with: " + writeResult);
         } catch (WriteConcernException e) {
+            assertNotNull(e.getServerAddress());
+            assertNotNull(e.getErrorMessage());
             assertNotNull(e.getCommandResult().get("err"));
             assertEquals(1, e.getCommandResult().get("n"));
         } finally {
