@@ -21,6 +21,8 @@ import java.io.Serializable;
 /**
  * A class representing a cursor id associated with a server address (host/port) Since cursor ids are only useful in the context of a single
  * MongoDB server process, you need both values to do a getMore on the cursor.
+ *
+ * @since 3.0
  */
 public final class ServerCursor implements Serializable {
 
@@ -29,6 +31,12 @@ public final class ServerCursor implements Serializable {
     private final long id;
     private final ServerAddress address;
 
+    /**
+     * Construct an instance.
+     *
+     * @param id  the non-null cursor id
+     * @param address the non-null server address that has the cursor
+     */
     public ServerCursor(final long id, final ServerAddress address) {
         if (id == 0) {
             throw new IllegalArgumentException();
@@ -41,10 +49,20 @@ public final class ServerCursor implements Serializable {
         this.address = address;
     }
 
+    /**
+     * Gets the cursor id.
+     *
+     * @return the cursor id
+     */
     public long getId() {
         return id;
     }
 
+    /**
+     * Gets the server address.
+     *
+     * @return the server address
+     */
     public ServerAddress getAddress() {
         return address;
     }
@@ -63,7 +81,7 @@ public final class ServerCursor implements Serializable {
         if (id != that.id) {
             return false;
         }
-        if (address != null ? !address.equals(that.address) : that.address != null) {
+        if (!address.equals(that.address)) {
             return false;
         }
 
@@ -73,7 +91,7 @@ public final class ServerCursor implements Serializable {
     @Override
     public int hashCode() {
         int result = (int) (id ^ (id >>> 32));
-        result = 31 * result + (address != null ? address.hashCode() : 0);
+        result = 31 * result + (address.hashCode());
         return result;
     }
 

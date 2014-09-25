@@ -45,11 +45,6 @@ class MongoNamespaceSpecification extends Specification {
         namespace.getFullName() == 'db.coll'
     }
 
-    def 'asNamespaceString should return correct string'() {
-        expect:
-        MongoNamespace.asNamespaceString('db', 'coll') == 'db.coll'
-    }
-
     @SuppressWarnings('ComparisonWithSelf')
     def 'testEqualsAndHashCode'() {
         given:

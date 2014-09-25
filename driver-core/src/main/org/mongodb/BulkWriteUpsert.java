@@ -27,6 +27,12 @@ public class BulkWriteUpsert {
     private final int index;
     private final BsonValue id;
 
+    /**
+     * Construct an instance.
+     *
+     * @param index the index in the list of bulk write requests that the upsert occurred in
+     * @param id the id of the document that was inserted as the result of the upsert
+     */
     public BulkWriteUpsert(final int index, final BsonValue id) {
         this.index = index;
         this.id = id;

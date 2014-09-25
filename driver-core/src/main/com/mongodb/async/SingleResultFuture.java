@@ -42,43 +42,64 @@ public class SingleResultFuture<T> implements MongoFuture<T> {
     private boolean isCancelled;
     private final List<SingleResultCallback<T>> callbacks = new ArrayList<SingleResultCallback<T>>();
 
+    /**
+     * Construct an un-completed instance.
+     */
     public SingleResultFuture() {
     }
 
-    public SingleResultFuture(final T result, final MongoException newException) {
-        init(result, newException);
+    /**
+     * Construct a completed instance.  If the exception is not null, the result must be null
+     *
+     * @param result the result, which may be null
+     * @param exception the exception, which may be null
+     */
+    public SingleResultFuture(final T result, final MongoException exception) {
+        init(result, exception);
     }
 
+    /**
+     * Construct a completed instance.
+     *
+     * @param result the result, which may be null
+     */
     public SingleResultFuture(final T result) {
         init(result, null);
     }
 
-    public synchronized void init(final T newResult, final MongoException newException) {
+    /**
+     * Complete the future.  If the exception is not null, the result must be null
+     *
+     * @param result the result, which may be null
+     * @param exception the exception, which may be null
+     */
+    public synchronized void init(final T result, final MongoException exception) {
         if (isCancelled()) {
             return;
         }
 
         if (isDone()) {
-            if (newException != null) {
-                throw new IllegalStateException("Illegal re-initialization of future with exception.  Already initialized with " + result,
-                                                newException);
+            if (exception != null) {
+                throw new IllegalStateException("Illegal re-initialization of future with exception.  Already initialized with " + this
+                                                                                                                                   .result,
+                                                exception);
             } else {
-                throw new IllegalStateException("Illegal re-initialization of future with result: " + newResult);
+                throw new IllegalStateException("Illegal re-initialization of future with result: " + result);
             }
         }
 
-        if (newResult != null && newException != null) {
+        if (result != null && exception != null) {
             throw new IllegalArgumentException("result and exception can't both not be null");
         }
 
         this.isDone = true;
-        this.result = newResult;
-        this.exception = newException;
+        this.result = result;
+        this.exception = exception;
 
         notifyAll();
 
         for (final SingleResultCallback<T> callback : callbacks) {
-            callback.onResult(result, exception);
+            callback.onResult(this.result, this.exception);
         }
     }
 

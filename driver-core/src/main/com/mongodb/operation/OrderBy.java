@@ -38,10 +38,21 @@ public enum OrderBy {
         this.intRepresentation = intRepresentation;
     }
 
+    /**
+     * The integer representation of the order.
+     *
+     * @return the integer representation
+     */
     public int getIntRepresentation() {
         return intRepresentation;
     }
 
+    /**
+     * Gets the order from the given integer representation.
+     *
+     * @param intRepresentation the integer representation
+     * @return the order
+     */
     public static OrderBy fromInt(final int intRepresentation) {
         switch (intRepresentation) {
             case 1:

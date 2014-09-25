@@ -207,12 +207,27 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
         return future;
     }
 
+    /**
+     * Gets the namespace to execute the protocol in.
+     *
+     * @return the namespace
+     */
     public MongoNamespace getNamespace() {
         return namespace;
     }
 
+    /**
+     * Gets the logger.
+     *
+     * @return the logger
+     */
     protected abstract com.mongodb.diagnostics.logging.Logger getLogger();
 
+    /**
+     * Gets whether the writes must be executed in order.
+     *
+     * @return true if the writes must be executed in order
+     */
     protected boolean isOrdered() {
         return ordered;
     }

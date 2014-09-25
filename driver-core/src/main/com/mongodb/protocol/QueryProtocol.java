@@ -91,6 +91,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         return queryResult;
     }
 
+    @Override
     public MongoFuture<QueryResult<T>> executeAsync(final Connection connection) {
         LOGGER.debug(format("Asynchronously sending query of namespace %s on connection [%s] to server %s", namespace, connection.getId(),
                             connection.getServerAddress()));

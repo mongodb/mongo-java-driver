@@ -86,6 +86,7 @@ public abstract class BaseWriteCommandMessage extends RequestMessage {
         return ordered;
     }
 
+    @Override
     public BaseWriteCommandMessage encode(final BsonOutput outputStream) {
         return (BaseWriteCommandMessage) super.encode(outputStream);
     }

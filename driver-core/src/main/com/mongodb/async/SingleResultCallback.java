@@ -18,10 +18,17 @@ package com.mongodb.async;
 
 import com.mongodb.MongoException;
 
+/**
+ * An interface to describe the completion of an asynchronous operation.
+ *
+ * @param <T> the result type
+ * @since 3.0
+ */
 public interface SingleResultCallback<T> {
     /**
-     * @param result the result, or null if there was an exception
-     * @param e      the exception, or null if there was none
+     * Called when the operation completes.
+     * @param result the result, which may be null.  Always null if e is not null.
+     * @param e      the exception, or null if the operation completed normally
      */
     void onResult(T result, MongoException e);
 }

@@ -16,6 +16,17 @@
 
 package com.mongodb;
 
+/**
+ * An interface for applying some logic against the given parameter.
+ *
+ * @param <T> the value type
+ * @since 3.0
+ */
 public interface Block<T> {
+    /**
+     * Apply some logic to the value.
+     *
+     * @param t the value to apply to
+     */
     void apply(T t);
 }

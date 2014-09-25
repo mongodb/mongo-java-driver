@@ -31,10 +31,18 @@ public class PowerOfTwoBufferPool implements BufferProvider {
 
     private final Map<Integer, ConcurrentPool<ByteBuffer>> powerOfTwoToPoolMap = new HashMap<Integer, ConcurrentPool<ByteBuffer>>();
 
+    /**
+     * Construct an instance with a highest power of two of 24.
+     */
     public PowerOfTwoBufferPool() {
         this(24);
     }
 
+    /**
+     * Construct an instance.
+     *
+     * @param highestPowerOfTwo the highest power of two buffer size that will be pooled
+     */
     public PowerOfTwoBufferPool(final int highestPowerOfTwo) {
         int x = 1;
         for (int i = 0; i <= highestPowerOfTwo; i++) {

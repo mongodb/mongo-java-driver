@@ -28,6 +28,13 @@ public class MongoQueryFailureException extends MongoServerException {
     private final int errorCode;
     private final String errorMessage;
 
+    /**
+     * Construct an instance.
+     *
+     * @param address the server address
+     * @param errorCode the error code
+     * @param errorMessage the error message
+     */
     public MongoQueryFailureException(final ServerAddress address, final int errorCode, final String errorMessage) {
         super(format("Query failed with error code %d and error message '%s' on server %s", errorCode, errorMessage, address), address);
         this.errorCode = errorCode;

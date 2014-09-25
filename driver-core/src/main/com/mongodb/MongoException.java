@@ -83,6 +83,13 @@ public class MongoException extends RuntimeException {
 
         private static final long serialVersionUID = 6557680785576001838L;
 
+        /**
+         * Construct an instance.
+         *
+         * @param response the response from the server
+         * @param address the server address
+         * @param writeResult the write result
+         */
         public DuplicateKey(final BsonDocument response, final ServerAddress address, final WriteResult writeResult) {
             super(response, address, writeResult);
         }
