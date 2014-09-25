@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -626,7 +625,7 @@ public class DBCollectionTest extends TestCase {
     @Test
     public void testWriteConcernExceptionOnInsert() throws UnknownHostException {
         assumeTrue(isReplicaSet(getMongoClient()));
-        MongoClient mongoClient = new MongoClient(asList(new ServerAddress()));
+        MongoClient mongoClient = new MongoClient(getMongoClientURI());
         try {
             DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
             WriteResult writeResult = localCollection.insert(new BasicDBObject(), new WriteConcern(5, 1, false, false));
@@ -642,7 +641,7 @@ public class DBCollectionTest extends TestCase {
     @Test
     public void testWriteConcernExceptionOnUpdate() throws UnknownHostException {
         assumeTrue(isReplicaSet(getMongoClient()));
-        MongoClient mongoClient = new MongoClient(asList(new ServerAddress()));
+        MongoClient mongoClient = new MongoClient(getMongoClientURI());
         ObjectId id = new ObjectId();
         try {
             DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
@@ -663,7 +662,7 @@ public class DBCollectionTest extends TestCase {
     @Test
     public void testWriteConcernExceptionOnRemove() throws UnknownHostException {
         assumeTrue(isReplicaSet(getMongoClient()));
-        MongoClient mongoClient = new MongoClient(asList(new ServerAddress()));
+        MongoClient mongoClient = new MongoClient(getMongoClientURI());
         try {
             DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
             localCollection.insert(new BasicDBObject());
@@ -679,7 +678,7 @@ public class DBCollectionTest extends TestCase {
     @Test
     public void testBulkWriteConcernException() throws UnknownHostException {
         assumeTrue(isReplicaSet(getMongoClient()));
-        MongoClient mongoClient = new MongoClient(asList(new ServerAddress()));
+        MongoClient mongoClient = new MongoClient(getMongoClientURI());
         try {
             DBCollection localCollection = mongoClient.getDB(collection.getDB().getName()).getCollection(collection.getName());
             BulkWriteOperation bulkWriteOperation = localCollection.initializeUnorderedBulkOperation();

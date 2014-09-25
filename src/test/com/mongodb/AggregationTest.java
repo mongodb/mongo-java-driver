@@ -189,7 +189,7 @@ public class AggregationTest extends TestCase {
         assumeTrue(isReplicaSet(cleanupMongo));
 
         ServerAddress primary = new ServerAddress("localhost");
-        MongoClient rsClient = new MongoClient(asList(primary, new ServerAddress("localhost", 27018)));
+        MongoClient rsClient = new MongoClient(getMongoClientURI());
         DB rsDatabase = rsClient.getDB(database.getName());
         DBCollection aggCollection = rsDatabase.getCollection(collection.getName());
         aggCollection.drop();
