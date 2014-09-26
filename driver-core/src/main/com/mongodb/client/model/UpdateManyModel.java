@@ -31,7 +31,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class UpdateManyModel<T> extends WriteModel<T> {
     private final Object criteria;
     private final Object update;
-    private final UpdateManyOptions options;
+    private final UpdateOptions options;
 
     /**
      * Construct a new instance.
@@ -42,7 +42,7 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
      * operators. This can be of any type for which a {@code Codec} is registered
      */
     public UpdateManyModel(final Object criteria, final Object update) {
-        this(criteria, update, new UpdateManyOptions());
+        this(criteria, update, new UpdateOptions());
     }
 
     /**
@@ -54,7 +54,7 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
      * operators. This can be of any type for which a {@code Codec} is registered
      * @param options the options to apply
      */
-    public UpdateManyModel(final Object criteria, final Object update, final UpdateManyOptions options) {
+    public UpdateManyModel(final Object criteria, final Object update, final UpdateOptions options) {
         this.criteria = notNull("criteria", criteria);
         this.update = notNull("update", update);
         this.options = notNull("options", options);
@@ -84,7 +84,7 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
      *
      * @return the options
      */
-    public UpdateManyOptions getOptions() {
+    public UpdateOptions getOptions() {
         return options;
     }
 }

@@ -44,15 +44,13 @@ import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.MapReduceModel;
 import com.mongodb.client.model.MapReduceOptions;
-import com.mongodb.client.model.ReplaceOneModel;
-import com.mongodb.client.model.ReplaceOneOptions;
 import com.mongodb.client.model.ParallelCollectionScanModel;
-import com.mongodb.client.model.UpdateManyModel;
-import com.mongodb.client.model.UpdateManyOptions;
-import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.UpdateOneOptions;
-import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.ParallelCollectionScanOptions;
+import com.mongodb.client.model.ReplaceOneModel;
+import com.mongodb.client.model.UpdateManyModel;
+import com.mongodb.client.model.UpdateOneModel;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.codecs.CollectibleCodec;
@@ -379,11 +377,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public UpdateResult replaceOne(final Object criteria, final T replacement) {
-        return replaceOne(criteria, replacement, new ReplaceOneOptions());
+        return replaceOne(criteria, replacement, new UpdateOptions());
     }
 
     @Override
-    public UpdateResult replaceOne(final Object criteria, final T replacement, final ReplaceOneOptions options) {
+    public UpdateResult replaceOne(final Object criteria, final T replacement, final UpdateOptions options) {
         return replaceOne(new ReplaceOneModel<T>(criteria, replacement, options));
     }
 
@@ -397,11 +395,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public UpdateResult updateOne(final Object criteria, final Object update) {
-        return updateOne(criteria, update, new UpdateOneOptions());
+        return updateOne(criteria, update, new UpdateOptions());
     }
 
     @Override
-    public UpdateResult updateOne(final Object criteria, final Object update, final UpdateOneOptions options) {
+    public UpdateResult updateOne(final Object criteria, final Object update, final UpdateOptions options) {
         return updateOne(new UpdateOneModel<T>(criteria, update, options));
     }
 
@@ -419,11 +417,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public UpdateResult updateMany(final Object criteria, final Object update) {
-        return updateMany(criteria, update, new UpdateManyOptions());
+        return updateMany(criteria, update, new UpdateOptions());
     }
 
     @Override
-    public UpdateResult updateMany(final Object criteria, final Object update, final UpdateManyOptions options) {
+    public UpdateResult updateMany(final Object criteria, final Object update, final UpdateOptions options) {
         return updateMany(new UpdateManyModel<T>(criteria, update, options));
     }
 
@@ -528,7 +526,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                               final Decoder<C> decoder) {
         return operationExecutor.execute(new ParallelCollectionScanOperation<C>(namespace, parallelCollectionScanModel.getNumCursors(),
                                                                                 decoder)
-                                             .batchSize(parallelCollectionScanModel.getOptions().getBatchSize()),
+                                         .batchSize(parallelCollectionScanModel.getOptions().getBatchSize()),
                                          options.getReadPreference());
     }
 

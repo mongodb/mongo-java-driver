@@ -19,8 +19,7 @@ package com.mongodb.acceptancetest.crud;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.FindOptions;
-import com.mongodb.client.model.UpdateManyOptions;
-import com.mongodb.client.model.UpdateOneOptions;
+import com.mongodb.client.model.UpdateOptions;
 import org.junit.Test;
 import org.mongodb.Document;
 
@@ -71,7 +70,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document searchCriteria = new Document("_id", 2);
-        collection.updateMany(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateManyOptions().upsert(true));
+        collection.updateMany(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(), is(2L));
@@ -87,7 +86,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document searchCriteria = new Document("_id", 2);
-        collection.updateOne(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateOneOptions().upsert(true));
+        collection.updateOne(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(), is(2L));
@@ -105,7 +104,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document searchCriteria = new Document("x", 3);
-        collection.updateMany(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateManyOptions().upsert(true));
+        collection.updateMany(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(new CountOptions().criteria(new Document("x", 5))), is(2L));
@@ -121,7 +120,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document searchCriteria = new Document("x", 3);
-        collection.updateOne(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateOneOptions().upsert(true));
+        collection.updateOne(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(new CountOptions().criteria(new Document("x", 5))), is(1L));

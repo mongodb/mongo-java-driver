@@ -31,7 +31,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class UpdateOneModel<T> extends WriteModel<T> {
     private final Object criteria;
     private final Object update;
-    private final UpdateOneOptions options;
+    private final UpdateOptions options;
 
     /**
      * Construct a new instance.
@@ -42,7 +42,18 @@ public final class UpdateOneModel<T> extends WriteModel<T> {
      *                 can be of any type for which a {@code Codec} is registered
      */
     public UpdateOneModel(final Object criteria, final Object update) {
-        this(criteria, update, new UpdateOneOptions());
+        this(criteria, update, new UpdateOptions() {
+            /**
+             * Set to true if a new document should be inserted if there are no matches to the query criteria.
+             *
+             * @param upsert true if a new document should be inserted if there are no matches to the query criteria
+             * @return this
+             */
+            public UpdateOptions upsert(final boolean upsert) {
+                super.upsert(upsert);
+                return this;
+            }
+        });
     }
 
     /**
@@ -54,7 +65,7 @@ public final class UpdateOneModel<T> extends WriteModel<T> {
      *                 can be of any type for which a {@code Codec} is registered
      * @param options the options to apply
      */
-    public UpdateOneModel(final Object criteria, final Object update, final UpdateOneOptions options) {
+    public UpdateOneModel(final Object criteria, final Object update, final UpdateOptions options) {
         this.criteria = notNull("criteria", criteria);
         this.update = notNull("update", update);
         this.options = notNull("options", options);
@@ -83,7 +94,7 @@ public final class UpdateOneModel<T> extends WriteModel<T> {
      *
      * @return the options
      */
-    public UpdateOneOptions getOptions() {
+    public UpdateOptions getOptions() {
         return options;
     }
 }

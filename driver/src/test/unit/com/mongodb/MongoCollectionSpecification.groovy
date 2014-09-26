@@ -32,11 +32,9 @@ import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.MapReduceOptions
 import com.mongodb.client.model.ParallelCollectionScanOptions
 import com.mongodb.client.model.ReplaceOneModel
-import com.mongodb.client.model.ReplaceOneOptions
 import com.mongodb.client.model.UpdateManyModel
-import com.mongodb.client.model.UpdateManyOptions
 import com.mongodb.client.model.UpdateOneModel
-import com.mongodb.client.model.UpdateOneOptions
+import com.mongodb.client.model.UpdateOptions
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.codecs.DocumentCodecProvider
 import com.mongodb.operation.AggregateOperation
@@ -176,7 +174,7 @@ class MongoCollectionSpecification extends Specification {
         when:
         def result = collection.replaceOne(new Document('_id', 1),
                                            new Document('color', 'blue'),
-                                           new ReplaceOneOptions().upsert(true))
+                                           new UpdateOptions().upsert(true))
 
         then:
         def operation = executor.getWriteOperation() as UpdateOperation
@@ -201,7 +199,7 @@ class MongoCollectionSpecification extends Specification {
         when:
         def result = collection.updateOne(new Document('_id', 1),
                                           new Document('$set', new Document('color', 'blue')),
-                                          new UpdateOneOptions().upsert(true))
+                                          new UpdateOptions().upsert(true))
 
         then:
         def operation = executor.getWriteOperation() as UpdateOperation
@@ -226,7 +224,7 @@ class MongoCollectionSpecification extends Specification {
         when:
         def result = collection.updateMany(new Document('_id', 1),
                                            new Document('$set', new Document('color', 'blue')),
-                                           new UpdateManyOptions().upsert(true))
+                                           new UpdateOptions().upsert(true))
 
         then:
         def operation = executor.getWriteOperation() as UpdateOperation
@@ -392,13 +390,13 @@ class MongoCollectionSpecification extends Specification {
         collection.bulkWrite([new InsertOneModel<>(document),
                               new UpdateOneModel<>(new Document('_id', 1),
                                                    new Document('$set', new Document('color', 'blue')),
-                                                   new UpdateOneOptions().upsert(true)),
+                                                   new UpdateOptions().upsert(true)),
                               new UpdateManyModel<>(new Document('_id', 1),
                                                     new Document('$set', new Document('color', 'blue')),
-                                                    new UpdateManyOptions().upsert(true)),
+                                                    new UpdateOptions().upsert(true)),
                               new ReplaceOneModel<>(new Document('_id', 1),
                                                     new Document('color', 'blue'),
-                                                    new ReplaceOneOptions().upsert(true)),
+                                                    new UpdateOptions().upsert(true)),
                               new DeleteOneModel<>(new Document('_id', 1)),
                               new DeleteManyModel<>(new Document('_id', 1))],
                              new BulkWriteOptions().ordered(false))

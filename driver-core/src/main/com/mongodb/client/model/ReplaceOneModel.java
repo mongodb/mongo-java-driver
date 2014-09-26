@@ -28,18 +28,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class ReplaceOneModel<T> extends WriteModel<T> {
     private final Object criteria;
     private final T replacement;
-    private final ReplaceOneOptions options;
-
-    /**
-     * Construct a new instance.
-     *
-     * @param criteria    a document describing the query criteria, which may not be null. This can be of any type for which a {@code Codec}
-     *                    is registered
-     * @param replacement the replacement document
-     */
-    public ReplaceOneModel(final Object criteria, final T replacement) {
-        this(criteria, replacement, new ReplaceOneOptions());
-    }
+    private final UpdateOptions options;
 
     /**
      * Construct a new instance.
@@ -49,7 +38,7 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
      * @param replacement the replacement document
      * @param options     the options to apply
      */
-    public ReplaceOneModel(final Object criteria, final T replacement, final ReplaceOneOptions options) {
+    public ReplaceOneModel(final Object criteria, final T replacement, final UpdateOptions options) {
         this.criteria = notNull("criteria", criteria);
         this.replacement = notNull("replacement", replacement);
         this.options = notNull("options", options);
@@ -78,7 +67,7 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
      *
      * @return the options
      */
-    public ReplaceOneOptions getOptions() {
+    public UpdateOptions getOptions() {
         return options;
     }
 }

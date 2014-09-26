@@ -32,10 +32,8 @@ import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.MapReduceOptions;
 import com.mongodb.client.model.ParallelCollectionScanOptions;
-import com.mongodb.client.model.ReplaceOneOptions;
-import com.mongodb.client.model.UpdateManyOptions;
 import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.UpdateOneOptions;
+import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
@@ -318,7 +316,7 @@ public interface MongoCollection<T> {
      * @param replacement the replacement document
      * @param options the options to apply to the replace operation
      */
-    UpdateResult replaceOne(Object criteria, T replacement, ReplaceOneOptions options);
+    UpdateResult replaceOne(Object criteria, T replacement, UpdateOptions options);
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -345,7 +343,7 @@ public interface MongoCollection<T> {
      * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
      * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
      */
-    UpdateResult updateOne(Object criteria, Object update, UpdateOneOptions options);
+    UpdateResult updateOne(Object criteria, Object update, UpdateOptions options);
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -382,7 +380,7 @@ public interface MongoCollection<T> {
      * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
      * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
      */
-    UpdateResult updateMany(Object criteria, Object update, UpdateManyOptions options);
+    UpdateResult updateMany(Object criteria, Object update, UpdateOptions options);
 
     /**
      * Atomically find a document and remove it.

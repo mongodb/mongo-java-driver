@@ -17,13 +17,13 @@
 package com.mongodb.client.model;
 
 /**
- * The options for updating all documents that matches the query criteria.
+ * The options for updating documents.
  *
  * @since 3.0
  * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
  * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
  */
-public final class UpdateManyOptions {
+public class UpdateOptions {
     private boolean upsert;
 
     /**
@@ -41,7 +41,7 @@ public final class UpdateManyOptions {
      * @param upsert true if a new document should be inserted if there are no matches to the query criteria
      * @return this
      */
-    public UpdateManyOptions upsert(final boolean upsert) {
+    public UpdateOptions upsert(final boolean upsert) {
         this.upsert = upsert;
         return this;
     }
