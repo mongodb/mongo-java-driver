@@ -93,7 +93,6 @@ import org.mongodb.WriteResult;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.List;
 
 import static java.lang.String.format;
@@ -610,62 +609,21 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private <C> FindOperation<C> createQueryOperation(final MongoNamespace namespace, final FindModel model, final Decoder<C> decoder) {
-        FindOperation<C> operation = new FindOperation<C>(namespace, decoder)
-                                         .criteria(asBson(model.getOptions().getCriteria()))
-                                         .batchSize(model.getOptions().getBatchSize())
-                                         .skip(model.getOptions().getSkip())
-                                         .limit(model.getOptions().getLimit())
-                                         .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
-                                         .modifiers(asBson(model.getOptions().getModifiers()))
-                                         .projection(asBson(model.getOptions().getProjection()))
-                                         .sort(asBson(model.getOptions().getSort()));
-
-        EnumSet<CursorFlag> cursorFlags = getCursorFlags(model);
-        if (cursorFlags.contains(CursorFlag.TAILABLE)) {
-            operation.tailableCursor(true);
-        }
-        if (cursorFlags.contains(CursorFlag.SLAVE_OK)) {
-            operation.slaveOk(true);
-        }
-        if (cursorFlags.contains(CursorFlag.OPLOG_REPLAY)) {
-            operation.oplogReplay(true);
-        }
-        if (cursorFlags.contains(CursorFlag.NO_CURSOR_TIMEOUT)) {
-            operation.noCursorTimeout(true);
-        }
-        if (cursorFlags.contains(CursorFlag.AWAIT_DATA)) {
-            operation.awaitData(true);
-        }
-        if (cursorFlags.contains(CursorFlag.EXHAUST)) {
-            operation.exhaust(true);
-        }
-        if (cursorFlags.contains(CursorFlag.PARTIAL)) {
-            operation.partial(true);
-        }
-        return operation;
-    }
-
-    private EnumSet<CursorFlag> getCursorFlags(final FindModel model) {
-        EnumSet<CursorFlag> cursorFlags = EnumSet.noneOf(CursorFlag.class);
-        if (model.getOptions().isAwaitData()) {
-            cursorFlags.add(CursorFlag.AWAIT_DATA);
-        }
-        if (model.getOptions().isExhaust()) {
-            cursorFlags.add(CursorFlag.EXHAUST);
-        }
-        if (model.getOptions().isNoCursorTimeout()) {
-            cursorFlags.add(CursorFlag.NO_CURSOR_TIMEOUT);
-        }
-        if (model.getOptions().isOplogReplay()) {
-            cursorFlags.add(CursorFlag.OPLOG_REPLAY);
-        }
-        if (model.getOptions().isPartial()) {
-            cursorFlags.add(CursorFlag.PARTIAL);
-        }
-        if (model.getOptions().isTailable()) {
-            cursorFlags.add(CursorFlag.TAILABLE);
-        }
-        return cursorFlags;
+        return new FindOperation<C>(namespace, decoder)
+                   .criteria(asBson(model.getOptions().getCriteria()))
+                   .batchSize(model.getOptions().getBatchSize())
+                   .skip(model.getOptions().getSkip())
+                   .limit(model.getOptions().getLimit())
+                   .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
+                   .modifiers(asBson(model.getOptions().getModifiers()))
+                   .projection(asBson(model.getOptions().getProjection()))
+                   .sort(asBson(model.getOptions().getSort()))
+                   .awaitData(model.getOptions().isAwaitData())
+                   .exhaust(model.getOptions().isExhaust())
+                   .noCursorTimeout(model.getOptions().isNoCursorTimeout())
+                   .oplogReplay(model.getOptions().isOplogReplay())
+                   .partial(model.getOptions().isPartial())
+                   .tailableCursor(model.getOptions().isTailable());
     }
 
     private CountOperation createCountOperation(final CountModel model) {
