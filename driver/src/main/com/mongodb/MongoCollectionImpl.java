@@ -610,16 +610,39 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private <C> FindOperation<C> createQueryOperation(final MongoNamespace namespace, final FindModel model, final Decoder<C> decoder) {
-        return new FindOperation<C>(namespace, decoder)
-                   .criteria(asBson(model.getOptions().getCriteria()))
-                   .batchSize(model.getOptions().getBatchSize())
-                   .cursorFlags(getCursorFlags(model))
-                   .skip(model.getOptions().getSkip())
-                   .limit(model.getOptions().getLimit())
-                   .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
-                   .modifiers(asBson(model.getOptions().getModifiers()))
-                   .projection(asBson(model.getOptions().getProjection()))
-                   .sort(asBson(model.getOptions().getSort()));
+        FindOperation<C> operation = new FindOperation<C>(namespace, decoder)
+                                         .criteria(asBson(model.getOptions().getCriteria()))
+                                         .batchSize(model.getOptions().getBatchSize())
+                                         .skip(model.getOptions().getSkip())
+                                         .limit(model.getOptions().getLimit())
+                                         .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
+                                         .modifiers(asBson(model.getOptions().getModifiers()))
+                                         .projection(asBson(model.getOptions().getProjection()))
+                                         .sort(asBson(model.getOptions().getSort()));
+
+        EnumSet<CursorFlag> cursorFlags = getCursorFlags(model);
+        if (cursorFlags.contains(CursorFlag.TAILABLE)) {
+            operation.tailableCursor(true);
+        }
+        if (cursorFlags.contains(CursorFlag.SLAVE_OK)) {
+            operation.slaveOk(true);
+        }
+        if (cursorFlags.contains(CursorFlag.OPLOG_REPLAY)) {
+            operation.oplogReplay(true);
+        }
+        if (cursorFlags.contains(CursorFlag.NO_CURSOR_TIMEOUT)) {
+            operation.noCursorTimeout(true);
+        }
+        if (cursorFlags.contains(CursorFlag.AWAIT_DATA)) {
+            operation.awaitData(true);
+        }
+        if (cursorFlags.contains(CursorFlag.EXHAUST)) {
+            operation.exhaust(true);
+        }
+        if (cursorFlags.contains(CursorFlag.PARTIAL)) {
+            operation.partial(true);
+        }
+        return operation;
     }
 
     private EnumSet<CursorFlag> getCursorFlags(final FindModel model) {

@@ -40,7 +40,6 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.CursorFlag.EXHAUST
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -257,8 +256,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         (1..500).each {
             collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', it))
         }
-        def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .cursorFlags(EnumSet.of(EXHAUST))
+        def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec()).exhaust(true)
 
         when:
         def count = 0;
@@ -307,8 +305,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         (1..500).each {
             collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', it))
         }
-        def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .cursorFlags(EnumSet.of(EXHAUST))
+        def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec()).exhaust(true)
 
         when:
         def count = 0;

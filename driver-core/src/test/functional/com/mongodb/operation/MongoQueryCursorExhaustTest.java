@@ -16,7 +16,6 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.CursorFlag;
 import com.mongodb.FunctionalTest;
 import com.mongodb.ReadPreference;
 import com.mongodb.binding.ConnectionSource;
@@ -34,8 +33,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
 
-import java.util.EnumSet;
-
 import static com.mongodb.ClusterFixture.getBinding;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ReadPreference.primary;
@@ -45,7 +42,7 @@ import static org.junit.Assume.assumeFalse;
 public class MongoQueryCursorExhaustTest extends FunctionalTest {
 
     private final BsonBinary binary = new BsonBinary(new byte[10000]);
-    private EnumSet<CursorFlag> exhaustFlag = EnumSet.of(CursorFlag.EXHAUST);
+    private final int exhaustFlag = 1 << 6;
     private QueryResult<Document> firstBatch;
     private Connection exhaustConnection;
     private ConnectionSource readConnectionSource;
@@ -65,7 +62,6 @@ public class MongoQueryCursorExhaustTest extends FunctionalTest {
         firstBatch = new QueryProtocol<Document>(getNamespace(), exhaustFlag, 0, 0, new BsonDocument(), null,
                                                  new DocumentCodec())
                      .execute(exhaustConnection);
-
     }
 
     @After
@@ -106,8 +102,7 @@ public class MongoQueryCursorExhaustTest extends FunctionalTest {
             cursor.next();
             cursor.close();
 
-            new QueryProtocol<Document>(getNamespace(), EnumSet.noneOf(CursorFlag.class), 0, 0, new BsonDocument(), null,
-                                        new DocumentCodec())
+            new QueryProtocol<Document>(getNamespace(), 0, 0, 0, new BsonDocument(), null, new DocumentCodec())
             .execute(connection);
 
         } finally {

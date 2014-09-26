@@ -16,7 +16,6 @@
 
 package com.mongodb.protocol;
 
-import com.mongodb.CursorFlag;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultFuture;
@@ -32,8 +31,6 @@ import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 import org.mongodb.Document;
-
-import java.util.EnumSet;
 
 import static com.mongodb.protocol.ProtocolHelper.encodeMessage;
 import static com.mongodb.protocol.ProtocolHelper.getMessageSettings;
@@ -51,7 +48,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
 
     public static final Logger LOGGER = Loggers.getLogger("protocol.query");
 
-    private final EnumSet<CursorFlag> cursorFlags;
+    private final int cursorFlags;
     private final int skip;
     private final int numberToReturn;
     private final BsonDocument queryDocument;
@@ -70,7 +67,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
      * @param fields         the fields to return in the result documents
      * @param resultDecoder  the decoder for the result documents
      */
-    public QueryProtocol(final MongoNamespace namespace, final EnumSet<CursorFlag> cursorFlags, final int skip,
+    public QueryProtocol(final MongoNamespace namespace, final int cursorFlags, final int skip,
                          final int numberToReturn, final BsonDocument queryDocument,
                          final BsonDocument fields, final Decoder<T> resultDecoder) {
         this.namespace = namespace;

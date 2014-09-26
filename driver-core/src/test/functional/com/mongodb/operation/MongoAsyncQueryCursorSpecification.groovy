@@ -251,18 +251,23 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         executeQuery(getOrderedByIdQuery(), 0, EnumSet.noneOf(CursorFlag))
     }
 
-    private QueryResult<Document> executeQuery(final Document query, final int numberToReturn, final EnumSet<CursorFlag> queryFlag) {
+    private QueryResult<Document> executeQuery(final Document query, final int numberToReturn, final EnumSet<CursorFlag> cursorFlag) {
         Connection connection = source.getConnection().get()
         try {
-            executeQuery(query, numberToReturn, queryFlag, connection)
+            executeQuery(query, numberToReturn, cursorFlag, connection)
         } finally {
             connection.release()
         }
     }
 
-    private QueryResult<Document> executeQuery(final Document query, final int numberToReturn, final EnumSet<CursorFlag> queryFlag,
+    private QueryResult<Document> executeQuery(final Document query, final int numberToReturn, final EnumSet<CursorFlag> cursorFlag,
                                                final Connection connection) {
-        new QueryProtocol<Document>(getNamespace(), queryFlag, 0, numberToReturn,
+        executeQuery(query, numberToReturn, CursorFlag.fromSet(cursorFlag), connection)
+    }
+
+    private QueryResult<Document> executeQuery(final Document query, final int numberToReturn, final int cursorFlag,
+                                               final Connection connection) {
+        new QueryProtocol<Document>(getNamespace(), cursorFlag, 0, numberToReturn,
                                     new BsonDocumentWrapper<Document>(query, new DocumentCodec()), null,
                                     new DocumentCodec()).execute(connection)
     }

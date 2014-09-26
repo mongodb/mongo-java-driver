@@ -450,16 +450,38 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     private FindOperation<DBObject> getQueryOperation(final FindModel findModel, final Decoder<DBObject> decoder) {
-        return new FindOperation<DBObject>(collection.getNamespace(), decoder)
-                   .criteria((BsonDocument) findModel.getOptions().getCriteria())
-                   .batchSize(findModel.getOptions().getBatchSize())
-                   .cursorFlags(cursorFlags)
-                   .limit(findModel.getOptions().getLimit())
-                   .maxTime(findModel.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
-                   .modifiers((BsonDocument) findModel.getOptions().getModifiers())
-                   .projection((BsonDocument) findModel.getOptions().getProjection())
-                   .skip(findModel.getOptions().getSkip())
-                   .sort((BsonDocument) findModel.getOptions().getSort());
+        FindOperation<DBObject> operation = new FindOperation<DBObject>(collection.getNamespace(), decoder)
+                                                .criteria((BsonDocument) findModel.getOptions().getCriteria())
+                                                .batchSize(findModel.getOptions().getBatchSize())
+                                                .limit(findModel.getOptions().getLimit())
+                                                .maxTime(findModel.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
+                                                .modifiers((BsonDocument) findModel.getOptions().getModifiers())
+                                                .projection((BsonDocument) findModel.getOptions().getProjection())
+                                                .skip(findModel.getOptions().getSkip())
+                                                .sort((BsonDocument) findModel.getOptions().getSort());
+
+        if (cursorFlags.contains(CursorFlag.TAILABLE)) {
+            operation.tailableCursor(true);
+        }
+        if (cursorFlags.contains(CursorFlag.SLAVE_OK)) {
+            operation.slaveOk(true);
+        }
+        if (cursorFlags.contains(CursorFlag.OPLOG_REPLAY)) {
+            operation.oplogReplay(true);
+        }
+        if (cursorFlags.contains(CursorFlag.NO_CURSOR_TIMEOUT)) {
+            operation.noCursorTimeout(true);
+        }
+        if (cursorFlags.contains(CursorFlag.AWAIT_DATA)) {
+            operation.awaitData(true);
+        }
+        if (cursorFlags.contains(CursorFlag.EXHAUST)) {
+            operation.exhaust(true);
+        }
+        if (cursorFlags.contains(CursorFlag.PARTIAL)) {
+            operation.partial(true);
+        }
+        return operation;
     }
 
     /**

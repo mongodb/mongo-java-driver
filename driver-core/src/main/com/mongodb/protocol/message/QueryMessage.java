@@ -16,11 +16,8 @@
 
 package com.mongodb.protocol.message;
 
-import com.mongodb.CursorFlag;
 import org.bson.BsonDocument;
 import org.bson.io.BsonOutput;
-
-import java.util.EnumSet;
 
 /**
  * An OP_QUERY message for an actual query (not a command).
@@ -43,7 +40,7 @@ public class QueryMessage extends BaseQueryMessage {
      * @param fields         the fields to return in the result documents
      * @param settings       the message settings
      */
-    public QueryMessage(final String collectionName, final EnumSet<CursorFlag> cursorFlags, final int skip,
+    public QueryMessage(final String collectionName, final int cursorFlags, final int skip,
                         final int numberToReturn, final BsonDocument queryDocument,
                         final BsonDocument fields, final MessageSettings settings) {
         super(collectionName, cursorFlags, skip, numberToReturn, settings);

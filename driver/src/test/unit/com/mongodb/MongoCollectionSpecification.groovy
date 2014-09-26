@@ -308,7 +308,13 @@ class MongoCollectionSpecification extends Specification {
             modifiers == new BsonDocument('$hint', new BsonString('i1'))
             projection == new BsonDocument('x', new BsonInt32(1))
             sort == new BsonDocument('y', new BsonInt32(1))
-            cursorFlags == EnumSet.noneOf(CursorFlag)
+            !isTailableCursor()
+            !isSlaveOk()
+            !isOplogReplay()
+            !isNoCursorTimeout()
+            !isAwaitData()
+            !isExhaust()
+            !isPartial()
         }
         executor.readPreference == secondary()
 
@@ -325,8 +331,15 @@ class MongoCollectionSpecification extends Specification {
 
         then: 'cursor flags contains all flags'
         def operation2 = executor.getReadOperation() as FindOperation
-        operation2.cursorFlags == EnumSet.of(CursorFlag.AWAIT_DATA, CursorFlag.EXHAUST, CursorFlag.NO_CURSOR_TIMEOUT, CursorFlag.PARTIAL,
-                                             CursorFlag.TAILABLE, CursorFlag.OPLOG_REPLAY);
+        operation2.with {
+            isTailableCursor()
+            isSlaveOk()
+            isOplogReplay()
+            isNoCursorTimeout()
+            isAwaitData()
+            isExhaust()
+            isPartial()
+        }
     }
 
     def 'count should use CountOperation properly'() {

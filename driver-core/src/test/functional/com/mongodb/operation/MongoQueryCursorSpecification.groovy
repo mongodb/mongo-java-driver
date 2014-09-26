@@ -461,13 +461,17 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
     }
 
     private QueryResult<Document> executeQuery(int numToReturn) {
-        executeQuery(new BsonDocument(), numToReturn, EnumSet.noneOf(CursorFlag))
+        executeQuery(new BsonDocument(), numToReturn, 0)
     }
 
-    private QueryResult<Document> executeQuery(BsonDocument query, int numberToReturn, EnumSet<CursorFlag> queryFlag) {
+    private QueryResult<Document> executeQuery(BsonDocument query, int numberToReturn, EnumSet<CursorFlag> cursorFlag) {
+        executeQuery(query, numberToReturn, CursorFlag.fromSet(cursorFlag))
+    }
+
+    private QueryResult<Document> executeQuery(BsonDocument query, int numberToReturn, int cursorFlag) {
         def connection = connectionSource.getConnection()
         try {
-            new QueryProtocol<Document>(getNamespace(), queryFlag, 0, numberToReturn, query, null, new DocumentCodec())
+            new QueryProtocol<Document>(getNamespace(), cursorFlag, 0, numberToReturn, query, null, new DocumentCodec())
                     .execute(connection)
         } finally {
             connection.release();

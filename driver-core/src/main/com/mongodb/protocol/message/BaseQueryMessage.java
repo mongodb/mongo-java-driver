@@ -16,19 +16,17 @@
 
 package com.mongodb.protocol.message;
 
-import com.mongodb.CursorFlag;
 import org.bson.io.BsonOutput;
-
-import java.util.EnumSet;
 
 /**
  * Base class for OP_QUERY messages.
  *
+ * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
  * @since 3.0
  */
 public abstract class BaseQueryMessage extends RequestMessage {
 
-    private final EnumSet<CursorFlag> cursorFlags;
+    private final int cursorFlags;
     private final int skip;
     private final int numberToReturn;
 
@@ -41,7 +39,7 @@ public abstract class BaseQueryMessage extends RequestMessage {
      * @param numberToReturn the number of documents to return
      * @param settings       the message settings
      */
-    public BaseQueryMessage(final String collectionName, final EnumSet<CursorFlag> cursorFlags,
+    public BaseQueryMessage(final String collectionName, final int cursorFlags,
                             final int skip, final int numberToReturn, final MessageSettings settings) {
         super(collectionName, OpCode.OP_QUERY, settings);
         this.cursorFlags = cursorFlags;
@@ -55,7 +53,7 @@ public abstract class BaseQueryMessage extends RequestMessage {
      * @param bsonOutput the BSON output
      */
     protected void writeQueryPrologue(final BsonOutput bsonOutput) {
-        bsonOutput.writeInt32(CursorFlag.fromSet(cursorFlags));
+        bsonOutput.writeInt32(cursorFlags);
         bsonOutput.writeCString(getCollectionName());
         bsonOutput.writeInt32(skip);
         bsonOutput.writeInt32(numberToReturn);

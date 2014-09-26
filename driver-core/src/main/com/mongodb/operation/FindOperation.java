@@ -17,7 +17,6 @@
 package com.mongodb.operation;
 
 import com.mongodb.Block;
-import com.mongodb.CursorFlag;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
@@ -41,7 +40,6 @@ import org.bson.BsonInt64;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
-import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ReadPreference.primary;
@@ -63,10 +61,16 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
     private int limit;
     private BsonDocument modifiers;
     private BsonDocument projection;
-    private EnumSet<CursorFlag> cursorFlags = EnumSet.noneOf(CursorFlag.class);
     private long maxTimeMS;
     private int skip;
     private BsonDocument sort;
+    private boolean tailableCursor;
+    private boolean slaveOk;
+    private boolean oplogReplay;
+    private boolean noCursorTimeout;
+    private boolean awaitData;
+    private boolean exhaust;
+    private boolean partial;
 
     /**
      * Construct a new instance.
@@ -134,7 +138,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      *
      * @param batchSize the batch size
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     * @mongodb.driver.manual manual/reference/method/ Batch Size
      */
     public FindOperation<T> batchSize(final int batchSize) {
         this.batchSize = batchSize;
@@ -208,26 +212,6 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
     }
 
     /**
-     * Gets the cursor flags.
-     *
-     * @return the cursor flags
-     */
-    public EnumSet<CursorFlag> getCursorFlags() {
-        return cursorFlags;
-    }
-
-    /**
-     * Sets the cursor flags.
-     *
-     * @param cursorFlags the cursor flags
-     * @return this
-     */
-    public FindOperation<T> cursorFlags(final EnumSet<CursorFlag> cursorFlags) {
-        this.cursorFlags = cursorFlags;
-        return this;
-    }
-
-    /**
      * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
      *
      * @param timeUnit the time unit to return the result in
@@ -296,6 +280,182 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
         return this;
     }
 
+    /**
+     * Gets whether the cursor is configured to be a tailable cursor.
+     *
+     * <p>Tailable means the cursor is not closed when the last data is retrieved. Rather, the cursor marks the final object's position. You
+     * can resume using the cursor later, from where it was located, if more data were received. Like any "latent cursor",
+     * the cursor may become invalid at some point – for example if the final object it references were deleted.</p>
+     *
+     * @return true if the cursor is configured to be a tailable cursor
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public boolean isTailableCursor() {
+        return tailableCursor;
+    }
+
+    /**
+     * Sets whether the cursor should be a tailable cursor.
+     *
+     * <p>Tailable means the cursor is not closed when the last data is retrieved. Rather, the cursor marks the final object's position. You
+     * can resume using the cursor later, from where it was located, if more data were received. Like any "latent cursor",
+     * the cursor may become invalid at some point – for example if the final object it references were deleted.</p>
+     *
+     * @param tailableCursor whether the cursor should be a tailable cursor.
+     * @return this
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public FindOperation<T> tailableCursor(final boolean tailableCursor) {
+        this.tailableCursor = tailableCursor;
+        return this;
+    }
+
+    /**
+     * Returns true if set to allowed to query non-primary replica set members.
+     *
+     * @return true if set to allowed to query non-primary replica set members.
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public boolean isSlaveOk() {
+        return slaveOk;
+    }
+
+    /**
+     * Sets if allowed to query non-primary replica set members.
+     *
+     * @param slaveOk true if allowed to query non-primary replica set members.
+     * @return this
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public FindOperation<T> slaveOk(final boolean slaveOk) {
+        this.slaveOk = slaveOk;
+        return this;
+    }
+
+    /**
+     * Internal replication use only.  Driver users should ordinarily not use this.
+     *
+     * @return oplogReplay
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public boolean isOplogReplay() {
+        return oplogReplay;
+    }
+
+    /**
+     * Internal replication use only.  Driver users should ordinarily not use this.
+     *
+     * @param oplogReplay the oplogReplay value
+     * @return this
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public FindOperation<T> oplogReplay(final boolean oplogReplay) {
+        this.oplogReplay = oplogReplay;
+        return this;
+    }
+
+    /**
+     * Returns true if cursor timeout has been turned off.
+     *
+     * <p>The server normally times out idle cursors after an inactivity period (10 minutes) to prevent excess memory use.</p>
+     *
+     * @return if cursor timeout has been turned off
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public boolean isNoCursorTimeout() {
+        return noCursorTimeout;
+    }
+
+    /**
+     * Sets if the cursor timeout should be turned off.
+     *
+     * @param noCursorTimeout true if the cursor timeout should be turned off.
+     * @return this
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public FindOperation<T> noCursorTimeout(final boolean noCursorTimeout) {
+        this.noCursorTimeout = noCursorTimeout;
+        return this;
+    }
+
+    /**
+     * Returns true if the cursor should await for data.
+     *
+     * <p>Use with {@link #tailableCursor}. If we are at the end of the data, block for a while rather than returning no data. After a
+     * timeout period, we do return as normal.</p>
+     *
+     * @return if the cursor should await for data
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public boolean isAwaitData() {
+        return awaitData;
+    }
+
+    /**
+     * Sets if the cursor should await for data.
+     *
+     * <p>Use with {@link #tailableCursor}. If we are at the end of the data, block for a while rather than returning no data. After a
+     * timeout period, we do return as normal.</p>
+     *
+     * @param awaitData if we should await for data
+     * @return this
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public FindOperation<T> awaitData(final boolean awaitData) {
+        this.awaitData = awaitData;
+        return this;
+    }
+
+    /**
+     * Gets if cursor should get all the data immediately.
+     *
+     * <p>Stream the data down full blast in multiple "more" packages, on the assumption that the client will fully read all data
+     * queried. Faster when you are pulling a lot of data and know you want to pull it all down</p>
+     *
+     * @return if cursor should get all the data immediately
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public boolean isExhaust() {
+        return exhaust;
+    }
+
+    /**
+     * Should the cursor get all the data immediately.
+     *
+     * <p>Stream the data down full blast in multiple "more" packages, on the assumption that the client will fully read all data
+     * queried. Faster when you are pulling a lot of data and know you want to pull it all down</p>
+     *
+     * @param exhaust should the cursor get all the data immediately.
+     * @return this
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public FindOperation<T> exhaust(final boolean exhaust) {
+        this.exhaust = exhaust;
+        return this;
+    }
+
+    /**
+     * Returns true if can get partial results from a mongos if some shards are down.
+     *
+     * @return if can get partial results from a mongos if some shards are down
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public boolean isPartial() {
+        return partial;
+    }
+
+    /**
+     * Sets if partial results from a mongos if some shards are down are allowed
+     *
+     * @param partial allow partial results from a mongos if some shards are down
+     * @return this
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public FindOperation<T> partial(final boolean partial) {
+        this.partial = partial;
+        return this;
+    }
+
     @Override
     public MongoTailableCursor<T> execute(final ReadBinding binding) {
         return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<MongoTailableCursor<T>>() {
@@ -303,7 +463,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
             public MongoTailableCursor<T> call(final ConnectionSource source, final Connection connection) {
                 QueryResult<T> queryResult = asQueryProtocol(connection.getDescription(), binding.getReadPreference())
                                              .execute(connection);
-                if (isExhaustCursor()) {
+                if (isExhaust()) {
                     return new MongoQueryCursor<T>(namespace, queryResult, limit, batchSize,
                                                    decoder, connection);
                 } else {
@@ -328,7 +488,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
                                   if (e != null) {
                                       future.init(null, e);
                                   } else {
-                                      if (isExhaustCursor()) {
+                                      if (isExhaust()) {
                                           future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, limit,
                                                                                    batchSize, decoder,
                                                                                    connection), null);
@@ -420,12 +580,13 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
     }
 
     /**
-     * Gets the limit of the number of documents in the first OP_REPLY response to the query. A value of zero tells the server to use the
-     * default size. A negative value tells the server to return no more than that number and immediately close the cursor.  Otherwise, the
-     * server will return no more than that number and return a cursorId to allow the rest of the documents to be fetched, if it turns out
-     * there are more documents.
-     * <p/>
-     * The value returned by this method is based on the limit and the batch size, both of which can be positive, negative, or zero.
+     * Gets the limit of the number of documents in the first OP_REPLY response to the query.
+     *
+     * <p>A value of zero tells the server to use the default size. A negative value tells the server to return no more than that number
+     * and immediately close the cursor.  Otherwise, the server will return no more than that number and return a cursorId to allow the
+     * rest of the documents to be fetched, if it turns out there are more documents.</p>
+     *
+     * <p>The value returned by this method is based on the limit and the batch size, both of which can be positive, negative, or zero.</p>
      *
      * @return the value for numberToReturn in the OP_QUERY wire protocol message.
      * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
@@ -444,14 +605,30 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
         }
     }
 
-    private EnumSet<CursorFlag> getFlags(final ReadPreference readPreference) {
-        if (readPreference.isSlaveOk()) {
-            EnumSet<CursorFlag> retVal = EnumSet.copyOf(cursorFlags);
-            retVal.add(CursorFlag.SLAVE_OK);
-            return retVal;
-        } else {
-            return cursorFlags;
+    private int getFlags(final ReadPreference readPreference) {
+        int flags = 0;
+        if (isTailableCursor()) {
+            flags |= 1 << 1;
         }
+        if (isSlaveOk() || readPreference.isSlaveOk()){
+            flags |= 1 << 2;
+        }
+        if (isOplogReplay()){
+            flags |= 1 << 3;
+        }
+        if (isNoCursorTimeout()){
+            flags |= 1 << 4;
+        }
+        if (isAwaitData()){
+            flags |= 1 << 5;
+        }
+        if (isExhaust()) {
+            flags |= 1 << 6;
+        }
+        if (isPartial()) {
+            flags |= 1 << 7;
+        }
+        return flags;
     }
 
     private BsonDocument asDocument(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
@@ -472,8 +649,4 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
         return document;
     }
 
-
-    private boolean isExhaustCursor() {
-        return cursorFlags.contains(CursorFlag.EXHAUST);
-    }
 }

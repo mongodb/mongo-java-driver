@@ -16,7 +16,6 @@
 
 package com.mongodb.operation;
 
-import com.mongodb.CursorFlag;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
@@ -28,8 +27,6 @@ import com.mongodb.protocol.QueryResult;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
-
-import java.util.EnumSet;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
@@ -110,7 +107,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
 
     private QueryProtocol<BsonDocument> getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(databaseName, "system.users");
-        return new QueryProtocol<BsonDocument>(namespace, EnumSet.noneOf(CursorFlag.class), 0, 1,
+        return new QueryProtocol<BsonDocument>(namespace, 0, 0, 1,
                                                new BsonDocument("user", new BsonString(userName)), null, new BsonDocumentCodec());
     }
 
