@@ -15,6 +15,11 @@ do not email any of the Java driver developers directly with issues or
 questions - you're more likely to get an answer on the [mongodb-user]
 (http://groups.google.com/group/mongodb-user) list on Google Groups.
 
+At a minimum, please include in your description the exact version of the driver that you are using.  If you are having 
+connectivity issues, it's often also useful to paste in the line of code where you construct the MongoClient instance,
+along with the values of all parameters that you pass to the constructor. You should also check your application logs for
+any connectivity-related exceptions and post those as well.
+
 Bugs / Feature Requests
 =======================
 
@@ -25,8 +30,7 @@ case in our issue management tool, JIRA:
 - Navigate to [the JAVA project](https://jira.mongodb.org/browse/JAVA).
 - Click **Create Issue** - Please provide as much information as possible about the issue type and how to reproduce it.
 
-Bug reports in JIRA for all driver projects (i.e. JAVA, PYTHON, CSHARP) and the
-Core Server (i.e. SERVER) project are **public**.
+Bug reports in JIRA for the driver and the Core Server (i.e. SERVER) project are **public**.
 
 Security Vulnerabilities
 ------------------------
