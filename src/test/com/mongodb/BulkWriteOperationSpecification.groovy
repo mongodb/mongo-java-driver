@@ -817,6 +817,21 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
     	where:
         ordered << [true, false]
     }
+    
+    def 'view number of requests added to operation'() {
+    	given:
+    	def operation = initializeBulkOperation(ordered)
+    	
+    	when:
+    	operation.insert(new BasicDBObject('_id', 1))
+    	operation.insert(new BasicDBObject('_id', 2))
+    	
+    	then:
+    	operation.requestCount() == 2
+    	
+    	where:
+    	ordered << [true, false]
+    }
 
     private static void addWritesToOperation(BulkWriteOperation operation) {
         operation.find(new BasicDBObject('_id', 1)).updateOne(new BasicDBObject('$set', new BasicDBObject('x', 2)))

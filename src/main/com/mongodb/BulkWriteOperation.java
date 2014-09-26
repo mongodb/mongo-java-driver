@@ -120,4 +120,11 @@ public class BulkWriteOperation {
     	return closed;
     }
 
+    /**
+     * Returns the number of requests added to the bulk operation
+     * @return number of requests added to the bulk operation
+     */
+    public int requestCount() {
+    	return requests.size();
+    }
 }
