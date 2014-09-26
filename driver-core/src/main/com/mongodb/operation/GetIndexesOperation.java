@@ -73,7 +73,7 @@ public class GetIndexesOperation<T> implements AsyncReadOperation<List<T>>, Read
     }
 
     private QueryProtocol<T> getProtocol() {
-        return new QueryProtocol<T>(getIndexNamespace(), 0, 0, 0, asQueryDocument(), null, decoder);
+        return new QueryProtocol<T>(getIndexNamespace(), 0, 0, asQueryDocument(), null, decoder);
     }
 
 }

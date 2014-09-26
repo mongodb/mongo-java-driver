@@ -461,17 +461,20 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
     }
 
     private QueryResult<Document> executeQuery(int numToReturn) {
-        executeQuery(new BsonDocument(), numToReturn, 0)
+        executeQuery(new BsonDocument(), numToReturn, EnumSet.noneOf(CursorFlag))
     }
 
     private QueryResult<Document> executeQuery(BsonDocument query, int numberToReturn, EnumSet<CursorFlag> cursorFlag) {
-        executeQuery(query, numberToReturn, CursorFlag.fromSet(cursorFlag))
-    }
-
-    private QueryResult<Document> executeQuery(BsonDocument query, int numberToReturn, int cursorFlag) {
         def connection = connectionSource.getConnection()
         try {
-            new QueryProtocol<Document>(getNamespace(), cursorFlag, 0, numberToReturn, query, null, new DocumentCodec())
+            new QueryProtocol<Document>(getNamespace(), 0, numberToReturn, query, null, new DocumentCodec())
+                    .tailableCursor(cursorFlag.contains(CursorFlag.TAILABLE))
+                    .slaveOk(cursorFlag.contains(CursorFlag.SLAVE_OK))
+                    .oplogReplay(cursorFlag.contains(CursorFlag.OPLOG_REPLAY))
+                    .noCursorTimeout(cursorFlag.contains(CursorFlag.NO_CURSOR_TIMEOUT))
+                    .awaitData(cursorFlag.contains(CursorFlag.AWAIT_DATA))
+                    .exhaust(cursorFlag.contains(CursorFlag.EXHAUST))
+                    .partial(cursorFlag.contains(CursorFlag.PARTIAL))
                     .execute(connection)
         } finally {
             connection.release();

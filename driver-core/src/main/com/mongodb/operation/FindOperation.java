@@ -138,7 +138,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      *
      * @param batchSize the batch size
      * @return this
-     * @mongodb.driver.manual manual/reference/method/ Batch Size
+     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public FindOperation<T> batchSize(final int batchSize) {
         this.batchSize = batchSize;
@@ -574,9 +574,14 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
     }
 
     private QueryProtocol<T> asQueryProtocol(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
-        return new QueryProtocol<T>(namespace, getFlags(readPreference), skip,
-                                    getNumberToReturn(), asDocument(connectionDescription, readPreference),
-                                    projection, decoder);
+        return new QueryProtocol<T>(namespace, skip, getNumberToReturn(), asDocument(connectionDescription, readPreference), projection,
+                                    decoder).tailableCursor(isTailableCursor())
+                                            .slaveOk(isSlaveOk() || readPreference.isSlaveOk())
+                                            .oplogReplay(isOplogReplay())
+                                            .noCursorTimeout(isNoCursorTimeout())
+                                            .awaitData(isAwaitData())
+                                            .exhaust(isExhaust())
+                                            .partial(isPartial());
     }
 
     /**

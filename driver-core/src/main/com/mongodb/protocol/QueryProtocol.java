@@ -47,36 +47,215 @@ import static java.lang.String.format;
 public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
 
     public static final Logger LOGGER = Loggers.getLogger("protocol.query");
-
-    private final int cursorFlags;
     private final int skip;
     private final int numberToReturn;
     private final BsonDocument queryDocument;
     private final BsonDocument fields;
     private final Decoder<T> resultDecoder;
     private final MongoNamespace namespace;
+    private boolean tailableCursor;
+    private boolean slaveOk;
+    private boolean oplogReplay;
+    private boolean noCursorTimeout;
+    private boolean awaitData;
+    private boolean exhaust;
+    private boolean partial;
 
     /**
      * Construct an instance.
      *
      * @param namespace      the namespace
-     * @param cursorFlags    the cursor flags
      * @param skip           the number of documents to skip
      * @param numberToReturn the number to return
      * @param queryDocument  the query document
      * @param fields         the fields to return in the result documents
      * @param resultDecoder  the decoder for the result documents
      */
-    public QueryProtocol(final MongoNamespace namespace, final int cursorFlags, final int skip,
+    public QueryProtocol(final MongoNamespace namespace, final int skip,
                          final int numberToReturn, final BsonDocument queryDocument,
                          final BsonDocument fields, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
-        this.cursorFlags = cursorFlags;
         this.skip = skip;
         this.numberToReturn = numberToReturn;
         this.queryDocument = queryDocument;
         this.fields = fields;
         this.resultDecoder = resultDecoder;
+    }
+
+    /**
+     * Gets whether the cursor is configured to be a tailable cursor.
+     *
+     * <p>Tailable means the cursor is not closed when the last data is retrieved. Rather, the cursor marks the final object's position. You
+     * can resume using the cursor later, from where it was located, if more data were received. Like any "latent cursor",
+     * the cursor may become invalid at some point – for example if the final object it references were deleted.</p>
+     *
+     * @return true if the cursor is configured to be a tailable cursor
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public boolean isTailableCursor() {
+        return tailableCursor;
+    }
+
+    /**
+     * Sets whether the cursor should be a tailable cursor.
+     *
+     * <p>Tailable means the cursor is not closed when the last data is retrieved. Rather, the cursor marks the final object's position. You
+     * can resume using the cursor later, from where it was located, if more data were received. Like any "latent cursor",
+     * the cursor may become invalid at some point – for example if the final object it references were deleted.</p>
+     *
+     * @param tailableCursor whether the cursor should be a tailable cursor.
+     * @return this
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public QueryProtocol<T> tailableCursor(final boolean tailableCursor) {
+        this.tailableCursor = tailableCursor;
+        return this;
+    }
+
+    /**
+     * Returns true if set to allowed to query non-primary replica set members.
+     *
+     * @return true if set to allowed to query non-primary replica set members.
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public boolean isSlaveOk() {
+        return slaveOk;
+    }
+
+    /**
+     * Sets if allowed to query non-primary replica set members.
+     *
+     * @param slaveOk true if allowed to query non-primary replica set members.
+     * @return this
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public QueryProtocol<T> slaveOk(final boolean slaveOk) {
+        this.slaveOk = slaveOk;
+        return this;
+    }
+
+    /**
+     * Internal replication use only.  Driver users should ordinarily not use this.
+     *
+     * @return oplogReplay
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public boolean isOplogReplay() {
+        return oplogReplay;
+    }
+
+    /**
+     * Internal replication use only.  Driver users should ordinarily not use this.
+     *
+     * @param oplogReplay the oplogReplay value
+     * @return this
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public QueryProtocol<T> oplogReplay(final boolean oplogReplay) {
+        this.oplogReplay = oplogReplay;
+        return this;
+    }
+
+    /**
+     * Returns true if cursor timeout has been turned off.
+     *
+     * <p>The server normally times out idle cursors after an inactivity period (10 minutes) to prevent excess memory use.</p>
+     *
+     * @return if cursor timeout has been turned off
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public boolean isNoCursorTimeout() {
+        return noCursorTimeout;
+    }
+
+    /**
+     * Sets if the cursor timeout should be turned off.
+     *
+     * @param noCursorTimeout true if the cursor timeout should be turned off.
+     * @return this
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public QueryProtocol<T> noCursorTimeout(final boolean noCursorTimeout) {
+        this.noCursorTimeout = noCursorTimeout;
+        return this;
+    }
+
+    /**
+     * Returns true if the cursor should await for data.
+     *
+     * <p>Use with {@link #tailableCursor}. If we are at the end of the data, block for a while rather than returning no data. After a
+     * timeout period, we do return as normal.</p>
+     *
+     * @return if the cursor should await for data
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public boolean isAwaitData() {
+        return awaitData;
+    }
+
+    /**
+     * Sets if the cursor should await for data.
+     *
+     * <p>Use with {@link #tailableCursor}. If we are at the end of the data, block for a while rather than returning no data. After a
+     * timeout period, we do return as normal.</p>
+     *
+     * @param awaitData if we should await for data
+     * @return this
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public QueryProtocol<T> awaitData(final boolean awaitData) {
+        this.awaitData = awaitData;
+        return this;
+    }
+
+    /**
+     * Gets if cursor should get all the data immediately.
+     *
+     * <p>Stream the data down full blast in multiple "more" packages, on the assumption that the client will fully read all data
+     * queried. Faster when you are pulling a lot of data and know you want to pull it all down</p>
+     *
+     * @return if cursor should get all the data immediately
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public boolean isExhaust() {
+        return exhaust;
+    }
+
+    /**
+     * Should the cursor get all the data immediately.
+     *
+     * <p>Stream the data down full blast in multiple "more" packages, on the assumption that the client will fully read all data
+     * queried. Faster when you are pulling a lot of data and know you want to pull it all down</p>
+     *
+     * @param exhaust should the cursor get all the data immediately.
+     * @return this
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public QueryProtocol<T> exhaust(final boolean exhaust) {
+        this.exhaust = exhaust;
+        return this;
+    }
+
+    /**
+     * Returns true if can get partial results from a mongos if some shards are down.
+     *
+     * @return if can get partial results from a mongos if some shards are down
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public boolean isPartial() {
+        return partial;
+    }
+
+    /**
+     * Sets if partial results from a mongos if some shards are down are allowed
+     *
+     * @param partial allow partial results from a mongos if some shards are down
+     * @return this
+     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+     */
+    public QueryProtocol<T> partial(final boolean partial) {
+        this.partial = partial;
+        return this;
     }
 
     @Override
@@ -109,8 +288,15 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     private QueryMessage createQueryMessage(final ConnectionDescription connectionDescription) {
-        return new QueryMessage(namespace.getFullName(), cursorFlags, skip, numberToReturn, queryDocument, fields,
-                                getMessageSettings(connectionDescription));
+        return (QueryMessage) new QueryMessage(namespace.getFullName(), skip, numberToReturn, queryDocument, fields,
+                                               getMessageSettings(connectionDescription))
+                                  .tailableCursor(isTailableCursor())
+                                  .slaveOk(isSlaveOk())
+                                  .oplogReplay(isOplogReplay())
+                                  .noCursorTimeout(isNoCursorTimeout())
+                                  .awaitData(isAwaitData())
+                                  .exhaust(isExhaust())
+                                  .partial(isPartial());
     }
 
     private QueryMessage sendMessage(final Connection connection) {

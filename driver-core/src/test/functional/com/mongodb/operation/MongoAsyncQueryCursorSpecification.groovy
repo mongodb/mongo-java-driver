@@ -40,7 +40,6 @@ import spock.lang.Shared
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.CursorFlag.EXHAUST
 import static com.mongodb.ReadPreference.primary
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -104,7 +103,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         setup:
         Connection connection = source.getConnection().get()
         QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(),
-                                                        2, EnumSet.of(EXHAUST),
+                                                        2, EnumSet.of(CursorFlag.EXHAUST),
                                                         connection)
 
         when:
@@ -124,7 +123,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
     def 'Cursor should support Exhaust and limit'() {
         setup:
         Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(EXHAUST), connection)
+        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(CursorFlag.EXHAUST), connection)
 
         when:
         new MongoAsyncQueryCursor<Document>(getNamespace(),
@@ -144,7 +143,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         setup:
         AsyncConnectionSource readConnectionSource = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = readConnectionSource.getConnection().get()
-        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(EXHAUST), connection)
+        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(CursorFlag.EXHAUST), connection)
 
         when:
         new MongoAsyncQueryCursor<Document>(getNamespace(), firstBatch, 5, 2, new DocumentCodec(), connection)
@@ -153,7 +152,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         then:
         thrown(MongoInternalException)
         documentResultList == documentList[0..0]
-        def docs = executeQuery(getOrderedByIdQuery(), 1, EnumSet.of(EXHAUST), connection).getResults()
+        def docs = executeQuery(getOrderedByIdQuery(), 1, EnumSet.of(CursorFlag.EXHAUST), connection).getResults()
         [[_id: 1]] == docs
 
         cleanup:
@@ -166,7 +165,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(EXHAUST), connection)
+        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(CursorFlag.EXHAUST), connection)
         TestBlock block = new TestBlock(1)
 
         when:
@@ -221,11 +220,11 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
     }
 
     @IgnoreIf({ isSharded() })
-    def 'should get Exceptions for operations on the exhause cursor after closing'() throws InterruptedException {
+    def 'should get Exceptions for operations on the exhaust cursor after closing'() throws InterruptedException {
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(EXHAUST), connection)
+        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(CursorFlag.EXHAUST), connection)
 
         when:
         MongoAsyncQueryCursor<Document> asyncCursor = new MongoAsyncQueryCursor<Document>(getNamespace(),
@@ -262,14 +261,17 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
 
     private QueryResult<Document> executeQuery(final Document query, final int numberToReturn, final EnumSet<CursorFlag> cursorFlag,
                                                final Connection connection) {
-        executeQuery(query, numberToReturn, CursorFlag.fromSet(cursorFlag), connection)
-    }
-
-    private QueryResult<Document> executeQuery(final Document query, final int numberToReturn, final int cursorFlag,
-                                               final Connection connection) {
-        new QueryProtocol<Document>(getNamespace(), cursorFlag, 0, numberToReturn,
+        new QueryProtocol<Document>(getNamespace(), 0, numberToReturn,
                                     new BsonDocumentWrapper<Document>(query, new DocumentCodec()), null,
-                                    new DocumentCodec()).execute(connection)
+                                    new DocumentCodec())
+                .tailableCursor(cursorFlag.contains(CursorFlag.TAILABLE))
+                .slaveOk(cursorFlag.contains(CursorFlag.SLAVE_OK))
+                .oplogReplay(cursorFlag.contains(CursorFlag.OPLOG_REPLAY))
+                .noCursorTimeout(cursorFlag.contains(CursorFlag.NO_CURSOR_TIMEOUT))
+                .awaitData(cursorFlag.contains(CursorFlag.AWAIT_DATA))
+                .exhaust(cursorFlag.contains(CursorFlag.EXHAUST))
+                .partial(cursorFlag.contains(CursorFlag.PARTIAL))
+                .execute(connection)
     }
 
     private final class TestBlock implements Block<Document> {

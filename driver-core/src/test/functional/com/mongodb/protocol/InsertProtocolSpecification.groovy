@@ -84,7 +84,7 @@ class InsertProtocolSpecification extends OperationFunctionalSpecification {
 
 
         then:
-        new QueryProtocol<BsonDocument>(getNamespace(), 0, 0, 1, new BsonDocument(), new BsonDocument(),
+        new QueryProtocol<BsonDocument>(getNamespace(), 0, 1, new BsonDocument(), new BsonDocument(),
                                         new BsonDocumentCodec()).execute(connection).getResults()[0]
 
         cleanup:

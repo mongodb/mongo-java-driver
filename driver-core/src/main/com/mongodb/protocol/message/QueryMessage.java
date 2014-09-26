@@ -33,17 +33,16 @@ public class QueryMessage extends BaseQueryMessage {
      * Construct an instance.
      *
      * @param collectionName the collection name
-     * @param cursorFlags    the cursor flags
      * @param skip           the number of documents to skip
      * @param numberToReturn the number to return
      * @param queryDocument  the query document
      * @param fields         the fields to return in the result documents
      * @param settings       the message settings
      */
-    public QueryMessage(final String collectionName, final int cursorFlags, final int skip,
+    public QueryMessage(final String collectionName, final int skip,
                         final int numberToReturn, final BsonDocument queryDocument,
                         final BsonDocument fields, final MessageSettings settings) {
-        super(collectionName, cursorFlags, skip, numberToReturn, settings);
+        super(collectionName, skip, numberToReturn, settings);
         this.queryDocument = queryDocument;
         this.fields = fields;
     }

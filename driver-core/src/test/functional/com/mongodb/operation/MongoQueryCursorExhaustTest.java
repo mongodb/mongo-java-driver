@@ -59,8 +59,8 @@ public class MongoQueryCursorExhaustTest extends FunctionalTest {
 
         readConnectionSource = getBinding().getReadConnectionSource();
         exhaustConnection = readConnectionSource.getConnection();
-        firstBatch = new QueryProtocol<Document>(getNamespace(), exhaustFlag, 0, 0, new BsonDocument(), null,
-                                                 new DocumentCodec())
+        firstBatch = new QueryProtocol<Document>(getNamespace(), 0, 0, new BsonDocument(), null,
+                                                 new DocumentCodec()).exhaust(true)
                      .execute(exhaustConnection);
     }
 
@@ -102,7 +102,7 @@ public class MongoQueryCursorExhaustTest extends FunctionalTest {
             cursor.next();
             cursor.close();
 
-            new QueryProtocol<Document>(getNamespace(), 0, 0, 0, new BsonDocument(), null, new DocumentCodec())
+            new QueryProtocol<Document>(getNamespace(), 0, 0, new BsonDocument(), null, new DocumentCodec())
             .execute(connection);
 
         } finally {

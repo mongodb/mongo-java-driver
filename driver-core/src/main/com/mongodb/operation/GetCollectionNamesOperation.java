@@ -76,7 +76,7 @@ public class GetCollectionNamesOperation implements AsyncReadOperation<List<Stri
     }
 
     private QueryProtocol<BsonDocument> getProtocol() {
-        return new QueryProtocol<BsonDocument>(getNamespace(), 0, 0, 0, new BsonDocument(), null, new BsonDocumentCodec());
+        return new QueryProtocol<BsonDocument>(getNamespace(), 0, 0, new BsonDocument(), null, new BsonDocumentCodec());
     }
 
 }

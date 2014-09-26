@@ -107,7 +107,7 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
 
     private QueryProtocol<BsonDocument> getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(databaseName, "system.users");
-        return new QueryProtocol<BsonDocument>(namespace, 0, 0, 1,
+        return new QueryProtocol<BsonDocument>(namespace, 0, 1,
                                                new BsonDocument("user", new BsonString(userName)), null, new BsonDocumentCodec());
     }
 
