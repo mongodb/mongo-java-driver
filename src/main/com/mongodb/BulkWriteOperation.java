@@ -112,5 +112,12 @@ public class BulkWriteOperation {
         requests.add(request);
     }
 
+    /**
+     * Returns true if the bulk operations have been executed.
+     * @return whether the bulk operations have been executed
+     */
+    public boolean isExecuted() {
+    	return closed;
+    }
 
 }

@@ -802,6 +802,21 @@ class BulkWriteOperationSpecification extends FunctionalSpecification {
         where:
         ordered << [true, false]
     }
+    
+    def 'when the operation has been executed isExecuted should return true'() {
+    	given:
+    	def operation = initializeBulkOperation(ordered)
+    	addWritesToOperation(operation)
+    	
+    	when:
+    	operation.execute()
+    	
+    	then:
+    	operation.isExecuted() == true
+
+    	where:
+        ordered << [true, false]
+    }
 
     private static void addWritesToOperation(BulkWriteOperation operation) {
         operation.find(new BasicDBObject('_id', 1)).updateOne(new BasicDBObject('$set', new BasicDBObject('x', 2)))
