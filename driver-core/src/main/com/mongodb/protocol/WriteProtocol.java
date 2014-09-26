@@ -16,7 +16,6 @@
 
 package com.mongodb.protocol;
 
-import com.mongodb.CursorFlag;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
@@ -33,8 +32,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
 import org.mongodb.WriteResult;
-
-import java.util.EnumSet;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.protocol.ProtocolHelper.encodeMessage;
@@ -81,8 +78,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
         if (writeConcern.isAcknowledged()) {
             CommandMessage getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                                                                                        COMMAND_COLLECTION_NAME).getFullName(),
-                                                                    createGetLastErrorCommandDocument(),
-                                                                    EnumSet.noneOf(CursorFlag.class),
+                                                                    createGetLastErrorCommandDocument(), false,
                                                                     getMessageSettings(connection.getDescription()));
             encodeMessage(getLastErrorMessage, bsonOutput);
             connection.sendMessageAsync(bsonOutput.getByteBuffers(), getLastErrorMessage.getId(),
@@ -127,7 +123,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
             if (writeConcern.isAcknowledged()) {
                 getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                                                                             COMMAND_COLLECTION_NAME).getFullName(),
-                                                         createGetLastErrorCommandDocument(), EnumSet.noneOf(CursorFlag.class),
+                                                         createGetLastErrorCommandDocument(), false,
                                                          getMessageSettings(connection.getDescription()));
                 getLastErrorMessage.encode(bsonOutput);
                 lastMessage = getLastErrorMessage;

@@ -19,7 +19,6 @@ package com.mongodb.operation
 import category.Async
 import category.Slow
 import com.mongodb.Block
-import com.mongodb.CursorFlag
 import com.mongodb.MongoInternalException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.async.MongoFuture
@@ -102,9 +101,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
     def 'Cursor should support Exhaust'() {
         setup:
         Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(),
-                                                        2, EnumSet.of(CursorFlag.EXHAUST),
-                                                        connection)
+        QueryResult<Document> firstBatch = getQueryProtocol(getOrderedByIdQuery(), 2).exhaust(true).execute(connection)
 
         when:
         new MongoAsyncQueryCursor<Document>(getNamespace(),
@@ -123,7 +120,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
     def 'Cursor should support Exhaust and limit'() {
         setup:
         Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(CursorFlag.EXHAUST), connection)
+        QueryResult<Document> firstBatch = getQueryProtocol(getOrderedByIdQuery(), 2).exhaust(true).execute(connection)
 
         when:
         new MongoAsyncQueryCursor<Document>(getNamespace(),
@@ -143,7 +140,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         setup:
         AsyncConnectionSource readConnectionSource = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = readConnectionSource.getConnection().get()
-        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(CursorFlag.EXHAUST), connection)
+        QueryResult<Document> firstBatch = getQueryProtocol(getOrderedByIdQuery(), 2).exhaust(true).execute(connection)
 
         when:
         new MongoAsyncQueryCursor<Document>(getNamespace(), firstBatch, 5, 2, new DocumentCodec(), connection)
@@ -152,7 +149,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         then:
         thrown(MongoInternalException)
         documentResultList == documentList[0..0]
-        def docs = executeQuery(getOrderedByIdQuery(), 1, EnumSet.of(CursorFlag.EXHAUST), connection).getResults()
+        def docs = getQueryProtocol(getOrderedByIdQuery(), 1).exhaust(true).execute(connection).getResults()
         [[_id: 1]] == docs
 
         cleanup:
@@ -165,7 +162,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(CursorFlag.EXHAUST), connection)
+        QueryResult<Document> firstBatch = getQueryProtocol(getOrderedByIdQuery(), 2).exhaust(true).execute(connection)
         TestBlock block = new TestBlock(1)
 
         when:
@@ -192,8 +189,10 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         def timestamp = new BsonTimestamp(5, 0)
         getCollectionHelper().insertDocuments(new DocumentCodec(), [_id: 1, ts: timestamp] as Document)
 
-        QueryResult<Document> firstBatch = executeQuery([ts: ['$gte': timestamp] as Document ] as Document, 2,
-                                                        EnumSet.of(CursorFlag.TAILABLE, CursorFlag.AWAIT_DATA), connection)
+        QueryResult<Document> firstBatch = getQueryProtocol([ts: ['$gte': timestamp] as Document ] as Document, 2)
+                .tailableCursor(true)
+                .awaitData(true)
+                .execute(connection)
         TestBlock block = new TestBlock(2)
 
         when:
@@ -224,7 +223,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = executeQuery(getOrderedByIdQuery(), 2, EnumSet.of(CursorFlag.EXHAUST), connection)
+        QueryResult<Document> firstBatch = getQueryProtocol(getOrderedByIdQuery(), 2).exhaust(true).execute(connection);
 
         when:
         MongoAsyncQueryCursor<Document> asyncCursor = new MongoAsyncQueryCursor<Document>(getNamespace(),
@@ -247,31 +246,17 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
     }
 
     private QueryResult<Document> executeQuery() {
-        executeQuery(getOrderedByIdQuery(), 0, EnumSet.noneOf(CursorFlag))
-    }
-
-    private QueryResult<Document> executeQuery(final Document query, final int numberToReturn, final EnumSet<CursorFlag> cursorFlag) {
         Connection connection = source.getConnection().get()
         try {
-            executeQuery(query, numberToReturn, cursorFlag, connection)
+            getQueryProtocol(getOrderedByIdQuery(), 0).execute(connection)
         } finally {
             connection.release()
         }
     }
 
-    private QueryResult<Document> executeQuery(final Document query, final int numberToReturn, final EnumSet<CursorFlag> cursorFlag,
-                                               final Connection connection) {
-        new QueryProtocol<Document>(getNamespace(), 0, numberToReturn,
-                                    new BsonDocumentWrapper<Document>(query, new DocumentCodec()), null,
-                                    new DocumentCodec())
-                .tailableCursor(cursorFlag.contains(CursorFlag.TAILABLE))
-                .slaveOk(cursorFlag.contains(CursorFlag.SLAVE_OK))
-                .oplogReplay(cursorFlag.contains(CursorFlag.OPLOG_REPLAY))
-                .noCursorTimeout(cursorFlag.contains(CursorFlag.NO_CURSOR_TIMEOUT))
-                .awaitData(cursorFlag.contains(CursorFlag.AWAIT_DATA))
-                .exhaust(cursorFlag.contains(CursorFlag.EXHAUST))
-                .partial(cursorFlag.contains(CursorFlag.PARTIAL))
-                .execute(connection)
+    private QueryProtocol<Document> getQueryProtocol(final Document query, final int numberToReturn) {
+        new QueryProtocol<Document>(getNamespace(), 0, numberToReturn, new BsonDocumentWrapper<Document>(query, new DocumentCodec()), null,
+                                    new DocumentCodec());
     }
 
     private final class TestBlock implements Block<Document> {

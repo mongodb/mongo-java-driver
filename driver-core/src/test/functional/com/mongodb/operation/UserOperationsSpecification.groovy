@@ -17,7 +17,6 @@
 package com.mongodb.operation
 
 import category.Async
-import com.mongodb.CursorFlag
 import com.mongodb.MongoCredential
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoServerException
@@ -324,9 +323,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
 
     def sendMessage(Connection connection) {
         def command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME).getFullName(),
-                                         new BsonDocument('ismaster', new BsonInt32(1)),
-                                         EnumSet.noneOf(CursorFlag),
-                                         MessageSettings.builder().build());
+                                         new BsonDocument('ismaster', new BsonInt32(1)), false, MessageSettings.builder().build());
         OutputBuffer buffer = new BasicOutputBuffer();
         command.encode(buffer);
         connection.sendMessage(buffer.byteBuffers, command.getId())

@@ -16,12 +16,9 @@
 
 package com.mongodb.protocol.message;
 
-import com.mongodb.CursorFlag;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.io.BsonOutput;
-
-import java.util.EnumSet;
 
 import static com.mongodb.protocol.message.RequestMessage.OpCode.OP_QUERY;
 
@@ -32,7 +29,7 @@ import static com.mongodb.protocol.message.RequestMessage.OpCode.OP_QUERY;
  * @since 3.0
  */
 public class CommandMessage extends RequestMessage {
-    private final EnumSet<CursorFlag> cursorFlags;
+    private final boolean slaveOk;
     private final BsonDocument command;
     private final FieldNameValidator validator;
 
@@ -41,12 +38,11 @@ public class CommandMessage extends RequestMessage {
      *
      * @param collectionName the collection to execute the command in
      * @param command        the command
-     * @param cursorFlags    the cursor flags
+     * @param slaveOk        if querying of non-primary replica set members is allowed
      * @param settings       the message settings
      */
-    public CommandMessage(final String collectionName, final BsonDocument command, final EnumSet<CursorFlag> cursorFlags,
-                          final MessageSettings settings) {
-        this(collectionName, command, cursorFlags, new NoOpFieldNameValidator(), settings);
+    public CommandMessage(final String collectionName, final BsonDocument command, final boolean slaveOk, final MessageSettings settings) {
+        this(collectionName, command, slaveOk, new NoOpFieldNameValidator(), settings);
     }
 
     /**
@@ -54,23 +50,22 @@ public class CommandMessage extends RequestMessage {
      *
      * @param collectionName the collection to execute the command in
      * @param command        the command
-     * @param cursorFlags    the cursor flags
+     * @param slaveOk        if querying of non-primary replica set members is allowed
      * @param validator      the field name validator
      * @param settings       the message settings
      */
-    public CommandMessage(final String collectionName, final BsonDocument command, final EnumSet<CursorFlag> cursorFlags,
+    public CommandMessage(final String collectionName, final BsonDocument command, final boolean slaveOk,
                           final FieldNameValidator validator, final MessageSettings settings) {
         super(collectionName, OP_QUERY, settings);
-        this.cursorFlags = cursorFlags;
+        this.slaveOk = slaveOk;
         this.command = command;
         this.validator = validator;
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
-        bsonOutput.writeInt32(CursorFlag.fromSet(cursorFlags));
+        bsonOutput.writeInt32(slaveOk ? 1 << 2 : 0);
         bsonOutput.writeCString(getCollectionName());
-
         bsonOutput.writeInt32(0);
         bsonOutput.writeInt32(-1);
         addDocument(command, bsonOutput, validator);

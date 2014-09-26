@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.CommandFailureException;
-import com.mongodb.CursorFlag;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.protocol.message.CommandMessage;
@@ -26,8 +25,6 @@ import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
-
-import java.util.EnumSet;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static java.lang.String.format;
@@ -47,7 +44,7 @@ final class CommandHelper {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(internalConnection);
         try {
             CommandMessage message = new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
-                                                        command, EnumSet.noneOf(CursorFlag.class), MessageSettings.builder().build());
+                                                        command, false, MessageSettings.builder().build());
             message.encode(bsonOutput);
             internalConnection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             return message;

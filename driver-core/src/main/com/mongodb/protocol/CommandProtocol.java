@@ -16,7 +16,6 @@
 
 package com.mongodb.protocol;
 
-import com.mongodb.CursorFlag;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoFuture;
@@ -34,8 +33,6 @@ import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
-
-import java.util.EnumSet;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.protocol.ProtocolHelper.encodeMessage;
@@ -57,7 +54,7 @@ public class CommandProtocol<T> implements Protocol<T> {
     private final MongoNamespace namespace;
     private final BsonDocument command;
     private final Decoder<T> commandResultDecoder;
-    private final EnumSet<CursorFlag> cursorFlags;
+    private final boolean slaveOk;
     private final FieldNameValidator fieldNameValidator;
 
     /**
@@ -65,17 +62,17 @@ public class CommandProtocol<T> implements Protocol<T> {
      *
      * @param database             the database
      * @param command              the command
-     * @param cursorFlags          the cursor flags to use
+     * @param slaveOk              if querying of non-primary replica set members is allowed
      * @param fieldNameValidator   the field name validator to apply tot the command
      * @param commandResultDecoder the decoder to use to decode the command result
      */
-    public CommandProtocol(final String database, final BsonDocument command, final EnumSet<CursorFlag> cursorFlags,
+    public CommandProtocol(final String database, final BsonDocument command, final boolean slaveOk,
                            final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder) {
         notNull("database", database);
         this.namespace = new MongoNamespace(database, MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = notNull("command", command);
         this.commandResultDecoder = notNull("commandResultDecoder", commandResultDecoder);
-        this.cursorFlags = notNull("cursorFlags", cursorFlags);
+        this.slaveOk = slaveOk;
         this.fieldNameValidator = notNull("fieldNameValidator", fieldNameValidator);
     }
 
@@ -92,7 +89,7 @@ public class CommandProtocol<T> implements Protocol<T> {
     private CommandMessage sendMessage(final Connection connection) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
-            CommandMessage message = new CommandMessage(namespace.getFullName(), command, cursorFlags, fieldNameValidator,
+            CommandMessage message = new CommandMessage(namespace.getFullName(), command, slaveOk, fieldNameValidator,
                                                         getMessageSettings(connection.getDescription()));
             message.encode(bsonOutput);
             connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
@@ -120,7 +117,7 @@ public class CommandProtocol<T> implements Protocol<T> {
         SingleResultFuture<T> retVal = new SingleResultFuture<T>();
 
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
-        CommandMessage message = new CommandMessage(namespace.getFullName(), command, cursorFlags, fieldNameValidator,
+        CommandMessage message = new CommandMessage(namespace.getFullName(), command, slaveOk, fieldNameValidator,
                                                     getMessageSettings(connection.getDescription()));
         encodeMessage(message, bsonOutput);
 

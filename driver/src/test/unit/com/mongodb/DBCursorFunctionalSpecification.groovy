@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import com.mongodb.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 import spock.lang.Subject
 
@@ -299,5 +300,34 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
         then:
         dbCursor.collect { it -> [ it.get('name'), it.get('_id') ] } == [['Adam', 2], ['Adam', 4], ['Adam', 5], ['Bob', 3], ['Chris', 1]]
+    }
+
+    def 'DBCursor options should set the correct read preference'() {
+        given:
+        def collection = Spy(DBCollection, constructorArgs: ['collectionName', database, new DocumentCodec()])
+
+        when:
+        collection.find().hasNext()
+
+        then:
+        1 * collection.execute(_, ReadPreference.primary())
+
+        when:
+        collection.find().addOption(Bytes.QUERYOPTION_SLAVEOK).hasNext()
+
+        then:
+        1 * collection.execute(_, ReadPreference.secondaryPreferred())
+
+        when:
+        collection.find().addOption(Bytes.QUERYOPTION_TAILABLE).tryNext()
+
+        then:
+        1 * collection.execute(_, ReadPreference.primary())
+
+        when:
+        collection.find().addOption(Bytes.QUERYOPTION_TAILABLE).addOption(Bytes.QUERYOPTION_SLAVEOK).tryNext()
+
+        then:
+        1 * collection.execute(_, ReadPreference.secondaryPreferred())
     }
 }

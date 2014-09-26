@@ -18,7 +18,6 @@ package com.mongodb.connection
 
 import category.Async
 import category.Slow
-import com.mongodb.CursorFlag
 import com.mongodb.MongoException
 import com.mongodb.MongoInternalException
 import com.mongodb.MongoNamespace
@@ -738,8 +737,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def isMaster() {
             def command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME).getFullName(),
                                              new BsonDocument('ismaster', new BsonInt32(1)),
-                                             EnumSet.noneOf(CursorFlag),
-                                             MessageSettings.builder().build());
+                                             false, MessageSettings.builder().build());
             OutputBuffer buffer = new BasicOutputBuffer();
             command.encode(buffer);
             nextMessageId++
