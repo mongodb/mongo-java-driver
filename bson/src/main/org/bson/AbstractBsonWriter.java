@@ -643,7 +643,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
      * @param methodName        The name of the method.
      * @param actualContextType The actual ContextType.
      * @param validContextTypes The valid ContextTypes.
-     * @throws BsonInvalidOperationException
+     * @throws BsonInvalidOperationException when the method called is not valid for the current ContextType.
      */
     protected void throwInvalidContextType(final String methodName, final BsonContextType actualContextType,
                                            final BsonContextType... validContextTypes) {
@@ -659,7 +659,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
      *
      * @param methodName  The name of the method.
      * @param validStates The valid states.
-     * @throws BsonInvalidOperationException
+     * @throws BsonInvalidOperationException when the method called is not valid for the current state.
      */
     protected void throwInvalidState(final String methodName, final State... validStates) {
         String message;

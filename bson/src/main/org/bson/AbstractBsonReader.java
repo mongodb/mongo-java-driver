@@ -598,7 +598,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
      * @param methodName        The name of the method.
      * @param actualContextType The actual ContextType.
      * @param validContextTypes The valid ContextTypes.
-     * @throws BsonInvalidOperationException
+     * @throws BsonInvalidOperationException when the method called is not valid for the current ContextType.
      */
     protected void throwInvalidContextType(final String methodName, final BsonContextType actualContextType,
                                            final BsonContextType... validContextTypes) {
@@ -613,7 +613,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
      *
      * @param methodName  The name of the method.
      * @param validStates The valid states.
-     * @throws BsonInvalidOperationException
+     * @throws BsonInvalidOperationException when the method called is not valid for the current state.
      */
     protected void throwInvalidState(final String methodName, final State... validStates) {
         String validStatesString = StringUtils.join(" or ", asList(validStates));
@@ -650,7 +650,7 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
      * Verifies the name of the current element.
      *
      * @param expectedName The expected name.
-     * @throws BsonSerializationException
+     * @throws BsonSerializationException when the name read is not the expected name
      */
     protected void verifyName(final String expectedName) {
         readBsonType();
