@@ -39,7 +39,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
      * Construct an instance.
      *
      * @param bsonOutput the output to write to
-     * @param validator the field name validator to apply
+     * @param validator  the field name validator to apply
      */
     public BsonBinaryWriter(final BsonOutput bsonOutput, final FieldNameValidator validator) {
         this(new BsonWriterSettings(), new BsonBinaryWriterSettings(), bsonOutput, validator);
@@ -48,7 +48,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     /**
      * Construct an instance.
      *
-     * @param bsonOutput the output to write to
+     * @param bsonOutput  the output to write to
      * @param closeOutput whether to close the bsonOutput when it is closed itself
      */
     public BsonBinaryWriter(final BsonOutput bsonOutput, final boolean closeOutput) {
@@ -58,10 +58,10 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     /**
      * Construct an instance.
      *
-     * @param settings the generic BsonWriter settings
+     * @param settings             the generic BsonWriter settings
      * @param binaryWriterSettings the settings specific to a BsonBinaryWriter
-     * @param bsonOutput the output to write to
-     * @param closeOutput whether to close the bsonOutput when it is closed itself
+     * @param bsonOutput           the output to write to
+     * @param closeOutput          whether to close the bsonOutput when it is closed itself
      */
     public BsonBinaryWriter(final BsonWriterSettings settings, final BsonBinaryWriterSettings binaryWriterSettings,
                             final BsonOutput bsonOutput, final boolean closeOutput) {
@@ -71,10 +71,10 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     /**
      * Construct an instance.
      *
-     * @param settings the generic BsonWriter settings
+     * @param settings             the generic BsonWriter settings
      * @param binaryWriterSettings the settings specific to a BsonBinaryWriter
-     * @param bsonOutput the output to write to
-     * @param validator the field name validator to apply
+     * @param bsonOutput           the output to write to
+     * @param validator            the field name validator to apply
      */
     public BsonBinaryWriter(final BsonWriterSettings settings, final BsonBinaryWriterSettings binaryWriterSettings,
                             final BsonOutput bsonOutput, final FieldNameValidator validator) {
@@ -323,18 +323,34 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
         }
     }
 
+    /**
+     * Sets a maximum size for documents from this point.
+     *
+     * @param maxDocumentSize the maximum document size.
+     */
     public void pushMaxDocumentSize(final int maxDocumentSize) {
         maxDocumentSizeStack.push(maxDocumentSize);
     }
 
+    /**
+     * Reset the maximum document size to its previous value.
+     */
     public void popMaxDocumentSize() {
         maxDocumentSizeStack.pop();
     }
 
+    /**
+     * Create a snapshot of this writer's context at a point in time.
+     */
     public void mark() {
         mark = new Mark();
     }
 
+    /**
+     * Resets this writer to the last {@link #mark()} saved.
+     *
+     * @throws IllegalStateException if {@link #mark()} was not called prior to reset.
+     */
     public void reset() {
         if (mark == null) {
             throw new IllegalStateException("Can not reset without first marking");
@@ -366,11 +382,23 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
         private final int startPosition;
         private int index; // used when contextType is an array
 
+        /**
+         * Creates a new instance
+         *
+         * @param parentContext the context of the parent node
+         * @param contextType   the type of this context
+         * @param startPosition the position of the output stream of this writer.
+         */
         public Context(final Context parentContext, final BsonContextType contextType, final int startPosition) {
             super(parentContext, contextType);
             this.startPosition = startPosition;
         }
 
+        /**
+         * Creates a new instance by copying the values from the given context.
+         *
+         * @param from the Context to copy.
+         */
         public Context(final Context from) {
             super(from);
             startPosition = from.startPosition;
@@ -391,10 +419,14 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     protected class Mark extends AbstractBsonWriter.Mark {
         private final int position;
 
+        /**
+         * Creates a new instance storing the current position of the {@link org.bson.io.BsonOutput}.
+         */
         protected Mark() {
             this.position = bsonOutput.getPosition();
         }
 
+        @Override
         protected void reset() {
             super.reset();
             bsonOutput.truncateToPosition(mark.position);

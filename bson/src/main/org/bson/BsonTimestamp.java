@@ -42,7 +42,7 @@ public final class BsonTimestamp extends BsonValue implements Comparable<BsonTim
      * Construct a new instance for the given time and increment.
      *
      * @param time the number of seconds since the epoch
-     * @param inc the increment.
+     * @param inc  the increment.
      */
     public BsonTimestamp(final int time, final int inc) {
         this.time = new Date(time * 1000L);
@@ -66,6 +66,11 @@ public final class BsonTimestamp extends BsonValue implements Comparable<BsonTim
         return (int) (time.getTime() / 1000);
     }
 
+    /**
+     * Gets the increment value.
+     *
+     * @return an incrementing ordinal for operations within a given second
+     */
     public int getInc() {
         return inc;
     }

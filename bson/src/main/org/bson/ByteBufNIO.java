@@ -27,6 +27,11 @@ import java.nio.ByteOrder;
 public class ByteBufNIO implements ByteBuf {
     private ByteBuffer buf;
 
+    /**
+     * Creates a new instance.
+     *
+     * @param buf the {@code ByteBuffer} to wrap.
+     */
     public ByteBufNIO(final ByteBuffer buf) {
         this.buf = buf;
     }

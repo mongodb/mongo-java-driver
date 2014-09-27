@@ -69,7 +69,9 @@ public class BSONException extends RuntimeException {
     }
 
     /**
-     * Returns true if the error code is set (i.e., not null).
+     * Returns if the error code is set (i.e., not null).
+     *
+     * @return true if the error code is not null.
      */
     public boolean hasErrorCode() {
         return (errorCode != null);

@@ -20,6 +20,11 @@ import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.types.MaxKey;
 
+/**
+ * Encodes and decodes instances of type {@link org.bson.types.MaxKey}.
+ *
+ * @since 3.0
+ */
 public class MaxKeyCodec implements Codec<MaxKey> {
     @Override
     public void encode(final BsonWriter writer, final MaxKey value, final EncoderContext encoderContext) {

@@ -29,11 +29,22 @@ public final class BsonRegularExpression extends BsonValue implements Serializab
     private final String pattern;
     private final String options;
 
+    /**
+     * Creates a new instance
+     *
+     * @param pattern the regular expression {@link java.util.regex.Pattern}
+     * @param options the options for the regular expression
+     */
     public BsonRegularExpression(final String pattern, final String options) {
         this.pattern = pattern;
         this.options = options;
     }
 
+    /**
+     * Creates a new instance with no options set.
+     *
+     * @param pattern the regular expression {@link java.util.regex.Pattern}
+     */
     public BsonRegularExpression(final String pattern) {
         this(pattern, "");
     }
@@ -43,10 +54,20 @@ public final class BsonRegularExpression extends BsonValue implements Serializab
         return BsonType.REGULAR_EXPRESSION;
     }
 
+    /**
+     * Gets the regex pattern.
+     *
+     * @return the regular expression pattern
+     */
     public String getPattern() {
         return pattern;
     }
 
+    /**
+     * Gets the options for the regular expression
+     *
+     * @return the options.
+     */
     public String getOptions() {
         return options;
     }
