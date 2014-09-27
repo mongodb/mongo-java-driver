@@ -16,17 +16,35 @@
 
 package org.bson;
 
+/**
+ * All the customisable settings for writing BSON.
+ *
+ * @since 3.0
+ */
 public class BsonWriterSettings {
     private final int maxSerializationDepth;
 
+    /**
+     * Creates a new instance of the settings with the given maximum serialization depth.
+     *
+     * @param maxSerializationDepth the maximum number of nested levels to serialise
+     */
     public BsonWriterSettings(final int maxSerializationDepth) {
         this.maxSerializationDepth = maxSerializationDepth;
     }
 
+    /**
+     * Creates a new instance of the settings with the default maximum serialization depth of 1024.
+     */
     public BsonWriterSettings() {
         this(1024);
     }
 
+    /**
+     * Gets the maximum nuber of levels of depth defined by this settings object.
+     *
+     * @return the maximum number of levels that can be serialized.
+     */
     public int getMaxSerializationDepth() {
         return maxSerializationDepth;
     }

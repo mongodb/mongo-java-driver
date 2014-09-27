@@ -16,6 +16,11 @@
 
 package org.bson;
 
+/**
+ * Enumeration of all the BSON types currently supported.
+ *
+ * @since 3.0
+ */
 public enum BsonType {
     /**
      * Not a real BSON type. Used to signal the end of a document.
@@ -117,14 +122,30 @@ public enum BsonType {
         this.value = value;
     }
 
+    /**
+     * Get the int value of this BSON type.
+     *
+     * @return the int value of this type.
+     */
     public int getValue() {
         return value;
     }
 
+    /**
+     * Gets the {@code BsonType} that corresponds to the given int value.
+     *
+     * @param value the int value of the desired BSON type.
+     * @return the corresponding {@code BsonType}
+     */
     public static BsonType findByValue(final int value) {
         return LOOKUP_TABLE[value & 0xFF];
     }
 
+    /**
+     * Returns whether this type is some sort of containing type, e.g. a document or array.
+     *
+     * @return true if this is some sort of containing type rather than a primitive value
+     */
     public boolean isContainer() {
         return this == DOCUMENT || this == ARRAY;
     }

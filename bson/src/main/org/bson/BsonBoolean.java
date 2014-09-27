@@ -32,6 +32,12 @@ public final class BsonBoolean extends BsonValue implements Comparable<BsonBoole
 
     public static final BsonBoolean FALSE = new BsonBoolean(false);
 
+    /**
+     * Returns a {@code BsonBoolean} instance representing the specified {@code boolean} value.
+     *
+     * @param value a boolean value.
+     * @return {@link BsonBoolean#TRUE} if {@code value} is true, {@link BsonBoolean#FALSE} if {@code value} is false
+     */
     public static BsonBoolean valueOf(final boolean value) {
         return value ? TRUE : FALSE;
     }

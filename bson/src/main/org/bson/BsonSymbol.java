@@ -22,6 +22,8 @@ import java.io.Serializable;
 
 /**
  * Class to hold a BSON symbol object, which is an interned string in Ruby
+ *
+ * @since 3.0
  */
 public class BsonSymbol extends BsonValue implements Serializable {
 
@@ -29,11 +31,16 @@ public class BsonSymbol extends BsonValue implements Serializable {
 
     private static final long serialVersionUID = 1326269319883146072L;
 
-    public BsonSymbol(final String s) {
-        if (s == null) {
+    /**
+     * Creates a new instance.
+     *
+     * @param value the symbol value
+     */
+    public BsonSymbol(final String value) {
+        if (value == null) {
             throw new IllegalArgumentException("Value can not be null");
         }
-        symbol = s;
+        symbol = value;
     }
 
     @Override
@@ -41,6 +48,11 @@ public class BsonSymbol extends BsonValue implements Serializable {
         return BsonType.SYMBOL;
     }
 
+    /**
+     * Gets the symbol value
+     *
+     * @return the symbol.
+     */
     public String getSymbol() {
         return symbol;
     }

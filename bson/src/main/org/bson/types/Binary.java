@@ -49,7 +49,6 @@ public class Binary implements Serializable {
         this(type.getValue(), data);
     }
 
-
     /**
      * Creates a Binary object
      *
@@ -61,14 +60,29 @@ public class Binary implements Serializable {
         this.data = data.clone();
     }
 
+    /**
+     * Get the binary sub type as a byte.
+     *
+     * @return the binary sub type as a byte.
+     */
     public byte getType() {
         return type;
     }
 
+    /**
+     * Get a copy of the binary value.
+     *
+     * @return a copy of the binary value.
+     */
     public byte[] getData() {
         return data.clone();
     }
 
+    /**
+     * Get the length of the data.
+     *
+     * @return the length of the binary array.
+     */
     public int length() {
         return data.length;
     }

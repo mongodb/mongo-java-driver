@@ -20,6 +20,11 @@ import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.types.MinKey;
 
+/**
+ * Encodes and decodes instances of type {@link org.bson.types.MinKey}.
+ *
+ * @since 3.0
+ */
 public class MinKeyCodec implements Codec<MinKey> {
     @Override
     public void encode(final BsonWriter writer, final MinKey value, final EncoderContext encoderContext) {

@@ -24,6 +24,7 @@ import java.nio.charset.Charset;
 
 /**
  * An implementation of {@code BsonInput} that is backed by a {@code ByteBuf}.
+ *
  * @since 3.0
  */
 public class ByteBufferBsonInput implements BsonInput {
@@ -33,8 +34,9 @@ public class ByteBufferBsonInput implements BsonInput {
     private int mark = -1;
 
     /**
-     * Construct an instance with the given byte buffer.  The stream takes over ownership of the buffer and closes it when this instance
-     * is closed.
+     * Construct an instance with the given byte buffer.  The stream takes over ownership of the buffer and closes it when this instance is
+     * closed.
+     *
      * @param buffer the byte buffer
      */
     public ByteBufferBsonInput(final ByteBuf buffer) {
@@ -162,6 +164,7 @@ public class ByteBufferBsonInput implements BsonInput {
         return buffer.hasRemaining();
     }
 
+    @Override
     public void close() {
         buffer.close();
         buffer = null;

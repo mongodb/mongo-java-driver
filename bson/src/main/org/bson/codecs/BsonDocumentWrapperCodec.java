@@ -45,7 +45,7 @@ public class BsonDocumentWrapperCodec implements Codec<BsonDocumentWrapper> {
      * in all cases.
      *
      * @param reader the BSON reader the reader
-     * @param decoderContext
+     * @param decoderContext a decoder context, currently unused
      * @return the document
      */
     @Override

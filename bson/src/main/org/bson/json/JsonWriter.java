@@ -42,10 +42,21 @@ public class JsonWriter extends AbstractBsonWriter {
     private final Writer writer;
     private final JsonWriterSettings settings;
 
+    /**
+     * Creates a new instance which uses {@code writer} to write JSON to.
+     *
+     * @param writer the writer to write JSON to.
+     */
     public JsonWriter(final Writer writer) {
         this(writer, new JsonWriterSettings());
     }
 
+    /**
+     * Creates a new instance which uses {@code writer} to write JSON to and uses the given settings.
+     *
+     * @param writer   the writer to write JSON to.
+     * @param settings the settings to apply to this writer.
+     */
     public JsonWriter(final Writer writer, final JsonWriterSettings settings) {
         super(settings);
         this.settings = settings;
@@ -126,7 +137,7 @@ public class JsonWriter extends AbstractBsonWriter {
                 case SHELL:
                     writeNameHelper(getName());
                     writer.write(String.format("new BinData(%s, \"%s\")", Integer.toString(binary.getType() & 0xFF),
-                            printBase64Binary(binary.getData())));
+                                               printBase64Binary(binary.getData())));
 
                     break;
                 default:
@@ -490,10 +501,21 @@ public class JsonWriter extends AbstractBsonWriter {
         throw new BSONException("Wrapping IOException", e);
     }
 
+    /**
+     * The context for the writer, inheriting all the values from {@link org.bson.AbstractBsonWriter.Context}, and additionally providing
+     * settings for the indentation level and whether there are any child elements at this level.
+     */
     public class Context extends AbstractBsonWriter.Context {
         private final String indentation;
         private boolean hasElements;
 
+        /**
+         * Creates a new context.
+         *
+         * @param parentContext the parent context that can be used for going back up to the parent level
+         * @param contextType   the type of this context
+         * @param indentChars   the String to use for indentation at this level.
+         */
         public Context(final Context parentContext, final BsonContextType contextType, final String indentChars) {
             super(parentContext, contextType);
             this.indentation = (parentContext == null) ? indentChars : parentContext.indentation + indentChars;
