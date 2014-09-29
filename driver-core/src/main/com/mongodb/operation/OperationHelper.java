@@ -31,13 +31,14 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerVersion;
 import com.mongodb.protocol.Protocol;
 
-import java.util.Arrays;
 import java.util.List;
+
+import static java.util.Arrays.asList;
 
 final class OperationHelper {
 
     // TODO: This is duplicated in ProtocolHelper, but I don't want it to be public
-    static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
+    static final List<Integer> DUPLICATE_KEY_ERROR_CODES = asList(11000, 11001, 12582);
 
 
     interface CallableWithConnection<T> {
@@ -72,6 +73,11 @@ final class OperationHelper {
 
     static boolean serverIsAtLeastVersionTwoDotSix(final Connection connection) {
         return connection.getServerDescription().getVersion().compareTo(new ServerVersion(2, 6)) >= 0;
+    }
+
+    static boolean serverIsAtLeastVersionTwoDotEight(final Connection connection) {
+        // Todo update to 2.8 once released
+        return connection.getServerDescription().getVersion().compareTo(new ServerVersion(asList(2, 7, 7))) >= 0;
     }
 
     static <T> T executeProtocol(final Protocol<T> protocol, final ConnectionSource source) {

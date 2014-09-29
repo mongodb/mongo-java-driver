@@ -22,7 +22,7 @@ import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.operation.CreateIndexesOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropIndexOperation;
-import com.mongodb.operation.GetIndexesOperation;
+import com.mongodb.operation.ListIndexesOperation;
 import com.mongodb.operation.Index;
 import org.mongodb.Document;
 
@@ -55,7 +55,7 @@ public class CollectionAdministrationImpl implements CollectionAdministration {
 
     @Override
     public MongoFuture<List<Document>> getIndexes() {
-        return client.execute(new GetIndexesOperation<Document>(collectionNamespace, new DocumentCodec()), primary());
+        return client.execute(new ListIndexesOperation<Document>(collectionNamespace, new DocumentCodec()), primary());
     }
 
     @Override

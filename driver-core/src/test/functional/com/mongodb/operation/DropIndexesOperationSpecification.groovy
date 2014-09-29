@@ -143,7 +143,7 @@ class DropIndexesOperationSpecification extends OperationFunctionalSpecification
     }
 
     def getIndexes() {
-        new GetIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
+        new ListIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
     }
 
 }

@@ -309,17 +309,25 @@ final class CommandOperationHelper {
     /* Misc operation helpers */
 
     static void rethrowIfNotNamespaceError(final CommandFailureException e) {
-        String message = e.getErrorMessage();
-        if (!message.contains("ns not found")) {
-            throw e;
-        }
+        rethrowIfNotNamespaceError(e, null);
     }
 
-    static MongoFuture<Void> rethrowIfNotNamespaceError(final MongoFuture<BsonDocument> future) {
-        final SingleResultFuture<Void> ignoringFuture = new SingleResultFuture<Void>();
-        future.register(new SingleResultCallback<BsonDocument>() {
+    static <T> T rethrowIfNotNamespaceError(final CommandFailureException e, final T defaultValue) {
+        if (!e.getErrorMessage().contains("ns not found") && e.getErrorCode() != 26) {
+            throw e;
+        }
+        return defaultValue;
+    }
+
+    static <T> MongoFuture<T> rethrowIfNotNamespaceError(final MongoFuture<T> future) {
+        return rethrowIfNotNamespaceError(future, null);
+    }
+
+    static <T> MongoFuture<T> rethrowIfNotNamespaceError(final MongoFuture<T> future, final T defaultValue) {
+        final SingleResultFuture<T> ignoringFuture = new SingleResultFuture<T>();
+        future.register(new SingleResultCallback<T>() {
             @Override
-            public void onResult(final BsonDocument result, final MongoException e) {
+            public void onResult(final T result, final MongoException e) {
                 MongoException checkedError = e;
                 // Check for a namespace error which we can safely ignore
                 if (e instanceof CommandFailureException) {
@@ -330,7 +338,11 @@ final class CommandOperationHelper {
                         checkedError = error;
                     }
                 }
-                ignoringFuture.init(null, checkedError);
+                if (result != null) {
+                    ignoringFuture.init(result, checkedError);
+                } else {
+                    ignoringFuture.init(defaultValue, checkedError);
+                }
             }
         });
         return ignoringFuture;

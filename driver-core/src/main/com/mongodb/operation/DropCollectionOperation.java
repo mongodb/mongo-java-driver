@@ -59,7 +59,8 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
 
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return rethrowIfNotNamespaceError(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding));
+        return rethrowIfNotNamespaceError(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding,
+                                                                             new OperationHelper.VoidTransformer<BsonDocument>()));
     }
 
     private BsonDocument getCommand() {

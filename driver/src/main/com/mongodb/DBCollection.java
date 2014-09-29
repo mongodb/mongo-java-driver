@@ -32,7 +32,7 @@ import com.mongodb.operation.FindAndDeleteOperation;
 import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
 import com.mongodb.operation.FindOperation;
-import com.mongodb.operation.GetIndexesOperation;
+import com.mongodb.operation.ListIndexesOperation;
 import com.mongodb.operation.Index;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
@@ -1771,7 +1771,7 @@ public class DBCollection {
      * @throws MongoException
      */
     public List<DBObject> getIndexInfo() {
-        return execute(new GetIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec()), primary());
+        return execute(new ListIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec()), primary());
     }
 
     /**

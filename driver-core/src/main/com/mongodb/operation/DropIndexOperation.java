@@ -61,7 +61,8 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
 
     @Override
     public MongoFuture<Void> executeAsync(final AsyncWriteBinding binding) {
-        return rethrowIfNotNamespaceError(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding));
+        return rethrowIfNotNamespaceError(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(), getCommand(), binding,
+                                                                             new OperationHelper.VoidTransformer<BsonDocument>()));
     }
 
     private BsonDocument getCommand() {

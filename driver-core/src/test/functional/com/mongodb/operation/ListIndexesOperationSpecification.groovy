@@ -25,12 +25,38 @@ import org.mongodb.Document
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.operation.OrderBy.ASC
+import static com.mongodb.operation.OrderBy.DESC
 import static java.util.concurrent.TimeUnit.SECONDS
 
-class GetIndexesOperationSpecification extends OperationFunctionalSpecification {
+class ListIndexesOperationSpecification extends OperationFunctionalSpecification {
+
+    def 'should return empty list for nonexistent collection'() {
+        given:
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+
+        when:
+        List<Document> indexes = operation.execute(getBinding())
+
+        then:
+        indexes.size() == 0
+    }
+
+    @Category(Async)
+    def 'should return empty list for nonexistent collection asynchronously'() {
+        given:
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+
+        when:
+        List<Document> indexes = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
+
+        then:
+        indexes.size() == 0
+    }
+
+
     def 'should return default index on Collection that exists'() {
         given:
-        def operation = new GetIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
@@ -44,7 +70,7 @@ class GetIndexesOperationSpecification extends OperationFunctionalSpecification 
     @Category(Async)
     def 'should return default index on Collection that exists asynchronously'() {
         given:
-        def operation = new GetIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
@@ -57,31 +83,42 @@ class GetIndexesOperationSpecification extends OperationFunctionalSpecification 
 
     def 'should return created indexes on Collection'() {
         given:
-        def operation = new GetIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
         createIndexes(Index.builder().addKey('theField', ASC).build())
+        createIndexes(Index.builder().addKey('compound', ASC).addKey('index', DESC).build())
+        createIndexes(Index.builder().addKey('unique', ASC).unique(true).build())
 
         when:
         List<Document> indexes = operation.execute(getBinding())
 
         then:
-        indexes.size() == 2
+        indexes.size() == 4
         indexes[0].name == '_id_'
         indexes[1].name == 'theField_1'
+        indexes[2].name == 'compound_1_index_-1'
+        indexes[3].name == 'unique_1'
+        indexes[3].unique
     }
 
     @Category(Async)
     def 'should return created indexes on Collection asynchronously'() {
         given:
-        def operation = new GetIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
         createIndexes(Index.builder().addKey('theField', ASC).build())
+        createIndexes(Index.builder().addKey('compound', ASC).addKey('index', DESC).build())
+        createIndexes(Index.builder().addKey('unique', ASC).unique(true).build())
 
         when:
         List<Document> indexes = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
 
         then:
-        indexes.size() == 2
+        indexes.size() == 4
         indexes[0].name == '_id_'
         indexes[1].name == 'theField_1'
+        indexes[2].name == 'compound_1_index_-1'
+        indexes[3].name == 'unique_1'
+        indexes[3].unique
+
     }
 
     @SuppressWarnings('FactoryMethodName')
