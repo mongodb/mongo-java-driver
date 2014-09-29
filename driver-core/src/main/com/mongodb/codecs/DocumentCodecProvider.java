@@ -102,6 +102,7 @@ public class DocumentCodecProvider implements CodecProvider {
         addCodec(new SymbolCodec());
         addCodec(new BsonTimestampCodec());
         addCodec(new BsonUndefinedCodec());
+        addCodec(new UUIDCodec());
     }
 
     private <T> void addCodec(final Codec<T> codec) {

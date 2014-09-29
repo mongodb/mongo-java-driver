@@ -725,13 +725,44 @@ public abstract class AbstractBsonReader implements Closeable, BsonReader {
                 throw new BSONException(format("Unexpected ContextType %s.", getContext().getContextType()));
         }
     }
+    protected class Mark {
+        private State state;
+        private Context parentContext;
+        private BsonContextType contextType;
+        private BsonType currentBsonType;
+        private String currentName;
+
+        protected Context getParentContext() {
+            return parentContext;
+        }
+
+        protected BsonContextType getContextType() {
+            return contextType;
+        }
+
+        protected Mark() {
+            state = AbstractBsonReader.this.state;
+            parentContext = AbstractBsonReader.this.context.parentContext;
+            contextType = AbstractBsonReader.this.context.contextType;
+            currentBsonType = AbstractBsonReader.this.currentBsonType;
+            currentName = AbstractBsonReader.this.currentName;
+        }
+
+        protected void reset() {
+            AbstractBsonReader.this.state = state;
+            AbstractBsonReader.this.currentBsonType = currentBsonType;
+            AbstractBsonReader.this.currentName = currentName;
+        }
+    }
+
 
     /**
      * The context for the reader. Records the parent context, creating a bread crumb trail to trace back up to the root context of the
      * reader. Also records the {@link org.bson.BsonContextType}, indicating whether the reader is reading a document, array, or other
      * complex sub-structure.
      */
-    protected static class Context {
+    protected abstract class Context {
+
         private final Context parentContext;
         private final BsonContextType contextType;
 

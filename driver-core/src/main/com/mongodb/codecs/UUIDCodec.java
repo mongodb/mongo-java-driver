@@ -16,15 +16,19 @@
 
 package com.mongodb.codecs;
 
+import org.bson.BSONException;
 import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 
 import java.util.UUID;
+
+import static com.mongodb.codecs.CodecHelper.reverseByteArray;
 
 /**
  * Encodes and decodes {@code UUID} objects.
@@ -32,34 +36,79 @@ import java.util.UUID;
  * @since 3.0
  */
 public class UUIDCodec implements Codec<UUID> {
+
+     private final UuidRepresentation encoderUuidRepresentation;
+     private final UuidRepresentation decoderUuidRepresentation;
+
+     /**
+      * The default UUIDRepresentation is JAVA_LEGACY to be compatible with existing documents
+      *
+      * @param uuidRepresentation the representation of UUID
+      *
+      * @since 3.0
+      * @see org.bson.UuidRepresentation
+      */
+     public UUIDCodec(final UuidRepresentation uuidRepresentation) {
+         this.encoderUuidRepresentation = uuidRepresentation;
+         this.decoderUuidRepresentation = uuidRepresentation;
+     }
+
+    /**
+      * The constructor for UUIDCodec, default is JAVA_LEGACY
+      */
+     public UUIDCodec() {
+         this.encoderUuidRepresentation = UuidRepresentation.JAVA_LEGACY;
+         this.decoderUuidRepresentation = UuidRepresentation.JAVA_LEGACY;
+     }
+
     @Override
     public void encode(final BsonWriter writer, final UUID value, final EncoderContext encoderContext) {
-        byte[] bytes = new byte[16];
-
-        writeLongToArrayLittleEndian(bytes, 0, value.getMostSignificantBits());
-        writeLongToArrayLittleEndian(bytes, 8, value.getLeastSignificantBits());
-
-        writer.writeBinaryData(new BsonBinary(BsonBinarySubType.UUID_LEGACY, bytes));
+        byte[] binaryData = new byte[16];
+        writeLongToArrayBigEndian(binaryData, 0, value.getMostSignificantBits());
+        writeLongToArrayBigEndian(binaryData, 8, value.getLeastSignificantBits());
+        switch (encoderUuidRepresentation) {
+            case C_SHARP_LEGACY:
+                reverseByteArray(binaryData, 0, 4);
+                reverseByteArray(binaryData, 4, 2);
+                reverseByteArray(binaryData, 6, 2);
+                break;
+            case JAVA_LEGACY:
+                reverseByteArray(binaryData, 0, 8);
+                reverseByteArray(binaryData, 8, 8);
+                break;
+            case PYTHON_LEGACY:
+            case STANDARD:
+                break;
+            default:
+                throw new BSONException("Unexpected UUID representation");
+        }
+        // changed the default subtype to STANDARD since 3.0
+        if (encoderUuidRepresentation == UuidRepresentation.STANDARD) {
+            writer.writeBinaryData(new BsonBinary(BsonBinarySubType.UUID_STANDARD, binaryData));
+        } else {
+            writer.writeBinaryData(new BsonBinary(BsonBinarySubType.UUID_LEGACY, binaryData));
+        }
     }
 
     @Override
     public UUID decode(final BsonReader reader, final DecoderContext decoderContext) {
-        return new BinaryToUUIDTransformer().transform(reader.readBinaryData());
+        BsonBinary binaryData = reader.readBinaryData();
+        BinaryToUUIDTransformer transformer = new BinaryToUUIDTransformer(decoderUuidRepresentation);
+        return transformer.transform(binaryData);
     }
 
     @Override
     public Class<UUID> getEncoderClass() {
         return UUID.class;
     }
-
-    private static void writeLongToArrayLittleEndian(final byte[] bytes, final int offset, final long x) {
-        bytes[offset] = (byte) (0xFFL & (x));
-        bytes[offset + 1] = (byte) (0xFFL & (x >> 8));
-        bytes[offset + 2] = (byte) (0xFFL & (x >> 16));
-        bytes[offset + 3] = (byte) (0xFFL & (x >> 24));
-        bytes[offset + 4] = (byte) (0xFFL & (x >> 32));
-        bytes[offset + 5] = (byte) (0xFFL & (x >> 40));
-        bytes[offset + 6] = (byte) (0xFFL & (x >> 48));
-        bytes[offset + 7] = (byte) (0xFFL & (x >> 56));
+    private static void writeLongToArrayBigEndian(final byte[] bytes, final int offset, final long x) {
+        bytes[offset + 7] = (byte) (0xFFL & (x));
+        bytes[offset + 6] = (byte) (0xFFL & (x >> 8));
+        bytes[offset + 5] = (byte) (0xFFL & (x >> 16));
+        bytes[offset + 4] = (byte) (0xFFL & (x >> 24));
+        bytes[offset + 3] = (byte) (0xFFL & (x >> 32));
+        bytes[offset + 2] = (byte) (0xFFL & (x >> 40));
+        bytes[offset + 1] = (byte) (0xFFL & (x >> 48));
+        bytes[offset] = (byte) (0xFFL & (x >> 56));
     }
 }

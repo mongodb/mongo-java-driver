@@ -16,6 +16,7 @@
 
 package com.mongodb.codecs;
 
+import org.bson.BsonBinarySubType;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonReader;
@@ -32,6 +33,7 @@ import org.mongodb.Document;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.UUID;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -175,8 +177,15 @@ public class DocumentCodec implements CollectibleCodec<Document> {
         if (bsonType == BsonType.NULL) {
             reader.readNull();
             return null;
-        } else {
-            return registry.get(bsonTypeClassMap.get(bsonType)).decode(reader, decoderContext);
+        } else if (bsonType == BsonType.BINARY) {
+            reader.mark();
+            byte bsonSubType = reader.readBinaryData().getType();
+            reader.reset();
+            if (bsonSubType == BsonBinarySubType.UUID_STANDARD.getValue()
+                    || bsonSubType == BsonBinarySubType.UUID_LEGACY.getValue()) {
+                return registry.get(UUID.class).decode(reader, decoderContext);
+            }
         }
+        return registry.get(bsonTypeClassMap.get(bsonType)).decode(reader, decoderContext);
     }
 }
