@@ -143,7 +143,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     }
 
     def collectionNameExists(String collectionName) {
-        new GetCollectionNamesOperation(databaseName).execute(getBinding()).contains(collectionName);
+        new ListCollectionNamesOperation(databaseName).execute(getBinding()).contains(collectionName);
     }
 
 }

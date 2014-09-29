@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import category.Async
+import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
@@ -25,13 +26,13 @@ import org.mongodb.Document
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 
-class GetCollectionNamesOperationSpecification extends OperationFunctionalSpecification {
+class ListCollectionNamesOperationSpecification extends OperationFunctionalSpecification {
 
     def madeUpDatabase = 'MadeUpDatabase'
 
     def 'should return empty set if database does not exist'() {
         given:
-        def operation = new GetCollectionNamesOperation(madeUpDatabase)
+        def operation = new ListCollectionNamesOperation(madeUpDatabase)
 
         when:
         List<String> names = operation.execute(getBinding())
@@ -46,7 +47,7 @@ class GetCollectionNamesOperationSpecification extends OperationFunctionalSpecif
     @Category(Async)
     def 'should return empty set if database does not exist asynchronously'() {
         given:
-        def operation = new GetCollectionNamesOperation(madeUpDatabase)
+        def operation = new ListCollectionNamesOperation(madeUpDatabase)
 
         when:
         List<String> names = operation.executeAsync(getAsyncBinding()).get()
@@ -60,27 +61,37 @@ class GetCollectionNamesOperationSpecification extends OperationFunctionalSpecif
 
     def 'should return default system.index and collection names if a Collection exists'() {
         given:
-        def operation = new GetCollectionNamesOperation(databaseName)
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
+        def operation = new ListCollectionNamesOperation(databaseName)
+        def helper = getCollectionHelper()
+        def helper2 = getCollectionHelper(new MongoNamespace(databaseName, 'collection2'))
+        def codec = new DocumentCodec()
+        helper.insertDocuments(codec, ['a': 1] as Document)
+        helper2.insertDocuments(codec, ['a': 1] as Document)
 
         when:
         List<String> names = operation.execute(getBinding())
 
         then:
-        names.containsAll(['system.indexes', collectionName])
+        names.size() == 3
+        names.containsAll(['system.indexes', collectionName, 'collection2'])
     }
 
     @Category(Async)
     def 'should return default system.index and collection names if a Collection exists asynchronously'() {
         given:
-        def operation = new GetCollectionNamesOperation(databaseName)
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
+        def operation = new ListCollectionNamesOperation(databaseName)
+        def helper = getCollectionHelper()
+        def helper2 = getCollectionHelper(new MongoNamespace(databaseName, 'collection2'))
+        def codec = new DocumentCodec()
+        helper.insertDocuments(codec, ['a': 1] as Document)
+        helper2.insertDocuments(codec, ['a': 1] as Document)
 
         when:
         List<String> names = operation.executeAsync(getAsyncBinding()).get()
 
         then:
-        names.containsAll(['system.indexes', collectionName])
+        names.size() == 3
+        names.containsAll(['system.indexes', collectionName, 'collection2'])
     }
 
 }

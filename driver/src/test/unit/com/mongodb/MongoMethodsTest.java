@@ -27,8 +27,8 @@ public class MongoMethodsTest extends DatabaseTestCase {
     @Test
     public void shouldGetDatabaseNames() throws UnknownHostException {
         try {
-            getClient().getDB("test1").getCollectionNames();
-            getClient().getDB("test2").getCollectionNames();
+            getClient().getDB("test1").getCollection("test").insert(new BasicDBObject("a", 1));
+            getClient().getDB("test2").getCollection("test").insert(new BasicDBObject("a", 1));
 
             assertThat(getClient().getDatabaseNames(), hasItems("test1", "test2"));
         } finally {

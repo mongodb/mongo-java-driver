@@ -24,7 +24,7 @@ import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateUserOperation;
 import com.mongodb.operation.DropUserOperation;
-import com.mongodb.operation.FindOperation;
+import com.mongodb.operation.ListCollectionNamesOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.UpdateUserOperation;
 import com.mongodb.operation.UserExistsOperation;
@@ -36,7 +36,9 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.mongodb.Document;
 
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -229,19 +231,10 @@ public class DB {
      * @return the names of collections in this database
      * @throws MongoException
      */
-        public Set<String> getCollectionNames() {
-        MongoCursor<BsonDocument> cursor = execute(new FindOperation<BsonDocument>(new MongoNamespace(name, "system.namespaces"),
-                                                                                    new BsonDocumentCodec()), primary());
-        HashSet<String> collections = new HashSet<String>();
-        int lengthOfDatabaseName = getName().length();
-        while (cursor.hasNext()) {
-            String collectionName = cursor.next().getString("name").getValue();
-            if (!collectionName.contains("$")) {
-                String collectionNameWithoutDatabasePrefix = collectionName.substring(lengthOfDatabaseName + 1);
-                collections.add(collectionNameWithoutDatabasePrefix);
-            }
-        }
-        return collections;
+    public Set<String> getCollectionNames() {
+        List<String> collectionNames = execute(new ListCollectionNamesOperation(name), primary());
+        Collections.sort(collectionNames);
+        return new LinkedHashSet<String>(collectionNames);
     }
 
     /**

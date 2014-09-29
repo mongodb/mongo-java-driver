@@ -20,7 +20,7 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateCollectionOptions;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.GetCollectionNamesOperation;
+import com.mongodb.operation.ListCollectionNamesOperation;
 import com.mongodb.operation.RenameCollectionOperation;
 
 import java.util.List;
@@ -56,7 +56,7 @@ public class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public MongoFuture<List<String>> getCollectionNames() {
-        return client.execute(new GetCollectionNamesOperation(databaseName), primary());
+        return client.execute(new ListCollectionNamesOperation(databaseName), primary());
     }
 
     @Override

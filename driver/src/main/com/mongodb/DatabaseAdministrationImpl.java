@@ -20,7 +20,7 @@ import com.mongodb.client.DatabaseAdministration;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateCollectionOptions;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.GetCollectionNamesOperation;
+import com.mongodb.operation.ListCollectionNamesOperation;
 import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.RenameCollectionOperation;
 
@@ -55,7 +55,7 @@ class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public List<String> getCollectionNames() {
-        return executor.execute(new GetCollectionNamesOperation(databaseName), primary());
+        return executor.execute(new ListCollectionNamesOperation(databaseName), primary());
     }
 
     @Override
