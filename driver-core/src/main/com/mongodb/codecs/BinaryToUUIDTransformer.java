@@ -16,9 +16,15 @@
 
 package com.mongodb.codecs;
 
+import org.bson.BSONException;
 import org.bson.BsonBinary;
+import org.bson.BsonBinarySubType;
+import org.bson.BsonSerializationException;
+import org.bson.UuidRepresentation;
 
 import java.util.UUID;
+
+import static com.mongodb.codecs.CodecHelper.reverseByteArray;
 
 /**
  * A transformer from {@code BsonBinary} to {@code UUID}.
@@ -26,21 +32,59 @@ import java.util.UUID;
  * @since 3.0
  */
 public class BinaryToUUIDTransformer implements BinaryTransformer<UUID> {
-    @Override
-    public UUID transform(final BsonBinary binary) {
-        return new UUID(readLongFromArrayLittleEndian(binary.getData(), 0), readLongFromArrayLittleEndian(binary.getData(), 8));
+
+    private UuidRepresentation uuidRepresentation = UuidRepresentation.JAVA_LEGACY;
+
+    public BinaryToUUIDTransformer() {
     }
 
-    private static long readLongFromArrayLittleEndian(final byte[] bytes, final int offset) {
+    public BinaryToUUIDTransformer(final UuidRepresentation uuidRepresentation) {
+        this.uuidRepresentation = uuidRepresentation;
+    }
+    
+    @Override
+    public UUID transform(final BsonBinary binary) {
+        byte[] binaryData = binary.getData();
+
+        if (binaryData.length != 16) {
+            throw new BsonSerializationException(String.format("Expected length to be 16, not %d.", binaryData.length));
+        }
+        if (binary.getType() == BsonBinarySubType.UUID_LEGACY.getValue()) {
+            switch (uuidRepresentation) {
+                case C_SHARP_LEGACY:
+                    reverseByteArray(binaryData, 0, 4);
+                    reverseByteArray(binaryData, 4, 2);
+                    reverseByteArray(binaryData, 6, 2);
+                    break;
+                case JAVA_LEGACY:
+                    reverseByteArray(binaryData, 0, 8);
+                    reverseByteArray(binaryData, 8, 8);
+                    break;
+                case PYTHON_LEGACY:
+                case STANDARD:
+                    break;
+                default:
+                    throw new BSONException("Unexpected UUID representation");
+            }
+        }
+        if (binary.getType() == BsonBinarySubType.UUID_LEGACY.getValue()
+                || binary.getType() == BsonBinarySubType.UUID_STANDARD.getValue()) {
+            return new UUID(readLongFromArrayBigEndian(binaryData, 0), readLongFromArrayBigEndian(binaryData, 8));
+        } else {
+            throw new BSONException("Unexpected BsonBinarySubType");
+        }
+    }
+
+    private static long readLongFromArrayBigEndian(final byte[] bytes, final int offset) {
         long x = 0;
-        x |= (0xFFL & bytes[offset]);
-        x |= (0xFFL & bytes[offset + 1]) << 8;
-        x |= (0xFFL & bytes[offset + 2]) << 16;
-        x |= (0xFFL & bytes[offset + 3]) << 24;
-        x |= (0xFFL & bytes[offset + 4]) << 32;
-        x |= (0xFFL & bytes[offset + 5]) << 40;
-        x |= (0xFFL & bytes[offset + 6]) << 48;
-        x |= (0xFFL & bytes[offset + 7]) << 56;
+        x |= (0xFFL & bytes[offset + 7]);
+        x |= (0xFFL & bytes[offset + 6]) << 8;
+        x |= (0xFFL & bytes[offset + 5]) << 16;
+        x |= (0xFFL & bytes[offset + 4]) << 24;
+        x |= (0xFFL & bytes[offset + 3]) << 32;
+        x |= (0xFFL & bytes[offset + 2]) << 40;
+        x |= (0xFFL & bytes[offset + 1]) << 48;
+        x |= (0xFFL & bytes[offset]) << 56;
         return x;
     }
 }

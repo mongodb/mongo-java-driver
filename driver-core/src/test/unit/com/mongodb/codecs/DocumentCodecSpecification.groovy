@@ -20,15 +20,20 @@ import org.bson.BsonBinaryReader
 import org.bson.BsonBinaryWriter
 import org.bson.BsonDbPointer
 import org.bson.BsonDocument
+import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.BsonReader
 import org.bson.BsonRegularExpression
 import org.bson.BsonTimestamp
 import org.bson.BsonUndefined
+import org.bson.BsonWriter
 import org.bson.ByteBufNIO
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.ByteBufferBsonInput
+import org.bson.json.JsonReader
+import org.bson.json.JsonWriter
 import org.bson.types.Binary
 import org.bson.types.Code
 import org.bson.types.MaxKey
@@ -37,6 +42,7 @@ import org.bson.types.ObjectId
 import org.bson.types.Symbol
 import org.mongodb.CodeWithScope
 import org.mongodb.Document
+import spock.lang.Shared
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
@@ -44,7 +50,10 @@ import java.nio.ByteBuffer
 import static java.util.Arrays.asList
 
 class DocumentCodecSpecification extends Specification {
-    def 'should encode and decode all default types'() {
+    @Shared BsonDocument bsonDoc = new BsonDocument()
+    @Shared StringWriter stringWriter = new StringWriter()
+
+    def 'should encode and decode all default types with all readers and writers' (BsonWriter writer) {
         given:
         def originalDocument = new Document()
         originalDocument.with {
@@ -68,15 +77,22 @@ class DocumentCodecSpecification extends Specification {
             put('undefined', new BsonUndefined())
             put('binary', new Binary((byte) 80, [5, 4, 3, 2, 1] as byte[]))
             put('array', asList(1, 1L, true, [1, 2, 3], new Document('a', 1), null))
+            put('uuid', new UUID(1L, 2L))
             put('document', new Document('a', 2))
         }
 
         when:
-        def buffer = new BasicOutputBuffer()
-        BsonBinaryWriter writer = new BsonBinaryWriter(buffer, false)
         new DocumentCodec().encode(writer, originalDocument, EncoderContext.builder().build())
-        BsonBinaryReader reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray()))),
-                                                       true)
+        BsonReader reader
+        if (writer instanceof BsonDocumentWriter) {
+            reader = new BsonDocumentReader(bsonDoc)
+        } else if (writer instanceof BsonBinaryWriter) {
+            BasicOutputBuffer buffer = (BasicOutputBuffer)writer.getBsonOutput();
+            reader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(
+                    ByteBuffer.wrap(buffer.toByteArray()))), true)
+        } else {
+            reader = new JsonReader(stringWriter.toString())
+        }
         def decodedDoc = new DocumentCodec().decode(reader, DecoderContext.builder().build())
 
         then:
@@ -99,8 +115,15 @@ class DocumentCodecSpecification extends Specification {
         decodedDoc.get('timestamp') == originalDocument.get('timestamp')
         decodedDoc.get('undefined') == originalDocument.get('undefined')
         decodedDoc.get('binary') == originalDocument.get('binary')
+        decodedDoc.get('uuid') == originalDocument.get('uuid')
         decodedDoc.get('array') == originalDocument.get('array')
         decodedDoc.get('document') == originalDocument.get('document')
+        where:
+        writer << [
+                new BsonDocumentWriter(bsonDoc),
+                new BsonBinaryWriter(new BasicOutputBuffer(), false),
+//                new JsonWriter(stringWriter)
+        ]
     }
 
     def 'should respect encodeIdFirst property in encoder context'() {

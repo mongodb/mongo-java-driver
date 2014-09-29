@@ -2,7 +2,9 @@ package org.bson;
 
 import org.bson.types.ObjectId;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -16,6 +18,7 @@ import java.util.Map;
  */
 public class BsonDocumentReader extends AbstractBsonReader {
     private BsonValue currentValue;
+    private Mark mark;
 
     /**
      * Construct a new instance.
@@ -201,22 +204,121 @@ public class BsonDocumentReader extends AbstractBsonReader {
     }
 
     @Override
+    public void mark() {
+        if (mark != null) {
+            throw new BSONException("A mark already exists; it needs to be reset before creating a new one");
+        }
+        mark = new Mark();
+    }
+
+    @Override
+    public void reset() {
+        if (mark == null) {
+            throw new BSONException("trying to reset a mark before creating it");
+        }
+        mark.reset();
+        mark = null;
+    }
+
+    @Override
     protected Context getContext() {
         return (Context) super.getContext();
     }
+    protected class Mark extends AbstractBsonReader.Mark {
+        private BsonValue currentValue;
+        private Context context;
 
-    protected static class Context extends AbstractBsonReader.Context {
-        private Iterator<Map.Entry<String, BsonValue>> documentIterator;
-        private Iterator<BsonValue> arrayIterator;
+        protected Mark() {
+            super();
+            currentValue = BsonDocumentReader.this.currentValue;
+            context = BsonDocumentReader.this.getContext();
+            context.mark();
+        }
+
+        protected void reset() {
+            super.reset();
+            BsonDocumentReader.this.currentValue = currentValue;
+            BsonDocumentReader.this.setContext(context);
+            context.reset();
+        }
+    }
+
+    private static class BsonDocumentMarkableIterator<T> implements Iterator<T> {
+
+        private Iterator<T> baseIterator;
+        private List<T> markIterator = new ArrayList<T>();
+        private int curIndex; // index of the cursor
+        private boolean marking;
+
+        protected BsonDocumentMarkableIterator(final Iterator<T> baseIterator) {
+            this.baseIterator = baseIterator;
+            curIndex = 0;
+            marking = false;
+        }
+
+        /**
+         *
+         */
+        protected void mark() {
+            marking = true;
+        }
+
+        /**
+         *
+         */
+        protected void reset() {
+            curIndex = 0;
+            marking = false;
+        }
+
+
+        @Override
+        public boolean hasNext() {
+            return baseIterator.hasNext() || curIndex < markIterator.size();
+        }
+
+        @Override
+        public T next() {
+            T value;
+            //TODO: check closed
+            if (curIndex < markIterator.size()) {
+                value = markIterator.get(curIndex);
+                if (marking) {
+                    curIndex++;
+                } else {
+                    markIterator.remove(0);
+                }
+            } else {
+                value = baseIterator.next();
+                if (marking) {
+                    markIterator.add(value);
+                    curIndex++;
+                }
+            }
+
+
+            return value;
+        }
+
+        @Override
+        public void remove() {
+            // iterator is read only
+        }
+    }
+
+    protected class Context extends AbstractBsonReader.Context {
+
+        private BsonDocumentMarkableIterator<Map.Entry<String, BsonValue>> documentIterator;
+        private BsonDocumentMarkableIterator<BsonValue> arrayIterator;
 
         protected Context(final Context parentContext, final BsonContextType contextType, final BsonArray array) {
             super(parentContext, contextType);
-            arrayIterator = array.iterator();
+            arrayIterator = new BsonDocumentMarkableIterator<BsonValue>(array.iterator());
         }
 
         protected Context(final Context parentContext, final BsonContextType contextType, final BsonDocument document) {
             super(parentContext, contextType);
-            documentIterator = document.entrySet().iterator();
+            documentIterator = new BsonDocumentMarkableIterator<Map.Entry<String, BsonValue>>(document.entrySet().iterator());
         }
 
         public Map.Entry<String, BsonValue> getNextElement() {
@@ -224,6 +326,29 @@ public class BsonDocumentReader extends AbstractBsonReader {
                 return documentIterator.next();
             } else {
                 return null;
+            }
+        }
+        protected void mark() {
+            if (documentIterator != null) {
+                documentIterator.mark();
+            } else {
+                arrayIterator.mark();
+            }
+
+            if (getParentContext() != null) {
+                ((Context) getParentContext()).mark();
+            }
+        }
+
+        protected void reset() {
+            if (documentIterator != null) {
+                documentIterator.reset();
+            } else {
+                arrayIterator.reset();
+            }
+
+            if (getParentContext() != null) {
+                ((Context) getParentContext()).reset();
             }
         }
 
