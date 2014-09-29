@@ -561,11 +561,11 @@ public class JsonReader extends AbstractBsonReader {
                 currentValue = visitDateTimeExtendedJson();
                 setCurrentBsonType(BsonType.DATE_TIME);
                 return;
-            } else if ("$maxkey".equals(value)) {
+            } else if ("$maxKey".equals(value)) {
                 currentValue = visitMaxKeyExtendedJson();
                 setCurrentBsonType(BsonType.MAX_KEY);
                 return;
-            } else if ("$minkey".equals(value)) {
+            } else if ("$minKey".equals(value)) {
                 currentValue = visitMinKeyExtendedJson();
                 setCurrentBsonType(BsonType.MIN_KEY);
                 return;
