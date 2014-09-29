@@ -77,6 +77,7 @@ public class PinnedBinding extends AbstractReferenceCounted implements ReadWrite
         return this;
     }
 
+    @Override
     public void release() {
         super.release();
         if (getCount() == 0) {

@@ -16,6 +16,10 @@
 
 package com.mongodb.diagnostics.logging;
 
+/**
+ * This class is not part of the public API.  It may be removed or changed at any time.
+ *
+ */
 public interface Logger {
     /**
      * Return the name of this <code>Logger</code> instance.

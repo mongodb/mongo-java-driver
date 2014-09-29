@@ -24,11 +24,11 @@ import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.SEVERE;
 import static java.util.logging.Level.WARNING;
 
-public class JULLogger implements Logger {
+class JULLogger implements Logger {
 
     private final java.util.logging.Logger delegate;
 
-    public JULLogger(final String name) {
+    JULLogger(final String name) {
         this.delegate = java.util.logging.Logger.getLogger(name);
     }
 

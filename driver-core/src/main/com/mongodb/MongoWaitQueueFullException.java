@@ -16,6 +16,12 @@
 
 package com.mongodb;
 
+/**
+ * An exception indicating that the queue for waiting for a pooled connection is full.
+ *
+ * @see com.mongodb.connection.ConnectionPoolSettings#getMaxWaitQueueSize()
+ * @since 3.0
+ */
 public class MongoWaitQueueFullException extends MongoClientException {
 
     private static final long serialVersionUID = 1482094507852255793L;

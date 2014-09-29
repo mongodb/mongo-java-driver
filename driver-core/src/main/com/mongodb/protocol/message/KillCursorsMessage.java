@@ -17,8 +17,11 @@
 package com.mongodb.protocol.message;
 
 import com.mongodb.ServerCursor;
-import com.mongodb.protocol.KillCursor;
 import org.bson.io.BsonOutput;
+
+import java.util.List;
+
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * An OP_KILL_CURSOR message.
@@ -27,22 +30,22 @@ import org.bson.io.BsonOutput;
  * @since 3.0
  */
 public class KillCursorsMessage extends RequestMessage {
-    private final KillCursor killCursor;
+    private final List<ServerCursor> cursors;
 
     /**
      * Construct an instance.
      *
-     * @param killCursor the list of cursors to kill
+     * @param cursors the list of cursors to kill
      */
-    public KillCursorsMessage(final KillCursor killCursor) {
+    public KillCursorsMessage(final List<ServerCursor> cursors) {
         super(OpCode.OP_KILL_CURSORS, MessageSettings.builder().build());
-        this.killCursor = killCursor;
+        this.cursors = notNull("cursors", cursors);
     }
 
     @Override
     protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
-        writeKillCursorsPrologue(killCursor.getServerCursors().size(), bsonOutput);
-        for (final ServerCursor cur : killCursor.getServerCursors()) {
+        writeKillCursorsPrologue(cursors.size(), bsonOutput);
+        for (final ServerCursor cur : cursors) {
             bsonOutput.writeInt64(cur.getId());
         }
         return null;

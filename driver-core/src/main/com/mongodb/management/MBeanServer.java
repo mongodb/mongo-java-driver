@@ -20,7 +20,18 @@ package com.mongodb.management;
  * This class is NOT part of the public API.  It may change at any time without notification.
  */
 public interface MBeanServer {
+    /**
+     * Unregister the MBean with the given name.
+     *
+     * @param mBeanName the MBean name
+     */
     void unregisterMBean(String mBeanName);
 
+    /**
+     * Register the given mBean with the given name.
+     *
+     * @param mBean the MBean
+     * @param mBeanName the MBean name
+     */
     void registerMBean(Object mBean, String mBeanName);
 }

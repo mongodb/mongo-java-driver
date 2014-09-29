@@ -27,6 +27,13 @@ public class DuplicateKeyException extends WriteConcernException {
 
     private static final long serialVersionUID = -4415279469780082174L;
 
+    /**
+     * Construct an instance.
+     *
+     * @param response the response
+     * @param address the server address
+     * @param writeResult the write result
+     */
     public DuplicateKeyException(final BsonDocument response, final ServerAddress address, final WriteResult writeResult) {
         super(response, address, writeResult);
     }

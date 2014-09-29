@@ -25,8 +25,8 @@ import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.protocol.message.QueryMessage;
 import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.BsonDocument;
@@ -91,6 +91,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         return queryResult;
     }
 
+    @Override
     public MongoFuture<QueryResult<T>> executeAsync(final Connection connection) {
         LOGGER.debug(format("Asynchronously sending query of namespace %s on connection [%s] to server %s", namespace, connection.getId(),
                             connection.getServerAddress()));

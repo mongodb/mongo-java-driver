@@ -27,15 +27,16 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.connection.Connection;
-import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.protocol.GetMoreDiscardProtocol;
 import com.mongodb.protocol.GetMoreProtocol;
 import com.mongodb.protocol.GetMoreReceiveProtocol;
-import com.mongodb.protocol.KillCursor;
 import com.mongodb.protocol.KillCursorProtocol;
 import com.mongodb.protocol.QueryResult;
 import org.bson.codecs.Decoder;
+
+import static java.util.Arrays.asList;
 
 
 class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
@@ -121,7 +122,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             connectionSource.getConnection().register(new SingleResultCallback<Connection>() {
                 @Override
                 public void onResult(final Connection connection, final MongoException connectionException) {
-                    new KillCursorProtocol(new KillCursor(cursor))
+                    new KillCursorProtocol(asList(cursor))
                         .executeAsync(connection)
                         .register(new SingleResultCallback<Void>() {
                             @Override

@@ -37,20 +37,6 @@ public class JMXConnectionPoolListener implements ConnectionPoolListener {
     private final ConcurrentMap<ClusterIdServerAddressPair, ConnectionPoolStatistics> map =
         new ConcurrentHashMap<ClusterIdServerAddressPair, ConnectionPoolStatistics>();
 
-    public String getMBeanObjectName(final String clusterId, final ServerAddress serverAddress) {
-        // we could do a url encode, but since : is the only invalid character in an object name, then
-        // we'll simply do it.
-        String adjustedClusterId = clusterId.replace(":", "%3A");
-        String adjustedHost = serverAddress.getHost().replace(":", "%3A");
-
-        return format("org.mongodb.driver:type=ConnectionPool,clusterId=%s,host=%s,port=%s", adjustedClusterId, adjustedHost,
-                      serverAddress.getPort());
-    }
-
-    public ConnectionPoolStatisticsMBean getMBean(final String clusterId, final ServerAddress serverAddress) {
-        return getStatistics(clusterId, serverAddress);
-    }
-
     @Override
     public void connectionPoolOpened(final ConnectionPoolOpenedEvent event) {
         ConnectionPoolStatistics statistics = new ConnectionPoolStatistics(event);
@@ -110,6 +96,20 @@ public class JMXConnectionPoolListener implements ConnectionPoolListener {
         if (statistics != null) {
             statistics.connectionRemoved(event);
         }
+    }
+
+    String getMBeanObjectName(final String clusterId, final ServerAddress serverAddress) {
+        // we could do a url encode, but since : is the only invalid character in an object name, then
+        // we'll simply do it.
+        String adjustedClusterId = clusterId.replace(":", "%3A");
+        String adjustedHost = serverAddress.getHost().replace(":", "%3A");
+
+        return format("org.mongodb.driver:type=ConnectionPool,clusterId=%s,host=%s,port=%s", adjustedClusterId, adjustedHost,
+                      serverAddress.getPort());
+    }
+
+    ConnectionPoolStatisticsMBean getMBean(final String clusterId, final ServerAddress serverAddress) {
+        return getStatistics(clusterId, serverAddress);
     }
 
     private ConnectionPoolStatistics getStatistics(final ConnectionEvent event) {

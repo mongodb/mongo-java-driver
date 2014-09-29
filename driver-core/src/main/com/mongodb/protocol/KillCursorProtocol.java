@@ -23,9 +23,11 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.Connection;
-import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.protocol.message.KillCursorsMessage;
+
+import java.util.List;
 
 import static java.lang.String.format;
 
@@ -38,15 +40,15 @@ import static java.lang.String.format;
 public class KillCursorProtocol implements Protocol<Void> {
     public static final Logger LOGGER = Loggers.getLogger("protocol.killcursor");
 
-    private final KillCursor killCursor;
+    private final List<ServerCursor> cursors;
 
     /**
      * Construct an instance.
      *
-     * @param killCursor the list of cursors to kill
+     * @param cursors the list of cursors to kill
      */
-    public KillCursorProtocol(final KillCursor killCursor) {
-        this.killCursor = killCursor;
+    public KillCursorProtocol(final List<ServerCursor> cursors) {
+        this.cursors = cursors;
     }
 
     @Override
@@ -55,7 +57,7 @@ public class KillCursorProtocol implements Protocol<Void> {
                             connection.getServerAddress()));
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
-            KillCursorsMessage message = new KillCursorsMessage(killCursor);
+            KillCursorsMessage message = new KillCursorsMessage(cursors);
             message.encode(bsonOutput);
             connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             return null;
@@ -71,7 +73,7 @@ public class KillCursorProtocol implements Protocol<Void> {
                             connection.getServerAddress()));
         final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
         final ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
-        KillCursorsMessage message = new KillCursorsMessage(killCursor);
+        KillCursorsMessage message = new KillCursorsMessage(cursors);
         message.encode(bsonOutput);
         connection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
             @Override
@@ -85,10 +87,10 @@ public class KillCursorProtocol implements Protocol<Void> {
 
     private String getCursorIdListAsString() {
         StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < killCursor.getServerCursors().size(); i++) {
-            ServerCursor cursor = killCursor.getServerCursors().get(i);
+        for (int i = 0; i < cursors.size(); i++) {
+            ServerCursor cursor = cursors.get(i);
             builder.append(cursor.getId());
-            if (i < killCursor.getServerCursors().size() - 1) {
+            if (i < cursors.size() - 1) {
                 builder.append(", ");
             }
         }

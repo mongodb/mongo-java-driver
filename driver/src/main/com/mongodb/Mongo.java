@@ -38,7 +38,6 @@ import com.mongodb.management.JMXConnectionPoolListener;
 import com.mongodb.operation.GetDatabaseNamesOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
-import com.mongodb.protocol.KillCursor;
 import com.mongodb.protocol.KillCursorProtocol;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
@@ -813,7 +812,7 @@ public class Mongo {
                 try {
                     Connection connection = source.getConnection();
                     try {
-                        new KillCursorProtocol(new KillCursor(cur)).execute(connection);
+                        new KillCursorProtocol(asList(cur)).execute(connection);
                     } finally {
                         connection.release();
                     }
