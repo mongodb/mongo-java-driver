@@ -19,6 +19,7 @@ package com.mongodb
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createGSSAPICredential
 import static com.mongodb.MongoCredential.createMongoCRCredential
 import static com.mongodb.MongoCredential.createMongoX509Credential
@@ -177,12 +178,17 @@ class MongoClientURISpecification extends Specification {
 
         where:
         uri                                                   | credentialList
-        new MongoClientURI('mongodb://jeff:123@localhost')    | createMongoCRCredential('jeff', 'admin', '123'.toCharArray())
+        new MongoClientURI('mongodb://jeff:123@localhost')    | createCredential('jeff', 'admin', '123'.toCharArray())
         new MongoClientURI('mongodb://jeff:123@localhost/?' +
                            'authMechanism=MONGODB-CR')        | createMongoCRCredential('jeff', 'admin', '123'.toCharArray())
         new MongoClientURI('mongodb://jeff:123@localhost/?' +
                            'authMechanism=MONGODB-CR' +
                            '&authSource=test')                | createMongoCRCredential('jeff', 'test', '123'.toCharArray())
+        new MongoClientURI('mongodb://jeff:123@localhost/?' +
+                           'authMechanism=SCRAM-SHA-1')       | createScramSha1Credential('jeff', 'admin', '123'.toCharArray())
+        new MongoClientURI('mongodb://jeff:123@localhost/?' +
+                           'authMechanism=SCRAM-SHA-1' +
+                           '&authSource=test')                | createScramSha1Credential('jeff', 'test', '123'.toCharArray())
         new MongoClientURI('mongodb://jeff@localhost/?' +
                            'authMechanism=GSSAPI')            | createGSSAPICredential('jeff')
         new MongoClientURI('mongodb://jeff:123@localhost/?' +

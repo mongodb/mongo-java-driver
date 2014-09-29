@@ -137,8 +137,8 @@ import static java.lang.String.format;
  * <p>Authentication configuration:</p>
  * <ul>
  * <li>{@code authMechanism=MONGO-CR|GSSAPI|PLAIN|MONGODB-X509}: The authentication mechanism to use if a credential was supplied.
- * The default is MONGODB-CR, which is the native MongoDB Challenge Response mechanism.  For the GSSAPI and MONGODB-X509 mechanisms,
- * no password is accepted, only the username.
+ * The default is unspecified, in which case the client will pick the most secure mechanism available based on the sever version.  For the
+ * GSSAPI and MONGODB-X509 mechanisms, no password is accepted, only the username.
  * </li>
  * <li>{@code authSource=string}: The source of the authentication credentials.  This is typically the database that
  * the credentials have been created.  The value defaults to the database specified in the path portion of the URI.
@@ -402,7 +402,7 @@ public class ConnectionString {
             return null;
         }
 
-        AuthenticationMechanism mechanism = MONGODB_CR;
+        AuthenticationMechanism mechanism = null;
         String authSource = (database == null) ? "admin" : database;
         String gssapiServiceName = null;
 
@@ -436,6 +436,8 @@ public class ConnectionString {
             return MongoCredential.createMongoX509Credential(userName);
         } else if (mechanism == SCRAM_SHA_1) {
             return MongoCredential.createScramSha1Credential(userName, authSource, password);
+        } else if (mechanism == null) {
+            return MongoCredential.createCredential(userName, authSource, password);
         } else {
             throw new UnsupportedOperationException("Unsupported authentication mechanism in the URI: " + mechanism);
         }

@@ -171,19 +171,32 @@ class PipelinedConnectionInitializer implements ConnectionInitializer, InternalC
     }
 
     private Authenticator createAuthenticator(final MongoCredential credential) {
-        switch (credential.getAuthenticationMechanism()) {
+        MongoCredential actualCredential;
+        if (credential.getAuthenticationMechanism() == null) {
+            if (connectionDescription.getServerVersion().compareTo(new ServerVersion(2, 7)) >= 0) {
+                actualCredential = MongoCredential.createScramSha1Credential(credential.getUserName(), credential.getSource(),
+                                                                             credential.getPassword());
+            } else {
+                actualCredential = MongoCredential.createMongoCRCredential(credential.getUserName(), credential.getSource(),
+                                                                           credential.getPassword());
+
+            }
+        } else {
+            actualCredential = credential;
+        }
+        switch (actualCredential.getAuthenticationMechanism()) {
             case MONGODB_CR:
-                return new NativeAuthenticator(credential, this);
+                return new NativeAuthenticator(actualCredential, this);
             case GSSAPI:
-                return new GSSAPIAuthenticator(credential, this);
+                return new GSSAPIAuthenticator(actualCredential, this);
             case PLAIN:
-                return new PlainAuthenticator(credential, this);
+                return new PlainAuthenticator(actualCredential, this);
             case MONGODB_X509:
-                return new X509Authenticator(credential, this);
+                return new X509Authenticator(actualCredential, this);
             case SCRAM_SHA_1:
-                return new ScramSha1Authenticator(credential, this);
+                return new ScramSha1Authenticator(actualCredential, this);
             default:
-                throw new IllegalArgumentException("Unsupported authentication protocol: " + credential.getMechanism());
+                throw new IllegalArgumentException("Unsupported authentication protocol: " + actualCredential.getMechanism());
         }
     }
 

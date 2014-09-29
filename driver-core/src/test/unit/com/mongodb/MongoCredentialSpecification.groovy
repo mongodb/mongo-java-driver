@@ -25,6 +25,23 @@ import static com.mongodb.AuthenticationMechanism.PLAIN
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1
 
 class MongoCredentialSpecification extends Specification {
+    def 'creating a credential with an unspecified mechanism should populate correct fields'() {
+        given:
+        String userName = 'user';
+        String database = 'test';
+        char[] password = 'pwd'.toCharArray();
+
+        when:
+        MongoCredential credential = MongoCredential.createCredential(userName, database, password);
+
+        then:
+        userName == credential.getUserName()
+        database == credential.getSource()
+        password == credential.getPassword()
+        !credential.getAuthenticationMechanism()
+        !credential.getMechanism()
+    }
+
     def 'creating a challenge-response credential should populate correct fields'() {
         given:
         AuthenticationMechanism mechanism = MONGODB_CR;

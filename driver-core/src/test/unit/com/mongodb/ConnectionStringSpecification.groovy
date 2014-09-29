@@ -19,10 +19,12 @@ package com.mongodb
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createGSSAPICredential
 import static com.mongodb.MongoCredential.createMongoCRCredential
 import static com.mongodb.MongoCredential.createMongoX509Credential
 import static com.mongodb.MongoCredential.createPlainCredential
+import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.ReadPreference.secondaryPreferred
 import static java.util.Arrays.asList
 
@@ -152,12 +154,19 @@ class ConnectionStringSpecification extends Specification {
 
         where:
         uri                                                   | credentialList
-        new ConnectionString('mongodb://jeff:123@localhost')  | asList(createMongoCRCredential('jeff', 'admin', '123'.toCharArray()))
+        new ConnectionString('mongodb://jeff:123@localhost')  | asList(createCredential('jeff', 'admin', '123'.toCharArray()))
+        new ConnectionString('mongodb://jeff:123@localhost/?' +
+                           '&authSource=test')                | asList(createCredential('jeff', 'test', '123'.toCharArray()))
         new ConnectionString('mongodb://jeff:123@localhost/?' +
                            'authMechanism=MONGODB-CR')        | asList(createMongoCRCredential('jeff', 'admin', '123'.toCharArray()))
         new ConnectionString('mongodb://jeff:123@localhost/?' +
                            'authMechanism=MONGODB-CR' +
                            '&authSource=test')                | asList(createMongoCRCredential('jeff', 'test', '123'.toCharArray()))
+        new ConnectionString('mongodb://jeff:123@localhost/?' +
+                             'authMechanism=SCRAM-SHA-1')     | asList(createScramSha1Credential('jeff', 'admin', '123'.toCharArray()))
+        new ConnectionString('mongodb://jeff:123@localhost/?' +
+                             'authMechanism=SCRAM-SHA-1' +
+                             '&authSource=test')              | asList(createScramSha1Credential('jeff', 'test', '123'.toCharArray()))
         new ConnectionString('mongodb://jeff@localhost/?' +
                            'authMechanism=GSSAPI')            | asList(createGSSAPICredential('jeff'))
         new ConnectionString('mongodb://jeff:123@localhost/?' +

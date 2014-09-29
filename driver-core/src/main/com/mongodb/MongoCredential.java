@@ -82,12 +82,54 @@ public final class MongoCredential {
     public static final String SCRAM_SHA_1_MECHANISM = AuthenticationMechanism.SCRAM_SHA_1.getMechanismName();
 
     /**
-     * Creates a MongoCredential instance for the MongoDB Challenge Response protocol.
+     * Creates a MongoCredential instance with an unspecified mechanism.  The client will negotiate the best mechanism based on the
+     * version of the server that the client is authenticating to.  If the server version is 2.8 or higher,
+     * the driver will authenticate using the SCRAM-SHA-1 mechanism.  Otherwise, the driver will authenticate using the MONGODB_CR
+     * mechanism.
+     *
      *
      * @param userName the user name
      * @param database the database where the user is defined
      * @param password the user's password
      * @return the credential
+     *
+     * @since 2.13
+     */
+    public static MongoCredential createCredential(final String userName, final String database, final char[] password) {
+        return new MongoCredential(null, userName, database, password);
+    }
+
+    /**
+     * Creates a MongoCredential instance for the SCRAM-SHA-1 SASL mechanism. Use this method only if you want to ensure that
+     * the driver uses the MONGODB_CR mechanism regardless of whether the server you are connecting to supports a more secure
+     * authentication mechanism.  Otherwise use the {@link #createCredential(String, String, char[])} method to allow the driver to
+     * negotiate the best mechanism based on the server version.
+     *
+     *
+     * @param userName the non-null user name
+     * @param source the source where the user is defined.
+     * @param password the non-null user password
+     * @return the credential
+     * @see #createCredential(String, String, char[])
+     *
+     * @since 2.13
+     * @mongodb.server.release 2.8
+     */
+    public static MongoCredential createScramSha1Credential(final String userName, final String source, final char[] password) {
+        return new MongoCredential(SCRAM_SHA_1, userName, source, password);
+    }
+
+    /**
+     * Creates a MongoCredential instance for the MongoDB Challenge Response protocol. Use this method only if you want to ensure that
+     * the driver uses the MONGODB_CR mechanism regardless of whether the server you are connecting to supports a more secure
+     * authentication mechanism.  Otherwise use the {@link #createCredential(String, String, char[])} method to allow the driver to
+     * negotiate the best mechanism based on the server version.
+     *
+     * @param userName the user name
+     * @param database the database where the user is defined
+     * @param password the user's password
+     * @return the credential
+     * @see #createCredential(String, String, char[])
      */
     public static MongoCredential createMongoCRCredential(final String userName, final String database, final char[] password) {
         return new MongoCredential(MONGODB_CR, userName, database, password);
@@ -137,21 +179,6 @@ public final class MongoCredential {
     }
 
     /**
-     * Creates a MongoCredential instance for the SCRAM-SHA-1 SASL mechanism.
-     *
-     * @param userName the user name
-     * @param database the database where the user is defined
-     * @param password the user's password
-     * @return the credential
-     *
-     * @since 2.13
-     * @mongodb.server.release 2.8
-     */
-    public static MongoCredential createScramSha1Credential(final String userName, final String database, final char[] password) {
-        return new MongoCredential(SCRAM_SHA_1, userName, database, password);
-    }
-
-    /**
      * Creates a new MongoCredential as a copy of this instance, with the specified mechanism property added.
      *
      * @param key   the key to the property, which is treated as case-insensitive
@@ -173,9 +200,13 @@ public final class MongoCredential {
      * @param password  the password
      */
     MongoCredential(final AuthenticationMechanism mechanism, final String userName, final String source, final char[] password) {
-        this.mechanism = notNull("mechanism", mechanism);
-        this.userName = notNull("userName", userName);
-        this.source = notNull("source", source);
+        if (userName == null) {
+            throw new IllegalArgumentException("username can not be null");
+        }
+
+        if (mechanism == null && password == null) {
+            throw new IllegalArgumentException("Password can not be null when the authentication mechanism is unspecified");
+        }
 
         if ((mechanism == PLAIN || mechanism == MONGODB_CR || mechanism == SCRAM_SHA_1) && password == null) {
             throw new IllegalArgumentException("Password can not be null for " + mechanism + " mechanism");
@@ -184,6 +215,10 @@ public final class MongoCredential {
         if ((mechanism == GSSAPI || mechanism == MONGODB_X509) && password != null) {
             throw new IllegalArgumentException("Password must be null for the " + mechanism + " mechanism");
         }
+
+        this.mechanism = mechanism;
+        this.userName = notNull("userName", userName);
+        this.source = notNull("source", source);
 
         this.password = password != null ? password.clone() : null;
         this.mechanismProperties = Collections.emptyMap();
@@ -214,7 +249,7 @@ public final class MongoCredential {
      * @return the mechanism.
      */
     public String getMechanism() {
-        return mechanism.getMechanismName();
+        return mechanism == null ? null : mechanism.getMechanismName();
     }
 
     /**
@@ -286,7 +321,7 @@ public final class MongoCredential {
 
         MongoCredential that = (MongoCredential) o;
 
-        if (!mechanism.equals(that.mechanism)) {
+        if (mechanism != that.mechanism) {
             return false;
         }
         if (!Arrays.equals(password, that.password)) {
@@ -307,7 +342,7 @@ public final class MongoCredential {
 
     @Override
     public int hashCode() {
-        int result = mechanism.hashCode();
+        int result = mechanism != null ? mechanism.hashCode() : 0;
         result = 31 * result + userName.hashCode();
         result = 31 * result + source.hashCode();
         result = 31 * result + (password != null ? Arrays.hashCode(password) : 0);
