@@ -17,9 +17,8 @@
 package com.mongodb.assertions;
 
 /**
- * Design by contract assertions.
- * <p>
- * This class is not part of the public API and may be removed or changed at any time.
+ * <p>Design by contract assertions.</p>
+ * <p>This class is not part of the public API and may be removed or changed at any time.</p>
  */
 public final class Assertions {
     /**
@@ -29,7 +28,7 @@ public final class Assertions {
      * @param value the value that should not be null
      * @param <T> the value type
      * @return the value
-     * @throws java.lang.IllegalArgumentException if notNull is null
+     * @throws java.lang.IllegalArgumentException if value is null
      */
     public static <T> T notNull(final String name, final T value) {
         if (value == null) {

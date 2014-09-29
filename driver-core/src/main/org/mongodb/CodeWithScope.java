@@ -41,7 +41,7 @@ public class CodeWithScope extends Code {
     }
 
     /**
-     * Gets the scope.
+     * Gets the scope, which is is a mapping from identifiers to values, representing the scope in which the code should be evaluated.
      *
      * @return the scope
      */

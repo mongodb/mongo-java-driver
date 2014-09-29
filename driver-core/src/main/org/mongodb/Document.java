@@ -110,7 +110,7 @@ public class Document implements Map<String, Object>, Serializable {
     }
 
     /**
-     * Gets the value of the given key as an integer.
+     * Gets the value of the given key as an Integer.
      *
      * @param key the key
      * @return the value as an integer, which may be null
@@ -121,7 +121,7 @@ public class Document implements Map<String, Object>, Serializable {
     }
 
     /**
-     * Gets the value of the given key as an integer.
+     * Gets the value of the given key as a primitive int.
      *
      * @param key          the key
      * @param defaultValue what to return if the value is null
@@ -134,7 +134,7 @@ public class Document implements Map<String, Object>, Serializable {
     }
 
     /**
-     * Gets the value of the given key as a long.
+     * Gets the value of the given key as a Long.
      *
      * @param key the key
      * @return the value as a long, which may be null
@@ -145,7 +145,7 @@ public class Document implements Map<String, Object>, Serializable {
     }
 
     /**
-     * Gets the value of the given key as a double.
+     * Gets the value of the given key as a Double.
      *
      * @param key the key
      * @return the value as a double, which may be null
@@ -167,7 +167,7 @@ public class Document implements Map<String, Object>, Serializable {
     }
 
     /**
-     * Gets the value of the given key as a boolean.
+     * Gets the value of the given key as a Boolean.
      *
      * @param key the key
      * @return the value as a double, which may be null
@@ -178,7 +178,7 @@ public class Document implements Map<String, Object>, Serializable {
     }
 
     /**
-     * Gets the value of the given key as a boolean.
+     * Gets the value of the given key as a primitive boolean.
      *
      * @param key          the key
      * @param defaultValue what to return if the value is null

@@ -30,7 +30,7 @@ public class DuplicateKeyException extends WriteConcernException {
     /**
      * Construct an instance.
      *
-     * @param response the response
+     * @param response the response from the server
      * @param address the server address
      * @param writeResult the write result
      */

@@ -50,7 +50,7 @@ public final class ServerCursor implements Serializable {
     }
 
     /**
-     * Gets the cursor id.
+     * Gets the cursor id that the server uses to uniquely identify the cursor.
      *
      * @return the cursor id
      */
