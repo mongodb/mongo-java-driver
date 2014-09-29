@@ -19,8 +19,8 @@ package com.mongodb.connection;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.diagnostics.Loggers;
 import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 

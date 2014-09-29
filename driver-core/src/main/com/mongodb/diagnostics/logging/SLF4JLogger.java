@@ -18,11 +18,11 @@ package com.mongodb.diagnostics.logging;
 
 import org.slf4j.LoggerFactory;
 
-public class SLF4JLogger implements Logger {
+class SLF4JLogger implements Logger {
     
     private final org.slf4j.Logger delegate;
 
-    public SLF4JLogger(final String name) {
+    SLF4JLogger(final String name) {
         this.delegate = LoggerFactory.getLogger(name);
     }
 

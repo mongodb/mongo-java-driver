@@ -20,10 +20,10 @@ import com.mongodb.MongoCursorNotFoundException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
-import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.diagnostics.Loggers;
+import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.codecs.Decoder;
 
