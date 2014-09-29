@@ -307,7 +307,7 @@ public class JsonReaderTest {
 
     @Test
     public void testMaxKey() {
-        String json = "{ \"$maxkey\" : 1 }";
+        String json = "{ \"$maxKey\" : 1 }";
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.MAX_KEY, bsonReader.readBsonType());
         bsonReader.readMaxKey();
@@ -317,7 +317,7 @@ public class JsonReaderTest {
 
     @Test
     public void testMinKey() {
-        String json = "{ \"$minkey\" : 1 }";
+        String json = "{ \"$minKey\" : 1 }";
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.MIN_KEY, bsonReader.readBsonType());
         bsonReader.readMinKey();
