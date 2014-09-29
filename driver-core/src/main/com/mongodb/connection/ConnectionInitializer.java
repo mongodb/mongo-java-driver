@@ -28,6 +28,13 @@ interface ConnectionInitializer {
     String getId();
 
     /**
+     * Gets the description of the server that this is connected to.
+     *
+     * @return the server description
+     */
+    ServerDescription getServerDescription();
+
+    /**
      * Initializes the connection, gets the connection id and authenticates
      */
     void initialize();

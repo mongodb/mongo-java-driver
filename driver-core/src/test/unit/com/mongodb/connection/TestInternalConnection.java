@@ -65,6 +65,11 @@ class TestInternalConnection implements InternalConnection {
     }
 
     @Override
+    public ServerDescription getServerDescription() {
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    @Override
     public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
         // repackage all byte buffers into a single byte buffer...
         int totalSize = 0;

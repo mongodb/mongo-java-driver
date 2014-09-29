@@ -21,7 +21,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.event.ConnectionListener;
 import com.mongodb.event.ConnectionPoolListener;
 
-import java.util.Collections;
 import java.util.List;
 
 class DefaultClusterableServerFactory implements ClusterableServerFactory {
@@ -61,7 +60,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                                                                                connectionListener),
                                                            connectionPoolSettings, connectionPoolListener),
                                  new InternalStreamConnectionFactory(clusterId, heartbeatStreamFactory,
-                                                                     Collections.<MongoCredential>emptyList(), connectionListener));
+                                                                     credentialList, connectionListener));
     }
 
     @Override

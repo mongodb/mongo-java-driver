@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.connection.CommandHelper.executeCommand;
 
 class PipelinedConnectionInitializer implements ConnectionInitializer, InternalConnection {
     private static final AtomicInteger INCREMENTING_ID = new AtomicInteger();
@@ -46,6 +47,7 @@ class PipelinedConnectionInitializer implements ConnectionInitializer, InternalC
     static final Logger LOGGER = Loggers.getLogger("ConnectionInitializer");
 
     private String id;
+    private ServerDescription serverDescription;
 
     PipelinedConnectionInitializer(final String clusterId, final Stream stream, final List<MongoCredential> credentialList,
                                    final ConnectionListener connectionListener) {
@@ -65,6 +67,11 @@ class PipelinedConnectionInitializer implements ConnectionInitializer, InternalC
     @Override
     public String getId() {
         return id;
+    }
+
+    @Override
+    public ServerDescription getServerDescription() {
+        return serverDescription;
     }
 
     @Override
@@ -108,6 +115,7 @@ class PipelinedConnectionInitializer implements ConnectionInitializer, InternalC
     public void initialize() {
         try {
             initializeConnectionId();
+            initializeServerDescription();
             authenticateAll();
 
             // try again if there was an exception calling getlasterror before authenticating
@@ -146,9 +154,21 @@ class PipelinedConnectionInitializer implements ConnectionInitializer, InternalC
                        : "*" + INCREMENTING_ID.incrementAndGet() + "*");
     }
 
+    private void initializeServerDescription() {
+        long start = System.nanoTime();
+        BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), this);
+
+        BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), this);
+        serverDescription = ServerDescriptionHelper.createDescription(stream.getAddress(), isMasterResult, buildInfoResult,
+                                                                      System.nanoTime() - start);
+    }
+
+
     private void authenticateAll() {
-        for (final MongoCredential cur : credentialList) {
-            createAuthenticator(cur).authenticate();
+        if (serverDescription.getType() != ServerType.REPLICA_SET_ARBITER) {
+            for (final MongoCredential cur : credentialList) {
+                createAuthenticator(cur).authenticate();
+            }
         }
     }
 
