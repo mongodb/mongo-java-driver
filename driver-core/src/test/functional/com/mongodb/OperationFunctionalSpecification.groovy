@@ -35,7 +35,6 @@ import static com.mongodb.WriteConcern.ACKNOWLEDGED
 class OperationFunctionalSpecification extends Specification {
 
     def setupSpec() {
-        Runtime.getRuntime().addShutdownHook { CollectionHelper.dropDatabase(getDatabaseName()) }
         CollectionHelper.dropDatabase(getDatabaseName())
     }
 
