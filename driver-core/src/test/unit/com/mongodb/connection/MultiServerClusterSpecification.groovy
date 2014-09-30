@@ -26,6 +26,7 @@ import spock.lang.Specification
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterType.REPLICA_SET
 import static com.mongodb.connection.ClusterType.SHARDED
+import static com.mongodb.connection.ClusterType.UNKNOWN
 import static com.mongodb.connection.ServerConnectionState.CONNECTING
 import static com.mongodb.connection.ServerType.REPLICA_SET_GHOST
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
@@ -54,6 +55,18 @@ class MultiServerClusterSpecification extends Specification {
 
         then:
         thrown(MongoTimeoutException)
+    }
+
+    def 'should report current description if no servers connect'() {
+        given:
+        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer]).build(), factory,
+                                             CLUSTER_LISTENER)
+
+        when:
+        def description = cluster.getDescription()
+
+        then:
+        description.getType() == UNKNOWN
     }
 
     def 'should correct report description when connected to a primary'() {

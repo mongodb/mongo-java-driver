@@ -29,11 +29,20 @@ import java.util.concurrent.TimeUnit;
 public interface Cluster {
 
     /**
-     * Get the details of this cluster of servers
+     * Get the description of this cluster.  This method will return the current cluster description even if the cluster type is not yet
+     * known.
+     *
+     * @return a ClusterDescription representing the current state of the cluster
+     */
+    ClusterDescription getDescription();
+
+    /**
+     * Get the description of this cluster.  This method will not return normally until the cluster type is known.
      *
      * @param maxWaitTime the maximum time to wait for a connection to the cluster to get the description
      * @param timeUnit    the TimeUnit for the maxWaitTime
      * @return a ClusterDescription representing the current state of the cluster
+     * @throws com.mongodb.MongoTimeoutException if the timeout has been reached before the cluster type is known
      */
     ClusterDescription getDescription(long maxWaitTime, TimeUnit timeUnit);
 
@@ -44,6 +53,7 @@ public interface Cluster {
      * @param maxWaitTime    the maximum time to wait for a connection to the cluster to get a server
      * @param timeUnit       the TimeUnit for the maxWaitTime
      * @return a Server that meets the requirements
+     * @throws com.mongodb.MongoTimeoutException if the timeout has been reached before a server matching the selector is available
      */
     Server selectServer(ServerSelector serverSelector, long maxWaitTime, TimeUnit timeUnit);
 
