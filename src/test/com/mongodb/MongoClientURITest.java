@@ -25,6 +25,7 @@ import java.net.UnknownHostException;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -325,6 +326,31 @@ public class MongoClientURITest {
         assertEquals(2, u.getHosts().size());
         assertEquals("[::1]:1000", u.getHosts().get(0));
         assertEquals("[2010:836B:4179::836B:4179]:2000", u.getHosts().get(1));
+    }
+
+    @Test
+    public void testEqualsAndHashCode() {
+      MongoClientURI uris[] = new MongoClientURI[] {
+          new MongoClientURI("mongodb://user:pass@[2010:836B:4179::836B:4179]"),
+          new MongoClientURI("mongodb://localhost/?readPreference=secondaryPreferred"),
+          new MongoClientURI("mongodb://[::1]:1000,[2010:836B:4179::836B:4179]:2000"),
+          new MongoClientURI("mongodb://localhost/?" +
+              "maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;" +
+              "minPoolSize=7;maxIdleTimeMS=1000;maxLifeTimeMS=2000;" +
+              "replicaSet=test;" +
+              "connectTimeoutMS=2500;socketTimeoutMS=5500;autoConnectRetry=true;" +
+              "slaveOk=true;safe=false;w=1;wtimeout=2500;fsync=true")
+      };
+      for (MongoClientURI uri : uris) {
+        assertEquals(uri, uri);
+        MongoClientURI reinstantiatedUri = new MongoClientURI(uri.getURI());
+        assertEquals(uri, reinstantiatedUri);
+        assertEquals(uri.hashCode(), reinstantiatedUri.hashCode());
+        for (MongoClientURI anotherURI : uris) {
+          if (uri == anotherURI) continue;
+          assertNotEquals(uri, anotherURI);
+        }
+      }
     }
 
     @SuppressWarnings("deprecation")
