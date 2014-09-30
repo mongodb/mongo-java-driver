@@ -17,7 +17,6 @@
 package com.mongodb.operation;
 
 import com.mongodb.CommandFailureException;
-import com.mongodb.CursorFlag;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
@@ -32,7 +31,6 @@ import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -120,10 +118,7 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
                 BsonArray collectionInfo = results.getArray("collections");
                 List<String> names = new ArrayList<String>();
                 for (BsonValue collection: collectionInfo) {
-                    String collectionName = collection.asDocument().getString("name").getValue();
-                    if (!collectionName.contains("$")) {
-                        names.add(collectionName);
-                    }
+                    names.add(collection.asDocument().getString("name").getValue());
                 }
                 return names;
             }
@@ -135,8 +130,7 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
     }
 
     private QueryProtocol<BsonDocument> getProtocol() {
-        return new QueryProtocol<BsonDocument>(getNamespace(), EnumSet.noneOf(CursorFlag.class), 0, 0, new BsonDocument(), null,
-                                               new BsonDocumentCodec());
+        return new QueryProtocol<BsonDocument>(getNamespace(), 0, 0, new BsonDocument(), null, new BsonDocumentCodec());
     }
 
     private BsonDocument getCommand() {
