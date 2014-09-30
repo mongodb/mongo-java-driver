@@ -39,6 +39,20 @@ final class CommandHelper {
         return receiveCommandDocument(internalConnection, sendMessage(database, command, internalConnection));
     }
 
+    static boolean isCommandOk(final BsonDocument response) {
+        if (!response.containsKey("ok")) {
+            return false;
+        }
+        BsonValue okValue = response.get("ok");
+        if (okValue.isBoolean()) {
+            return okValue.asBoolean().getValue();
+        } else if (okValue.isNumber()) {
+            return okValue.asNumber().intValue() == 1;
+        } else {
+            return false;
+        }
+    }
+
     private static CommandMessage sendMessage(final String database, final BsonDocument command,
                                               final InternalConnection internalConnection) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(internalConnection);
@@ -75,17 +89,6 @@ final class CommandHelper {
             return new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(), message.getId());
         } finally {
             responseBuffers.close();
-        }
-    }
-
-    private static boolean isCommandOk(final BsonDocument response) {
-        BsonValue okValue = response.get("ok");
-        if (okValue.isBoolean()) {
-            return okValue.asBoolean().getValue();
-        } else if (okValue.isNumber()) {
-            return okValue.asNumber().intValue() == 1;
-        } else {
-            return false;
         }
     }
 

@@ -42,6 +42,7 @@ import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
 import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
+import static com.mongodb.connection.ServerType.UNKNOWN;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -78,7 +79,7 @@ final class DescriptionHelper {
                                 .maxWireVersion(isMasterResult.getInt32("maxWireVersion",
                                                                         new BsonInt32(getDefaultMaxWireVersion())).getValue())
                                 .roundTripTime(roundTripTime, NANOSECONDS)
-                                .ok(true).build();
+                                .ok(CommandHelper.isCommandOk(isMasterResult)).build();
     }
 
     private static int getMaxMessageSizeBytes(final BsonDocument isMasterResult) {
@@ -123,6 +124,11 @@ final class DescriptionHelper {
     }
 
     private static ServerType getServerType(final BsonDocument isMasterResult) {
+
+        if (!CommandHelper.isCommandOk(isMasterResult)) {
+            return UNKNOWN;
+        }
+
         if (isReplicaSetMember(isMasterResult)) {
             if (isMasterResult.getBoolean("ismaster", BsonBoolean.FALSE).getValue()) {
                 return REPLICA_SET_PRIMARY;
