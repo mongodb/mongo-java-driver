@@ -185,7 +185,7 @@ public class MongoClient extends Mongo {
      * fail over to the next server if the closest is down.</p>
      *
      * @param seeds           Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list
-     *                        of mongod servers in the same replica set or a list of mongos servers in the same sharded cluster. \
+     *                        of mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @param credentialsList the list of credentials used to authenticate all connections
      * @throws MongoException
      * @see com.mongodb.ServerAddress
