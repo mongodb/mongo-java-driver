@@ -334,6 +334,32 @@ class DBCollectionImpl extends DBCollection {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public List<DBObject> getIndexInfo() {
+        DBTCPConnector connector = db.getConnector();
+        DBPort port = db.getConnector().getPrimaryPort();
+        List<DBObject> list = new ArrayList<DBObject>();
+
+        if (connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 7, 7))) >= 0) {
+            CommandResult res = _db.command(new BasicDBObject("listIndexes", getName()));
+            if (!res.ok() && res.getCode() == 26) {
+                return list;
+            }
+            res.throwOnError();
+            for (DBObject indexDocument : (List<DBObject>) res.get("indexes")) {
+                list.add(indexDocument);
+            }
+        } else {
+            BasicDBObject cmd = new BasicDBObject("ns", getFullName());
+            DBCursor cur = _db.getCollection("system.indexes").find(cmd);
+            while (cur.hasNext()) {
+                list.add(cur.next());
+            }
+        }
+
+        return list;
+    }
+
     public void createIndex(final DBObject keys, final DBObject options, DBEncoder encoder) {
         DBTCPConnector connector = db.getConnector();
         final DBPort port = db.getConnector().getPrimaryPort();

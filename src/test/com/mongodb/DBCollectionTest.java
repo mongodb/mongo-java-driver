@@ -268,6 +268,17 @@ public class DBCollectionTest extends TestCase {
     }
 
     @Test
+    public void testGetIndexInfo() {
+        DBCollection c = collection;
+
+        assertEquals(0, c.getIndexInfo().size());
+
+        c.save( new BasicDBObject( "x" , 1 ) );
+        assertEquals(1, c.getIndexInfo().size());
+    }
+
+
+        @Test
     public void testDrop() {
         // ensure it exists
         collection.insert(new BasicDBObject());

@@ -1756,20 +1756,7 @@ public abstract class DBCollection {
      * @return list of index documents
      * @throws MongoException
      */
-    public List<DBObject> getIndexInfo() {
-        BasicDBObject cmd = new BasicDBObject();
-        cmd.put("ns", getFullName());
-
-        DBCursor cur = _db.getCollection("system.indexes").find(cmd);
-
-        List<DBObject> list = new ArrayList<DBObject>();
-
-        while(cur.hasNext()) {
-            list.add(cur.next());
-        }
-
-        return list;
-    }
+    public abstract List<DBObject> getIndexInfo();
 
     /**
      * Drops an index from this collection

@@ -58,6 +58,7 @@ public abstract class DB {
         _obedientCommands.add("geowalk");
         _obedientCommands.add("text");
         _obedientCommands.add("parallelcollectionscan");
+        _obedientCommands.add("listindexes");
     }
 
     /**
