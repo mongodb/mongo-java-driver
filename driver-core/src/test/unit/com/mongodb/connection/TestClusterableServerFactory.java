@@ -45,6 +45,11 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
         return addressToServerMap.get(serverAddress);
     }
 
+    public void sendNotification(final ServerAddress serverAddress, final ServerDescription serverDescription) {
+        getServer(serverAddress).sendNotification(serverDescription);
+    }
+
+
     public void sendNotification(final ServerAddress serverAddress, final ServerType serverType, final List<ServerAddress> hosts) {
         sendNotification(serverAddress, serverType, hosts, "test");
     }

@@ -80,6 +80,7 @@ public class PinnedBindingTest {
         ConnectionSource readSource = binding.getReadConnectionSource();
         Connection readConnection = readSource.getConnection();
         try {
+            assertEquals(writeSource.getServerDescription().getAddress(), readSource.getServerDescription().getAddress());
             assertEquals(writeConnection.getId(), readConnection.getId());
         } finally {
             writeConnection.release();
