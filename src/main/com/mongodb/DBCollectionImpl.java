@@ -32,10 +32,10 @@ import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import static com.mongodb.QueryResultIterator.chooseBatchSize;
 import static com.mongodb.WriteCommandResultHelper.getBulkWriteException;
 import static com.mongodb.WriteCommandResultHelper.getBulkWriteResult;
 import static com.mongodb.WriteCommandResultHelper.hasError;
-import static com.mongodb.QueryResultIterator.chooseBatchSize;
 import static com.mongodb.WriteRequest.Type.INSERT;
 import static com.mongodb.WriteRequest.Type.REMOVE;
 import static com.mongodb.WriteRequest.Type.REPLACE;
@@ -336,12 +336,10 @@ class DBCollectionImpl extends DBCollection {
 
     @SuppressWarnings("unchecked")
     public List<DBObject> getIndexInfo() {
-        DBTCPConnector connector = db.getConnector();
-        DBPort port = db.getConnector().getPrimaryPort();
         List<DBObject> list = new ArrayList<DBObject>();
 
-        if (connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(asList(2, 7, 7))) >= 0) {
-            CommandResult res = _db.command(new BasicDBObject("listIndexes", getName()));
+        if (db.isServerVersionAtLeast(asList(2, 7, 6))) {
+            CommandResult res = _db.command(new BasicDBObject("listIndexes", getName()), ReadPreference.primary());
             if (!res.ok() && res.getCode() == 26) {
                 return list;
             }
@@ -351,7 +349,7 @@ class DBCollectionImpl extends DBCollection {
             }
         } else {
             BasicDBObject cmd = new BasicDBObject("ns", getFullName());
-            DBCursor cur = _db.getCollection("system.indexes").find(cmd);
+            DBCursor cur = _db.getCollection("system.indexes").find(cmd).setReadPreference(ReadPreference.primary());
             while (cur.hasNext()) {
                 list.add(cur.next());
             }

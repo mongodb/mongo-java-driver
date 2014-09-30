@@ -16,14 +16,21 @@
 
 package com.mongodb;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.logging.Level;
+
+import static java.util.Arrays.asList;
 
 /**
  * Concrete extension of abstract {@code DB} class.
@@ -74,7 +81,7 @@ public class DBApiLayer extends DB {
     public WriteResult addUser( String username , char[] passwd, boolean readOnly ){
         requestStart();
         try {
-            if (useUserCommands(_connector.getPrimaryPort())) {
+            if (isServerVersionAtLeast(asList(2, 6, 0))) {
                 CommandResult userInfoResult = command(new BasicDBObject("usersInfo", username));
                 userInfoResult.throwOnError();
                 DBObject userCommandDocument = getUserCommandDocument(username, passwd, readOnly,
@@ -94,7 +101,7 @@ public class DBApiLayer extends DB {
     public WriteResult removeUser( String username ){
         requestStart();
         try {
-            if (useUserCommands(_connector.getPrimaryPort())) {
+            if (isServerVersionAtLeast(asList(2, 6, 0))) {
                 CommandResult res = command(new BasicDBObject("dropUser", username));
                 res.throwOnError();
                 return new WriteResult(res, getWriteConcern());
@@ -127,6 +134,36 @@ public class DBApiLayer extends DB {
         c = new DBCollectionImpl(this, name );
         DBCollectionImpl old = _collections.putIfAbsent(name, c);
         return old != null ? old : c;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Set<String> getCollectionNames() {
+        {
+            List<String> collectionNames = new ArrayList<String>();
+            if (isServerVersionAtLeast(asList(2, 7, 7))) {
+                CommandResult res = command(new BasicDBObject("listCollections", getName()), ReadPreference.primary());
+                if (!res.ok() && res.getCode() != 26) {
+                    res.throwOnError();
+                } else {
+                    List<DBObject> collections = (List<DBObject>) res.get("collections");
+                    for (DBObject collectionInfo: collections) {
+                        collectionNames.add(collectionInfo.get("name").toString());
+                    }
+                }
+            } else {
+                Iterator<DBObject> collections = getCollection("system.namespaces")
+                        .find(new BasicDBObject(), null, 0, 0, 0, getOptions(), ReadPreference.primary(), null);
+                for (; collections.hasNext();) {
+                    String collectionName = collections.next().get("name").toString();
+                    if (!collectionName.contains("$")) {
+                        collectionNames.add(collectionName.substring(getName().length() + 1));
+                    }
+                }
+            }
+            Collections.sort(collectionNames);
+            return new LinkedHashSet<String>(collectionNames);
+        }
     }
 
 
@@ -195,8 +232,9 @@ public class DBApiLayer extends DB {
         return _connector.authenticate(credentials);
     }
 
-    private boolean useUserCommands(final DBPort port) {
-        return _connector.getServerDescription(port.getAddress()).getVersion().compareTo(new ServerVersion(2, 6)) >= 0;
+    boolean isServerVersionAtLeast(final List<Integer> versionList) {
+        return getConnector().getServerDescription(getConnector().getPrimaryPort().getAddress())
+                .getVersion().compareTo(new ServerVersion(versionList)) >= 0;
     }
 
     void addDeadCursor(final DeadCursor deadCursor) {

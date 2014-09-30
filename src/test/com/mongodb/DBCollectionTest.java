@@ -277,8 +277,17 @@ public class DBCollectionTest extends TestCase {
         assertEquals(1, c.getIndexInfo().size());
     }
 
+    @Test
+    public void testGetCollectionNames() {
+        getDatabase().dropDatabase();
+        assertTrue(getDatabase().getCollectionNames().isEmpty());
 
-        @Test
+        collection.insert(new BasicDBObject());
+        assertFalse(getDatabase().getCollectionNames().isEmpty());
+        assertTrue(getDatabase().getCollectionNames().contains(collection.getName()));
+    }
+
+    @Test
     public void testDrop() {
         // ensure it exists
         collection.insert(new BasicDBObject());

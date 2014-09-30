@@ -23,11 +23,7 @@ import org.bson.BSONObject;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -58,7 +54,8 @@ public abstract class DB {
         _obedientCommands.add("geowalk");
         _obedientCommands.add("text");
         _obedientCommands.add("parallelcollectionscan");
-        _obedientCommands.add("listindexes");
+        _obedientCommands.add("listIndexes");
+        _obedientCommands.add("listCollections");
     }
 
     /**
@@ -503,42 +500,7 @@ public abstract class DB {
      * @return an set of names
      * @throws MongoException
      */
-    public Set<String> getCollectionNames(){
-
-        DBCollection namespaces = getCollection("system.namespaces");
-        if (namespaces == null)
-            throw new RuntimeException("this is impossible");
-
-        Iterator<DBObject> i = namespaces.find(new BasicDBObject(), null, 0, 0, 0, getOptions(), getReadPreference(), null);
-        if (i == null)
-            return new HashSet<String>();
-
-        List<String> tables = new ArrayList<String>();
-
-        for (; i.hasNext();) {
-            DBObject o = i.next();
-            if ( o.get( "name" ) == null ){
-                throw new MongoException( "how is name null : " + o );
-            }
-            String n = o.get("name").toString();
-            int idx = n.indexOf(".");
-
-            String root = n.substring(0, idx);
-            if (!root.equals(_name))
-                continue;
-
-            if (n.indexOf("$") >= 0)
-                continue;
-
-            String table = n.substring(idx + 1);
-
-            tables.add(table);
-        }
-
-        Collections.sort(tables);
-
-        return new LinkedHashSet<String>(tables);
-    }
+    public abstract Set<String> getCollectionNames();
 
     /**
      * Checks to see if a collection with a given name exists on a server.
