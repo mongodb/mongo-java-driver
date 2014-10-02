@@ -43,7 +43,7 @@ import static org.bson.util.Assertions.notNull;
 class ServerDescription {
 
     static final int MIN_DRIVER_WIRE_VERSION = 0;
-    static final int MAX_DRIVER_WIRE_VERSION = 2;
+    static final int MAX_DRIVER_WIRE_VERSION = 3;
 
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
