@@ -72,6 +72,8 @@ class ServerDescription {
     private final int minWireVersion;
     private final int maxWireVersion;
 
+    private Throwable exception;
+
     static class Builder {
         private ServerAddress address;
         private ServerType type = Unknown;
@@ -90,6 +92,7 @@ class ServerDescription {
         private ServerVersion version = new ServerVersion();
         private int minWireVersion = 0;
         private int maxWireVersion = 0;
+        private Throwable exception;
 
         // CHECKSTYLE:OFF
         public Builder address(final ServerAddress address) {
@@ -175,6 +178,11 @@ class ServerDescription {
 
         public Builder maxWireVersion(final int maxWireVersion) {
             this.maxWireVersion = maxWireVersion;
+            return this;
+        }
+
+        public Builder exception(final Throwable exception) {
+            this.exception = exception;
             return this;
         }
 
@@ -349,6 +357,10 @@ class ServerDescription {
         return averageLatencyNanos;
     }
 
+    public Throwable getException() {
+        return exception;
+    }
+
     /**
      * Returns true if this instance is equals to @code{o}.  Note that equality is defined to NOT include the average ping time.
      *
@@ -415,6 +427,19 @@ class ServerDescription {
             return false;
         }
 
+        // Compare class equality and message as exceptions rarely override equals
+        Class thisExceptionClass = exception != null ? exception.getClass() : null;
+        Class thatExceptionClass = that.exception != null ? that.exception.getClass() : null;
+        if (thisExceptionClass != null ? !thisExceptionClass.equals(thatExceptionClass) : thatExceptionClass != null) {
+            return false;
+        }
+
+        String thisExceptionMessage = exception != null ? exception.getMessage() : null;
+        String thatExceptionMessage= that.exception != null ? that.exception.getMessage() : null;
+        if (thisExceptionMessage != null ? !thisExceptionMessage.equals(thatExceptionMessage) : thatExceptionMessage != null) {
+            return false;
+        }
+
         return true;
     }
 
@@ -437,6 +462,8 @@ class ServerDescription {
         result = 31 * result + version.hashCode();
         result = 31 * result + minWireVersion;
         result = 31 * result + maxWireVersion;
+        result = 31 * result + (exception == null ? 0 : exception.getClass().hashCode());
+        result = 31 * result + (exception == null ? 0 : exception.getMessage().hashCode());
         return result;
     }
 
@@ -467,10 +494,28 @@ class ServerDescription {
         return "{"
                + "address=" + address
                + ", type=" + type
-               + (tags.isEmpty() ? "" : tags)
+               + (tags.isEmpty() ? "" : ", " + tags)
                + (state == Connected ? (", averageLatency=" + getAverageLatencyFormattedInMilliseconds() + " ms") : "")
                + ", state=" + state
+               + (exception == null ? "" : ", exception=" + translateExceptionToString())
                + '}';
+    }
+
+    private String translateExceptionToString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("{");
+        builder.append(exception);
+        builder.append("}");
+        Throwable cur = exception.getCause();
+        while (cur != null) {
+            builder.append(", caused by ");
+            builder.append("{");
+            builder.append(cur);
+            builder.append("}");
+            cur = cur.getCause();
+        }
+
+        return builder.toString();
     }
 
     private String getAverageLatencyFormattedInMilliseconds() {
@@ -495,5 +540,6 @@ class ServerDescription {
         ok = builder.ok;
         minWireVersion = builder.minWireVersion;
         maxWireVersion = builder.maxWireVersion;
+        exception = builder.exception;
     }
 }

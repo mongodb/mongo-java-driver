@@ -77,7 +77,7 @@ class ServerMonitor {
         public void run() {
             DBPort connection = null;
             try {
-                ServerDescription currentServerDescription = getConnectingServerDescription();
+                ServerDescription currentServerDescription = getConnectingServerDescription(null);
                 Throwable currentException = null;
                 while (!isClosed) {
                     ServerDescription previousServerDescription = currentServerDescription;
@@ -109,7 +109,7 @@ class ServerMonitor {
                         }
                     } catch (Throwable t) {
                         currentException = t;
-                        currentServerDescription = getConnectingServerDescription();
+                        currentServerDescription = getConnectingServerDescription(t);
                     }
 
                     if (!isClosed) {
@@ -203,7 +203,7 @@ class ServerMonitor {
     }
 
     static boolean descriptionHasChanged(final ServerDescription previousServerDescription,
-                                          final ServerDescription currentServerDescription) {
+                                         final ServerDescription currentServerDescription) {
         return !previousServerDescription.equals(currentServerDescription);
     }
 
@@ -317,7 +317,11 @@ class ServerMonitor {
         return tags;
     }
 
-    private ServerDescription getConnectingServerDescription() {
-        return ServerDescription.builder().type(ServerType.Unknown).state(ServerConnectionState.Connecting).address(serverAddress).build();
+    private ServerDescription getConnectingServerDescription(final Throwable throwable) {
+        return ServerDescription.builder().type(ServerType.Unknown)
+                                .state(ServerConnectionState.Connecting)
+                                .address(serverAddress)
+                                .exception(throwable)
+                                .build();
     }
 }

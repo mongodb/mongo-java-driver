@@ -158,7 +158,7 @@ class Tags implements Map<String, String> {
 
     @Override
     public String toString() {
-        return wrapped.toString();
+        return "TagSet" + wrapped.toString();
     }
 }
 
