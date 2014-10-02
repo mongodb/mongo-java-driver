@@ -43,7 +43,7 @@ public class RootCodecRegistry implements CodecRegistry {
      *
      * @param codecProviders the list of codec providers
      */
-    public RootCodecRegistry(final List<CodecProvider> codecProviders) {
+    public RootCodecRegistry(final List<? extends CodecProvider> codecProviders) {
         this.sources = new ArrayList<CodecProvider>(codecProviders);
     }
 
