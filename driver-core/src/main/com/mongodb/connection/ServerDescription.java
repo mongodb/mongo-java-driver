@@ -43,7 +43,7 @@ import static com.mongodb.connection.ServerType.UNKNOWN;
 public class ServerDescription {
 
     static final int MIN_DRIVER_WIRE_VERSION = 0;
-    static final int MAX_DRIVER_WIRE_VERSION = 2;
+    static final int MAX_DRIVER_WIRE_VERSION = 3;
 
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
 
