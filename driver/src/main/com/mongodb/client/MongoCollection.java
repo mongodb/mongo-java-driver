@@ -45,14 +45,16 @@ import org.mongodb.Document;
 import java.util.List;
 
 /**
- * Additions to this interface will not be considered to break binary compatibility.
+ * The MongoCollection interface.
+ *
+ * <p>Note: Additions to this interface will not be considered to break binary compatibility.</p>
  *
  * @param <T> The type that this collection will encode documents from and decode documents to.
- *
  * @since 3.0
  */
 @ThreadSafe
 public interface MongoCollection<T> {
+
     /**
      * Gets the namespace of this collection.
      *
@@ -95,10 +97,11 @@ public interface MongoCollection<T> {
      * Gets the distinct values of the specified field name.
      *
      * @param fieldName the field name
+     * @param distinctOptions the options to apply to the distinct operation
      * @return a non-null list of distinct values
      * @mongodb.driver.manual manual/reference/command/distinct/ Distinct
      */
-    List<Object> distinct(String fieldName, DistinctOptions options);
+    List<Object> distinct(String fieldName, DistinctOptions distinctOptions);
 
     /**
      * Finds all documents in the collection.
@@ -112,6 +115,7 @@ public interface MongoCollection<T> {
      * Finds all documents in the collection.
      *
      * @param clazz the class to decode each document into
+     * @param <C> the target document type of the iterable.
      * @return an iterable containing the result of the find operation
      * @mongodb.driver.manual manual/tutorial/query-documents/ Find
      */
@@ -131,6 +135,7 @@ public interface MongoCollection<T> {
      *
      * @param findOptions the options describing the find operation
      * @param clazz the class to decode each document into
+     * @param <C> the target document type of the iterable.
      * @return an iterable containing the result of the find operation
      * @mongodb.driver.manual manual/tutorial/query-documents/ Find
      */
@@ -151,6 +156,7 @@ public interface MongoCollection<T> {
      *
      * @param pipeline the aggregate pipeline
      * @param clazz the class to decode each document into
+     * @param <C> the target document type of the iterable.
      * @return an iterable containing the result of the aggregation operation
      * @mongodb.driver.manual manual/aggregation/ Aggregation
      * @mongodb.server.release 2.2
@@ -174,6 +180,7 @@ public interface MongoCollection<T> {
      * @param pipeline the aggregate pipeline
      * @param options the options to apply to the aggregation operation
      * @param clazz the class to decode each document into
+     * @param <C> the target document type of the iterable.
      * @return an iterable containing the result of the aggregation operation
      * @mongodb.driver.manual manual/aggregation/ Aggregation
      * @mongodb.server.release 2.2
@@ -207,6 +214,7 @@ public interface MongoCollection<T> {
      * @param mapFunction A JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
      * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
      * @param clazz the class to decode each resulting document into.
+     * @param <C> the target document type of the iterable.
      * @return an iterable containing the result of the map-reduce operation
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
      */
@@ -219,6 +227,7 @@ public interface MongoCollection<T> {
      * @param reduceFunction A JavaScript function that "reduces" to a single object all the values associated with a particular key.
      * @param options The specific options for the map-reduce command.
      * @param clazz the class to decode each resulting document into.
+     * @param <C> the target document type of the iterable.
      * @return an iterable containing the result of the map-reduce operation
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
      */
@@ -475,6 +484,7 @@ public interface MongoCollection<T> {
      *
      * @param numCursors the number of cursors requested to iterate in parallel.
      * @param clazz the class to decode each document into.
+     * @param <C> the target document type of the iterable.
      * @return a list of MongoIterable, whose size may be less than the number requested
      * @mongodb.server.release 2.6
      */
@@ -486,6 +496,7 @@ public interface MongoCollection<T> {
      * @param numCursors the number of cursors requested to iterate in parallel.
      * @param parallelCollectionScanOptions the options to use with operation.
      * @param clazz the class to decode each document into.
+     * @param <C> the target document type of the iterable.
      * @return a list of MongoIterable, whose size may be less than the number requested
      * @mongodb.server.release 2.6
      */

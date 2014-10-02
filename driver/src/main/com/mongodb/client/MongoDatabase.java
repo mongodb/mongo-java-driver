@@ -24,25 +24,85 @@ import org.mongodb.Document;
 import java.util.List;
 
 /**
- * Additions to this interface will not be considered to break binary compatibility.
+ * The MongoDatabase interface.
+ *
+ * <p>Note: Additions to this interface will not be considered to break binary compatibility.</p>
+ *
+ * @since 3.0
  */
 @ThreadSafe
 public interface MongoDatabase {
+
+    /**
+     * Gets the name of the database.
+     *
+     * @return the database name
+     */
     String getName();
 
+    /**
+     * Executes command in the context of the current database.
+     *
+     * @param command the command to be run
+     * @return the command result
+     */
     Document executeCommand(Document command);
 
+    /**
+     * Executes command in the context of the current database.
+     *
+     * @param command        the command to be run
+     * @param readPreference the {@link ReadPreference} to be used when executing the command
+     * @return the command result
+     */
     Document executeCommand(Document command, ReadPreference readPreference);
 
+    /**
+     * Gets the options that are used with the database.
+     *
+     * <p>Note: {@link MongoDatabaseOptions} is immutable.</p>
+     *
+     * @return the options
+     */
     MongoDatabaseOptions getOptions();
 
+    /**
+     * Gets a collection.
+     *
+     * @param collectionName the name of the collection to return
+     * @return the collection
+     */
     MongoCollection<Document> getCollection(String collectionName);
 
-    MongoCollection<Document> getCollection(String collectionName, MongoCollectionOptions options);
+    /**
+     * Gets a collection, with the specific {@code MongoCollectionOptions}.
+     *
+     * @param collectionName         the name of the collection to return
+     * @param mongoCollectionOptions the options to be used with the {@code MongoCollection}
+     * @return the collection
+     */
+    MongoCollection<Document> getCollection(String collectionName, MongoCollectionOptions mongoCollectionOptions);
 
+    /**
+     * Gets a collection, with a specific document class.
+     *
+     * @param collectionName the name of the collection to return
+     * @param clazz          the default class to cast any documents returned from the database into.
+     * @param <T>            the type of the class to use instead of {@code Document}.
+     * @return the collection
+     */
     <T> MongoCollection<T> getCollection(String collectionName, Class<T> clazz);
 
-    <T> MongoCollection<T> getCollection(String collectionName, Class<T> clazz, MongoCollectionOptions options);
+    /**
+     * Gets a collection, with a specific document class and {@code MongoCollectionOptions}.
+     *
+     * @param collectionName         the name of the collection to return
+     * @param clazz                  the default class to cast any documents returned from the database into
+     * @param mongoCollectionOptions the options to be used with the {@code MongoCollection}
+     * @param <T>                    the type of the class to use instead of {@code Document}
+     * @return the collection
+     */
+    <T> MongoCollection<T> getCollection(String collectionName, Class<T> clazz, MongoCollectionOptions mongoCollectionOptions);
 
 
     /**

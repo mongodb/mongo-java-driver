@@ -23,8 +23,6 @@
 <suppressions>
     <!--Ignore the core module, as this is not complete yet.  Documenting this is JAVA-1391 -->
     <suppress checks="Javadoc*" files=".*driver-core.*"/>
-    <!--Ignore the new API folder for javadoc until the specs for the API are finished. Documenting this is JAVA-1411 -->
-    <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]client[\\/]"/>
     <!--Ignore the async functionality for now since this is incomplete -->
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]async[\\/]"/>
 

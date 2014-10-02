@@ -58,8 +58,8 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public MongoCollection<Document> getCollection(final String collectionName, final MongoCollectionOptions options) {
-        return getCollection(collectionName, Document.class, options);
+    public MongoCollection<Document> getCollection(final String collectionName, final MongoCollectionOptions mongoCollectionOptions) {
+        return getCollection(collectionName, Document.class, mongoCollectionOptions);
     }
 
     @Override
@@ -68,8 +68,10 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz, final MongoCollectionOptions options) {
-        return new MongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, options.withDefaults(this.options), executor);
+    public <T> MongoCollection<T> getCollection(final String collectionName, final Class<T> clazz,
+                                                final MongoCollectionOptions mongoCollectionOptions) {
+        return new MongoCollectionImpl<T>(new MongoNamespace(name, collectionName), clazz, mongoCollectionOptions.withDefaults(options),
+                                          executor);
     }
 
     @Override

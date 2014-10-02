@@ -245,7 +245,9 @@ public class MongoClient extends Mongo {
     }
 
     /**
-     * Gets the options that this client uses to connect to server. Please, note that {@link MongoClientOptions} is immutable.
+     * Gets the options that this client uses to connect to server.
+     *
+     * <p>Note: {@link MongoClientOptions} is immutable.</p>
      *
      * @return the options
      */

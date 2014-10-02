@@ -14,23 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.configuration;
-
-import org.bson.codecs.Codec;
-
 /**
- * A registry of Codec instances searchable by the class that the Codec can encode and decode. 
- *
- * @since 3.0
+ * This packages contains classes for the new client api for MongoDatabase and MongoCollection
  */
-public interface CodecRegistry {
-    /**
-     * Gets a {@code Codec} for the given Class.
-     *
-     * @param clazz the class
-     * @param <T> the class type
-     * @return a codec for the given class
-     * @throws CodecConfigurationException if the registry does not contain a codec for the given class.
-     */
-    <T> Codec<T> get(Class<T> clazz);
-}
+package com.mongodb.client;

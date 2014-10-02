@@ -26,6 +26,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+/**
+ * A utility class for creating a {@link Document} that represents a query.
+ *
+ * @since 3.0
+ */
 public class QueryBuilder implements ConvertibleToDocument {
     private final Document query;
     private String currentKey;

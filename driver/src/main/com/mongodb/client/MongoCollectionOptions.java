@@ -21,12 +21,31 @@ import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Immutable;
 import org.bson.codecs.configuration.CodecRegistry;
 
+/**
+ * Various settings to control the behavior of a {@code MongoCollection}.
+ *
+ * @since 3.0
+ */
 @Immutable
 public final class MongoCollectionOptions extends MongoDatabaseOptions {
+
+    /**
+     * Create a new MongoCollectionOptions builder.
+     *
+     * @return a new MongoCollectionOptions builder
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * Merges MongoDatabaseOptions to the current MongoCollectionOptions
+     *
+     * <p>If any options haven't been set then the default MongoDatabaseOptions will be used.</p>
+     *
+     * @param defaultOptions the MongoDatabaseOptions to default to
+     * @return a new MongoCollectionOptions with the merged in default options
+     */
     public MongoCollectionOptions withDefaults(final MongoDatabaseOptions defaultOptions) {
         Builder builder = new Builder();
         builder.writeConcern(getWriteConcern() != null ? getWriteConcern() : defaultOptions.getWriteConcern());
@@ -35,7 +54,18 @@ public final class MongoCollectionOptions extends MongoDatabaseOptions {
         return builder.build();
     }
 
+    /**
+     * A builder for MongoCollectionOptions.
+     *
+     * <p>Note: as MongoCollectionOptions are immutable, the builder helpers support easier construction through chaining.</p>
+     */
     public static final class Builder extends MongoDatabaseOptions.Builder {
+
+        /**
+         * Build an instance of MongoCollectionOptions.
+         *
+         * @return the options from this builder
+         */
         public MongoCollectionOptions build() {
             return new MongoCollectionOptions(getWriteConcern(), getReadPreference(), getCodecRegistry());
         }

@@ -150,8 +150,8 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public List<Object> distinct(final String fieldName, final DistinctOptions options) {
-        return distinct(new DistinctModel(fieldName, options));
+    public List<Object> distinct(final String fieldName, final DistinctOptions distinctOptions) {
+        return distinct(new DistinctModel(fieldName, distinctOptions));
     }
 
     private List<Object> distinct(final DistinctModel model) {

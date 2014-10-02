@@ -24,16 +24,35 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+
+/**
+ * Various settings to control the behavior of a {@code MongoDatabase}.
+ *
+ * @since 3.0
+ */
 @Immutable
 public class MongoDatabaseOptions {
     private final WriteConcern writeConcern;
     private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
 
+    /**
+     * Create a new MongoDatabaseOptions builder.
+     *
+     * @return a new MongoDatabaseOptions builder
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * Merges MongoClientOptions to the current MongoDatabaseOptions
+     *
+     * <p>If any options haven't been set then the default MongoClientOptions will be used.</p>
+     *
+     * @param defaultOptions the MongoClientOptions to default to
+     * @return a new MongoCollectionOptions with the merged in default options
+     */
     public MongoDatabaseOptions withDefaults(final MongoClientOptions defaultOptions) {
         Builder builder = new Builder();
         builder.writeConcern(getWriteConcern() != null ? getWriteConcern() : defaultOptions.getWriteConcern());
@@ -42,50 +61,108 @@ public class MongoDatabaseOptions {
         return builder.build();
     }
 
+    /**
+     * Gets the write concern to use.
+     *
+     * @return {@code WriteConcern} to be used for write operations
+     */
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
 
+    /**
+     * Gets the read preference to use.
+     *
+     * @return {@code ReadPreference} to be used for read operations.
+     */
     public ReadPreference getReadPreference() {
         return readPreference;
     }
 
+    /**
+     * Gets the codec registry to use.
+     *
+     * @return {@code CodecRegistry} the codec registry
+     */
     public CodecRegistry getCodecRegistry() {
         return codecRegistry;
     }
 
+    /**
+     * A builder for MongoDatabaseOptions.
+     *
+     * <p>Note: as MongoDatabaseOptions are immutable, the builder helpers support easier construction through chaining.</p>
+     */
     public static class Builder {
         private WriteConcern writeConcern;
         private ReadPreference readPreference;
         private CodecRegistry codecRegistry;
 
+        /**
+         * Gets the write concern to use.
+         *
+         * @return {@code WriteConcern} to be used for write operations
+         */
         public WriteConcern getWriteConcern() {
             return writeConcern;
         }
 
+        /**
+         * Gets the read preference to use.
+         *
+         * @return {@code ReadPreference} to be used for read operations.
+         */
         public ReadPreference getReadPreference() {
             return readPreference;
         }
 
+        /**
+         * Gets the codec registry to use.
+         *
+         * @return {@code CodecRegistry} the codec registry
+         */
         public CodecRegistry getCodecRegistry() {
             return codecRegistry;
         }
 
+        /**
+         * Sets the write concern to use.
+         *
+         * @param writeConcern the {@code WriteConcern} to be used for write operations
+         * @return this
+         */
         public Builder writeConcern(final WriteConcern writeConcern) {
             this.writeConcern = notNull("writeConcern", writeConcern);
             return this;
         }
 
+        /**
+         * Sets the read preference to use.
+         *
+         * @param readPreference the {@code ReadPreference} to be used for read operations.
+         * @return this
+         */
         public Builder readPreference(final ReadPreference readPreference) {
             this.readPreference = notNull("readPreference", readPreference);
             return this;
         }
 
+        /**
+         * Sets the codec registry to use.
+         *
+         * @param codecRegistry the {@code CodecRegistry} the codec registry to be used with the {@link MongoDatabase}
+         * @return this
+         */
         public Builder codecRegistry(final CodecRegistry codecRegistry) {
             this.codecRegistry = notNull("codecRegistry", codecRegistry);
             return this;
         }
 
+        /**
+         * Builds an instance of MongoDatabaseOptions.
+         *
+         * @return the options from this builder
+         */
         public MongoDatabaseOptions build() {
             return new MongoDatabaseOptions(writeConcern, readPreference, codecRegistry);
         }
