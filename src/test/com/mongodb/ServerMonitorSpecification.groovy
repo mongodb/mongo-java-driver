@@ -1,4 +1,5 @@
 package com.mongodb
+import spock.lang.IgnoreIf
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -7,37 +8,19 @@ import static com.mongodb.Fixture.getMongoClient
 import static com.mongodb.Fixture.serverIsAtLeastVersion
 import static com.mongodb.ServerMonitor.exceptionHasChanged
 import static com.mongodb.ServerMonitor.stateHasChanged
-import static org.junit.Assume.assumeFalse
-import static org.junit.Assume.assumeTrue
 
 class ServerMonitorSpecification extends FunctionalSpecification {
     ServerDescription newDescription
     ServerMonitor serverMonitor
     CountDownLatch latch = new CountDownLatch(1)
 
-    def setup() {
-        def connectionProvider = new PooledConnectionProvider('cluster-1', new ServerAddress(), new DBPortFactory(new MongoOptions()),
-                                                              ConnectionPoolSettings.builder().maxSize(1).build(),
-                                                              new JMXConnectionPoolListener());
-        serverMonitor = new ServerMonitor(new ServerAddress(),
-                                          new ChangeListener<ServerDescription>() {
-                                              @Override
-                                              void stateChanged(final ChangeEvent<ServerDescription> event) {
-                                                  newDescription = event.newValue
-                                                  latch.countDown()
-                                              }
-                                          },
-                                          SocketSettings.builder().build(), ServerSettings.builder().build(),
-                                          'cluster-1', getMongoClient(), connectionProvider)
-        serverMonitor.start()
-    }
-
     def cleanup() {
-        serverMonitor.close();
+        serverMonitor?.close();
     }
 
     def 'should set server version'() {
         given:
+        initializeServerMonitor(new ServerAddress())
         CommandResult commandResult = database.command(new BasicDBObject('buildinfo', 1))
         def expectedVersion = new ServerVersion((commandResult.get('versionArray') as List<Integer>).subList(0, 3))
 
@@ -48,10 +31,10 @@ class ServerMonitorSpecification extends FunctionalSpecification {
         newDescription.version == expectedVersion
     }
 
+    @IgnoreIf( { !serverIsAtLeastVersion(2.6) } )
     def 'should set max wire batch size when provided by server'() {
-        assumeTrue(serverIsAtLeastVersion(2.5))
-
         given:
+        initializeServerMonitor(new ServerAddress())
         CommandResult commandResult = database.command(new BasicDBObject('ismaster', 1))
         def expected = commandResult.get('maxWriteBatchSize')
 
@@ -62,14 +45,27 @@ class ServerMonitorSpecification extends FunctionalSpecification {
         newDescription.maxWriteBatchSize == expected
     }
 
+    @IgnoreIf( { serverIsAtLeastVersion(2.6) } )
     def 'should set default max wire batch size when not provided by server'() {
-        assumeFalse(serverIsAtLeastVersion(2.5))
+        given:
+        initializeServerMonitor(new ServerAddress())
 
         when:
         latch.await()
 
         then:
         newDescription.maxWriteBatchSize == ServerDescription.getDefaultMaxWriteBatchSize()
+    }
+
+    def 'should report current exception'() {
+        given:
+        initializeServerMonitor(new ServerAddress('some_unknown_server_name:34567'))
+
+        when:
+        latch.await()
+
+        then:
+        newDescription.exception instanceof MongoSocketException
     }
 
     def 'should report exception has changed when the current and previous are different'() {
@@ -134,5 +130,24 @@ class ServerMonitorSpecification extends FunctionalSpecification {
                                           .address(new ServerAddress())
                                           .averageLatency(5, TimeUnit.MILLISECONDS)
                                           .build());
+    }
+
+    def initializeServerMonitor(ServerAddress address) {
+        def options = new MongoOptions()
+        options.connectTimeout = 1000
+        def connectionProvider = new PooledConnectionProvider('cluster-1', address, new DBPortFactory(options),
+                                                              ConnectionPoolSettings.builder().maxSize(1).build(),
+                                                              new JMXConnectionPoolListener());
+        serverMonitor = new ServerMonitor(address,
+                                          new ChangeListener<ServerDescription>() {
+                                              @Override
+                                              void stateChanged(final ChangeEvent<ServerDescription> event) {
+                                                  newDescription = event.newValue
+                                                  latch.countDown()
+                                              }
+                                          },
+                                          SocketSettings.builder().build(), ServerSettings.builder().build(),
+                                          'cluster-1', getMongoClient(), connectionProvider)
+        serverMonitor.start()
     }
 }

@@ -79,8 +79,10 @@ abstract class BaseCluster implements Cluster {
                 }
 
                 if (curTimeNanos > endTimeNanos) {
-                    throw new MongoTimeoutException(format("Timed out while waiting for a server that matches %s after %d ms",
-                                                           serverSelector, MILLISECONDS.convert(maxWaitTime, timeUnit)));
+                    throw new MongoTimeoutException(format("Timed out after %d ms while waiting for a server that matches %s. " +
+                                                           "Client view of cluster state is %s",
+                                                           MILLISECONDS.convert(maxWaitTime, timeUnit), serverSelector,
+                                                           curDescription.getShortDescription()));
                 }
 
                 if (!selectionFailureLogged) {
@@ -123,8 +125,10 @@ abstract class BaseCluster implements Cluster {
             while (curDescription.getType() == ClusterType.Unknown) {
 
                 if (curTimeNanos > endTimeNanos) {
-                    throw new MongoTimeoutException(format("Timed out while waiting to connect after %d ms",
-                                                           MILLISECONDS.convert(maxWaitTime, timeUnit)));
+                    throw new MongoTimeoutException(format("Timed out after %d ms while waiting to connect. Client view of cluster state " +
+                                                           "is %s",
+                                                           MILLISECONDS.convert(maxWaitTime, timeUnit),
+                                                           curDescription.getShortDescription()));
                 }
 
                 if (!selectionFailureLogged) {
