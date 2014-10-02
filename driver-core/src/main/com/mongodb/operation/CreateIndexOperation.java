@@ -71,6 +71,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
     private Double min;
     private Double max;
     private Double bucketSize;
+    private boolean dropDups;
 
     /**
      * Construct a new instance.
@@ -417,6 +418,34 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
         return this;
     }
 
+    /**
+     * Returns the legacy dropDups setting
+     *
+     * <p>Prior to MongoDB 2.8 dropDups could be used with unique indexes allowing documents with duplicate values to be dropped when
+     * building the index. Later versions of MongoDB will silently ignore this setting.</p>
+     *
+     * @return the legacy dropDups setting
+     * @mongodb.driver.manual core/index-creation/#index-creation-duplicate-dropping duplicate dropping
+     */
+    public boolean getDropDups() {
+        return dropDups;
+    }
+
+    /**
+     * Sets the legacy dropDups setting
+     *
+     * <p>Prior to MongoDB 2.8 dropDups could be used with unique indexes allowing documents with duplicate values to be dropped when
+     * building the index. Later versions of MongoDB will silently ignore this setting.</p>
+     *
+     * @param dropDups the legacy dropDups setting
+     * @return this
+     * @mongodb.driver.manual core/index-creation/#index-creation-duplicate-dropping duplicate dropping
+     */
+    public CreateIndexOperation dropDups(final boolean dropDups) {
+        this.dropDups = dropDups;
+        return this;
+    }
+
     @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<Void>() {
@@ -510,6 +539,9 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
         if (bucketSize != null) {
             index.append("bucketSize", new BsonDouble(bucketSize));
         }
+        if (dropDups) {
+            index.append("dropDups", BsonBoolean.TRUE);
+        }
         return index;
     }
 
@@ -558,4 +590,5 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
         }
         return indexName.toString();
     }
+
 }

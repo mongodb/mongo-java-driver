@@ -1974,7 +1974,6 @@ public class DBCollection {
         if (options.containsField("v")) {
             operation.version(convertOptionsToType(options, "v", Integer.class));
         }
-
         if (options.containsField("weights")) {
             operation.weights(wrap(convertOptionsToType(options, "weights", DBObject.class)));
         }
@@ -2001,6 +2000,9 @@ public class DBCollection {
         }
         if (options.containsField("bucketSize")) {
             operation.bucketSize(convertOptionsToType(options, "bucketSize", Double.class));
+        }
+        if (options.containsField("dropDups")) {
+            operation.dropDups(convertOptionsToType(options, "dropDups", Boolean.class));
         }
         return operation;
     }

@@ -54,13 +54,14 @@ class DBCollectionSpecification extends Specification {
         operation.getMin() == null
         operation.getMax() == null
         operation.getBucketSize() == null
+        !operation.getDropDups()
 
         when:
         collection.createIndex(keys, new BasicDBObject(['background': true, 'unique': true, 'sparse': true, 'name': 'aIndex',
                                                       'expireAfterSeconds': 100, 'v': 1, 'weights': new BasicDBObject(['a': 1000]),
                                                       'default_language': 'es', 'language_override': 'language', 'textIndexVersion': 1,
                                                       '2dsphereIndexVersion': 1, 'bits': 1, 'min': new Double(-180.0),
-                                                      'max': new Double(180.0), 'bucketSize': new Double(200.0)]))
+                                                      'max': new Double(180.0), 'bucketSize': new Double(200.0), 'dropDups': true]))
 
         then:
         def operation2 = executor.getWriteOperation() as CreateIndexOperation
@@ -80,5 +81,6 @@ class DBCollectionSpecification extends Specification {
         operation2.getMin() == -180.0
         operation2.getMax() == 180.0
         operation2.getBucketSize() == 200.0
+        operation2.getDropDups()
     }
 }

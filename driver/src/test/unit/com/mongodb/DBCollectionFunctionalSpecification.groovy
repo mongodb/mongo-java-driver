@@ -16,6 +16,10 @@
 
 package com.mongodb
 
+import spock.lang.IgnoreIf
+
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static java.util.Arrays.asList
 import static org.hamcrest.Matchers.contains
 import static spock.util.matcher.HamcrestSupport.that
 
@@ -138,6 +142,30 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         DBObject document = collection.getIndexInfo()[1]
         document.get('expireAfterSeconds') == 42
         document.get('background') == true
+    }
+
+    @IgnoreIf({ serverVersionAtLeast(asList(2, 7, 0)) })
+    def 'should support legacy dropDups when creating a unique index'() {
+        when:
+        collection.drop()
+        collection.insert(~['y': 1])
+        collection.insert(~['y': 1])
+
+        then:
+        collection.count() == 2
+
+        when:
+        collection.createIndex(~['y': 1], ~['unique': true]);
+
+        then:
+        thrown(DuplicateKeyException)
+
+        when:
+        collection.createIndex(~['y': 1], ~['unique': true, 'dropDups': true]);
+
+        then:
+        notThrown(DuplicateKeyException)
+        collection.count() == 1
     }
 
     def 'drop index should not fail if collection does not exist'() {
