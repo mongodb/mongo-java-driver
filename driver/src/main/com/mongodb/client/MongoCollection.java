@@ -23,6 +23,7 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.model.AggregateOptions;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DistinctOptions;
 import com.mongodb.client.model.ExplainableModel;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
@@ -32,6 +33,7 @@ import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.MapReduceOptions;
 import com.mongodb.client.model.ParallelCollectionScanOptions;
+import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
@@ -501,9 +503,67 @@ public interface MongoCollection<T> {
     Document explain(ExplainableModel explainableModel, ExplainVerbosity verbosity);
 
     /**
-     * Collection administration tools
+     * Drops this collection from the Database.
      *
-     * @return the collection administration tools
+     * @mongodb.driver.manual reference/command/drop/ Drop Collection
      */
-    CollectionAdministration tools();
+    void dropCollection();
+
+    /**
+     * @param key an object describing the index key(s), which may not be null. This can be of any type for which a {@code Codec} is
+     *            registered
+     * @mongodb.driver.manual reference/method/db.collection.ensureIndex Ensure Index
+     */
+    void createIndex(Object key);
+
+    /**
+     * @param key an object describing the index key(s), which may not be null. This can be of any type for which a {@code Codec} is
+     *            registered
+     * @param createIndexOptions the options for the index
+     * @mongodb.driver.manual reference/method/db.collection.ensureIndex Ensure Index
+     */
+    void createIndex(Object key, CreateIndexOptions createIndexOptions);
+
+    /**
+     * @return all the indexes on this collection
+     * @mongodb.driver.manual reference/method/db.collection.getIndexes/ getIndexes
+     */
+    List<Document> getIndexes();
+
+    /**
+     * Drops the given index.
+     *
+     * @param indexName the name of the index to remove
+     * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
+     */
+    void dropIndex(String indexName);
+
+    /**
+     * Drop all the indexes on this collection, except for the default on _id.
+     *
+     * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
+     */
+    void dropIndexes();
+
+    /**
+     * Rename the collection with oldCollectionName to the newCollectionName.
+     *
+     * @param newCollectionNamespace the namespace the collection will be renamed to
+     * @throws com.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection, or if the
+     *                                          oldCollectionName is the name of a collection that doesn't exist
+     * @mongodb.driver.manual reference/commands/renameCollection Rename collection
+     */
+    void renameCollection(MongoNamespace newCollectionNamespace);
+
+    /**
+     * Rename the collection with oldCollectionName to the newCollectionName.
+     *
+     * @param newCollectionNamespace  the name the collection will be renamed to
+     * @param renameCollectionOptions the options for renaming a collection
+     * @throws com.mongodb.MongoServerException if you provide a newCollectionName that is the name of an existing collection and dropTarget
+     *                                          is false, or if the oldCollectionName is the name of a collection that doesn't exist
+     * @mongodb.driver.manual reference/commands/renameCollection Rename collection
+     */
+    void renameCollection(MongoNamespace newCollectionNamespace, RenameCollectionOptions renameCollectionOptions);
+
 }

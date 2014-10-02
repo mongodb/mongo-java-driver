@@ -35,7 +35,6 @@ import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.operation.OrderBy.ASC
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -140,13 +139,11 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should use hint with the count'() {
         given:
-        def index = Index.builder().addKey('x', ASC).sparse().build()
-        def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index])
-        def countOperation = new CountOperation(getNamespace())
-                .hint(new BsonString('x_1'))
+        def createIndexOperation = new CreateIndexOperation(getNamespace(), new BsonDocument('x', new BsonInt32(1))).sparse(true)
+        def countOperation = new CountOperation(getNamespace()).hint(new BsonString('x_1'))
 
         when:
-        createIndexesOperation.execute(getBinding())
+        createIndexOperation.execute(getBinding())
 
         then:
         countOperation.execute(getBinding()) == serverVersionAtLeast(asList(2, 6, 0)) ? 1 : documents.size()
@@ -155,13 +152,11 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     @Category(Async)
     def 'should use hint with the count asynchronously'() {
         given:
-        def index = Index.builder().addKey('x', ASC).sparse().build()
-        def createIndexesOperation = new CreateIndexesOperation(getNamespace(), [index])
-        def countOperation = new CountOperation(getNamespace())
-                .hint(new BsonString('x_1'))
+        def createIndexOperation = new CreateIndexOperation(getNamespace(), new BsonDocument('x', new BsonInt32(1))).sparse(true)
+        def countOperation = new CountOperation(getNamespace()).hint(new BsonString('x_1'))
 
         when:
-        createIndexesOperation.executeAsync(getAsyncBinding()).get()
+        createIndexOperation.executeAsync(getAsyncBinding()).get()
 
         then:
         countOperation.executeAsync(getAsyncBinding()).get() == serverVersionAtLeast(asList(2, 6, 0)) ? 1 : documents.size()

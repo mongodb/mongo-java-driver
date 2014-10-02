@@ -30,31 +30,46 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.OperationHelper.VoidTransformer;
 
 /**
- * An operation that renames the given collection to the new name.  If the new name is the same as an existing collection and dropTarget is
- * true, this existing collection will be dropped. If dropTarget is false and the newCollectionName is the same as an existing collection, a
- * MongoServerException will be thrown.
+ * An operation that renames the given collection to the new name.
  *
+ * <p>If the new name is the same as an existing collection and dropTarget is true, this existing collection will be dropped. If
+ * dropTarget is false and the newCollectionName is the same as an existing collection, a MongoServerException will be thrown.</p>
+ *
+ * @mongodb.driver.manual reference/command/renameCollection renameCollection
  * @since 3.0
  */
 public class RenameCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
-    private final String databaseName;
-    private final String originalCollectionName;
-    private final String newCollectionName;
-    private final boolean dropTarget;
+    private final MongoNamespace originalNamespace;
+    private final MongoNamespace newNamespace;
+    private boolean dropTarget;
 
     /**
-     * @param databaseName the name of the database for the operation.
-     * @param originalCollectionName the name of the collection to rename
-     * @param newCollectionName      the desired new name for the collection
-     * @param dropTarget             set to true if you want any existing database with newCollectionName to be dropped during the rename
+     * @param originalNamespace the name of the collection to rename
+     * @param newNamespace      the desired new name for the collection
      */
-    public RenameCollectionOperation(final String databaseName, final String originalCollectionName, final String newCollectionName,
-                                     final boolean dropTarget) {
-        super();
-        this.originalCollectionName = notNull("originalCollectionName", originalCollectionName);
-        this.newCollectionName = notNull("newCollectionName", newCollectionName);
-        this.dropTarget = notNull("dropTarget", dropTarget);
-        this.databaseName = notNull("databaseName", databaseName);
+    public RenameCollectionOperation(final MongoNamespace originalNamespace, final MongoNamespace newNamespace) {
+        this.originalNamespace = notNull("originalNamespace", originalNamespace);
+        this.newNamespace = notNull("newNamespace", newNamespace);
+    }
+
+    /**
+     * Gets if mongod should drop the target of renameCollection prior to renaming the collection.
+     *
+     * @return true if mongod should drop the target of renameCollection prior to renaming the collection.
+     */
+    public boolean isDropTarget() {
+        return dropTarget;
+    }
+
+    /**
+     * Sets if mongod should drop the target of renameCollection prior to renaming the collection.
+     *
+     * @param dropTarget true if mongod should drop the target of renameCollection prior to renaming the collection.
+     * @return this
+     */
+    public RenameCollectionOperation dropTarget(final boolean dropTarget) {
+        this.dropTarget = dropTarget;
+        return this;
     }
 
     /**
@@ -84,9 +99,8 @@ public class RenameCollectionOperation implements AsyncWriteOperation<Void>, Wri
     }
 
     private BsonDocument getCommand() {
-        return new BsonDocument("renameCollection", new BsonString(new MongoNamespace(databaseName, originalCollectionName).getFullName()))
-               .append("to", new BsonString(new MongoNamespace(databaseName, newCollectionName).getFullName()))
-               .append("dropTarget", BsonBoolean.valueOf(dropTarget));
+        return new BsonDocument("renameCollection", new BsonString(originalNamespace.getFullName()))
+                   .append("to", new BsonString(newNamespace.getFullName()))
+                   .append("dropTarget", BsonBoolean.valueOf(dropTarget));
     }
-
 }

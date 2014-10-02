@@ -47,8 +47,8 @@ public final class BulkWriteModel<T> {
      * @param options the non-null bulk write options
      */
     public BulkWriteModel(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options) {
-        this.requests = notNull("requests", requests);
         isTrueArgument("requests list is not empty", !requests.isEmpty());
+        this.requests = notNull("requests", requests);
         this.options = notNull("options", options);
     }
 

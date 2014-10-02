@@ -18,12 +18,10 @@ package com.mongodb.acceptancetest.index;
 
 import com.mongodb.CommandFailureException;
 import com.mongodb.client.DatabaseTestCase;
-import com.mongodb.operation.Index;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
 
-import static java.util.Arrays.asList;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -33,39 +31,39 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
         super.setUp();
         //create a brand new collection for each test
         collection = database.getCollection("Collection" + System.currentTimeMillis());
-        assertThat("Should be no indexes on the database at all at this stage", collection.tools().getIndexes().size(),
+        assertThat("Should be no indexes on the database at all at this stage", collection.getIndexes().size(),
                    is(0));
     }
 
     @Test
     public void shouldDropSingleNamedIndex() {
         // Given
-        collection.tools().createIndexes(asList(Index.builder().addKey("theField").build()));
+        collection.createIndex(new Document("field", 1));
 
-        assertThat("Should be default index and new index on the database now", collection.tools().getIndexes().size(),
+        assertThat("Should be default index and new index on the database now", collection.getIndexes().size(),
                    is(2));
 
         // When
-        collection.tools().dropIndex(Index.builder().addKey("theField").build());
+        collection.dropIndex("field_1");
 
         // Then
-        assertThat("Should be one less index", collection.tools().getIndexes().size(), is(1));
+        assertThat("Should be one less index", collection.getIndexes().size(), is(1));
     }
 
     @Test
     public void shouldDropAllIndexesForCollection() {
         // Given
-        collection.tools().createIndexes(asList(Index.builder().addKey("theField").build()));
-        collection.tools().createIndexes(asList(Index.builder().addKey("aSecondIndex").build()));
+        collection.createIndex(new Document("field", 1));
+        collection.createIndex(new Document("anotherField", 1));
 
-        assertThat("Should be three indexes on the collection now", collection.tools().getIndexes().size(),
+        assertThat("Should be three indexes on the collection now", collection.getIndexes().size(),
                    is(3));
 
         // When
-        collection.tools().dropIndexes();
+        collection.dropIndexes();
 
         // Then
-        assertThat("Should only be the default index on the collection", collection.tools().getIndexes().size(), is(1));
+        assertThat("Should only be the default index on the collection", collection.getIndexes().size(), is(1));
     }
 
     @Test(expected = CommandFailureException.class)
@@ -74,17 +72,17 @@ public class DropIndexAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(new Document("to", "createTheCollection"));
 
         // When
-        collection.tools().dropIndex(Index.builder().addKey("nonExistentIndex").build());
+        collection.dropIndex("nonExistentIndex");
     }
 
     @Test
     public void shouldNotErrorWhenTryingToDropIndexesOnACollectionThatDoesNotExist() {
-        collection.tools().dropIndex(Index.builder().addKey("someField").build());
+        collection.dropIndex("nonExistentIndex");
     }
 
     @Test
     public void shouldNotErrorWhenTryingToDropAllIndexesOnACollectionThatDoesNotExist() {
-        collection.tools().dropIndexes();
+        collection.dropIndexes();
     }
 
 }

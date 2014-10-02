@@ -48,8 +48,8 @@ public final class InsertManyModel<T> {
      * @param options the non-null options
      */
     public InsertManyModel(final List<? extends T> documents, final InsertManyOptions options) {
-        this.documents = notNull("documents", documents);
         isTrueArgument("documents list is not empty", !documents.isEmpty());
+        this.documents = notNull("documents", documents);
         this.options = notNull("options", options);
     }
 

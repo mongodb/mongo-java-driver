@@ -25,6 +25,7 @@ import com.mongodb.async.MongoFuture
 import com.mongodb.binding.AsyncClusterBinding
 import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.binding.AsyncReadBinding
+import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.codecs.DocumentCodec
 import com.mongodb.connection.Connection
 import com.mongodb.protocol.QueryProtocol
@@ -185,7 +186,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = source.getConnection().get()
-        getCollectionHelper().create(new CreateCollectionOptions(getCollectionName(), true, 1000))
+        getCollectionHelper().create(getCollectionName(), new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         def timestamp = new BsonTimestamp(5, 0)
         getCollectionHelper().insertDocuments(new DocumentCodec(), [_id: 1, ts: timestamp] as Document)
 

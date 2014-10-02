@@ -16,20 +16,21 @@
 
 package com.mongodb.async.client
 
-import com.mongodb.operation.Index
+import com.mongodb.MongoNamespace
+import org.mongodb.Document
 
-import static com.mongodb.operation.OrderBy.ASC
+import static Fixture.getMongoClient
 
 class CollectionAdministrationSpecification extends FunctionalSpecification {
 
     def idIndex = ['_id': 1]
     def field1Index = ['field': 1]
-    def index1 = Index.builder().addKey('field', ASC).build()
-    def index2 = Index.builder().addKey('field2', ASC).build()
+    def index1 = ['field': 1] as Document
+    def index2 = ['field2': 1] as Document
 
     def 'Drop should drop the collection'() {
         when:
-        def client = Fixture.getMongoClient()
+        def client = getMongoClient()
         def database = client.getDatabase(databaseName)
         database.tools().createCollection(collectionName).get()
 
@@ -45,7 +46,7 @@ class CollectionAdministrationSpecification extends FunctionalSpecification {
 
     def 'getIndexes should not error for a nonexistent collection'() {
         when:
-        def database = Fixture.getMongoClient().getDatabase(databaseName)
+        def database = getMongoClient().getDatabase(databaseName)
 
         then:
         !database.tools().getCollectionNames().get().contains(collectionName)
@@ -53,9 +54,9 @@ class CollectionAdministrationSpecification extends FunctionalSpecification {
     }
 
     @SuppressWarnings(['FactoryMethodName'])
-    def 'createIndexes should add indexes to the collection'() {
+    def 'createIndex should add indexes to the collection'() {
         when:
-        collection.tools().createIndexes([index1]).get()
+        collection.tools().createIndex(index1).get()
 
         then:
         collection.tools().getIndexes().get()*.get('key') containsAll(idIndex, field1Index)
@@ -63,13 +64,13 @@ class CollectionAdministrationSpecification extends FunctionalSpecification {
 
     def 'dropIndex should drop index'() {
         when:
-        collection.tools().createIndexes([index1]).get()
+        collection.tools().createIndex(index1).get()
 
         then:
         collection.tools().getIndexes().get()*.get('key') containsAll(idIndex, field1Index)
 
         when:
-        collection.tools().dropIndex(index1).get()
+        collection.tools().dropIndex('field_1').get()
 
         then:
         collection.tools().getIndexes().get()*.get('key') == [idIndex]
@@ -77,7 +78,8 @@ class CollectionAdministrationSpecification extends FunctionalSpecification {
 
     def 'dropIndexes should drop all indexes apart from _id'() {
         when:
-        collection.tools().createIndexes([index1, index2]).get()
+        collection.tools().createIndex(index1).get()
+        collection.tools().createIndex(index2).get()
 
         then:
         collection.tools().getIndexes().get()*.get('key') containsAll(idIndex, field1Index)
@@ -87,6 +89,27 @@ class CollectionAdministrationSpecification extends FunctionalSpecification {
 
         then:
         collection.tools().getIndexes().get()*.get('key') == [idIndex]
+    }
+
+    def 'rename collection should rename the collection name'() {
+
+        given:
+        def newCollectionName = 'NewCollection1234'
+        def client = getMongoClient()
+        def database = client.getDatabase(databaseName)
+
+        when:
+        database.tools().createCollection(collectionName).get()
+
+        then:
+        database.tools().getCollectionNames().get().contains(collectionName)
+
+        when:
+        collection.tools().renameCollection(new MongoNamespace(databaseName, newCollectionName)).get()
+
+        then:
+        !database.tools().getCollectionNames().get().contains(collectionName)
+        database.tools().getCollectionNames().get().contains(newCollectionName)
     }
 
 }

@@ -18,12 +18,16 @@ package com.mongodb.async.client;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
+import com.mongodb.client.model.CreateIndexOptions;
+import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.codecs.DocumentCodec;
-import com.mongodb.operation.CreateIndexesOperation;
+import com.mongodb.operation.CreateIndexOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropIndexOperation;
 import com.mongodb.operation.ListIndexesOperation;
-import com.mongodb.operation.Index;
+import com.mongodb.operation.RenameCollectionOperation;
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentWrapper;
 import org.mongodb.Document;
 
 import java.util.List;
@@ -37,10 +41,8 @@ import static com.mongodb.ReadPreference.primary;
  * @since 3.0
  */
 public class CollectionAdministrationImpl implements CollectionAdministration {
-
     private final MongoClientImpl client;
     private final MongoNamespace collectionNamespace;
-
 
     CollectionAdministrationImpl(final MongoClientImpl client,
                                  final MongoNamespace collectionNamespace) {
@@ -49,8 +51,28 @@ public class CollectionAdministrationImpl implements CollectionAdministration {
     }
 
     @Override
-    public MongoFuture<Void> createIndexes(final List<Index> indexes) {
-        return client.execute(new CreateIndexesOperation(collectionNamespace, indexes));
+    public MongoFuture<Void> createIndex(final Document key) {
+        return createIndex(key, new CreateIndexOptions());
+    }
+
+    @Override
+    public MongoFuture<Void> createIndex(final Document key, final CreateIndexOptions createIndexOptions) {
+        return client.execute(new CreateIndexOperation(collectionNamespace, asBson(key))
+                                  .name(createIndexOptions.getName())
+                                  .background(createIndexOptions.isBackground())
+                                  .unique(createIndexOptions.isUnique())
+                                  .sparse(createIndexOptions.isSparse())
+                                  .expireAfterSeconds(createIndexOptions.getExpireAfterSeconds())
+                                  .version(createIndexOptions.getVersion())
+                                  .weights(asBson((Document) createIndexOptions.getWeights()))
+                                  .defaultLanguage(createIndexOptions.getDefaultLanguage())
+                                  .languageOverride(createIndexOptions.getLanguageOverride())
+                                  .textIndexVersion(createIndexOptions.getTextIndexVersion())
+                                  .twoDSphereIndexVersion(createIndexOptions.getTwoDSphereIndexVersion())
+                                  .bits(createIndexOptions.getBits())
+                                  .min(createIndexOptions.getMin())
+                                  .max(createIndexOptions.getMax())
+                                  .bucketSize(createIndexOptions.getBucketSize()));
     }
 
     @Override
@@ -64,12 +86,35 @@ public class CollectionAdministrationImpl implements CollectionAdministration {
     }
 
     @Override
-    public MongoFuture<Void> dropIndex(final Index index) {
-        return client.execute(new DropIndexOperation(collectionNamespace, index.getName()));
+    public MongoFuture<Void> dropIndex(final String indexName) {
+        return client.execute(new DropIndexOperation(collectionNamespace, indexName));
     }
 
     @Override
     public MongoFuture<Void> dropIndexes() {
         return client.execute(new DropIndexOperation(collectionNamespace, "*"));
+    }
+
+
+    @Override
+    public MongoFuture<Void> renameCollection(final MongoNamespace newCollectionNamespace) {
+        return renameCollection(newCollectionNamespace, new RenameCollectionOptions());
+    }
+
+    @Override
+    public MongoFuture<Void> renameCollection(final MongoNamespace newCollectionNamespace,
+                                              final RenameCollectionOptions renameCollectionOptions) {
+        return client.execute(new RenameCollectionOperation(collectionNamespace, newCollectionNamespace)
+                                  .dropTarget(renameCollectionOptions.isDropTarget()));
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private BsonDocument asBson(final Document document) {
+        if (document == null) {
+            return null;
+        } else {
+            return new BsonDocumentWrapper(document, new DocumentCodec());
+        }
+
     }
 }

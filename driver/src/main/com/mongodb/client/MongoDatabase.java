@@ -18,7 +18,10 @@ package com.mongodb.client;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.client.model.CreateCollectionOptions;
 import org.mongodb.Document;
+
+import java.util.List;
 
 /**
  * Additions to this interface will not be considered to break binary compatibility.
@@ -41,5 +44,36 @@ public interface MongoDatabase {
 
     <T> MongoCollection<T> getCollection(String collectionName, Class<T> clazz, MongoCollectionOptions options);
 
-    DatabaseAdministration tools();
+
+    /**
+     * Drops this database.
+     *
+     * @mongodb.driver.manual reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database
+     */
+    void dropDatabase();
+
+    /**
+     * Gets the names of all the collections in this database.
+     *
+     * @return a set of the names of all the collections in this database
+     */
+    List<String> getCollectionNames();
+
+    /**
+     * Create a new collection with the given name.
+     *
+     * @param collectionName the name for the new collection to create
+     * @mongodb.driver.manual reference/commands/create Create Command
+     */
+    void createCollection(String collectionName);
+
+    /**
+     * Create a new collection with the selected options
+     *
+     * @param collectionName          the name for the new collection to create
+     * @param createCollectionOptions various options for creating the collection
+     * @mongodb.driver.manual reference/commands/create Create Command
+     */
+    void createCollection(String collectionName, CreateCollectionOptions createCollectionOptions);
+
 }

@@ -42,25 +42,4 @@ class DatabaseAdministrationSpecification extends FunctionalSpecification {
         dropDatabase(databaseToDrop)
     }
 
-    def 'rename collection should rename the collection name'() {
-        given:
-        def newCollectionName = 'NewCollection1234'
-
-        when:
-        def client = Fixture.getMongoClient()
-        def database = client.getDatabase('AsyncDatabaseAdministrationSpecificationDatabase')
-        database.tools().createCollection(collectionName).get()
-
-        then:
-        database.tools().getCollectionNames().get().contains(collectionName)
-        when:
-        database.tools().renameCollection(collectionName, newCollectionName).get()
-
-        then:
-        !database.tools().getCollectionNames().get().contains(collectionName)
-        database.tools().getCollectionNames().get().contains(newCollectionName)
-
-        cleanup:
-        dropDatabase(database.getName())
-    }
 }

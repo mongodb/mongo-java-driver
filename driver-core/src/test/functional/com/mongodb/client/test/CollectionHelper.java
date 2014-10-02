@@ -20,17 +20,16 @@ import com.mongodb.CommandFailureException;
 import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.CreateCollectionOperation;
-import com.mongodb.operation.CreateCollectionOptions;
-import com.mongodb.operation.CreateIndexesOperation;
+import com.mongodb.operation.CreateIndexOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.Index;
+import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
-import com.mongodb.operation.FindOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
@@ -47,6 +46,11 @@ public final class CollectionHelper<T> {
 
     private Codec<T> codec;
     private MongoNamespace namespace;
+
+    public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
+        this.codec = codec;
+        this.namespace = namespace;
+    }
 
     public static void drop(final MongoNamespace namespace) {
         new DropCollectionOperation(namespace).execute(getBinding());
@@ -65,9 +69,9 @@ public final class CollectionHelper<T> {
         }
     }
 
-    public void create(final CreateCollectionOptions options) {
+    public void create(final String collectionName, final CreateCollectionOptions options) {
         drop(namespace);
-        new CreateCollectionOperation(namespace.getDatabaseName(), options.getCollectionName())
+        new CreateCollectionOperation(namespace.getDatabaseName(), collectionName)
             .capped(options.isCapped())
             .sizeInBytes(options.getSizeInBytes())
             .autoIndex(options.isAutoIndex())
@@ -75,16 +79,11 @@ public final class CollectionHelper<T> {
             .usePowerOf2Sizes(options.isUsePowerOf2Sizes()).execute(getBinding());
     }
 
-    public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
-        this.codec = codec;
-        this.namespace = namespace;
-    }
-
     @SuppressWarnings("unchecked")
     public void insertDocuments(final BsonDocument... documents) {
         for (BsonDocument document : documents) {
             new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                   asList(new InsertRequest(document))).execute(getBinding());
+                                asList(new InsertRequest(document))).execute(getBinding());
         }
     }
 
@@ -92,7 +91,7 @@ public final class CollectionHelper<T> {
     public void insertDocuments(final List<BsonDocument> documents) {
         for (BsonDocument document : documents) {
             new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                   asList(new InsertRequest(document))).execute(getBinding());
+                                asList(new InsertRequest(document))).execute(getBinding());
         }
     }
 
@@ -100,14 +99,14 @@ public final class CollectionHelper<T> {
     public <I> void insertDocuments(final Codec<I> iCodec, final I... documents) {
         for (I document : documents) {
             new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                   asList(new InsertRequest(new BsonDocumentWrapper<I>(document, iCodec)))).execute(getBinding());
+                                asList(new InsertRequest(new BsonDocumentWrapper<I>(document, iCodec)))).execute(getBinding());
         }
     }
 
     public <I> void insertDocuments(final Codec<I> iCodec, final List<I> documents) {
         for (I document : documents) {
             new InsertOperation(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                   asList(new InsertRequest(new BsonDocumentWrapper<I>(document, iCodec)))).execute(getBinding());
+                                asList(new InsertRequest(new BsonDocumentWrapper<I>(document, iCodec)))).execute(getBinding());
         }
     }
 
@@ -149,7 +148,7 @@ public final class CollectionHelper<T> {
         return new BsonDocumentWrapper<Document>(document, new DocumentCodec());
     }
 
-    public void createIndexes(final List<Index> indexes) {
-        new CreateIndexesOperation(namespace, indexes).execute(getBinding());
+    public void createIndex(final BsonDocument key) {
+        new CreateIndexOperation(namespace, key).execute(getBinding());
     }
 }

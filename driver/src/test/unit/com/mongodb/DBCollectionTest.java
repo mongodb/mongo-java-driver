@@ -225,8 +225,9 @@ public class DBCollectionTest extends DatabaseTestCase {
         collection.setDBEncoderFactory(null);
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test(expected = CommandFailureException.class)
     public void testCreateIndexWithInvalidIndexType() {
+        assumeTrue(serverVersionAtLeast(asList(2, 6, 0)));
         DBObject index = new BasicDBObject("x", "funny");
         collection.createIndex(index);
     }

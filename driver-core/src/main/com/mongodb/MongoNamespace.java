@@ -25,7 +25,6 @@ import com.mongodb.annotations.Immutable;
  */
 @Immutable
 public final class MongoNamespace {
-    private static final String NAMESPACE_TEMPLATE = "%s.%s";
     public static final String COMMAND_COLLECTION_NAME = "$cmd";
 
     private final String databaseName;
@@ -113,4 +112,5 @@ public final class MongoNamespace {
         result = 31 * result + (collectionName.hashCode());
         return result;
     }
+
 }

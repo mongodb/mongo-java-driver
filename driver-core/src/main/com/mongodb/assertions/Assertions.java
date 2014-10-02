@@ -63,6 +63,14 @@ public final class Assertions {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> T convertToType(final Class<T> clazz, final Object value, final String errorMessage) {
+        if (!clazz.isAssignableFrom(value.getClass())) {
+            throw new IllegalArgumentException(errorMessage);
+        }
+        return (T) value;
+    }
+
     private Assertions() {
     }
 }

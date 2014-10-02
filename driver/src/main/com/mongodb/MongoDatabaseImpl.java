@@ -16,31 +16,35 @@
 
 package com.mongodb;
 
-import com.mongodb.client.DatabaseAdministration;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoDatabaseOptions;
+import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
+import com.mongodb.operation.CreateCollectionOperation;
+import com.mongodb.operation.DropDatabaseOperation;
+import com.mongodb.operation.GetCollectionNamesOperation;
 import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.mongodb.Document;
 
+import java.util.List;
+
+import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final MongoDatabaseOptions options;
     private final String name;
     private final OperationExecutor executor;
-    private final DatabaseAdministration admin;
 
     MongoDatabaseImpl(final String name, final MongoDatabaseOptions options, final OperationExecutor executor) {
         this.name = name;
         this.executor = executor;
         this.options = options;
-        this.admin = new DatabaseAdministrationImpl(name, executor);
     }
 
     @Override
@@ -69,8 +73,28 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    public DatabaseAdministration tools() {
-        return admin;
+    public void dropDatabase() {
+        executor.execute(new DropDatabaseOperation(name));
+    }
+
+    @Override
+    public List<String> getCollectionNames() {
+        return executor.execute(new GetCollectionNamesOperation(name), primary());
+    }
+
+    @Override
+    public void createCollection(final String collectionName) {
+        createCollection(collectionName, new CreateCollectionOptions());
+    }
+
+    @Override
+    public void createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions) {
+        executor.execute(new CreateCollectionOperation(name, collectionName)
+                             .capped(createCollectionOptions.isCapped())
+                             .sizeInBytes(createCollectionOptions.getSizeInBytes())
+                             .autoIndex(createCollectionOptions.isAutoIndex())
+                             .maxDocuments(createCollectionOptions.getMaxDocuments())
+                             .usePowerOf2Sizes(createCollectionOptions.isUsePowerOf2Sizes()));
     }
 
     @Override

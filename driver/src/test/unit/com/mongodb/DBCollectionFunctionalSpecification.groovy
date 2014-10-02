@@ -101,8 +101,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setObjectClass(ClassA)
 
         when:
-        DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument,
-                                                             'c'  : 1])
+        DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument, 'c'  : 1])
 
         then:
         document instanceof ClassA
@@ -115,8 +114,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setInternalClass('b', ClassB);
 
         when:
-        DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument,
-                                                             'c'  : 1])
+        DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument, 'c'  : 1])
 
         then:
         document.get('a') instanceof ClassA
@@ -128,8 +126,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         def options = ~[
                 'sparse'            : true,
                 'background'        : true,
-                'expireAfterSeconds': 42,
-                'somethingOdd'      : 'jeff'
+                'expireAfterSeconds': 42
         ]
 
         when:
@@ -140,9 +137,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         DBObject document = collection.getIndexInfo()[1]
         document.get('expireAfterSeconds') == 42
-        document.get('somethingOdd') == 'jeff'
         document.get('background') == true
-        !document.containsField('dropDups')
     }
 
     def 'drop index should not fail if collection does not exist'() {

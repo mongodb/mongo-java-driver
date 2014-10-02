@@ -19,13 +19,13 @@ package com.mongodb.operation
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.codecs.DocumentCodec
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.junit.experimental.categories.Category
 import org.mongodb.Document
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.operation.OrderBy.ASC
-import static com.mongodb.operation.OrderBy.DESC
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class ListIndexesOperationSpecification extends OperationFunctionalSpecification {
@@ -83,10 +83,10 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return created indexes on Collection'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
-        createIndexes(Index.builder().addKey('theField', ASC).build())
-        createIndexes(Index.builder().addKey('compound', ASC).addKey('index', DESC).build())
-        createIndexes(Index.builder().addKey('unique', ASC).unique(true).build())
+        def operation = new GetIndexesOperation(getNamespace(), new DocumentCodec())
+        collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
+        collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
+        new CreateIndexOperation(namespace, new BsonDocument('unique', new BsonInt32(1))).unique(true).execute(getBinding())
 
         when:
         List<Document> indexes = operation.execute(getBinding())
@@ -103,10 +103,10 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
     @Category(Async)
     def 'should return created indexes on Collection asynchronously'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
-        createIndexes(Index.builder().addKey('theField', ASC).build())
-        createIndexes(Index.builder().addKey('compound', ASC).addKey('index', DESC).build())
-        createIndexes(Index.builder().addKey('unique', ASC).unique(true).build())
+        def operation = new GetIndexesOperation(getNamespace(), new DocumentCodec())
+        collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
+        collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
+        new CreateIndexOperation(namespace, new BsonDocument('unique', new BsonInt32(1))).unique(true).execute(getBinding())
 
         when:
         List<Document> indexes = operation.executeAsync(getAsyncBinding()).get(1, SECONDS)
@@ -119,11 +119,6 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         indexes[3].name == 'unique_1'
         indexes[3].unique
 
-    }
-
-    @SuppressWarnings('FactoryMethodName')
-    def createIndexes(Index[] indexes) {
-        new CreateIndexesOperation(getNamespace(), indexes.toList()).execute(getBinding())
     }
 
 }

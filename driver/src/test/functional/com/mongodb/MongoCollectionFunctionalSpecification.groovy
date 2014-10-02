@@ -20,11 +20,11 @@ import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.AggregateModel
 import com.mongodb.client.model.AggregateOptions
 import com.mongodb.client.model.CountModel
+import com.mongodb.client.model.CreateIndexOptions
 import com.mongodb.client.model.FindModel
 import com.mongodb.client.model.FindOptions
 import com.mongodb.client.model.MapReduceModel
 import com.mongodb.codecs.DocumentCodecProvider
-import com.mongodb.operation.Index
 import com.mongodb.operation.OperationExecutor
 import com.mongodb.operation.ReadOperation
 import com.mongodb.operation.WriteOperation
@@ -38,7 +38,6 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.operation.OrderBy.ASC
 import static java.util.Arrays.asList
 
 // Due to the implementation of explain using private classes, it can't be effectively unit tests, so instead there is this integration
@@ -65,7 +64,7 @@ class MongoCollectionFunctionalSpecification extends FunctionalSpecification {
 
     def 'should explain a find model'() {
         given:
-        collection.tools().createIndexes([Index.builder().addKey('x', ASC).sparse().build()])
+        collection.createIndex(new Document('x', 1), new CreateIndexOptions().sparse(true));
 
         when:
         def model = new FindModel(new FindOptions().criteria(new Document('cold', true))

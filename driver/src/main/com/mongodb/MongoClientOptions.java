@@ -21,13 +21,11 @@ import com.mongodb.codecs.DocumentCodecProvider;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
-import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;

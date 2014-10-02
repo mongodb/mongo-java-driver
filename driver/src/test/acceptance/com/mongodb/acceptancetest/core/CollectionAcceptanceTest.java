@@ -19,10 +19,12 @@ package com.mongodb.acceptancetest.core;
 import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.MongoCursor;
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCollectionOptions;
+import com.mongodb.client.model.RenameCollectionOptions;
 import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.types.Binary;
@@ -30,6 +32,7 @@ import org.bson.types.Code;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mongodb.CodeWithScope;
 import org.mongodb.Document;
@@ -42,6 +45,7 @@ import java.util.List;
 
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -53,7 +57,6 @@ import static org.junit.Assert.assertTrue;
  * Documents the basic functionality of MongoDB Collections available via the Java driver.
  */
 public class CollectionAcceptanceTest extends DatabaseTestCase {
-
 
     @Test
     public void shouldBeAbleToIterateOverACollection() {
@@ -98,14 +101,14 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldDropExistingCollection() {
         String collectionName = "shouldDropExistingCollection";
-        database.tools().createCollection(collectionName);
+        database.createCollection(collectionName);
         MongoCollection<Document> newCollection = database.getCollection(collectionName);
 
-        assertThat(database.tools().getCollectionNames().contains(collectionName), is(true));
+        assertThat(database.getCollectionNames().contains(collectionName), is(true));
 
-        newCollection.tools().drop();
+        newCollection.dropCollection();
 
-        assertThat(database.tools().getCollectionNames().contains(collectionName), is(false));
+        assertThat(database.getCollectionNames().contains(collectionName), is(false));
     }
 
     @Test
@@ -309,6 +312,63 @@ public class CollectionAcceptanceTest extends DatabaseTestCase {
         Collections.shuffle(shuffledDocuments);
         collection.insertMany(shuffledDocuments);
         return documents;
+    }
+
+
+    @Test
+    public void shouldChangeACollectionNameWhenRenameIsCalled() {
+        //given
+        collection.insertOne(new Document("someKey", "someValue"));
+
+        assertThat(database.getCollectionNames().contains(getCollectionName()), is(true));
+
+        //when
+        String newCollectionName = "TheNewCollectionName";
+        collection.renameCollection(new MongoNamespace(getDatabaseName(), newCollectionName));
+
+        //then
+        assertThat(database.getCollectionNames().contains(getCollectionName()), is(false));
+        assertThat(database.getCollectionNames().contains(newCollectionName), is(true));
+
+        MongoCollection<Document> renamedCollection = database.getCollection(newCollectionName);
+        assertThat("Renamed collection should have the same number of documents as original",
+                   renamedCollection.count(), is(1L));
+    }
+
+    @Test
+    public void shouldBeAbleToRenameCollectionToAnExistingCollectionNameAndReplaceItWhenDropIsTrue() {
+        //given
+        String existingCollectionName = "anExistingCollection";
+
+        String keyInOriginalCollection = "someKey";
+        String valueInOriginalCollection = "someValue";
+        collection.insertOne(new Document(keyInOriginalCollection, valueInOriginalCollection));
+
+        MongoCollection<Document> existingCollection = database.getCollection(existingCollectionName);
+        String keyInExistingCollection = "aDifferentDocument";
+        String valueInExistingCollection = "withADifferentValue";
+        existingCollection.insertOne(new Document(keyInExistingCollection, valueInExistingCollection));
+
+        assertThat(database.getCollectionNames().contains(getCollectionName()), is(true));
+        assertThat(database.getCollectionNames().contains(existingCollectionName), is(true));
+
+        //when
+        collection.renameCollection(new MongoNamespace(getDatabaseName(), existingCollectionName),
+                                    new RenameCollectionOptions().dropTarget(true));
+
+        //then
+        assertThat(database.getCollectionNames().contains(getCollectionName()), is(false));
+        assertThat(database.getCollectionNames().contains(existingCollectionName), is(true));
+
+        MongoCollection<Document> replacedCollection = database.getCollection(existingCollectionName);
+        assertThat(replacedCollection.find().first().get(keyInExistingCollection), is(nullValue()));
+        assertThat(replacedCollection.find().first().get(keyInOriginalCollection).toString(), is(valueInOriginalCollection));
+    }
+
+    @Test
+    @Ignore("not implemented")
+    public void shouldFailRenameIfSharded() {
+
     }
 
 }

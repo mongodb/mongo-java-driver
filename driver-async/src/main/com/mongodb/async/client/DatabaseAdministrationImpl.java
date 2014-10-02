@@ -17,12 +17,10 @@
 package com.mongodb.async.client;
 
 import com.mongodb.async.MongoFuture;
+import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.operation.CreateCollectionOperation;
-import com.mongodb.operation.CreateCollectionOptions;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.ListCollectionNamesOperation;
-import com.mongodb.operation.RenameCollectionOperation;
-
 import java.util.List;
 
 import static com.mongodb.ReadPreference.primary;
@@ -61,26 +59,17 @@ public class DatabaseAdministrationImpl implements DatabaseAdministration {
 
     @Override
     public MongoFuture<Void> createCollection(final String collectionName) {
-        return createCollection(new CreateCollectionOptions(collectionName));
+        return createCollection(collectionName, new CreateCollectionOptions());
     }
 
     @Override
-    public MongoFuture<Void> createCollection(final CreateCollectionOptions options) {
-        return client.execute(new CreateCollectionOperation(databaseName, options.getCollectionName())
-                                  .capped(options.isCapped())
-                                  .sizeInBytes(options.getSizeInBytes())
-                                  .autoIndex(options.isAutoIndex())
-                                  .maxDocuments(options.getMaxDocuments())
-                                  .usePowerOf2Sizes(options.isUsePowerOf2Sizes()));
+    public MongoFuture<Void> createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions) {
+        return client.execute(new CreateCollectionOperation(databaseName, collectionName)
+                                  .capped(createCollectionOptions.isCapped())
+                                  .sizeInBytes(createCollectionOptions.getSizeInBytes())
+                                  .autoIndex(createCollectionOptions.isAutoIndex())
+                                  .maxDocuments(createCollectionOptions.getMaxDocuments())
+                                  .usePowerOf2Sizes(createCollectionOptions.isUsePowerOf2Sizes()));
     }
 
-    @Override
-    public MongoFuture<Void> renameCollection(final String oldCollectionName, final String newCollectionName) {
-        return client.execute(new RenameCollectionOperation(databaseName, oldCollectionName, newCollectionName, false));
-    }
-
-    @Override
-    public MongoFuture<Void> renameCollection(final String oldCollectionName, final String newCollectionName, final boolean dropTarget) {
-        return client.execute(new RenameCollectionOperation(databaseName, oldCollectionName, newCollectionName, dropTarget));
-    }
 }

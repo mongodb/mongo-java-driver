@@ -20,6 +20,7 @@ import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.AggregateOptions
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.CountOptions
+import com.mongodb.client.model.CreateIndexOptions
 import com.mongodb.client.model.DeleteManyModel
 import com.mongodb.client.model.DeleteOneModel
 import com.mongodb.client.model.DistinctOptions
@@ -31,6 +32,7 @@ import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.MapReduceOptions
 import com.mongodb.client.model.ParallelCollectionScanOptions
+import com.mongodb.client.model.RenameCollectionOptions
 import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.client.model.UpdateManyModel
 import com.mongodb.client.model.UpdateOneModel
@@ -40,18 +42,23 @@ import com.mongodb.codecs.DocumentCodecProvider
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.CountOperation
+import com.mongodb.operation.CreateIndexOperation
 import com.mongodb.operation.DeleteOperation
 import com.mongodb.operation.DeleteRequest
 import com.mongodb.operation.DistinctOperation
+import com.mongodb.operation.DropCollectionOperation
+import com.mongodb.operation.DropIndexOperation
 import com.mongodb.operation.FindAndDeleteOperation
 import com.mongodb.operation.FindAndReplaceOperation
 import com.mongodb.operation.FindAndUpdateOperation
 import com.mongodb.operation.FindOperation
+import com.mongodb.operation.GetIndexesOperation
 import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.MapReduceToCollectionOperation
 import com.mongodb.operation.MapReduceWithInlineResultsOperation
 import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.ParallelCollectionScanOperation
+import com.mongodb.operation.RenameCollectionOperation
 import com.mongodb.operation.UpdateOperation
 import com.mongodb.protocol.AcknowledgedWriteResult
 import org.bson.BsonArray
@@ -86,7 +93,7 @@ class MongoCollectionSpecification extends Specification {
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, new TestOperationExecutor([]))
 
         expect:
-        collection.namespace == namespace
+        collection.getNamespace() == namespace
     }
 
     def 'should get options'() {
@@ -94,7 +101,7 @@ class MongoCollectionSpecification extends Specification {
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, new TestOperationExecutor([]))
 
         expect:
-        collection.options == options
+        collection.getOptions() == options
     }
 
     def 'insertOne should use InsertOperation properly'() {
@@ -737,4 +744,148 @@ class MongoCollectionSpecification extends Specification {
         operation2.getNumCursors() == 100
         operation2.getBatchSize() == 100
     }
+
+    def 'dropCollection should use DropCollectionOperation properly'() {
+        given:
+        def executor = new TestOperationExecutor([null])
+        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        collection.dropCollection()
+
+        then:
+        executor.getWriteOperation() instanceof DropCollectionOperation
+    }
+
+    @SuppressWarnings(['FactoryMethodName'])
+    def 'createIndex should use CreateIndexOperation properly'() {
+        given:
+        def executor = new TestOperationExecutor([null, null])
+        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        collection.createIndex(new Document('a', 1))
+
+        then:
+        def operation = executor.getWriteOperation() as CreateIndexOperation
+        operation.getKey() == new BsonDocument('a', new BsonInt32(1))
+        !operation.isBackground()
+        !operation.isUnique()
+        !operation.isSparse()
+        operation.getName() == null
+        operation.getExpireAfterSeconds() == null
+        operation.getVersion() == null
+        operation.getWeights() == null
+        operation.getDefaultLanguage() == null
+        operation.getLanguageOverride() == null
+        operation.getTextIndexVersion() == null
+        operation.getTwoDSphereIndexVersion() == null
+        operation.getBits() == null
+        operation.getMin() == null
+        operation.getMax() == null
+        operation.getBucketSize() == null
+
+        when:
+        collection.createIndex(new Document('a', 1), new CreateIndexOptions()
+                .background(true)
+                .unique(true)
+                .sparse(true)
+                .name('aIndex')
+                .expireAfterSeconds(100)
+                .version(1)
+                .weights(new Document('a', 1000))
+                .defaultLanguage('es')
+                .languageOverride('language')
+                .textIndexVersion(1)
+                .twoDSphereIndexVersion(1)
+                .bits(1)
+                .min(-180.0)
+                .max(180.0)
+                .bucketSize(200.0)
+        )
+
+        then:
+        def operation2 = executor.getWriteOperation() as CreateIndexOperation
+        operation2.getKey() == new BsonDocument('a', new BsonInt32(1))
+        operation2.isBackground()
+        operation2.isUnique()
+        operation2.isSparse()
+        operation2.getName() == 'aIndex'
+        operation2.getExpireAfterSeconds() == 100
+        operation2.getVersion() == 1
+        operation2.getWeights() == new BsonDocument('a', new BsonInt32(1000))
+        operation2.getDefaultLanguage() == 'es'
+        operation2.getLanguageOverride() == 'language'
+        operation2.getTextIndexVersion() == 1
+        operation2.getTwoDSphereIndexVersion() == 1
+        operation2.getBits() == 1
+        operation2.getMin() == -180.0
+        operation2.getMax() == 180.0
+        operation2.getBucketSize() == 200.0
+    }
+
+    def 'getIndexes should use GetIndexesOperation properly'() {
+        given:
+        def executor = new TestOperationExecutor([null])
+        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        collection.getIndexes()
+
+        then:
+        executor.getReadOperation() instanceof GetIndexesOperation<Document>
+    }
+
+    def 'dropIndex should use DropIndexOperation properly'() {
+        given:
+        def executor = new TestOperationExecutor([null])
+        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        collection.dropIndex('index_name')
+
+        then:
+        def operation = executor.getWriteOperation() as DropIndexOperation
+        operation.indexName == 'index_name'
+    }
+
+    def 'dropIndexes should use DropIndexOperation properly'() {
+        given:
+        def executor = new TestOperationExecutor([null])
+        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        collection.dropIndexes()
+
+        then:
+        def operation = executor.getWriteOperation() as DropIndexOperation
+        operation.indexName == '*'
+    }
+
+
+    def 'should use RenameCollectionOperation properly'() {
+        given:
+        def executor = new TestOperationExecutor([null, null])
+        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+        def newNamespace = new MongoNamespace(namespace.getDatabaseName(), 'anotherCollection')
+
+        when:
+        collection.renameCollection(newNamespace)
+
+        then:
+        def operation = executor.getWriteOperation() as RenameCollectionOperation
+        operation.originalNamespace == namespace
+        operation.newNamespace == newNamespace
+        !operation.isDropTarget()
+
+        when:
+        collection.renameCollection(newNamespace, new RenameCollectionOptions().dropTarget(true))
+
+        then:
+        def operation2 = executor.getWriteOperation() as RenameCollectionOperation
+        operation2.originalNamespace == namespace
+        operation2.newNamespace == newNamespace
+        operation2.isDropTarget()
+    }
+
 }

@@ -21,8 +21,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.operation.CreateCollectionOptions;
-import org.junit.Ignore;
+import com.mongodb.client.model.CreateCollectionOptions;
 import org.junit.Test;
 import org.mongodb.Document;
 
@@ -32,7 +31,6 @@ import static com.mongodb.Fixture.getMongoClient;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.not;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -43,17 +41,17 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldCreateCollection() {
-        database.tools().createCollection(getCollectionName());
+        database.createCollection(getCollectionName());
 
-        List<String> collections = database.tools().getCollectionNames();
+        List<String> collections = database.getCollectionNames();
         assertThat(collections.contains(getCollectionName()), is(true));
     }
 
     @Test
     public void shouldCreateCappedCollection() {
-        database.tools().createCollection(new CreateCollectionOptions(getCollectionName(), true, 40 * 1024));
+        database.createCollection(getCollectionName(), new CreateCollectionOptions().capped(true).sizeInBytes(40 * 1024));
 
-        List<String> collections = database.tools().getCollectionNames();
+        List<String> collections = database.getCollectionNames();
         assertThat(collections.contains(getCollectionName()), is(true));
 
         MongoCollection<Document> collection = database.getCollection(getCollectionName());
@@ -61,14 +59,17 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         Boolean isCapped = database.executeCommand(collStatsCommand, ReadPreference.primary()).getBoolean("capped");
         assertThat(isCapped, is(true));
 
-        assertThat("Should have the default index on _id", collection.tools().getIndexes().size(), is(1));
+        assertThat("Should have the default index on _id", collection.getIndexes().size(), is(1));
     }
 
     @Test
     public void shouldCreateCappedCollectionWithoutAutoIndex() {
-        database.tools().createCollection(new CreateCollectionOptions(getCollectionName(), true, 40 * 1024, false));
+        database.createCollection(getCollectionName(), new CreateCollectionOptions()
+                                                           .capped(true)
+                                                           .sizeInBytes(40 * 1024)
+                                                           .autoIndex(false));
 
-        List<String> collections = database.tools().getCollectionNames();
+        List<String> collections = database.getCollectionNames();
         assertThat(collections.contains(getCollectionName()), is(true));
 
         MongoCollection<Document> collection = database.getCollection(getCollectionName());
@@ -76,19 +77,19 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
         Boolean isCapped = database.executeCommand(collStatsCommand, ReadPreference.primary()).getBoolean("capped");
         assertThat(isCapped, is(true));
 
-        assertThat("Should NOT have the default index on _id", collection.tools().getIndexes().size(), is(0));
+        assertThat("Should NOT have the default index on _id", collection.getIndexes().size(), is(0));
     }
 
     @Test
     public void shouldSupportMaxNumberOfDocumentsInACappedCollection() {
         int maxDocuments = 5;
-        database.tools().createCollection(new CreateCollectionOptions(getCollectionName(),
-                                                                      true,
-                                                                      40 * 1024,
-                                                                      false,
-                                                                      maxDocuments));
+        database.createCollection(getCollectionName(), new CreateCollectionOptions()
+                                                           .capped(true)
+                                                           .sizeInBytes(40 * 1024)
+                                                           .autoIndex(false)
+                                                           .maxDocuments(maxDocuments));
 
-        List<String> collections = database.tools().getCollectionNames();
+        List<String> collections = database.getCollectionNames();
         assertThat(collections.contains(getCollectionName()), is(true));
 
         Document collStatsCommand = new Document("collStats", getCollectionName());
@@ -98,71 +99,12 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldGetCollectionNamesFromDatabase() {
-        database.tools().createCollection(getCollectionName());
+        database.createCollection(getCollectionName());
 
-        List<String> collections = database.tools().getCollectionNames();
+        List<String> collections = database.getCollectionNames();
 
         assertThat(collections.contains("system.indexes"), is(true));
         assertThat(collections.contains(getCollectionName()), is(true));
-    }
-
-    @Test
-    public void shouldChangeACollectionNameWhenRenameIsCalled() {
-        //given
-        String originalCollectionName = "originalCollection";
-        MongoCollection<Document> originalCollection = database.getCollection(originalCollectionName);
-        originalCollection.insertOne(new Document("someKey", "someValue"));
-
-        assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(true));
-
-        //when
-        String newCollectionName = "TheNewCollectionName";
-        database.tools().renameCollection(originalCollectionName, newCollectionName);
-
-        //then
-        assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(false));
-        assertThat(database.tools().getCollectionNames().contains(newCollectionName), is(true));
-
-        MongoCollection<Document> renamedCollection = database.getCollection(newCollectionName);
-        assertThat("Renamed collection should have the same number of documents as original",
-                   renamedCollection.count(), is(1L));
-    }
-
-    @Test
-    public void shouldBeAbleToRenameCollectionToAnExistingCollectionNameAndReplaceItWhenDropIsTrue() {
-        //given
-        String existingCollectionName = "anExistingCollection";
-        String originalCollectionName = "someOriginalCollection";
-
-        MongoCollection<Document> originalCollection = database.getCollection(originalCollectionName);
-        String keyInOriginalCollection = "someKey";
-        String valueInOriginalCollection = "someValue";
-        originalCollection.insertOne(new Document(keyInOriginalCollection, valueInOriginalCollection));
-
-        MongoCollection<Document> existingCollection = database.getCollection(existingCollectionName);
-        String keyInExistingCollection = "aDifferentDocument";
-        String valueInExistingCollection = "withADifferentValue";
-        existingCollection.insertOne(new Document(keyInExistingCollection, valueInExistingCollection));
-
-        assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(true));
-        assertThat(database.tools().getCollectionNames().contains(existingCollectionName), is(true));
-
-        //when
-        database.tools().renameCollection(originalCollectionName, existingCollectionName, true);
-
-        //then
-        assertThat(database.tools().getCollectionNames().contains(originalCollectionName), is(false));
-        assertThat(database.tools().getCollectionNames().contains(existingCollectionName), is(true));
-
-        MongoCollection<Document> replacedCollection = database.getCollection(existingCollectionName);
-        assertThat(replacedCollection.find().first().get(keyInExistingCollection), is(nullValue()));
-        assertThat(replacedCollection.find().first().get(keyInOriginalCollection).toString(), is(valueInOriginalCollection));
-    }
-
-    @Test
-    @Ignore("not implemented")
-    public void shouldFailRenameIfSharded() {
-
     }
 
     @Test
@@ -185,8 +127,8 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
             assertThat(databaseNames, not(hasItem(otherDatabase.getName())));
         } finally {
             //tear down
-            firstDatabase.tools().drop();
-            secondDatabase.tools().drop();
+            firstDatabase.dropDatabase();
+            secondDatabase.dropDatabase();
         }
     }
 }

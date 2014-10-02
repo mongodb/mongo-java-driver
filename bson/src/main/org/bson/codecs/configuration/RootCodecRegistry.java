@@ -32,7 +32,6 @@ import static java.lang.String.format;
  * @since 3.0
  */
 public class RootCodecRegistry implements CodecRegistry {
-
     private final ConcurrentMap<Class<?>, Codec<?>> codecs = new ConcurrentHashMap<Class<?>, Codec<?>>();
     private final List<CodecProvider> sources;
 

@@ -302,32 +302,58 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         dbCursor.collect { it -> [ it.get('name'), it.get('_id') ] } == [['Adam', 2], ['Adam', 4], ['Adam', 5], ['Bob', 3], ['Chris', 1]]
     }
 
+    @SuppressWarnings('CloseWithoutCloseable') // Spock bug as MongoTailableCursor does implement closeable
     def 'DBCursor options should set the correct read preference'() {
         given:
-        def collection = Spy(DBCollection, constructorArgs: ['collectionName', database, new DocumentCodec()])
+        def tailableCursor =
+                new MongoTailableCursor<DBObject>() {
+                    @Override
+                    DBObject tryNext() { null  }
+
+                    @Override
+                    void close() { }
+
+                    @Override
+                    boolean hasNext() { true }
+
+                    @Override
+                    DBObject next() { null }
+
+                    @Override
+                    void remove() { }
+
+                    @Override
+                    ServerCursor getServerCursor() { }
+
+                    @Override
+                    ServerAddress getServerAddress() { }
+                }
+
+        def executor = new TestOperationExecutor([tailableCursor, tailableCursor, tailableCursor, tailableCursor])
+        def collection = new DBCollection('collectionName', database, executor, new DocumentCodec())
 
         when:
         collection.find().hasNext()
 
         then:
-        1 * collection.execute(_, ReadPreference.primary())
+        executor.getReadPreference() ==  ReadPreference.primary()
 
         when:
         collection.find().addOption(Bytes.QUERYOPTION_SLAVEOK).hasNext()
 
         then:
-        1 * collection.execute(_, ReadPreference.secondaryPreferred())
+        executor.getReadPreference() ==  ReadPreference.secondaryPreferred()
 
         when:
         collection.find().addOption(Bytes.QUERYOPTION_TAILABLE).tryNext()
 
         then:
-        1 * collection.execute(_, ReadPreference.primary())
+        executor.getReadPreference() ==  ReadPreference.primary()
 
         when:
         collection.find().addOption(Bytes.QUERYOPTION_TAILABLE).addOption(Bytes.QUERYOPTION_SLAVEOK).tryNext()
 
         then:
-        1 * collection.execute(_, ReadPreference.secondaryPreferred())
+        executor.getReadPreference() ==  ReadPreference.secondaryPreferred()
     }
 }

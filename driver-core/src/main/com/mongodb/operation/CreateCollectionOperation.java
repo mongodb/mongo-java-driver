@@ -186,14 +186,14 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     }
 
     private BsonDocument asDocument() {
-        BsonDocument document = new BsonDocument("create", new BsonString(getCollectionName()));
-        document.put("capped", BsonBoolean.valueOf(isCapped()));
-        if (isCapped()) {
-            putIfNotZero(document, "size", getSizeInBytes());
-            document.put("autoIndexId", BsonBoolean.valueOf(isAutoIndex()));
-            putIfNotZero(document, "max", getMaxDocuments());
+        BsonDocument document = new BsonDocument("create", new BsonString(collectionName));
+        document.put("capped", BsonBoolean.valueOf(capped));
+        if (capped) {
+            putIfNotZero(document, "size", sizeInBytes);
+            document.put("autoIndexId", BsonBoolean.valueOf(autoIndex));
+            putIfNotZero(document, "max", maxDocuments);
         }
-        if (isUsePowerOf2Sizes() != null) {
+        if (usePowerOf2Sizes != null) {
             document.put("usePowerOfTwoSizes", BsonBoolean.valueOf(usePowerOf2Sizes));
         }
         return document;
