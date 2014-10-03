@@ -25,14 +25,14 @@ import org.bson.UuidRepresentation;
 import java.util.UUID;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.codecs.UUIDCodecHelper.reverseByteArray;
+import static com.mongodb.codecs.UuidCodecHelper.reverseByteArray;
 
 /**
  * A transformer from {@code BsonBinary} to {@code UUID}.
  *
  * @since 3.0
  */
-public class BinaryToUUIDTransformer implements BinaryTransformer<UUID> {
+public class BinaryToUuidTransformer implements BinaryTransformer<UUID> {
 
     private final UuidRepresentation uuidRepresentation;
 
@@ -41,7 +41,7 @@ public class BinaryToUUIDTransformer implements BinaryTransformer<UUID> {
      *
      * @see org.bson.UuidRepresentation#JAVA_LEGACY
      */
-    public BinaryToUUIDTransformer() {
+    public BinaryToUuidTransformer() {
         this(UuidRepresentation.JAVA_LEGACY);
     }
 
@@ -50,7 +50,7 @@ public class BinaryToUUIDTransformer implements BinaryTransformer<UUID> {
      *
      * @param uuidRepresentation the non-null representation
      */
-    public BinaryToUUIDTransformer(final UuidRepresentation uuidRepresentation) {
+    public BinaryToUuidTransformer(final UuidRepresentation uuidRepresentation) {
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
     }
     

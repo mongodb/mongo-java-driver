@@ -42,7 +42,7 @@ public class TransformingBinaryDecoderTest {
         writer.writeBinaryData("subtype2", new BsonBinary(BsonBinarySubType.OLD_BINARY, new byte[]{2}));
 
         writer.writeName("subtype3");
-        new UUIDCodec().encode(writer, UUID.randomUUID(), EncoderContext.builder().build());
+        new UuidCodec().encode(writer, UUID.randomUUID(), EncoderContext.builder().build());
 
         writer.writeBinaryData("subtype4", new BsonBinary(BsonBinarySubType.UUID_STANDARD, new byte[]{4}));
         writer.writeBinaryData("subtype5", new BsonBinary(BsonBinarySubType.MD5, new byte[]{5}));

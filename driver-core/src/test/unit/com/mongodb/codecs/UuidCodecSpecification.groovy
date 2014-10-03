@@ -24,8 +24,8 @@ import org.bson.ByteBufNIO
 import org.bson.UuidRepresentation
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
-import org.bson.io.ByteBufferBsonInput
 import org.bson.io.BasicOutputBuffer
+import org.bson.io.ByteBufferBsonInput
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -34,17 +34,17 @@ import java.nio.ByteBuffer
 /**
  *
  */
-class UUIDCodecSpecification extends Specification {
+class UuidCodecSpecification extends Specification {
 
-    @Shared private UUIDCodec uuidCodec;
+    @Shared private UuidCodec uuidCodec;
     @Shared private BasicOutputBuffer outputBuffer;
 
     def setup() {
-        uuidCodec = new UUIDCodec();
+        uuidCodec = new UuidCodec();
         outputBuffer = new BasicOutputBuffer();
     }
 
-    def 'should decode different types of UUID'(UUIDCodec codec, byte[] list) throws IOException {
+    def 'should decode different types of UUID'(UuidCodec codec, byte[] list) throws IOException {
 
         given:
 
@@ -67,10 +67,10 @@ class UUIDCodecSpecification extends Specification {
         where:
 
         codec << [
-                new UUIDCodec(),
-                new UUIDCodec(UuidRepresentation.STANDARD),
-                new UUIDCodec(UuidRepresentation.PYTHON_LEGACY),
-                new UUIDCodec(UuidRepresentation.C_SHARP_LEGACY),
+                new UuidCodec(),
+                new UuidCodec(UuidRepresentation.STANDARD),
+                new UuidCodec(UuidRepresentation.PYTHON_LEGACY),
+                new UuidCodec(UuidRepresentation.C_SHARP_LEGACY),
         ]
 
         list << [
@@ -110,7 +110,7 @@ class UUIDCodecSpecification extends Specification {
     }
 
     def 'should encode different types of UUIDs'(Byte bsonSubType,
-                                                 UUIDCodec codec,
+                                                 UuidCodec codec,
                                                  UUID uuid) throws IOException {
         given:
 
@@ -142,10 +142,10 @@ class UUIDCodecSpecification extends Specification {
         bsonSubType << [3, 4, 3, 3]
 
         codec << [
-                new UUIDCodec(),
-                new UUIDCodec(UuidRepresentation.STANDARD),
-                new UUIDCodec(UuidRepresentation.PYTHON_LEGACY),
-                new UUIDCodec(UuidRepresentation.C_SHARP_LEGACY),
+                new UuidCodec(),
+                new UuidCodec(UuidRepresentation.STANDARD),
+                new UuidCodec(UuidRepresentation.PYTHON_LEGACY),
+                new UuidCodec(UuidRepresentation.C_SHARP_LEGACY),
         ]
 
         uuid << [

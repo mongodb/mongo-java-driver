@@ -27,7 +27,7 @@ import com.mongodb.codecs.LongCodec;
 import com.mongodb.codecs.PatternCodec;
 import com.mongodb.codecs.ShortCodec;
 import com.mongodb.codecs.StringCodec;
-import com.mongodb.codecs.UUIDCodec;
+import com.mongodb.codecs.UuidCodec;
 import org.bson.BsonDbPointer;
 import org.bson.BsonType;
 import org.bson.BsonUndefined;
@@ -120,7 +120,7 @@ class DBObjectCodecProvider implements CodecProvider {
         addCodec(new ShortCodec());
         addCodec(new ByteArrayCodec());
         addCodec(new FloatCodec());
-        addCodec(new UUIDCodec());
+        addCodec(new UuidCodec());
     }
 
     private <T> void addCodec(final Codec<T> codec) {
