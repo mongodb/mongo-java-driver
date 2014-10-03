@@ -31,19 +31,6 @@ public final class EncoderContext {
     private final boolean encodingCollectibleDocument;
 
     /**
-     * Returns true if the the value to be encoded is a document that will be
-     * put in a MongoDB collection. Encoders for such documents
-     * might choose to act differently when encoding such as documents,
-     * e.g. by re-ordering the fields in some way (like encoding the _id
-     * field first).
-     *
-     * @return true if the value to be encoded is a document that will be put in a MongoDB collection
-     */
-    public boolean isEncodingCollectibleDocument() {
-        return encodingCollectibleDocument;
-    }
-
-    /**
      * Create a builder.
      *
      * @return the builder
@@ -62,11 +49,9 @@ public final class EncoderContext {
         }
 
         /**
-         * Set to true if the the value to be encoded is a
-         * document that will be put in a MongoDB collection.
+         * Set to true if the the value to be encoded is a document that will be put in a MongoDB collection.
          *
-         * @param encodingCollectibleDocument true if the value to be encoded is a document
-         *                                    that will be put in a MongoDB collection
+         * @param encodingCollectibleDocument true if the value to be encoded is a document that will be put in a MongoDB collection
          * @return this
          */
         public Builder isEncodingCollectibleDocument(final boolean encodingCollectibleDocument) {
@@ -81,6 +66,17 @@ public final class EncoderContext {
         public EncoderContext build() {
             return new EncoderContext(this);
         }
+    }
+
+    /**
+     * Returns true if the the value to be encoded is a document that will be put in a MongoDB collection.  Encoders for such documents
+     * might choose to act differently when encoding such as documents, e.g. by re-ordering the fields in some way (like encoding the _id
+     * field first).
+     *
+     * @return true if the value to be encoded is a document that will be put in a MongoDB collection
+     */
+    public boolean isEncodingCollectibleDocument() {
+        return encodingCollectibleDocument;
     }
 
     /**
