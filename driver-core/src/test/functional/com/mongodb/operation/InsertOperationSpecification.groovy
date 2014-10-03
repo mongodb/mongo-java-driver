@@ -26,7 +26,6 @@ import org.bson.BsonInt32
 import org.bson.BsonSerializationException
 import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
-import org.mongodb.Document
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncSingleConnectionBinding
@@ -40,10 +39,10 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should return correct result'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert))
+        def operation = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(insert))
 
         when:
-        def result = op.execute(getBinding())
+        def result = operation.execute(getBinding())
 
         then:
         result.wasAcknowledged()
@@ -56,10 +55,10 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should return correct result asynchronously'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert))
+        def operation = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(insert))
 
         when:
-        def result = op.executeAsync(getAsyncBinding()).get()
+        def result = operation.executeAsync(getAsyncBinding()).get()
 
         then:
         result.wasAcknowledged()
@@ -71,10 +70,10 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should insert a single document'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert))
+        def operation = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(insert))
 
         when:
-        op.execute(getBinding())
+        operation.execute(getBinding())
 
         then:
         asList(insert.getDocument()) == getCollectionHelper().find(new BsonDocumentCodec())
@@ -84,10 +83,10 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should insert a single document asynchronously'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert))
+        def operation = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(insert))
 
         when:
-        op.executeAsync(getAsyncBinding()).get()
+        operation.executeAsync(getAsyncBinding()).get()
 
         then:
         asList(insert.getDocument()) == getCollectionHelper().find(new BsonDocumentCodec())
@@ -99,11 +98,11 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         for (i in 1..1001) {
             inserts += new InsertRequest(new BsonDocument('_id', new BsonInt32(i)))
         }
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, inserts.toList())
+        def operation = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, inserts.toList())
 
 
         when:
-        op.execute(getBinding())
+        operation.execute(getBinding())
 
         then:
         getCollectionHelper().count() == 1001
@@ -116,11 +115,11 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         for (i in 1..1001) {
             inserts += new InsertRequest(new BsonDocument('_id', new BsonInt32(i)))
         }
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, inserts.toList())
+        def operation = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, inserts.toList())
 
 
         when:
-        op.executeAsync(getAsyncBinding()).get()
+        operation.executeAsync(getAsyncBinding()).get()
 
         then:
         getCollectionHelper().count() == 1001
@@ -129,13 +128,13 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should return UnacknowledgedWriteResult when using an unacknowledged WriteConcern'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        def op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, asList(insert))
+        def operation = new InsertOperation(getNamespace(), true, UNACKNOWLEDGED, asList(insert))
 
         when:
         def binding = getPinnedBinding()
-        def result = op.execute(binding)
-        new InsertOperation<Document>(namespace, true, ACKNOWLEDGED, [new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))]
-        ).execute(binding);
+        def result = operation.execute(binding)
+        new InsertOperation(namespace, true, ACKNOWLEDGED,
+                            [new InsertRequest(new BsonDocument('_id', new BsonInt32(2)))]).execute(binding);
 
         then:
         !result.wasAcknowledged()
@@ -148,11 +147,11 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should return UnacknowledgedWriteResult when using an unacknowledged WriteConcern asynchronously'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        def op = new InsertOperation<Document>(getNamespace(), true, UNACKNOWLEDGED, asList(insert))
+        def operation = new InsertOperation(getNamespace(), true, UNACKNOWLEDGED, asList(insert))
 
         when:
         def binding = getAsyncSingleConnectionBinding()
-        def result = op.executeAsync(binding).get()
+        def result = operation.executeAsync(binding).get()
 
         then:
         !result.wasAcknowledged()
@@ -173,7 +172,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         ]
 
         when:
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents.toList()).execute(getBinding())
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, documents.toList()).execute(getBinding())
 
         then:
         getCollectionHelper().count() == 2
@@ -191,8 +190,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         ]
 
         when:
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents.toList())
-                .executeAsync(getAsyncBinding()).get()
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, documents.toList()).executeAsync(getAsyncBinding()).get()
 
         then:
         getCollectionHelper().count() == 2
@@ -207,8 +205,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         ]
 
         when:
-        new InsertOperation<Document>(getNamespace(), false, ACKNOWLEDGED, documents)
-                .execute(getBinding())
+        new InsertOperation(getNamespace(), false, ACKNOWLEDGED, documents).execute(getBinding())
 
         then:
         thrown(MongoException.DuplicateKey)
@@ -225,8 +222,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         ]
 
         when:
-        new InsertOperation<Document>(getNamespace(), false, ACKNOWLEDGED, documents)
-                .executeAsync(getAsyncBinding()).get()
+        new InsertOperation(getNamespace(), false, ACKNOWLEDGED, documents).executeAsync(getAsyncBinding()).get()
 
         then:
         thrown(MongoException.DuplicateKey)
@@ -242,8 +238,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         ]
 
         when:
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents)
-                .execute(getBinding())
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, documents).execute(getBinding())
 
         then:
         thrown(MongoException.DuplicateKey)
@@ -260,8 +255,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         ]
 
         when:
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents)
-                .executeAsync(getAsyncBinding()).get()
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, documents).executeAsync(getAsyncBinding()).get()
 
         then:
         thrown(MongoException.DuplicateKey)
@@ -274,8 +268,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         def documents = [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)).append('b', new BsonBinary(hugeByteArray)))]
 
         when:
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents)
-                .execute(getBinding())
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, documents).execute(getBinding())
 
         then:
         thrown(BsonSerializationException)
@@ -287,8 +280,7 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
         def documents = [new InsertRequest(new BsonDocument('_id', new BsonInt32(1)).append('b', new BsonBinary(hugeByteArray)))]
 
         when:
-        new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, documents)
-                .executeAsync(getAsyncBinding()).get()
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, documents).executeAsync(getAsyncBinding()).get()
 
         then:
         thrown(BsonSerializationException)
@@ -297,10 +289,10 @@ class InsertOperationSpecification extends OperationFunctionalSpecification {
     def 'should move _id to the beginning'() {
         given:
         def insert = new InsertRequest(new BsonDocument('x', new BsonInt32(1)).append('_id', new BsonInt32(1)))
-        def op = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED, asList(insert))
+        def operation = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(insert))
 
         when:
-        op.execute(getBinding())
+        operation.execute(getBinding())
 
         then:
         getCollectionHelper().find().get(0).keySet() as List == ['_id', 'x']

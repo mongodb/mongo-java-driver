@@ -37,7 +37,6 @@ import org.bson.BsonInt32
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.OutputBuffer
 import org.junit.experimental.categories.Category
-import org.mongodb.Document
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
@@ -206,8 +205,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster()
 
         when:
-        def result = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
-                                                   asList(new InsertRequest(new BsonDocument())))
+        def result = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
                 .execute(getBinding())
         then:
         result.getCount() == 0
@@ -224,8 +222,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster()
 
         when:
-        def result = new InsertOperation<Document>(getNamespace(), true, ACKNOWLEDGED,
-                                                   asList(new InsertRequest(new BsonDocument())))
+        def result = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
                 .executeAsync(getAsyncBinding()).get()
         then:
         result.getCount() == 0
