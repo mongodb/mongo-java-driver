@@ -359,18 +359,17 @@ public class BsonBinaryReader extends AbstractBsonReader {
     protected class Mark extends AbstractBsonReader.Mark {
         private int startPosition;
         private int size;
-        private int currentPosition;
 
         protected Mark() {
             super();
             startPosition = BsonBinaryReader.this.getContext().startPosition;
             size = BsonBinaryReader.this.getContext().size;
-            currentPosition = BsonBinaryReader.this.bsonInput.getPosition();
+            BsonBinaryReader.this.bsonInput.mark(Integer.MAX_VALUE);
         }
 
         protected void reset() {
             super.reset();
-            BsonBinaryReader.this.bsonInput.setPosition(currentPosition);
+            BsonBinaryReader.this.bsonInput.reset();
             BsonBinaryReader.this.setContext(new Context((Context) getParentContext(), getContextType(), startPosition, size));
         }
     }
