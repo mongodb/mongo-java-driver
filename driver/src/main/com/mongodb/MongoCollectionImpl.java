@@ -19,32 +19,20 @@ package com.mongodb;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoIterable;
-import com.mongodb.client.model.AggregateModel;
 import com.mongodb.client.model.AggregateOptions;
-import com.mongodb.client.model.BulkWriteModel;
 import com.mongodb.client.model.BulkWriteOptions;
-import com.mongodb.client.model.CountModel;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
-import com.mongodb.client.model.DistinctModel;
 import com.mongodb.client.model.DistinctOptions;
-import com.mongodb.client.model.ExplainableModel;
-import com.mongodb.client.model.FindModel;
-import com.mongodb.client.model.FindOneAndDeleteModel;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
-import com.mongodb.client.model.FindOneAndReplaceModel;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
-import com.mongodb.client.model.FindOneAndUpdateModel;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.FindOptions;
-import com.mongodb.client.model.InsertManyModel;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.MapReduceModel;
 import com.mongodb.client.model.MapReduceOptions;
-import com.mongodb.client.model.ParallelCollectionScanModel;
 import com.mongodb.client.model.ParallelCollectionScanOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOneModel;
@@ -55,7 +43,6 @@ import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.codecs.CollectibleCodec;
-import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.CountOperation;
@@ -89,7 +76,6 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
@@ -132,16 +118,22 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public long count() {
-        return count(new CountModel());
+        return count(new CountOptions());
     }
 
     @Override
     public long count(final CountOptions options) {
-        return executor.execute(createCountOperation(new CountModel(options)), this.options.getReadPreference());
-    }
-
-    private long count(final CountModel model) {
-        return executor.execute(createCountOperation(model), options.getReadPreference());
+        CountOperation operation = new CountOperation(namespace)
+                                       .criteria(asBson(options.getCriteria()))
+                                       .skip(options.getSkip())
+                                       .limit(options.getLimit())
+                                       .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
+        if (options.getHint() != null) {
+            operation.hint(asBson(options.getHint()));
+        } else if (options.getHintString() != null) {
+            operation.hint(new BsonString(options.getHintString()));
+        }
+        return executor.execute(operation, this.options.getReadPreference());
     }
 
     @Override
@@ -151,13 +143,9 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public List<Object> distinct(final String fieldName, final DistinctOptions distinctOptions) {
-        return distinct(new DistinctModel(fieldName, distinctOptions));
-    }
-
-    private List<Object> distinct(final DistinctModel model) {
-        DistinctOperation operation = new DistinctOperation(namespace, model.getFieldName())
-                                          .criteria(asBson(model.getOptions().getCriteria()))
-                                          .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
+        DistinctOperation operation = new DistinctOperation(namespace, fieldName)
+                                          .criteria(asBson(distinctOptions.getCriteria()))
+                                          .maxTime(distinctOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
         BsonArray distinctArray = executor.execute(operation, options.getReadPreference());
         List<Object> distinctList = new ArrayList<Object>();
         for (BsonValue value : distinctArray) {
@@ -187,12 +175,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public <C> MongoIterable<C> find(final FindOptions findOptions, final Class<C> clazz) {
-        return find(new FindModel(findOptions), clazz);
-    }
-
-    private <C> MongoIterable<C> find(final FindModel findModel, final Class<C> clazz) {
-        return new OperationIterable<C>(createQueryOperation(findModel, getCodec(clazz)),
-                                        options.getReadPreference());
+        return new OperationIterable<C>(createQueryOperation(namespace, findOptions, getCodec(clazz)), options.getReadPreference());
     }
 
     @Override
@@ -212,69 +195,92 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public <C> MongoIterable<C> aggregate(final List<?> pipeline, final AggregateOptions options, final Class<C> clazz) {
-        return aggregate(new AggregateModel(pipeline, options), clazz);
-    }
-
-    private <C> MongoIterable<C> aggregate(final AggregateModel model, final Class<C> clazz) {
-        List<BsonDocument> aggregateList = createBsonDocumentList(model.getPipeline());
+        List<BsonDocument> aggregateList = createBsonDocumentList(pipeline);
 
         BsonValue outCollection = aggregateList.size() == 0 ? null : aggregateList.get(aggregateList.size() - 1).get("$out");
 
         if (outCollection != null) {
             AggregateToCollectionOperation operation = new AggregateToCollectionOperation(namespace, aggregateList)
-                                                           .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                           .allowDiskUse(model.getOptions().getAllowDiskUse());
+                                                           .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                                           .allowDiskUse(options.getAllowDiskUse());
             executor.execute(operation);
             return new OperationIterable<C>(new FindOperation<C>(new MongoNamespace(namespace.getDatabaseName(),
                                                                                     outCollection.asString().getValue()),
                                                                  getCodec(clazz)),
-                                            options.getReadPreference());
+                                            this.options.getReadPreference());
         } else {
-            return new OperationIterable<C>(createAggregateOperation(model, aggregateList, getCodec(clazz)),
-                                            options.getReadPreference());
+            return new OperationIterable<C>(new AggregateOperation<C>(namespace, aggregateList, getCodec(clazz))
+                                            .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                            .allowDiskUse(options.getAllowDiskUse())
+                                            .batchSize(options.getBatchSize())
+                                            .useCursor(options.getUseCursor()),
+                                            this.options.getReadPreference());
         }
     }
 
     @Override
     public MongoIterable<Document> mapReduce(final String mapFunction, final String reduceFunction) {
-        return mapReduce(new MapReduceModel(mapFunction, reduceFunction));
+        return mapReduce(mapFunction, reduceFunction, new MapReduceOptions());
     }
 
     @Override
     public MongoIterable<Document> mapReduce(final String mapFunction, final String reduceFunction, final MapReduceOptions options) {
-        return mapReduce(new MapReduceModel(mapFunction, reduceFunction, options));
+        return mapReduce(mapFunction, reduceFunction, options, Document.class);
     }
 
     @Override
     public <C> MongoIterable<C> mapReduce(final String mapFunction, final String reduceFunction, final Class<C> clazz) {
-        return mapReduce(new MapReduceModel(mapFunction, reduceFunction), clazz);
+        return mapReduce(mapFunction, reduceFunction, new MapReduceOptions(), clazz);
     }
 
     @Override
     public <C> MongoIterable<C> mapReduce(final String mapFunction, final String reduceFunction, final MapReduceOptions options,
                                           final Class<C> clazz) {
-        return mapReduce(new MapReduceModel(mapFunction, reduceFunction, options), clazz);
-    }
-
-    private MongoIterable<Document> mapReduce(final MapReduceModel mapReduceModel) {
-        return mapReduce(mapReduceModel, Document.class);
-    }
-
-    private <C> MongoIterable<C> mapReduce(final MapReduceModel mapReduceModel, final Class<C> clazz) {
-        MapReduceOptions mapReduceOptions = mapReduceModel.getOptions();
-        if (mapReduceOptions.isInline()) {
+        if (options.isInline()) {
             MapReduceWithInlineResultsOperation<C> operation =
-                createMapReduceWithInlineResultsOperation(mapReduceModel, getCodec(clazz));
-            return new MapReduceResultsIterable<C>(operation, options.getReadPreference(), executor);
+                new MapReduceWithInlineResultsOperation<C>(getNamespace(),
+                                                           new BsonJavaScript(mapFunction),
+                                                           new BsonJavaScript(reduceFunction),
+                                                           getCodec(clazz))
+                    .criteria(asBson(options.getCriteria()))
+                    .limit(options.getLimit())
+                    .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                    .jsMode(options.isJsMode())
+                    .scope(asBson(options.getScope()))
+                    .sort(asBson(options.getSort()))
+                    .verbose(options.isVerbose());
+            if (options.getFinalizeFunction() != null) {
+                operation.finalizeFunction(new BsonJavaScript(options.getFinalizeFunction()));
+            }
+            return new MapReduceResultsIterable<C>(operation, this.options.getReadPreference(), executor);
         } else {
-            MapReduceToCollectionOperation operation = createMapReduceToCollectionOperation(mapReduceModel);
+            MapReduceToCollectionOperation operation =
+                new MapReduceToCollectionOperation(getNamespace(),
+                                                   new BsonJavaScript(mapFunction),
+                                                   new BsonJavaScript(reduceFunction),
+                                                   options.getCollectionName())
+                    .criteria(asBson(options.getCriteria()))
+                    .limit(options.getLimit())
+                    .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                    .jsMode(options.isJsMode())
+                    .scope(asBson(options.getScope()))
+                    .sort(asBson(options.getSort()))
+                    .verbose(options.isVerbose())
+                    .action(options.getAction().getValue())
+                    .nonAtomic(options.isNonAtomic())
+                    .sharded(options.isSharded())
+                    .databaseName(options.getDatabaseName());
+
+            if (options.getFinalizeFunction() != null) {
+                operation.finalizeFunction(new BsonJavaScript(options.getFinalizeFunction()));
+            }
             executor.execute(operation);
 
-            String databaseName = mapReduceOptions.getDatabaseName() != null ? mapReduceOptions.getDatabaseName()
+            String databaseName = options.getDatabaseName() != null ? options.getDatabaseName()
                                                                              : namespace.getDatabaseName();
-            FindOperation<C> findOperation = createQueryOperation(new MongoNamespace(databaseName, mapReduceOptions.getCollectionName()),
-                                                                  new FindModel(), getCodec(clazz));
-            return new OperationIterable<C>(findOperation, options.getReadPreference());
+            FindOperation<C> findOperation = createQueryOperation(new MongoNamespace(databaseName, options.getCollectionName()),
+                                                                  new FindOptions(), getCodec(clazz));
+            return new OperationIterable<C>(findOperation, this.options.getReadPreference());
         }
     }
 
@@ -284,14 +290,10 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options) {
-        return bulkWrite(new BulkWriteModel<T>(requests, options));
-    }
-
     @SuppressWarnings("unchecked")
-    private BulkWriteResult bulkWrite(final BulkWriteModel<? extends T> model) {
-        List<WriteRequest> requests = new ArrayList<WriteRequest>();
-        for (WriteModel<? extends T> writeModel : model.getRequests()) {
+    public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options) {
+        List<WriteRequest> writeRequests = new ArrayList<WriteRequest>();
+        for (WriteModel<? extends T> writeModel : requests) {
             WriteRequest writeRequest;
             if (writeModel instanceof InsertOneModel) {
                 InsertOneModel<T> insertOneModel = (InsertOneModel<T>) writeModel;
@@ -326,11 +328,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 throw new UnsupportedOperationException(format("WriteModel of type %s is not supported", writeModel.getClass()));
             }
 
-            requests.add(writeRequest);
+            writeRequests.add(writeRequest);
         }
 
-        return executor.execute(new MixedBulkWriteOperation(namespace, requests, model.getOptions().isOrdered(),
-                                                            options.getWriteConcern()));
+        return executor.execute(new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(),
+                                                            this.options.getWriteConcern()));
     }
 
     @Override
@@ -350,18 +352,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public void insertMany(final List<? extends T> documents, final InsertManyOptions options) {
-        insertMany(new InsertManyModel<T>(documents, options));
-    }
-
-    private void insertMany(final InsertManyModel<T> model) {
         List<InsertRequest> requests = new ArrayList<InsertRequest>();
-        for (T document : model.getDocuments()) {
+        for (T document : documents) {
             if (getCodec() instanceof CollectibleCodec) {
                 ((CollectibleCodec<T>) getCodec()).generateIdIfAbsentFromDocument(document);
             }
             requests.add(new InsertRequest(asBson(document)));
         }
-        executor.execute(new InsertOperation(namespace, model.getOptions().isOrdered(), options.getWriteConcern(), requests));
+        executor.execute(new InsertOperation(namespace, options.isOrdered(), this.options.getWriteConcern(), requests));
     }
 
     @Override
@@ -448,20 +446,15 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public T findOneAndDelete(final Object criteria, final FindOneAndDeleteOptions options) {
-        return findOneAndDelete(new FindOneAndDeleteModel(criteria, options));
+        return executor.execute(new FindAndDeleteOperation<T>(namespace, getCodec())
+                                                  .criteria(asBson(criteria))
+                                                  .projection(asBson(options.getProjection()))
+                                                  .sort(asBson(options.getSort())));
     }
 
     // TODO modifiedCount
     private UpdateResult createUpdateResult(final WriteResult writeResult) {
         return new UpdateResult(writeResult.getCount(), 0, writeResult.getUpsertedId());
-    }
-
-    private T findOneAndDelete(final FindOneAndDeleteModel model) {
-        FindAndDeleteOperation<T> operation = new FindAndDeleteOperation<T>(namespace, getCodec())
-                                                  .criteria(asBson(model.getCriteria()))
-                                                  .projection(asBson(model.getOptions().getProjection()))
-                                                  .sort(asBson(model.getOptions().getSort()));
-        return executor.execute(operation);
     }
 
     @Override
@@ -471,27 +464,12 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public T findOneAndReplace(final Object criteria, final T replacement, final FindOneAndReplaceOptions options) {
-        return findOneAndReplace(new FindOneAndReplaceModel<T>(criteria, replacement, options));
-    }
-
-    T findOneAndUpdate(final FindOneAndUpdateModel model) {
-        FindAndUpdateOperation<T> operation = new FindAndUpdateOperation<T>(namespace, getCodec(), asBson(model.getUpdate()))
-                                                  .criteria(asBson(model.getCriteria()))
-                                                  .projection(asBson(model.getOptions().getProjection()))
-                                                  .sort(asBson(model.getOptions().getSort()))
-                                                  .returnUpdated(model.getOptions().getReturnUpdated())
-                                                  .upsert(model.getOptions().isUpsert());
-        return executor.execute(operation);
-    }
-
-    private T findOneAndReplace(final FindOneAndReplaceModel<T> model) {
-        FindAndReplaceOperation<T> operation = new FindAndReplaceOperation<T>(namespace, getCodec(), asBson(model.getReplacement()))
-                                                   .criteria(asBson(model.getCriteria()))
-                                                   .projection(asBson(model.getOptions().getProjection()))
-                                                   .sort(asBson(model.getOptions().getSort()))
-                                                   .returnReplaced(model.getOptions().getReturnReplaced())
-                                                   .upsert(model.getOptions().isUpsert());
-        return executor.execute(operation);
+        return executor.execute(new FindAndReplaceOperation<T>(namespace, getCodec(), asBson(replacement))
+                                                   .criteria(asBson(criteria))
+                                                   .projection(asBson(options.getProjection()))
+                                                   .sort(asBson(options.getSort()))
+                                                   .returnReplaced(options.getReturnReplaced())
+                                                   .upsert(options.isUpsert()));
     }
 
     @Override
@@ -501,51 +479,36 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public T findOneAndUpdate(final Object criteria, final Object update, final FindOneAndUpdateOptions options) {
-        return findOneAndUpdate(new FindOneAndUpdateModel(criteria, update, options));
+        return executor.execute(new FindAndUpdateOperation<T>(namespace, getCodec(), asBson(update))
+                                                  .criteria(asBson(criteria))
+                                                  .projection(asBson(options.getProjection()))
+                                                  .sort(asBson(options.getSort()))
+                                                  .returnUpdated(options.getReturnUpdated())
+                                                  .upsert(options.isUpsert()));
     }
 
     @Override
     public List<MongoCursor<T>> parallelCollectionScan(final int numCursors) {
-        return parallelCollectionScan(new ParallelCollectionScanModel(numCursors), getCodec());
+        return parallelCollectionScan(numCursors, new ParallelCollectionScanOptions());
     }
 
     @Override
     public List<MongoCursor<T>> parallelCollectionScan(final int numCursors,
                                                        final ParallelCollectionScanOptions parallelCollectionScanOptions) {
-        return parallelCollectionScan(new ParallelCollectionScanModel(numCursors, parallelCollectionScanOptions), getCodec());
+        return parallelCollectionScan(numCursors, parallelCollectionScanOptions, clazz);
     }
 
     @Override
     public <C> List<MongoCursor<C>> parallelCollectionScan(final int numCursors, final Class<C> clazz) {
-        return parallelCollectionScan(new ParallelCollectionScanModel(numCursors), getCodec(clazz));
+       return parallelCollectionScan(numCursors, new ParallelCollectionScanOptions(), clazz);
     }
 
     @Override
     public <C> List<MongoCursor<C>> parallelCollectionScan(final int numCursors,
                                                            final ParallelCollectionScanOptions parallelCollectionScanOptions,
                                                            final Class<C> clazz) {
-        return parallelCollectionScan(new ParallelCollectionScanModel(numCursors, parallelCollectionScanOptions), getCodec(clazz));
-    }
-
-    private <C> List<MongoCursor<C>> parallelCollectionScan(final ParallelCollectionScanModel parallelCollectionScanModel,
-                                                            final Decoder<C> decoder) {
-        return executor.execute(new ParallelCollectionScanOperation<C>(namespace, parallelCollectionScanModel.getNumCursors(), decoder)
-                                    .batchSize(parallelCollectionScanModel.getOptions().getBatchSize()), options.getReadPreference());
-    }
-
-    @Override
-    public Document explain(final ExplainableModel explainableModel, final ExplainVerbosity verbosity) {
-        if (explainableModel instanceof AggregateModel) {
-            return explainAggregate((AggregateModel) explainableModel, verbosity);
-        } else if (explainableModel instanceof FindModel) {
-            return explainFind((FindModel) explainableModel, verbosity);
-        } else if (explainableModel instanceof CountModel) {
-            return explainCount((CountModel) explainableModel, verbosity);
-        } else if (explainableModel instanceof MapReduceModel) {
-            return explainMapReduce((MapReduceModel) explainableModel, verbosity);
-        } else {
-            throw new UnsupportedOperationException(format("Unsupported explainable model type %s", explainableModel.getClass()));
-        }
+        return executor.execute(new ParallelCollectionScanOperation<C>(namespace, numCursors, getCodec(clazz))
+                                .batchSize(parallelCollectionScanOptions.getBatchSize()), options.getReadPreference());
     }
 
     @Override
@@ -604,41 +567,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                              .dropTarget(renameCollectionOptions.isDropTarget()));
     }
 
-    private Document explainCount(final CountModel countModel, final ExplainVerbosity verbosity) {
-        CountOperation countOperation = createCountOperation(countModel);
-        BsonDocument bsonDocument = executor.execute(countOperation.asExplainableOperation(verbosity),
-                                                     options.getReadPreference());
-        return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
-    }
-
-    private Document explainFind(final FindModel findModel, final ExplainVerbosity verbosity) {
-        FindOperation<BsonDocument> findOperation = createQueryOperation(findModel, new BsonDocumentCodec());
-        BsonDocument bsonDocument = executor.execute(findOperation.asExplainableOperation(verbosity),
-                                                     options.getReadPreference());
-        return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
-    }
-
-    private Document explainAggregate(final AggregateModel aggregateModel, final ExplainVerbosity verbosity) {
-        AggregateOperation<BsonDocument> operation = createAggregateOperation(aggregateModel,
-                                                                              createBsonDocumentList(aggregateModel.getPipeline()),
-                                                                              new BsonDocumentCodec());
-        BsonDocument bsonDocument = executor.execute(operation.asExplainableOperation(verbosity), options.getReadPreference());
-        return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
-    }
-
-    private Document explainMapReduce(final MapReduceModel mapReduceModel, final ExplainVerbosity verbosity) {
-        BsonDocument bsonDocument;
-        if (mapReduceModel.getOptions().isInline()) {
-            MapReduceWithInlineResultsOperation<BsonDocument> operation =
-                createMapReduceWithInlineResultsOperation(mapReduceModel, new BsonDocumentCodec());
-            bsonDocument = executor.execute(operation.asExplainableOperation(verbosity), options.getReadPreference());
-        } else {
-            MapReduceToCollectionOperation operation = createMapReduceToCollectionOperation(mapReduceModel);
-            bsonDocument = executor.execute(operation.asExplainableOperation(verbosity), options.getReadPreference());
-        }
-        return new DocumentCodec().decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build());
-    }
-
     private Codec<T> getCodec() {
         return getCodec(clazz);
     }
@@ -659,96 +587,22 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
     }
 
-    private <C> FindOperation<C> createQueryOperation(final FindModel model, final Decoder<C> decoder) {
-        return createQueryOperation(namespace, model, decoder);
-    }
-
-    private <C> FindOperation<C> createQueryOperation(final MongoNamespace namespace, final FindModel model, final Decoder<C> decoder) {
+    private <C> FindOperation<C> createQueryOperation(final MongoNamespace namespace, final FindOptions options, final Decoder<C> decoder) {
         return new FindOperation<C>(namespace, decoder)
-                   .criteria(asBson(model.getOptions().getCriteria()))
-                   .batchSize(model.getOptions().getBatchSize())
-                   .skip(model.getOptions().getSkip())
-                   .limit(model.getOptions().getLimit())
-                   .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
-                   .modifiers(asBson(model.getOptions().getModifiers()))
-                   .projection(asBson(model.getOptions().getProjection()))
-                   .sort(asBson(model.getOptions().getSort()))
-                   .awaitData(model.getOptions().isAwaitData())
-                   .exhaust(model.getOptions().isExhaust())
-                   .noCursorTimeout(model.getOptions().isNoCursorTimeout())
-                   .oplogReplay(model.getOptions().isOplogReplay())
-                   .partial(model.getOptions().isPartial())
-                   .tailableCursor(model.getOptions().isTailable());
-    }
-
-    private CountOperation createCountOperation(final CountModel model) {
-        CountOperation operation = new CountOperation(namespace)
-                                       .criteria(asBson(model.getOptions().getCriteria()))
-                                       .skip(model.getOptions().getSkip())
-                                       .limit(model.getOptions().getLimit())
-                                       .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
-        if (model.getOptions().getHint() != null) {
-            operation.hint(asBson(model.getOptions().getHint()));
-        } else if (model.getOptions().getHintString() != null) {
-            operation.hint(new BsonString(model.getOptions().getHintString()));
-        }
-        return operation;
-    }
-
-    private <C> MapReduceWithInlineResultsOperation<C> createMapReduceWithInlineResultsOperation(final MapReduceModel model,
-                                                                                                 final Decoder<C> decoder) {
-        MapReduceOptions mapReduceOptions = model.getOptions();
-        MapReduceWithInlineResultsOperation<C> operation =
-            new MapReduceWithInlineResultsOperation<C>(getNamespace(),
-                                                       new BsonJavaScript(model.getMapFunction()),
-                                                       new BsonJavaScript(model.getReduceFunction()),
-                                                       decoder)
-                .criteria(asBson(mapReduceOptions.getCriteria()))
-                .limit(mapReduceOptions.getLimit())
-                .maxTime(mapReduceOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .jsMode(mapReduceOptions.isJsMode())
-                .scope(asBson(mapReduceOptions.getScope()))
-                .sort(asBson(mapReduceOptions.getSort()))
-                .verbose(mapReduceOptions.isVerbose());
-        if (mapReduceOptions.getFinalizeFunction() != null) {
-            operation.finalizeFunction(new BsonJavaScript(mapReduceOptions.getFinalizeFunction()));
-        }
-        return operation;
-    }
-
-    private MapReduceToCollectionOperation createMapReduceToCollectionOperation(final MapReduceModel model) {
-        MapReduceOptions mapReduceOptions = model.getOptions();
-        MapReduceToCollectionOperation operation =
-            new MapReduceToCollectionOperation(getNamespace(),
-                                               new BsonJavaScript(model.getMapFunction()),
-                                               new BsonJavaScript(model.getReduceFunction()),
-                                               mapReduceOptions.getCollectionName())
-                .criteria(asBson(mapReduceOptions.getCriteria()))
-                .limit(mapReduceOptions.getLimit())
-                .maxTime(mapReduceOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .jsMode(mapReduceOptions.isJsMode())
-                .scope(asBson(mapReduceOptions.getScope()))
-                .sort(asBson(mapReduceOptions.getSort()))
-                .verbose(mapReduceOptions.isVerbose())
-                .action(mapReduceOptions.getAction().getValue())
-                .nonAtomic(mapReduceOptions.isNonAtomic())
-                .sharded(mapReduceOptions.isSharded())
-                .databaseName(mapReduceOptions.getDatabaseName());
-
-        if (mapReduceOptions.getFinalizeFunction() != null) {
-            operation.finalizeFunction(new BsonJavaScript(mapReduceOptions.getFinalizeFunction()));
-        }
-        return operation;
-    }
-
-    private <C> AggregateOperation<C> createAggregateOperation(final AggregateModel model,
-                                                               final List<BsonDocument> aggregateList,
-                                                               final Decoder<C> decoder) {
-        return new AggregateOperation<C>(namespace, aggregateList, decoder)
-                   .maxTime(model.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
-                   .allowDiskUse(model.getOptions().getAllowDiskUse())
-                   .batchSize(model.getOptions().getBatchSize())
-                   .useCursor(model.getOptions().getUseCursor());
+                   .criteria(asBson(options.getCriteria()))
+                   .batchSize(options.getBatchSize())
+                   .skip(options.getSkip())
+                   .limit(options.getLimit())
+                   .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                   .modifiers(asBson(options.getModifiers()))
+                   .projection(asBson(options.getProjection()))
+                   .sort(asBson(options.getSort()))
+                   .awaitData(options.isAwaitData())
+                   .exhaust(options.isExhaust())
+                   .noCursorTimeout(options.isNoCursorTimeout())
+                   .oplogReplay(options.isOplogReplay())
+                   .partial(options.isPartial())
+                   .tailableCursor(options.isTailable());
     }
 
     private <D> List<BsonDocument> createBsonDocumentList(final List<D> pipeline) {

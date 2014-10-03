@@ -27,7 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual manual/aggregation/ Aggregation
  * @mongodb.server.release 2.2
  */
-public class AggregateOptions implements ExplainableModel {
+public class AggregateOptions {
     private Boolean allowDiskUse;
     private Integer batchSize;
     private long maxTimeMS;

@@ -21,7 +21,6 @@ package com.mongodb.client.model;
  *
  * @param <T> the document type for storage
  * @since 3.0
- * @see BulkWriteModel
  */
 public abstract class WriteModel<T> {
     WriteModel() {

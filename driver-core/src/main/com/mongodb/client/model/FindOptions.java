@@ -388,4 +388,24 @@ public final class FindOptions {
         this.tailable = tailable;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "FindOptions{"
+               + "criteria=" + criteria
+               + ", batchSize=" + batchSize
+               + ", limit=" + limit
+               + ", modifiers=" + modifiers
+               + ", projection=" + projection
+               + ", maxTimeMS=" + maxTimeMS
+               + ", skip=" + skip
+               + ", sort=" + sort
+               + ", awaitData=" + awaitData
+               + ", exhaust=" + exhaust
+               + ", noCursorTimeout=" + noCursorTimeout
+               + ", oplogReplay=" + oplogReplay
+               + ", partial=" + partial
+               + ", tailable=" + tailable
+               + '}';
+    }
 }

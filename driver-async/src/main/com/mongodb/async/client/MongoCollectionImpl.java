@@ -25,7 +25,7 @@ import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
-import com.mongodb.client.model.FindModel;
+import com.mongodb.client.model.FindOptions;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
@@ -142,7 +142,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     private class MongoCollectionView implements MongoView<T> {
-        private final FindModel findModel = new FindModel();
+        private final FindOptions findOptions = new FindOptions();
         private final ReadPreference readPreference = options.getReadPreference();
         private boolean upsert;
 
@@ -181,16 +181,16 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<Long> count() {
             CountOperation operation = new CountOperation(getNamespace())
-                                           .criteria((BsonDocument) findModel.getOptions().getCriteria())
-                                           .skip(findModel.getOptions().getSkip())
-                                           .limit(findModel.getOptions().getLimit())
-                                           .maxTime(findModel.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS);
+                                           .criteria((BsonDocument) findOptions.getCriteria())
+                                           .skip(findOptions.getSkip())
+                                           .limit(findOptions.getLimit())
+                                           .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
             return execute(operation, readPreference);
         }
 
         @Override
         public MongoView<T> find(final Document filter) {
-            findModel.getOptions().criteria(new BsonDocumentWrapper<Document>(filter, options.getDocumentCodec()));
+            findOptions.criteria(new BsonDocumentWrapper<Document>(filter, options.getDocumentCodec()));
             return this;
         }
 
@@ -200,13 +200,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         MongoView<T> find(final BsonDocument filter) {
-            findModel.getOptions().criteria(filter);
+            findOptions.criteria(filter);
             return this;
         }
 
         @Override
         public MongoView<T> sort(final Document sortCriteria) {
-            findModel.getOptions().sort(new BsonDocumentWrapper<Document>(sortCriteria, options.getDocumentCodec()));
+            findOptions.sort(new BsonDocumentWrapper<Document>(sortCriteria, options.getDocumentCodec()));
             return this;
         }
 
@@ -217,19 +217,19 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoView<T> skip(final int skip) {
-            findModel.getOptions().skip(skip);
+            findOptions.skip(skip);
             return this;
         }
 
         @Override
         public MongoView<T> limit(final int limit) {
-            findModel.getOptions().limit(limit);
+            findOptions.limit(limit);
             return this;
         }
 
         @Override
         public MongoView<T> fields(final Document selector) {
-            findModel.getOptions().projection(new BsonDocumentWrapper<Document>(selector, options.getDocumentCodec()));
+            findOptions.projection(new BsonDocumentWrapper<Document>(selector, options.getDocumentCodec()));
             return this;
         }
 
@@ -307,7 +307,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> replace(final T replacement) {
             notNull("replacement", replacement);
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
-                                                   asList(new UpdateRequest((BsonDocument) findModel.getOptions().getCriteria(),
+                                                   asList(new UpdateRequest((BsonDocument) findOptions.getCriteria(),
                                                                              asBson(replacement), WriteRequest.Type.REPLACE)
                                                           .upsert(upsert))
             ));
@@ -317,7 +317,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> update(final Document updateOperations) {
             notNull("updateOperations", updateOperations);
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new UpdateRequest((BsonDocument) findModel.getOptions().getCriteria(),
+                                               asList(new UpdateRequest((BsonDocument) findOptions.getCriteria(),
                                                                         new BsonDocumentWrapper<Document>(updateOperations,
                                                                                                           options.getDocumentCodec()),
                                                                         WriteRequest.Type.UPDATE)
@@ -329,7 +329,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> updateOne(final Document updateOperations) {
             notNull("updateOperations", updateOperations);
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new UpdateRequest((BsonDocument) findModel.getOptions().getCriteria(),
+                                               asList(new UpdateRequest((BsonDocument) findOptions.getCriteria(),
                                                                         new BsonDocumentWrapper<Document>(updateOperations,
                                                                                                           options.getDocumentCodec()),
                                                                         WriteRequest.Type.UPDATE)
@@ -340,27 +340,27 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<WriteResult> remove() {
             return execute(new DeleteOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new DeleteRequest((BsonDocument) findModel.getOptions().getCriteria())
+                                               asList(new DeleteRequest((BsonDocument) findOptions.getCriteria())
                                                       .multi(true))));
         }
 
         @Override
         public MongoFuture<WriteResult> removeOne() {
             return execute(new DeleteOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new DeleteRequest((BsonDocument) findModel.getOptions().getCriteria())
+                                               asList(new DeleteRequest((BsonDocument) findOptions.getCriteria())
                                                       .multi(false))));
         }
 
         private FindOperation<T> createQueryOperation() {
             return new FindOperation<T>(getNamespace(), getCodec())
-                       .criteria(asBson(findModel.getOptions().getCriteria()))
-                       .batchSize(findModel.getOptions().getBatchSize())
-                       .skip(findModel.getOptions().getSkip())
-                       .limit(findModel.getOptions().getLimit())
-                       .maxTime(findModel.getOptions().getMaxTime(MILLISECONDS), MILLISECONDS)
-                       .modifiers(asBson(findModel.getOptions().getModifiers()))
-                       .projection(asBson(findModel.getOptions().getProjection()))
-                       .sort(asBson(findModel.getOptions().getSort()));
+                       .criteria(asBson(findOptions.getCriteria()))
+                       .batchSize(findOptions.getBatchSize())
+                       .skip(findOptions.getSkip())
+                       .limit(findOptions.getLimit())
+                       .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
+                       .modifiers(asBson(findOptions.getModifiers()))
+                       .projection(asBson(findOptions.getProjection()))
+                       .sort(asBson(findOptions.getSort()));
         }
 
         @SuppressWarnings({"rawtypes", "unchecked"})

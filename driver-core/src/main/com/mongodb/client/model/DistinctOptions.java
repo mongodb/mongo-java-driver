@@ -26,7 +26,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  * @mongodb.driver.manual manual/reference/command/distinct/ Distinct
  */
-public class DistinctOptions implements ExplainableModel {
+public class DistinctOptions {
     private Object criteria;
     private long maxTimeMS;
 

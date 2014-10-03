@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.ThreadSafe;
@@ -25,7 +24,6 @@ import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DistinctOptions;
-import com.mongodb.client.model.ExplainableModel;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -502,16 +500,6 @@ public interface MongoCollection<T> {
      */
     <C> List<MongoCursor<C>> parallelCollectionScan(int numCursors, ParallelCollectionScanOptions parallelCollectionScanOptions,
                                                       Class<C> clazz);
-
-    /**
-     * Explain the specified operation with the specified verbosity.
-     *
-     * @param explainableModel the operation to explain
-     * @param verbosity the verbosity
-     * @return a document explaining how the server would perform the given operation
-     * @mongodb.server.release 2.8
-     */
-    Document explain(ExplainableModel explainableModel, ExplainVerbosity verbosity);
 
     /**
      * Drops this collection from the Database.
