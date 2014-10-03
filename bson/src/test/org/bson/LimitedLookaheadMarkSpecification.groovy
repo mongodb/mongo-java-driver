@@ -16,16 +16,8 @@
  *
  */
 
-package com.mongodb
+package org.bson
 
-import org.bson.BSONException
-import org.bson.BsonBinaryReader
-import org.bson.BsonBinaryWriter
-import org.bson.BsonDocument
-import org.bson.BsonDocumentReader
-import org.bson.BsonDocumentWriter
-import org.bson.BsonReader
-import org.bson.BsonWriter
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.ByteBufferBsonInput
 import org.bson.json.JsonReader
@@ -36,7 +28,7 @@ import spock.lang.Specification
  *
  */
 @SuppressWarnings('UnnecessaryObjectReferences')
-class LimitedLookaheadMarkSpecification extends Specification {
+class LimitedLookAheadMarkSpecification extends Specification {
 
     static BsonDocument bsonDoc
     static BasicOutputBuffer buffer
