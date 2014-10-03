@@ -232,6 +232,7 @@ public class MongoClientURI {
 
                 Collections.addAll(all, serverPart.split(","));
 
+                Collections.sort(all);
                 hosts = Collections.unmodifiableList(all);
             }
 
@@ -664,37 +665,33 @@ public class MongoClientURI {
 
         MongoClientURI that = (MongoClientURI) o;
 
+        if (!hosts.equals(that.hosts)) {
+            return false;
+        }
+        if (database != null ? !database.equals(that.database) : that.database != null) {
+            return false;
+        }
         if (collection != null ? !collection.equals(that.collection) : that.collection != null) {
             return false;
         }
         if (credentials != null ? !credentials.equals(that.credentials) : that.credentials != null) {
             return false;
         }
-        if (database != null ? !database.equals(that.database) : that.database != null) {
-            return false;
-        }
-        if (hosts != null ? !hosts.equals(that.hosts) : that.hosts != null) {
-            return false;
-        }
-        if (options != null ? !options.equals(that.options) : that.options != null) {
-            return false;
-        }
-        if (uri != null ? !uri.equals(that.uri) : that.uri != null) {
+        if (!options.equals(that.options)) {
             return false;
         }
 
         return true;
-  }
+    }
 
-  @Override
-  public int hashCode() {
-      int result = options != null ? options.hashCode() : 0;
-      result = 31 * result + (credentials != null ? credentials.hashCode() : 0);
-      result = 31 * result + (hosts != null ? hosts.hashCode() : 0);
-      result = 31 * result + (database != null ? database.hashCode() : 0);
-      result = 31 * result + (collection != null ? collection.hashCode() : 0);
-      result = 31 * result + (uri != null ? uri.hashCode() : 0);
-      return result;
-  }
+    @Override
+    public int hashCode() {
+        int result = options.hashCode();
+        result = 31 * result + (credentials != null ? credentials.hashCode() : 0);
+        result = 31 * result + hosts.hashCode();
+        result = 31 * result + (database != null ? database.hashCode() : 0);
+        result = 31 * result + (collection != null ? collection.hashCode() : 0);
+        return result;
+    }
 
 }
