@@ -23,11 +23,6 @@ package org.bson.codecs;
  * @since 3.0
  */
 public final class DecoderContext {
-
-
-    private DecoderContext() {
-    }
-
     /**
      * Create a builder.
      *
@@ -41,9 +36,7 @@ public final class DecoderContext {
      * A builder for {@code DecoderContext} instances.
      */
     public static final class Builder {
-
         private Builder() {
-
         }
 
         /**
@@ -51,7 +44,10 @@ public final class DecoderContext {
          * @return the decoder context
          */
         public DecoderContext build() {
-            return new DecoderContext();
+            return new DecoderContext(this);
         }
+    }
+
+    private DecoderContext(final Builder builder) {
     }
 }
