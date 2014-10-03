@@ -34,13 +34,6 @@ public interface BsonInput extends Closeable {
     int getPosition();
 
     /**
-     * Sets the position in the stream
-     *
-     * @param newPosition the new position
-     */
-    void setPosition(int newPosition);
-
-    /**
      * Reads a single byte from the stream
      *
      * @return the byte value

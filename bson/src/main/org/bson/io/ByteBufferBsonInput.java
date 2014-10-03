@@ -53,12 +53,6 @@ public class ByteBufferBsonInput implements BsonInput {
         return buffer.position();
     }
 
-    @Override
-    public void setPosition(final int newPosition) {
-        ensureOpen();
-        buffer.position(newPosition);
-    }
-
 
     @Override
     public byte readByte() {
