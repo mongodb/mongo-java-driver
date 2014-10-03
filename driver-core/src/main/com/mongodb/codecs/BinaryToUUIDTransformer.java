@@ -25,7 +25,7 @@ import org.bson.UuidRepresentation;
 import java.util.UUID;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.codecs.CodecHelper.reverseByteArray;
+import static com.mongodb.codecs.UUIDCodecHelper.reverseByteArray;
 
 /**
  * A transformer from {@code BsonBinary} to {@code UUID}.

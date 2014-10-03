@@ -28,7 +28,7 @@ import org.bson.codecs.EncoderContext;
 
 import java.util.UUID;
 
-import static com.mongodb.codecs.CodecHelper.reverseByteArray;
+import static com.mongodb.codecs.UUIDCodecHelper.reverseByteArray;
 
 /**
  * Encodes and decodes {@code UUID} objects.

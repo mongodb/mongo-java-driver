@@ -18,14 +18,7 @@
 
 package com.mongodb.codecs;
 
-/**
- * helper functions for codecs
- */
-public final class CodecHelper {
-
-    private CodecHelper() {
-
-    }
+final class UUIDCodecHelper {
     // reverse elements in the subarray data[start:start+length]
     public static void reverseByteArray(final byte[] data, final int start, final int length) {
         for (int left = start, right = start + length - 1; left < right; left++, right--) {
@@ -34,5 +27,8 @@ public final class CodecHelper {
             data[left]  = data[right];
             data[right] = temp;
         }
+    }
+
+    private UUIDCodecHelper() {
     }
 }
