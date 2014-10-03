@@ -98,7 +98,7 @@ public class ReplyHeader {
      * <ul>
      *     <li>0 - <i>CursorNotFound</i>: Set when getMore is called but the cursor id is not valid at the server. Returned with zero 
      *     results.</li>
-     *     <li>1 - <i>QueryFailure</i>: Set when query failed. Results consist of one document containing an “$err” field describing the 
+     *     <li>1 - <i>QueryFailure</i>: Set when query failed. Results consist of one document containing an "$err" field describing the
      *     failure.
      *     <li>2 - <i>ShardConfigStale</i>: Drivers should ignore this. Only mongos will ever see this set, in which case, 
      *     it needs to update config from the server.

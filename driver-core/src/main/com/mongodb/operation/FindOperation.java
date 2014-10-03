@@ -285,7 +285,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      *
      * <p>Tailable means the cursor is not closed when the last data is retrieved. Rather, the cursor marks the final object's position. You
      * can resume using the cursor later, from where it was located, if more data were received. Like any "latent cursor",
-     * the cursor may become invalid at some point – for example if the final object it references were deleted.</p>
+     * the cursor may become invalid at some point - for example if the final object it references were deleted.</p>
      *
      * @return true if the cursor is configured to be a tailable cursor
      * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
@@ -299,7 +299,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      *
      * <p>Tailable means the cursor is not closed when the last data is retrieved. Rather, the cursor marks the final object's position. You
      * can resume using the cursor later, from where it was located, if more data were received. Like any "latent cursor",
-     * the cursor may become invalid at some point – for example if the final object it references were deleted.</p>
+     * the cursor may become invalid at some point - for example if the final object it references were deleted.</p>
      *
      * @param tailableCursor whether the cursor should be a tailable cursor.
      * @return this

@@ -276,7 +276,7 @@ public final class FindOptions {
     }
 
     /**
-     * If true, stream the data down full blast in multiple “more” packages, on the assumption that
+     * If true, stream the data down full blast in multiple "more" packages, on the assumption that
      * the client will fully read all data queried. Faster when you are pulling a lot of
      * data and know you want to pull it all down, but note that it is not currently supported in sharded clusters.
      *
@@ -287,7 +287,7 @@ public final class FindOptions {
     }
 
     /**
-     * If true, stream the data down full blast in multiple “more” packages, on the assumption that
+     * If true, stream the data down full blast in multiple "more" packages, on the assumption that
      * the client will fully read all data queried. Faster when you are pulling a lot of
      * data and know you want to pull it all down, but note that it is not currently supported in sharded clusters.
      *
@@ -363,10 +363,10 @@ public final class FindOptions {
 
     /**
      * Tailable means the cursor is not closed when the last data is retrieved.
-     * Rather, the cursor marks the final documents’s position. You can resume
+     * Rather, the cursor marks the final documents's position. You can resume
      * using the cursor later, from where it was located, if more data were
-     * received. Like any “latent cursor”, the cursor may become invalid at
-     * some point -– for example if the final document it references is deleted.
+     * received. Like any "latent cursor", the cursor may become invalid at
+     * some point - for example if the final document it references is deleted.
      *
      * @return true if tailable is enabled
      */
@@ -376,10 +376,10 @@ public final class FindOptions {
 
     /**
      * Tailable means the cursor is not closed when the last data is retrieved.
-     * Rather, the cursor marks the final documents’s position. You can resume
+     * Rather, the cursor marks the final documents's position. You can resume
      * using the cursor later, from where it was located, if more data were
-     * received. Like any “latent cursor”, the cursor may become invalid at
-     * some point -– for example if the final document it references is deleted.
+     * received. Like any "latent cursor", the cursor may become invalid at
+     * some point - for example if the final document it references is deleted.
      * *
      * @param tailable if tailable is enabled
      * @return this

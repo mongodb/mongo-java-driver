@@ -48,8 +48,8 @@ public class MapReduceCommand {
      * Represents the command for a map reduce operation Runs the command in REPLACE output type to a named collection
      *
      * @param inputCollection  collection to use as the source documents to perform the map reduce operation.
-     * @param map              a JavaScript function that associates or “maps” a value with a key and emits the key and value pair.
-     * @param reduce           a JavaScript function that “reduces” to a single object all the values associated with a particular key.
+     * @param map              a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
+     * @param reduce           a JavaScript function that "reduces" to a single object all the values associated with a particular key.
      * @param outputCollection optional - leave null if want to get the result inline
      * @param type             the type of output
      * @param query            specifies the selection criteria using query operators for determining the documents input to the map
