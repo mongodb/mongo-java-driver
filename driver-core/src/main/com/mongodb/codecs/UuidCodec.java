@@ -28,14 +28,14 @@ import org.bson.codecs.EncoderContext;
 
 import java.util.UUID;
 
-import static com.mongodb.codecs.UUIDCodecHelper.reverseByteArray;
+import static com.mongodb.codecs.UuidCodecHelper.reverseByteArray;
 
 /**
  * Encodes and decodes {@code UUID} objects.
  *
  * @since 3.0
  */
-public class UUIDCodec implements Codec<UUID> {
+public class UuidCodec implements Codec<UUID> {
 
      private final UuidRepresentation encoderUuidRepresentation;
      private final UuidRepresentation decoderUuidRepresentation;
@@ -48,7 +48,7 @@ public class UUIDCodec implements Codec<UUID> {
       * @since 3.0
       * @see org.bson.UuidRepresentation
       */
-     public UUIDCodec(final UuidRepresentation uuidRepresentation) {
+     public UuidCodec(final UuidRepresentation uuidRepresentation) {
          this.encoderUuidRepresentation = uuidRepresentation;
          this.decoderUuidRepresentation = uuidRepresentation;
      }
@@ -56,7 +56,7 @@ public class UUIDCodec implements Codec<UUID> {
     /**
       * The constructor for UUIDCodec, default is JAVA_LEGACY
       */
-     public UUIDCodec() {
+     public UuidCodec() {
          this.encoderUuidRepresentation = UuidRepresentation.JAVA_LEGACY;
          this.decoderUuidRepresentation = UuidRepresentation.JAVA_LEGACY;
      }
@@ -93,7 +93,7 @@ public class UUIDCodec implements Codec<UUID> {
     @Override
     public UUID decode(final BsonReader reader, final DecoderContext decoderContext) {
         BsonBinary binaryData = reader.readBinaryData();
-        BinaryToUUIDTransformer transformer = new BinaryToUUIDTransformer(decoderUuidRepresentation);
+        BinaryToUuidTransformer transformer = new BinaryToUuidTransformer(decoderUuidRepresentation);
         return transformer.transform(binaryData);
     }
 

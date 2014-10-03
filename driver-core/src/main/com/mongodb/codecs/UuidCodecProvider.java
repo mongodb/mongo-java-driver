@@ -30,7 +30,7 @@
   *
   * @since 3.0
   */
- public class UUIDCodecProvider implements CodecProvider {
+ public class UuidCodecProvider implements CodecProvider {
 
      private UuidRepresentation uuidRepresentation;
 
@@ -43,7 +43,7 @@
       * @since 3.0
       * @see org.bson.UuidRepresentation
       */
-     public UUIDCodecProvider(final UuidRepresentation uuidRepresentation) {
+     public UuidCodecProvider(final UuidRepresentation uuidRepresentation) {
          this.uuidRepresentation = uuidRepresentation;
      }
 
@@ -51,7 +51,7 @@
      @SuppressWarnings("unchecked")
      public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
          if (clazz == UUID.class) {
-             return (Codec<T>) (new UUIDCodec(uuidRepresentation));
+             return (Codec<T>) (new UuidCodec(uuidRepresentation));
          }
          return null;
      }

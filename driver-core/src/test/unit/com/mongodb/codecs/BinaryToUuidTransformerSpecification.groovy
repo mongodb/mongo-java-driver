@@ -25,10 +25,10 @@ import spock.lang.Subject
 
 import static java.nio.ByteBuffer.wrap
 
-class BinaryToUUIDTransformerSpecification extends Specification {
+class BinaryToUuidTransformerSpecification extends Specification {
 
     @Subject
-    private final BinaryToUUIDTransformer binaryToUUIDTransformer = new BinaryToUUIDTransformer();
+    private final BinaryToUuidTransformer binaryToUUIDTransformer = new BinaryToUuidTransformer();
 
     def 'should read big endian encoded longs'() {
         given:
