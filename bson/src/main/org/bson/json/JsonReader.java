@@ -81,6 +81,11 @@ public class JsonReader extends AbstractBsonReader {
     }
 
     @Override
+    protected byte doPeekBinarySubType() {
+       return doReadBinaryData().getType();
+    }
+
+    @Override
     protected boolean doReadBoolean() {
         return (Boolean) currentValue;
     }

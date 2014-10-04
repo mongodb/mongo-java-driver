@@ -37,6 +37,11 @@ public class BsonDocumentReader extends AbstractBsonReader {
     }
 
     @Override
+    protected byte doPeekBinarySubType() {
+        return currentValue.asBinary().getType();
+    }
+
+    @Override
     protected boolean doReadBoolean() {
         return currentValue.asBoolean().getValue();
     }
