@@ -131,6 +131,15 @@ public class BsonBinaryReader extends AbstractBsonReader {
     }
 
     @Override
+    protected byte doPeekBinarySubType() {
+        mark();
+        bsonInput.readInt32();
+        byte type = bsonInput.readByte();
+        reset();
+        return type;
+    }
+
+    @Override
     protected boolean doReadBoolean() {
         return bsonInput.readByte() == 0x1;
     }

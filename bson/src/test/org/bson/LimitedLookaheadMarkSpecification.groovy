@@ -241,4 +241,44 @@ class LimitedLookaheadMarkSpecification extends Specification {
                 new JsonWriter(new StringWriter())
         ]
     }
+
+    def 'should peek binary subtype'(BsonWriter writer) {
+        given:
+        writer.with {
+            writeStartDocument()
+            writeBinaryData('binary', new BsonBinary(BsonBinarySubType.UUID_LEGACY, new byte[16]))
+            writeInt64('int64', 52L)
+            writeEndDocument()
+        }
+
+        when:
+        BsonReader reader
+        if (writer instanceof BsonDocumentWriter) {
+            reader = new BsonDocumentReader(writer.document)
+        } else if (writer instanceof BsonBinaryWriter) {
+            BasicOutputBuffer buffer = (BasicOutputBuffer) writer.getBsonOutput();
+            reader = new BsonBinaryReader(new ByteBufferBsonInput(buffer.getByteBuffers().get(0)), true)
+        } else if (writer instanceof JsonWriter) {
+            reader = new JsonReader(writer.writer.toString())
+        }
+
+        reader.readStartDocument()
+        reader.readName()
+        def subType = reader.peekBinarySubType()
+        def binary = reader.readBinaryData()
+        def longValue = reader.readInt64('int64')
+        reader.readEndDocument()
+
+        then:
+        subType == BsonBinarySubType.UUID_LEGACY.value
+        binary == new BsonBinary(BsonBinarySubType.UUID_LEGACY, new byte[16])
+        longValue == 52L
+
+        where:
+        writer << [
+                new BsonDocumentWriter(new BsonDocument()),
+                new BsonBinaryWriter(new BasicOutputBuffer(), false),
+                new JsonWriter(new StringWriter())
+        ]
+    }
 }
