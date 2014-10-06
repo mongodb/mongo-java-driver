@@ -469,11 +469,11 @@ public class ConnectionString {
             }
         }
 
-        // JAVA-943 handle legacy wtimeout settings
+        // handle legacy wtimeout settings
         if (optionsMap.containsKey("wtimeout") && !optionsMap.containsKey("wtimeoutms")) {
             optionsMap.put("wtimeoutms", optionsMap.remove("wtimeout"));
         }
-        // JAVA-1433 handle legacy slaveok settings
+        // handle legacy slaveok settings
         if (optionsMap.containsKey("slaveok") && !optionsMap.containsKey("readpreference")) {
             optionsMap.put("readpreference", asList("secondaryPreferred"));
         }
