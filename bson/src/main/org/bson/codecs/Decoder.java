@@ -32,5 +32,5 @@ public interface Decoder<T> {
      * @param decoderContext the decoder context
      * @return an instance of the type parameter {@code T}.
      */
-    T decode(BsonReader reader, final DecoderContext decoderContext);
+    T decode(BsonReader reader, DecoderContext decoderContext);
 }

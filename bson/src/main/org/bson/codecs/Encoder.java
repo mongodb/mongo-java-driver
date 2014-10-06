@@ -33,7 +33,7 @@ public interface Encoder<T> {
      * @param value the value to encode
      * @param encoderContext the encoder context
      */
-    void encode(BsonWriter writer, T value, final EncoderContext encoderContext);
+    void encode(BsonWriter writer, T value, EncoderContext encoderContext);
 
     /**
      * Returns the Class instance that this encodes. This is necessary because Java does not reify generic types.
