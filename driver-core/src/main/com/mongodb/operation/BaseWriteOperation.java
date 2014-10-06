@@ -176,6 +176,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
         return checkedError;
     }
 
+    @SuppressWarnings("deprecation")
     private MongoException convertBulkWriteException(final BulkWriteException e) {
         BulkWriteError lastError = getLastError(e);
         if (lastError != null) {

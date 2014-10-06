@@ -22,8 +22,7 @@ import org.bson.codecs.Codec;
 // An implementation of CodecRegistry that is used to detect cyclic dependencies between Codecs
 class ChildCodecRegistry<T> implements CodecRegistry {
 
-    @SuppressWarnings("rawtypes")
-    private final ChildCodecRegistry parent;
+    private final ChildCodecRegistry<?> parent;
     private final RootCodecRegistry registry;
     private final Class<T> codecClass;
 
@@ -33,8 +32,8 @@ class ChildCodecRegistry<T> implements CodecRegistry {
         this.registry = registry;
     }
 
-    @SuppressWarnings("rawtypes")
-    private ChildCodecRegistry(final ChildCodecRegistry parent, final Class<T> codecClass) {
+
+    private ChildCodecRegistry(final ChildCodecRegistry<?> parent, final Class<T> codecClass) {
         this.parent = parent;
         this.codecClass = codecClass;
         this.registry = parent.registry;
@@ -76,7 +75,7 @@ class ChildCodecRegistry<T> implements CodecRegistry {
             return false;
         }
 
-        ChildCodecRegistry that = (ChildCodecRegistry) o;
+        ChildCodecRegistry<?> that = (ChildCodecRegistry) o;
 
         if (!codecClass.equals(that.codecClass)) {
             return false;

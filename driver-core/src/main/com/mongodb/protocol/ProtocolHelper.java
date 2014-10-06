@@ -133,7 +133,7 @@ final class ProtocolHelper {
         return new com.mongodb.WriteResult(writeResult.getCount(), writeResult.isUpdateOfExisting(), writeResult.getUpsertedId());
     }
 
-
+    @SuppressWarnings("deprecation")
     private static void throwWriteException(final BsonDocument result, final ServerAddress serverAddress) {
         int code = MongoWriteException.extractErrorCode(result);
         if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {

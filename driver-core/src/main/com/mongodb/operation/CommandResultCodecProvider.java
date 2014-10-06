@@ -116,7 +116,7 @@ class CommandResultCodecProvider<P> implements CodecProvider {
             return false;
         }
 
-        CommandResultCodecProvider that = (CommandResultCodecProvider) o;
+        CommandResultCodecProvider<?> that = (CommandResultCodecProvider) o;
 
         if (!fieldContainingPayload.equals(that.fieldContainingPayload)) {
             return false;
