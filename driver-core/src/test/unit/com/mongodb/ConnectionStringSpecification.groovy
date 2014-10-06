@@ -69,9 +69,9 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://user:pass@' +
                                    'host:7,' +
                                    'host2:8,' +
-                                   'host3:9/bar')        | 3   | ['host:7',
-                                                                'host2:8',
-                                                                'host3:9']          | 'bar'    | null       | 'user'   | 'pass' as char[]
+                                   'host3:9/bar')        | 3   | ['host2:8',
+                                                                'host3:9',
+                                                                'host:7']          | 'bar'    | null       | 'user'   | 'pass' as char[]
         new ConnectionString('mongodb://user:pass@' +
                            '10.0.0.1:7,' +
                            '[::1]:8,' +
@@ -197,5 +197,78 @@ class ConnectionStringSpecification extends Specification {
                                                                                                                  new Tag('rack', '1'))),
                                                                                                new TagSet(asList(new Tag('dc', 'ny'))),
                                                                                                new TagSet()])
+    }
+
+    def 'should be equal to another instance with the same string values'() {
+        expect:
+        uri1 == uri2
+        uri1.hashCode() == uri2.hashCode()
+
+        where:
+        uri1                                                        | uri2
+        new ConnectionString('mongodb://user:pass@host1:1/')        | new ConnectionString('mongodb://user:pass@host1:1/')
+        new ConnectionString('mongodb://user:pass@host1:1,host2:2,'
+                                     + 'host3:3/bar')               | new ConnectionString('mongodb://user:pass@host3:3,host1:1,'
+                                                                                           + 'host2:2/bar')
+        new ConnectionString('mongodb://localhost/'
+                             + '?readPreference=secondaryPreferred'
+                             + '&readPreferenceTags=dc:ny,rack:1'
+                             + '&readPreferenceTags=dc:ny'
+                             + '&readPreferenceTags=')              | new ConnectionString('mongodb://localhost/'
+                                                                                           + '?readPreference=secondaryPreferred'
+                                                                                           + '&readPreferenceTags=dc:ny, rack:1'
+                                                                                           + '&readPreferenceTags=dc:ny'
+                                                                                           + '&readPreferenceTags=')
+        new ConnectionString('mongodb://localhost/?readPreference='
+                                     + 'secondaryPreferred')        | new ConnectionString('mongodb://localhost/?readPreference='
+                                                                                         + 'secondaryPreferred')
+        new ConnectionString('mongodb://ross:123@localhost/?'
+                             + 'authMechanism=SCRAM-SHA-1')         | new ConnectionString('mongodb://ross:123@localhost/?'
+                                                                                           + 'authMechanism=SCRAM-SHA-1')
+        new ConnectionString('mongodb://localhost/db/coll'
+                             + '?minPoolSize=5;'
+                             + 'maxPoolSize=10;waitQueueMultiple=7;'
+                             + 'waitQueueTimeoutMS=150;'
+                             + 'maxIdleTimeMS=200;'
+                             + 'maxLifeTimeMS=300;replicaSet=test;'
+                             + 'connectTimeoutMS=2500;'
+                             + 'socketTimeoutMS=5500;'
+                             + 'safe=false;w=1;wtimeout=2500;'
+                             + 'fsync=true;readPreference=primary;'
+                             + 'ssl=true')                           |  new ConnectionString('mongodb://localhost/db/coll?minPoolSize=5;'
+                                                                                             + 'maxPoolSize=10&waitQueueMultiple=7;'
+                                                                                             + 'waitQueueTimeoutMS=150;'
+                                                                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300'
+                                                                                             + '&replicaSet=test;connectTimeoutMS=2500;'
+                                                                                             + 'socketTimeoutMS=5500&safe=false&w=1;'
+                                                                                             + 'wtimeout=2500;fsync=true'
+                                                                                             + '&readPreference=primary;ssl=true')
+    }
+
+    def 'should be not equal to another ConnectionString with the different string values'() {
+        expect:
+        uri1 != uri2
+
+        where:
+        uri1                                                        | uri2
+        new ConnectionString('mongodb://user:pass@host1:1/')        | new ConnectionString('mongodb://user:pass@host1:2/')
+        new ConnectionString('mongodb://user:pass@host1:1,host2:2,'
+                           + 'host3:3/bar')                         | new ConnectionString('mongodb://user:pass@host1:1,host2:2,'
+                                                                                         + 'host4:4/bar')
+        new ConnectionString('mongodb://localhost/?readPreference='
+                           + 'secondaryPreferred')                  | new ConnectionString('mongodb://localhost/?readPreference='
+                                                                                         + 'secondary')
+        new ConnectionString('mongodb://localhost/'
+                           + '?readPreference=secondaryPreferred'
+                           + '&readPreferenceTags=dc:ny,rack:1'
+                           + '&readPreferenceTags=dc:ny'
+                           + '&readPreferenceTags=')                  | new ConnectionString('mongodb://localhost/'
+                                                                                           + '?readPreference=secondaryPreferred'
+                                                                                           + '&readPreferenceTags=dc:ny'
+                                                                                           + '&readPreferenceTags=dc:ny, rack:1'
+                                                                                           + '&readPreferenceTags=')
+        new ConnectionString('mongodb://ross:123@localhost/?'
+                           + 'authMechanism=SCRAM-SHA-1')            | new ConnectionString('mongodb://ross:123@localhost/?'
+                                                                                          + 'authMechanism=GSSAPI')
     }
 }

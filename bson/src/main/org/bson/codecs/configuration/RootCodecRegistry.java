@@ -88,4 +88,27 @@ public class RootCodecRegistry implements CodecRegistry {
 
         return null;
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        RootCodecRegistry that = (RootCodecRegistry) o;
+
+        if (!sources.equals(that.sources)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return sources != null ? sources.hashCode() : 0;
+    }
 }

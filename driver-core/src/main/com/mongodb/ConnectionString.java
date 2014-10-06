@@ -241,6 +241,7 @@ public class ConnectionString {
 
             Collections.addAll(all, serverPart.split(","));
 
+            Collections.sort(all);
             hosts = Collections.unmodifiableList(all);
 
             if (nsPart != null && !nsPart.isEmpty()) { // database,_collection
@@ -699,5 +700,98 @@ public class ConnectionString {
     @Override
     public String toString() {
         return uri;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof ConnectionString)) {
+            return false;
+        }
+
+        ConnectionString that = (ConnectionString) o;
+
+        if (collection != null ? !collection.equals(that.collection) : that.collection != null) {
+            return false;
+        }
+        if (connectTimeout != null ? !connectTimeout.equals(that.connectTimeout) : that.connectTimeout != null) {
+            return false;
+        }
+        if (credentials != null ? !credentials.equals(that.credentials) : that.credentials != null) {
+            return false;
+        }
+        if (database != null ? !database.equals(that.database) : that.database != null) {
+            return false;
+        }
+        if (!hosts.equals(that.hosts)) {
+            return false;
+        }
+        if (maxConnectionIdleTime != null ? !maxConnectionIdleTime.equals(that.maxConnectionIdleTime)
+                                          : that.maxConnectionIdleTime != null) {
+            return false;
+        }
+        if (maxConnectionLifeTime != null ? !maxConnectionLifeTime.equals(that.maxConnectionLifeTime)
+                                          : that.maxConnectionLifeTime != null) {
+            return false;
+        }
+        if (maxConnectionPoolSize != null ? !maxConnectionPoolSize.equals(that.maxConnectionPoolSize)
+                                          : that.maxConnectionPoolSize != null) {
+            return false;
+        }
+        if (maxWaitTime != null ? !maxWaitTime.equals(that.maxWaitTime) : that.maxWaitTime != null) {
+            return false;
+        }
+        if (minConnectionPoolSize != null ? !minConnectionPoolSize.equals(that.minConnectionPoolSize)
+                                          : that.minConnectionPoolSize != null) {
+            return false;
+        }
+        if (readPreference != null ? !readPreference.equals(that.readPreference) : that.readPreference != null) {
+            return false;
+        }
+        if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
+                                           : that.requiredReplicaSetName != null) {
+            return false;
+        }
+        if (socketTimeout != null ? !socketTimeout.equals(that.socketTimeout) : that.socketTimeout != null) {
+            return false;
+        }
+        if (sslEnabled != null ? !sslEnabled.equals(that.sslEnabled) : that.sslEnabled != null) {
+            return false;
+        }
+        if (threadsAllowedToBlockForConnectionMultiplier != null
+            ? !threadsAllowedToBlockForConnectionMultiplier.equals(that.threadsAllowedToBlockForConnectionMultiplier)
+            : that.threadsAllowedToBlockForConnectionMultiplier != null) {
+            return false;
+        }
+        if (writeConcern != null ? !writeConcern.equals(that.writeConcern) : that.writeConcern != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = credentials != null ? credentials.hashCode() : 0;
+        result = 31 * result + hosts.hashCode();
+        result = 31 * result + (database != null ? database.hashCode() : 0);
+        result = 31 * result + (collection != null ? collection.hashCode() : 0);
+        result = 31 * result + (readPreference != null ? readPreference.hashCode() : 0);
+        result = 31 * result + (writeConcern != null ? writeConcern.hashCode() : 0);
+        result = 31 * result + (minConnectionPoolSize != null ? minConnectionPoolSize.hashCode() : 0);
+        result = 31 * result + (maxConnectionPoolSize != null ? maxConnectionPoolSize.hashCode() : 0);
+        result = 31 * result + (threadsAllowedToBlockForConnectionMultiplier != null
+                                ? threadsAllowedToBlockForConnectionMultiplier.hashCode()
+                                : 0);
+        result = 31 * result + (maxWaitTime != null ? maxWaitTime.hashCode() : 0);
+        result = 31 * result + (maxConnectionIdleTime != null ? maxConnectionIdleTime.hashCode() : 0);
+        result = 31 * result + (maxConnectionLifeTime != null ? maxConnectionLifeTime.hashCode() : 0);
+        result = 31 * result + (connectTimeout != null ? connectTimeout.hashCode() : 0);
+        result = 31 * result + (socketTimeout != null ? socketTimeout.hashCode() : 0);
+        result = 31 * result + (sslEnabled != null ? sslEnabled.hashCode() : 0);
+        result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
+        return result;
     }
 }

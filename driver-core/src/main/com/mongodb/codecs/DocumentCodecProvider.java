@@ -107,4 +107,27 @@ public class DocumentCodecProvider implements CodecProvider {
     private <T> void addCodec(final Codec<T> codec) {
         codecs.put(codec.getEncoderClass(), codec);
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        DocumentCodecProvider that = (DocumentCodecProvider) o;
+
+        if (!bsonTypeClassMap.equals(that.bsonTypeClassMap)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return bsonTypeClassMap.hashCode();
+    }
 }

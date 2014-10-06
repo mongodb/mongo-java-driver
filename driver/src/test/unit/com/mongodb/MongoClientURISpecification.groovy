@@ -78,9 +78,9 @@ class MongoClientURISpecification extends Specification {
         new MongoClientURI('mongodb://user:pass@' +
                            'host:7,' +
                            'host2:8,' +
-                           'host3:9/bar')      | 3   | ['host:7',
-                                                        'host2:8',
-                                                        'host3:9']        | 'bar'    | null       | 'user'   | 'pass' as char[]
+                           'host3:9/bar')      | 3   | ['host2:8',
+                                                        'host3:9',
+                                                        'host:7']         | 'bar'    | null       | 'user'   | 'pass' as char[]
         new MongoClientURI('mongodb://user:pass@' +
                            '10.0.0.1:7,' +
                            '[::1]:8,' +
@@ -241,5 +241,113 @@ class MongoClientURISpecification extends Specification {
 
         then:
         options.getConnectionsPerHost() == 250
+    }
+
+    def 'should be equal to another MongoClientURI with the same string values'() {
+        expect:
+        uri1 == uri2
+        uri1.hashCode() == uri2.hashCode()
+
+        where:
+        uri1                                                        | uri2
+        new MongoClientURI('mongodb://user:pass@host1:1/')          | new MongoClientURI('mongodb://user:pass@host1:1/')
+        new MongoClientURI('mongodb://user:pass@host1:1,host2:2,'
+                                     + 'host3:3/bar')               | new MongoClientURI('mongodb://user:pass@host3:3,host1:1,'
+                                                                                                   + 'host2:2/bar')
+        new MongoClientURI('mongodb://localhost/'
+                         + '?readPreference=secondaryPreferred'
+                         + '&readPreferenceTags=dc:ny,rack:1'
+                         + '&readPreferenceTags=dc:ny'
+                         + '&readPreferenceTags=')                  | new MongoClientURI('mongodb://localhost/'
+                                                                                       + '?readPreference=secondaryPreferred'
+                                                                                       + '&readPreferenceTags=dc:ny, rack:1'
+                                                                                       + '&readPreferenceTags=dc:ny'
+                                                                                       + '&readPreferenceTags=')
+        new MongoClientURI('mongodb://localhost/?readPreference='
+                         + 'secondaryPreferred')                    | new MongoClientURI('mongodb://localhost/?readPreference='
+                                                                                       + 'secondaryPreferred')
+        new MongoClientURI('mongodb://ross:123@localhost/?'
+                         + 'authMechanism=SCRAM-SHA-1')             | new MongoClientURI('mongodb://ross:123@localhost/?'
+                                                                                       + 'authMechanism=SCRAM-SHA-1')
+        new MongoClientURI('mongodb://localhost/db.coll'
+                         + '?minPoolSize=5;'
+                         + 'maxPoolSize=10;waitQueueMultiple=7;'
+                         + 'waitQueueTimeoutMS=150;'
+                         + 'maxIdleTimeMS=200;'
+                         + 'maxLifeTimeMS=300;replicaSet=test;'
+                         + 'connectTimeoutMS=2500;'
+                         + 'socketTimeoutMS=5500;'
+                         + 'safe=false;w=1;wtimeout=2500;'
+                         + 'fsync=true;readPreference=primary;'
+                         + 'ssl=true')                              |  new MongoClientURI('mongodb://localhost/db.coll?minPoolSize=5;'
+                                                                                         + 'maxPoolSize=10&waitQueueMultiple=7;'
+                                                                                         + 'waitQueueTimeoutMS=150;'
+                                                                                         + 'maxIdleTimeMS=200&maxLifeTimeMS=300'
+                                                                                         + '&replicaSet=test;connectTimeoutMS=2500;'
+                                                                                         + 'socketTimeoutMS=5500&safe=false&w=1;'
+                                                                                         + 'wtimeout=2500;fsync=true'
+                                                                                         + '&readPreference=primary;ssl=true')
+    }
+
+    def 'should be not equal to another MongoClientURI with the different string values'() {
+        expect:
+        uri1 != uri2
+        uri1.hashCode() != uri2.hashCode()
+
+        where:
+        uri1                                                        | uri2
+        new MongoClientURI('mongodb://user:pass@host1:1/')          | new MongoClientURI('mongodb://user:pass@host1:2/')
+        new MongoClientURI('mongodb://user:pass@host1:1,host2:2,'
+                                   + 'host3:3/bar')                 | new MongoClientURI('mongodb://user:pass@host1:1,host2:2,'
+                                                                                       + 'host4:4/bar')
+        new MongoClientURI('mongodb://localhost/?readPreference='
+                        + 'secondaryPreferred')                     | new MongoClientURI('mongodb://localhost/?readPreference='
+                                                                                      + 'secondary')
+        new MongoClientURI('mongodb://localhost/'
+                         + '?readPreference=secondaryPreferred'
+                         + '&readPreferenceTags=dc:ny,rack:1'
+                         + '&readPreferenceTags=dc:ny'
+                         + '&readPreferenceTags=')                  | new MongoClientURI('mongodb://localhost/'
+                                                                                       + '?readPreference=secondaryPreferred'
+                                                                                       + '&readPreferenceTags=dc:ny'
+                                                                                       + '&readPreferenceTags=dc:ny, rack:1'
+                                                                                       + '&readPreferenceTags=')
+        new MongoClientURI('mongodb://ross:123@localhost/?'
+                         + 'authMechanism=SCRAM-SHA-1')            | new MongoClientURI('mongodb://ross:123@localhost/?'
+                                                                                       + 'authMechanism=GSSAPI')
+    }
+
+    def 'should be equal to another MongoClientURI with options'() {
+        when:
+        MongoClientURI uri1 = new MongoClientURI('mongodb://user:pass@host1:1,host2:2,host3:3/bar?'
+                                                        + 'maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;'
+                                                        + 'minPoolSize=7;maxIdleTimeMS=1000;maxLifeTimeMS=2000;replicaSet=test;'
+                                                        + 'connectTimeoutMS=2500;socketTimeoutMS=5500;autoConnectRetry=true;'
+                                                        + 'slaveOk=true;safe=false;w=1;wtimeout=2600;fsync=true')
+
+        MongoClientOptions.Builder builder = MongoClientOptions.builder()
+                                                               .connectionsPerHost(10)
+                                                               .threadsAllowedToBlockForConnectionMultiplier(5)
+                                                               .maxWaitTime(150)
+                                                               .minConnectionsPerHost(7)
+                                                               .maxConnectionIdleTime(1000)
+                                                               .maxConnectionLifeTime(2000)
+                                                               .requiredReplicaSetName('test')
+                                                               .connectTimeout(2500)
+                                                               .socketTimeout(5500)
+                                                               .readPreference(secondaryPreferred())
+                                                               .writeConcern(new WriteConcern(1, 2600, true))
+
+        MongoClientOptions options = builder.build()
+
+        then:
+        uri1.getOptions() == options
+
+        when:
+        MongoClientURI uri2 = new MongoClientURI('mongodb://user:pass@host3:3,host1:1,host2:2/bar?', builder)
+
+        then:
+        uri1 == uri2
+        uri1.hashCode() == uri2.hashCode()
     }
 }

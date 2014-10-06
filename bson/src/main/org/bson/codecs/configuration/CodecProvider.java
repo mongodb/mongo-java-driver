@@ -22,6 +22,11 @@ import org.bson.codecs.Codec;
  * A provider of {@code Codec} instances.  Typically, an instance of a class implementing this interface would be used to construct a
  * {@code CodecRegistry}.
  *
+ * <p>While the {@code CodecProvider} interface adds no stipulations to the general contract for the Object.equals,
+ * programmers who implement the {@code CodecProvider} interface "directly" must exercise care if they choose to override the
+ * {@code Object.equals}. It is not necessary to do so, and the simplest course of action is to rely on Object's implementation, but the
+ * implementer may wish to implement a "value comparison" in place of the default "reference comparison."</p>
+ *
  * @since 3.0
  */
 public interface CodecProvider {

@@ -113,4 +113,27 @@ public class BsonTypeClassMap {
         map.put(BsonType.TIMESTAMP, BsonTimestamp.class);
         map.put(BsonType.UNDEFINED, BsonUndefined.class);
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        final BsonTypeClassMap that = (BsonTypeClassMap) o;
+
+        if (!map.equals(that.map)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return map.hashCode();
+    }
 }

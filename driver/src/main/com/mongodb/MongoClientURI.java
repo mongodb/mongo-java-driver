@@ -291,7 +291,19 @@ public class MongoClientURI {
 
         MongoClientURI that = (MongoClientURI) o;
 
-        if (!proxied.equals(that.proxied)) {
+        if (!getHosts().equals(that.getHosts())) {
+            return false;
+        }
+        if (getDatabase() != null ? !getDatabase().equals(that.getDatabase()) : that.getDatabase() != null) {
+            return false;
+        }
+        if (getCollection() != null ? !getCollection().equals(that.getCollection()) : that.getCollection() != null) {
+            return false;
+        }
+        if (getCredentials() != null ? !getCredentials().equals(that.getCredentials()) : that.getCredentials() != null) {
+            return false;
+        }
+        if (!getOptions().equals(that.getOptions())) {
             return false;
         }
 
@@ -300,7 +312,12 @@ public class MongoClientURI {
 
     @Override
     public int hashCode() {
-        return proxied.hashCode();
+        int result = getOptions().hashCode();
+        result = 31 * result + (getCredentials() != null ? getCredentials().hashCode() : 0);
+        result = 31 * result + getHosts().hashCode();
+        result = 31 * result + (getDatabase() != null ? getDatabase().hashCode() : 0);
+        result = 31 * result + (getCollection() != null ? getCollection().hashCode() : 0);
+        return result;
     }
 
     @Override

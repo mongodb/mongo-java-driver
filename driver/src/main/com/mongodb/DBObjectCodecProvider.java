@@ -126,4 +126,21 @@ class DBObjectCodecProvider implements CodecProvider {
     private <T> void addCodec(final Codec<T> codec) {
         codecs.put(codec.getEncoderClass(), codec);
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

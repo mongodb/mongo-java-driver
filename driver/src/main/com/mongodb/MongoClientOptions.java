@@ -26,7 +26,6 @@ import org.bson.codecs.configuration.RootCodecRegistry;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
-import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -442,7 +441,6 @@ public class MongoClientOptions {
         return cursorFinalizerEnabled;
     }
 
-
     ConnectionPoolSettings getConnectionPoolSettings() {
         return connectionPoolSettings;
     }
@@ -521,10 +519,6 @@ public class MongoClientOptions {
         if (threadsAllowedToBlockForConnectionMultiplier != that.threadsAllowedToBlockForConnectionMultiplier) {
             return false;
         }
-        if (connectionPoolSettings != null ? !connectionPoolSettings.equals(that.connectionPoolSettings)
-                                           : that.connectionPoolSettings != null) {
-            return false;
-        }
         if (dbDecoderFactory != null ? !dbDecoderFactory.equals(that.dbDecoderFactory) : that.dbDecoderFactory != null) {
             return false;
         }
@@ -532,10 +526,6 @@ public class MongoClientOptions {
             return false;
         }
         if (description != null ? !description.equals(that.description) : that.description != null) {
-            return false;
-        }
-        if (heartbeatSocketSettings != null ? !heartbeatSocketSettings.equals(that.heartbeatSocketSettings)
-                                            : that.heartbeatSocketSettings != null) {
             return false;
         }
         if (!readPreference.equals(that.readPreference)) {
@@ -546,6 +536,9 @@ public class MongoClientOptions {
         }
         if (requiredReplicaSetName != null ? !requiredReplicaSetName.equals(that.requiredReplicaSetName)
                                            : that.requiredReplicaSetName != null) {
+            return false;
+        }
+        if (!socketFactory.getClass().equals(that.socketFactory.getClass())) {
             return false;
         }
 
@@ -577,8 +570,8 @@ public class MongoClientOptions {
         result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
         result = 31 * result + (dbDecoderFactory != null ? dbDecoderFactory.hashCode() : 0);
         result = 31 * result + (dbEncoderFactory != null ? dbEncoderFactory.hashCode() : 0);
-        result = 31 * result + (socketFactory != null ? socketFactory.hashCode() : 0);
         result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
+        result = 31 * result + socketFactory.getClass().hashCode();
         return result;
     }
 
@@ -623,12 +616,10 @@ public class MongoClientOptions {
      * @since 2.10.0
      */
     public static class Builder {
-        private final List<DocumentCodecProvider> codecProviders = asList(new DocumentCodecProvider());
-
         private String description;
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
-        private CodecRegistry codecRegistry = new RootCodecRegistry(codecProviders);
+        private CodecRegistry codecRegistry = new RootCodecRegistry(asList(new DocumentCodecProvider()));
 
         private int minConnectionPoolSize;
         private int maxConnectionPoolSize = 100;
@@ -865,7 +856,6 @@ public class MongoClientOptions {
             this.socketFactory = socketFactory;
             return this;
         }
-
 
         /**
          * Sets whether cursor finalizers are enabled.

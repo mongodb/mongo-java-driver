@@ -21,6 +21,11 @@ import org.bson.codecs.Codec;
 /**
  * A registry of Codec instances searchable by the class that the Codec can encode and decode. 
  *
+ * <p>While the {@code CodecRegistry} interface adds no stipulations to the general contract for the Object.equals,
+ * programmers who implement the {@code CodecRegistry} interface "directly" must exercise care if they choose to override the
+ * {@code Object.equals}. It is not necessary to do so, and the simplest course of action is to rely on Object's implementation, but the
+ * implementer may wish to implement a "value comparison" in place of the default "reference comparison."</p>
+ *
  * @since 3.0
  */
 public interface CodecRegistry {
