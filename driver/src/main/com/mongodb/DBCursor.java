@@ -60,6 +60,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class DBCursor implements Cursor, Iterable<DBObject> {
     private final DBCollection collection;
     private final OperationExecutor executor;
+    private final BsonDocument criteria;
     private final FindOptions findOptions;
     private int options;
     private ReadPreference readPreference;
@@ -85,10 +86,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @param readPreference the read preference for this query
      */
     public DBCursor(final DBCollection collection, final DBObject query, final DBObject fields, final ReadPreference readPreference) {
-        this(collection, collection.getExecutor(),
+        this(collection, collection.getExecutor(), collection.wrapAllowNull(query),
              new FindOptions()
              .modifiers(new BsonDocument())
-             .criteria(collection.wrapAllowNull(query))
              .projection(collection.wrapAllowNull(fields)),
              readPreference);
 
@@ -100,13 +100,15 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
     }
 
-    private DBCursor(final DBCollection collection, final OperationExecutor executor, final FindOptions findOptions,
+    private DBCursor(final DBCollection collection, final OperationExecutor executor, final BsonDocument criteria,
+                     final FindOptions findOptions,
                      final ReadPreference readPreference) {
         if (collection == null) {
             throw new IllegalArgumentException("Collection can't be null");
         }
         this.collection = collection;
         this.executor = executor;
+        this.criteria = criteria;
         this.findOptions = findOptions;
         this.readPreference = readPreference;
         this.resultDecoder = collection.getObjectCodec();
@@ -121,7 +123,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the new cursor
      */
     public DBCursor copy() {
-        return new DBCursor(collection, executor, new FindOptions(findOptions), readPreference);
+        return new DBCursor(collection, executor, criteria, new FindOptions(findOptions), readPreference);
     }
 
     /**
@@ -452,7 +454,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     private FindOperation<DBObject> getQueryOperation(final FindOptions options, final Decoder<DBObject> decoder) {
         FindOperation<DBObject> operation = new FindOperation<DBObject>(collection.getNamespace(), decoder)
-                                                .criteria((BsonDocument) options.getCriteria())
                                                 .batchSize(options.getBatchSize())
                                                 .limit(options.getLimit())
                                                 .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
@@ -484,6 +485,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
         if ((this.options & Bytes.QUERYOPTION_PARTIAL) != 0) {
             operation.partial(true);
+        }
+        if (criteria != null) {
+            operation.criteria(criteria);
         }
         return operation;
     }
@@ -707,7 +711,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the query that cursor used
      */
     public DBObject getQuery() {
-        return DBObjects.toDBObject((BsonDocument) findOptions.getCriteria());
+        return DBObjects.toDBObject(criteria);
     }
 
     /**

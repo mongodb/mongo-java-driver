@@ -144,6 +144,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     private class MongoCollectionView implements MongoView<T> {
         private final FindOptions findOptions = new FindOptions();
         private final ReadPreference readPreference = options.getReadPreference();
+        private BsonDocument criteria;
         private boolean upsert;
 
         @Override
@@ -181,7 +182,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<Long> count() {
             CountOperation operation = new CountOperation(getNamespace())
-                                           .criteria((BsonDocument) findOptions.getCriteria())
+                                           .criteria(criteria)
                                            .skip(findOptions.getSkip())
                                            .limit(findOptions.getLimit())
                                            .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
@@ -190,7 +191,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoView<T> find(final Document filter) {
-            findOptions.criteria(new BsonDocumentWrapper<Document>(filter, options.getDocumentCodec()));
+            criteria = new BsonDocumentWrapper<Document>(filter, options.getDocumentCodec());
             return this;
         }
 
@@ -200,13 +201,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         MongoView<T> find(final BsonDocument filter) {
-            findOptions.criteria(filter);
+            criteria = filter;
             return this;
         }
 
         @Override
         public MongoView<T> sort(final Document sortCriteria) {
-            findOptions.sort(new BsonDocumentWrapper<Document>(sortCriteria, options.getDocumentCodec()));
+            findOptions.sort(asBson(sortCriteria));
             return this;
         }
 
@@ -307,8 +308,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> replace(final T replacement) {
             notNull("replacement", replacement);
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
-                                                   asList(new UpdateRequest((BsonDocument) findOptions.getCriteria(),
-                                                                             asBson(replacement), WriteRequest.Type.REPLACE)
+                                                   asList(new UpdateRequest(criteria, asBson(replacement), WriteRequest.Type.REPLACE)
                                                           .upsert(upsert))
             ));
         }
@@ -317,11 +317,11 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> update(final Document updateOperations) {
             notNull("updateOperations", updateOperations);
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new UpdateRequest((BsonDocument) findOptions.getCriteria(),
+                                               asList(new UpdateRequest(criteria,
                                                                         new BsonDocumentWrapper<Document>(updateOperations,
                                                                                                           options.getDocumentCodec()),
                                                                         WriteRequest.Type.UPDATE)
-                                                      .upsert(upsert).multi(true))
+                                                    .upsert(upsert).multi(true))
             ));
         }
 
@@ -329,7 +329,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoFuture<WriteResult> updateOne(final Document updateOperations) {
             notNull("updateOperations", updateOperations);
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new UpdateRequest((BsonDocument) findOptions.getCriteria(),
+                                               asList(new UpdateRequest(criteria,
                                                                         new BsonDocumentWrapper<Document>(updateOperations,
                                                                                                           options.getDocumentCodec()),
                                                                         WriteRequest.Type.UPDATE)
@@ -340,20 +340,18 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         @Override
         public MongoFuture<WriteResult> remove() {
             return execute(new DeleteOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new DeleteRequest((BsonDocument) findOptions.getCriteria())
-                                                      .multi(true))));
+                                               asList(new DeleteRequest(criteria).multi(true))));
         }
 
         @Override
         public MongoFuture<WriteResult> removeOne() {
             return execute(new DeleteOperation(getNamespace(), true, options.getWriteConcern(),
-                                               asList(new DeleteRequest((BsonDocument) findOptions.getCriteria())
-                                                      .multi(false))));
+                                               asList(new DeleteRequest(criteria).multi(false))));
         }
 
         private FindOperation<T> createQueryOperation() {
             return new FindOperation<T>(getNamespace(), getCodec())
-                       .criteria(asBson(findOptions.getCriteria()))
+                       .criteria(criteria)
                        .batchSize(findOptions.getBatchSize())
                        .skip(findOptions.getSkip())
                        .limit(findOptions.getLimit())

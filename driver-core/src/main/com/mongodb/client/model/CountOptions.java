@@ -27,34 +27,11 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual manual/reference/command/count/ Count
  */
 public class CountOptions {
-    private Object criteria;
     private Object hint;
     private String hintString;
     private long limit;
     private long maxTimeMS;
     private long skip;
-
-    /**
-     * Gets the query criteria.
-     *
-     * @return the query criteria
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
-     */
-    public Object getCriteria() {
-        return criteria;
-    }
-
-    /**
-     * Sets the criteria to apply to the query.
-     *
-     * @param criteria the criteria, which may be null.
-     * @return this
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
-     */
-    public CountOptions criteria(final Object criteria) {
-        this.criteria = criteria;
-        return this;
-    }
 
     /**
      * Gets the hint to apply.

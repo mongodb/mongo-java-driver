@@ -75,7 +75,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         // then
         assertThat(collection.count(), is(2L));
         Document expectedDocument = new Document("_id", 2).append("x", 5);
-        assertThat(collection.find(new FindOptions().criteria(searchCriteria)).iterator().next(), is(expectedDocument));
+        assertThat(collection.find(searchCriteria, new FindOptions()).iterator().next(), is(expectedDocument));
     }
 
     @Test
@@ -91,7 +91,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         // then
         assertThat(collection.count(), is(2L));
         Document expectedDocument = new Document("_id", 2).append("x", 5);
-        assertThat(collection.find(new FindOptions().criteria(searchCriteria)).iterator().next(), is(expectedDocument));
+        assertThat(collection.find(searchCriteria, new FindOptions()).iterator().next(), is(expectedDocument));
     }
 
     @Test
@@ -107,7 +107,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.updateMany(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
-        assertThat(collection.count(new CountOptions().criteria(new Document("x", 5))), is(2L));
+        assertThat(collection.count(new Document("x", 5), new CountOptions()), is(2L));
     }
 
     @Test
@@ -123,7 +123,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.updateOne(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
-        assertThat(collection.count(new CountOptions().criteria(new Document("x", 5))), is(1L));
+        assertThat(collection.count(new Document("x", 5), new CountOptions()), is(1L));
     }
 
     @Test
@@ -140,7 +140,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.updateOne(searchCriteria, incrementXValueByOne);
 
         // Then
-        assertThat(collection.count(new CountOptions().criteria(new Document("x", 4))), is(1L));
+        assertThat(collection.count(new Document("x", 4), new CountOptions()), is(1L));
     }
 
     @Test
@@ -157,7 +157,7 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.updateMany(searchCriteria, incrementXValueByOne);
 
         // Then
-        assertThat(collection.count(new CountOptions().criteria(new Document("x", 4))), is(2L));
+        assertThat(collection.count(new Document("x", 4), new CountOptions()), is(2L));
     }
 
 }

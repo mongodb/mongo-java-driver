@@ -43,7 +43,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
         collection.replaceOne(searchCriteria, newDocumentWithoutFieldForA);
 
         // Then
-        Document document = collection.find(new FindOptions().criteria(searchCriteria)).first();
+        Document document = collection.find(searchCriteria, new FindOptions()).first();
         assertThat(document, is(newDocumentWithoutFieldForA));
     }
 
@@ -58,7 +58,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
 
         // then
         assertThat(collection.count(), is(1L));
-        assertThat(collection.find(new FindOptions().criteria(new Document("_id", 3))).iterator().next(), is(replacement));
+        assertThat(collection.find(new Document("_id", 3), new FindOptions()).iterator().next(), is(replacement));
     }
 
     @Test
@@ -74,7 +74,7 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
 
         // then
         assertThat(collection.count(), is(1L));
-        assertThat(collection.find(new FindOptions().criteria(new Document("_id", 3))).iterator().next(), is(replacement));
+        assertThat(collection.find(new Document("_id", 3), new FindOptions()).iterator().next(),  is(replacement));
     }
 
     @Test

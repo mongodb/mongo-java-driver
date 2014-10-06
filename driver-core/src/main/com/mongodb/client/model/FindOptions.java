@@ -28,7 +28,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
  */
 public final class FindOptions {
-    private Object criteria;
     private int batchSize;
     private int limit;
     private Object modifiers;
@@ -54,7 +53,6 @@ public final class FindOptions {
      * @param from model to copy
      */
     public FindOptions(final FindOptions from) {
-        criteria = from.criteria;
         batchSize = from.batchSize;
         limit = from.limit;
         modifiers = from.modifiers;
@@ -68,28 +66,6 @@ public final class FindOptions {
         oplogReplay = from.oplogReplay;
         partial = from.partial;
         tailable = from.tailable;
-    }
-
-    /**
-     * Sets the criteria to apply to the query.
-     *
-     * @param criteria the criteria, which may be null.
-     * @return this
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
-     */
-    public FindOptions criteria(final Object criteria) {
-        this.criteria = criteria;
-        return this;
-    }
-
-    /**
-     * Gets the query criteria.
-     *
-     * @return the query criteria
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
-     */
-    public Object getCriteria() {
-        return criteria;
     }
 
     /**
@@ -392,7 +368,6 @@ public final class FindOptions {
     @Override
     public String toString() {
         return "FindOptions{"
-               + "criteria=" + criteria
                + ", batchSize=" + batchSize
                + ", limit=" + limit
                + ", modifiers=" + modifiers

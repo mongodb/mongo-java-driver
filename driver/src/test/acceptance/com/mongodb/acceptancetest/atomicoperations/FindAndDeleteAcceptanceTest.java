@@ -107,7 +107,7 @@ public class FindAndDeleteAcceptanceTest extends DatabaseTestCase {
 
         // when
         Document filter = new Document(KEY, VALUE_TO_CARE_ABOUT);
-        assertThat(collection.count(new CountOptions().criteria(filter)), is(3L));
+        assertThat(collection.count(filter, new CountOptions()), is(3L));
 
         Document documentRetrieved = collection.findOneAndDelete(filter);
 

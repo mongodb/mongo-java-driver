@@ -293,7 +293,6 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def options = new FindOptions()
-                .criteria(new Document('cold', true))
                 .batchSize(4)
                 .maxTime(1, TimeUnit.SECONDS)
                 .skip(5)
@@ -302,7 +301,7 @@ class MongoCollectionSpecification extends Specification {
                 .projection(new Document('x', 1))
                 .sort(new Document('y', 1))
 
-        collection.find(options).first()
+        collection.find(new Document('cold', true), options).first()
 
         then:
         def operation = executor.getReadOperation() as FindOperation
@@ -334,7 +333,7 @@ class MongoCollectionSpecification extends Specification {
                                    .tailable(true)
                                    .oplogReplay(true)
 
-        collection.find(options).first()
+        collection.find(new Document(), options).first()
 
         then: 'cursor flags contains all flags'
         def operation2 = executor.getReadOperation() as FindOperation
@@ -355,7 +354,7 @@ class MongoCollectionSpecification extends Specification {
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        collection.count(new CountOptions().criteria(new Document('cold', true))
+        collection.count(new Document('cold', true), new CountOptions()
                                            .maxTime(1, TimeUnit.SECONDS)
                                            .skip(5)
                                            .limit(100)
@@ -377,7 +376,7 @@ class MongoCollectionSpecification extends Specification {
         collection = new MongoCollectionImpl<Document>(namespace, Document, this.options, executor)
 
         when:
-        collection.count(new CountOptions().hintString('idx1'))
+        collection.count(new Document(), new CountOptions().hintString('idx1'))
 
         then:
         def operation = executor.getReadOperation() as CountOperation

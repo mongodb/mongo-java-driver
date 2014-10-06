@@ -77,10 +77,19 @@ public interface MongoCollection<T> {
     /**
      * Counts the number of documents in the collection according to the given options.
      *
+     * @param criteria the query criteria
+     * @return the number of documents in the collection
+     */
+    long count(Object criteria);
+
+    /**
+     * Counts the number of documents in the collection according to the given options.
+     *
+     * @param criteria the query criteria
      * @param options the options describing the count
      * @return the number of documents in the collection
      */
-    long count(CountOptions options);
+    long count(Object criteria, CountOptions options);
 
     /**
      * Gets the distinct values of the specified field name.
@@ -120,24 +129,46 @@ public interface MongoCollection<T> {
     <C> MongoIterable<C> find(Class<C> clazz);
 
     /**
+     * Finds all documents in the collection.
+     *
+     * @param criteria the query criteria
+     * @return an iterable containing the result of the find operation
+     * @mongodb.driver.manual manual/tutorial/query-documents/ Find
+     */
+    MongoIterable<T> find(Object criteria);
+
+    /**
+     * Finds all documents in the collection.
+     *
+     * @param criteria the query criteria
+     * @param clazz the class to decode each document into
+     * @param <C> the target document type of the iterable.
+     * @return an iterable containing the result of the find operation
+     * @mongodb.driver.manual manual/tutorial/query-documents/ Find
+     */
+    <C> MongoIterable<C> find(Object criteria, Class<C> clazz);
+
+    /**
      * Finds documents in the collection according to the specified options.
      *
+     * @param criteria the query criteria
      * @param findOptions the options to apply to the find operation
      * @return an iterable containing the result of the find operation
      * @mongodb.driver.manual manual/tutorial/query-documents/ Find
      */
-    MongoIterable<T> find(FindOptions findOptions);
+    MongoIterable<T> find(Object criteria, FindOptions findOptions);
 
     /**
      * Finds documents according to the specified criteria.
      *
+     * @param criteria the query criteria
      * @param findOptions the options describing the find operation
      * @param clazz the class to decode each document into
      * @param <C> the target document type of the iterable.
      * @return an iterable containing the result of the find operation
      * @mongodb.driver.manual manual/tutorial/query-documents/ Find
      */
-    <C> MongoIterable<C> find(FindOptions findOptions, Class<C> clazz);
+    <C> MongoIterable<C> find(Object criteria, FindOptions findOptions, Class<C> clazz);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.

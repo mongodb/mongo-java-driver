@@ -68,7 +68,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         concreteCollection.insertOne(secondItem);
 
         // when
-        List<String> listOfStringObjectIds = concreteCollection.find(new FindOptions().criteria(new Document("i", 1)))
+        List<String> listOfStringObjectIds = concreteCollection.find(new Document("i", 1), new FindOptions())
                                                                .map(new Function<Concrete, ObjectId>() {
                                                                    @Override
                                                                    public ObjectId apply(final Concrete concrete) {
@@ -87,7 +87,7 @@ public class MongoCollectionTest extends DatabaseTestCase {
         assertThat(listOfStringObjectIds.get(0), is(firstItem.getId().toString()));
 
         // when
-        List<ObjectId> listOfObjectIds = concreteCollection.find(new FindOptions().criteria(new Document("i", 1)))
+        List<ObjectId> listOfObjectIds = concreteCollection.find(new Document("i", 1), new FindOptions())
                                                            .map(new Function<Concrete, ObjectId>() {
                                                                @Override
                                                                public ObjectId apply(final Concrete concrete) {
