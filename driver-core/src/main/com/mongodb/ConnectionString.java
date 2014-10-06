@@ -145,7 +145,12 @@ import static java.util.Arrays.asList;
  * If the database is specified in neither place, the default value is "admin".  This option is only respected when using the MONGO-CR
  * mechanism (the default).
  * </li>
- * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name. </li>
+ * <li>{@code authMechanismProperties=PROPERTY_NAME:PROPERTY_VALUE,PROPERTY_NAME2:PROPERTY_VALUE2}: This option allows authentication
+ * mechanism properties to be set on the connection string.
+ * </li>
+ * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name.
+ *   Deprecated, please use {@code authMechanismProperties=SERVICE_NAME:string} instead.
+ * </li>
  * </ul>
  *
  * @mongodb.driver.manual reference/connection-string Connection String URI Format
@@ -298,6 +303,7 @@ public class ConnectionString {
         AUTH_KEYS.add("authmechanism");
         AUTH_KEYS.add("authsource");
         AUTH_KEYS.add("gssapiservicename");
+        AUTH_KEYS.add("authmechanismproperties");
 
         ALL_KEYS.addAll(GENERAL_OPTIONS_KEYS);
         ALL_KEYS.addAll(AUTH_KEYS);
@@ -406,6 +412,7 @@ public class ConnectionString {
         AuthenticationMechanism mechanism = null;
         String authSource = (database == null) ? "admin" : database;
         String gssapiServiceName = null;
+        String authMechanismProperties = null;
 
         for (final String key : AUTH_KEYS) {
             String value = getLastValue(optionsMap, key);
@@ -420,28 +427,42 @@ public class ConnectionString {
                 authSource = value;
             } else if (key.equals("gssapiservicename")) {
                 gssapiServiceName = value;
+            } else if (key.endsWith("authmechanismproperties")) {
+                authMechanismProperties = value;
             }
         }
 
+        MongoCredential credential;
         if (mechanism == GSSAPI) {
-            MongoCredential gssapiCredential = MongoCredential.createGSSAPICredential(userName);
+            credential = MongoCredential.createGSSAPICredential(userName);
             if (gssapiServiceName != null) {
-                gssapiCredential = gssapiCredential.withMechanismProperty("SERVICE_NAME", gssapiServiceName);
+                credential = credential.withMechanismProperty("SERVICE_NAME", gssapiServiceName);
             }
-            return gssapiCredential;
         } else if (mechanism == PLAIN) {
-            return MongoCredential.createPlainCredential(userName, authSource, password);
+            credential = MongoCredential.createPlainCredential(userName, authSource, password);
         } else if (mechanism == MONGODB_CR) {
-            return MongoCredential.createMongoCRCredential(userName, authSource, password);
+            credential = MongoCredential.createMongoCRCredential(userName, authSource, password);
         } else if (mechanism == MONGODB_X509) {
-            return MongoCredential.createMongoX509Credential(userName);
+            credential = MongoCredential.createMongoX509Credential(userName);
         } else if (mechanism == SCRAM_SHA_1) {
-            return MongoCredential.createScramSha1Credential(userName, authSource, password);
+            credential = MongoCredential.createScramSha1Credential(userName, authSource, password);
         } else if (mechanism == null) {
-            return MongoCredential.createCredential(userName, authSource, password);
+            credential = MongoCredential.createCredential(userName, authSource, password);
         } else {
             throw new UnsupportedOperationException("Unsupported authentication mechanism in the URI: " + mechanism);
         }
+
+        if (authMechanismProperties != null) {
+            for (final String part : authMechanismProperties.split(",")) {
+                int idx = part.indexOf(":");
+                if (idx >= 0) {
+                    String key = part.substring(0, idx).toLowerCase();
+                    String value = part.substring(idx + 1);
+                    credential = credential.withMechanismProperty(key, value);
+                }
+            }
+        }
+        return credential;
     }
 
     private String getLastValue(final Map<String, List<String>> optionsMap, final String key) {
