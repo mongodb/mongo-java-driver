@@ -22,7 +22,6 @@ import com.mongodb.diagnostics.logging.Loggers;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -37,6 +36,7 @@ import static com.mongodb.AuthenticationMechanism.MONGODB_X509;
 import static com.mongodb.AuthenticationMechanism.PLAIN;
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 
 
 /**
@@ -472,6 +472,10 @@ public class ConnectionString {
         if (optionsMap.containsKey("wtimeout") && !optionsMap.containsKey("wtimeoutms")) {
             optionsMap.put("wtimeoutms", optionsMap.remove("wtimeout"));
         }
+        // JAVA-1433 handle legacy slaveok settings
+        if (optionsMap.containsKey("slaveok") && !optionsMap.containsKey("readpreference")) {
+            optionsMap.put("readpreference", asList("secondaryPreferred"));
+        }
 
         return optionsMap;
     }
@@ -593,7 +597,7 @@ public class ConnectionString {
      * @return the credentials
      */
     public List<MongoCredential> getCredentialList() {
-        return credentials != null ? Arrays.asList(credentials) : new ArrayList<MongoCredential>();
+        return credentials != null ? asList(credentials) : new ArrayList<MongoCredential>();
     }
 
     /**

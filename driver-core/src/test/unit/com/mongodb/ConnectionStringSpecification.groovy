@@ -188,6 +188,7 @@ class ConnectionStringSpecification extends Specification {
         uri                                                              | readPreference
         new ConnectionString('mongodb://localhost/' +
                                    '?readPreference=secondaryPreferred') | secondaryPreferred()
+        new ConnectionString('mongodb://localhost/?slaveOk=true')        | secondaryPreferred()
         new ConnectionString('mongodb://localhost/' +
                                    '?readPreference=secondaryPreferred' +
                                    '&readPreferenceTags=dc:ny,rack:1' +
