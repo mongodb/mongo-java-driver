@@ -245,7 +245,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
 
     protected abstract WriteRequest.Type getType();
 
-    protected abstract int getCount(final BulkWriteResult bulkWriteResult);
+    protected abstract int getCount(BulkWriteResult bulkWriteResult);
 
     protected boolean getUpdatedExisting(final BulkWriteResult bulkWriteResult) {
         return false;
