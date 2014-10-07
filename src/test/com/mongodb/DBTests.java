@@ -27,6 +27,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Tests aspect of the DB - not really driver tests
@@ -117,20 +118,18 @@ public class DBTests extends TestCase {
 //    }
 
     @Test
-    public void testGetCollectionNamesToSecondary() throws MongoException, UnknownHostException {
-        if (!isReplicaSet(cleanupMongo)) {
-            return;
-        }
+    public void testGetCollectionNamesToPrimary() throws MongoException, UnknownHostException {
+        assumeTrue(isReplicaSet(cleanupMongo));
 
         Mongo mongo = new MongoClient(getMongoClientURI());
 
         try {
-            String secondary = getASecondaryAsString(mongo);
+            String primary = getPrimaryAsString(mongo);
             mongo.close();
             if (getMongoClientURI().getCredentials() == null) {
-                mongo = new MongoClient(secondary);
+                mongo = new MongoClient(primary);
             } else {
-                mongo = new MongoClient(new ServerAddress(secondary), asList(getMongoClientURI().getCredentials()));
+                mongo = new MongoClient(new ServerAddress(primary), asList(getMongoClientURI().getCredentials()));
             }
             DB db = mongo.getDB("secondaryTest");
             db.setReadPreference(ReadPreference.secondary());

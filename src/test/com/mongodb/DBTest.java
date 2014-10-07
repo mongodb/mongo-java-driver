@@ -113,10 +113,10 @@ public class DBTest extends TestCase {
         assertEquals(ReadPreference.secondaryPreferred(), db.getCommandReadPreference(obj, ReadPreference.secondaryPreferred()));
 
         obj = new BasicDBObject("listIndexes", 1);
-        assertEquals(ReadPreference.secondaryPreferred(), db.getCommandReadPreference(obj, ReadPreference.secondaryPreferred()));
+        assertEquals(ReadPreference.primary(), db.getCommandReadPreference(obj, ReadPreference.secondaryPreferred()));
 
         obj = new BasicDBObject("listCollections", 1);
-        assertEquals(ReadPreference.secondaryPreferred(), db.getCommandReadPreference(obj, ReadPreference.secondaryPreferred()));
+        assertEquals(ReadPreference.primary(), db.getCommandReadPreference(obj, ReadPreference.secondaryPreferred()));
     }
 
     @Test
