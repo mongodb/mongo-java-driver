@@ -66,7 +66,7 @@ class DocumentCodecSpecification extends Specification {
             put('symbol', new Symbol('ruby stuff'))
             put('timestamp', new BsonTimestamp(0x12345678, 5))
             put('undefined', new BsonUndefined())
-            put('binary', new Binary((byte) 80, [5, 4, 3, 2, 1] as byte[]))
+            put('binary', new Binary((byte) 0x80, [5, 4, 3, 2, 1] as byte[]))
             put('array', asList(1, 1L, true, [1, 2, 3], new Document('a', 1), null))
             put('document', new Document('a', 2))
         }
