@@ -454,10 +454,15 @@ public class ConnectionString {
 
         if (authMechanismProperties != null) {
             for (String part : authMechanismProperties.split(",")) {
-                int idx = part.indexOf(":");
-                if (idx >= 0) {
-                    String key = part.substring(0, idx).toLowerCase();
-                    String value = part.substring(idx + 1);
+                String[] mechanismPropertyKeyValue = part.split(":");
+                if (mechanismPropertyKeyValue.length != 2) {
+                    throw new IllegalArgumentException("Bad authMechanismProperties: " + authMechanismProperties);
+                }
+                String key = mechanismPropertyKeyValue[0].trim().toLowerCase();
+                String value = mechanismPropertyKeyValue[1].trim();
+                if (key.equals("canonicalize_host_name")) {
+                    credential = credential.withMechanismProperty(key, Boolean.valueOf(value));
+                } else {
                     credential = credential.withMechanismProperty(key, value);
                 }
             }

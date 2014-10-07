@@ -43,7 +43,7 @@ public final class MongoCredential {
     private final String userName;
     private final String source;
     private final char[] password;
-    private final Map<String, String> mechanismProperties;
+    private final Map<String, Object> mechanismProperties;
 
     /**
      * The MongoDB Challenge Response mechanism.
@@ -170,7 +170,7 @@ public final class MongoCredential {
      *
      * @param userName the non-null user name
      * @return the credential
-     * @see #withMechanismProperty(String, String)
+     * @see #withMechanismProperty(String, Object)
      *
      * @mongodb.server.release 2.4
      */
@@ -183,10 +183,11 @@ public final class MongoCredential {
      *
      * @param key   the key to the property, which is treated as case-insensitive
      * @param value the value of the property
+     * @param <T>   the property type
      * @return the credential
      * @since 2.12
      */
-    public MongoCredential withMechanismProperty(final String key, final String value) {
+    public <T> MongoCredential withMechanismProperty(final String key, final T value) {
         return new MongoCredential(this, key, value);
     }
 
@@ -229,15 +230,16 @@ public final class MongoCredential {
      * @param from                   the credential to copy from
      * @param mechanismPropertyKey   the new mechanism property key
      * @param mechanismPropertyValue the new mechanism property value
+     * @param <T>                    the mechanism property type
      */
-    MongoCredential(final MongoCredential from, final String mechanismPropertyKey, final String mechanismPropertyValue) {
+    <T> MongoCredential(final MongoCredential from, final String mechanismPropertyKey, final T mechanismPropertyValue) {
         notNull("mechanismPropertyKey", mechanismPropertyKey);
 
         this.mechanism = from.mechanism;
         this.userName = from.userName;
         this.source = from.source;
         this.password = from.password;
-        this.mechanismProperties = new HashMap<String, String>(from.mechanismProperties);
+        this.mechanismProperties = new HashMap<String, Object>(from.mechanismProperties);
         this.mechanismProperties.put(mechanismPropertyKey.toLowerCase(), mechanismPropertyValue);
     }
 
@@ -295,15 +297,17 @@ public final class MongoCredential {
      *
      * @param key          the mechanism property key, which is treated as case-insensitive
      * @param defaultValue the default value, if no mapping exists
+     * @param <T>          the value type
      * @return the mechanism property value
      * @since 2.12
      */
     @SuppressWarnings("unchecked")
-    public String getMechanismProperty(final String key, final String defaultValue) {
+    public <T> T getMechanismProperty(final String key, final T defaultValue) {
         notNull("key", key);
 
-        String value = mechanismProperties.get(key.toLowerCase());
+        T value = (T) mechanismProperties.get(key.toLowerCase());
         return (value == null) ? defaultValue : value;
+
     }
 
     @Override
