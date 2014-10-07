@@ -133,6 +133,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * {@link Bytes#QUERYOPTION_TAILABLE} option set. For non blocking tailable cursors see {@link #tryNext }.</p>
      *
      * @return true if there is another object available
+     * @mongodb.driver.manual /core/cursors/#cursor-batches Cursor Batches
      */
     @Override
     public boolean hasNext() {
@@ -158,6 +159,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * {@link Bytes#QUERYOPTION_TAILABLE} option set. For non blocking tailable cursors see {@link #tryNext }.</p>
      *
      * @return the next element
+     * @mongodb.driver.manual /core/cursors/#cursor-batches Cursor Batches
      */
     @Override
     public DBObject next() {
@@ -177,6 +179,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      *
      * @return the next element or null
      * @throws MongoException
+     * @mongodb.driver.manual /core/cursors/#cursor-batches Cursor Batches
      */
     public DBObject tryNext() {
         if (cursor == null) {
@@ -193,7 +196,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Returns the element the cursor is at.
      *
-     * @return the next element
+     * @return the current element
      */
     public DBObject curr() {
         return currentObject;
@@ -210,6 +213,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @param option the option to be added
      * @return {@code this} so calls can be chained
      * @see Bytes
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public DBCursor addOption(final int option) {
         setOptions(this.options |= option);
@@ -222,6 +226,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @param options the bitmask of options
      * @return {@code this} so calls can be chained
      * @see Bytes
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public DBCursor setOptions(final int options) {
         this.options = options;
@@ -232,6 +237,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * Resets the query options.
      *
      * @return {@code this} so calls can be chained
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public DBCursor resetOptions() {
         this.options = 0;
@@ -242,6 +248,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * Gets the query options.
      *
      * @return the bitmask of options
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public int getOptions() {
         return options;
@@ -381,6 +388,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      *
      * @param indexKeys a {@code DBObject} with fields and direction
      * @return same DBCursor for chaining operations
+     * @mongodb.driver.manual reference/operator/meta/hint/ $hint
      */
     public DBCursor hint(final DBObject indexKeys) {
         ((BsonDocument) findOptions.getModifiers()).append("$hint", collection.wrap(indexKeys));
@@ -392,6 +400,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      *
      * @param indexName the name of an index
      * @return same DBCursor for chaining operations
+     * @mongodb.driver.manual reference/operator/meta/hint/ $hint
      */
     public DBCursor hint(final String indexName) {
         ((BsonDocument) findOptions.getModifiers()).append("$hint", new BsonString(indexName));
@@ -406,6 +415,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @param timeUnit the time unit
      * @return same DBCursor for chaining operations
      * @mongodb.server.release 2.6
+     * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ $maxTimeMS
      * @since 2.12.0
      */
     public DBCursor maxTime(final long maxTime, final TimeUnit timeUnit) {

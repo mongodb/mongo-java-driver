@@ -20,6 +20,7 @@ package com.mongodb;
  * Options related to insertion of documents into MongoDB.  The setter methods return {@code this} so that a chaining style can be used.
  *
  * @since 2.13
+ * @mongodb.driver.manual tutorial/insert-documents/ Insert Tutorial
  */
 public final class InsertOptions {
     private WriteConcern writeConcern;

@@ -543,7 +543,7 @@ public class DB {
      * Adds the given flag to the default query options.
      *
      * @param option value to be added
-     * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public void addOption(final int option) {
         optionHolder.add(option);
@@ -553,7 +553,7 @@ public class DB {
      * Sets the query options, overwriting previous value.
      *
      * @param options bit vector of query options
-     * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public void setOptions(final int options) {
         optionHolder.set(options);
@@ -561,7 +561,7 @@ public class DB {
 
     /**
      * Resets the query options.
-     * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public void resetOptions() {
         optionHolder.reset();
@@ -571,7 +571,7 @@ public class DB {
      * Gets the query options
      *
      * @return bit vector of query options
-     * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public int getOptions() {
         return optionHolder.get();
