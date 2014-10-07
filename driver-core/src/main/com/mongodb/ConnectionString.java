@@ -453,7 +453,7 @@ public class ConnectionString {
         }
 
         if (authMechanismProperties != null) {
-            for (final String part : authMechanismProperties.split(",")) {
+            for (String part : authMechanismProperties.split(",")) {
                 int idx = part.indexOf(":");
                 if (idx >= 0) {
                     String key = part.substring(0, idx).toLowerCase();

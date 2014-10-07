@@ -41,6 +41,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
     public static final String SERVICE_NAME_KEY = "SERVICE_NAME";
     public static final String SERVICE_NAME_DEFAULT_VALUE = "mongodb";
     public static final String CANONICALIZE_HOST_NAME_KEY = "CANONICALIZE_HOST_NAME";
+    public static final String CANONICALIZE_HOST_NAME_DEFAULT_VALUE = "false";
 
     GSSAPIAuthenticator(final MongoCredential credential, final InternalConnection internalConnection) {
         super(credential, internalConnection);
@@ -57,6 +58,11 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
 
     @Override
     protected SaslClient createSaslClient() {
+        try {
+            String test = getHostName();
+        } catch (Exception e) {
+            // pass
+        }
         MongoCredential credential = getCredential();
         try {
             Map<String, Object> props = new HashMap<String, Object>();
@@ -88,8 +94,9 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
     }
 
     private String getHostName() throws UnknownHostException {
-        return getCredential().getMechanismProperty(CANONICALIZE_HOST_NAME_KEY, false)
-               ? InetAddress.getByName(getInternalConnection().getServerAddress().getHost()).getCanonicalHostName()
+        boolean canonicalizeHostName = Boolean.valueOf(getCredential().getMechanismProperty(CANONICALIZE_HOST_NAME_KEY,
+                                                                                            CANONICALIZE_HOST_NAME_DEFAULT_VALUE));
+        return canonicalizeHostName ? InetAddress.getByName(getInternalConnection().getServerAddress().getHost()).getCanonicalHostName()
                : getInternalConnection().getServerAddress().getHost();
     }
 }

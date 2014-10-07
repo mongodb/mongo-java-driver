@@ -201,6 +201,26 @@ class ConnectionStringSpecification extends Specification {
                              'SERVICE_NAME=foo,' +
                              'CANONICALIZE_HOST_NAME=true,' +
                              'SERVICE_REALM=AWESOME')        | asList(createGSSAPICredential('jeff'))
+        new ConnectionString('mongodb://jeff@localhost/?' +
+                             'authMechanism=GSSAPI' +
+                             '&authMechanismProperties=' +
+                             'SERVICE_NAME:foo')              | asList(createGSSAPICredential('jeff')
+                                                                     .withMechanismProperty('SERVICE_NAME', 'foo'))
+    }
+
+    @Unroll
+    def 'should support invalid connection strings for credential types'() {
+        expect:
+        uri.credentialList == credentialList
+
+        where:
+        uri                                                   | credentialList
+        new ConnectionString('mongodb://jeff@localhost/?' +
+                             'authMechanism=GSSAPI' +
+                             '&authMechanismProperties=' +
+                             'SERVICE_NAME=foo,' +
+                             'CANONICALIZE_HOST_NAME=true,' +
+                             'SERVICE_REALM=AWESOME')        | asList(createGSSAPICredential('jeff'))
     }
 
     @Unroll

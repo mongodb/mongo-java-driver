@@ -192,7 +192,7 @@ class MongoCredentialSpecification extends Specification {
         String firstKey = 'firstKey'
         String firstValue = 'firstValue'
         String secondKey = 'secondKey'
-        Integer secondValue = 2
+        String secondValue = '2'
 
         when:
         def credential = MongoCredential.createGSSAPICredential('user').withMechanismProperty(firstKey, firstValue)
@@ -206,7 +206,7 @@ class MongoCredentialSpecification extends Specification {
 
         then:
         credential.getMechanismProperty(firstKey, 'default') == firstValue
-        credential.getMechanismProperty(secondKey, 1) == secondValue
+        credential.getMechanismProperty(secondKey, '1') == secondValue
     }
 
     def 'should preserve other properties when adding a mechanism property'() {
