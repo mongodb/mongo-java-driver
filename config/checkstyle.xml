@@ -66,7 +66,6 @@
 
         <!-- Checks for Javadoc comments.                     -->
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
-        <!-- TODO: This has to be enabled at some point before we release -->
         <module name="JavadocType">
             <property name="scope" value="public"/>
         </module>
