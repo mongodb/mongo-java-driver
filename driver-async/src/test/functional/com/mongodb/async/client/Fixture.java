@@ -110,17 +110,13 @@ public final class Fixture {
     static class ShutdownHook extends Thread {
         @Override
         public void run() {
-            if (mongoClient != null) {
-                if (mongoClient != null) {
-                    try {
-                        dropDatabase(getDefaultDatabaseName());
-                    } catch (CommandFailureException e) {
-                        // ignore
-                    }
-                }
-                mongoClient.close();
-                mongoClient = null;
+            try {
+                dropDatabase(getDefaultDatabaseName());
+            } catch (CommandFailureException e) {
+                // ignore
             }
+            mongoClient.close();
+            mongoClient = null;
         }
     }
 }

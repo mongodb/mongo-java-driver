@@ -16,7 +16,6 @@
 
 package com.mongodb.async.rx.client;
 
-import com.mongodb.CommandFailureException;
 import com.mongodb.MongoNamespace;
 import org.mongodb.Document;
 import rx.Observable;
@@ -38,7 +37,6 @@ public final class Fixture {
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
             mongoClient = new MongoClientImpl(com.mongodb.async.client.Fixture.getMongoClient());
-            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
     }
@@ -70,22 +68,5 @@ public final class Fixture {
 
     public static <T> List<T> getAsList(final Observable<T> observable) {
         return observable.timeout(90, SECONDS).toList().toBlocking().first();
-    }
-
-    static class ShutdownHook extends Thread {
-        @Override
-        public void run() {
-            if (mongoClient != null) {
-                if (mongoClient != null) {
-                    try {
-                        dropDatabase(getDefaultDatabaseName());
-                    } catch (CommandFailureException e) {
-                        // ignore
-                    }
-                }
-                mongoClient.close();
-                mongoClient = null;
-            }
-        }
     }
 }
