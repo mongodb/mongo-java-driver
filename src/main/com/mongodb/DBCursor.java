@@ -258,13 +258,15 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Use snapshot mode for the query. Snapshot mode assures no duplicates are
-     * returned, or objects missed, which were present at both the start and end
-     * of the query's execution (if an object is new during the query, or deleted
-     * during the query, it may or may not be returned, even with snapshot mode).
-     * Note that short query responses (less than 1MB) are always effectively snapshotted.
-     * Currently, snapshot mode may not be used with sorting or explicit hints.
-     * @return same DBCursor for chaining operations
+     * Use snapshot mode for the query. Snapshot mode prevents the cursor from returning a document more than once because an intervening
+     * write operation results in a move of the document. Even in snapshot mode, documents inserted or deleted during the lifetime of the
+     * cursor may or may not be returned.  Currently, snapshot mode may not be used with sorting or explicit hints.
+     *
+     * @return {@code this} so calls can be chained
+     *
+     * @see com.mongodb.DBCursor#sort(DBObject)
+     * @see com.mongodb.DBCursor#hint(DBObject)
+     * @mongodb.driver.manual reference/operator/meta/snapshot/ $snapshot
      */
     public DBCursor snapshot() {
         if (_it != null)
