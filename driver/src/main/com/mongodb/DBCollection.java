@@ -113,7 +113,6 @@ public class DBCollection {
     private final String name;
     private final DB database;
     private final OperationExecutor executor;
-    private final Codec<Document> documentCodec;
     private final Bytes.OptionHolder optionHolder;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
@@ -135,7 +134,6 @@ public class DBCollection {
         this.name = name;
         this.database = database;
         this.executor = executor;
-        this.documentCodec = documentCodec;
         this.optionHolder = new Bytes.OptionHolder(database.getOptionHolder());
         this.objectFactory = new DBCollectionObjectFactory();
         this.objectCodec = new CompoundDBObjectCodec(getDefaultDBObjectCodec());
@@ -2047,14 +2045,6 @@ public class DBCollection {
 
     MongoNamespace getNamespace() {
         return new MongoNamespace(getDB().getName(), getName());
-    }
-
-    Codec<Document> getDocumentCodec() {
-        return documentCodec;
-    }
-
-    Bytes.OptionHolder getOptionHolder() {
-        return optionHolder;
     }
 
     BufferProvider getBufferPool() {
