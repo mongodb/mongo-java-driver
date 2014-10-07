@@ -65,6 +65,8 @@ public class ServerDescription {
     private final int minWireVersion;
     private final int maxWireVersion;
 
+    private Throwable exception;
+
     /**
      * Gets a Builder for creating a new ServerDescription instance.
      *
@@ -93,6 +95,7 @@ public class ServerDescription {
         private ServerVersion version = new ServerVersion();
         private int minWireVersion = 0;
         private int maxWireVersion = 0;
+        private Throwable exception;
 
         /**
          * Sets the address of the server.
@@ -263,6 +266,17 @@ public class ServerDescription {
          */
         public Builder maxWireVersion(final int maxWireVersion) {
             this.maxWireVersion = maxWireVersion;
+            return this;
+        }
+
+        /**
+         * Sets the exception thrown while attempting to determine the server description.
+         *
+         * @param exception the exception
+         * @return this
+         */
+        public Builder exception(final Throwable exception) {
+            this.exception = exception;
             return this;
         }
 
@@ -538,6 +552,16 @@ public class ServerDescription {
     }
 
     /**
+     * Gets the exception thrown while attempting to determine the server description.  This is useful for diagnostic purposed when
+     * determining the root cause of a connectivity failure.
+     *
+     * @return the exception, which may be null
+     */
+    public Throwable getException() {
+        return exception;
+    }
+
+    /**
      * Returns true if this instance is equals to @code{o}.  Note that equality is defined to NOT include the round trip time.
      *
      * @param o the object to compare to
@@ -597,6 +621,19 @@ public class ServerDescription {
             return false;
         }
 
+        // Compare class equality and message as exceptions rarely override equals
+        Class thisExceptionClass = exception != null ? exception.getClass() : null;
+        Class thatExceptionClass = that.exception != null ? that.exception.getClass() : null;
+        if (thisExceptionClass != null ? !thisExceptionClass.equals(thatExceptionClass) : thatExceptionClass != null) {
+            return false;
+        }
+
+        String thisExceptionMessage = exception != null ? exception.getMessage() : null;
+        String thatExceptionMessage = that.exception != null ? that.exception.getMessage() : null;
+        if (thisExceptionMessage != null ? !thisExceptionMessage.equals(thatExceptionMessage) : thatExceptionMessage != null) {
+            return false;
+        }
+
         return true;
     }
 
@@ -616,6 +653,8 @@ public class ServerDescription {
         result = 31 * result + version.hashCode();
         result = 31 * result + minWireVersion;
         result = 31 * result + maxWireVersion;
+        result = 31 * result + (exception == null ? 0 : exception.getClass().hashCode());
+        result = 31 * result + (exception == null ? 0 : exception.getMessage().hashCode());
         return result;
     }
 
@@ -643,6 +682,7 @@ public class ServerDescription {
                   + ", primary='" + primary + '\''
                   + ", tagSet=" + tagSet
                   : "")
+               + (exception == null ? "" : ", exception=" + translateExceptionToString())
                + '}';
     }
 
@@ -655,11 +695,30 @@ public class ServerDescription {
         return "{"
                + "address=" + address
                + ", type=" + type
-               + (tagSet.iterator().hasNext() ? "" : tagSet)
+               + (!tagSet.iterator().hasNext() ? "" : ", " + tagSet)
                + (state == CONNECTED ? (", roundTripTime=" + getRoundTripFormattedInMilliseconds() + " ms") : "")
                + ", state=" + state
+               + (exception == null ? "" : ", exception=" + translateExceptionToString())
                + '}';
     }
+
+    private String translateExceptionToString() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("{");
+        builder.append(exception);
+        builder.append("}");
+        Throwable cur = exception.getCause();
+        while (cur != null) {
+            builder.append(", caused by ");
+            builder.append("{");
+            builder.append(cur);
+            builder.append("}");
+            cur = cur.getCause();
+        }
+
+        return builder.toString();
+    }
+
 
     private String getRoundTripFormattedInMilliseconds() {
         return new DecimalFormat("#0.0").format(roundTripTimeNanos / 1000.0 / 1000.0);
@@ -681,5 +740,6 @@ public class ServerDescription {
         ok = builder.ok;
         minWireVersion = builder.minWireVersion;
         maxWireVersion = builder.maxWireVersion;
+        exception = builder.exception;
     }
 }

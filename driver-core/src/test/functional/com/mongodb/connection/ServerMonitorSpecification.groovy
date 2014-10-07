@@ -17,6 +17,7 @@
 package com.mongodb.connection
 
 import com.mongodb.MongoException
+import com.mongodb.MongoSocketException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerAddress
 import com.mongodb.operation.CommandReadOperation
@@ -39,30 +40,14 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
     ServerMonitor serverMonitor
     CountDownLatch latch = new CountDownLatch(1)
 
-    def setup() {
-        serverMonitor = new ServerMonitor(getPrimary(), ServerSettings.builder().build(), 'cluster-1',
-                                          new ChangeListener<ServerDescription>() {
-                                              @Override
-                                              void stateChanged(final ChangeEvent<ServerDescription> event) {
-                                                  newDescription = event.newValue
-                                                  latch.countDown()
-                                              }
-                                          },
-                                          new InternalStreamConnectionFactory('1',
-                                                                              new SocketStreamFactory(SocketSettings.builder()
-                                                                                                                    .build(),
-                                                                                                      getSSLSettings()),
-                                                                              getCredentialList(),
-                                                                              new NoOpConnectionListener()),
-                                          new TestConnectionPool())
-        serverMonitor.start()
-    }
-
     def cleanup() {
-        serverMonitor.close();
+        serverMonitor?.close();
     }
 
     def 'should have positive round trip time'() {
+        given:
+        initializeServerMonitor(getPrimary())
+
         when:
         latch.await()
 
@@ -72,6 +57,8 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
 
     def 'should return server version'() {
         given:
+        initializeServerMonitor(getPrimary())
+
         def commandResult = new CommandReadOperation<BsonDocument>('admin', new BsonDocument('buildinfo', new BsonInt32(1)),
                                                                    new BsonDocumentCodec())
                 .execute(getBinding())
@@ -84,6 +71,17 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
 
         cleanup:
         serverMonitor.close()
+    }
+
+    def 'should report current exception'() {
+        given:
+        initializeServerMonitor(new ServerAddress('some_unknown_server_name:34567'))
+
+        when:
+        latch.await()
+
+        then:
+        newDescription.exception instanceof MongoSocketException
     }
 
     def 'should report exception has changed when the current and previous are different'() {
@@ -148,5 +146,23 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                                           .address(new ServerAddress())
                                           .roundTripTime(5, TimeUnit.MILLISECONDS)
                                           .build());
+    }
+
+    def initializeServerMonitor(ServerAddress address) {
+        serverMonitor = new ServerMonitor(address, ServerSettings.builder().build(), 'cluster-1',
+                                          new ChangeListener<ServerDescription>() {
+                                              @Override
+                                              void stateChanged(final ChangeEvent<ServerDescription> event) {
+                                                  newDescription = event.newValue
+                                                  latch.countDown()
+                                              }
+                                          },
+                                          new InternalStreamConnectionFactory('1',
+                                                                              new SocketStreamFactory(SocketSettings.builder().build(),
+                                                                                                      getSSLSettings()),
+                                                                              getCredentialList(),
+                                                                              new NoOpConnectionListener()),
+                                          new TestConnectionPool())
+        serverMonitor.start()
     }
 }

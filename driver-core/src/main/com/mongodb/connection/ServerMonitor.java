@@ -89,7 +89,7 @@ class ServerMonitor {
         public synchronized void run() {
             InternalConnection connection = null;
             try {
-                ServerDescription currentServerDescription = getConnectingServerDescription();
+                ServerDescription currentServerDescription = getConnectingServerDescription(null);
                 Throwable currentException = null;
                 while (!isClosed) {
                     ServerDescription previousServerDescription = currentServerDescription;
@@ -115,7 +115,7 @@ class ServerMonitor {
                         }
                     } catch (Throwable t) {
                         currentException = t;
-                        currentServerDescription = getConnectingServerDescription();
+                        currentServerDescription = getConnectingServerDescription(t);
                     }
 
                     if (!isClosed) {
@@ -226,7 +226,7 @@ class ServerMonitor {
         return createServerDescription(serverAddress, isMasterResult, buildInfoResult, roundTripTimeSum / count);
     }
 
-    private ServerDescription getConnectingServerDescription() {
-        return ServerDescription.builder().type(UNKNOWN).state(CONNECTING).address(serverAddress).build();
+    private ServerDescription getConnectingServerDescription(final Throwable exception) {
+        return ServerDescription.builder().type(UNKNOWN).state(CONNECTING).address(serverAddress).exception(exception).build();
     }
 }
