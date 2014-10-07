@@ -202,12 +202,21 @@ public class DBCursorTest extends TestCase {
         c.save(firstDBObject, WriteConcern.SAFE);
 
         assertEquals(firstDBObject, cur.tryNext());
+        assertEquals(firstDBObject, cur.curr());
+        assertEquals(1, cur.numSeen());
+
         assertEquals(null, cur.tryNext());
-        assertEquals(null, cur.tryNext());
+        assertEquals(firstDBObject, cur.curr());
+        assertEquals(1, cur.numSeen());
 
         c.save(secondDBObject, WriteConcern.SAFE);
         assertEquals(secondDBObject, cur.tryNext());
+        assertEquals(secondDBObject, cur.curr());
+        assertEquals(2, cur.numSeen());
+
         assertEquals(null, cur.tryNext());
+        assertEquals(secondDBObject, cur.curr());
+        assertEquals(2, cur.numSeen());
     }
 
     @Test
@@ -542,6 +551,22 @@ public class DBCursorTest extends TestCase {
         cur = c.find(q).batchSize(-20).limit(100);
         assertEquals(0, cur.getCursorId());
         assertEquals(20, cur.itcount());
+    }
+
+    @Test
+    public void testCurrentObjectAndNumSeen() {
+        for (int i = 1; i < 100; i++) {
+            collection.save(new BasicDBObject("x", i));
+        }
+
+        DBCursor cur = collection.find().sort(new BasicDBObject("x", 1));
+        while (cur.hasNext()) {
+            DBObject current = cur.next();
+            int num = (Integer) current.get("x");
+
+            assertEquals(current, cur.curr());
+            assertEquals(num, cur.numSeen());
+        }
     }
 
     @Test
