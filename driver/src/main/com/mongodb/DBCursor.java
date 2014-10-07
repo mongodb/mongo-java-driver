@@ -186,8 +186,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             }
             cursor = executor.execute(operation, getReadPreferenceForCursor());
         }
-
-        return cursor.tryNext();
+        return currentObject(cursor.tryNext());
     }
 
 
@@ -817,14 +816,19 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             checkCursorType(CursorType.ITERATOR);
         }
 
-        currentObject = cursor.next();
-        numSeen++;
+        return currentObject(cursor.next());
+    }
 
-        if (findOptions.getProjection() != null && !((BsonDocument) findOptions.getProjection()).isEmpty()) {
-            currentObject.markAsPartialObject();
+    private DBObject currentObject(final DBObject newCurrentObject){
+        if (newCurrentObject != null) {
+            currentObject = newCurrentObject;
+            numSeen++;
+
+            if (findOptions.getProjection() != null && !((BsonDocument) findOptions.getProjection()).isEmpty()) {
+                currentObject.markAsPartialObject();
+            }
         }
-
-        return currentObject;
+        return newCurrentObject;
     }
 
     private static DBObject lookupSuitableHints(final DBObject query, final List<DBObject> hints) {
