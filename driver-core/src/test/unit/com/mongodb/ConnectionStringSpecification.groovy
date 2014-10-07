@@ -176,7 +176,48 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://jeff@localhost/?' +
                            'authMechanism=GSSAPI' +
                            '&gssapiServiceName=foo')          | asList(createGSSAPICredential('jeff')
-                                                                                       .withMechanismProperty('SERVICE_NAME', 'foo'))
+                                                                            .withMechanismProperty('SERVICE_NAME', 'foo'))
+        new ConnectionString('mongodb://jeff@localhost/?' +
+                             'authMechanism=GSSAPI' +
+                             '&authMechanismProperties=' +
+                             'SERVICE_NAME:foo')              | asList(createGSSAPICredential('jeff')
+                                                                            .withMechanismProperty('SERVICE_NAME', 'foo'))
+        new ConnectionString('mongodb://jeff@localhost/?' +
+                             'authMechanism=GSSAPI' +
+                             '&authMechanismProperties=' +
+                             'SERVICE_NAME :foo')              | asList(createGSSAPICredential('jeff')
+                                                                            .withMechanismProperty('SERVICE_NAME', 'foo'))
+        new ConnectionString('mongodb://jeff@localhost/?' +
+                             'authMechanism=GSSAPI' +
+                             '&authMechanismProperties=' +
+                             'SERVICE_NAME:foo,' +
+                             'CANONICALIZE_HOST_NAME:true,' +
+                             'SERVICE_REALM:AWESOME')        | asList(createGSSAPICredential('jeff')
+                                                                          .withMechanismProperty('SERVICE_NAME', 'foo')
+                                                                          .withMechanismProperty('CANONICALIZE_HOST_NAME', true)
+                                                                          .withMechanismProperty('SERVICE_REALM', 'AWESOME'))
+    }
+
+    def 'should support thrown an IllegalArgumentException when given invalid authMechanismProperties'() {
+        when:
+        new ConnectionString('mongodb://jeff@localhost/?' +
+                             'authMechanism=GSSAPI' +
+                             '&authMechanismProperties=' +
+                             'SERVICE_NAME=foo,' +
+                             'CANONICALIZE_HOST_NAME=true,' +
+                             'SERVICE_REALM=AWESOME')
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        new ConnectionString('mongodb://jeff@localhost/?' +
+                             'authMechanism=GSSAPI' +
+                             '&authMechanismProperties=' +
+                             'SERVICE_NAME:foo:bar')
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     @Unroll
