@@ -73,7 +73,6 @@ public class Document implements Map<String, Object>, Serializable {
      *
      * @param s document representation in JSON format that conforms <a href="http://www.json.org/">JSON RFC specifications</a>.
      * @return a corresponding {@code Document} object
-     * @throws org.bson.json.JsonParseException if the input is invalid
      */
     public static Document valueOf(final String s) {
         JsonReader bsonReader = new JsonReader(s);
@@ -81,9 +80,10 @@ public class Document implements Map<String, Object>, Serializable {
     }
 
     /**
-     * Put the given key/value pair into this Document and return this.  Useful for chaining puts in a single expression, e.g.  {@code
+     * Put the given key/value pair into this Document and return this.  Useful for chaining puts in a single expression, e.g.
+     * <pre>
      * doc.append("a", 1).append("b", 2)}
-     *
+     * </pre>
      * @param key   key
      * @param value value
      * @return this
