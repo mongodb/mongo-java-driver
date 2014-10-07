@@ -40,6 +40,17 @@ public interface MongoCursor<T> extends Iterator<T>, Closeable {
     T next();
 
     /**
+     * A special {@code next()} case that returns the next element in the iteration if available or null.
+     *
+     * <p>Tailable cursors are an example where this is useful. A call to {@code tryNext()} may return null, but in the future calling
+     * {@code tryNext()} would return a new element if a document had been added to the capped collection.</p>
+     *
+     * @return the next element in the iteration if available or null.
+     * @mongodb.driver.manual reference/glossary/#term-tailable-cursor Tailable Cursor
+     */
+    T tryNext();
+
+    /**
      * Returns the server cursor
      *
      * @return ServerCursor

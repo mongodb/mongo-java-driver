@@ -302,11 +302,11 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         dbCursor.collect { it -> [ it.get('name'), it.get('_id') ] } == [['Adam', 2], ['Adam', 4], ['Adam', 5], ['Bob', 3], ['Chris', 1]]
     }
 
-    @SuppressWarnings('CloseWithoutCloseable') // Spock bug as MongoTailableCursor does implement closeable
+    @SuppressWarnings('CloseWithoutCloseable') // Spock bug as MongoCursor does implement closeable
     def 'DBCursor options should set the correct read preference'() {
         given:
         def tailableCursor =
-                new MongoTailableCursor<DBObject>() {
+                new MongoCursor<DBObject>() {
                     @Override
                     DBObject tryNext() { null  }
 

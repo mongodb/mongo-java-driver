@@ -16,8 +16,8 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
-import com.mongodb.MongoTailableCursor;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.NotThreadSafe;
@@ -39,7 +39,7 @@ import java.util.NoSuchElementException;
 import static java.util.Arrays.asList;
 
 @NotThreadSafe
-class MongoQueryCursor<T> implements MongoTailableCursor<T> {
+class MongoQueryCursor<T> implements MongoCursor<T> {
     private final Connection exhaustConnection;
     private final MongoNamespace namespace;
     private final int limit;
@@ -144,6 +144,16 @@ class MongoQueryCursor<T> implements MongoTailableCursor<T> {
         return currentIterator.next();
     }
 
+    /**
+     * A special {@code next()} case that returns the next element in the iteration if available or null.
+     *
+     * <p>Note: Tailable cursors that don't have the {@see com.mongodb.Bytes#QUERYOPTION_AWAITDATA} query flag set either via
+     * {@see com.mongodb.client.model.FindOptions#awaitData} or via {@see com.mongodb.DBCursor#addOption} should
+     * use this method rather than iterating via {@code next()} as that may throw a {@code NoSuchElementException} even though in the
+     * future there may be more results available.</p>
+     *
+     * @return the next element in the iteration if available or null.
+     */
     @Override
     public T tryNext() {
         if (closed) {
@@ -176,11 +186,6 @@ class MongoQueryCursor<T> implements MongoTailableCursor<T> {
         return currentIterator.hasNext();
     }
 
-    /**
-     * Gets the cursor id.
-     *
-     * @return the cursor id
-     */
     @Override
     public ServerCursor getServerCursor() {
         if (closed) {

@@ -48,7 +48,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
     MongoQueryCursor<Document> cursor
 
     def setup() {
-        for ( int i = 0; i < 10; i++) {
+        for (int i = 0; i < 10; i++) {
             collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', i))
         }
         connectionSource = getBinding().getReadConnectionSource()
@@ -219,6 +219,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
         cursor.getSizes().get(2) == 2
     }
 
+    @SuppressWarnings('EmptyCatchBlock')
     @Category(Slow)
     def 'test tailable'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
@@ -237,19 +238,16 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
 
         when:
         def latch = new CountDownLatch(1)
-        new Thread(new Runnable() {
-            @Override
-            void run() {
-                try {
-                    Thread.sleep(500)
-                    MongoQueryCursorSpecification.this.collectionHelper
-                                                 .insertDocuments(new DocumentCodec(),
-                                                                  new Document('_id', 2).append('ts', new BsonTimestamp(6, 0)))
-                } catch (ignored) {
-                }
+        Thread.start {
+            try {
+                sleep(1000)
+                collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 2).append('ts', new BsonTimestamp(6, 0)))
+            } catch (interrupt) {
+                //pass
+            } finally {
                 latch.countDown()
             }
-        }).start()
+        }
 
         // Note: this test is racy.
         // The sleep above does not guarantee that we're testing what we're trying to, which is the loop in the hasNext() method.
@@ -261,13 +259,13 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
         latch.await(5, SECONDS)
     }
 
+    @SuppressWarnings('EmptyCatchBlock')
     @Category(Slow)
     def 'test tailable interrupt'() throws InterruptedException {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1))
 
-        def firstBatch = executeQueryProtocol(getQueryProtocol(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2)
-                                                      .tailableCursor(true).awaitData(true))
+        def firstBatch = executeQueryProtocol(getQueryProtocol(new BsonDocument(), 2).tailableCursor(true).awaitData(true))
 
         when:
         cursor = new MongoQueryCursor<Document>(getNamespace(),
@@ -275,28 +273,26 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
                                                 connectionSource)
 
         CountDownLatch latch = new CountDownLatch(1)
-        //TODO: there might be a more Groovy-y way to do this, may be no need to hack into an array?
-        List<Boolean> success = []
-        Thread t = new Thread(new Runnable() {
-            @Override
-            void run() {
-                try {
-                    cursor.next()
-                    cursor.next()
-                } catch (ignored) {
-                    success.add(true)
-                } finally {
-                    latch.countDown()
-                }
+        def seen;
+        def thread = Thread.start {
+            try {
+                cursor.next()
+                seen = 1
+                cursor.next()
+                seen = 2
+            } catch (interrupt) {
+                // pass
+            } finally {
+                latch.countDown()
             }
-        })
-        t.start()
-        Thread.sleep(1000)  // Note: this is racy, as where the interrupted exception is actually thrown from depends on timing.
-        t.interrupt()
+        }
+        sleep(1000)
+        thread.interrupt()
+        collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 2))
         latch.await()
 
         then:
-        !success.isEmpty()
+        seen == 1
     }
 
     // 2.2 does not properly detect cursor not found, so ignoring
