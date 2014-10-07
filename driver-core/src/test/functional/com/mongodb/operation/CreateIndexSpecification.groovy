@@ -285,7 +285,7 @@ class CreateIndexSpecification extends OperationFunctionalSpecification {
 
         then:
         getUserCreatedIndexes('key') == [['field' :'2dsphere']]
-        if (serverVersionAtLeast(asList(2, 6, 0))) getUserCreatedIndexes('2dsphereIndexVersion') == [2]
+        if (serverVersionAtLeast(asList(2, 6, 0))) { getUserCreatedIndexes('2dsphereIndexVersion') == [2] }
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
@@ -330,7 +330,7 @@ class CreateIndexSpecification extends OperationFunctionalSpecification {
 
         then:
         getUserCreatedIndexes().size() == 1
-        if (serverVersionAtLeast(asList(2, 6, 0))) getUserCreatedIndexes('textIndexVersion') == [2]
+        if (serverVersionAtLeast(asList(2, 6, 0))) { getUserCreatedIndexes('textIndexVersion') == [2] }
     }
 
     @IgnoreIf({ !serverVersionAtLeast(asList(2, 6, 0)) })
