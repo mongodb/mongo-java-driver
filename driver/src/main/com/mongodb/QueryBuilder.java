@@ -26,7 +26,7 @@ import static java.util.Arrays.asList;
 /**
  * Utility for creating DBObject queries
  *
- * @author Julson Lim
+ * @mongodb.driver.manual tutorial/query-documents/ Querying
  */
 @SuppressWarnings("rawtypes")
 public class QueryBuilder {
@@ -72,8 +72,8 @@ public class QueryBuilder {
     }
 
     /**
-     * Equivalent to {@code QueryBuilder.put(key)}. Intended for compound query chains to be more readable, e.g.
-     * {@code QueryBuilder.start("a").greaterThan(1).and("b").lessThan(3) }
+     * Equivalent to {@code QueryBuilder.put(key)}. Intended for compound query chains to be more readable, e.g. {@code
+     * QueryBuilder.start("a").greaterThan(1).and("b").lessThan(3) }
      *
      * @param key MongoDB document key
      * @return {@code this}
@@ -253,11 +253,12 @@ public class QueryBuilder {
 
     /**
      * Equivalent of the $near operand
+     *
      * @param x x coordinate
      * @param y y coordinate
      * @return {@code this}
      */
-    public QueryBuilder near(final double x, final double y){
+    public QueryBuilder near(final double x, final double y) {
         addOperand(QueryOperators.NEAR,
                    asList(x, y));
         return this;
@@ -265,12 +266,13 @@ public class QueryBuilder {
 
     /**
      * Equivalent of the $near operand
-     * @param x x coordinate
-     * @param y y coordinate
+     *
+     * @param x           x coordinate
+     * @param y           y coordinate
      * @param maxDistance max distance
      * @return {@code this}
      */
-    public QueryBuilder near(final double x, final double y, final double maxDistance){
+    public QueryBuilder near(final double x, final double y, final double maxDistance) {
         addOperand(QueryOperators.NEAR,
                    asList(x, y));
         addOperand(QueryOperators.MAX_DISTANCE,
@@ -280,11 +282,12 @@ public class QueryBuilder {
 
     /**
      * Equivalent of the $nearSphere operand
+     *
      * @param longitude coordinate in decimal degrees
-     * @param latitude coordinate in decimal degrees
+     * @param latitude  coordinate in decimal degrees
      * @return {@code this}
      */
-    public QueryBuilder nearSphere(final double longitude, final double latitude){
+    public QueryBuilder nearSphere(final double longitude, final double latitude) {
         addOperand(QueryOperators.NEAR_SPHERE,
                    asList(longitude, latitude));
         return this;
@@ -292,12 +295,13 @@ public class QueryBuilder {
 
     /**
      * Equivalent of the $nearSphere operand
-     * @param longitude coordinate in decimal degrees
-     * @param latitude coordinate in decimal degrees
+     *
+     * @param longitude   coordinate in decimal degrees
+     * @param latitude    coordinate in decimal degrees
      * @param maxDistance max spherical distance
      * @return {@code this}
      */
-    public QueryBuilder nearSphere(final double longitude, final double latitude, final double maxDistance){
+    public QueryBuilder nearSphere(final double longitude, final double latitude, final double maxDistance) {
         addOperand(QueryOperators.NEAR_SPHERE,
                    asList(longitude, latitude));
         addOperand(QueryOperators.MAX_DISTANCE,
@@ -363,9 +367,9 @@ public class QueryBuilder {
 
     /**
      * Equivalent to a $text operand.
+     *
      * @param search the search terms to apply to the text index.
      * @return {@code this}
-     *
      * @mongodb.server.release 2.6
      */
     public QueryBuilder text(final String search) {
@@ -374,16 +378,16 @@ public class QueryBuilder {
 
     /**
      * Equivalent to a $text operand.
-     * @param search the search terms to apply to the text index.
+     *
+     * @param search   the search terms to apply to the text index.
      * @param language the language to use.
      * @return {@code this}
-     *
      * @mongodb.server.release 2.6
      */
     public QueryBuilder text(final String search, final String language) {
         if (_currentKey != null) {
             throw new QueryBuilderException("The text operand may only occur at the top-level of a query. It does"
-                    + " not apply to a specific element, but rather to a document as a whole.");
+                                            + " not apply to a specific element, but rather to a document as a whole.");
         }
 
         put(QueryOperators.TEXT);

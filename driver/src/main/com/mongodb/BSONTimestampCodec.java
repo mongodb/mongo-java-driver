@@ -27,6 +27,7 @@ import org.bson.types.BSONTimestamp;
 /**
  * Knows how to encode and decode BSON timestamps.
  *
+ * @mongodb.driver.manual reference/bson-types/#timestamps Timestamps
  * @since 3.0
  */
 public class BSONTimestampCodec implements Codec<BSONTimestamp> {

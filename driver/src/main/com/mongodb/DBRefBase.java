@@ -25,6 +25,8 @@ import java.io.Serializable;
  *
  * <p>While instances of this class are {@code Serializable}, deserialized instances can not be fetched, as the {@code db} property is
  * transient.</p>
+ *
+ * @mongodb.driver.manual applications/database-references Database References
  */
 public class DBRefBase implements Serializable {
     private static final long serialVersionUID = 3031885741395465814L;

@@ -20,6 +20,9 @@ import java.net.InetAddress;
 
 /**
  * Represents a database address, which includes the properties of ServerAddress (host and port) and adds a database name.
+ *
+ * @mongodb.driver.manual reference/default-mongodb-port/ MongoDB Ports
+ * @mongodb.driver.manual reference/connection-string/ MongoDB Connection String
  */
 public class DBAddress extends ServerAddress {
     private static final long serialVersionUID = -813211264765778133L;
@@ -35,6 +38,7 @@ public class DBAddress extends ServerAddress {
      * </ul>
      *
      * @param urlFormat the URL-formatted host and port
+     * @mongodb.driver.manual reference/connection-string/ MongoDB Connection String
      * @see MongoClientURI
      */
     public DBAddress(final String urlFormat) {

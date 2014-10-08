@@ -24,6 +24,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * The options to use for a parallel collection scan.
  *
+ * @mongodb.driver.manual reference/command/parallelCollectionScan/ Parallel Collection Scan
  * @since 2.12
  */
 @Immutable

@@ -18,6 +18,8 @@ package com.mongodb;
 
 /**
  * MongoDB keywords for various query operations.
+ *
+ * @mongodb.driver.manual reference/operator/query/ Query Operators
  */
 public class QueryOperators {
     public static final String OR = "$or";

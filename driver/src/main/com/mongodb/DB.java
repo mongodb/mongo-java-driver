@@ -55,7 +55,7 @@ import static java.util.Arrays.asList;
  * }
  * </pre>
  *
- * @mongodb.driver.manual reference/glossary/#term-database database
+ * @mongodb.driver.manual reference/glossary/#term-database Database
  * @see MongoClient
  */
 @ThreadSafe
@@ -108,6 +108,7 @@ public class DB {
      * documentation for {@link ReadPreference} for more information.
      *
      * @param readPreference {@code ReadPreference} to use
+     * @mongodb.driver.manual core/read-preference/ Read Preference
      */
     public void setReadPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
@@ -118,6 +119,7 @@ public class DB {
      * documentation for {@link WriteConcern} for more information.
      *
      * @param writeConcern {@code WriteConcern} to use
+     * @mongodb.driver.manual core/write-concern/ Write Concern
      */
     public void setWriteConcern(final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
@@ -127,6 +129,7 @@ public class DB {
      * Gets the read preference for this database.
      *
      * @return {@code ReadPreference} to be used for read operations, if not specified explicitly
+     * @mongodb.driver.manual core/read-preference/ Read Preference
      */
     public ReadPreference getReadPreference() {
         return readPreference != null ? readPreference : mongo.getReadPreference();
@@ -136,6 +139,7 @@ public class DB {
      * Gets the write concern for this database.
      *
      * @return {@code WriteConcern} to be used for write operations, if not specified explicitly
+     * @mongodb.driver.manual core/write-concern/ Write Concern
      */
     public WriteConcern getWriteConcern() {
         return writeConcern != null ? writeConcern : mongo.getWriteConcern();
@@ -202,6 +206,7 @@ public class DB {
      * Drops this database. Removes all data on disk. Use with caution.
      *
      * @throws MongoException
+     * @mongodb.driver.manual reference/command/dropDatabase/ Drop Database
      */
     public void dropDatabase() {
         executeCommand(new BsonDocument("dropDatabase", new BsonInt32(1)));
@@ -231,6 +236,7 @@ public class DB {
      *
      * @return the names of collections in this database
      * @throws MongoException
+     * @mongodb.driver.manual reference/method/db.getCollectionNames/ getCollectionNames()
      */
     public Set<String> getCollectionNames() {
         List<String> collectionNames = executor.execute(new ListCollectionNamesOperation(name), primary());
@@ -258,6 +264,7 @@ public class DB {
      * @param options        options
      * @return the collection
      * @throws MongoException
+     * @mongodb.driver.manual reference/method/db.createCollection/ createCollection()
      */
     public DBCollection createCollection(final String collectionName, final DBObject options) {
         executor.execute(getCreateCollectionOperation(collectionName, options));
@@ -428,6 +435,7 @@ public class DB {
      * @param args arguments to pass to the JavaScript function
      * @return result of the command execution
      * @throws MongoException
+     * @mongodb.driver.manual reference/method/db.eval/ db.eval()
      */
     public CommandResult doEval(final String code, final Object... args) {
         DBObject commandDocument = new BasicDBObject("$eval", code).append("args", asList(args));
@@ -442,6 +450,7 @@ public class DB {
      * @param args arguments to pass to the JavaScript function
      * @return result of the execution
      * @throws MongoException
+     * @mongodb.driver.manual reference/method/db.eval/ db.eval()
      */
     public Object eval(final String code, final Object... args) {
         CommandResult result = doEval(code, args);
@@ -454,6 +463,7 @@ public class DB {
      *
      * @return result of the execution
      * @throws MongoException
+     * @mongodb.driver.manual reference/command/dbStats/ Database Stats
      */
     public CommandResult getStats() {
         BsonDocument commandDocument = new BsonDocument("dbStats", new BsonInt32(1)).append("scale", new BsonInt32(1));
@@ -533,6 +543,7 @@ public class DB {
      * Adds the given flag to the default query options.
      *
      * @param option value to be added
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public void addOption(final int option) {
         optionHolder.add(option);
@@ -542,6 +553,7 @@ public class DB {
      * Sets the query options, overwriting previous value.
      *
      * @param options bit vector of query options
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public void setOptions(final int options) {
         optionHolder.set(options);
@@ -549,6 +561,7 @@ public class DB {
 
     /**
      * Resets the query options.
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public void resetOptions() {
         optionHolder.reset();
@@ -558,6 +571,7 @@ public class DB {
      * Gets the query options
      *
      * @return bit vector of query options
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public int getOptions() {
         return optionHolder.get();

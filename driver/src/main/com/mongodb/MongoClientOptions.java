@@ -59,9 +59,7 @@ public class MongoClientOptions {
     private final int connectTimeout;
     private final int socketTimeout;
     private final boolean socketKeepAlive;
-    //CHECKSTYLE:OFF
     private final boolean sslEnabled;
-    //CHECKSTYLE:ON
     private final boolean alwaysUseMBeans;
     private final int heartbeatFrequency;
     private final int minHeartbeatFrequency;

@@ -20,6 +20,9 @@ import java.util.List;
 
 /**
  * Container for the result of aggregation operation.
+ *
+ * @mongodb.server.release 2.2
+ * @mongodb.driver.manual aggregation/ Aggregation
  */
 public class AggregationOutput {
     private final List<DBObject> results;

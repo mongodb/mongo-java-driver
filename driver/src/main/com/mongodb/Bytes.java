@@ -30,8 +30,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Class that hold definitions of the wire protocol
- *
- * @author antoine
  */
 public class Bytes extends BSON {
 

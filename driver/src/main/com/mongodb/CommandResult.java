@@ -23,6 +23,8 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * A simple wrapper to hold the result of a command.  All the fields from the response document have been added to this result.
+ *
+ * @mongodb.driver.manual reference/command/ Database Commands
  */
 public class CommandResult extends BasicDBObject {
     private static final long serialVersionUID = 5907909423864204060L;

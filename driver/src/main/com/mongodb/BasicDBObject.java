@@ -22,11 +22,13 @@ import org.bson.BasicBSONObject;
 import java.util.Map;
 
 /**
- * A basic implementation of BSON object that is mongo specific. A {@code DBObject} can be created as follows, using this class:
- * <blockquote><pre>
+ * A basic implementation of BSON object that is MongoDB specific. A {@code DBObject} can be created as follows, using this class:
+ * <pre>
  * DBObject obj = new BasicDBObject();
  * obj.put( "foo", "bar" );
- * </pre></blockquote>
+ * </pre>
+ *
+ * @mongodb.driver.manual core/document/ MongoDB Documents
  */
 @SuppressWarnings({"rawtypes"})
 public class BasicDBObject extends BasicBSONObject implements DBObject {
@@ -94,7 +96,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
 
     /**
      * <p>Returns a JSON serialization of this object</p>
-     * 
+     *
      * <p>The output will look like: {@code  {"a":1, "b":["x","y","z"]} }</p>
      *
      * @return JSON serialization

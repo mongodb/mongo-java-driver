@@ -22,6 +22,7 @@ import java.util.Iterator;
 /**
  * Interface for providing consistent behaviour between different Cursor implementations.
  *
+ * @mongodb.driver.manual core/cursors/ Cursors
  * @since 2.12
  */
 public interface Cursor extends Iterator<DBObject>, Closeable {
