@@ -18,7 +18,6 @@ package com.mongodb;
 
 import org.bson.BSONObject;
 import org.bson.LazyBSONCallback;
-import org.bson.io.BSONByteBuffer;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,14 +35,6 @@ public class LazyWriteableDBObject extends LazyDBObject {
 
     public LazyWriteableDBObject(final byte[] bytes, final int offset, final LazyBSONCallback callback) {
         super(bytes, offset, callback);
-    }
-
-    public LazyWriteableDBObject(final BSONByteBuffer buffer, final LazyBSONCallback callback) {
-        this(buffer.array(), callback);
-    }
-
-    public LazyWriteableDBObject(final BSONByteBuffer buffer, final int offset, final LazyBSONCallback callback) {
-        this(buffer.array(), offset, callback);
     }
 
     @Override

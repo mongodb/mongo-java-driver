@@ -18,7 +18,6 @@ package com.mongodb;
 
 import org.bson.LazyBSONCallback;
 import org.bson.LazyBSONList;
-import org.bson.io.BSONByteBuffer;
 
 public class LazyDBList extends LazyBSONList implements DBObject {
 
@@ -30,14 +29,6 @@ public class LazyDBList extends LazyBSONList implements DBObject {
 
     public LazyDBList(final byte[] data, final int offset, final LazyBSONCallback callback) {
         super(data, offset, callback);
-    }
-
-    public LazyDBList(final BSONByteBuffer buffer, final LazyBSONCallback callback) {
-        this(buffer.array(), callback);
-    }
-
-    public LazyDBList(final BSONByteBuffer buffer, final int offset, final LazyBSONCallback callback) {
-        this(buffer.array(), offset, callback);
     }
 
     @Override
