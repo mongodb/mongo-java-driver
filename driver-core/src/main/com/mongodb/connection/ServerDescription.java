@@ -622,8 +622,8 @@ public class ServerDescription {
         }
 
         // Compare class equality and message as exceptions rarely override equals
-        Class thisExceptionClass = exception != null ? exception.getClass() : null;
-        Class thatExceptionClass = that.exception != null ? that.exception.getClass() : null;
+        Class<?> thisExceptionClass = exception != null ? exception.getClass() : null;
+        Class<?> thatExceptionClass = that.exception != null ? that.exception.getClass() : null;
         if (thisExceptionClass != null ? !thisExceptionClass.equals(thatExceptionClass) : thatExceptionClass != null) {
             return false;
         }

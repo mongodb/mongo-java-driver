@@ -40,10 +40,7 @@
 
     <!-- Checks for Size Violations.                    -->
     <!-- See http://checkstyle.sf.net/config_sizes.html -->
-    <module name="FileLength">
-        <!-- Sadly DBCollection is over 2000 lines long.  A lot of that is documentation, but it's still too long. -->
-        <property name="max" value="2100"/>
-    </module>
+    <module name="FileLength"/>
 
     <!-- Checks for whitespace                               -->
     <!-- See http://checkstyle.sf.net/config_whitespace.html -->
