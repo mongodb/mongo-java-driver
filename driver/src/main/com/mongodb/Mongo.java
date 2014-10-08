@@ -447,11 +447,13 @@ public class Mongo {
     }
 
     /**
-     * Gets a database object
+     * Gets a database object. Users should use {@link com.mongodb.MongoClient#getDatabase(String)} instead.
      *
      * @param dbName the name of the database to retrieve
      * @return a DB representing the specified database
+     * @deprecated use {@link com.mongodb.MongoClient#getDatabase(String)}
      */
+    @Deprecated
     public DB getDB(final String dbName) {
         DB db = dbCache.get(dbName);
         if (db != null) {
