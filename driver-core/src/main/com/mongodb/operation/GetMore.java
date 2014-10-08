@@ -96,7 +96,7 @@ public class GetMore {
      * number of documents fetched so far.</p>
      *
      * @return the value for numberToReturn in the OP_GET_MORE wire protocol message.
-     * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-get-more OP_GET_MORE
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-get-more OP_GET_MORE
      */
     public int getNumberToReturn() {
         int numberToReturn;

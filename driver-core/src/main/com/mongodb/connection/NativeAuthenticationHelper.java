@@ -43,7 +43,7 @@ public final class NativeAuthenticationHelper {
      * @param userName the user name
      * @param password the password
      * @return the hash as a string
-     * @mongodb.driver.manual meta-driver/latest/legacy/implement-authentication-in-driver/ Authentication
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/implement-authentication-in-driver/ Authentication
      */
     public static String createAuthenticationHash(final String userName, final char[] password) {
         ByteArrayOutputStream bout = new ByteArrayOutputStream(userName.length() + 20 + password.length);

@@ -44,7 +44,7 @@ import static java.lang.String.format;
  * A protocol for executing a command against a MongoDB server using the OP_QUERY wire protocol message.
  *
  * @param <T> the type returned from execution
- * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+ * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
  * @since 3.0
  */
 public class CommandProtocol<T> implements Protocol<T> {

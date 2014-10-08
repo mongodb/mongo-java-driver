@@ -26,7 +26,7 @@ import static com.mongodb.operation.WriteRequest.Type.REPLACE;
 /**
  * An OP_UPDATE message.
  *
- * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-update OP_UPDATE
+ * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-update OP_UPDATE
  * @since 3.0
  */
 public class UpdateMessage extends RequestMessage {

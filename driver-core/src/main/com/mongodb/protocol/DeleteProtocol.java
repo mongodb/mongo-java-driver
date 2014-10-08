@@ -38,7 +38,7 @@ import static java.lang.String.format;
 /**
  * An implementation of the MongoDB OP_DELETE wire protocol.
  *
- * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-delete OP_DELETE
+ * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-delete OP_DELETE
  * @since 3.0
  */
 public class DeleteProtocol extends WriteProtocol {

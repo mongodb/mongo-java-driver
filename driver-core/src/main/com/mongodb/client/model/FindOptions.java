@@ -24,8 +24,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  * The options to apply to a find operation (also commonly referred to as a query).
  *
  * @since 3.0
- * @mongodb.driver.manual manual/tutorial/query-documents/ Find
- * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+ * @mongodb.driver.manual tutorial/query-documents/ Find
+ * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
  */
 public final class FindOptions {
     private int batchSize;

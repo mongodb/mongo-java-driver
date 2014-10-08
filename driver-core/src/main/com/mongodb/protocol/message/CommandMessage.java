@@ -25,7 +25,7 @@ import static com.mongodb.protocol.message.RequestMessage.OpCode.OP_QUERY;
 /**
  * A command message that uses OP_QUERY to send the command.
  *
- * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+ * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
  * @since 3.0
  */
 public class CommandMessage extends RequestMessage {

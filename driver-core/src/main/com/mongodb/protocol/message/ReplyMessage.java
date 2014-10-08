@@ -33,7 +33,7 @@ import static java.lang.String.format;
 /**
  * An OP_REPLY message.
  *
- * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-reply OP_REPLY
+ * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-reply OP_REPLY
  * @since 3.0
  * @param <T> the type of the result document
  */

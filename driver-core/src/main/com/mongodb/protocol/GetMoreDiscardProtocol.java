@@ -26,8 +26,8 @@ import com.mongodb.connection.ResponseBuffers;
 /**
  * An implementation of the OP_GET_MORE protocol that can be used to terminate an exhaust cursor without decoding the results.
  *
- * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-get-more OP_GET_MORE
- * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+ * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-get-more OP_GET_MORE
+ * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
  * @since 3.0
  */
 public class GetMoreDiscardProtocol implements Protocol<Void> {

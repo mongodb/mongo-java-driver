@@ -27,8 +27,8 @@ import org.bson.codecs.Decoder;
  * An implementation of the OP_GET_MORE protocol that can be used to receive the next batch of documents from an exhaust cursor.
  *
  * @param <T> the type of document to decode query results to
- * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-get-more OP_GET_MORE
- * @mongodb.driver.manual meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
+ * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-get-more OP_GET_MORE
+ * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
  * @since 3.0
  */
 public class GetMoreReceiveProtocol<T> implements Protocol<QueryResult<T>> {
