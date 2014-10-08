@@ -24,7 +24,7 @@ package com.mongodb;
  * @see BulkWriteRequestBuilder#upsert()
  *
  * @mongodb.server.release 2.6
- * @mongodb.driver.manual reference/method/Bulk.find.upsert/#bulk-find-upsert Bulk Upsert
+ * @mongodb.driver.manual reference/command/update/#update.upserted Bulk Upsert
  */
 public class BulkWriteUpsert {
     private final int index;

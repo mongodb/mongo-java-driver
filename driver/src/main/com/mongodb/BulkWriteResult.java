@@ -22,7 +22,9 @@ import java.util.List;
  * The result of a successful bulk write operation.
  *
  * @mongodb.server.release 2.6
- * @mongodb.driver.manual reference/method/BulkWriteResult/ BulkWriteResult()
+ * @mongodb.driver.manual reference/command/delete/#delete-command-output Delete Result
+ * @mongodb.driver.manual reference/command/update/#delete-command-output Delete Result
+ * @mongodb.driver.manual reference/command/insert/#delete-command-output Delete Result
  * @since 2.12
  */
 public abstract class BulkWriteResult {
@@ -39,19 +41,17 @@ public abstract class BulkWriteResult {
      * Returns the number of documents inserted by the write operation.
      *
      * @return the number of documents inserted by the write operation
-     *
      * @throws UnacknowledgedWriteException if the write was unacknowledged.
      * @see WriteConcern#UNACKNOWLEDGED
      */
     public abstract int getInsertedCount();
 
     /**
-     * Returns the number of documents matched by updates or replacements in the write operation.  This will include documents that
-     * matched the query but where the modification didn't result in any actual change to the document; for example,
-     * if you set the value of some field, and the field already has that value, that will still count as an update.
+     * Returns the number of documents matched by updates or replacements in the write operation.  This will include documents that matched
+     * the query but where the modification didn't result in any actual change to the document; for example, if you set the value of some
+     * field, and the field already has that value, that will still count as an update.
      *
      * @return the number of documents matched by updates in the write operation
-     *
      * @throws UnacknowledgedWriteException if the write was unacknowledged.
      * @see WriteConcern#UNACKNOWLEDGED
      */
@@ -61,18 +61,16 @@ public abstract class BulkWriteResult {
      * Returns the number of documents removed by the write operation.
      *
      * @return the number of documents removed by the write operation
-     *
      * @throws UnacknowledgedWriteException if the write was unacknowledged.
      * @see WriteConcern#UNACKNOWLEDGED
      */
     public abstract int getRemovedCount();
 
     /**
-     * Returns true if the server was able to provide a count of modified documents.  If this method returns false (which can happen if
-     * the server is not at least version 2.6) then the {@code getModifiedCount} method will throw {@code UnsupportedOperationException}.
+     * Returns true if the server was able to provide a count of modified documents.  If this method returns false (which can happen if the
+     * server is not at least version 2.6) then the {@code getModifiedCount} method will throw {@code UnsupportedOperationException}.
      *
      * @return true if modifiedCount is available
-     *
      * @throws UnacknowledgedWriteException if the write was unacknowledged.
      * @see WriteConcern#UNACKNOWLEDGED
      * @see #getModifiedCount()
@@ -80,18 +78,15 @@ public abstract class BulkWriteResult {
     public abstract boolean isModifiedCountAvailable();
 
     /**
-     * Returns the number of documents modified by the write operation.  This only applies to updates or replacements,
-     * and will only count documents that were actually changed; for example, if you set the value of some field ,
-     * and the field already has that value, that will not count as a modification.
+     * <p>Returns the number of documents modified by the write operation.  This only applies to updates or replacements, and will only
+     * count documents that were actually changed; for example, if you set the value of some field , and the field already has that value,
+     * that will not count as a modification.</p>
      *
-     *  <p>
-     *     If the server is not able to provide a count of modified documents (which can happen if the server is not at least version
-     *     2.6), then this method will throw an {@code UnsupportedOperationException}
-     * </p>
+     * <p>If the server is not able to provide a count of modified documents (which can happen if the server is not at least version 2.6),
+     * then this method will throw an {@code UnsupportedOperationException} </p>
      *
      * @return the number of documents modified by the write operation
-     *
-     * @throws UnacknowledgedWriteException if the write was unacknowledged.
+     * @throws UnacknowledgedWriteException            if the write was unacknowledged.
      * @throws java.lang.UnsupportedOperationException if no modified count is available
      * @see WriteConcern#UNACKNOWLEDGED
      * @see #isModifiedCountAvailable()
@@ -102,7 +97,6 @@ public abstract class BulkWriteResult {
      * Gets an unmodifiable list of upserted items, or the empty list if there were none.
      *
      * @return a list of upserted items, or the empty list if there were none.
-     *
      * @throws UnacknowledgedWriteException if the write was unacknowledged.
      * @see WriteConcern#UNACKNOWLEDGED
      */
