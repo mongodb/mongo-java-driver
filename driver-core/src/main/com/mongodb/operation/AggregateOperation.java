@@ -51,7 +51,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * An operation that executes an aggregation query.
  *
  * @param <T> the operations result type.
- * @mongodb.driver.manual manual/aggregation/ Aggregation
+ * @mongodb.driver.manual aggregation/ Aggregation
  * @mongodb.server.release 2.2
  * @since 3.0
  */
@@ -84,7 +84,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      * Gets the aggregation pipeline.
      *
      * @return the pipeline
-     * @mongodb.driver.manual manual/core/aggregation-introduction/#aggregation-pipelines Aggregation Pipeline
+     * @mongodb.driver.manual core/aggregation-introduction/#aggregation-pipelines Aggregation Pipeline
      */
     public List<BsonDocument> getPipeline() {
         return pipeline;
@@ -94,7 +94,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      * Whether writing to temporary files is enabled. A null value indicates that it's unspecified.
      *
      * @return true if writing to temporary files is enabled
-     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
     public Boolean getAllowDiskUse() {
@@ -106,7 +106,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      *
      * @param allowDiskUse true if writing to temporary files is enabled
      * @return this
-     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
     public AggregateOperation<T> allowDiskUse(final Boolean allowDiskUse) {
@@ -118,7 +118,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      * Gets the number of documents to return per batch.  Default to 0, which indicates that the server chooses an appropriate batch size.
      *
      * @return the batch size, which may be null
-     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public Integer getBatchSize() {
         return batchSize;
@@ -129,7 +129,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      *
      * @param batchSize the batch size
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public AggregateOperation<T> batchSize(final Integer batchSize) {
         this.batchSize = batchSize;
@@ -141,7 +141,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      *
      * @param timeUnit the time unit to return the result in
      * @return the maximum execution time in the given time unit
-     * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -154,7 +154,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public AggregateOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -167,7 +167,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      * server supports it.
      *
      * @return whether the server should use a cursor to return results
-     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
     public Boolean getUseCursor() {
@@ -179,7 +179,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
      *
      * @param useCursor whether the server should use a cursor to return results
      * @return this
-     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
     public AggregateOperation<T> useCursor(final Boolean useCursor) {

@@ -24,7 +24,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @param <T> the type of document to update.  In practice this doesn't actually apply to updates but is here for consistency with the
  *           other write models
  * @since 3.0
- * @mongodb.driver.manual manual/tutorial/remove-documents/ Remove
+ * @mongodb.driver.manual tutorial/remove-documents/ Remove
  */
 public final class DeleteManyModel<T> extends WriteModel<T> {
     private final Object criteria;

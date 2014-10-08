@@ -23,7 +23,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * Operation to fetch more results from the server for a cursor.
  *
- * @mongodb.driver.manual manual/reference/method/db.currentOp/#currentOp.op getmore
+ * @mongodb.driver.manual reference/method/db.currentOp/#currentOp.op getmore
  * @since 3.0
  */
 public class GetMore {
@@ -39,8 +39,8 @@ public class GetMore {
      * @param limit           the maximum number of documents the cursor will return
      * @param batchSize       the number of documents to return per batch. Do not use a batch size of 1
      * @param numFetchedSoFar the number of documents already retrieved by this cursor
-     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize batchSize
-     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit limit
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize batchSize
+     * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit limit
      */
     public GetMore(final ServerCursor serverCursor, final int limit, final int batchSize, final long numFetchedSoFar) {
         this.serverCursor = notNull("serverCursor", serverCursor);
@@ -53,7 +53,7 @@ public class GetMore {
      * Get the limit value for this operation.
      *
      * @return the maximum number of documents the cursor will return
-     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit limit
+     * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit limit
      */
     public int getLimit() {
         return limit;

@@ -24,7 +24,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * A model describing a count operation.
  *
  * @since 3.0
- * @mongodb.driver.manual manual/reference/command/count/ Count
+ * @mongodb.driver.manual reference/command/count/ Count
  */
 public class CountOptions {
     private Object hint;
@@ -77,7 +77,7 @@ public class CountOptions {
      * Gets the limit to apply.  The default is 0, which means there is no limit.
      *
      * @return the limit
-     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
+     * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
     public long getLimit() {
         return limit;
@@ -88,7 +88,7 @@ public class CountOptions {
      *
      * @param limit the limit
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
+     * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
     public CountOptions limit(final long limit) {
         this.limit = limit;
@@ -99,7 +99,7 @@ public class CountOptions {
      * Gets the number of documents to skip.  The default is 0.
      *
      * @return the number of documents to skip
-     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
+     * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
     public long getSkip() {
         return skip;
@@ -110,7 +110,7 @@ public class CountOptions {
      *
      * @param skip the number of documents to skip
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
+     * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
     public CountOptions skip(final long skip) {
         this.skip = skip;

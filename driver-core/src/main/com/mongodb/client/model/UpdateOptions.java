@@ -20,8 +20,8 @@ package com.mongodb.client.model;
  * The options for updating documents.
  *
  * @since 3.0
- * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
- * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
+ * @mongodb.driver.manual tutorial/modify-documents/ Updates
+ * @mongodb.driver.manual reference/operator/update/ Update Operators
  */
 public class UpdateOptions {
     private boolean upsert;

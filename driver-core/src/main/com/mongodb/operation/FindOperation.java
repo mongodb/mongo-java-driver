@@ -105,7 +105,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      * Gets the query criteria.
      *
      * @return the query criteria
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
      */
     public BsonDocument getCriteria() {
         return criteria;
@@ -116,7 +116,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      *
      * @param criteria the criteria, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
      */
     public FindOperation<T> criteria(final BsonDocument criteria) {
         this.criteria = criteria;
@@ -127,7 +127,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      * Gets the number of documents to return per batch.  Default to 0, which indicates that the server chooses an appropriate batch size.
      *
      * @return the batch size, which may be null
-     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public int getBatchSize() {
         return batchSize;
@@ -138,7 +138,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      *
      * @param batchSize the batch size
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public FindOperation<T> batchSize(final int batchSize) {
         this.batchSize = batchSize;
@@ -149,7 +149,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      * Gets the limit to apply.  The default is null.
      *
      * @return the limit
-     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
+     * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
     public int getLimit() {
         return limit;
@@ -160,7 +160,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      *
      * @param limit the limit, which may be null
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
+     * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
     public FindOperation<T> limit(final int limit) {
         this.limit = limit;
@@ -171,7 +171,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      * Gets the query modifiers to apply to this operation.  The default is not to apply any modifiers.
      *
      * @return the query modifiers, which may be null
-     * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
+     * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
      */
     public BsonDocument getModifiers() {
         return modifiers;
@@ -182,7 +182,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      *
      * @param modifiers the query modifiers to apply, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
+     * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
      */
     public FindOperation<T> modifiers(final BsonDocument modifiers) {
         this.modifiers = modifiers;
@@ -193,7 +193,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      * Gets a document describing the fields to return for all matching documents.
      *
      * @return the project document, which may be null
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
+     * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
     public BsonDocument getProjection() {
         return projection;
@@ -204,7 +204,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      *
      * @param projection the project document, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
+     * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
     public FindOperation<T> projection(final BsonDocument projection) {
         this.projection = projection;
@@ -239,7 +239,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      * Gets the number of documents to skip.  The default is 0.
      *
      * @return the number of documents to skip, which may be null
-     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
+     * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
     public int getSkip() {
         return skip;
@@ -250,7 +250,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      *
      * @param skip the number of documents to skip
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
+     * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
     public FindOperation<T> skip(final int skip) {
         this.skip = skip;
@@ -262,7 +262,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      * order.
      *
      * @return a document describing the sort criteria
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
     public BsonDocument getSort() {
         return sort;
@@ -273,7 +273,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
      *
      * @param sort the sort criteria, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
     public FindOperation<T> sort(final BsonDocument sort) {
         this.sort = sort;

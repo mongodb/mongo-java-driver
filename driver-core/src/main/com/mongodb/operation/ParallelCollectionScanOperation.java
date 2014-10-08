@@ -52,7 +52,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * <p> Note: As of MongoDB 2.6, this operation will work against a mongod, but not a mongos. </p>
  *
  * @param <T> the operations result type.
- * @mongodb.driver.manual manual/reference/command/parallelCollectionScan/ parallelCollectionScan
+ * @mongodb.driver.manual reference/command/parallelCollectionScan/ parallelCollectionScan
  * @mongodb.server.release 2.6
  * @since 3.0
  */
@@ -91,7 +91,7 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
      * Gets the batch size to use for each cursor.  The default value is 0, which tells the server to use its own default batch size.
      *
      * @return batch size
-     * @mongodb.driver.manual manual/core/cursors/#cursor-batches BatchSize
+     * @mongodb.driver.manual core/cursors/#cursor-batches BatchSize
      */
     public int getBatchSize() {
         return batchSize;
@@ -102,7 +102,7 @@ public class ParallelCollectionScanOperation<T> implements AsyncReadOperation<Li
      *
      * @param batchSize the batch size, which must be greater than or equal to  0
      * @return this
-     * @mongodb.driver.manual manual/core/cursors/#cursor-batches BatchSize
+     * @mongodb.driver.manual core/cursors/#cursor-batches BatchSize
      */
     public ParallelCollectionScanOperation<T> batchSize(final int batchSize) {
         isTrue("batchSize >= 0", batchSize >= 0);

@@ -19,7 +19,7 @@ package com.mongodb.client.model;
 /**
  * The options to apply to a parallel scan operation.
  *
- * @mongodb.driver.manual manual/reference/command/parallelCollectionScan/ parallelCollectionScan
+ * @mongodb.driver.manual reference/command/parallelCollectionScan/ parallelCollectionScan
  * @mongodb.server.release 2.6
  * @since 3.0
  */
@@ -40,7 +40,7 @@ public class ParallelCollectionScanOptions {
      *
      * @param batchSize the batch size, which must be greater than or equal to  0
      * @return this
-     * @mongodb.driver.manual manual/core/cursors/#cursor-batches BatchSize
+     * @mongodb.driver.manual core/cursors/#cursor-batches BatchSize
      */
     public ParallelCollectionScanOptions batchSize(final int batchSize) {
         this.batchSize = batchSize;

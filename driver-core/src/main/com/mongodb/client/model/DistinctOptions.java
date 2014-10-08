@@ -24,7 +24,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * The options to apply to a distinct operation.
  *
  * @since 3.0
- * @mongodb.driver.manual manual/reference/command/distinct/ Distinct
+ * @mongodb.driver.manual reference/command/distinct/ Distinct
  */
 public class DistinctOptions {
     private Object criteria;
@@ -34,7 +34,7 @@ public class DistinctOptions {
      * Gets the query criteria.
      *
      * @return the query criteria
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
      */
     public Object getCriteria() {
         return criteria;
@@ -45,7 +45,7 @@ public class DistinctOptions {
      *
      * @param criteria the criteria, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
      */
     public DistinctOptions criteria(final Object criteria) {
         this.criteria = criteria;

@@ -62,7 +62,7 @@ public class DistinctOperation implements AsyncReadOperation<BsonArray>, ReadOpe
      * Gets the query criteria.
      *
      * @return the query criteria
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
      */
     public BsonDocument getCriteria() {
         return criteria;
@@ -73,7 +73,7 @@ public class DistinctOperation implements AsyncReadOperation<BsonArray>, ReadOpe
      *
      * @param criteria the criteria, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
      */
     public DistinctOperation criteria(final BsonDocument criteria) {
         this.criteria = criteria;

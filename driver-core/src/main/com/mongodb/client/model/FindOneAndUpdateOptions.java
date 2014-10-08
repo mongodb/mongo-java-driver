@@ -20,7 +20,7 @@ package com.mongodb.client.model;
  * The options to apply to an operation that atomically finds a document and updates it.
  *
  * @since 3.0
- * @mongodb.driver.manual manual/reference/command/findAndModify/
+ * @mongodb.driver.manual reference/command/findAndModify/
  */
 public class FindOneAndUpdateOptions {
     private Object projection;
@@ -32,7 +32,7 @@ public class FindOneAndUpdateOptions {
      * Gets a document describing the fields to return for all matching documents.
      *
      * @return the project document, which may be null
-     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
+     * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
      */
     public Object getProjection() {
         return projection;
@@ -44,7 +44,7 @@ public class FindOneAndUpdateOptions {
      * @param projection the project document, which may be null. This can be of any type for which a
      * {@code Codec} is registered
      * @return this
-     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
+     * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
      */
     public FindOneAndUpdateOptions projection(final Object projection) {
         this.projection = projection;
@@ -56,7 +56,7 @@ public class FindOneAndUpdateOptions {
      * order.
      *
      * @return a document describing the sort criteria
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
     public Object getSort() {
         return sort;
@@ -68,7 +68,7 @@ public class FindOneAndUpdateOptions {
      * @param sort the sort criteria, which may be null. This can be of any type for which a
      * {@code Codec} is registered
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
     public FindOneAndUpdateOptions sort(final Object sort) {
         this.sort = sort;

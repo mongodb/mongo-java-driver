@@ -36,7 +36,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * An insert command message.
  *
  * @since 3.0
- * @mongodb.driver.manual manual/reference/command/insert/#dbcmd.insert Insert Command
+ * @mongodb.driver.manual reference/command/insert/#dbcmd.insert Insert Command
  */
 public class InsertCommandMessage extends BaseWriteCommandMessage {
     private final List<InsertRequest> insertRequestList;

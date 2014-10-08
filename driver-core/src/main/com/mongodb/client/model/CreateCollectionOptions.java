@@ -114,7 +114,7 @@ public class CreateCollectionOptions {
      * Gets whether the usePowerOf2Sizes allocation strategy is turned on for this collection.
      *
      * @return true if the usePowerOf2Sizes allocation strategy is turned on for this collection
-     * @mongodb.driver.manual manual/reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
+     * @mongodb.driver.manual reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
      * @mongodb.server.release 2.6
      */
     public Boolean isUsePowerOf2Sizes() {
@@ -126,7 +126,7 @@ public class CreateCollectionOptions {
      *
      * @param usePowerOf2Sizes true if the usePowerOf2Sizes allocation strategy is turned on for this collection
      * @return this
-     * @mongodb.driver.manual manual/reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
+     * @mongodb.driver.manual reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
      * @mongodb.server.release 2.6
      */
     public CreateCollectionOptions usePowerOf2Sizes(final Boolean usePowerOf2Sizes) {

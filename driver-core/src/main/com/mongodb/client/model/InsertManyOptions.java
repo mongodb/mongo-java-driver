@@ -20,7 +20,7 @@ package com.mongodb.client.model;
  * The options to apply to an operation that inserts multiple documents into a collection.
  *
  * @since 3.0
- * @mongodb.driver.manual manual/tutorial/insert-documents/ Insert
+ * @mongodb.driver.manual tutorial/insert-documents/ Insert
  */
 public final class InsertManyOptions {
     private boolean ordered;

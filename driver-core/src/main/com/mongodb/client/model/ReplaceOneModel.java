@@ -23,7 +23,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @param <T> the type of document to replace. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
- * @mongodb.driver.manual manual/tutorial/modify-documents/#replace-the-document Replace
+ * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
  */
 public final class ReplaceOneModel<T> extends WriteModel<T> {
     private final Object criteria;

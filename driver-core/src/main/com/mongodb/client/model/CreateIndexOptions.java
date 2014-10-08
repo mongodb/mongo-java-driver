@@ -130,7 +130,7 @@ public class CreateIndexOptions {
      * Gets the time to live for documents in the collection
      *
      * @return the time to live for documents in the collection
-     * @mongodb.driver.manual manual/tutorial/expire-data TTL
+     * @mongodb.driver.manual tutorial/expire-data TTL
      */
     public Integer getExpireAfterSeconds() {
         return expireAfterSeconds;
@@ -141,7 +141,7 @@ public class CreateIndexOptions {
      *
      * @param expireAfterSeconds the time to live for documents in the collection
      * @return this
-     * @mongodb.driver.manual manual/tutorial/expire-data TTL
+     * @mongodb.driver.manual tutorial/expire-data TTL
      */
     public CreateIndexOptions expireAfterSeconds(final Integer expireAfterSeconds) {
         this.expireAfterSeconds = expireAfterSeconds;

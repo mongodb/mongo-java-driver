@@ -178,7 +178,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
      * Gets the time to live for documents in the collection
      *
      * @return the time to live for documents in the collection
-     * @mongodb.driver.manual manual/tutorial/expire-data TTL
+     * @mongodb.driver.manual tutorial/expire-data TTL
      */
     public Integer getExpireAfterSeconds() {
         return expireAfterSeconds;
@@ -189,7 +189,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
      *
      * @param expireAfterSeconds the time to live for documents in the collection
      * @return this
-     * @mongodb.driver.manual manual/tutorial/expire-data TTL
+     * @mongodb.driver.manual tutorial/expire-data TTL
      */
     public CreateIndexOperation expireAfterSeconds(final Integer expireAfterSeconds) {
         this.expireAfterSeconds = expireAfterSeconds;

@@ -101,7 +101,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
      * Gets the query criteria.
      *
      * @return the query criteria
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
      */
     public BsonDocument getCriteria() {
         return criteria;
@@ -112,7 +112,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
      *
      * @param criteria the criteria, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
      */
     public FindAndUpdateOperation<T> criteria(final BsonDocument criteria) {
         this.criteria = criteria;
@@ -123,7 +123,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
      * Gets a document describing the fields to return for all matching documents.
      *
      * @return the project document, which may be null
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
+     * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
     public BsonDocument getProjection() {
         return projection;
@@ -134,7 +134,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
      *
      * @param projection the project document, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
+     * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
     public FindAndUpdateOperation<T> projection(final BsonDocument projection) {
         this.projection = projection;
@@ -171,7 +171,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
      * order.
      *
      * @return a document describing the sort criteria
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
     public BsonDocument getSort() {
         return sort;
@@ -182,7 +182,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
      *
      * @param sort the sort criteria, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
     public FindAndUpdateOperation<T> sort(final BsonDocument sort) {
         this.sort = sort;

@@ -61,7 +61,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      * Gets the query criteria.
      *
      * @return the query criteria
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
      */
     public BsonDocument getCriteria() {
         return criteria;
@@ -72,7 +72,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      *
      * @param criteria the criteria, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
      */
     public CountOperation criteria(final BsonDocument criteria) {
         this.criteria = criteria;
@@ -103,7 +103,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      * Gets the limit to apply.  The default is 0, which means there is no limit.
      *
      * @return the limit
-     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
+     * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
     public long getLimit() {
         return limit;
@@ -114,7 +114,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      *
      * @param limit the limit
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
+     * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
     public CountOperation limit(final long limit) {
         this.limit = limit;
@@ -125,7 +125,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      * Gets the number of documents to skip.  The default is 0.
      *
      * @return the number of documents to skip, which may be null
-     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
+     * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
     public long getSkip() {
         return skip;
@@ -136,7 +136,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      *
      * @param skip the number of documents to skip
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
+     * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
     public CountOperation skip(final long skip) {
         this.skip = skip;

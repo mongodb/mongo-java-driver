@@ -19,7 +19,7 @@ package com.mongodb.client.model;
 /**
  * The options to apply to an operation that atomically finds a document and replaces it.
  *
- * @mongodb.driver.manual manual/reference/command/findAndModify/
+ * @mongodb.driver.manual reference/command/findAndModify/
  * @since 3.0
  */
 public class FindOneAndReplaceOptions {
@@ -32,7 +32,7 @@ public class FindOneAndReplaceOptions {
      * Gets a document describing the fields to return for all matching documents.
      *
      * @return the project document, which may be null
-     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
+     * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
      */
     public Object getProjection() {
         return projection;
@@ -43,7 +43,7 @@ public class FindOneAndReplaceOptions {
      *
      * @param projection the project document, which may be null. This can be of any type for which a {@code Codec} is registered
      * @return this
-     * @mongodb.driver.manual manual/tutorial/project-fields-from-query-results Projection
+     * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
      */
     public FindOneAndReplaceOptions projection(final Object projection) {
         this.projection = projection;
@@ -55,7 +55,7 @@ public class FindOneAndReplaceOptions {
      * order.
      *
      * @return a document describing the sort criteria
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
     public Object getSort() {
         return sort;
@@ -66,7 +66,7 @@ public class FindOneAndReplaceOptions {
      *
      * @param sort the sort criteria, which may be null. This can be of any type for which a {@code Codec} is registered
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
     public FindOneAndReplaceOptions sort(final Object sort) {
         this.sort = sort;

@@ -152,7 +152,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
      * <p>Note: {@code }usePowerOf2Sizes} became the default allocation strategy in mongodb 2.6</p>
      *
      * @return  usePowerOf2Sizes became the default allocation strategy
-     * @mongodb.driver.manual manual/reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
+     * @mongodb.driver.manual reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
      * @mongodb.server.release 2.6
      */
     public Boolean isUsePowerOf2Sizes() {
@@ -166,7 +166,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
      *
      * @param usePowerOf2Sizes as the default allocation strategy
      * @return this
-     * @mongodb.driver.manual manual/reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
+     * @mongodb.driver.manual reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
      * @mongodb.server.release 2.6
      */
     public CreateCollectionOperation usePowerOf2Sizes(final Boolean usePowerOf2Sizes) {

@@ -24,7 +24,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * A model describing an aggregation.
  *
  * @since 3.0
- * @mongodb.driver.manual manual/aggregation/ Aggregation
+ * @mongodb.driver.manual aggregation/ Aggregation
  * @mongodb.server.release 2.2
  */
 public class AggregateOptions {
@@ -37,7 +37,7 @@ public class AggregateOptions {
      * Whether writing to temporary files is enabled. A null value indicates that it's unspecified.
      *
      * @return true if writing to temporary files is enabled
-     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
     public Boolean getAllowDiskUse() {
@@ -49,7 +49,7 @@ public class AggregateOptions {
      *
      * @param allowDiskUse true if writing to temporary files is enabled
      * @return this
-     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
     public AggregateOptions allowDiskUse(final Boolean allowDiskUse) {
@@ -62,7 +62,7 @@ public class AggregateOptions {
      * size.
      *
      * @return the batch size, which may be null
-     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public Integer getBatchSize() {
         return batchSize;
@@ -73,7 +73,7 @@ public class AggregateOptions {
      *
      * @param batchSize the batch size
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public AggregateOptions batchSize(final Integer batchSize) {
         this.batchSize = batchSize;
@@ -85,7 +85,7 @@ public class AggregateOptions {
      *
      * @param timeUnit the time unit to return the result in
      * @return the maximum execution time in the given time unit
-     * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -98,7 +98,7 @@ public class AggregateOptions {
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public AggregateOptions maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -111,7 +111,7 @@ public class AggregateOptions {
      * a cursor will be used if the server supports it.
      *
      * @return whether the server should use a cursor to return results
-     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
     public Boolean getUseCursor() {
@@ -123,7 +123,7 @@ public class AggregateOptions {
      *
      * @param useCursor whether the server should use a cursor to return results
      * @return this
-     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
     public AggregateOptions useCursor(final Boolean useCursor) {

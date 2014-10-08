@@ -96,7 +96,7 @@ public interface MongoCollection<T> {
      *
      * @param fieldName the field name
      * @return a non-null list of distinct values
-     * @mongodb.driver.manual manual/reference/command/distinct/ Distinct
+     * @mongodb.driver.manual reference/command/distinct/ Distinct
      */
     List<Object> distinct(String fieldName);
 
@@ -106,7 +106,7 @@ public interface MongoCollection<T> {
      * @param fieldName the field name
      * @param distinctOptions the options to apply to the distinct operation
      * @return a non-null list of distinct values
-     * @mongodb.driver.manual manual/reference/command/distinct/ Distinct
+     * @mongodb.driver.manual reference/command/distinct/ Distinct
      */
     List<Object> distinct(String fieldName, DistinctOptions distinctOptions);
 
@@ -114,7 +114,7 @@ public interface MongoCollection<T> {
      * Finds all documents in the collection.
      *
      * @return an iterable containing the result of the find operation
-     * @mongodb.driver.manual manual/tutorial/query-documents/ Find
+     * @mongodb.driver.manual tutorial/query-documents/ Find
      */
     MongoIterable<T> find();
 
@@ -124,7 +124,7 @@ public interface MongoCollection<T> {
      * @param clazz the class to decode each document into
      * @param <C> the target document type of the iterable.
      * @return an iterable containing the result of the find operation
-     * @mongodb.driver.manual manual/tutorial/query-documents/ Find
+     * @mongodb.driver.manual tutorial/query-documents/ Find
      */
     <C> MongoIterable<C> find(Class<C> clazz);
 
@@ -133,7 +133,7 @@ public interface MongoCollection<T> {
      *
      * @param criteria the query criteria
      * @return an iterable containing the result of the find operation
-     * @mongodb.driver.manual manual/tutorial/query-documents/ Find
+     * @mongodb.driver.manual tutorial/query-documents/ Find
      */
     MongoIterable<T> find(Object criteria);
 
@@ -144,7 +144,7 @@ public interface MongoCollection<T> {
      * @param clazz the class to decode each document into
      * @param <C> the target document type of the iterable.
      * @return an iterable containing the result of the find operation
-     * @mongodb.driver.manual manual/tutorial/query-documents/ Find
+     * @mongodb.driver.manual tutorial/query-documents/ Find
      */
     <C> MongoIterable<C> find(Object criteria, Class<C> clazz);
 
@@ -154,7 +154,7 @@ public interface MongoCollection<T> {
      * @param criteria the query criteria
      * @param findOptions the options to apply to the find operation
      * @return an iterable containing the result of the find operation
-     * @mongodb.driver.manual manual/tutorial/query-documents/ Find
+     * @mongodb.driver.manual tutorial/query-documents/ Find
      */
     MongoIterable<T> find(Object criteria, FindOptions findOptions);
 
@@ -166,7 +166,7 @@ public interface MongoCollection<T> {
      * @param clazz the class to decode each document into
      * @param <C> the target document type of the iterable.
      * @return an iterable containing the result of the find operation
-     * @mongodb.driver.manual manual/tutorial/query-documents/ Find
+     * @mongodb.driver.manual tutorial/query-documents/ Find
      */
     <C> MongoIterable<C> find(Object criteria, FindOptions findOptions, Class<C> clazz);
 
@@ -175,7 +175,7 @@ public interface MongoCollection<T> {
      *
      * @param pipeline the aggregate pipeline
      * @return an iterable containing the result of the aggregation operation
-     * @mongodb.driver.manual manual/aggregation/ Aggregation
+     * @mongodb.driver.manual aggregation/ Aggregation
      * @mongodb.server.release 2.2
      */
     MongoIterable<Document> aggregate(List<?> pipeline);
@@ -187,7 +187,7 @@ public interface MongoCollection<T> {
      * @param clazz the class to decode each document into
      * @param <C> the target document type of the iterable.
      * @return an iterable containing the result of the aggregation operation
-     * @mongodb.driver.manual manual/aggregation/ Aggregation
+     * @mongodb.driver.manual aggregation/ Aggregation
      * @mongodb.server.release 2.2
      */
     <C> MongoIterable<C> aggregate(List<?> pipeline, Class<C> clazz);
@@ -198,7 +198,7 @@ public interface MongoCollection<T> {
      * @param pipeline the aggregate pipeline
      * @param options the options to apply to the aggregation operation
      * @return an iterable containing the result of the aggregation operation
-     * @mongodb.driver.manual manual/aggregation/ Aggregation
+     * @mongodb.driver.manual aggregation/ Aggregation
      * @mongodb.server.release 2.2
      */
     MongoIterable<Document> aggregate(List<?> pipeline, AggregateOptions options);
@@ -211,7 +211,7 @@ public interface MongoCollection<T> {
      * @param clazz the class to decode each document into
      * @param <C> the target document type of the iterable.
      * @return an iterable containing the result of the aggregation operation
-     * @mongodb.driver.manual manual/aggregation/ Aggregation
+     * @mongodb.driver.manual aggregation/ Aggregation
      * @mongodb.server.release 2.2
      */
     <C> MongoIterable<C> aggregate(List<?> pipeline, AggregateOptions options, Class<C> clazz);
@@ -341,7 +341,7 @@ public interface MongoCollection<T> {
      * Replace a document in the collection according to the specified arguments.
      *
      * @return the result of the replace one operation
-     * @mongodb.driver.manual manual/tutorial/modify-documents/#replace-the-document Replace
+     * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      * @param criteria the query criteria to apply the the replace operation
      * @param replacement the replacement document
      */
@@ -351,7 +351,7 @@ public interface MongoCollection<T> {
      * Replace a document in the collection according to the specified arguments.
      *
      * @return the result of the replace one operation
-     * @mongodb.driver.manual manual/tutorial/modify-documents/#replace-the-document Replace
+     * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      * @param criteria the query criteria to apply the the replace operation
      * @param replacement the replacement document
      * @param options the options to apply to the replace operation
@@ -366,8 +366,8 @@ public interface MongoCollection<T> {
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
      * @return the result of the update one operation
-     * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
-     * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
     UpdateResult updateOne(Object criteria, Object update);
 
@@ -380,8 +380,8 @@ public interface MongoCollection<T> {
      * operators. This can be of any type for which a {@code Codec} is registered
      * @param options the options to apply to the update operation
      * @return the result of the update one operation
-     * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
-     * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
     UpdateResult updateOne(Object criteria, Object update, UpdateOptions options);
 
@@ -390,8 +390,8 @@ public interface MongoCollection<T> {
      *
      * @param model the model describing the update
      * @return the result of the update one operation
-     * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
-     * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
     UpdateResult updateOne(UpdateOneModel<T> model);
 
@@ -403,8 +403,8 @@ public interface MongoCollection<T> {
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
      * @return the result of the update one operation
-     * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
-     * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
     UpdateResult updateMany(Object criteria, Object update);
 
@@ -417,8 +417,8 @@ public interface MongoCollection<T> {
      * operators. This can be of any type for which a {@code Codec} is registered
      * @param options the options to apply to the update operation
      * @return the result of the update one operation
-     * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
-     * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
     UpdateResult updateMany(Object criteria, Object update, UpdateOptions options);
 

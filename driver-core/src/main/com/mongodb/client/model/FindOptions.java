@@ -72,7 +72,7 @@ public final class FindOptions {
      * Gets the limit to apply.  The default is null.
      *
      * @return the limit
-     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
+     * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
     public int getLimit() {
         return limit;
@@ -83,7 +83,7 @@ public final class FindOptions {
      *
      * @param limit the limit, which may be null
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.limit/#cursor.limit Limit
+     * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
     public FindOptions limit(final int limit) {
         this.limit = limit;
@@ -94,7 +94,7 @@ public final class FindOptions {
      * Gets the number of documents to skip.  The default is 0.
      *
      * @return the number of documents to skip, which may be null
-     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
+     * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
     public int getSkip() {
         return skip;
@@ -105,7 +105,7 @@ public final class FindOptions {
      *
      * @param skip the number of documents to skip
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.skip/#cursor.skip Skip
+     * @mongodb.driver.manual reference/method/cursor.skip/#cursor.skip Skip
      */
     public FindOptions skip(final int skip) {
         this.skip = skip;
@@ -117,7 +117,7 @@ public final class FindOptions {
      *
      * @param timeUnit the time unit to return the result in
      * @return the maximum execution time in the given time unit
-     * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -130,7 +130,7 @@ public final class FindOptions {
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public FindOptions maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -143,7 +143,7 @@ public final class FindOptions {
      * size.
      *
      * @return the batch size, which may be null
-     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public int getBatchSize() {
         return batchSize;
@@ -154,7 +154,7 @@ public final class FindOptions {
      *
      * @param batchSize the batch size
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public FindOptions batchSize(final int batchSize) {
         this.batchSize = batchSize;
@@ -165,7 +165,7 @@ public final class FindOptions {
      * Gets the query modifiers to apply to this operation.  The default is not to apply any modifiers.
      *
      * @return the query modifiers, which may be null
-     * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
+     * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
      */
     public Object getModifiers() {
         return modifiers;
@@ -176,7 +176,7 @@ public final class FindOptions {
      *
      * @param modifiers the query modifiers to apply, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/reference/operator/query-modifier/ Query Modifiers
+     * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
      */
     public FindOptions modifiers(final Object modifiers) {
         this.modifiers = modifiers;
@@ -187,7 +187,7 @@ public final class FindOptions {
      * Gets a document describing the fields to return for all matching documents.
      *
      * @return the project document, which may be null
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
+     * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
     public Object getProjection() {
         return projection;
@@ -198,7 +198,7 @@ public final class FindOptions {
      *
      * @param projection the project document, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/reference/method/db.collection.find/ Projection
+     * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
     public FindOptions projection(final Object projection) {
         this.projection = projection;
@@ -210,7 +210,7 @@ public final class FindOptions {
      * order.
      *
      * @return a document describing the sort criteria
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
     public Object getSort() {
         return sort;
@@ -221,7 +221,7 @@ public final class FindOptions {
      *
      * @param sort the sort criteria, which may be null.
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.sort/ Sort
+     * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
     public FindOptions sort(final Object sort) {
         this.sort = sort;

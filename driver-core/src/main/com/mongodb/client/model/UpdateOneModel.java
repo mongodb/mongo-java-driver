@@ -24,8 +24,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @param <T> the type of document to update.  In practice this doesn't actually apply to updates but is here for consistency with the other
  *            write models
- * @mongodb.driver.manual manual/tutorial/modify-documents/ Updates
- * @mongodb.driver.manual manual/reference/operator/update/ Update Operators
+ * @mongodb.driver.manual tutorial/modify-documents/ Updates
+ * @mongodb.driver.manual reference/operator/update/ Update Operators
  * @since 3.0
  */
 public final class UpdateOneModel<T> extends WriteModel<T> {

@@ -67,7 +67,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      * Gets the aggregation pipeline.
      *
      * @return the pipeline
-     * @mongodb.driver.manual manual/core/aggregation-introduction/#aggregation-pipelines Aggregation Pipeline
+     * @mongodb.driver.manual core/aggregation-introduction/#aggregation-pipelines Aggregation Pipeline
      */
     public List<BsonDocument> getPipeline() {
         return pipeline;
@@ -77,7 +77,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      * Whether writing to temporary files is enabled. A null value indicates that it's unspecified.
      *
      * @return true if writing to temporary files is enabled
-     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
     public Boolean getAllowDiskUse() {
@@ -89,7 +89,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      *
      * @param allowDiskUse true if writing to temporary files is enabled
      * @return this
-     * @mongodb.driver.manual manual/reference/command/aggregate/ Aggregation
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
     public AggregateToCollectionOperation allowDiskUse(final Boolean allowDiskUse) {
@@ -102,7 +102,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      *
      * @param timeUnit the time unit to return the result in
      * @return the maximum execution time in the given time unit
-     * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public long getMaxTime(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
@@ -115,7 +115,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      * @param maxTime  the max time
      * @param timeUnit the time unit, which may not be null
      * @return this
-     * @mongodb.driver.manual manual/reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
+     * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public AggregateToCollectionOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
