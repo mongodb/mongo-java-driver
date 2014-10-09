@@ -21,9 +21,9 @@ import com.mongodb.MongoClient;
 import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
+import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import static com.mongodb.AuthenticationMechanism.PLAIN;
 import static com.mongodb.ClusterFixture.getConnectionString;

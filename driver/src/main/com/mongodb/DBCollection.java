@@ -53,13 +53,14 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
+import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.Encoder;
 import org.bson.types.ObjectId;
-import org.mongodb.Document;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -147,7 +148,7 @@ public class DBCollection {
      * @param name     the name of the collection
      */
     protected DBCollection(final DB database, final String name) {
-        this(name, database, database.getExecutor(), new com.mongodb.codecs.DocumentCodec());
+        this(name, database, database.getExecutor(), new DocumentCodec());
     }
 
     private static BasicDBList toDBList(final MongoCursor<DBObject> source) {

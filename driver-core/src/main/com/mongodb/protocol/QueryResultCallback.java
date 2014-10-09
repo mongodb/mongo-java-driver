@@ -20,13 +20,13 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.protocol.message.ReplyMessage;
+import org.bson.Document;
 import org.bson.codecs.Decoder;
-import org.mongodb.Document;
+import org.bson.codecs.DocumentCodec;
 
 import static com.mongodb.protocol.ProtocolHelper.getQueryFailureException;
 

@@ -20,8 +20,8 @@ import com.mongodb.MongoCursor;
 import com.mongodb.MongoQueryFailureException;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.model.FindOptions;
+import org.bson.Document;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import java.util.ArrayList;
 import java.util.List;

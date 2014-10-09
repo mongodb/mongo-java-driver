@@ -18,13 +18,13 @@ package com.mongodb.client;
 
 import com.mongodb.Function;
 import com.mongodb.client.model.FindOptions;
-import com.mongodb.codecs.DocumentCodec;
-import com.mongodb.codecs.DocumentCodecProvider;
+import org.bson.Document;
+import org.bson.codecs.DocumentCodec;
+import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.ObjectId;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import java.util.ArrayList;
 import java.util.Arrays;

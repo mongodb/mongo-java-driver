@@ -16,7 +16,7 @@
 
 package com.mongodb.async.client
 
-import org.mongodb.Document
+import org.bson.Document
 
 class ClientAdministrationSpecification extends FunctionalSpecification {
 

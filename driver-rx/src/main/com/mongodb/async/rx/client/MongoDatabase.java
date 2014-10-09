@@ -18,8 +18,8 @@ package com.mongodb.async.rx.client;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.async.client.MongoCollectionOptions;
+import org.bson.Document;
 import org.bson.codecs.Codec;
-import org.mongodb.Document;
 import rx.Observable;
 
 /**

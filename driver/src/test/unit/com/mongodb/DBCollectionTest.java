@@ -21,6 +21,7 @@ import category.Slow;
 import org.bson.BSONObject;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonBinaryWriter;
+import org.bson.Document;
 import org.bson.io.OutputBuffer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
@@ -31,7 +32,6 @@ import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.Document;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;

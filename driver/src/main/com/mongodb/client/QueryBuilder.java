@@ -17,8 +17,8 @@
 package com.mongodb.client;
 
 import com.mongodb.QueryOperators;
+import org.bson.Document;
 import org.mongodb.ConvertibleToDocument;
-import org.mongodb.Document;
 
 import java.util.ArrayList;
 import java.util.Arrays;

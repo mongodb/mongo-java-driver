@@ -16,8 +16,8 @@
 
 package com.mongodb.client;
 
+import org.bson.Document;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import static com.mongodb.QueryOperators.TYPE;
 import static com.mongodb.client.QueryBuilder.query;

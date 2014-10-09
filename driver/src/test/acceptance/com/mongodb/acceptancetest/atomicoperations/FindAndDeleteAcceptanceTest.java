@@ -19,8 +19,8 @@ package com.mongodb.acceptancetest.atomicoperations;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
+import org.bson.Document;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.nullValue;

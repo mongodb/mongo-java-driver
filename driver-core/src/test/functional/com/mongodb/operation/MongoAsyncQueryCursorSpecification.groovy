@@ -26,14 +26,14 @@ import com.mongodb.binding.AsyncClusterBinding
 import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.binding.AsyncReadBinding
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.codecs.DocumentCodec
 import com.mongodb.connection.Connection
 import com.mongodb.protocol.QueryProtocol
 import com.mongodb.protocol.QueryResult
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonTimestamp
+import org.bson.Document
+import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
-import org.mongodb.Document
 import spock.lang.IgnoreIf
 import spock.lang.Shared
 

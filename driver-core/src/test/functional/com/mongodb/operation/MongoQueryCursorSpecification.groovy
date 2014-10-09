@@ -22,15 +22,15 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerCursor
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.codecs.DocumentCodec
 import com.mongodb.protocol.GetMoreProtocol
 import com.mongodb.protocol.KillCursorProtocol
 import com.mongodb.protocol.QueryProtocol
 import com.mongodb.protocol.QueryResult
 import org.bson.BsonDocument
 import org.bson.BsonTimestamp
+import org.bson.Document
+import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
-import org.mongodb.Document
 import spock.lang.IgnoreIf
 
 import java.util.concurrent.CountDownLatch

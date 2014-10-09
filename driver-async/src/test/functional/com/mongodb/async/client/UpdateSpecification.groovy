@@ -16,7 +16,7 @@
 
 package com.mongodb.async.client
 
-import org.mongodb.Document
+import org.bson.Document
 import org.mongodb.WriteResult
 
 class UpdateSpecification extends FunctionalSpecification {

@@ -18,8 +18,8 @@ package com.mongodb.async.client;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.async.MongoFuture;
+import org.bson.Document;
 import org.bson.codecs.Codec;
-import org.mongodb.Document;
 
 /**
  * A representation of a logical MongoDB database, which contains zero or more collections.  Instances of this class serve as factories for

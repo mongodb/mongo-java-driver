@@ -29,7 +29,7 @@ import com.mongodb.operation.GetCollectionNamesOperation;
 import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
-import org.mongodb.Document;
+import org.bson.Document;
 
 import java.util.List;
 

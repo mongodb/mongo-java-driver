@@ -42,10 +42,10 @@ import com.mongodb.operation.WriteOperation;
 import com.mongodb.protocol.KillCursorProtocol;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.ServerSelector;
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
-import org.mongodb.Document;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;

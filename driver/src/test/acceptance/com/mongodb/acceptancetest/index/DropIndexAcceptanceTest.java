@@ -18,9 +18,9 @@ package com.mongodb.acceptancetest.index;
 
 import com.mongodb.CommandFailureException;
 import com.mongodb.client.DatabaseTestCase;
+import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
