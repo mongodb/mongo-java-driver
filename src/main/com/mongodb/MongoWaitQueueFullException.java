@@ -16,7 +16,10 @@
 
 package com.mongodb;
 
-public class MongoWaitQueueFullException extends DBPortPool.NoMoreConnection {
+/**
+ * An exception indicating that the queue for waiting for a pooled connection is full.
+ */
+public class MongoWaitQueueFullException extends MongoClientException {
 
     private static final long serialVersionUID = 1482094507852255793L;
 

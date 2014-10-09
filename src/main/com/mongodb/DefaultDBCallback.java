@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-// DBCallback.java
-
 package com.mongodb;
 
-// Bson
 import org.bson.BSONObject;
 import org.bson.BasicBSONCallback;
 import org.bson.types.ObjectId;
@@ -31,7 +28,6 @@ import java.util.logging.Logger;
 /**
  * This class overrides BasicBSONCallback to implement some extra features specific to the Database.
  * For example DBRef type.
- * @author antoine
  */
 public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
 
@@ -42,9 +38,13 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
         }
     }
 
-    public static DBCallbackFactory FACTORY = new DefaultFactory();
-
-    public DefaultDBCallback( DBCollection coll ){
+    /**
+     * Creates a new DefaultDBCallback. If the Collection is null, it uses {@link DBCollectionObjectFactory} to create documents, otherwise
+     * it uses the collection's object factory.
+     *
+     * @param coll an optionally null Collection that the documents created by this callback belong to.
+     */
+    public DefaultDBCallback(final DBCollection coll) {
         _collection = coll;
         _db = _collection == null ? null : _collection.getDB();
     }
@@ -84,21 +84,11 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
         return o;
     }
 
-    /**
-     * @return
-     * @throws MongoException
-     */
     @Override
     public BSONObject create(){
         return _create( null );
     }
 
-    /**
-     * @param array
-     * @param path
-     * @return
-     * @throws MongoException
-     */
     @Override
     public BSONObject create( boolean array , List<String> path ){
         if ( array )

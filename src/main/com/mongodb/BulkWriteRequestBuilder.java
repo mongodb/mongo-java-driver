@@ -19,6 +19,10 @@ package com.mongodb;
 /**
  * A builder for a single write request.
  *
+ * @mongodb.server.release 2.6
+ * @mongodb.driver.manual /reference/command/delete/ Delete
+ * @mongodb.driver.manual /reference/command/update/ Update
+ * @mongodb.driver.manual /reference/command/insert/ Insert
  * @since 2.12
  */
 public class BulkWriteRequestBuilder {

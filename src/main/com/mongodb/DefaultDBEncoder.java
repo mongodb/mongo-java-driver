@@ -25,9 +25,12 @@ import static org.bson.BSON.EOO;
 import static org.bson.BSON.OBJECT;
 import static org.bson.BSON.REF;
 
-
+/**
+ * The default BSON encoder for BSONObject instances.
+ */
 public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
 
+    @Override
     public int writeObject( OutputBuffer buf, BSONObject o ){
         set( buf );
         int x = super.putObject( o );
@@ -48,6 +51,7 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
 
     }
 
+    @Override
     protected boolean putSpecial( String name , Object val ){
         if (val instanceof DBRefBase) {
             putDBRef(name, (DBRefBase) val);
@@ -72,6 +76,12 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
         _buf.writeInt( oid._inc() );
     }
 
+    /**
+     * Deals with encoding database references.
+     *
+     * @param name the name of the field in the document
+     * @param ref  the database reference object
+     */
     protected void putDBRef( String name, DBRefBase ref ){
         _put( OBJECT , name );
         final int sizePos = _buf.getPosition();
@@ -87,12 +97,8 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
 
     public static DBEncoderFactory FACTORY = new DefaultFactory();
 
-    public DefaultDBEncoder( ){
-    }
-
     @Override
     public String toString() {
         return "DefaultDBEncoder";
     }
-
 }

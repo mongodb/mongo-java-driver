@@ -21,9 +21,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Abstract base class for all preference which can be combined with tags
- *
- * @author breinero
+ * Abstract class for all preference which can be combined with tags
  */
 public abstract class TaggableReadPreference extends ReadPreference {
     TaggableReadPreference() {
@@ -39,12 +37,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
         return true;
     }
 
-    /**
-     *
-     * @return <code>DBObject</code> representation of this preference
-     *
-     * @deprecated for internal use only
-     */
     @Deprecated
     @Override
     public DBObject toDBObject() {
@@ -79,8 +71,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
      * Gets the list of tag sets as a list of DBObject, one for each tag set
      *
      * @return the list of tag sets
-     * @deprecated use the {@code getTagSetList} method instead
      * @see TaggableReadPreference#getTagSetList()
+     * @deprecated use the {@code getTagSetList} method instead
      */
     @Deprecated
     public List<DBObject> getTagSets() {
@@ -105,7 +97,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final TaggableReadPreference that = (TaggableReadPreference) o;
+        TaggableReadPreference that = (TaggableReadPreference) o;
 
         if (!tagSetList.equals(that.tagSetList)) return false;
 
@@ -145,8 +137,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     /**
      * Read from secondary
-     *
-     * @author breinero
      */
     static class SecondaryReadPreference extends TaggableReadPreference {
         SecondaryReadPreference() {
@@ -174,8 +164,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     /**
      * Read from secondary if available, otherwise from primary, irrespective of tags.
-     *
-     * @author breinero
      */
     static class SecondaryPreferredReadPreference extends SecondaryReadPreference {
         SecondaryPreferredReadPreference() {
@@ -199,8 +187,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     /**
      * Read from nearest node respective of tags.
-     *
-     * @author breinero
      */
     static class NearestReadPreference extends TaggableReadPreference {
         NearestReadPreference() {
@@ -228,8 +214,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     /**
      * Read from primary if available, otherwise a secondary.
-     *
-     * @author breinero
      */
     static class PrimaryPreferredReadPreference extends SecondaryReadPreference {
         PrimaryPreferredReadPreference() {}
@@ -245,7 +229,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
         @Override
         List<ServerDescription> choose(final ClusterDescription clusterDescription) {
-            final List<ServerDescription> servers = clusterDescription.getPrimaries();
+            List<ServerDescription> servers = clusterDescription.getPrimaries();
             return (!servers.isEmpty()) ? servers : super.choose(clusterDescription);
         }
     }

@@ -18,7 +18,6 @@ package com.mongodb;
 
 /**
  * A factory for cluster implementations.
- *
  */
 final class Clusters {
     private Clusters() {

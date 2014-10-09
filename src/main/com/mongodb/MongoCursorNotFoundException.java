@@ -29,7 +29,9 @@ public class MongoCursorNotFoundException extends MongoException {
     private final ServerAddress serverAddress;
 
     /**
-     * @param cursorId      cursor
+     * Construct a new instance.
+     *
+     * @param cursorId      cursor identifier
      * @param serverAddress server address
      */
     MongoCursorNotFoundException(final long cursorId, final ServerAddress serverAddress) {

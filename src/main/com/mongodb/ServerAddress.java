@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// ServerAddress.java
-
 package com.mongodb;
 
 import org.bson.util.annotations.Immutable;
@@ -25,13 +23,14 @@ import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 
 /**
- * mongo server address
+ * Represents the location of a Mongo server - i.e. server name and port number
  */
 @Immutable
 public class ServerAddress {
 
     /**
      * Creates a ServerAddress with default host and port
+     *
      * @throws UnknownHostException
      */
     public ServerAddress()
@@ -41,6 +40,7 @@ public class ServerAddress {
 
     /**
      * Creates a ServerAddress with default port
+     *
      * @param host hostname
      * @throws UnknownHostException
      */
@@ -51,6 +51,7 @@ public class ServerAddress {
 
     /**
      * Creates a ServerAddress
+     *
      * @param host hostname
      * @param port mongod port
      * @throws UnknownHostException
@@ -97,26 +98,29 @@ public class ServerAddress {
 
     /**
      * Creates a ServerAddress with default port
+     *
      * @param addr host address
      */
-    public ServerAddress( InetAddress addr ){
+    public ServerAddress(InetAddress addr) {
         this( new InetSocketAddress( addr , defaultPort() ) );
     }
 
     /**
      * Creates a ServerAddress
+     *
      * @param addr host address
      * @param port mongod port
      */
-    public ServerAddress( InetAddress addr , int port ){
+    public ServerAddress(InetAddress addr, int port) {
         this( new InetSocketAddress( addr , port ) );
     }
 
     /**
      * Creates a ServerAddress
+     *
      * @param addr inet socket address containing hostname and port
      */
-    public ServerAddress( InetSocketAddress addr ){
+    public ServerAddress(InetSocketAddress addr) {
         _host = addr.getHostName();
         _port = addr.getPort();
     }
@@ -149,7 +153,7 @@ public class ServerAddress {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        final ServerAddress that = (ServerAddress) o;
+        ServerAddress that = (ServerAddress) o;
 
         if (_port != that._port) return false;
         if (!_host.equals(that._host)) return false;
@@ -166,6 +170,7 @@ public class ServerAddress {
 
     /**
      * Gets the hostname
+     *
      * @return hostname
      */
     public String getHost(){
@@ -174,16 +179,19 @@ public class ServerAddress {
 
     /**
      * Gets the port number
+     *
      * @return port
      */
-    public int getPort(){
+    public int getPort() {
         return _port;
     }
 
     /**
      * Gets the underlying socket address
+     *
      * @return socket address
-     * @throws MongoException.Network if the host can not be resolved
+     * @throws MongoException.Network        if the host can not be resolved
+     * @throws java.net.UnknownHostException
      */
     public InetSocketAddress getSocketAddress() throws UnknownHostException {
         return new InetSocketAddress(InetAddress.getByName(_host), _port);

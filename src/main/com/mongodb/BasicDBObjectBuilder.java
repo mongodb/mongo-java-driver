@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// BasicDBObjectBuilder.java
-
 package com.mongodb;
 
 import java.util.Iterator;
@@ -23,14 +21,15 @@ import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * utility for building complex objects
- * example:
- *  BasicDBObjectBuilder.start().add( "name" , "eliot" ).add( "number" , 17 ).get()
+ * <p>Utility for building complex objects. For example:</p>
+ * <pre>
+ *   {@code BasicDBObjectBuilder.start().add( "name" , "eliot").add("number" , 17).get()}
+ * </pre>
  */
 public class BasicDBObjectBuilder {
 
     /**
-     * creates an empty object
+     * Creates a builder intialized with an empty document.
      */
     public BasicDBObjectBuilder(){
         _stack = new LinkedList<DBObject>();
@@ -38,7 +37,8 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * Creates an empty object
+     * Creates a builder intialized with an empty document.
+     *
      * @return The new empty builder
      */
     public static BasicDBObjectBuilder start(){
@@ -46,23 +46,26 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * creates an object with the given key/value
-     * @param k The field name
+     * Creates a builder initialized with the given key/value.
+     *
+     * @param key The field name
      * @param val The value
+     * @return the new builder
      */
-    public static BasicDBObjectBuilder start( String k , Object val ){
-        return (new BasicDBObjectBuilder()).add( k , val );
+    public static BasicDBObjectBuilder start(final String key, final Object val) {
+        return (new BasicDBObjectBuilder()).add(key, val);
     }
 
     /**
-     * Creates an object builder from an existing map.
-     * @param m map to use
+     * Creates an object builder from an existing map of key value pairs.
+     *
+     * @param map map to use
      * @return the new builder
      */
     @SuppressWarnings("unchecked")
-    public static BasicDBObjectBuilder start(Map m){
+    public static BasicDBObjectBuilder start(final Map map){
         BasicDBObjectBuilder b = new BasicDBObjectBuilder();
-        Iterator<Map.Entry> i = m.entrySet().iterator();
+        Iterator<Map.Entry> i = map.entrySet().iterator();
         while (i.hasNext()) {
             Map.Entry entry = i.next();
             b.add(entry.getKey().toString(), entry.getValue());
@@ -71,35 +74,36 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * appends the key/value to the active object
-     * @param key
-     * @param val
-     * @return returns itself so you can chain
+     * Appends the key/value to the active object
+     *
+     * @param key the field name
+     * @param val the value of the field
+     * @return {@code this} so calls can be chained
      */
-    public BasicDBObjectBuilder append( String key , Object val ){
+    public BasicDBObjectBuilder append(final String key, final Object val) {
         _cur().put( key , val );
         return this;
     }
 
-
     /**
-     * same as appends
+     * Same as append
+     *
+     * @param key the field name
+     * @param val the value of the field
+     * @return {@code this} so calls can be chained
      * @see #append(String, Object)
-     * @param key
-     * @param val
-     * @return returns itself so you can chain
      */
-    public BasicDBObjectBuilder add( String key , Object val ){
-        return append( key, val );
+    public BasicDBObjectBuilder add(final String key, final Object val) {
+        return append(key, val);
     }
 
     /**
-     * creates an new empty object and inserts it into the current object with the given key.
-     * The new child object becomes the active one.
-     * @param key
-     * @return returns itself so you can chain
+     * Creates an new empty object and inserts it into the current object with the given key. The new child object becomes the active one.
+     *
+     * @param key the field name
+     * @return {@code this} so calls can be chained
      */
-    public BasicDBObjectBuilder push( String key ){
+    public BasicDBObjectBuilder push(final String key) {
         BasicDBObject o = new BasicDBObject();
         _cur().put( key , o );
         _stack.addLast( o );
@@ -107,8 +111,9 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * pops the active object, which means that the parent object becomes active
-     * @return returns itself so you can chain
+     * Pops the active object, which means that the parent object becomes active
+     *
+     * @return {@code this} so calls can be chained
      */
     public BasicDBObjectBuilder pop(){
         if ( _stack.size() <= 1 )
@@ -118,7 +123,8 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * gets the base object
+     * Gets the top level document.
+     *
      * @return The base object
      */
     public DBObject get(){
@@ -126,8 +132,9 @@ public class BasicDBObjectBuilder {
     }
 
     /**
-     * returns true if no key/value was inserted into base object
-     * @return True if empty
+     * Returns true if no key/value was inserted into the top level document.
+     *
+     * @return true if empty
      */
     public boolean isEmpty(){
         return ((BasicDBObject) _stack.getFirst()).size() == 0;

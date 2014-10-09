@@ -52,15 +52,14 @@ import java.util.logging.Logger;
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated.</li>
  * </ul>
- * <p>
- * The following options are supported (case insensitive):
- * <p>
- * Replica set configuration:
- * </p>
+ * <p>The following options are supported (case insensitive):</p>
+ * 
+ * <p>Replica set configuration:</p>
  * <ul>
  * <li>{@code replicaSet=name}: Implies that the hosts given are a seed list, and the driver will attempt to find
  * all members of the set.</li>
  * </ul>
+ * 
  * <p>Connection Configuration:</p>
  * <ul>
  * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
@@ -69,6 +68,7 @@ import java.util.logging.Logger;
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * </ul>
+ * 
  * <p>Connection pool configuration:</p>
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
@@ -102,6 +102,7 @@ import java.util.logging.Logger;
  * </ul>
  * </li>
  * </ul>
+ * 
  * <p>Read preference configuration:</p>
  * <ul>
  * <li>{@code slaveOk=true|false}: Whether a driver connected to a replica set will send reads to slaves/secondaries.</li>
@@ -142,11 +143,11 @@ import java.util.logging.Logger;
  * <li>{@code gssapiServiceName=string}: This option only applies to the GSSAPI mechanism and is used to alter the service name..
  * </li>
  * <ul>
- * <p>
- * Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference
- * in behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.
- * </p>
  *
+ * <p>Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in
+ * behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.</p>
+ *
+ * @mongodb.driver.manual reference/connection-string Connection String URI Format
  * @see MongoClientOptions for the default values for all options
  * @since 2.10.0
  */
@@ -166,8 +167,8 @@ public class MongoClientURI {
     }
 
     /**
-     * Creates a MongoURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured
-     * with default options, which may be overridden by options specified in the URI string.
+     * Creates a MongoURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured with default options,
+     * which may be overridden by options specified in the URI string.
      *
      * @param uri  the URI
      * @param builder a Builder
@@ -617,7 +618,6 @@ public class MongoClientURI {
     public String getURI() {
         return uri;
     }
-
 
     /**
      * Gets the credentials.

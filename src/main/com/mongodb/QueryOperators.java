@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-// QueryOperators.java
 package com.mongodb;
 
 /**
- * MongoDB keywords for various query operations
+ * MongoDB keywords for various query operations.
  *
- * @author Julson Lim
+ * @mongodb.driver.manual reference/operator/query/ Query Operators
  */
 public class QueryOperators {
     public static final String OR = "$or";

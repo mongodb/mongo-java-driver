@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// ReplicaSetStatus.java
-
 package com.mongodb;
 
 import java.util.List;
@@ -31,21 +29,30 @@ public class ReplicaSetStatus {
         this.clusterDescription = clusterDescription;
     }
 
+    /**
+     * Get the name of the replica set.
+     *
+     * @return the name of the replica set.
+     */
     public String getName() {
-        final List<ServerDescription> any = clusterDescription.getAnyPrimaryOrSecondary();
+        List<ServerDescription> any = clusterDescription.getAnyPrimaryOrSecondary();
         return any.isEmpty() ? null : any.get(0).getSetName();
     }
 
     /**
+     * Gets the ServerAddress of the master server in this replica set.
+     *
      * @return master or null if don't have one
      * @throws MongoException
      */
     public ServerAddress getMaster() {
-        final List<ServerDescription> primaries = clusterDescription.getPrimaries();
+        List<ServerDescription> primaries = clusterDescription.getPrimaries();
         return primaries.isEmpty() ? null : primaries.get(0).getAddress();
     }
 
     /**
+     * Checks to see if a given server is the primary server in this replica set.
+     *
      * @param serverAddress the server to compare
      * @return indication if the ServerAddress is the current Master/Primary
      * @throws MongoException

@@ -20,7 +20,6 @@ import java.util.EventListener;
 
 /**
  * A listener for cluster-related events.
- *
  */
 interface ClusterListener extends EventListener {
     /**

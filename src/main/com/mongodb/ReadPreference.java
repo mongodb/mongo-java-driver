@@ -26,7 +26,7 @@ import static java.util.Arrays.asList;
 /**
  * An abstract class that represents preferred replica set members to which a query or command can be sent.
  *
- * @mongodb.driver.manual applications/replication/#replica-set-read-preference  Read Preference
+ * @mongodb.driver.manual core/read-preference  Read Preference
  */
 public abstract class ReadPreference {
 
@@ -34,12 +34,16 @@ public abstract class ReadPreference {
     }
 
     /**
-     * @return <code>true</code> if this preference allows reads or commands from secondary nodes
+     * True if this read preference allows reading from a secondary member of a replica set.
+     *
+     * @return if reading from a secondary is ok
      */
     public abstract boolean isSlaveOk();
 
     /**
-     * @return <code>DBObject</code> representation of this preference
+     * Converts this read preference into a {@code DBObject}.
+     *
+     * @return a {@code DBObject} representation of this preference
      * @deprecated for internal use only
      */
     @Deprecated
@@ -57,8 +61,6 @@ public abstract class ReadPreference {
     /**
      * Preference to read from primary only.
      * Cannot be combined with tags.
-     *
-     * @author breinero
      */
     private static class PrimaryReadPreference extends ReadPreference {
         private PrimaryReadPreference() {

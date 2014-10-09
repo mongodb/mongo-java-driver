@@ -19,29 +19,24 @@
 package com.mongodb;
 
 /**
- * An Mongo exception internal to the driver, not carrying any error code
- * @author antoine
+ * A Mongo exception internal to the driver, not carrying any error code.
  */
 public class MongoInternalException extends MongoException {
-
     private static final long serialVersionUID = -4415279469780082174L;
 
     /**
-     *
-     * @param msg the message
+     * @param msg the description of the problem
      */
     public MongoInternalException( String msg ){
         super( msg );
     }
 
     /**
-     *
-     * @param msg the message
-     * @param t the throwable cause
+     * @param msg the description of the problem
+     * @param t   the Throwable root cause
      */
     public MongoInternalException( String msg , Throwable t ){
         super(msg, t);
     }
-
 }
 

@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-// CommandResult.java
-
-
-
 package com.mongodb;
 
 
 import java.util.List;
 
 /**
- * A simple wrapper for the result of getLastError() calls and other commands
+ * A simple wrapper to hold the result of a command.  All the fields from the response document have been added to this result.
+ *
+ * @mongodb.driver.manual reference/command/ Database Commands
  */
 public class CommandResult extends BasicDBObject {
 
@@ -38,10 +36,11 @@ public class CommandResult extends BasicDBObject {
     }
 
     /**
-     * gets the "ok" field which is the result of the command
-     * @return True if ok
+     * Gets the "ok" field, which is whether this command executed correctly or not.
+     *
+     * @return true if the command executed without error.
      */
-    public boolean ok(){
+    public boolean ok() {
         Object okValue = get("ok");
         if (okValue instanceof Boolean) {
             return (Boolean) okValue;
@@ -53,27 +52,29 @@ public class CommandResult extends BasicDBObject {
     }
 
     /**
-     * gets the "errmsg" field which holds the error message
+     * Gets the error message associated with a failed command.
+     *
      * @return The error message or null
      */
-    public String getErrorMessage(){
-        Object errorMessage = get( "errmsg" );
-        if ( errorMessage == null )
+    public String getErrorMessage() {
+        Object errorMessage = get("errmsg");
+        if (errorMessage == null) {
             return null;
+        }
         return errorMessage.toString();
     }
 
     /**
-     * utility method to create an exception with the command name
-     * @return The mongo exception or null
+     * Utility method to create an exception from a failed command.
+     *
+     * @return The mongo exception, or null if the command was successful.
      */
     public MongoException getException() {
-        if ( !ok() ) {   // check for command failure
+        if (!ok()) {   // check for command failure
             if (getCode() == 50) {
                 return new MongoExecutionTimeoutException(getCode(), getErrorMessage());
-            }
-            else {
-                return new CommandFailureException( this );
+            } else {
+                return new CommandFailureException(this);
             }
         } else if (hasErr()) {
             return getWriteException();
@@ -93,6 +94,7 @@ public class CommandResult extends BasicDBObject {
 
     /**
      * returns the "code" field, as an int
+     *
      * @return -1 if there is no code
      */
     @SuppressWarnings("unchecked")
@@ -115,24 +117,28 @@ public class CommandResult extends BasicDBObject {
 
     /**
      * check the "err" field
+     *
      * @return if it has it, and isn't null
      */
-    boolean hasErr(){
+    boolean hasErr() {
         String err = getString("err");
         return err != null && err.length() > 0;
     }
 
     /**
-     * throws an exception containing the cmd name, in case the command failed, or the "err/code" information
+     * Throws a {@code CommandFailureException} if the command failed. Otherwise, returns normally.
+     *
      * @throws MongoException
+     * @see #ok()
      */
     public void throwOnError() {
-        if ( !ok() || hasErr() ){
+        if (!ok() || hasErr()) {
             throw getException();
         }
     }
 
     /**
+     * @return the server the command ran against
      * @deprecated there is no replacement for this method
      */
     @Deprecated

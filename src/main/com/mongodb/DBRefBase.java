@@ -21,17 +21,19 @@ package com.mongodb;
 import java.io.Serializable;
 
 /**
- * Represents a database reference, which points to an object stored in the database.
- * <p>
- * While instances of this class are {@code Serializable}, deserialized instances can not be fetched,
- * as the {@code db} property is transient.
+ * <p>Represents a database reference, which points to an object stored in the database.</p>
+ *
+ * <p>While instances of this class are {@code Serializable}, deserialized instances can not be fetched, as the {@code db} property is
+ * transient.</p>
+ *
+ * @mongodb.driver.manual applications/database-references Database References
  */
 public class DBRefBase implements Serializable {
-
     private static final long serialVersionUID = 3031885741395465814L;
 
     /**
      * Creates a DBRefBase
+     *
      * @param db the database
      * @param ns the namespace where the object is stored
      * @param id the object id
@@ -77,7 +79,8 @@ public class DBRefBase implements Serializable {
 
     /**
      * Gets the object's id
-     * @return the id of the reference
+     *
+     * @return the id of the referenced document
      */
     public Object getId() {
         return _id;

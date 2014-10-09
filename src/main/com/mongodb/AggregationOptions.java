@@ -24,8 +24,9 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * The options to apply to an aggregate operation.
  *
- * @since 2.12
  * @mongodb.server.release 2.2
+ * @mongodb.driver.manual reference/command/aggregate/ aggregate
+ * @since 2.12
  */
 public class AggregationOptions {
     private final Integer batchSize;
@@ -33,6 +34,9 @@ public class AggregationOptions {
     private final OutputMode outputMode;
     private final long maxTimeMS;
 
+    /**
+     * Enumeration to define where the results of the aggregation will be output.
+     */
     public enum OutputMode {
         /**
          * The output of the aggregate operation is returned inline.
@@ -53,9 +57,10 @@ public class AggregationOptions {
     }
 
     /**
-     * If true, this enables external sort capabilities otherwise $sort produces an error if the operation consumes 10 percent or more of
+     * If true, this enables external sort capabilities, otherwise $sort produces an error if the operation consumes 10 percent or more of
      * RAM.
      *
+     * @return true if aggregation stages can write data to temporary files
      * @mongodb.server.release 2.6
      */
     public Boolean getAllowDiskUse() {
@@ -65,6 +70,7 @@ public class AggregationOptions {
     /**
      * The size of batches to use when iterating over results.
      *
+     * @return the batch size
      * @mongodb.server.release 2.6
      */
     public Integer getBatchSize() {
@@ -73,6 +79,8 @@ public class AggregationOptions {
 
     /**
      * The mode of output for this configuration.
+     *
+     * @return whether the output will be inline or via a cursor
      * @see OutputMode
      */
     public OutputMode getOutputMode() {
@@ -102,10 +110,21 @@ public class AggregationOptions {
                + '}';
     }
 
+    /**
+     * Creates a new Builder for {@code AggregationOptions}.
+     *
+     * @return a new empty builder.
+     */
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * Builder for creating {@code AggregationOptions}.
+     *
+     * @mongodb.server.release 2.2
+     * @mongodb.driver.manual reference/command/aggregate/ aggregate
+     */
     public static class Builder {
 
         private Integer batchSize;
@@ -117,9 +136,10 @@ public class AggregationOptions {
         }
 
         /**
-         * Sets the size of batches to use when iterating over results.
-         * @return this
+         * Sets the size of batches to use when iterating over results. Can be null.
          *
+         * @param size the batch size to apply to the cursor
+         * @return {@code this} so calls can be chained
          * @mongodb.server.release 2.6
          */
         public Builder batchSize(final Integer size) {
@@ -128,10 +148,11 @@ public class AggregationOptions {
         }
 
         /**
-         * If true, this enables external sort capabilities otherwise $sort produces an error if the operation consumes 10 percent or
-         * more of RAM.
-         * @return this
+         * Set whether to enable external sort capabilities. If set to false, $sort produces an error if the operation consumes 10 percent
+         * or more RAM.
          *
+         * @param allowDiskUse whether or not aggregation stages can write data to temporary files
+         * @return {@code this} so calls can be chained
          * @mongodb.server.release 2.6
          */
         public Builder allowDiskUse(final Boolean allowDiskUse) {
@@ -141,7 +162,9 @@ public class AggregationOptions {
 
         /**
          * The mode of output for this configuration.
-         * @return this
+         *
+         * @param mode an {@code OutputMode} that defines how to output the results of the aggregation
+         * @return {@code this} so calls can be chained
          * @see OutputMode
          */
         public Builder outputMode(final OutputMode mode) {
@@ -154,8 +177,7 @@ public class AggregationOptions {
          *
          * @param maxTime the max time
          * @param timeUnit the time unit
-         * @return this
-         *
+         * @return {@code this} so calls can be chained
          * @mongodb.server.release 2.6
          */
         public Builder maxTime(final long maxTime, final TimeUnit timeUnit) {

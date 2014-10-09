@@ -22,8 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- *
- * @author antoine
+ * An implementation of DBDecoder
  */
 public class DefaultDBDecoder extends BasicBSONDecoder implements DBDecoder {
 
@@ -41,14 +40,13 @@ public class DefaultDBDecoder extends BasicBSONDecoder implements DBDecoder {
 
     public static DBDecoderFactory FACTORY = new DefaultFactory();
 
-    public DefaultDBDecoder( ){
-    }
-        
+    @Override
     public DBCallback getDBCallback(DBCollection collection) {
         // brand new callback every time
         return new DefaultDBCallback(collection);
     }
 
+    @Override
     public DBObject decode(byte[] b, DBCollection collection) {
         DBCallback cbk = getDBCallback(collection);
         cbk.reset();
@@ -56,6 +54,7 @@ public class DefaultDBDecoder extends BasicBSONDecoder implements DBDecoder {
         return (DBObject) cbk.get();
     }
 
+    @Override
     public DBObject decode(InputStream in,  DBCollection collection) throws IOException {
         DBCallback cbk = getDBCallback(collection);
         cbk.reset();

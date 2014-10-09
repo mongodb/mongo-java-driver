@@ -56,12 +56,11 @@ public class MapReduceCommand {
     /**
      * Represents the command for a map reduce operation Runs the command in REPLACE output type to a named collection
      *
-     * @param inputCollection  the collection to read from
+     * @param inputCollection  collection to use as the source documents to perform the map reduce operation.
      * @param map              a JavaScript function that associates or "maps" a value with a key and emits the key and value pair.
      * @param reduce           a JavaScript function that "reduces" to a single object all the values associated with a particular key.
-     * @param outputCollection specifies the location of the result of the map-reduce operation (optional) - leave null if want to get the
-     *                         result inline
-     * @param type             specifies the type of job output
+     * @param outputCollection optional - leave null if want to get the result inline
+     * @param type             the type of output
      * @param query            specifies the selection criteria using query operators for determining the documents input to the map
      *                         function.
      * @dochub mapreduce
@@ -126,10 +125,9 @@ public class MapReduceCommand {
     }
 
     /**
-     * Gets the output target (name of collection to save to)
-     * This value is nullable only if OutputType is set to INLINE
+     * Gets the output target (name of collection to save to) This value is nullable only if OutputType is set to INLINE
      * 
-     * @return The outputTarget
+     * @return The outputCollection
      */
     public String getOutputTarget(){
         return _outputTarget;
@@ -138,6 +136,7 @@ public class MapReduceCommand {
 
     /**
      * Gets the OutputType for this instance.
+     *
      * @return The outputType.
      */
     public OutputType getOutputType(){
@@ -157,8 +156,7 @@ public class MapReduceCommand {
     /**
      * Sets the Finalize JS Function 
      * 
-     * @param finalize
-     *            The finalize function (as a JS String)
+     * @param finalize The finalize function (as a JS String)
      */
     public void setFinalize( String finalize ){
         _finalize = finalize;
@@ -185,8 +183,7 @@ public class MapReduceCommand {
     /**
      * Sets the (optional) sort specification object
      * 
-     * @param sort
-     *            The sort specification object
+     * @param sort The sort specification object
      */
     public void setSort( DBObject sort ){
         _sort = sort;
@@ -204,8 +201,7 @@ public class MapReduceCommand {
     /**
      * Sets the (optional) limit on input
      * 
-     * @param limit
-     *            The limit specification object
+     * @param limit The limit specification object
      */
     public void setLimit( int limit ){
         _limit = limit;
@@ -216,9 +212,8 @@ public class MapReduceCommand {
      *
      * @param timeUnit the time unit to return the value in.
      * @return the maximum execution time
-     * @since 2.12.0
-     *
      * @mongodb.server.release 2.6
+     * @since 2.12.0
      */
     public long getMaxTime(final TimeUnit timeUnit) {
         return timeUnit.convert(_maxTimeMS, MILLISECONDS);
@@ -227,11 +222,10 @@ public class MapReduceCommand {
     /**
      * Sets the max execution time for this command, in the given time unit.
      *
-     * @param maxTime  the maximum execution time. A non-zero value requires a server version >= 2.6
+     * @param maxTime  the maximum execution time. A non-zero value requires a server version &gt;= 2.6
      * @param timeUnit the time unit that maxTime is specified in
-     * @since 2.12.0
-     *
      * @mongodb.server.release 2.6
+     * @since 2.12.0
      */
     public void setMaxTime(final long maxTime, final TimeUnit timeUnit) {
         this._maxTimeMS = MILLISECONDS.convert(maxTime, timeUnit);
@@ -249,8 +243,7 @@ public class MapReduceCommand {
     /**
      * Sets the (optional) JavaScript scope
      * 
-     * @param scope
-     *            The JavaScript scope
+     * @param scope The JavaScript scope
      */
     public void setScope( Map<String, Object> scope ){
         _scope = scope;
@@ -279,6 +272,8 @@ public class MapReduceCommand {
 
     /**
      * Gets the (optional) database name where the output collection should reside
+     *
+     * @return the name of the database the result is stored in, or null.
      */
     public String getOutputDB() {
         return this._outputDB;
@@ -286,12 +281,18 @@ public class MapReduceCommand {
 
     /**
      * Sets the (optional) database name where the output collection should reside
-     * @param outputDB
+     *
+     * @param outputDB the name of the database to send the Map Reduce output to
      */
     public void setOutputDB(String outputDB) {
         this._outputDB = outputDB;
     }
 
+    /**
+     * Turns this command into a DBObject representation of this map reduce command.
+     *
+     * @return a DBObject that contains the MongoDB document representation of this command.
+     */
     public DBObject toDBObject() {
         BasicDBObject cmd = new BasicDBObject();
 
@@ -369,19 +370,18 @@ public class MapReduceCommand {
     }
 
     /**
-     * Sets the read preference for this command.
-     * See the * documentation for {@link ReadPreference}
-     * for more information.
+     * Sets the read preference for this command. See the * documentation for {@link ReadPreference} for more information.
      *
      * @param preference Read Preference to use
      */
-    public void setReadPreference( ReadPreference preference ){
+    public void setReadPreference(final ReadPreference preference) {
         _readPref = preference;
     }
     
     /**
      * Gets the read preference
-     * @return
+     *
+     * @return the readPreference
      */
     public ReadPreference getReadPreference(){
         return _readPref;

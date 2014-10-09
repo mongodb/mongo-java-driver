@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// DB.java
-
 package com.mongodb;
 
 import com.mongodb.util.Util;
@@ -62,9 +60,9 @@ public abstract class DB {
      * Constructs a new instance of the {@code DB}.
      *
      * @param mongo the mongo instance
-     * @param name  the database name
+     * @param name  the database name - must not be empty and cannot contain spaces
      */
-    public DB( Mongo mongo , String name ){
+    public DB(final Mongo mongo, final String name) {
         if(!isValidName(name))
             throw new IllegalArgumentException("Invalid database name format. Database name is either empty or it contains spaces.");
         _mongo = mongo;
@@ -120,12 +118,12 @@ public abstract class DB {
     }
 
     /**
-     * Starts a new 'consistent request'.
-     * <p/>
-     * Following this call and until {@link com.mongodb.DB#requestDone()} is called,
-     * all db operations will use the same underlying connection.
-     * <p/>
-     * This is useful to ensure that operations happen in a certain order with predictable results.
+     * <p>Starts a new 'consistent request'</p>.
+     * 
+     * <p>Following this call and until {@link com.mongodb.DB#requestDone()} is called,
+     * all db operations will use the same underlying connection.</p>
+     * 
+     * <p>This is useful to ensure that operations happen in a certain order with predictable results.</p>
      */
     public abstract void requestStart();
 
@@ -135,16 +133,14 @@ public abstract class DB {
     public abstract void requestDone();
 
     /**
-     * Ensure that a connection is assigned to the current 'consistent request'
-     * (from primary pool, if connected to a replica set)
+     * Ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a replica set)
      */
     public abstract void requestEnsureConnection();
 
     /**
-     * Gets a collection with a given name.
-     * If the collection does not exist, a new collection is created.
-     * <p/>
-     * This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.
+     * <p>Gets a collection with a given name. If the collection does not exist, a new collection is created.</p> 
+     * 
+     * <p>This class is NOT part of the public API.  Be prepared for non-binary compatible changes in minor releases.</p>
      *
      * @param name the name of the collection
      * @return the collection
@@ -162,36 +158,30 @@ public abstract class DB {
         return c;
     }
 
+
     /**
-     * Creates a collection with a given name and options.
-     * If the collection does not exist, a new collection is created.
-     * <p/>
-     * Possible options:
-     * <ul>
-     * <li>
-     * <b>capped</b> ({@code boolean}) - Enables a collection cap.
-     * False by default. If enabled, you must specify a size parameter.
-     * </li>
-     * <li>
-     * <b>size</b> ({@code int}) - If capped is true, size specifies a maximum size in bytes for the capped collection.
-     * When capped is false, you may use size to preallocate space.
-     * </li>
-     * <li>
-     * <b>max</b> ({@code int}) -   Optional. Specifies a maximum "cap" in number of documents for capped collections.
-     * You must also specify size when specifying max.
-     * </li>
-     * <p/>
+     * <p>Creates a collection with a given name and options. If the collection already exists, this throws a 
+     * {@code CommandFailureException}.</p>
+     *
+     * <p>Possible options:</p>
+     * <ul> 
+     *     <li> <b>capped</b> ({@code boolean}) - Enables a collection cap. False by default. If enabled, 
+     *     you must specify a size parameter. </li> 
+     *     <li> <b>size</b> ({@code int}) - If capped is true, size specifies a maximum size in bytes for the capped collection. When 
+     *     capped is false, you may use size to preallocate space. </li> 
+     *     <li> <b>max</b> ({@code int}) -   Optional. Specifies a maximum "cap" in number of documents for capped collections. You must
+     *     also specify size when specifying max. </li>
      * </ul>
-     * <p/>
-     * Note that if the {@code options} parameter is {@code null},
-     * the creation will be deferred to when the collection is written to.
+     * <p>Note that if the {@code options} parameter is {@code null}, the creation will be deferred to when the collection is written
+     * to.</p>
      *
      * @param name    the name of the collection to return
      * @param options options
      * @return the collection
      * @throws MongoException
+     * @mongodb.driver.manual reference/method/db.createCollection/ createCollection()
      */
-    public DBCollection createCollection( String name, DBObject options ){
+    public DBCollection createCollection(final String name, final DBObject options) {
         if ( options != null ){
             DBObject createCmd = new BasicDBObject("create", name);
             createCmd.putAll(options);
@@ -208,7 +198,7 @@ public abstract class DB {
      * @param s the name of the collection
      * @return the collection
      */
-    public DBCollection getCollectionFromString( String s ){
+    public DBCollection getCollectionFromString(String s) {
         DBCollection foo = null;
 
         int idx = s.indexOf( "." );
@@ -228,22 +218,22 @@ public abstract class DB {
     }
 
     /**
-     * Executes a database command.
-     * This method calls {@link DB#command(DBObject, int)} } with 0 as query option.
+     * Executes a database command. This method calls {@link DB#command(DBObject, ReadPreference) } with the default read preference for the
+     * database.
      *
      * @param cmd {@code DBObject} representation of the command to be executed
      * @return result of the command execution
      * @throws MongoException
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
-    public CommandResult command( DBObject cmd ){
+    public CommandResult command(final DBObject cmd) {
         return command( cmd, 0 );
     }
 
 
     /**
-     * Executes a database command.
-     * This method calls {@link DB#command(com.mongodb.DBObject, int, com.mongodb.DBEncoder) } with 0 as query option.
+     * Executes a database command. This method calls {@link DB#command(DBObject, ReadPreference, DBEncoder) } with the default read
+     * preference for the database.
      *
      * @param cmd     {@code DBObject} representation of the command to be executed
      * @param encoder {@link DBEncoder} to be used for command encoding
@@ -251,15 +241,15 @@ public abstract class DB {
      * @throws MongoException
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
-    public CommandResult command( DBObject cmd, DBEncoder encoder ){
+    public CommandResult command(final DBObject cmd, final DBEncoder encoder) {
         return command( cmd, 0, encoder );
     }
 
     /**
-     * Executes a database command. This method calls
-     * {@link DB#command(com.mongodb.DBObject, int, com.mongodb.ReadPreference, com.mongodb.DBEncoder) } with the database default read
-     * preference.  The only option used by this method was "slave ok", therefore this method has been replaced with
-     * {@link com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)}.
+     * Executes a database command. This method calls 
+     * {@link #command(com.mongodb.DBObject, int, com.mongodb.ReadPreference, com.mongodb.DBEncoder) } with the database default read 
+     * preference.  The only option used by this method was "slave ok", therefore this method has been replaced with 
+     * {@link #command(DBObject, ReadPreference, DBEncoder)}.
      *
      * @param cmd     {@code DBObject} representation the command to be executed
      * @param options query options to use
@@ -270,15 +260,15 @@ public abstract class DB {
      * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)} instead.  This method will be removed in 3.0.
      */
     @Deprecated
-    public CommandResult command( DBObject cmd , int options, DBEncoder encoder ){
+    public CommandResult command(final DBObject cmd, final int options, final DBEncoder encoder) {
         return command(cmd, options, getReadPreference(), encoder);
     }
 
     /**
      * Executes a database command. This method calls
-     * {@link DB#command(com.mongodb.DBObject, int, com.mongodb.ReadPreference, com.mongodb.DBEncoder) } with a default encoder.  The only
+     * {@link #command(com.mongodb.DBObject, int, com.mongodb.ReadPreference, com.mongodb.DBEncoder) } with a default encoder.  The only
      * option used by this method was "slave ok", therefore this method has been replaced
-     * with {@link com.mongodb.DB#command(DBObject, ReadPreference)}.
+     * with {@link #command(DBObject, ReadPreference)}.
      *
      * @param cmd            A {@code DBObject} representation the command to be executed
      * @param options        The query options to use
@@ -289,13 +279,13 @@ public abstract class DB {
      * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference)} instead.  This method will be removed in 3.0.
      */
     @Deprecated
-    public CommandResult command( DBObject cmd , int options, ReadPreference readPreference ){
+    public CommandResult command( final DBObject cmd , final int options, final ReadPreference readPreference ){
         return command(cmd, options, readPreference, DefaultDBEncoder.FACTORY.create());
     }
 
     /**
-     * Executes a database command.  The only option used by this method was "slave ok", therefore this method has been replaced with {@link
-     * com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)}.
+     * Executes a database command.  The only option used by this method was "slave ok", therefore this method has been replaced with 
+     * {@link #command(DBObject, ReadPreference, DBEncoder)}.
      *
      * @param cmd            A {@code DBObject} representation the command to be executed
      * @param options        The query options to use
@@ -307,7 +297,7 @@ public abstract class DB {
      * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference, DBEncoder)} instead.  This method will be removed in 3.0.
      */
     @Deprecated
-    public CommandResult command( DBObject cmd , int options, ReadPreference readPreference, DBEncoder encoder ){
+    public CommandResult command(DBObject cmd, final int options, final ReadPreference readPreference, final DBEncoder encoder) {
         ReadPreference effectiveReadPrefs = getCommandReadPreference(cmd, readPreference);
         cmd = wrapCommand(cmd, effectiveReadPrefs);
 
@@ -327,12 +317,12 @@ public abstract class DB {
      *
      * @param cmd            The {@code DBObject} representation the command to be executed
      * @param readPreference Where to execute the command - this will only be applied for a subset of commands
-     * @param encoder        The DBEncoder that knows how to serialise the cmd
+     * @param encoder        The DBEncoder that knows how to serialise the command
      * @return The result of executing the command, success or failure
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      * @since 2.12
      */
-    public CommandResult command( final DBObject cmd , final ReadPreference readPreference, final DBEncoder encoder ){
+    public CommandResult command(final DBObject cmd, final ReadPreference readPreference, final DBEncoder encoder) {
         return command(cmd, 0, readPreference, encoder);
     }
 
@@ -354,7 +344,7 @@ public abstract class DB {
 
     /**
      * Executes a database command with the given query options.  The only option used by this method was "slave ok", therefore this method
-     * has been replaced with {@link com.mongodb.DB#command(DBObject, ReadPreference)}.
+     * has been replaced with {@link #command(DBObject, ReadPreference)}.
      *
      * @param cmd     The {@code DBObject} representation the command to be executed
      * @param options The query options to use
@@ -364,13 +354,13 @@ public abstract class DB {
      * @deprecated Use {@link com.mongodb.DB#command(DBObject, ReadPreference)} instead.  This method will be removed in 3.0.
      */
     @Deprecated
-    public CommandResult command(DBObject cmd, int options) {
+    public CommandResult command(final DBObject cmd, final int options) {
         return command(cmd, options, getReadPreference());
     }
 
     /**
      * Executes the command against the database with the given read preference.  This method is the preferred way of setting read
-     * preference, use this instead of {@link DB#command(com.mongodb.DBObject, int) }
+     * preference, use this instead of {@link #command(com.mongodb.DBObject, int) }
      *
      * @param cmd            The {@code DBObject} representation the command to be executed
      * @param readPreference Where to execute the command - this will only be applied for a subset of commands
@@ -383,19 +373,20 @@ public abstract class DB {
     }
 
     /**
-     * Executes a database command. This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject) }
+     * Executes a database command. This method constructs a simple DBObject using {@code command} as the field name and {@code true} as its
+     * value, and calls {@link #command(DBObject, ReadPreference) } with the default read preference for the database.
      *
-     * @param cmd name of the command to be executed
-     * @return result of the command execution
+     * @param cmd command to execute
+     * @return result of command from the database
      * @throws MongoException
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      */
-    public CommandResult command( String cmd ){
+    public CommandResult command(final String cmd) {
         return command( new BasicDBObject( cmd , Boolean.TRUE ) );
     }
 
     /**
-     * Executes a database command. This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject, int)  }
+     * Executes a database command. This method constructs a simple DBObject and calls {@link #command(com.mongodb.DBObject, int)}
      *
      * @param cmd     name of the command to be executed
      * @param options query options to use
@@ -405,14 +396,12 @@ public abstract class DB {
      * @deprecated Use {@link com.mongodb.DB#command(String, ReadPreference)} instead.  This method will be removed in 3.0.
      */
     @Deprecated
-    public CommandResult command( String cmd, int options  ){
+    public CommandResult command(final String cmd, final int options) {
         return command( new BasicDBObject( cmd , Boolean.TRUE ), options );
     }
 
     /**
-     * Executes a database command. This method constructs a simple dbobject and calls {@link DB#command(com.mongodb.DBObject, int,
-     * com.mongodb.ReadPreference)  }. The only option used by this method was "slave ok", therefore this method has been replaced with
-     * {@link com.mongodb.DB#command(DBObject, ReadPreference)}.
+     * Executes a database command. This method constructs a simple {@link DBObject} and calls {@link #command(DBObject, ReadPreference) }.
      *
      * @param cmd            The name of the command to be executed
      * @param readPreference Where to execute the command - this will only be applied for a subset of commands
@@ -426,13 +415,14 @@ public abstract class DB {
     }
 
     /**
-     * Evaluates JavaScript functions on the database server.
-     * This is useful if you need to touch a lot of data lightly, in which case network transfer could be a bottleneck.
+     * Evaluates JavaScript functions on the database server. This is useful if you need to touch a lot of data lightly, in which case
+     * network transfer could be a bottleneck.
      *
-     * @param code @{code String} representation of JavaScript function
+     * @param code {@code String} representation of JavaScript function
      * @param args arguments to pass to the JavaScript function
      * @return result of the command execution
      * @throws MongoException
+     * @mongodb.driver.manual reference/method/db.eval/ db.eval()
      */
     public CommandResult doEval( String code , Object ... args ){
 
@@ -443,14 +433,14 @@ public abstract class DB {
     }
 
     /**
-     * Calls {@link DB#doEval(java.lang.String, java.lang.Object[]) }.
-     * If the command is successful, the "retval" field is extracted and returned.
-     * Otherwise an exception is thrown.
+     * Calls {@link DB#doEval(java.lang.String, java.lang.Object[]) }. If the command is successful, the "retval" field is extracted and
+     * returned. Otherwise an exception is thrown.
      *
-     * @param code @{code String} representation of JavaScript function
+     * @param code {@code String} representation of JavaScript function
      * @param args arguments to pass to the JavaScript function
      * @return result of the execution
      * @throws MongoException
+     * @mongodb.driver.manual reference/method/db.eval/ db.eval()
      */
     public Object eval( String code , Object ... args ){
 
@@ -460,11 +450,11 @@ public abstract class DB {
     }
 
     /**
-     * Helper method for calling a 'dbStats' command.
-     * It returns storage statistics for a given database.
+     * Helper method for calling a 'dbStats' command. It returns storage statistics for a given database.
      *
      * @return result of the execution
      * @throws MongoException
+     * @mongodb.driver.manual reference/command/dbStats/ Database Stats
      */
     public CommandResult getStats() {
         CommandResult result = command("dbstats");
@@ -495,10 +485,11 @@ public abstract class DB {
     }
 
     /**
-     * Returns a set containing all collections in the existing database.
+     * Returns a set containing the names of all collections in this database.
      *
-     * @return an set of names
+     * @return the names of collections in this database
      * @throws MongoException
+     * @mongodb.driver.manual reference/method/db.getCollectionNames/ getCollectionNames()
      */
     public abstract Set<String> getCollectionNames();
 
@@ -569,65 +560,75 @@ public abstract class DB {
      * @see WriteConcern#ACKNOWLEDGED
      */
     @Deprecated
-    public CommandResult getLastError( com.mongodb.WriteConcern concern ){
+    public CommandResult getLastError(final com.mongodb.WriteConcern concern) {
         return command( concern.getCommand() );
     }
 
     /**
      * Returns the error status of the last operation on the current connection.
      *
-     * @param w        when running with replication, this is the number of servers to replicate to before returning. A <b>w</b> value of <b>1</b> indicates the primary only. A <b>w</b> value of <b>2</b> includes the primary and at least one secondary, etc. In place of a number, you may also set <b>w</b> to majority to indicate that the command should wait until the latest write propagates to a majority of replica set members. If using <b>w</b>, you should also use <b>wtimeout</b>. Specifying a value for <b>w</b> without also providing a <b>wtimeout</b> may cause {@code getLastError} to block indefinitely.
-     * @param wtimeout a value in milliseconds that controls how long to wait for write propagation to complete. If replication does not complete in the given timeframe, the getLastError command will return with an error status.
-     * @param fsync    if <b>true</b>, wait for {@code mongod} to write this data to disk before returning. Defaults to <b>false</b>.
+     * @param w        when running with replication, this is the number of servers to replicate to before returning. A {@code w} value 
+     *                 of {@code 1} indicates the primary only. A {@code w} value of {@code 2} includes the primary and at least one 
+     *                 secondary, etc. In place of a number, you may also set {@code w} to majority to indicate that the command should 
+     *                 wait until the latest write propagates to a majority of replica set members. If using {@code w}, 
+     *                 you should also use {@code wtimeout}. Specifying a value for {@code w} without also providing a {@code wtimeout} may
+     *                 cause {@code getLastError} to block indefinitely.
+     * @param wtimeout a value in milliseconds that controls how long to wait for write propagation to complete. If replication does not
+     *                 complete in the given time frame, the getLastError command will return with an error status.
+     * @param fsync    if {@code true}, wait for MongoDB to write this data to disk before returning. Defaults to {@code false}.
      * @return {@code DBObject} with error and status information
      * @throws MongoException
      * @deprecated The getlasterror command will not be supported in future versions of MongoDB.  Use acknowledged writes instead.
      * @see WriteConcern#ACKNOWLEDGED
      */
     @Deprecated
-    public CommandResult getLastError( int w , int wtimeout , boolean fsync ){
+    public CommandResult getLastError( final int w , final int wtimeout , final boolean fsync ){
         return command( (new com.mongodb.WriteConcern( w, wtimeout , fsync )).getCommand() );
     }
 
 
     /**
-     * Sets the write concern for this database. It will be used for
-     * write operations to any collection in this database. See the
+     * Sets the write concern for this database. It will be used for write operations to any collection in this database. See the
      * documentation for {@link WriteConcern} for more information.
      *
-     * @param concern {@code WriteConcern} to use
+     * @param writeConcern {@code WriteConcern} to use
+     * @mongodb.driver.manual core/write-concern/ Write Concern
      */
-    public void setWriteConcern( com.mongodb.WriteConcern concern ){
-        if (concern == null) throw new IllegalArgumentException();
-        _concern = concern;
+    public void setWriteConcern(final WriteConcern writeConcern) {
+        if (writeConcern == null) {
+            throw new IllegalArgumentException();
+        }
+        _concern = writeConcern;
     }
 
     /**
      * Gets the write concern for this database.
      *
      * @return {@code WriteConcern} to be used for write operations, if not specified explicitly
+     * @mongodb.driver.manual core/write-concern/ Write Concern
      */
-    public com.mongodb.WriteConcern getWriteConcern(){
+    public WriteConcern getWriteConcern(){
         if ( _concern != null )
             return _concern;
         return _mongo.getWriteConcern();
     }
 
     /**
-     * Sets the read preference for this database. Will be used as default for
-     * read operations from any collection in this database. See the
+     * Sets the read preference for this database. Will be used as default for read operations from any collection in this database. See the
      * documentation for {@link ReadPreference} for more information.
      *
-     * @param preference {@code ReadPreference} to use
+     * @param readPreference {@code ReadPreference} to use
+     * @mongodb.driver.manual core/read-preference/ Read Preference
      */
-    public void setReadPreference( ReadPreference preference ){
-        _readPref = preference;
+    public void setReadPreference(final ReadPreference readPreference) {
+        _readPref = readPreference;
     }
 
     /**
      * Gets the read preference for this database.
      *
      * @return {@code ReadPreference} to be used for read operations, if not specified explicitly
+     * @mongodb.driver.manual core/read-preference/ Read Preference
      */
     public ReadPreference getReadPreference(){
         if ( _readPref != null )
@@ -636,9 +637,10 @@ public abstract class DB {
     }
 
     /**
-     * Drops this database, deleting the associated data files. Use with caution.
+     * Drops this database. Removes all data on disk. Use with caution.
      *
      * @throws MongoException
+     * @mongodb.driver.manual reference/command/dropDatabase/ Drop Database
      */
     public void dropDatabase(){
 
@@ -759,7 +761,7 @@ public abstract class DB {
      * @deprecated Use {@code DB.command} to call either the createUser or updateUser command
      */
     @Deprecated
-    public WriteResult addUser( String username , char[] passwd ){
+    public WriteResult addUser(final String username, final char[] passwd) {
         return addUser(username, passwd, false);
     }
 
@@ -868,9 +870,9 @@ public abstract class DB {
     }
 
     /**
-     * Gets the {@link Mongo} instance
+     * Gets the Mongo instance
      *
-     * @return the instance of {@link Mongo} this database belongs to
+     * @return the mongo instance that this database was created from.
      */
     public Mongo getMongo(){
         return _mongo;
@@ -880,7 +882,7 @@ public abstract class DB {
      * Gets another database on same server
      *
      * @param name name of the database
-     * @return the database
+     * @return the DB for the given name
      */
     public DB getSisterDB( String name ){
         return _mongo.getDB( name );
@@ -901,6 +903,7 @@ public abstract class DB {
      * Adds the given flag to the default query options.
      *
      * @param option value to be added
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public void addOption( int option ){
         _options.add( option );
@@ -910,6 +913,7 @@ public abstract class DB {
      * Sets the default query options, overwriting previous value.
      *
      * @param options bit vector of query options
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public void setOptions( int options ){
         _options.set( options );
@@ -917,6 +921,7 @@ public abstract class DB {
 
     /**
      * Resets the query options.
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public void resetOptions(){
         _options.reset();
@@ -926,6 +931,7 @@ public abstract class DB {
      * Gets the default query options
      *
      * @return bit vector of query options
+     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public int getOptions(){
         return _options.get();

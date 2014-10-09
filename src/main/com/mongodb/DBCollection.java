@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-// Mongo
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -60,6 +59,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * DBObject myDoc = coll.findOne();
  * System.out.println(myDoc); }
  * </pre>
+ * @mongodb.driver.manual reference/glossary/#term-collection Collection
  */
 @SuppressWarnings("unchecked")
 public abstract class DBCollection {
@@ -175,27 +175,26 @@ public abstract class DBCollection {
     public abstract WriteResult insert(List<DBObject> list, WriteConcern concern, DBEncoder encoder);
 
     /**
-     * Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
-     * does not contain an '_id' field, it will be added.
-     * <p>
-     * If the value of the continueOnError property of the given {@code InsertOptions} is true, that value will override the value of the
-     * continueOnError property of the given {@code WriteConcern}.  Otherwise, the value of the
-     * continueOnError property of the given {@code WriteConcern} will take effect.
-     * </p>
+     * <p>Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
+     * does not contain an '_id' field, it will be added.</p>
      *
-     * @param list    a list of {@code DBObject}'s to be inserted
+     * <p>If the value of the continueOnError property of the given {@code InsertOptions} is true, 
+     * that value will override the value of the continueOnError property of the given {@code WriteConcern}. Otherwise, 
+     * the value of the continueOnError property of the given {@code WriteConcern} will take effect. </p>
+     *
+     * @param documents     a list of {@code DBObject}'s to be inserted
      * @param insertOptions the options to use for the insert
      * @return the result of the operation
      * @throws MongoException if the operation fails
-     * @mongodb.driver.manual tutorial/insert-documents/ Insert
+     * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
-    public WriteResult insert(List<DBObject> list, InsertOptions insertOptions) {
+    public WriteResult insert(final List<DBObject> documents, final InsertOptions insertOptions) {
         WriteConcern writeConcern = insertOptions.getWriteConcern() != null ? insertOptions.getWriteConcern() : getWriteConcern();
         if (insertOptions.isContinueOnError()) {
             writeConcern = writeConcern.continueOnError(true);
         }
         DBEncoder dbEncoder = insertOptions.getDbEncoder() != null ? insertOptions.getDbEncoder() : getDBEncoder();
-        return insert(list, writeConcern, dbEncoder);
+        return insert(documents, writeConcern, dbEncoder);
     }
 
     /**
@@ -279,10 +278,11 @@ public abstract class DBCollection {
     }
 
     /**
-     * Adds any necessary fields to a given object before saving it to the collection.
-     * @param o object to which to add the fields
+     * Method to be overridden if you need to add any fields to a given document before saving it to the collection.
+     *
+     * @param document object to which to add the fields
      */
-    protected abstract void doapply( DBObject o );
+    protected abstract void doapply(DBObject document);
 
     /**
      * Remove documents from a collection.
@@ -379,30 +379,27 @@ public abstract class DBCollection {
     // ------
 
     /**
-     * Finds an object by its id.
-     * This compares the passed in value to the _id field of the document
+     * Get a single document from collection by '_id'.
      *
-     * @param obj any valid object
-     * @return the object, if found, otherwise null
-     * @throws MongoException
+     * @param id value of '_id' field of a document we are looking for
+     * @return A document with '_id' provided as the argument to this method.
+     * @mongodb.driver.manual tutorial/query-documents/ Querying
      */
-    public DBObject findOne( Object obj ){
-        return findOne(obj, null);
+    public DBObject findOne(final Object id) {
+        return findOne(id, null);
     }
 
 
     /**
-     * Finds an object by its id.
-     * This compares the passed in value to the _id field of the document
+     * Get a single document from collection by '_id'.
      *
-     * @param obj any valid object
-     * @param fields fields to return
-     * @return the object, if found, otherwise null
-     * @throws MongoException
-     * @mongodb.driver.manual tutorial/query-documents/ Query
+     * @param id         value of '_id' field of a document we are looking for
+     * @param projection specifies which projection MongoDB will return from the documents in the result set.
+     * @return A document that satisfies the query specified as the argument to this method.
+     * @mongodb.driver.manual tutorial/query-documents/ Querying
      */
-    public DBObject findOne( Object obj, DBObject fields ){
-        return findOne(new BasicDBObject("_id", obj), fields);
+    public DBObject findOne(final Object id, final DBObject projection) {
+        return findOne(new BasicDBObject("_id", id), projection);
     }
 
     /**
@@ -768,16 +765,20 @@ public abstract class DBCollection {
     // --- END INDEX CODE ---
 
     /**
-     * Set hint fields for this collection (to optimize queries).
-     * @param lst a list of {@code DBObject}s to be used as hints
+     * Override MongoDB's default index selection and query optimization process.
+     *
+     * @param indexes list of indexes to "hint" or force MongoDB to use when performing the query.
+     * @mongodb.driver.manual reference/operator/meta/hint/ $hint
      */
-    public void setHintFields( List<DBObject> lst ){
-        _hintFields = lst;
+    public void setHintFields(final List<DBObject> indexes) {
+        _hintFields = indexes;
     }
 
     /**
      * Get hint fields for this collection (used to optimize queries).
+     *
      * @return a list of {@code DBObject} to be used as hints.
+     * @mongodb.driver.manual reference/operator/meta/hint/ $hint
      */
     protected List<DBObject> getHintFields() {
         return _hintFields;
@@ -845,6 +846,7 @@ public abstract class DBCollection {
 
     /**
      * Returns a single object from this collection matching the query.
+     *
      * @param o the query object
      * @return the object found, or {@code null} if no such object exists
      * @throws MongoException
@@ -856,7 +858,8 @@ public abstract class DBCollection {
 
     /**
      * Returns a single object from this collection matching the query.
-     * @param o the query object
+     *
+     * @param o      the query object
      * @param fields fields to return
      * @return the object found, or {@code null} if no such object exists
      * @throws MongoException
@@ -865,11 +868,12 @@ public abstract class DBCollection {
     public DBObject findOne( DBObject o, DBObject fields ) {
         return findOne( o, fields, null, getReadPreference());
     }
-    
+
     /**
      * Returns a single object from this collection matching the query.
-     * @param o the query object
-     * @param fields fields to return
+     *
+     * @param o       the query object
+     * @param fields  fields to return
      * @param orderBy fields to order by
      * @return the object found, or {@code null} if no such object exists
      * @throws MongoException
@@ -954,57 +958,66 @@ public abstract class DBCollection {
 
 
     /**
-     * calls {@link DBCollection#apply(com.mongodb.DBObject, boolean)} with ensureID=true
-     * @param o {@code DBObject} to which to add fields
-     * @return the modified parameter object
+     * Template method pattern. Please extend DBCollection and override {@link #doapply(DBObject)} if you need to add specific fields before
+     * saving object to collection.
+     *
+     * @param document document to be passed to {@code doapply()}
+     * @return '_id' of the document
      */
-    public Object apply( DBObject o ){
-        return apply( o , true );
+    public Object apply(final DBObject document) {
+        return apply(document, true);
     }
 
     /**
-     * calls {@link DBCollection#doapply(com.mongodb.DBObject)}, optionally adding an automatic _id field
-     * @param jo object to add fields to
-     * @param ensureID whether to add an {@code _id} field
-     * @return the modified object {@code o}
+     * Template method pattern. Please extend DBCollection and override {@link #doapply(DBObject)} if you need to add specific fields before
+     * saving object to collection.
+     *
+     * @param document document to be passed to {@code doapply()}
+     * @param ensureId specifies if '_id' field needs to be added to the document in case of absence.
+     * @return '_id' of the document
      */
-    public Object apply( DBObject jo , boolean ensureID ){
-        Object id = jo.get("_id");
-        if (ensureID && id == null) {
+    public Object apply(final DBObject document, final boolean ensureId) {
+        Object id = document.get("_id");
+        if (ensureId && id == null) {
             id = ObjectId.get();
-            jo.put("_id", id);
+            document.put("_id", id);
         }
 
-        doapply(jo);
+        doapply(document);
 
         return id;
     }
 
     /**
      * Update an existing document or insert a document depending on the parameter. If the document does not contain an '_id' field, then
-     * the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectid value. If
-     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field: <ul> <li>If a
-     * document does not exist with the specified '_id' value, the method performs an insert with the specified fields in the document.</li>
-     * <li>If a document exists with the specified '_id' value, the method performs an update, replacing all field in the existing record
-     * with the fields from the document.</li> </ul>. Calls {@link DBCollection#save(com.mongodb.DBObject, com.mongodb.WriteConcern)} with
-     * default WriteConcern
+     * the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectId value. If
+     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field: 
+     * <ul>
+     *     <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in 
+     *     the document.</li>
+     *     <li>If a document exists with the specified '_id' value, the method performs an update, 
+     *     replacing all field in the existing record with the fields from the document.</li> 
+     * </ul>
      *
      * @param jo {@link DBObject} to save to the collection.
      * @return the result of the operation
      * @throws MongoException if the operation fails
      * @mongodb.driver.manual tutorial/modify-documents/#modify-a-document-with-save-method Save
      */
-    public WriteResult save( DBObject jo ){
-    	return save(jo, getWriteConcern());
+    public WriteResult save(DBObject jo) {
+        return save(jo, getWriteConcern());
     }
 
     /**
      * Update an existing document or insert a document depending on the parameter. If the document does not contain an '_id' field, then
-     * the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectid value. If
-     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field: <ul> <li>If a
-     * document does not exist with the specified '_id' value, the method performs an insert with the specified fields in the document.</li>
-     * <li>If a document exists with the specified '_id' value, the method performs an update, replacing all field in the existing record
-     * with the fields from the document.</li> </ul>
+     * the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectId value. If
+     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field: 
+     * <ul>
+     *     <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in 
+     *     the document.</li>
+     *     <li>If a document exists with the specified '_id' value, the method performs an update, 
+     *     replacing all field in the existing record with the fields from the document.</li> 
+     * </ul>
      *
      * @param jo      {@link DBObject} to save to the collection.
      * @param concern {@code WriteConcern} to be used during operation
@@ -1043,8 +1056,8 @@ public abstract class DBCollection {
 
     // ---- DB COMMANDS ----
     /**
-     * Drops all indices from this collection
-     * @throws MongoException
+     * Drop all indexes on this collection.  The default index on the _id field will not be deleted.
+     * @mongodb.driver.manual core/indexes/ Indexes
      */
     public void dropIndexes(){
         dropIndexes( "*" );
@@ -1052,9 +1065,11 @@ public abstract class DBCollection {
 
 
     /**
-     * Drops an index from this collection
-     * @param name the index name
-     * @throws MongoException
+     * Drops the index with the given name from this collection.  This method is exactly the same as {@code dropIndex(indexName)}.
+     *
+     * @param name name of index to drop
+     * @throws MongoException if the index does not exist
+     * @mongodb.driver.manual core/indexes/ Indexes
      */
     public void dropIndexes( String name ){
         DBObject cmd = BasicDBObjectBuilder.start()
@@ -1070,8 +1085,10 @@ public abstract class DBCollection {
     }
 
     /**
-     * Drops (deletes) this collection. Use with care.
+     * Drops (deletes) this collection from the database. Use with care.
+     *
      * @throws MongoException
+     * @mongodb.driver.manual reference/command/drop/ Drop Command
      */
     public void drop(){
         resetIndexCache();
@@ -1583,7 +1600,6 @@ public abstract class DBCollection {
      * @param pipeline operations to be performed in the aggregation pipeline
      * @return the aggregation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
-     *
      * @mongodb.server.release 2.2
      */
     public AggregationOutput aggregate(final List<DBObject> pipeline) {
@@ -1597,7 +1613,6 @@ public abstract class DBCollection {
      * @param readPreference the read preference specifying where to run the query
      * @return the aggregation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
-     *
      * @mongodb.server.release 2.2
      */
     public AggregationOutput aggregate(final List<DBObject> pipeline, ReadPreference readPreference) {
@@ -1635,11 +1650,9 @@ public abstract class DBCollection {
      * @param readPreference {@link ReadPreference} to be used for this operation
      * @return the aggregation operation's result set
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
-     *
      * @mongodb.server.release 2.2
      */
-    public abstract Cursor aggregate(final List<DBObject> pipeline, final AggregationOptions options,
-                                          final ReadPreference readPreference);
+    public abstract Cursor aggregate(List<DBObject> pipeline, AggregationOptions options, ReadPreference readPreference);
 
     /**
      * Return the explain plan for the aggregation pipeline.
@@ -1649,10 +1662,9 @@ public abstract class DBCollection {
      * @return the command result.  The explain output may change from release to release, so best to simply log this.
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.driver.manual reference/operator/meta/explain/ Explain query
-     *
      * @mongodb.server.release 2.6
      */
-    public CommandResult explainAggregate(List<DBObject> pipeline, AggregationOptions options) {
+    public CommandResult explainAggregate(final List<DBObject> pipeline, final AggregationOptions options) {
         DBObject command = prepareCommand(pipeline, options);
         command.put("explain", true);
         final CommandResult res = _db.command(command, getOptions(), getReadPreference());
@@ -1662,34 +1674,32 @@ public abstract class DBCollection {
     }
 
     /**
-     * Return a list of cursors over the collection that can be used to scan it in parallel.
-     * <p>
-     *     Note: As of MongoDB 2.6, this method will work against a mongod, but not a mongos.
-     * </p>
+     * <p>Return a list of cursors over the collection that can be used to scan it in parallel.</p> 
+     *
+     * <p>Note: As of MongoDB 2.6, this method will work against a mongod, but not a mongos. </p>
      *
      * @param options the parallel scan options
      * @return a list of cursors, whose size may be less than the number requested
-     * @since 2.12
-     *
+     * @mongodb.driver.manual reference/command/parallelCollectionScan/ Parallel Collection Scan
      * @mongodb.server.release 2.6
+     * @since 2.12
      */
-    public abstract List<Cursor> parallelScan(final ParallelScanOptions options);
+    public abstract List<Cursor> parallelScan(ParallelScanOptions options);
 
     /**
-     * Creates a builder for an ordered bulk write operation, consisting of an ordered collection of write requests,
-     * which can be any combination of inserts, updates, replaces, or removes. Write requests included in the bulk operations will be
-     * executed in order, and will halt on the first failure.
-     * <p>
-     * Note: While this bulk write operation will execute on MongoDB 2.4 servers and below, the writes will be performed one at a time,
-     * as that is the only way to preserve the semantics of the value returned from execution or the exception thrown.
-     * <p>
-     * Note: While a bulk write operation with a mix of inserts, updates, replaces, and removes is supported,
-     * the implementation will batch up consecutive requests of the same type and send them to the server one at a time.  For example,
-     * if a bulk write operation consists of 10 inserts followed by 5 updates, followed by 10 more inserts,
-     * it will result in three round trips to the server.
+     * <p>Creates a builder for an ordered bulk write operation, consisting of an ordered collection of write requests, which can be any
+     * combination of inserts, updates, replaces, or removes. Write requests included in the bulk operations will be executed in order, and
+     * will halt on the first failure.</p>
+     *
+     * <p>Note: While this bulk write operation will execute on MongoDB 2.4 servers and below, the writes will be performed one at a time,
+     * as that is the only way to preserve the semantics of the value returned from execution or the exception thrown.</p>
+     *
+     * <p>Note: While a bulk write operation with a mix of inserts, updates, replaces, and removes is supported, the implementation will
+     * batch up consecutive requests of the same type and send them to the server one at a time.  For example, if a bulk write operation
+     * consists of 10 inserts followed by 5 updates, followed by 10 more inserts, it will result in three round trips to the server.</p>
      *
      * @return the builder
-     *
+     * @mongodb.driver.manual reference/method/db.collection.initializeOrderedBulkOp/ initializeOrderedBulkOp()
      * @since 2.12
      */
     public BulkWriteOperation initializeOrderedBulkOperation() {
@@ -1697,16 +1707,16 @@ public abstract class DBCollection {
     }
 
     /**
-     * Creates a builder for an unordered bulk operation, consisting of an unordered collection of write requests,
-     * which can be any combination of inserts, updates, replaces, or removes. Write requests included in the bulk operation will be
-     * executed in an undefined  order, and all requests will be executed even if some fail.
-     * <p>
-     * Note: While this bulk write operation will execute on MongoDB 2.4 servers and below, the writes will be performed one at a time,
-     * as that is the only way to preserve the semantics of the value returned from execution or the exception thrown.
+     * <p>Creates a builder for an unordered bulk operation, consisting of an unordered collection of write requests, which can be any
+     * combination of inserts, updates, replaces, or removes. Write requests included in the bulk operation will be executed in an undefined
+     * order, and all requests will be executed even if some fail.</p>
+     *
+     * <p>Note: While this bulk write operation will execute on MongoDB 2.4 servers and below, the writes will be performed one at a time,
+     * as that is the only way to preserve the semantics of the value returned from execution or the exception thrown.</p>
      *
      * @return the builder
-     *
      * @since 2.12
+     * @mongodb.driver.manual reference/method/db.collection.initializeUnorderedBulkOp/ initializeUnorderedBulkOp()
      */
     public BulkWriteOperation initializeUnorderedBulkOperation() {
         return new BulkWriteOperation(false, this);
@@ -1759,21 +1769,26 @@ public abstract class DBCollection {
     public abstract List<DBObject> getIndexInfo();
 
     /**
-     * Drops an index from this collection
-     * @param keys keys of the index
-     * @throws MongoException
+     * Drops an index from this collection.  The DBObject index parameter must match the specification of the index to drop, i.e. correct
+     * key name and type must be specified.
+     *
+     * @param keys the specification of the index to drop
+     * @throws MongoException if the index does not exist
+     * @mongodb.driver.manual core/indexes/ Indexes
      */
-    public void dropIndex( DBObject keys ){
+    public void dropIndex(final DBObject keys) {
         dropIndexes( genIndexName( keys ) );
     }
 
     /**
-     * Drops an index from this collection
-     * @param name name of index to drop
-     * @throws MongoException
+     * Drops the index with the given name from this collection.
+     *
+     * @param indexName name of index to drop
+     * @throws MongoException if the index does not exist
+     * @mongodb.driver.manual core/indexes/ Indexes
      */
-    public void dropIndex( String name ){
-        dropIndexes( name );
+    public void dropIndex(final String indexName) {
+        dropIndexes(indexName);
     }
 
     /**
@@ -1803,6 +1818,7 @@ public abstract class DBCollection {
 
     /**
      * Initializes a new collection. No operation is actually performed on the database.
+     *
      * @param base database in which to create the collection
      * @param name the name of the collection
      */
@@ -1876,8 +1892,9 @@ public abstract class DBCollection {
 
     /**
      * Check for invalid key names
+     *
      * @param s the string field/key to check
-     * @exception IllegalArgumentException if the key is not valid.
+     * @throws IllegalArgumentException if the key is not valid.
      */
     private void validateKey(String s ) {
         if ( s.contains( "\0" ) )
@@ -1906,16 +1923,19 @@ public abstract class DBCollection {
     }
 
     /**
-     * Returns the name of this collection.
-     * @return  the name of this collection
+     * Get the name of a collection.
+     *
+     * @return the name of a collection
      */
     public String getName(){
         return _name;
     }
 
     /**
-     * Returns the full name of this collection, with the database name as a prefix.
-     * @return  the name of this collection
+     * Get the full name of a collection, with the database name as a prefix.
+     *
+     * @return the name of a collection
+     * @mongodb.driver.manual reference/glossary/#term-namespace Namespace
      */
     public String getFullName(){
         return _fullName;
@@ -1923,7 +1943,9 @@ public abstract class DBCollection {
 
     /**
      * Returns the database this collection is a member of.
+     *
      * @return this collection's database
+     * @mongodb.driver.manual reference/glossary/#term-database Database
      */
     public DB getDB(){
         return _db;
@@ -1965,10 +1987,11 @@ public abstract class DBCollection {
 
     /**
      * Sets a default class for objects in this collection; null resets the class to nothing.
+     *
      * @param c the class
      * @throws IllegalArgumentException if {@code c} is not a DBObject
      */
-    public void setObjectClass( Class c ){
+    public void setObjectClass(Class c) {
         if ( c == null ){
             // reset
             _wrapper = null;
@@ -2021,21 +2044,21 @@ public abstract class DBCollection {
     }
 
     /**
-     * Set the write concern for this collection. Will be used for
-     * writes to this collection. Overrides any setting of write
-     * concern at the DB level. See the documentation for
-     * {@link WriteConcern} for more information.
+     * Set the {@link WriteConcern} for this collection. Will be used for writes to this collection. Overrides any setting of write concern
+     * at the DB level.
      *
-     * @param concern write concern to use
+     * @param writeConcern WriteConcern to use
+     * @mongodb.driver.manual core/write-concern/ Write Concern
      */
-    public void setWriteConcern( WriteConcern concern ){
-        _concern = concern;
+    public void setWriteConcern(final WriteConcern writeConcern) {
+        _concern = writeConcern;
     }
 
     /**
      * Get the {@link WriteConcern} for this collection.
      *
      * @return the default write concern for this collection
+     * @mongodb.driver.manual core/write-concern/ Write Concern
      */
     public WriteConcern getWriteConcern(){
         if ( _concern != null )
@@ -2044,13 +2067,13 @@ public abstract class DBCollection {
     }
 
     /**
-     * Sets the read preference for this collection. Will be used as default
-     * for reads from this collection; overrides DB & Connection level settings.
-     * See the * documentation for {@link ReadPreference} for more information.
+     * Sets the {@link ReadPreference} for this collection. Will be used as default for reads from this collection; overrides DB and
+     * Connection level settings. See the documentation for {@link ReadPreference} for more information.
      *
-     * @param preference Read Preference to use
+     * @param preference ReadPreference to use
+     * @mongodb.driver.manual core/read-preference/ Read Preference
      */
-    public void setReadPreference( ReadPreference preference ){
+    public void setReadPreference(final ReadPreference preference) {
         _readPref = preference;
     }
 
@@ -2058,6 +2081,7 @@ public abstract class DBCollection {
      * Gets the {@link ReadPreference}.
      *
      * @return the default read preference for this collection
+     * @mongodb.driver.manual core/read-preference/ Read Preference
      */
     public ReadPreference getReadPreference(){
         if ( _readPref != null )
@@ -2075,25 +2099,29 @@ public abstract class DBCollection {
     }
 
     /**
-     * Adds the given flag to the query options.
+     * Adds the given flag to the default query options.
      *
      * @param option value to be added
+     * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
      */
-    public void addOption( int option ){
+    public void addOption(final int option) {
         _options.add(option);
     }
 
     /**
-     * Sets the query options, overwriting previous value.
+     * Sets the default query options, overwriting previous value.
      *
      * @param options bit vector of query options
+     * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
      */
-    public void setOptions( int options ){
+    public void setOptions(final int options) {
         _options.set(options);
     }
 
     /**
      * Resets the default query options
+     *
+     * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
      */
     public void resetOptions(){
         _options.reset();
@@ -2103,6 +2131,7 @@ public abstract class DBCollection {
      * Gets the default query options
      *
      * @return bit vector of query options
+     * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
      */
     public int getOptions(){
         return _options.get();

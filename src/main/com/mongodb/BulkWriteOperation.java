@@ -28,6 +28,10 @@ import static org.bson.util.Assertions.isTrue;
  * @see DBCollection#initializeOrderedBulkOperation()
  * @see com.mongodb.DBCollection#initializeUnorderedBulkOperation()
  *
+ * @mongodb.server.release 2.6
+ * @mongodb.driver.manual /reference/command/delete/ Delete
+ * @mongodb.driver.manual /reference/command/update/ Update
+ * @mongodb.driver.manual /reference/command/insert/ Insert
  * @since 2.12
  */
 public class BulkWriteOperation {
@@ -45,7 +49,6 @@ public class BulkWriteOperation {
      * Returns true if this is building an ordered bulk write request.
      *
      * @return whether this is building an ordered bulk write operation
-     *
      * @see DBCollection#initializeOrderedBulkOperation()
      * @see DBCollection#initializeUnorderedBulkOperation()
      */
@@ -85,7 +88,6 @@ public class BulkWriteOperation {
      */
     public BulkWriteResult execute() {
         isTrue("already executed", !closed);
-
         closed = true;
         return collection.executeBulkWriteOperation(ordered, requests);
     }
@@ -95,14 +97,12 @@ public class BulkWriteOperation {
      * ignored.
      *
      * @param writeConcern the write concern to apply to the bulk operation.
-     *
      * @return the result of the bulk write operation.
      * @throws com.mongodb.BulkWriteException
      * @throws com.mongodb.MongoException
      */
     public BulkWriteResult execute(final WriteConcern writeConcern) {
         isTrue("already executed", !closed);
-
         closed = true;
         return collection.executeBulkWriteOperation(ordered, requests, writeConcern);
     }
@@ -111,6 +111,4 @@ public class BulkWriteOperation {
         isTrue("already executed", !closed);
         requests.add(request);
     }
-
-
 }
