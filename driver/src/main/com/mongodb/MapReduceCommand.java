@@ -243,6 +243,7 @@ public class MapReduceCommand {
      * Gets the (optional) JavaScript mode
      *
      * @return The JavaScript mode
+     * @since 2.13
      */
     public Boolean getJsMode() {
         return jsMode;
@@ -252,6 +253,7 @@ public class MapReduceCommand {
      * Sets the (optional) JavaScript Mode
      *
      * @param jsMode Specifies whether to convert intermediate data into BSON format between the execution of the map and reduce functions
+     * @since 2.13
      */
     public void setJsMode(final Boolean jsMode) {
         this.jsMode = jsMode;

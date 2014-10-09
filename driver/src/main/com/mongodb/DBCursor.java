@@ -654,7 +654,10 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
+     * Returns the first document that matches the query.
+     *
      * @return the first matching document
+     * @since 2.12
      */
     public DBObject one() {
         return collection.findOne(getQuery(), getKeysWanted(),

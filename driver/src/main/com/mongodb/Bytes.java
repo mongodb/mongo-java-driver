@@ -136,71 +136,71 @@ public class Bytes extends BSON {
     /**
      * Gets the type byte for a given object.
      *
-     * @param o the object
+     * @param object the object
      * @return the byte value associated with the type, or -1 if no type is matched
      */
     @SuppressWarnings("deprecation")
-    public static byte getType(final Object o) {
-        if (o == null) {
+    public static byte getType(final Object object) {
+        if (object == null) {
             return NULL;
         }
 
-        if (o instanceof Integer
-            || o instanceof Short
-            || o instanceof Byte
-            || o instanceof AtomicInteger) {
+        if (object instanceof Integer
+            || object instanceof Short
+            || object instanceof Byte
+            || object instanceof AtomicInteger) {
             return NUMBER_INT;
         }
 
-        if (o instanceof Long || o instanceof AtomicLong) {
+        if (object instanceof Long || object instanceof AtomicLong) {
             return NUMBER_LONG;
         }
 
-        if (o instanceof Number) {
+        if (object instanceof Number) {
             return NUMBER;
         }
 
-        if (o instanceof String) {
+        if (object instanceof String) {
             return STRING;
         }
 
-        if (o instanceof java.util.List) {
+        if (object instanceof java.util.List) {
             return ARRAY;
         }
 
-        if (o instanceof byte[]) {
+        if (object instanceof byte[]) {
             return BINARY;
         }
 
-        if (o instanceof ObjectId) {
+        if (object instanceof ObjectId) {
             return OID;
         }
 
-        if (o instanceof Boolean) {
+        if (object instanceof Boolean) {
             return BOOLEAN;
         }
 
-        if (o instanceof java.util.Date) {
+        if (object instanceof java.util.Date) {
             return DATE;
         }
 
-        if (o instanceof BSONTimestamp) {
+        if (object instanceof BSONTimestamp) {
             return TIMESTAMP;
         }
 
-        if (o instanceof java.util.regex.Pattern) {
+        if (object instanceof java.util.regex.Pattern) {
             return REGEX;
         }
 
-        if (o instanceof DBObject || o instanceof DBRefBase) {
+        if (object instanceof DBObject || object instanceof DBRefBase) {
             return OBJECT;
         }
 
-        if (o instanceof CodeWScope) {
+        if (object instanceof CodeWScope) {
             return CODE_W_SCOPE;
         }
 
-        if (o instanceof Code) {
+        if (object instanceof Code) {
             return CODE;
         }
 

@@ -163,7 +163,7 @@ public class DBAddress extends ServerAddress {
     }
 
     /**
-     * gets the database name
+     * Gets the database name
      *
      * @return the database name
      */
@@ -172,7 +172,7 @@ public class DBAddress extends ServerAddress {
     }
 
     /**
-     * gets a String representation of address as host:port/databaseName.
+     * Gets a String representation of address as host:port/databaseName.
      *
      * @return this address
      */

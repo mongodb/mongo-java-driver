@@ -121,7 +121,7 @@ public abstract class ReflectionDBObject implements DBObject {
     }
 
     /**
-     * This operation is not supported. {@inheritDoc}
+     * This operation is not supported. 
      */
     @Override
     public Object removeField(final String key) {

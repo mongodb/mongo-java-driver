@@ -271,10 +271,12 @@ public class DBCollection {
     }
 
     /**
-     * Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
-     * does not contain an '_id' field, it will be added. <p> If the value of the continueOnError property of the given {@code
-     * InsertOptions} is true, that value will override the value of the continueOnError property of the given {@code WriteConcern}.
-     * Otherwise, the value of the continueOnError property of the given {@code WriteConcern} will take effect. </p>
+     * <p>Insert documents into a collection. If the collection does not exists on the server, then it will be created. If the new document
+     * does not contain an '_id' field, it will be added.</p>
+     * 
+     * <p>If the value of the continueOnError property of the given {@code InsertOptions} is true, 
+     * that value will override the value of the continueOnError property of the given {@code WriteConcern}. Otherwise, 
+     * the value of the continueOnError property of the given {@code WriteConcern} will take effect. </p>
      *
      * @param documents     a list of {@code DBObject}'s to be inserted
      * @param insertOptions the options to use for the insert
@@ -329,10 +331,13 @@ public class DBCollection {
     /**
      * Update an existing document or insert a document depending on the parameter. If the document does not contain an '_id' field, then
      * the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectId value. If
-     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field: <ul> <li>If a
-     * document does not exist with the specified '_id' value, the method performs an insert with the specified fields in the document.</li>
-     * <li>If a document exists with the specified '_id' value, the method performs an update, replacing all field in the existing record
-     * with the fields from the document.</li> </ul>
+     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field: 
+     * <ul>
+     *     <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in 
+     *     the document.</li>
+     *     <li>If a document exists with the specified '_id' value, the method performs an update, 
+     *     replacing all field in the existing record with the fields from the document.</li> 
+     * </ul>
      *
      * @param document {@link DBObject} to save to the collection.
      * @return the result of the operation
@@ -346,10 +351,13 @@ public class DBCollection {
     /**
      * Update an existing document or insert a document depending on the parameter. If the document does not contain an '_id' field, then
      * the method performs an insert with the specified fields in the document as well as an '_id' field with a unique objectId value. If
-     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field: <ul> <li>If a
-     * document does not exist with the specified '_id' value, the method performs an insert with the specified fields in the document.</li>
-     * <li>If a document exists with the specified '_id' value, the method performs an update, replacing all field in the existing record
-     * with the fields from the document.</li> </ul>
+     * the document contains an '_id' field, then the method performs an upsert querying the collection on the '_id' field: 
+     * <ul>
+     *     <li>If a document does not exist with the specified '_id' value, the method performs an insert with the specified fields in 
+     *     the document.</li>
+     *     <li>If a document exists with the specified '_id' value, the method performs an update, 
+     *     replacing all field in the existing record with the fields from the document.</li> 
+     * </ul>
      *
      * @param document     {@link DBObject} to save to the collection.
      * @param writeConcern {@code WriteConcern} to be used during operation
@@ -1029,7 +1037,7 @@ public class DBCollection {
      * Find the distinct values for a specified field across a collection and returns the results in an array.
      *
      * @param fieldName Specifies the field for which to return the distinct values.
-     * @return an array of the distinct values
+     * @return a List of the distinct values
      * @mongodb.driver.manual reference/command/distinct Distinct Command
      */
     public List distinct(final String fieldName) {
@@ -1041,7 +1049,7 @@ public class DBCollection {
      *
      * @param fieldName      Specifies the field for which to return the distinct values
      * @param readPreference {@link ReadPreference} to be used for this operation
-     * @return an array of the distinct values
+     * @return a List of the distinct values
      * @mongodb.driver.manual reference/command/distinct Distinct Command
      */
     public List distinct(final String fieldName, final ReadPreference readPreference) {
@@ -1366,8 +1374,9 @@ public class DBCollection {
     }
 
     /**
-     * Return a list of cursors over the collection that can be used to scan it in parallel. <p> Note: As of MongoDB 2.6, this method will
-     * work against a mongod, but not a mongos. </p>
+     * <p>Return a list of cursors over the collection that can be used to scan it in parallel.</p> 
+     * 
+     * <p>Note: As of MongoDB 2.6, this method will work against a mongod, but not a mongos. </p>
      *
      * @param options the parallel scan options
      * @return a list of cursors, whose size may be less than the number requested

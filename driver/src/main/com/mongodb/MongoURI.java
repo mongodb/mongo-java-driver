@@ -167,7 +167,7 @@ public class MongoURI {
     }
 
     /**
-     * returns the URI's Collection from a given DB object.
+     * Returns the URI's Collection from a given DB object.
      *
      * @param db the database to get the collection from
      * @return the collection specified in this URI
@@ -177,7 +177,7 @@ public class MongoURI {
     }
 
     /**
-     * returns the URI's Collection from a given Mongo instance
+     * Returns the URI's Collection from a given Mongo instance
      *
      * @param mongo the mongo instance to get the collection from
      * @return the collection specified in this URI

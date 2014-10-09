@@ -281,7 +281,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets the connect timeout for connections used for the cluster heartbeat.  The default value is 20,000 milliseconds.
+     * <p>Gets the connect timeout for connections used for the cluster heartbeat.</p>  
+     *
+     * <p>The default value is 20,000 milliseconds.</p>
      *
      * @return the heartbeat connect timeout, in milliseconds
      * @since 2.12

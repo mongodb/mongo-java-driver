@@ -95,6 +95,7 @@ public class AggregationOptions {
      * @param timeUnit the time unit for the result
      * @return the max time
      * @mongodb.server.release 2.6
+     * @since 2.12
      */
     public long getMaxTime(final TimeUnit timeUnit) {
         return timeUnit.convert(maxTimeMS, MILLISECONDS);
@@ -157,6 +158,7 @@ public class AggregationOptions {
          *
          * @param allowDiskUse whether or not aggregation stages can write data to temporary files
          * @return {@code this} so calls can be chained
+         * @mongodb.server.release 2.6
          */
         public Builder allowDiskUse(final Boolean allowDiskUse) {
             this.allowDiskUse = allowDiskUse;
