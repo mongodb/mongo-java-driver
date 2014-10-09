@@ -64,6 +64,15 @@ public class JsonWriter extends AbstractBsonWriter {
         setContext(new Context(null, BsonContextType.TOP_LEVEL, ""));
     }
 
+    /**
+     * Gets the {@code Writer}.
+     *
+     * @return the writer
+     */
+    public Writer getWriter() {
+        return writer;
+    }
+
     @Override
     protected Context getContext() {
         return (Context) super.getContext();

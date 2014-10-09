@@ -25,12 +25,12 @@ import spock.lang.Subject
 
 import static java.nio.ByteBuffer.wrap
 
-class BinaryToUUIDTransformerSpecification extends Specification {
+class BinaryToUuidTransformerSpecification extends Specification {
 
     @Subject
-    private final BinaryToUUIDTransformer binaryToUUIDTransformer = new BinaryToUUIDTransformer();
+    private final BinaryToUuidTransformer binaryToUUIDTransformer = new BinaryToUuidTransformer();
 
-    def 'should read little endian encoded longs'() {
+    def 'should read big endian encoded longs'() {
         given:
         byte[] binaryTypeWithUUIDAsBytes = [
                 0, 0, 0, 0,            // document
@@ -38,8 +38,8 @@ class BinaryToUUIDTransformerSpecification extends Specification {
                 95, 105, 100, 0,        // "_id"
                 16, 0, 0, 0,            // int "16" (length)
                 4,                      // type (B_UUID_STANDARD)
-                2, 0, 0, 0, 0, 0, 0, 0, //
-                1, 0, 0, 0, 0, 0, 0, 0, // 8 bytes for long, 2 longs for UUID
+                0, 0, 0, 0, 0, 0, 0, 2, //
+                0, 0, 0, 0, 0, 0, 0, 1, // 8 bytes for long, 2 longs for UUID
                 0];                     // EOM
         BsonBinaryReader reader =
                 new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(wrap(binaryTypeWithUUIDAsBytes))), true);

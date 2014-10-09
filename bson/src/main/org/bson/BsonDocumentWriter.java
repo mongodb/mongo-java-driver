@@ -45,6 +45,15 @@ public class BsonDocumentWriter extends AbstractBsonWriter {
         setContext(new Context());
     }
 
+    /**
+     * Gets the document that the writer is writing to.
+     *
+     * @return the document
+     */
+    public BsonDocument getDocument() {
+        return document;
+    }
+
     @Override
     protected void doWriteStartDocument() {
         switch (getState()) {

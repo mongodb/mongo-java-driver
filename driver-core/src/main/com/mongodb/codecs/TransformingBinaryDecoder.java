@@ -39,7 +39,7 @@ public class TransformingBinaryDecoder implements Decoder<Object> {
         subTypeTransformerMap = new HashMap<Byte, BinaryTransformer<?>>();
         subTypeTransformerMap.put(BsonBinarySubType.BINARY.getValue(), new BinaryToByteArrayTransformer());
         subTypeTransformerMap.put(BsonBinarySubType.OLD_BINARY.getValue(), new BinaryToByteArrayTransformer());
-        subTypeTransformerMap.put(BsonBinarySubType.UUID_LEGACY.getValue(), new BinaryToUUIDTransformer());
+        subTypeTransformerMap.put(BsonBinarySubType.UUID_LEGACY.getValue(), new BinaryToUuidTransformer());
     }
 
     @Override

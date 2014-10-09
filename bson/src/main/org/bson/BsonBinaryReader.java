@@ -30,6 +30,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
 
     private final BsonInput bsonInput;
     private final boolean closeInput;
+    private Mark mark;
 
     /**
      * Construct an instance.
@@ -127,6 +128,15 @@ public class BsonBinaryReader extends AbstractBsonReader {
         byte[] bytes = new byte[numBytes];
         bsonInput.readBytes(bytes);
         return new BsonBinary(type, bytes);
+    }
+
+    @Override
+    protected byte doPeekBinarySubType() {
+        mark();
+        bsonInput.readInt32();
+        byte type = bsonInput.readByte();
+        reset();
+        return type;
     }
 
     @Override
@@ -338,9 +348,41 @@ public class BsonBinaryReader extends AbstractBsonReader {
     protected Context getContext() {
         return (Context) super.getContext();
     }
+    @Override
+    public void mark() {
+        if (mark != null) {
+             throw new BSONException("A mark already exists; it needs to be reset before creating a new one");
+        }
+        mark = new Mark();
+    }
 
+    @Override
+    public void reset() {
+        if (mark == null) {
+            throw new BSONException("trying to reset a mark before creating it");
+        }
+        mark.reset();
+        mark = null;
+    }
 
-    private static class Context extends AbstractBsonReader.Context {
+    protected class Mark extends AbstractBsonReader.Mark {
+        private int startPosition;
+        private int size;
+
+        protected Mark() {
+            super();
+            startPosition = BsonBinaryReader.this.getContext().startPosition;
+            size = BsonBinaryReader.this.getContext().size;
+            BsonBinaryReader.this.bsonInput.mark(Integer.MAX_VALUE);
+        }
+
+        protected void reset() {
+            super.reset();
+            BsonBinaryReader.this.bsonInput.reset();
+            BsonBinaryReader.this.setContext(new Context((Context) getParentContext(), getContextType(), startPosition, size));
+        }
+    }
+    protected class Context extends AbstractBsonReader.Context {
         private final int startPosition;
         private final int size;
 

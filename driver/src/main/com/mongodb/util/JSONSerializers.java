@@ -104,7 +104,7 @@ public class JSONSerializers {
         serializer.addObjectSerializer(ObjectId.class, new ObjectIdSerializer(serializer));
         serializer.addObjectSerializer(Pattern.class, new PatternSerializer(serializer));
         serializer.addObjectSerializer(String.class, new StringSerializer());
-        serializer.addObjectSerializer(UUID.class, new UUIDSerializer(serializer));
+        serializer.addObjectSerializer(UUID.class, new UuidSerializer(serializer));
         serializer.addObjectSerializer(BsonUndefined.class, new UndefinedSerializer(serializer));
         return serializer;
     }
@@ -389,9 +389,9 @@ public class JSONSerializers {
         }
     }
 
-    private static class UUIDSerializer extends CompoundObjectSerializer {
+    private static class UuidSerializer extends CompoundObjectSerializer {
 
-        UUIDSerializer(final ObjectSerializer serializer) {
+        UuidSerializer(final ObjectSerializer serializer) {
             super(serializer);
         }
 

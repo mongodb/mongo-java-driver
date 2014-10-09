@@ -44,6 +44,14 @@ public interface BsonReader {
     BsonBinary readBinaryData();
 
     /**
+     * Peeks the subtype of the binary data that the reader is positioned at.  This operation is not permitted if the mark is already set.
+     *
+     * @return the subtype
+     * @see #mark()
+     */
+    byte peekBinarySubType();
+
+    /**
      * Reads a BSON Binary data element from the reader.
      *
      * @param name The name of the element.
@@ -344,4 +352,18 @@ public interface BsonReader {
      * Skips the value (reader must be positioned on a value).
      */
     void skipValue();
+
+    /**
+     * Creates a bookmark in the BsonReader's input
+     *
+     * The previous mark must be cleared before creating a new one
+     */
+    void mark();
+
+    /**
+     * Go back to the state at the last mark and removes the mark
+     *
+     * @throws org.bson.BSONException if no mark has been set
+     */
+    void reset();
 }

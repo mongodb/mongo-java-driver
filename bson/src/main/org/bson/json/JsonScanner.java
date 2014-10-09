@@ -28,6 +28,20 @@ class JsonScanner {
     private final JsonBuffer buffer;
 
     /**
+     * @param newPosition the new position of the cursor position in the buffer
+     */
+    public void setBufferPosition(final int newPosition) {
+        buffer.setPosition(newPosition);
+    }
+
+    /**
+     * @return the current location of the cursor in the buffer
+     */
+    public int getBufferPosition() {
+        return buffer.getPosition();
+    }
+
+    /**
      * Constructs a a new {@code JSONScanner} that produces values scanned from specified {@code JSONBuffer}.
      *
      * @param buffer A buffer to be scanned.

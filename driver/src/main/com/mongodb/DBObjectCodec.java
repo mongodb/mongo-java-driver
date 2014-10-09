@@ -17,7 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.codecs.BinaryToByteArrayTransformer;
-import com.mongodb.codecs.BinaryToUUIDTransformer;
+import com.mongodb.codecs.BinaryToUuidTransformer;
 import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.codecs.IdGenerator;
 import com.mongodb.codecs.ObjectIdGenerator;
@@ -267,8 +267,9 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
             return new BinaryToByteArrayTransformer().transform(binary);
         } else if (binary.getType() == BsonBinarySubType.OLD_BINARY.getValue()) {
             return new BinaryToByteArrayTransformer().transform(binary);
-        } else if (binary.getType() == BsonBinarySubType.UUID_LEGACY.getValue()) {
-            return new BinaryToUUIDTransformer().transform(binary);
+        } else if (binary.getType() == BsonBinarySubType.UUID_LEGACY.getValue()
+                || binary.getType() == BsonBinarySubType.UUID_STANDARD.getValue()) {
+            return new BinaryToUuidTransformer().transform(binary);
         } else {
             return new Binary(binary.getType(), binary.getData());
         }
