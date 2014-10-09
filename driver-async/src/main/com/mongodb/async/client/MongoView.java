@@ -17,8 +17,8 @@
 package com.mongodb.async.client;
 
 import com.mongodb.annotations.NotThreadSafe;
+import org.bson.types.Document;
 import org.mongodb.ConvertibleToDocument;
-import org.mongodb.Document;
 
 /**
  * A view onto a collection.  Operations on the view will change which, how many, and in what order the documents appear in the view when

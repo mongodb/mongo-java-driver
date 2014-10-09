@@ -20,8 +20,8 @@ import com.mongodb.WriteConcernException;
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.UpdateOptions;
+import org.bson.types.Document;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.is;

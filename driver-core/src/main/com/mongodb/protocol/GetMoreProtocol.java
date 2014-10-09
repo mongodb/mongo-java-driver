@@ -20,7 +20,6 @@ import com.mongodb.MongoCursorNotFoundException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultFuture;
-import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
@@ -30,7 +29,8 @@ import com.mongodb.operation.GetMore;
 import com.mongodb.protocol.message.GetMoreMessage;
 import com.mongodb.protocol.message.ReplyMessage;
 import org.bson.codecs.Decoder;
-import org.mongodb.Document;
+import org.bson.codecs.DocumentCodec;
+import org.bson.types.Document;
 
 import static com.mongodb.protocol.ProtocolHelper.encodeMessage;
 import static com.mongodb.protocol.ProtocolHelper.getQueryFailureException;

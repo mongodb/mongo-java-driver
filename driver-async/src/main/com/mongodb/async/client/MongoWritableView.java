@@ -17,7 +17,7 @@
 package com.mongodb.async.client;
 
 import com.mongodb.async.MongoFuture;
-import org.mongodb.Document;
+import org.bson.types.Document;
 import org.mongodb.WriteResult;
 
 /**

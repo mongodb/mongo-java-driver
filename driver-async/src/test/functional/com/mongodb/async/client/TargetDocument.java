@@ -16,8 +16,8 @@
 
 package com.mongodb.async.client;
 
+import org.bson.types.Document;
 import org.bson.types.ObjectId;
-import org.mongodb.Document;
 
 public class TargetDocument {
     private ObjectId id;

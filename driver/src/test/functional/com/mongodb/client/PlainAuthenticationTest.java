@@ -19,9 +19,9 @@ package com.mongodb.client;
 import com.mongodb.CommandFailureException;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoTimeoutException;
+import org.bson.types.Document;
 import org.junit.Before;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import static com.mongodb.AuthenticationMechanism.PLAIN;
 import static com.mongodb.ClusterFixture.getConnectionString;

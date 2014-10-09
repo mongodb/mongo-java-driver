@@ -22,7 +22,6 @@ import com.mongodb.binding.AsyncSingleConnectionBinding;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.PinnedBinding;
 import com.mongodb.binding.ReadWriteBinding;
-import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterDescription;
@@ -44,7 +43,8 @@ import com.mongodb.operation.DropDatabaseOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.BsonDocumentCodec;
-import org.mongodb.Document;
+import org.bson.codecs.DocumentCodec;
+import org.bson.types.Document;
 
 import java.util.List;
 

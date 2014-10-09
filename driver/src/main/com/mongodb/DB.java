@@ -17,7 +17,6 @@
 package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
@@ -33,7 +32,8 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
-import org.mongodb.Document;
+import org.bson.codecs.DocumentCodec;
+import org.bson.types.Document;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;

@@ -16,7 +16,7 @@
 
 package com.mongodb.async.client
 
-import org.mongodb.Document
+import org.bson.types.Document
 
 class SaveSpecification extends FunctionalSpecification {
     def 'save should upsert a document that has an _id'() {

@@ -47,7 +47,7 @@ import com.mongodb.selector.ServerSelector;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
-import org.mongodb.Document;
+import org.bson.types.Document;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;

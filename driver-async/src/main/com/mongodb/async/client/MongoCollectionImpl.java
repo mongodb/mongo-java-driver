@@ -26,7 +26,6 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.client.model.FindOptions;
-import com.mongodb.codecs.CollectibleCodec;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.operation.CountOperation;
@@ -41,8 +40,9 @@ import com.mongodb.operation.WriteRequest;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
+import org.bson.codecs.CollectibleCodec;
+import org.bson.types.Document;
 import org.mongodb.ConvertibleToDocument;
-import org.mongodb.Document;
 import org.mongodb.WriteResult;
 
 import java.util.ArrayList;

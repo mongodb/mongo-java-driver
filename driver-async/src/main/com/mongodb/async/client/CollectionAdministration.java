@@ -20,7 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
-import org.mongodb.Document;
+import org.bson.types.Document;
 
 import java.util.List;
 

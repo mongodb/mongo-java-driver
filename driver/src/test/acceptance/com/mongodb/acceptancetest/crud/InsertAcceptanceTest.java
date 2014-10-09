@@ -18,8 +18,8 @@ package com.mongodb.acceptancetest.crud;
 
 import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.model.FindOptions;
+import org.bson.types.Document;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;

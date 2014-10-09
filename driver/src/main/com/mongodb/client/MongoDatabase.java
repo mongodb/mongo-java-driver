@@ -19,7 +19,7 @@ package com.mongodb.client;
 import com.mongodb.ReadPreference;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.model.CreateCollectionOptions;
-import org.mongodb.Document;
+import org.bson.types.Document;
 
 import java.util.List;
 

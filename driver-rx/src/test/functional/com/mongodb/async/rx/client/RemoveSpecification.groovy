@@ -16,7 +16,7 @@
 
 package com.mongodb.async.rx.client
 
-import org.mongodb.Document
+import org.bson.types.Document
 
 import static com.mongodb.async.rx.client.Fixture.get
 import static com.mongodb.async.rx.client.Fixture.getAsList

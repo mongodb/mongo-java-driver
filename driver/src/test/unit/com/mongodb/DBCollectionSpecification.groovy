@@ -16,10 +16,10 @@
 
 package com.mongodb
 
-import com.mongodb.codecs.DocumentCodec
 import com.mongodb.operation.CreateIndexOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.codecs.DocumentCodec
 import spock.lang.Specification
 
 import static com.mongodb.Fixture.getMongoClient

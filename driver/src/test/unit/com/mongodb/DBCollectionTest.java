@@ -26,12 +26,12 @@ import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
 import org.bson.types.CodeWScope;
+import org.bson.types.Document;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mongodb.Document;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;

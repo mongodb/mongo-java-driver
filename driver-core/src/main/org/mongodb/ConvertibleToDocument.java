@@ -16,6 +16,8 @@
 
 package org.mongodb;
 
+import org.bson.types.Document;
+
 /**
  * A mix-in for classes that can be converted to Document.
  *

@@ -29,13 +29,13 @@ import org.bson.BsonRegularExpression;
 import org.bson.BsonTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.Code;
+import org.bson.types.CodeWithScope;
+import org.bson.types.Document;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
 import org.junit.Ignore;
 import org.junit.Test;
-import org.mongodb.CodeWithScope;
-import org.mongodb.Document;
 
 import java.util.ArrayList;
 import java.util.Arrays;

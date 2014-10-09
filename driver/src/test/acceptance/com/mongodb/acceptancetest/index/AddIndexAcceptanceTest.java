@@ -20,8 +20,8 @@ import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.operation.OrderBy;
+import org.bson.types.Document;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import static com.mongodb.operation.OrderBy.ASC;
 import static com.mongodb.operation.OrderBy.DESC;

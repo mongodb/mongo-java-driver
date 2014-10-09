@@ -31,7 +31,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonValue;
 import org.bson.io.BsonOutput;
-import org.mongodb.Document;
+import org.bson.types.Document;
 import org.mongodb.WriteResult;
 
 import java.util.Arrays;
