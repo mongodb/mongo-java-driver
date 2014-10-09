@@ -64,6 +64,10 @@ public class BasicBSONCallback implements BSONCallback {
 	    objectStart(false);
     }
 
+    /**
+     * @deprecated instead, use {@link #arrayStart()} if {@code array} is true, and {@link #objectStart()} if if {@code array} is false 
+     */
+    @Deprecated
     public void objectStart(boolean array){
         _root = create(array, null);
         _stack.add( (BSONObject)_root );
@@ -73,6 +77,11 @@ public class BasicBSONCallback implements BSONCallback {
         objectStart( false , name );
     }
 
+    /**
+     * @deprecated instead, use {@link #arrayStart(String)} if {@code array} is true, and {@link #objectStart(String)} if {@code array}
+     * is false
+     */
+    @Deprecated
     public void objectStart(boolean array, String name){
         _nameStack.addLast( name );
         final BSONObject o = create( array , _nameStack );
@@ -90,8 +99,8 @@ public class BasicBSONCallback implements BSONCallback {
         return !BSON.hasDecodeHooks() ? o : (BSONObject)BSON.applyDecodingHooks(o);
     }
 
-    public void arrayStart(){
-	objectStart( true );
+    public void arrayStart() {
+        objectStart(true);
     }
 
     public void arrayStart(String name){

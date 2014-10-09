@@ -53,6 +53,11 @@ public class JSONCallback extends BasicBSONCallback {
         return new BasicDBList();
     }
 
+    /**
+     * @deprecated instead, use {@link #arrayStart(String)} if {@code array} is true, and {@link #objectStart(String)} if {@code array} 
+     * is false 
+     */
+    @Deprecated
     public void objectStart(boolean array, String name) {
         _lastArray = array;
         super.objectStart(array, name);

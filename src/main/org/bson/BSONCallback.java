@@ -24,6 +24,11 @@ public interface BSONCallback {
     
     void objectStart();
     void objectStart(String name);
+
+    /**
+     * @deprecated instead, use {@link #arrayStart()} if {@code array} is true, and {@link #objectStart()} if {@code array} is false 
+     */
+    @Deprecated
     void objectStart(boolean array);
     Object objectDone();
 

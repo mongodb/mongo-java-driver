@@ -57,6 +57,11 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
             cur().put(name, new DBRef(_db, ns, id));
     }
 
+    /**
+     * @deprecated instead, use {@link #arrayStart(String)} if {@code array} is true, and {@link #objectStart(String)} if {@code array} 
+     * is false 
+     */
+    @Deprecated
     @Override
     public void objectStart(boolean array, String name){
         _nameStack.addLast(name);

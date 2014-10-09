@@ -145,7 +145,7 @@ public class NewBSONDecoder implements BSONDecoder {
         final BSONCallback _basic = _callback.createBSONCallback();
         _callback = _basic;
         _basic.reset();
-        _basic.objectStart(false);
+        _basic.objectStart();
 
         while( decodeElement() );
         _callback = save;

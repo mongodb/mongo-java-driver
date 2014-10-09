@@ -35,6 +35,10 @@ public class LazyBSONCallback extends EmptyBSONCallback {
         throw new UnsupportedOperationException( "Not supported yet." );
     }
 
+    /**
+     * @deprecated instead, use {@link #arrayStart()} if {@code array} is true, and {@link #objectStart()} if {@code array} is false 
+     */
+    @Deprecated
     public void objectStart( boolean array ){
         throw new UnsupportedOperationException( "Not supported yet." );
     }
