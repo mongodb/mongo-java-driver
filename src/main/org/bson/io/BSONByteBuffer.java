@@ -24,10 +24,14 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 /**
- * Pseudo byte buffer, delegates as it is too hard to properly override / extend the ByteBuffer API
+ * Pseudo byte buffer, delegates as it is too hard to properly override / extend the ByteBuffer API.  This class has been deprecated and 
+ * will be removed in 3.0. The classes that use this type, {@code LazyBSONObject} and its children, also work with a simple byte array, 
+ * which is the preferred approach.
  *
  * @author brendan
+ * @deprecated use a simple byte array array instead, all of the classes that take a {@code BSONByteBuffer} also take a {@code byte[]}
  */
+@Deprecated
 public class BSONByteBuffer {
 
     private BSONByteBuffer( ByteBuffer buf ){

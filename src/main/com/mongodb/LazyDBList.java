@@ -29,10 +29,18 @@ public class LazyDBList extends org.bson.LazyDBList {
         super(data, offset, callback);
     }
 
+    /**
+     * @deprecated use {@link #LazyDBList(byte[], org.bson.LazyBSONCallback)} instead
+     */
+    @Deprecated
     public LazyDBList(final BSONByteBuffer buffer, final LazyBSONCallback callback) {
         super(buffer, callback);
     }
 
+    /**
+     * @deprecated use {@link #LazyDBList(byte[], int, org.bson.LazyBSONCallback)} instead
+     */
+    @Deprecated
     public LazyDBList(final BSONByteBuffer buffer, final int offset, final LazyBSONCallback callback) {
         super(buffer, offset, callback);
     }

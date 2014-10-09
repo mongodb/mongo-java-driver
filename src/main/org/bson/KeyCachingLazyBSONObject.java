@@ -31,7 +31,17 @@ public class KeyCachingLazyBSONObject extends LazyBSONObject {
 
     public KeyCachingLazyBSONObject(byte[] data , LazyBSONCallback cbk) { super( data , cbk ); }
     public KeyCachingLazyBSONObject(byte[] data , int offset , LazyBSONCallback cbk) { super( data , offset , cbk ); }
+
+    /**
+     * @deprecated use {@link #KeyCachingLazyBSONObject(byte[], LazyBSONCallback)} instead
+     */
+    @Deprecated
     public KeyCachingLazyBSONObject( BSONByteBuffer buffer, LazyBSONCallback callback ){ super( buffer, callback ); }
+    
+    /**
+     * @deprecated use {@link #KeyCachingLazyBSONObject(byte[], int, LazyBSONCallback)} instead
+     */
+    @Deprecated
     public KeyCachingLazyBSONObject( BSONByteBuffer buffer, int offset, LazyBSONCallback callback ){ super( buffer, offset, callback ); }
 
     @Override

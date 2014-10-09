@@ -27,10 +27,18 @@ import java.util.Set;
 
 public class LazyWriteableDBObject extends LazyDBObject {
 
+    /**
+     * @deprecated use {@link #LazyWriteableDBObject(byte[], org.bson.LazyBSONCallback)} instead
+     */
+    @Deprecated
     public LazyWriteableDBObject(BSONByteBuffer buff, LazyBSONCallback cbk){
         super(buff, cbk);
     }
 
+    /**
+     * @deprecated use {@link #LazyWriteableDBObject(byte[], int, org.bson.LazyBSONCallback)} instead
+     */
+    @Deprecated
     public LazyWriteableDBObject(BSONByteBuffer buff, int offset, LazyBSONCallback cbk){
         super(buff, offset, cbk);
     }

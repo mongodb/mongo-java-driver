@@ -55,10 +55,18 @@ public class LazyBSONObject implements BSONObject {
         this( BSONByteBuffer.wrap( data, offset, data.length - offset ), offset, callback );
     }
 
+    /**
+     * @deprecated use {@link #LazyBSONObject(byte[], LazyBSONCallback)} instead
+     */
+    @Deprecated
     public LazyBSONObject( BSONByteBuffer buffer, LazyBSONCallback callback ){
         this( buffer, 0, callback );
     }
 
+    /**
+     * @deprecated use {@link #LazyBSONObject(byte[], int, LazyBSONCallback)} instead
+     */
+    @Deprecated
     public LazyBSONObject( BSONByteBuffer buffer, int offset, LazyBSONCallback callback ){
         _callback = callback;
         _input = buffer;

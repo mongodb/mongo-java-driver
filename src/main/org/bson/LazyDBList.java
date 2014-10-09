@@ -33,7 +33,17 @@ public class LazyDBList extends LazyBSONList implements DBObject {
 
 	public LazyDBList(byte[] data, LazyBSONCallback callback) { super(data, callback); }
 	public LazyDBList(byte[] data, int offset, LazyBSONCallback callback) { super(data, offset, callback); }
+
+    /**
+     * @deprecated use {@link #LazyDBList(byte[], LazyBSONCallback)} instead
+     */
+    @Deprecated
 	public LazyDBList(BSONByteBuffer buffer, LazyBSONCallback callback) { super(buffer, callback); }
+
+    /**
+     * @deprecated use {@link #LazyDBList(byte[], int, LazyBSONCallback)} instead
+     */
+    @Deprecated
 	public LazyDBList(BSONByteBuffer buffer, int offset, LazyBSONCallback callback) { super(buffer, offset, callback); }
 
     /**

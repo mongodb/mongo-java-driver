@@ -30,10 +30,18 @@ public class LazyDBObject extends LazyBSONObject implements DBObject {
         return _partial;
     }
 
+    /**
+     * @deprecated use {@link #LazyDBObject(byte[], org.bson.LazyBSONCallback)} instead
+     */
+    @Deprecated
     public LazyDBObject(BSONByteBuffer buff, LazyBSONCallback cbk){ 
         super(buff, cbk);
     }
 
+    /**
+     * @deprecated use {@link #LazyDBObject(byte[], int, org.bson.LazyBSONCallback)} instead
+     */
+    @Deprecated
     public LazyDBObject(BSONByteBuffer buff, int offset, LazyBSONCallback cbk){ 
         super(buff, offset, cbk);
     }

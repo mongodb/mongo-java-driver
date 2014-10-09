@@ -28,7 +28,17 @@ public class LazyBSONList extends LazyBSONObject implements List {
 
     public LazyBSONList(byte[] data , LazyBSONCallback callback) { super( data , callback ); }
     public LazyBSONList(byte[] data , int offset , LazyBSONCallback callback) { super( data , offset , callback ); }
+
+    /**
+     * @deprecated use {@link #LazyBSONList(byte[], LazyBSONCallback)} instead
+     */
+    @Deprecated
     public LazyBSONList(BSONByteBuffer buffer , LazyBSONCallback callback) { super( buffer , callback ); }
+
+    /**
+     * @deprecated use {@link #LazyBSONList(byte[], int, LazyBSONCallback)} instead
+     */
+    @Deprecated
     public LazyBSONList(BSONByteBuffer buffer , int offset , LazyBSONCallback callback) { super( buffer , offset , callback ); }
 
     @Override
