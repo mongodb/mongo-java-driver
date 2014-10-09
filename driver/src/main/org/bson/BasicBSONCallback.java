@@ -95,30 +95,14 @@ public class BasicBSONCallback implements BSONCallback {
         if (stack.size() > 0) {
             throw new IllegalStateException("Illegal object beginning in current context.");
         }
-
-        objectStart(false);
-    }
-
-    @Override
-    public void objectStart(final boolean array) {
-        root = create(array, null);
+        root = create(false, null);
         stack.add((BSONObject) root);
     }
 
     @Override
     public void objectStart(final String name) {
-        objectStart(false, name);
-    }
-
-    /**
-     * Signals the start of a BSON object, providing a boolean flag to indicate whether this is an array rather than a document object.
-     *
-     * @param array set to true if this is the start of an array
-     * @param name  the name of the field
-     */
-    public void objectStart(final boolean array, final String name) {
         nameStack.addLast(name);
-        BSONObject o = create(array, nameStack);
+        BSONObject o = create();
         stack.getLast().put(name, o);
         stack.addLast(o);
     }
@@ -137,12 +121,16 @@ public class BasicBSONCallback implements BSONCallback {
 
     @Override
     public void arrayStart() {
-        objectStart(true);
+        root = create(true, null);
+        stack.add((BSONObject) root);
     }
 
     @Override
     public void arrayStart(final String name) {
-        objectStart(true, name);
+        nameStack.addLast(name);
+        BSONObject o = createList();
+        stack.getLast().put(name, o);
+        stack.addLast(o);
     }
 
     @Override

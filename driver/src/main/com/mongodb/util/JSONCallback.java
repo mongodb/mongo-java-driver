@@ -59,9 +59,15 @@ public class JSONCallback extends BasicBSONCallback {
     }
 
     @Override
-    public void objectStart(final boolean array, final String name) {
-        _lastArray = array;
-        super.objectStart(array, name);
+    public void arrayStart(final String name) {
+        _lastArray = true;
+        super.arrayStart(name);
+    }
+
+    @Override
+    public void objectStart(final String name) {
+        _lastArray = false;
+        super.objectStart(name);
     }
 
     @Override

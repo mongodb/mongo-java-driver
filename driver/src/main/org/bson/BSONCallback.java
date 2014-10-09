@@ -42,14 +42,6 @@ public interface BSONCallback {
     void objectStart(String name);
 
     /**
-     * Signals the start of a BSON document, providing a boolean flag to indicate whether this is an array rather than a document object.
-     *
-     * @param array true if the object to be read is an array rather than a document
-     * @mongodb.driver.manual core/document/ MongoDB Documents
-     */
-    void objectStart(boolean array);
-
-    /**
      * Called at the end of the document/array, and returns this object.
      *
      * @return the Object that has been read from this section of the document.

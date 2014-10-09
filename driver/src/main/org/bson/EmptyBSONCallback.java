@@ -34,11 +34,6 @@ public class EmptyBSONCallback implements BSONCallback {
     }
 
     @Override
-    public void objectStart(final boolean array) {
-        throw new UnsupportedOperationException("Operation is not supported");
-    }
-
-    @Override
     public Object objectDone() {
         throw new UnsupportedOperationException("Operation is not supported");
     }
