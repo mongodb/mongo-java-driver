@@ -38,8 +38,8 @@ public final class CompositeServerSelector implements ServerSelector {
      *
      * @param serverSelectors the list of composed server selectors
      */
-    public CompositeServerSelector(final List<ServerSelector> serverSelectors) {
-        notNull("serverSelectores", serverSelectors);
+    public CompositeServerSelector(final List<? extends ServerSelector> serverSelectors) {
+        notNull("serverSelectors", serverSelectors);
         if (serverSelectors.isEmpty()) {
             throw new IllegalArgumentException("Server selectors can not be an empty list");
         }
