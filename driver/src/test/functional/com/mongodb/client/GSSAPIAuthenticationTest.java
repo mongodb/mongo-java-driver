@@ -18,7 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.CommandFailureException;
 import com.mongodb.MongoClient;
-import com.mongodb.MongoSecurityException;
+import com.mongodb.MongoTimeoutException;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
@@ -59,7 +59,7 @@ public class GSSAPIAuthenticationTest {
         assertTrue(collection.count() >= 0); // Really just asserting that the query doesn't throw any security-related exceptions
     }
 
-    @Test(expected = MongoSecurityException.class)
+    @Test(expected = MongoTimeoutException.class)
     public void testUnsuccessfulAuthentication() throws InterruptedException {
         MongoClient client = new MongoClient(getPrimary(), asList(createGSSAPICredential("wrongUserName")));
         MongoCollection<Document> collection = client.getDatabase(getConnectionString().getDatabase()).getCollection("test");
