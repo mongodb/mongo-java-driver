@@ -40,9 +40,7 @@ import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 import com.mongodb.protocol.KillCursorProtocol;
-import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
-import com.mongodb.selector.MongosHAServerSelector;
 import com.mongodb.selector.ServerSelector;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -695,9 +693,7 @@ public class Mongo {
     }
 
     private static ServerSelector createServerSelector(final MongoClientOptions options) {
-        return new CompositeServerSelector(asList(new MongosHAServerSelector(),
-                                                  new LatencyMinimizingServerSelector(options.getAcceptableLatencyDifference(),
-                                                                                      MILLISECONDS)));
+        return new LatencyMinimizingServerSelector(options.getAcceptableLatencyDifference(), MILLISECONDS);
     }
 
     Cluster getCluster() {
