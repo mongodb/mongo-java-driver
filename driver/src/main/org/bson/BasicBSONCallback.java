@@ -102,7 +102,7 @@ public class BasicBSONCallback implements BSONCallback {
     @Override
     public void objectStart(final String name) {
         nameStack.addLast(name);
-        BSONObject o = create();
+        BSONObject o = create(false, nameStack);
         stack.getLast().put(name, o);
         stack.addLast(o);
     }
@@ -128,7 +128,7 @@ public class BasicBSONCallback implements BSONCallback {
     @Override
     public void arrayStart(final String name) {
         nameStack.addLast(name);
-        BSONObject o = createList();
+        BSONObject o = create(true, nameStack);
         stack.getLast().put(name, o);
         stack.addLast(o);
     }
