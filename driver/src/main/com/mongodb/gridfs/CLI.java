@@ -28,7 +28,7 @@ import java.security.MessageDigest;
 
 
 /**
- * a simple CLI for Gridfs
+ * A simple CLI for GridFS.
  */
 public class CLI {
 
@@ -58,6 +58,7 @@ public class CLI {
         return mongo;
     }
 
+    @SuppressWarnings("deprecation") // We know GridFS uses the old API. A new API version will be address later.
     private static GridFS getGridFS() throws Exception {
         if (gridFS == null) {
             gridFS = new GridFS(getMongo().getDB(db));

@@ -19,7 +19,6 @@ package com.mongodb;
 
 
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
@@ -32,7 +31,6 @@ import java.util.Map;
 import static com.mongodb.ClusterFixture.clusterIsType;
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
-import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
@@ -40,7 +38,6 @@ import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -159,28 +156,6 @@ public class JavaClientOldTest extends DatabaseTestCase {
         assertEquals(Fixture.getPrimary(), cursor.getServerAddress());
     }
 
-    @Test
-    @Ignore
-    public void testAggregateOnSecondary() throws UnknownHostException {
-        assumeTrue(isDiscoverableReplicaSet());
-
-        ServerAddress primary = new ServerAddress("localhost");
-        ServerAddress secondary = new ServerAddress("localhost", 27018);
-        MongoClient rsClient = new MongoClient(asList(primary, secondary));
-        DB rsDatabase = rsClient.getDB(database.getName());
-        rsDatabase.dropDatabase();
-        DBCollection aggCollection = rsDatabase.getCollection(collection.getName());
-        aggCollection.drop();
-
-        List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
-        AggregationOptions options = AggregationOptions.builder()
-            .outputMode(AggregationOptions.OutputMode.INLINE)
-            .build();
-
-        Cursor cursor = verify(pipeline, options, ReadPreference.secondary(), aggCollection);
-        assertNotEquals(primary, cursor.getServerAddress());
-    }
-
     public List<DBObject> prepareData() {
         collection.remove(new BasicDBObject());
 
@@ -230,7 +205,7 @@ public class JavaClientOldTest extends DatabaseTestCase {
         assumeTrue(serverVersionAtLeast(asList(2, 5, 3)));
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
-        final CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder()
+        CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder()
             .allowDiskUse(true)
             .outputMode(AggregationOptions.OutputMode.CURSOR)
             .build());

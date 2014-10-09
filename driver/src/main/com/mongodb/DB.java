@@ -406,6 +406,7 @@ public class DB {
      * @param name name of the database
      * @return the DB for the given name
      */
+    @SuppressWarnings("deprecation") // The old API (i.e. DB) will use deprecated methods.
     public DB getSisterDB(final String name) {
         return mongo.getDB(name);
     }

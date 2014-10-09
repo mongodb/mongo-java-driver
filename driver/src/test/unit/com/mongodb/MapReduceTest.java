@@ -125,6 +125,7 @@ public class MapReduceTest extends DatabaseTestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation") // This is for testing the old API, so it will use deprecated methods
     public void testMapReduceWithOutputToAnotherDatabase() {
         MapReduceCommand command = new MapReduceCommand(collection,
                                                         DEFAULT_MAP,

@@ -31,6 +31,7 @@ public class DatabaseTestCase {
     //CHECKSTYLE:ON
 
     @Before
+    @SuppressWarnings("deprecation") // This is for testing the old API, so it will use deprecated methods
     public void setUp() {
         database = getMongoClient().getDB(getDefaultDatabaseName());
 

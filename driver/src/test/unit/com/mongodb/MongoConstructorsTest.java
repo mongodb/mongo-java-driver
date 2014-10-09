@@ -115,6 +115,7 @@ public class MongoConstructorsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation") // This is for testing the old API, so it will use deprecated methods
     public void shouldGetDB() throws UnknownHostException {
         Mongo mongo = new MongoClient();
         try {
@@ -127,6 +128,7 @@ public class MongoConstructorsTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation") // This is for testing the old API, so it will use deprecated methods
     public void shouldGetSameDB() throws UnknownHostException {
         Mongo mongo = new MongoClient();
         try {
