@@ -24,7 +24,9 @@ package com.mongodb.util;
 @Deprecated
 public final class Hash {
 
-    /** Creates a hash for a string.
+    /**
+     * Creates a hash for a string.
+     *
      * @param s String to hash
      * @return the hash code
      */
@@ -35,7 +37,9 @@ public final class Hash {
         return hash;
     }
 
-    /** Creates a long hash for a string.
+    /**
+     * Creates a long hash for a string.
+     *
      * @param s the string to hash
      * @return the hash code
      */
@@ -104,7 +108,7 @@ public final class Hash {
      * @param end    Where to stop hashing.
      * @return the hash code
      */
-    public static final long longLowerHash( String s , int start , int end , long hash ) {
+    public static final long longLowerHash(String s, int start, int end, long hash) {
         for ( ; start < end; start++ )
             hash = _longHashConstant * hash + Character.toLowerCase( s.charAt( start ) );
         return hash;
@@ -129,15 +133,17 @@ public final class Hash {
     }
 
     /**
-     * This is an exact copy of the String <code>hashCode()</code> function, aside from the lowercasing.
+     * This is an exact copy of the String {@code hashCode()} function, aside from the lowercasing.
+     *
      * @param s string to be hashed
      * @return the hash code
      */
-    public static final int lowerCaseHash( String s ) {
-	int h = 0;
+    public static final int lowerCaseHash(String s) {
+        int h = 0;
         final int len = s.length();
-        for ( int i = 0; i < len; i++ )
-            h = 31*h + Character.toLowerCase( s.charAt( i ) );
+        for (int i = 0; i < len; i++) {
+            h = 31 * h + Character.toLowerCase(s.charAt(i));
+        }
         return h;
     }
 
@@ -191,13 +197,14 @@ public final class Hash {
     }
 
     /**
-     * This is an exact copy of the String <code>hashCode()</code> function, aside from the lowercasing.
-     * No, it's not.  It also ignores consecutive whitespace.
+     * This is an exact copy of the String {@code hashCode()} function, aside from the lowercasing. No, it's not.  It also ignores
+     * consecutive whitespace.
+     *
      * @param s string to be hashed
      * @return the hash code
      */
-    public static final int lowerCaseSpaceTrimHash( String s ) {
-	int h = 0;
+    public static final int lowerCaseSpaceTrimHash(String s) {
+        int h = 0;
         int len = s.length();
         while ( len > 1 && Character.isWhitespace( s.charAt( len-1 ) ) )
             len--;

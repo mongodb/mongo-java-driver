@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// BSONObject.java
-
 package org.bson;
 
 import java.util.Map;
@@ -28,6 +26,7 @@ public interface BSONObject {
 
     /**
      * Sets a name/value pair in this object.
+     *
      * @param key Name to set
      * @param v Corresponding value
      * @return <tt>v</tt>
@@ -36,18 +35,21 @@ public interface BSONObject {
 
     /**
      * Sets all key/value pairs from an object into this object
+     *
      * @param o the object
      */
     public void putAll( BSONObject o );
 
     /**
      * Sets all key/value pairs from a map into this object
+     *
      * @param m the map
      */
     public void putAll( Map m );
 
     /**
      * Gets a field from this object by a given name.
+     *
      * @param key The name of the field fetch
      * @return The field, if found
      */
@@ -55,12 +57,14 @@ public interface BSONObject {
 
     /**
      * Returns a map representing this BSONObject.
+     *
      * @return the map
      */
     public Map toMap();
 
     /**
      * Removes a field with a given name from this object.
+     *
      * @param key The name of the field to remove
      * @return The value removed from this object
      */
@@ -68,15 +72,17 @@ public interface BSONObject {
 
     /**
      * Deprecated
-     * @param s
+     *
+     * @param s the key to check
      * @return True if the key is present
-     * @deprecated
+     * @deprecated Please use {@link #containsField(String)} instead
      */
     @Deprecated
     public boolean containsKey( String s );
 
     /**
      * Checks if this object contains a field with the given name.
+     *
      * @param s Field name for which to check
      * @return True if the field is present
      */
@@ -84,6 +90,7 @@ public interface BSONObject {
 
     /**
      * Returns this object's fields' names
+     *
      * @return The names of the fields in this object
      */
     public Set<String> keySet();

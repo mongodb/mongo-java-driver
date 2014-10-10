@@ -14,29 +14,54 @@
  * limitations under the License.
  */
 
-// Bits.java
-
-
 package org.bson.io;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Utility class for reading values from an input stream.
+ */
 public class Bits {
 
-    public static void readFully( InputStream in, byte[] b )
-        throws IOException {
-        readFully( in , b , b.length );
+    /**
+     * Reads bytes from the input stream and puts them into the given byte buffer. The equivalent of calling {@link
+     * #readFully(java.io.InputStream, byte[], int, int)} with an offset of zero and a length equal to the length of the buffer.
+     *
+     * @param in the input stream to read from
+     * @param b  the buffer into which the data is read.
+     * @throws IOException if there's an error reading from the {@code in}
+     */
+    public static void readFully(InputStream in, byte[] b) throws IOException {
+        readFully(in, b, b.length);
     }
 
-    public static void readFully( InputStream in, byte[] b, int length )
-        throws IOException {
+    /**
+     * Reads bytes from the input stream and puts them into the given byte buffer. The equivalent of calling {@link
+     * #readFully(java.io.InputStream, byte[], int, int)} with an offset of zero.
+     *
+     * @param in     the input stream to read from
+     * @param b      the buffer into which the data is read.
+     * @param length the maximum number of bytes to read.
+     * @throws IOException if there's an error reading from the {@code in}
+     */
+    public static void readFully(InputStream in, byte[] b, int length) throws IOException {
         readFully(in, b, 0, length);
     }
 
-    public static void readFully( InputStream in, byte[] b, int startOffset, int length )
-        throws IOException {
+    /**
+     * Reads bytes from the input stream and puts them into the given byte buffer.
+     *
+     * @param in          the input stream to read from
+     * @param b           the buffer into which the data is read.
+     * @param startOffset the start offset in array {@code b} at which the data is written.
+     * @param length      the maximum number of bytes to read.
+     * @throws IOException if there's an error reading from the {@code in}
+     * @see java.io.InputStream#read(byte[], int, int)
+     */
+    public static void readFully(InputStream in, byte[] b, int startOffset, int length)
+    throws IOException {
 
         if (b.length < length + startOffset) {
             throw new IllegalArgumentException("Buffer is too small");
@@ -53,22 +78,50 @@ public class Bits {
         }
     }
 
-    public static int readInt( InputStream in )
-        throws IOException {
-        return readInt( in , new byte[4] );
+    /**
+     * Reads and returns a single integer value from the input stream.
+     *
+     * @param in the input stream to read from
+     * @return the integer value
+     * @throws IOException if there's an error reading from the {@code in}
+     */
+    public static int readInt(InputStream in) throws IOException {
+        return readInt(in, new byte[4]);
     }
 
-    public static int readInt( InputStream in , byte[] data )
-        throws IOException {
+    /**
+     * Reads and returns a single integer value from the input stream.
+     *
+     * @param in   the input stream to read from
+     * @param data the buffer to write the input stream bytes into
+     * @return the integer value
+     * @throws IOException if there's an error reading from the {@code in}
+     */
+    public static int readInt(InputStream in, byte[] data)
+    throws IOException {
         readFully(in, data, 4);
         return readInt(data);
     }
 
-    public static int readInt( byte[] data ) {
-        return readInt( data , 0 );
+    /**
+     * Reads and returns a single integer value from the buffer. The equivalent of calling {@link #readInt(byte[], int)} with an offset of
+     * zero.
+     *
+     * @param data the buffer to read from
+     * @return the integer value
+     */
+    public static int readInt(byte[] data) {
+        return readInt(data, 0);
     }
 
-    public static int readInt( byte[] data , int offset ) {
+    /**
+     * Reads and returns a single integer value from the buffer.
+     *
+     * @param data   the buffer to read from
+     * @param offset the position to start reading from the buffer
+     * @return the integer value
+     */
+    public static int readInt(byte[] data, int offset) {
         int x = 0;
         x |= ( 0xFF & data[offset+0] ) << 0;
         x |= ( 0xFF & data[offset+1] ) << 8;
@@ -77,7 +130,14 @@ public class Bits {
         return x;
     }
 
-    public static int readIntBE( byte[] data , int offset ) {
+    /**
+     * Reads and returns a single big-endian integer value
+     *
+     * @param data   the buffer to read from
+     * @param offset the position to start reading from the buffer
+     * @return the integer value
+     */
+    public static int readIntBE(byte[] data, int offset) {
         int x = 0;
         x |= ( 0xFF & data[offset+0] ) << 24;
         x |= ( 0xFF & data[offset+1] ) << 16;
@@ -86,23 +146,49 @@ public class Bits {
         return x;
     }
 
-    public static long readLong( InputStream in )
-        throws IOException {
-        return readLong( in , new byte[8] );
+    /**
+     * Reads and returns a single long value from the input stream.
+     *
+     * @param in the input stream to read from
+     * @return the long value
+     * @throws IOException if there's an error reading from the {@code in}
+     */
+    public static long readLong(InputStream in) throws IOException {
+        return readLong(in, new byte[8]);
     }
 
-
-    public static long readLong( InputStream in , byte[] data )
-        throws IOException {
+    /**
+     * Reads and returns a single long value from the input stream.
+     *
+     * @param in   the input stream to read from
+     * @param data the buffer to write the input stream bytes into
+     * @return the long value
+     * @throws IOException if there's an error reading from the {@code in}
+     */
+    public static long readLong(InputStream in, byte[] data) throws IOException {
         readFully(in, data, 8);
         return readLong(data);
     }
 
-    public static long readLong( byte[] data ) {
-        return readLong( data , 0 );
+    /**
+     * Reads and returns a single long value from the buffer. The equivalent of called {@link #readLong(byte[], int)} with an offset of
+     * zero.
+     *
+     * @param data the buffer to read from
+     * @return the long value
+     */
+    public static long readLong(byte[] data) {
+        return readLong(data, 0);
     }
-    
-    public static long readLong( byte[] data , int offset ) {
+
+    /**
+     * Reads and returns a single long value from the buffer.
+     *
+     * @param data   the buffer to read from
+     * @param offset the position to start reading from the buffer
+     * @return the long value
+     */
+    public static long readLong(byte[] data, int offset) {
         long x = 0;
         x |= ( 0xFFL & data[offset+0] ) << 0;
         x |= ( 0xFFL & data[offset+1] ) << 8;

@@ -14,28 +14,38 @@
  * limitations under the License.
  */
 
-// CodeWScope.java
-
 package org.bson.types;
 
 import org.bson.BSONObject;
 
 /** 
- * for using the CodeWScope type
+ * A representation of the JavaScript Code with Scope BSON type.
  */
 public class CodeWScope extends Code {
 
     private static final long serialVersionUID = -6284832275113680002L;
 
+    /**
+     * Construct an instance.
+     *
+     * @param code the code
+     * @param scope the scope
+     */
     public CodeWScope( String code , BSONObject scope ){
         super( code );
         _scope = scope;
     }
 
+    /**
+     * Gets the scope, which is is a mapping from identifiers to values, representing the scope in which the code should be evaluated.
+     *
+     * @return the scope
+     */
     public BSONObject getScope(){
         return _scope;
     }
 
+    @Override
     public boolean equals( Object o ){
         if ( ! ( o instanceof CodeWScope ) )
             return false;
@@ -44,6 +54,7 @@ public class CodeWScope extends Code {
         return _code.equals( c._code ) && _scope.equals( c._scope );
     }
 
+    @Override
     public int hashCode(){
         return _code.hashCode() ^ _scope.hashCode();
     }

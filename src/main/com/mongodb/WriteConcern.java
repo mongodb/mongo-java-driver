@@ -345,7 +345,7 @@ public class WriteConcern implements Serializable {
     /**
      * Gets the getlasterror command for this write concern.
      *
-     * @return getlasterror command, even if <code>w <= 0</code>
+     * @return getlasterror command, even if {@code w <= 0}
      * @deprecated This will be removed in 3.0
      */
     @Deprecated
@@ -637,12 +637,12 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Create a Majority Write Concern that requires a majority of
-     * servers to acknowledge the write.
+     * Create a Majority Write Concern that requires a majority of servers to acknowledge the write.
      *
      * @param wtimeout timeout for write operation
-     * @param fsync whether or not to fsync
-     * @param j whether writes should wait for a journaling group commit
+     * @param fsync    whether or not to fsync
+     * @param j        whether writes should wait for a journal group commit
+     * @return Majority, a subclass of WriteConcern that represents the write concern requiring most servers to acknowledge the write
      */
     public static Majority majorityWriteConcern( int wtimeout, boolean fsync, boolean j ) {
         return new Majority( wtimeout, fsync, j );
@@ -655,14 +655,27 @@ public class WriteConcern implements Serializable {
     final boolean _j;
     final boolean _continueOnError;
 
+    /**
+     * A write concern that blocks acknowledgement of a write operation until a majority of replica set members have applied it.
+     */
     public static class Majority extends WriteConcern {
 
         private static final long serialVersionUID = -4128295115883875212L;
 
+        /**
+         * Create a new Majority WriteConcern.
+         */
         public Majority( ) {
             super( "majority", 0, false, false );
         }
 
+        /**
+         * Create a new WriteConcern with the given configuration.
+         *
+         * @param wtimeout timeout for write operation
+         * @param fsync    whether or not to fsync
+         * @param j        whether writes should wait for a journaling group commit
+         */
         public Majority( int wtimeout, boolean fsync, boolean j ){
             super( "majority", wtimeout, fsync, j );
         }

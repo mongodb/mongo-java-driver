@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// BSONEncoder.java
-
 package org.bson;
 
 import com.mongodb.DBRefBase;
@@ -68,18 +66,14 @@ import static org.bson.BSON.UNDEFINED;
 import static org.bson.BSON.regexFlags;
 
 /**
- * this is meant to be pooled or cached
- * there is some per instance memory for string conversion, etc...
+ * This is meant to be pooled or cached. There is some per instance memory for string conversion, etc...
  */
 @SuppressWarnings("unchecked")
 public class BasicBSONEncoder implements BSONEncoder {
     
     static final boolean DEBUG = false;
 
-    public BasicBSONEncoder(){
-
-    }
-
+    @Override
     public byte[] encode( BSONObject o ){
         BasicOutputBuffer buf = new BasicOutputBuffer();
         set( buf );
@@ -88,6 +82,7 @@ public class BasicBSONEncoder implements BSONEncoder {
         return buf.toByteArray();
     }
 
+    @Override
     public void set( OutputBuffer out ){
         if ( _buf != null )
             throw new IllegalStateException( "in the middle of something" );
@@ -96,14 +91,15 @@ public class BasicBSONEncoder implements BSONEncoder {
     }
 
     /**
-     * Gets the buffer this encoder is writing to.
+     * Gets the buffer the BSON is being encoded into.
      *
-     * @return the output buffer
+     * @return the OutputBuffer
      */
     protected OutputBuffer getOutputBuffer() {
         return _buf;
     }
- 
+
+    @Override
     public void done(){
         _buf = null;
     }
@@ -117,24 +113,37 @@ public class BasicBSONEncoder implements BSONEncoder {
     protected boolean handleSpecialObjects( String name , BSONObject o ){
         return false;
     }
-    
+
+    /**
+     * Special values are not encoded into documents.
+     *
+     * @param name the field name
+     * @param o    the value
+     * @return true if the operation is successful. This implementation always returns false.
+     */
     protected boolean putSpecial( String name , Object o ){
         return false;
     }
 
-    /** Encodes a <code>BSONObject</code>.
-     * This is for the higher level api calls
-     * @param o the object to encode
+    /**
+     * Encodes a {@code BSONObject}. This is for the higher level api calls.
+     *
+     * @param o the document to encode
      * @return the number of characters in the encoding
      */
+    @Override
     public int putObject( BSONObject o ){
         return putObject( null , o );
     }
 
     /**
-     * this is really for embedded objects
+     * This is really for embedded objects
+     *
+     * @param name the field name
+     * @param o    the object
+     * @return the number of characters in the encoding
      */
-    protected int putObject( String name , BSONObject o ){
+    protected int putObject(String name, BSONObject o) {
 
         if ( o == null )
             throw new NullPointerException( "can't save a null object" );
@@ -206,7 +215,13 @@ public class BasicBSONEncoder implements BSONEncoder {
         return _buf.getPosition() - start;
     }
 
-	protected void _putObjectField( String name , Object val ){
+    /**
+     * Encodes any Object type
+     *
+     * @param name the field name
+     * @param val  the value to write
+     */
+    protected void _putObjectField( String name , Object val ){
 
         if ( name.equals( "_transientFields" ) )
             return;
@@ -328,21 +343,43 @@ public class BasicBSONEncoder implements BSONEncoder {
     }
     
 
+    /**
+     * Encodes a null value
+     *
+     * @param name the field name
+     */
     protected void putNull( String name ){
         _put( NULL , name );
     }
 
+    /**
+     * Encodes an undefined value
+     *
+     * @param name the field name
+     */
     protected void putUndefined(String name){
         _put(UNDEFINED, name);
     }
 
-    protected void putTimestamp(String name, BSONTimestamp ts ){
-        _put( TIMESTAMP , name );
-        _buf.writeInt( ts.getInc() );
-        _buf.writeInt( ts.getTime() );
+    /**
+     * Encodes a BSON timestamp
+     *
+     * @param name the field name
+     * @param ts   the timestamp to encode
+     */
+    protected void putTimestamp(String name, BSONTimestamp ts) {
+        _put(TIMESTAMP, name);
+        _buf.writeInt(ts.getInc());
+        _buf.writeInt(ts.getTime());
     }
-    
-    protected void putCodeWScope( String name , CodeWScope code ){
+
+    /**
+     * Encodes a field to a JAVASCRIPT_WITH_SCOPE value.
+     *
+     * @param name the field name
+     * @param code the value
+     */
+    protected void putCodeWScope(String name, CodeWScope code) {
         _put( CODE_W_SCOPE , name );
         int temp = _buf.getPosition();
         _buf.writeInt( 0 );
@@ -351,24 +388,48 @@ public class BasicBSONEncoder implements BSONEncoder {
         _buf.writeInt( temp , _buf.getPosition() - temp );
     }
 
+    /**
+     * Encodes a field to a JAVASCRIPT value.
+     *
+     * @param name the field name
+     * @param code the value
+     */
     protected void putCode( String name , Code code ){
         _put( CODE , name );
         int temp = _buf.getPosition();
         _putValueString( code.getCode() );
     }
 
+    /**
+     * Encodes a field with a {@code Boolean} or {@code boolean} value
+     *
+     * @param name  the field name
+     * @param b the value
+     */
     protected void putBoolean( String name , Boolean b ){
         _put( BOOLEAN , name );
         _buf.write( b ? (byte)0x1 : (byte)0x0 );
     }
 
-    protected void putDate( String name , Date d ){
-        _put( DATE , name );
-        _buf.writeLong( d.getTime() );
+    /**
+     * Encodes a field with data and time value.
+     *
+     * @param name the field name
+     * @param date the value
+     */
+    protected void putDate(String name, Date date) {
+        _put(DATE, name);
+        _buf.writeLong(date.getTime());
     }
 
-    protected void putNumber( String name , Number n ){
-		if ( n instanceof Integer ||
+    /**
+     * Encodes any number field.
+     *
+     * @param name the field name
+     * @param n    the number
+     */
+    protected void putNumber(String name, Number n) {
+        if ( n instanceof Integer ||
 	             n instanceof Short ||
 	             n instanceof Byte ||
 	             n instanceof AtomicInteger ){
@@ -387,12 +448,24 @@ public class BasicBSONEncoder implements BSONEncoder {
 	        throw new IllegalArgumentException( "can't serialize " + n.getClass() );
 		}
     }
-    
-    protected void putBinary( String name , byte[] data ){
+
+    /**
+     * Encodes a byte array field
+     *
+     * @param name the field name
+     * @param data the value
+     */
+    protected void putBinary(String name, byte[] data) {
         putBinary( name, B_GENERAL, data );
     }
     
-    protected void putBinary( String name , Binary val ){
+    /**
+     * Encodes a Binary field
+     *
+     * @param name   the field name
+     * @param val the value
+     */
+    protected void putBinary(final String name, final Binary val) {
         putBinary( name, val.getType(), val.getData() );        
     }
     
@@ -412,6 +485,12 @@ public class BasicBSONEncoder implements BSONEncoder {
         int after = _buf.getPosition();
     }
     
+    /**
+     * Encodes a field with a {@link java.util.UUID} value.  This is encoded to a binary value of subtype UUID_LEGACY
+     *
+     * @param name the field name
+     * @param val the value
+     */
     protected void putUUID( String name , UUID val ){
         _put( BINARY , name );
         _buf.writeInt( 16 );
@@ -420,12 +499,24 @@ public class BasicBSONEncoder implements BSONEncoder {
         _buf.writeLong( val.getLeastSignificantBits());
     }
 
-    protected void putSymbol( String name , Symbol s ){
-        _putString(name, s.getSymbol(), SYMBOL);
+    /**
+     * Encodes a Symbol field
+     *
+     * @param name   the field name
+     * @param symbol the value
+     */
+    protected void putSymbol(String name, Symbol symbol) {
+        _putString(name, symbol.getSymbol(), SYMBOL);
     }
 
-    protected void putString(String name, String s) {
-        _putString(name, s, STRING);
+    /**
+     * Encodes a String field
+     *
+     * @param name  the field name
+     * @param value the value
+     */
+    protected void putString(String name, String value) {
+        _putString(name, value, STRING);
     }
 
     private void _putString( String name , String s, byte type ){
@@ -433,7 +524,13 @@ public class BasicBSONEncoder implements BSONEncoder {
         _putValueString( s );
     }
 
-    protected void putObjectId( String name , ObjectId oid ){
+    /**
+     * Encodes an ObjectId field to an OBJECT_ID.
+     *
+     * @param name the field name
+     * @param oid  the value
+     */
+    protected void putObjectId(String name, ObjectId oid) {
         _put( OID , name );
         // according to spec, values should be stored big endian
         _buf.writeIntBE( oid._time() );
@@ -486,7 +583,7 @@ public class BasicBSONEncoder implements BSONEncoder {
     }
 
     /**
-     * puts as utf-8 string
+     * Puts as utf-8 string
      *
      * @deprecated Replaced by {@code getOutputBuffer().writeCString(String)}.
      */

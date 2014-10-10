@@ -434,7 +434,7 @@ public abstract class DBCollection {
      * @param update      performs an update of the selected document
      * @param upsert      when true, operation creates a new document if the query returns no documents
      * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
-     *                    a server version >= 2.6
+     *                    a server version &gt;= 2.6
      * @param maxTimeUnit the unit that maxTime is specified in
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made

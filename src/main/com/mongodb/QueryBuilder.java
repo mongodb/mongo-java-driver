@@ -329,7 +329,7 @@ public class QueryBuilder {
      * @param y the y coordinate of the first box corner.
      * @param x2 the x coordinate of the second box corner.
      * @param y2 the y coordinate of the second box corner.
-     * @return
+     * @return {@code this}
      */
     public QueryBuilder withinBox(double x, double y, double x2, double y2) {
     	addOperand( QueryOperators.WITHIN ,

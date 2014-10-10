@@ -39,6 +39,7 @@ public class DBAddress extends ServerAddress {
      * @param urlFormat the URL-formatted host and port
      * @mongodb.driver.manual reference/connection-string/ MongoDB Connection String
      * @see MongoClientURI
+     * @throws java.net.UnknownHostException
      */
     public DBAddress(final String urlFormat) throws UnknownHostException {
         super( _getHostSection( urlFormat ) );
@@ -165,10 +166,11 @@ public class DBAddress extends ServerAddress {
             throw new MongoInternalException( "shouldn't be possible" , uh );
         }
     }
-    
+
     /**
-     * gets the database name
-     * @return
+     * Gets the database name
+     *
+     * @return the name of the database
      */
     public String getDBName(){
         return _db;

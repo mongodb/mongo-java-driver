@@ -296,16 +296,17 @@ public class MongoOptions {
     }
 
     /**
-     * <p>The description for <code>Mongo</code> instances created with these options. This is used in various places like logging.</p>
+     * <p>The description for {@code Mongo} instances created with these options. This is used in various places like logging.</p>
      */
     public String description;
 
     /**
-     * The maximum number of connections allowed per host for this Mongo instance.
-     * Those connections will be kept in a pool when idle.
-     * Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection.
-     * Default is 10.
-     * @see {@linkplain MongoOptions#threadsAllowedToBlockForConnectionMultiplier}</p>
+     * <p>The maximum number of connections allowed per host for this Mongo instance. Those connections will be kept in  a pool when idle.
+     * Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection.</p>
+     *
+     * <p>Default is 10.</p>
+     *
+     * @see MongoOptions#threadsAllowedToBlockForConnectionMultiplier
      */
     public int connectionsPerHost;
 
@@ -438,7 +439,7 @@ public class MongoOptions {
     /**
      * Sets whether there is a a finalize method created that cleans up instances of DBCursor that the client
      * does not close.  If you are careful to always call the close method of DBCursor, then this can safely be set to false.
-     * @see com.mongodb.DBCursor#close().
+     * @see com.mongodb.DBCursor#close()
      * Default is true.
      */
     public boolean cursorFinalizerEnabled;
@@ -480,7 +481,7 @@ public class MongoOptions {
     String requiredReplicaSetName;
 
     /**
-     * @return The description for <code>MongoClient</code> instances created with these options
+     * @return The description for {@code MongoClient} instances created with these options
      */
     public synchronized String getDescription() {
         return description;
@@ -488,7 +489,7 @@ public class MongoOptions {
 
     /**
      *
-     * @param desc The description for <code>Mongo</code> instances created with these options
+     * @param desc The description for {@code Mongo} instances created with these options
      */
     public synchronized void setDescription(String desc) {
         description = desc;

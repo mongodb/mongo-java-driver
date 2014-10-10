@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// GridFS.java
-
 package com.mongodb.gridfs;
 
 import com.mongodb.BasicDBObject;
@@ -37,32 +35,40 @@ import java.util.List;
 import java.util.logging.Logger;
 
 /**
- *  Implementation of GridFS v1.0
+ * <p> Implementation of GridFS - a specification for storing and retrieving files that exceed the BSON-document size limit of 16MB. </p>
  *
- *  <a href="http://www.mongodb.org/display/DOCS/GridFS+Specification">GridFS 1.0 spec</a>
+ * <p>Instead of storing a file in a single document, GridFS divides a file into parts, or chunks, and stores each of those chunks as a
+ * separate document. By default GridFS limits chunk size to 256k. GridFS uses two collections to store files. One collection stores the
+ * file chunks, and the other stores file metadata. </p>
  *
- * @dochub gridfs
+ * <p>When you query a GridFS store for a file, the driver or client will reassemble the chunks as needed. You can perform range queries on
+ * files stored through GridFS. You also can access information from arbitrary sections of files, which allows you to "skip" into the middle
+ * of a video or audio file. </p>
+ *
+ * <p>GridFS is useful not only for storing files that exceed 16MB but also for storing any files for which you want access without having
+ * to load the entire file into memory. For more information on the indications of GridFS, see MongoDB official documentation.</p>
+ *
+ * @mongodb.driver.manual core/gridfs/ GridFS
  */
 public class GridFS {
     private static final Logger LOGGER = Logger.getLogger( "com.mongodb.gridfs" );
 
     /**
-     * file's chunk size
+     * File's chunk size
      */
     public static final int DEFAULT_CHUNKSIZE = 255 * 1024;
 
     /**
-     * file's max chunk size
+     * File's max chunk size
      *
-     * @deprecated You can calculate max chunkSize with
-     *             a similar formula {@link com.mongodb.MongoClient#getMaxBsonObjectSize()} - 500*1000.
+     * @deprecated You can calculate max chunkSize with a similar formula {@link com.mongodb.MongoClient#getMaxBsonObjectSize()} - 500*1000.
      *             Please ensure that you left enough space for metadata (500kb is enough).
      */
     @Deprecated
     public static final long MAX_CHUNKSIZE = (long) (3.5 * 1000 * 1000);
 
     /**
-     * bucket to use for the collection namespaces
+     * Bucket to use for the collection namespaces
      */
     public static final String DEFAULT_BUCKET = "fs";
 
@@ -71,26 +77,27 @@ public class GridFS {
     // --------------------------
 
     /**
-     * Creates a GridFS instance for the default bucket "fs"
-     * in the given database. Set the preferred WriteConcern on the give DB with DB.setWriteConcern
-     * @see com.mongodb.WriteConcern
+     * Creates a GridFS instance for the default bucket "fs" in the given database. Set the preferred WriteConcern on the give DB with
+     * DB.setWriteConcern
+     *
      * @param db database to work with
-     * @throws MongoException 
+     * @throws com.mongodb.MongoException
+     * @see com.mongodb.WriteConcern
      */
-    public GridFS(DB db) {
+    public GridFS(final DB db) {
         this(db, DEFAULT_BUCKET);
     }
 
     /**
-     * Creates a GridFS instance for the specified bucket
-     * in the given database.  Set the preferred WriteConcern on the give DB with DB.setWriteConcern
+     * Creates a GridFS instance for the specified bucket in the given database.  Set the preferred WriteConcern on the give DB with
+     * DB.setWriteConcern
      *
-     * @see com.mongodb.WriteConcern
      * @param db database to work with
      * @param bucket bucket to use in the given database
-     * @throws MongoException 
+     * @throws com.mongodb.MongoException
+     * @see com.mongodb.WriteConcern
      */
-    public GridFS(DB db, String bucket) {
+    public GridFS(final DB db, final String bucket) {
         _db = db;
         _bucketName = bucket;
 
@@ -119,7 +126,7 @@ public class GridFS {
 
 
     /**
-     * gets the list of files stored in this gridfs, sorted by filename
+     * Gets the list of files stored in this gridfs, sorted by filename.
      *
      * @return cursor of file objects
      */
@@ -128,7 +135,7 @@ public class GridFS {
     }
 
     /**
-     * gets a filtered list of files stored in this gridfs, sorted by filename
+     * Gets a filtered list of files stored in this gridfs, sorted by filename.
      *
      * @param query filter to apply
      * @return cursor of file objects
@@ -138,7 +145,7 @@ public class GridFS {
     }
 
     /**
-     * gets a filtered list of files stored in this gridfs, sorted by param sort
+     * Gets a sorted, filtered list of files stored in this gridfs.
      *
      * @param query filter to apply
      * @param sort sorting to apply
@@ -154,81 +161,91 @@ public class GridFS {
     // --------------------------
 
     /**
-     * finds one file matching the given id. Equivalent to findOne(id)
-     * @param id
-     * @return
-     * @throws MongoException 
+     * Finds one file matching the given objectId. Equivalent to findOne(objectId).
+     *
+     * @param objectId the objectId of the file stored on a server
+     * @return a gridfs file
+     * @throws com.mongodb.MongoException
      */
-    public GridFSDBFile find( ObjectId id ){
-        return findOne( id );
+    public GridFSDBFile find(final ObjectId objectId) {
+        return findOne(objectId);
+    }
+
+    /**
+     * Finds one file matching the given objectId.
+     *
+     * @param objectId the objectId of the file stored on a server
+     * @return a gridfs file
+     * @throws com.mongodb.MongoException
+     */
+    public GridFSDBFile findOne(final ObjectId objectId) {
+        return findOne( new BasicDBObject( "_id" , objectId ) );
     }
     /**
-     * finds one file matching the given id.
-     * @param id
-     * @return
-     * @throws MongoException 
+     * Finds one file matching the given filename.
+     *
+     * @param filename the name of the file stored on a server
+     * @return the gridfs db file
+     * @throws com.mongodb.MongoException
      */
-    public GridFSDBFile findOne( ObjectId id ){
-        return findOne( new BasicDBObject( "_id" , id ) );
-    }
-    /**
-     * finds one file matching the given filename
-     * @param filename
-     * @return
-     * @throws MongoException 
-     */
-    public GridFSDBFile findOne( String filename ){
+    public GridFSDBFile findOne(final String filename) {
         return findOne( new BasicDBObject( "filename" , filename ) );
     }
+
     /**
-     * finds one file matching the given query
-     * @param query
-     * @return
-     * @throws MongoException 
+     * Finds one file matching the given query.
+     *
+     * @param query filter to apply
+     * @return a gridfs file
+     * @throws com.mongodb.MongoException
      */
-    public GridFSDBFile findOne( DBObject query ){
+    public GridFSDBFile findOne(final DBObject query) {
         return _fix( _filesCollection.findOne( query ) );
     }
 
     /**
-     * finds a list of files matching the given filename
-     * @param filename
-     * @return
-     * @throws MongoException 
+     * Finds a list of files matching the given filename.
+     *
+     * @param filename the filename to look for
+     * @return list of gridfs files
+     * @throws com.mongodb.MongoException
      */
-    public List<GridFSDBFile> find( String filename ){
+    public List<GridFSDBFile> find(final String filename) {
         return find( filename, null );
     }
 
     /**
-     * finds a list of files matching the given filename
-     * @param filename
-     * @param sort
-     * @return
-     * @throws MongoException
+     * Finds a list of files matching the given filename.
+     *
+     * @param filename the filename to look for
+     * @param sort     the fields to sort with
+     * @return list of gridfs files
+     * @throws com.mongodb.MongoException
      */
-    public List<GridFSDBFile> find( String filename , DBObject sort){
+    public List<GridFSDBFile> find(final String filename, final DBObject sort) {
         return find( new BasicDBObject( "filename" , filename ), sort );
     }
 
     /**
-     * finds a list of files matching the given query
-     * @param query
-     * @return
-     * @throws MongoException
+     * Finds a list of files matching the given query.
+     *
+     * @param query the filter to apply
+     * @return list of gridfs files
+     * @throws com.mongodb.MongoException
      */
-    public List<GridFSDBFile> find( DBObject query ){
+    public List<GridFSDBFile> find(final DBObject query) {
         return find(query, null);
     }
 
     /**
-     * finds a list of files matching the given query
-     * @param query
-     * @param sort
-     * @return
-     * @throws MongoException 
+     * Finds a list of files matching the given query.
+     *
+     * @param query the filter to apply
+     * @param sort  the fields to sort with
+     * @return list of gridfs files
+     * @throws com.mongodb.MongoException
      */
-    public List<GridFSDBFile> find( DBObject query , DBObject sort){
+    public List<GridFSDBFile> find(final DBObject query, final DBObject sort) {
         List<GridFSDBFile> files = new ArrayList<GridFSDBFile>();
 
         DBCursor c = null;
@@ -270,11 +287,12 @@ public class GridFS {
     // --------------------------
 
     /**
-     * removes the file matching the given id
-     * @param id
-     * @throws MongoException 
+     * Removes the file matching the given id.
+     *
+     * @param id the id of the file to be removed
+     * @throws com.mongodb.MongoException
      */
-    public void remove( ObjectId id ){
+    public void remove(final ObjectId id) {
     	 if(id == null) {
              throw new IllegalArgumentException("file id can not be null");
          }
@@ -283,11 +301,12 @@ public class GridFS {
     }
 
     /**
-     * removes all files matching the given filename
-     * @param filename
-     * @throws MongoException 
+     * Removes all files matching the given filename.
+     *
+     * @param filename the name of the file to be removed
+     * @throws com.mongodb.MongoException
      */
-    public void remove( String filename ){
+    public void remove(final String filename) {
         if(filename == null) {
             throw new IllegalArgumentException("filename can not be null");
         }
@@ -295,11 +314,12 @@ public class GridFS {
     }
 
     /**
-     * removes all files matching the given query
-     * @param query
-     * @throws MongoException 
+     * Removes all files matching the given query.
+     *
+     * @param query filter to apply
+     * @throws com.mongodb.MongoException
      */
-    public void remove( DBObject query ){
+    public void remove(final DBObject query) {
     	if(query == null) {
               throw new IllegalArgumentException("query can not be null");
           }
@@ -314,91 +334,86 @@ public class GridFS {
     // --------------------------
 
     /**
-     * creates a file entry.
-     * After calling this method, you have to call save() on the GridFSInputFile file
+     * Creates a file entry. After calling this method, you have to call {@link com.mongodb.gridfs.GridFSInputFile#save()}.
+     *
      * @param data the file's data
-     * @return
+     * @return a gridfs input file
      */
-    public GridFSInputFile createFile( byte[] data ){
+    public GridFSInputFile createFile(final byte[] data) {
         return createFile( new ByteArrayInputStream( data ), true );
     }
 
-
     /**
-     * creates a file entry.
-     * After calling this method, you have to call save() on the GridFSInputFile file
-     * @param f the file object
-     * @return
-     * @throws IOException
+     * Creates a file entry. After calling this method, you have to call {@link com.mongodb.gridfs.GridFSInputFile#save()}.
+     *
+     * @param file the file object
+     * @return a GridFS input file
+     * @throws IOException if there are problems reading {@code file}
      */
-    public GridFSInputFile createFile( File f )
-        throws IOException {
-        return createFile( new FileInputStream( f ) , f.getName(), true );
+    public GridFSInputFile createFile(final File file) throws IOException {
+        return createFile(new FileInputStream(file), file.getName(), true);
     }
 
     /**
-     * creates a file entry.
-     * after calling this method, you have to call save() on the GridFSInputFile file
+     * Creates a file entry. After calling this method, you have to call {@link com.mongodb.gridfs.GridFSInputFile#save()}.
+     *
      * @param in an inputstream containing the file's data
-     * @return
+     * @return a gridfs input file
      */
-    public GridFSInputFile createFile( InputStream in ){
+    public GridFSInputFile createFile(final InputStream in) {
         return createFile( in , null );
     }
 
     /**
-     * creates a file entry.
-     * after calling this method, you have to call save() on the GridFSInputFile file
+     * Creates a file entry. After calling this method, you have to call {@link com.mongodb.gridfs.GridFSInputFile#save()}.
+     *
      * @param in an inputstream containing the file's data
-     * @param closeStreamOnPersist indicate the passed in input stream should be closed
-     *        once the data chunk persisted
-     * @return
+     * @param closeStreamOnPersist indicate the passed in input stream should be closed once the data chunk persisted
+     * @return a gridfs input file
      */
-    public GridFSInputFile createFile( InputStream in, boolean closeStreamOnPersist ){
+    public GridFSInputFile createFile(final InputStream in, final boolean closeStreamOnPersist) {
         return createFile( in , null, closeStreamOnPersist );
     }
 
     /**
-     * creates a file entry.
-     * After calling this method, you have to call save() on the GridFSInputFile file
+     * Creates a file entry. After calling this method, you have to call {@link com.mongodb.gridfs.GridFSInputFile#save()}.
+     *
      * @param in an inputstream containing the file's data
      * @param filename the file name as stored in the db
-     * @return
+     * @return a gridfs input file
      */
-    public GridFSInputFile createFile( InputStream in , String filename ){
+    public GridFSInputFile createFile(final InputStream in, final String filename) {
         return new GridFSInputFile( this , in , filename );
     }
 
     /**
-     * creates a file entry.
-     * After calling this method, you have to call save() on the GridFSInputFile file
+     * Creates a file entry. After calling this method, you have to call {@link com.mongodb.gridfs.GridFSInputFile#save()}.
+     *
      * @param in an inputstream containing the file's data
      * @param filename the file name as stored in the db
-     * @param closeStreamOnPersist indicate the passed in input stream should be closed
-     *        once the data chunk persisted
-     * @return
+     * @param closeStreamOnPersist indicate the passed in input stream should be closed once the data chunk persisted
+     * @return a gridfs input file
      */
-    public GridFSInputFile createFile( InputStream in , String filename, boolean closeStreamOnPersist ){
+    public GridFSInputFile createFile(final InputStream in, final String filename, final boolean closeStreamOnPersist) {
         return new GridFSInputFile( this , in , filename, closeStreamOnPersist );
     }
 
     /**
-     * @see {@link GridFS#createFile()} on how to use this method
+     * Creates a file entry.
+     *
      * @param filename the file name as stored in the db
-     * @return
+     * @return a gridfs input file
+     * @see GridFS#createFile()
      */
-    public GridFSInputFile createFile(String filename) {
+    public GridFSInputFile createFile(final String filename) {
         return new GridFSInputFile( this , filename );
     }
 
     /**
-     * This method creates an empty {@link GridFSInputFile} instance. On this
-     * instance an {@link java.io.OutputStream} can be obtained using the
-     * {@link GridFSInputFile#getOutputStream()} method. You can still call
-     * {@link GridFSInputFile#setContentType(String)} and
-     * {@link GridFSInputFile#setFilename(String)}. The file will be completely
-     * written and closed after calling the {@link java.io.OutputStream#close()}
-     * method on the output stream.
+     * This method creates an empty {@link GridFSInputFile} instance. On this instance an {@link java.io.OutputStream} can be obtained using
+     * the {@link GridFSInputFile#getOutputStream()} method. You can still call {@link GridFSInputFile#setContentType(String)} and {@link
+     * GridFSInputFile#setFilename(String)}. The file will be completely written and closed after calling the {@link
+     * java.io.OutputStream#close()} method on the output stream.
      *
      * @return GridFS file handle instance.
      */
@@ -413,23 +428,25 @@ public class GridFS {
     // --------------------------
 
     /**
-     * gets the bucket name used in the collection's namespace
-     * @return
+     * Gets the bucket name used in the collection's namespace. Default value is 'fs'.
+     *
+     * @return the name of the file bucket
      */
     public String getBucketName(){
         return _bucketName;
     }
 
     /**
-     * gets the db used
-     * @return
+     * Gets the database used.
+     *
+     * @return the database
      */
     public DB getDB(){
         return _db;
     }
 
     /**
-     * Gets the {@link DBCollection} in which the file’s metadata is stored.
+     * Gets the {@link DBCollection} in which the file's metadata is stored.
      *
      * @return the collection
      */

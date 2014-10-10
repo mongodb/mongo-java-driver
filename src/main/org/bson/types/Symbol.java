@@ -21,25 +21,30 @@ package org.bson.types;
 import java.io.Serializable;
 
 /**
- *  Class to hold a BSON symbol object, which is an interned string in Ruby
+ * Class to hold an instance of the BSON symbol type.
  */
 public class Symbol implements Serializable {
 
     private static final long serialVersionUID = 1326269319883146072L;
 
+    /**
+     * Construct a new instance with the given symbol.
+     *
+     * @param s the symbol
+     */
     public Symbol(String s) {
         _symbol = s;
     }
 
+    /**
+     * Gets the symbol.
+     *
+     * @return the symbol
+     */
     public String getSymbol(){
         return _symbol;
     }
 
-    /**
-     * Will compare equal to a String that is equal to the String that this holds
-     * @param o
-     * @return
-     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -66,6 +71,7 @@ public class Symbol implements Serializable {
         return _symbol != null ? _symbol.hashCode() : 0;
     }
 
+    @Override
     public String toString(){
         return _symbol;
     }

@@ -33,30 +33,55 @@ import java.util.List;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+/**
+ * An implementation of {@code BsonCallback} that creates an instance of BSONObject.
+ */
 public class BasicBSONCallback implements BSONCallback {
 
+    /**
+     * Creates a new instance.
+     */
     public BasicBSONCallback(){
         reset();
     }
 
+    /**
+     * Factory method for creating a new BSONObject.
+     *
+     * @return a new BasicBSONObject.
+     */
     public BSONObject create(){
         return new BasicBSONObject();
     }
 
+    /**
+     * Factory method for creating a new BSON List.
+     *
+     * @return a new BasicBSONList.
+     */
     protected BSONObject createList() {
         return new BasicBSONList();
     }
 
+    @Override
     public BSONCallback createBSONCallback(){
         return new BasicBSONCallback();
     }
 
-    public BSONObject create( boolean array , List<String> path ){
+    /**
+     * Helper method to create either a BSON Object or a BSON List depending upon whether the {@code array} parameter is true or not.
+     *
+     * @param array set to true to create a new BSON List, otherwise will create a new BSONObject
+     * @param path  a list of field names to navigate to this field in the document
+     * @return the new BSONObject
+     */
+    public BSONObject create(final boolean array, final List<String> path) {
         if ( array )
             return createList();
         return create();
     }
 
+    @Override
     public void objectStart(){
         if ( _stack.size() > 0 )
 	        throw new IllegalStateException( "something is wrong" );
@@ -73,7 +98,8 @@ public class BasicBSONCallback implements BSONCallback {
         _stack.add( (BSONObject)_root );
     }
 
-    public void objectStart(String name){
+    @Override
+    public void objectStart(final String name) {
         objectStart( false , name );
     }
 
@@ -89,6 +115,7 @@ public class BasicBSONCallback implements BSONCallback {
         _stack.addLast( o );
     }
 
+    @Override
     public Object objectDone(){
         final BSONObject o =_stack.removeLast();
         if ( _nameStack.size() > 0 )
@@ -99,104 +126,148 @@ public class BasicBSONCallback implements BSONCallback {
         return !BSON.hasDecodeHooks() ? o : (BSONObject)BSON.applyDecodingHooks(o);
     }
 
+    @Override
     public void arrayStart() {
         objectStart(true);
     }
 
-    public void arrayStart(String name){
+    @Override
+    public void arrayStart(final String name) {
         objectStart( true , name );
     }
 
+    @Override
     public Object arrayDone(){
         return objectDone();
     }
 
-    public void gotNull( String name ){
+    @Override
+    public void gotNull(final String name) {
         cur().put( name , null );
     }
 
-    public void gotUndefined( String name ) { }
+    @Override
+    public void gotUndefined(final String name) {
+    }
 
-    public void gotMinKey( String name ){
+    @Override
+    public void gotMinKey(final String name) {
         cur().put( name , new MinKey() );
     }
 
-    public void gotMaxKey( String name ){
+    @Override
+    public void gotMaxKey(final String name) {
         cur().put( name , new MaxKey() );
     }
 
-    public void gotBoolean( String name , boolean v ){
-        _put( name , v );
+    @Override
+    public void gotBoolean(final String name, final boolean value) {
+        _put(name, value);
     }
 
-    public void gotDouble( final String name , final double v ){
-        _put( name , v );
+    @Override
+    public void gotDouble(final String name, final double value) {
+        _put(name, value);
     }
 
-    public void gotInt( final String name , final int v ){
-        _put( name , v );
+    @Override
+    public void gotInt(final String name, final int value) {
+        _put(name, value);
     }
 
-    public void gotLong( final String name , final long v ){
-        _put( name , v );
+    @Override
+    public void gotLong(final String name, final long value) {
+        _put(name, value);
     }
 
-    public void gotDate( String name , long millis ){
+    @Override
+    public void gotDate(final String name, final long millis) {
         _put( name , new Date( millis ) );
     }
-    public void gotRegex( String name , String pattern , String flags ){
+
+    @Override
+    public void gotRegex(final String name, final String pattern, final String flags) {
         _put( name , Pattern.compile( pattern , BSON.regexFlags( flags ) ) );
     }
 
-    public void gotString( final String name , final String v ){
-        _put( name , v );
-    }
-    public void gotSymbol( String name , String v ){
-        _put( name , v );
+    @Override
+    public void gotString(final String name, final String value) {
+        _put(name, value);
     }
 
+    @Override
+    public void gotSymbol(final String name, final String value) {
+        _put(name, value);
+    }
+
+    @Override
     public void gotTimestamp( String name , int time , int inc ){
         _put( name , new BSONTimestamp( time , inc ) );
     }
-    public void gotObjectId( String name , ObjectId id ){
+
+    @Override
+    public void gotObjectId(final String name, final ObjectId id) {
         _put( name , id );
     }
+
+    @Override
     public void gotDBRef( String name , String ns , ObjectId id ){
         _put( name , new BasicBSONObject( "$ns" , ns ).append( "$id" , id ) );
     }
 
     @Deprecated
-    public void gotBinaryArray( String name , byte[] data ){
+    @Override
+    public void gotBinaryArray(final String name, final byte[] data) {
         gotBinary( name, BSON.B_GENERAL, data );
     }
 
-    public void gotBinary( String name , byte type , byte[] data ){
+    @Override
+    public void gotBinary(final String name, final byte type, final byte[] data) {
         if( type == BSON.B_GENERAL || type == BSON.B_BINARY )
             _put( name , data );
         else
             _put( name , new Binary( type , data ) );
     }
 
-    public void gotUUID( String name , long part1, long part2){
+    @Override
+    public void gotUUID(final String name, final long part1, final long part2) {
         _put( name , new UUID(part1, part2) );
     }
 
-    public void gotCode( String name , String code ){
+    @Override
+    public void gotCode(final String name, final String code) {
         _put( name , new Code( code ) );
     }
 
-    public void gotCodeWScope( String name , String code , Object scope ){
+    @Override
+    public void gotCodeWScope(final String name, final String code, final Object scope) {
         _put( name , new CodeWScope( code, (BSONObject)scope ) );
     }
 
-    protected void _put( final String name , final Object o ){
-        cur().put( name , !BSON.hasDecodeHooks() ? o : BSON.applyDecodingHooks( o ) );
+    /**
+     * Puts a new value into the document.
+     *
+     * @param name the name of the field
+     * @param o    the value
+     */
+    protected void _put(final String name, final Object o) {
+        cur().put(name, !BSON.hasDecodeHooks() ? o : BSON.applyDecodingHooks(o));
     }
 
+    /**
+     * Gets the current value
+     *
+     * @return the current value
+     */
     protected BSONObject cur(){
         return _stack.getLast();
     }
 
+    /**
+     * Gets the name of the current field
+     *
+     * @return the name of the current field.
+     */
     protected String curName(){
         return (!_nameStack.isEmpty()) ? _nameStack.getLast() : null;
     }
@@ -205,14 +276,25 @@ public class BasicBSONCallback implements BSONCallback {
 	    return _root;
     }
 
+    /**
+     * Sets the root document for this position
+     *
+     * @param o the new root document
+     */
     protected void setRoot(Object o) {
 	    _root = o;
     }
 
+    /**
+     * Returns whether this is the top level or not
+     *
+     * @return true if there's nothing on the stack, and this is the top level of the document.
+     */
     protected boolean isStackEmpty() {
 	    return _stack.size() < 1;
     }
 
+    @Override
     public void reset(){
         _root = null;
         _stack.clear();

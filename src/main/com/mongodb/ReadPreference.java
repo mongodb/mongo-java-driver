@@ -105,8 +105,7 @@ public abstract class ReadPreference {
     /**
      * Read from a secondary if available and matches tags.
      *
-     * @deprecated As of release 2.9, replaced by
-     * <code>ReadPreference.secondaryPreferred(DBObject firstTagSet, DBObject... remainingTagSets)</code>
+     * @deprecated As of release 2.9, replaced by {@link #secondaryPreferred(DBObject, DBObject...)}
      */
     @Deprecated
     public static class TaggedReadPreference extends ReadPreference {

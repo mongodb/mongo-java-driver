@@ -50,58 +50,54 @@ import static org.bson.BSON.UNDEFINED;
 
 
 /**
- * Basic implementation of BSONDecoder interface that creates BasicBSONObject instances.
+ * Basic implementation of BSONDecoder interface that creates BasicBSONObject instances
  *
  * <h3>Migration instructions</h3>
- * In driver versions before <b>2.12</b> {@code BasicBSONDecoder} exposed several protected members to its subclasses:
- * <br/><br/>
+ * <p>In driver versions before <em>2.12</em> {@code BasicBSONDecoder} exposed several protected members to its subclasses:</p>
+ * 
  * <b>Fields:</b>
  * <ul>
  *     <li>{@code protected BSONInput _in}</li>
  *     <li>{@code protected BSONCallback _callback}</li>
  *     <li>{@code protected int _len}</li>
  *     <li>{@code protected int _pos}</li>
- *
  * </ul>
- * <br/>
+ * 
  * <b>Methods:</b>
  * <ul>
  *     <li>{@code protected void _binary(String)}</li>
  * </ul>
- * <br/>
+ * 
  * <b>Nested Classes:</b>
  * <ul>
  *     <li>{@code protected class BSONInput}</li>
  * </ul>
- * <br/>
  *
- *<h4>Solution 1: Custom {@link BSONCallback} implementation</h4>
- * With callbacks you can handle the process of creating objects from bytes in BSON format.
- * <p>
- * For example to get away from overriging <b>{@code BasicBSONDecoder._binary(String)}</b>
- * you can use the following piece of code:
- * </p>
- * <pre>
- * <code style="background:#eee;display:inline-block;padding:10px">public class CustomBSONCallback extends BasicBSONCallback {
+ * <h4>Solution 1: Custom {@link BSONCallback} implementation</h4>
+ * <p>With callbacks you can handle the process of creating objects from bytes in BSON format.</p>
+ * 
+ * <p>For example to get away from overriging <b>{@code BasicBSONDecoder._binary(String)}</b>
+ * you can use the following piece of code:</p>
+ * <pre>{@code
+ *     public class CustomBSONCallback extends BasicBSONCallback {
+ *         public void gotBinary(String name, byte type, byte[] data) {
+ *             _put(name,toHex(data));
+ *         }
+ *         private static String toHex(byte[] bytes) {...}
+ *     }
+ * }</pre>
  *
- *  public void gotBinary(String name, byte type, byte[] data) {
- *      _put(name,toHex(data));
- *  }
- *
- *  private static String toHex(byte[] bytes) {...}
- *}
- *</code></pre>
- *
- * This solution covers majority of the cases.
+ * <p>This solution covers majority of the cases.</p>
  *
  * <h4>Solution 2: Custom {@link BSONDecoder} implementation</h4>
- * If you need to customize byte-level decoding at the lowest layer you have to provide you own
- * implementation of the {@link BSONDecoder} interface.
- * <br/>
- * Please check <a href="http://bsonspec.org/">http://bsonspec.org/</a> for more information.
- *
+ * <p>If you need to customize byte-level decoding at the lowest layer you have to provide you own
+ * implementation of the {@link BSONDecoder} interface.</p>
+ * 
+ * <p>Please check <a href="http://bsonspec.org/">http://bsonspec.org/</a> for more information.</p>
  */
 public class BasicBSONDecoder implements BSONDecoder {
+
+    @Override
     public BSONObject readObject( byte[] b ){
         try {
             return readObject( new ByteArrayInputStream( b ) );
@@ -111,6 +107,7 @@ public class BasicBSONDecoder implements BSONDecoder {
         }
     }
 
+    @Override
     public BSONObject readObject( InputStream in )
         throws IOException {
         BasicBSONCallback c = new BasicBSONCallback();
@@ -118,6 +115,7 @@ public class BasicBSONDecoder implements BSONDecoder {
         return (BSONObject)c.get();
     }
 
+    @Override
     public int decode( byte[] b , BSONCallback callback ){
         try {
             return _decode( new BSONInput( new ByteArrayInputStream(b) ) , callback );
@@ -127,6 +125,7 @@ public class BasicBSONDecoder implements BSONDecoder {
         }
     }
 
+    @Override
     public int decode( InputStream in , BSONCallback callback )
         throws IOException {
         return _decode( new BSONInput( in ) , callback );
@@ -369,6 +368,7 @@ public class BasicBSONDecoder implements BSONDecoder {
      * @deprecated This class should not be a part of API.
      *             Please see the class-level documentation for a migration instructions.
      */
+    @SuppressWarnings("JavaDoc")
     @Deprecated
     protected class BSONInput {
 

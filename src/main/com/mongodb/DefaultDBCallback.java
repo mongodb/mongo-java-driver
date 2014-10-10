@@ -38,9 +38,10 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
         }
     }
 
+    public static DBCallbackFactory FACTORY = new DefaultFactory();
+
     /**
-     * Creates a new DefaultDBCallback. If the Collection is null, it uses {@link DBCollectionObjectFactory} to create documents, otherwise
-     * it uses the collection's object factory.
+     * Creates a new DefaultDBCallback. 
      *
      * @param coll an optionally null Collection that the documents created by this callback belong to.
      */

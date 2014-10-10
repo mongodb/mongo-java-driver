@@ -20,6 +20,7 @@ package com.mongodb;
  * Options related to insertion of documents into MongoDB.  The setter methods return {@code this} so that a chaining style can be used.
  *
  * @since 2.13
+ * @mongodb.driver.manual tutorial/insert-documents/ Insert Tutorial
  */
 public final class InsertOptions {
     private WriteConcern writeConcern;
@@ -38,11 +39,10 @@ public final class InsertOptions {
     }
 
     /**
-     *  Set whether documents will continue to be inserted after a failure to insert one.
+     * Set whether documents will continue to be inserted after a failure to insert one.
      *
      * @param continueOnError whether to continue on error
-     * @r * @mongodb.driver.manual tutorial/insert-documents/ Insert Tutorial
-eturn this
+     * @return this
      */
     public InsertOptions continueOnError(final boolean continueOnError) {
         this.continueOnError = continueOnError;

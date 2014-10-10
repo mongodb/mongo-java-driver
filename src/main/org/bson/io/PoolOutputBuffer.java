@@ -27,6 +27,7 @@ import java.util.List;
 /**
  * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
  */
+@SuppressWarnings("JavaDoc")
 @Deprecated
 public class PoolOutputBuffer extends OutputBuffer {
 

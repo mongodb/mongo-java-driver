@@ -54,8 +54,9 @@ public class DBRefBase implements Serializable {
     }
 
     /**
-     * fetches the object referenced from the database
-     * @return the referenced document
+     * Fetches the object referenced from the database
+     *
+     * @return the document that this references.
      * @throws MongoException
      */
     public DBObject fetch() throws MongoException {

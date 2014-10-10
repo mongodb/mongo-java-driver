@@ -27,63 +27,57 @@ import org.bson.BSONCallback;
 public class JSON {
 
     /**
-     *  Serializes an object into its JSON form.
-     *  <p>
-     *  This method delegates serialization to <code>JSONSerializers.getLegacy</code>
+     * <p>Serializes an object into its JSON form.</p>
      *
-     * @param o object to serialize
-     * @return  a String containing the JSON form of the object
-     * @see com.mongodb.util.JSONSerializers#getLegacy()
+     * <p>This method delegates serialization to {@code JSONSerializers.getLegacy}</p>
+     *
+     * @param object object to serialize
+     * @return String containing JSON form of the object
+     * @see JSONSerializers#getLegacy()
      */
-    public static String serialize( Object o ){
+    public static String serialize(final Object object) {
         StringBuilder buf = new StringBuilder();
-        serialize( o , buf );
+        serialize( object , buf );
         return buf.toString();
     }
 
     /**
-     *  Serializes an object into its JSON form.
-     *  <p>
-     *  This method delegates serialization to <code>JSONSerializers.getLegacy</code>
+     * <p>Serializes an object into its JSON form.</p>
      *
-     * @param o object to serialize
+     * <p>This method delegates serialization to {@code JSONSerializers.getLegacy}</p>
+     *
+     * @param object   object to serialize
      * @param buf StringBuilder containing the JSON representation under construction 
-     * @return String containing JSON form of the object
-     * @see com.mongodb.util.JSONSerializers#getLegacy()
+     * @see JSONSerializers#getLegacy()
      */
-    public static void serialize( Object o, StringBuilder buf) {
-        JSONSerializers.getLegacy().serialize(o, buf);
+    public static void serialize(final Object object, final StringBuilder buf) {
+        JSONSerializers.getLegacy().serialize(object, buf);
     }
 
     /**
-     *  Parses a JSON string and returns a corresponding Java object.
-     *  The returned value is either a {@link com.mongodb.DBObject DBObject}
-     *  (if the string is a JSON object or array), or a boxed primitive
-     *  value according to the following mapping:
-     *  <p>
-     *  <code>java.lang.Boolean</code> for <code>true</code> or <code>false</code><br>
-     *  <code>java.lang.Integer</code> for integers between
-     *  Integer.MIN_VALUE and Integer.MAX_VALUE<br>
-     *  <code>java.lang.Long</code> for integers outside of this range<br>
-     *  <code>java.lang.Double</code> for floating point numbers
-     *  <p>
-     *  If the parameter is a string that contains a single-quoted
-     *  or double-quoted string, it is returned as an unquoted
-     *  <code>java.lang.String</code>.
+     * <p>Parses a JSON string and returns a corresponding Java object. The returned value is either a {@link com.mongodb.DBObject DBObject}
+     * (if the string is a JSON object or array), or a boxed primitive value according to the following mapping:</p>
+     * <ul>
+     *     <li>{@code java.lang.Boolean} for {@code true} or {@code false}</li>
+     *     <li>{@code java.lang.Integer} for integers between Integer.MIN_VALUE and Integer.MAX_VALUE</li>
+     *     <li>{@code java.lang.Long} for integers outside of this range</li>
+     *     <li>{@code java.lang.Double} for floating point numbers</li>
+     * </ul>
+     * If the parameter is a string that contains a single-quoted or double-quoted string, it is returned as an unquoted {@code
+     * java.lang.String}. Parses a JSON string representing a JSON value
      *
-     * @param s the string to parse
+     * @param jsonString the string to parse
      * @return a Java object representing the JSON data
-     * @throws JSONParseException if s is not valid JSON 
+     * @throws JSONParseException if jsonString is not valid JSON
      */
-    public static Object parse( String s ){
-	return parse(s, null);
+    public static Object parse(final String jsonString) {
+        return parse(jsonString, null);
     }
 
     /**
-     * Parses a JSON string and constructs a corresponding Java object by calling
-     * the methods of a {@link org.bson.BSONCallback BSONCallback} during parsing.
-     * If the callback <code>c</code> is null, this method is equivalent to
-     * {@link com.mongodb.JSON#parse(String) parse(String)}.
+     * Parses a JSON string and constructs a corresponding Java object by calling the methods of a {@link org.bson.BSONCallback
+     * BSONCallback} during parsing. If the callback {@code c} is null, this method is equivalent to {@link JSON#parse(String)
+     * parse(String)}.
      * 
      * @param s the string to parse
      * @param c the BSONCallback to call during parsing
@@ -124,12 +118,10 @@ public class JSON {
     }
 }
 
-
 /**
- * Parser for JSON objects.
+ * <p>Parser for JSON objects.</p>
  *
- * Supports all types described at www.json.org, except for
- * numbers with "e" or "E" in them.
+ * <p>Supports all types described at www.json.org, except for numbers with "e" or "E" in them.</p>
  */
 class JSONParser {
 
@@ -278,11 +270,9 @@ class JSONParser {
     }
 
     /**
-     * Read the current character, making sure that it is the expected character.
-     * Advances the pointer to the next character.
+     * Read the current character, making sure that it is the expected character. Advances the pointer to the next character.
      *
      * @param ch the character expected
-     *
      * @throws JSONParseException if the current character does not match the given character
      */
     public void read(char ch) {
@@ -319,7 +309,6 @@ class JSONParser {
      * Checks the current character, making sure that it is the expected character.
      *
      * @param ch the character expected
-     *
      * @throws JSONParseException if the current character does not match the given character
      */
     public boolean check(char ch) {
@@ -336,8 +325,7 @@ class JSONParser {
     }
 
     /**
-     * Returns the current character.
-     * Returns -1 if there are no more characters.
+     * Returns the current character. Returns -1 if there are no more characters.
      *
      * @return the next character
      */

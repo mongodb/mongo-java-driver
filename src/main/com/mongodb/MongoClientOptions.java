@@ -70,7 +70,7 @@ public class MongoClientOptions {
          *
          * @param heartbeatFrequency the heartbeat frequency, in milliseconds
          * @return {@code this}
-         * @throws IllegalArgumentException if heartbeatFrequency < 1, which must be > 0
+         * @throws IllegalArgumentException if heartbeatFrequency &lt; 1, which must be &gt; 0
          * @see com.mongodb.MongoClientOptions#getHeartbeatFrequency()
          * @since 2.12.0
          */
@@ -86,7 +86,7 @@ public class MongoClientOptions {
          * Sets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability, it will
          * wait at least this long since the previous check to avoid wasted effort.  The default value is 10ms.
          *
-         * @param minHeartbeatFrequency the minimum heartbeat frequency, in milliseconds, which must be > 0
+         * @param minHeartbeatFrequency the minimum heartbeat frequency, in milliseconds, which must be &gt; 0
          * @return {@code this}
          * @see MongoClientOptions#getMinHeartbeatFrequency()
          * @since 2.13
@@ -103,7 +103,7 @@ public class MongoClientOptions {
          * Sets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability, it will
          * wait at least this long since the previous check to avoid pointless effort.  The default value is 10ms.
          *
-         * @param minHeartbeatFrequency the minimum heartbeat frequency, in milliseconds, which must be > 0
+         * @param minHeartbeatFrequency the minimum heartbeat frequency, in milliseconds, which must be &gt; 0
          * @return {@code this}
          * @see MongoClientOptions#getMinHeartbeatFrequency() ()
          * @since 2.12
@@ -119,7 +119,7 @@ public class MongoClientOptions {
          *
          * @param heartbeatConnectTimeout the heartbeat connect timeout, in milliseconds
          * @return {@code this}
-         * @throws IllegalArgumentException if heartbeatConnectTimeout < 0
+         * @throws IllegalArgumentException if heartbeatConnectTimeout &lt; 0
          * @see com.mongodb.MongoClientOptions#getHeartbeatConnectTimeout()
          * @since 2.12.0
          */
@@ -136,7 +136,7 @@ public class MongoClientOptions {
          *
          * @param heartbeatSocketTimeout the heartbeat socket timeout, in milliseconds
          * @return {@code this}
-         * @throws IllegalArgumentException if heartbeatSocketTimeout < 0
+         * @throws IllegalArgumentException if heartbeatSocketTimeout &lt; 0
          * @see com.mongodb.MongoClientOptions#getHeartbeatSocketTimeout()
          * @since 2.12.0
          */
@@ -153,7 +153,7 @@ public class MongoClientOptions {
          *
          * @param heartbeatThreadCount the heartbeat thread count
          * @return {@code this}
-         * @throws IllegalArgumentException if heartbeatThreadCount < 1
+         * @throws IllegalArgumentException if heartbeatThreadCount &lt; 1
          * @see MongoClientOptions#getHeartbeatThreadCount()
          * @since 2.12.0
          * @deprecated this is no longer a configurable property
@@ -170,9 +170,9 @@ public class MongoClientOptions {
         /**
          * Sets the acceptable latency difference.
          *
-         * @param acceptableLatencyDifference the acceptable latency different, in milliseconds
+         * @param acceptableLatencyDifference the acceptable latency difference, in milliseconds
          * @return {@code this}
-         * @throws IllegalArgumentException if acceptableLatencyDifference < 0
+         * @throws IllegalArgumentException if acceptableLatencyDifference &lt; 0
          * @see com.mongodb.MongoClientOptions#getAcceptableLatencyDifference()
          * @since 2.12.0
          */
@@ -525,11 +525,12 @@ public class MongoClientOptions {
     }
 
     /**
-     * The minimum number of connections per host for this MongoClient instance. Those connections will be kept in a pool when idle, and the
-     * pool will ensure over time that it contains at least this minimum number. <p/> Default is 0.
+     * <p>The minimum number of connections per host for this MongoClient instance. Those connections will be kept in a pool when idle, and
+     * the pool will ensure over time that it contains at least this minimum number.</p>
+     *
+     * <p>Default is 0.</p>
      *
      * @return the minimum size of the connection pool per host
-     * @since 2.12
      */
     public int getMinConnectionsPerHost() {
         return minConnectionsPerHost;

@@ -41,6 +41,9 @@ import java.util.SimpleTimeZone;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+/**
+ * Converts JSON to DBObjects and vice versa.
+ */
 public class JSONCallback extends BasicBSONCallback {
 
     @Override
@@ -58,11 +61,13 @@ public class JSONCallback extends BasicBSONCallback {
      * is false 
      */
     @Deprecated
+    @Override
     public void objectStart(boolean array, String name) {
         _lastArray = array;
         super.objectStart(array, name);
     }
 
+    @Override
     public Object objectDone() {
         String name = curName();
         Object o = super.objectDone();

@@ -14,17 +14,12 @@
  * limitations under the License.
  */
 
-
-
-
-
 apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'jacoco'
 apply plugin: 'clirr'
 apply plugin: 'codenarc'
 apply plugin: 'eclipse'
-apply plugin: 'checkstyle'
 
 sourceCompatibility = '1.5'
 targetCompatibility = '1.5'
@@ -123,4 +118,5 @@ task testCoverage(dependsOn: test)
 task wrapper(type: Wrapper) {
     gradleVersion = '1.9'
 }
+
 
