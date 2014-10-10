@@ -20,7 +20,7 @@ import com.mongodb.util.JSON;
 import org.bson.BasicBSONObject;
 import org.bson.types.ObjectId;
 import org.junit.Test;
-
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -172,4 +172,36 @@ public class BasicDBObjectTest {
         assertNotEquals(y, x);
         assertNotEquals(x.hashCode(), y.hashCode());
     }
+    
+   @Test (expected = IllegalArgumentException.class) 
+   public void testAppendIfNotBlank() {
+	   BasicDBObject a = new BasicDBObject();
+	   a.appendIfNotBlank("x", "");
+   }
+   
+   @Test (expected = IllegalArgumentException.class) 
+   public void testAppendIfNotEmptyCollection() {
+	   BasicDBObject a = new BasicDBObject();
+	   a.appendIfNotEmpty("x", Collections.EMPTY_LIST);
+   }
+   
+   @Test (expected = IllegalArgumentException.class) 
+   public void testAppendIfNotEmptyArray() {
+	   BasicDBObject a = new BasicDBObject();
+	   a.appendIfNotEmpty("x", new Object[0]);
+   }
+
+   @Test (expected = IllegalArgumentException.class) 
+   public void testAppendIfNotEmptyString() {
+	   BasicDBObject a = new BasicDBObject();
+	   String test = null;
+	   a.appendIfNotEmpty("x", test);
+   }
+   
+   @Test (expected = IllegalArgumentException.class) 
+   public void testAppendIfNotNull() {
+	   BasicDBObject a = new BasicDBObject();
+	   a.appendIfNotNull("x", null);
+   }
+	
 }
