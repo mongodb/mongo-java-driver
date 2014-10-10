@@ -92,18 +92,34 @@ public class CommandResult extends BasicDBObject {
     }
 
     /**
+     * Examine the error text to extract dup key error codes from "caused by" exceptions on sharded clusters.
+     * Error messages would be in this form:
+     * "error inserting 1 documents to shard shard0000:host:22020 at version 2|1||53bc4ba51d95f80dd550b55b :: caused by :: E11000 duplicate key error index: test.t.$_id_  dup key: { : 1 }"
+     * @param err
+     * @param code
+     * @return
+     */
+    private int getCodeFromError(String err, int code) {
+        if (err != null && (err.indexOf("E11000") != -1 || err.indexOf("E11001") != -1)) {
+            return 11000;
+        } else {
+            return code;
+        }
+    }
+    /**
      * returns the "code" field, as an int
      * @return -1 if there is no code
      */
     @SuppressWarnings("unchecked")
     int getCode() {
-        int code = getInt("code", -1);
+        String err = getString("err");
+        int code = getCodeFromError(err, getInt("code", -1));
 
         // mongos may return a list of documents representing getlasterror responses from each shard.  Return the one with a matching
         // "err" field, so that it can be used to get the error code
         if (code == -1 && get("errObjects") != null) {
             for (BasicDBObject curErrorDocument : (List<BasicDBObject>) get("errObjects")) {
-                if (get("err").equals(curErrorDocument.get("err"))) {
+                if (err.equals(curErrorDocument.get("err"))) {
                     code = curErrorDocument.getInt("code", -1);
                     break;
                 }
