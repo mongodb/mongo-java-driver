@@ -335,8 +335,6 @@ public class GridFSInputFile extends GridFSFile {
 
     /**
      * An output stream implementation that can be used to successively write to a GridFS file.
-     *
-     * @author Guy K. Kloss
      */
     private class GridFSOutputStream extends OutputStream {
 

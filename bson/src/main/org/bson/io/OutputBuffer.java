@@ -29,7 +29,6 @@ import static java.lang.String.format;
 
 /**
  * An abstract base class for classes implementing {@code BsonOutput}.
- *
  */
 public abstract class OutputBuffer extends OutputStream implements BsonOutput {
 

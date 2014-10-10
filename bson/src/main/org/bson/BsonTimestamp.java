@@ -20,7 +20,8 @@ import java.io.Serializable;
 import java.util.Date;
 
 /**
- * A value representing the BSON timestamp type.
+ * This is used for internal increment values. For storing normal dates in MongoDB, you should use java.util.Date {@code time} is seconds
+ * since epoch {@code inc} is an ordinal.
  *
  * @since 3.0
  */
