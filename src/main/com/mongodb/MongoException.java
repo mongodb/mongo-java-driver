@@ -71,8 +71,10 @@ public class MongoException extends RuntimeException {
 
     /**
      * Creates a MongoException from a BSON object representing an error
-     * @param o
+     * @param o the document from the server containing the error
+     * @deprecated Use one of the other available constructors instead
      */
+    @Deprecated
     public MongoException( BSONObject o ){
         this( ServerError.getCode( o ) , ServerError.getMsg( o , "UNKNOWN" ) );
     }
