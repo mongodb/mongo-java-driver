@@ -52,6 +52,8 @@ classes:
 - com.mongodb.RawDBObject                                           # JAVA-893
 - org.bson.NewBSONDecoder                                           # JAVA-893
 - org.bson.BSONLazyDecoder                                          # JAVA-893
+- org.bson.io.BSONByteBuffer                                        # JAVA-1482
+- org.bson.util.StringRangeSet                                      # JAVA-1454
 - com.mongodb.io.ByteBufferOutputStream                             # JAVA-893
 - com.mongodb.DBPort                                                # JAVA-893
 - com.mongodb.DBPortPool                                            # JAVA-893
@@ -98,10 +100,14 @@ members:
   com.mongodb.MongoClientOptions:
   - getMaxAutoConnectRetryTime()
   - isAutoConnectRetry()
+  - getHeartbeatConnectRetryFrequency()
+  - getHeartbeatThreadCount()
 
   com.mongodb.MongoClientOptions$Builder:
   - autoConnectRetry(boolean)
   - maxAutoConnectRetryTime(long)
+  - heartbeatConnectRetryFrequency(int)
+  - heartbeatThreadCount(int)
 
   com.mongodb.Mongo:
   - getMinorVersion()                              # JAVA-882
@@ -256,6 +262,8 @@ members:
   - _binary(java.lang.String)                                   # JAVA-895 Fix-up org.bson.BasicBSONDecoder
 
   org.bson.LazyBSONObject:
+  - LazyBSONObject(org.bson.io.BSONByteBuffer,org.bson.LazyBSONCallback)        # JAVA-1482
+  - LazyBSONObject(org.bson.io.BSONByteBuffer,int,org.bson.LazyBSONCallback)   # JAVA-1482
   - getElementBSONSize(int)                                     # JAVA-901 Cleanup org.bson.Lazy*
   - getElementType(int)                                         # JAVA-901
   - getElementValue(org.bson.LazyBSONObject$ElementRecord)      # JAVA-901
@@ -265,8 +273,25 @@ members:
   - _doc_start_offset                                           # JAVA-901
   - _input                                                      # JAVA-901
 
+  org.bson.BSONCallback:
+  - objectStart(boolean)                                        # JAVA-1471
+
   org.bson.LazyBSONCallback:
   - setRootObject(java.lang.Object)                             # JAVA-901
+  - objectStart(boolean)                                        # JAVA-1471
+
+  org.bson.EmptyBSONCallback:
+  - objectStart(boolean)                                        # JAVA-1471
+
+  com.mongodb.util.JSONCallback:
+  - objectStart(boolean array,java.lang.String name)            # JAVA-1471
+
+  com.mongodb.DefaultDBCallback:
+  - objectStart(boolean array,java.lang.String name)            # JAVA-1471
+
+  org.bson.BasicBSONCallback:
+  - objectStart(boolean)                                       # JAVA-1471
+  - objectStart(boolean,java.lang.String)                      # JAVA-1471
 
   com.mongodb.AggregationOutput:
   - getCommandResult()
@@ -317,3 +342,18 @@ members:
   com.mongodb.MongoException$DuplicateKey:
   - MongoException$DuplicateKey(com.mongodb.CommandResult)     # JAVA-1379
 
+  com.mongodb.LazyDBObject:
+  - LazyDBObject(org.bson.io.BSONByteBuffer,org.bson.LazyBSONCallback)           # JAVA-1482
+  - LazyDBObject(org.bson.io.BSONByteBuffer,int,org.bson.LazyBSONCallback)       # JAVA-1482
+
+  com.mongodb.LazyDBList:
+  - LazyDBList(org.bson.io.BSONByteBuffer,org.bson.LazyBSONCallback)             # JAVA-1482
+  - LazyDBList(org.bson.io.BSONByteBuffer,int,org.bson.LazyBSONCallback)       # JAVA-1482
+
+  org.bson.LazyBSONList:
+  - LazyBSONList(org.bson.io.BSONByteBuffer,org.bson.LazyBSONCallback)           # JAVA-1482
+  - LazyBSONList(org.bson.io.BSONByteBuffer,int,org.bson.LazyBSONCallback)     # JAVA-1482
+
+  com.mongodb.LazyWriteableDBObject:
+   - LazyWriteableDBObject(org.bson.io.BSONByteBuffer,org.bson.LazyBSONCallback)        # JAVA-1482
+   - LazyWriteableDBObject(org.bson.io.BSONByteBuffer,int,org.bson.LazyBSONCallback)    # JAVA-1482
