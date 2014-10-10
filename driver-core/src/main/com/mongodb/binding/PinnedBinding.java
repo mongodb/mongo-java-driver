@@ -109,9 +109,9 @@ public class PinnedBinding extends AbstractReferenceCounted implements ReadWrite
             connectionForReads = serverForReads.getConnection();
         }
         if (serverForWrites != null && serverForReads.getDescription().getAddress().equals(serverForWrites.getDescription().getAddress())) {
-            return new MyConnectionSource(serverForWrites, connectionForWrites);
+            return new PinnedConnectionSource(serverForWrites, connectionForWrites);
         } else {
-            return new MyConnectionSource(serverForReads, connectionForReads);
+            return new PinnedConnectionSource(serverForReads, connectionForReads);
         }
     }
 
@@ -122,14 +122,14 @@ public class PinnedBinding extends AbstractReferenceCounted implements ReadWrite
             serverForWrites = cluster.selectServer(new PrimaryServerSelector(), maxWaitTimeMS, MILLISECONDS);
             connectionForWrites = serverForWrites.getConnection();
         }
-        return new MyConnectionSource(serverForWrites, connectionForWrites);
+        return new PinnedConnectionSource(serverForWrites, connectionForWrites);
     }
 
-    private static final class MyConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
+    private static final class PinnedConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
         private final Connection connection;
         private final Server server;
 
-        public MyConnectionSource(final Server server, final Connection connection) {
+        public PinnedConnectionSource(final Server server, final Connection connection) {
             this.server = server;
             this.connection = connection.retain();
         }
@@ -146,7 +146,7 @@ public class PinnedBinding extends AbstractReferenceCounted implements ReadWrite
         }
 
         @Override
-        public MyConnectionSource retain() {
+        public PinnedConnectionSource retain() {
             super.retain();
             return this;
         }
