@@ -108,7 +108,7 @@ public class PinnedBinding extends AbstractReferenceCounted implements ReadWrite
             serverForReads = cluster.selectServer(new ReadPreferenceServerSelector(readPreference), maxWaitTimeMS, MILLISECONDS);
             connectionForReads = serverForReads.getConnection();
         }
-        if (serverForWrites != null && serverForReads.getDescription().getAddress().equals(serverForWrites.getDescription().getAddress())) {
+        if (serverForWrites != null && serverForReads.getDescription().isPrimary()) {
             return new PinnedConnectionSource(serverForWrites, connectionForWrites);
         } else {
             return new PinnedConnectionSource(serverForReads, connectionForReads);

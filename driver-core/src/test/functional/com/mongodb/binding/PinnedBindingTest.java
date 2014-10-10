@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import static com.mongodb.ClusterFixture.getCluster;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isSharded;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
@@ -110,6 +111,26 @@ public class PinnedBindingTest {
         readConnectionSource = binding.getReadConnectionSource();
         assertEquals(ServerType.REPLICA_SET_PRIMARY, readConnectionSource.getServerDescription().getType());
         readConnectionSource.release();
+    }
+
+    @Test
+    public void shouldPinReadsToSameShardRouterAsWrites() {
+        assumeTrue(isSharded());
+
+        binding.setReadPreference(ReadPreference.secondary());
+        ConnectionSource readConnectionSource = binding.getReadConnectionSource();
+        readConnectionSource.release();
+
+        ConnectionSource writeConnectionSource = binding.getWriteConnectionSource();
+        ServerAddress writeServerAddress = writeConnectionSource.getServerDescription().getAddress();
+        writeConnectionSource.release();
+
+        readConnectionSource = binding.getReadConnectionSource();
+        try {
+            assertEquals(writeServerAddress, readConnectionSource.getServerDescription().getAddress());
+        } finally {
+            readConnectionSource.release();
+        }
     }
 
     @Test
