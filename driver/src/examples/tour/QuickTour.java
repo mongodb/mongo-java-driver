@@ -39,6 +39,7 @@ public class QuickTour {
      * @param args takes no args
      * @throws UnknownHostException if it cannot connect to a MongoDB instance at localhost:27017
      */
+    @SuppressWarnings("deprecation")
     public static void main(final String[] args) throws UnknownHostException {
         // connect to the local database server
         MongoClient mongoClient = new MongoClient();
