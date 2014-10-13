@@ -610,32 +610,6 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
         }
     }
 
-    private int getFlags(final ReadPreference readPreference) {
-        int flags = 0;
-        if (isTailableCursor()) {
-            flags |= 1 << 1;
-        }
-        if (isSlaveOk() || readPreference.isSlaveOk()){
-            flags |= 1 << 2;
-        }
-        if (isOplogReplay()){
-            flags |= 1 << 3;
-        }
-        if (isNoCursorTimeout()){
-            flags |= 1 << 4;
-        }
-        if (isAwaitData()){
-            flags |= 1 << 5;
-        }
-        if (isExhaust()) {
-            flags |= 1 << 6;
-        }
-        if (isPartial()) {
-            flags |= 1 << 7;
-        }
-        return flags;
-    }
-
     private BsonDocument asDocument(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
         BsonDocument document = modifiers != null ? modifiers : new BsonDocument();
         document.put("$query", criteria != null ? criteria : new BsonDocument());
