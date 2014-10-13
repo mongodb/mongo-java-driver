@@ -19,13 +19,13 @@ package com.mongodb.operation
 import category.Async
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.codecs.DocumentCodec
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
+import org.bson.codecs.DocumentCodec
+import org.bson.types.Document
 import org.junit.experimental.categories.Category
-import org.mongodb.Document
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint

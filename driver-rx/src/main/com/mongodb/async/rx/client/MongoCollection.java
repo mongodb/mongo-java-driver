@@ -19,7 +19,7 @@ package com.mongodb.async.rx.client;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.client.MongoCollectionOptions;
 import org.bson.codecs.Codec;
-import org.mongodb.Document;
+import org.bson.types.Document;
 import org.mongodb.WriteResult;
 import rx.Observable;
 

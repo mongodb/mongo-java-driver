@@ -26,7 +26,6 @@ import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.async.SingleResultFuture
-import com.mongodb.codecs.DocumentCodec
 import com.mongodb.event.ConnectionListener
 import com.mongodb.protocol.message.CommandMessage
 import com.mongodb.protocol.message.MessageSettings
@@ -35,11 +34,12 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.ByteBuf
 import org.bson.ByteBufNIO
+import org.bson.codecs.DocumentCodec
 import org.bson.codecs.EncoderContext
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.OutputBuffer
+import org.bson.types.Document
 import org.junit.experimental.categories.Category
-import org.mongodb.Document
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.util.concurrent.AsyncConditions

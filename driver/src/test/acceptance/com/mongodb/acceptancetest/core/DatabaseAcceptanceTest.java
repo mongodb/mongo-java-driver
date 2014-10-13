@@ -22,8 +22,8 @@ import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CreateCollectionOptions;
+import org.bson.types.Document;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import java.util.List;
 

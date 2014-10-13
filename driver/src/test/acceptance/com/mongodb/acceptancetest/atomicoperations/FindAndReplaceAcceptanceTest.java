@@ -22,12 +22,12 @@ import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.test.Worker;
 import com.mongodb.client.test.WorkerCodecProvider;
-import com.mongodb.codecs.DocumentCodecProvider;
+import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
+import org.bson.types.Document;
 import org.bson.types.ObjectId;
 import org.junit.Test;
-import org.mongodb.Document;
 
 import java.util.Arrays;
 import java.util.Date;

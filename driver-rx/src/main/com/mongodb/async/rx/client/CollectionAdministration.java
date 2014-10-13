@@ -19,7 +19,7 @@ package com.mongodb.async.rx.client;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
-import org.mongodb.Document;
+import org.bson.types.Document;
 import rx.Observable;
 
 /**

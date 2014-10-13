@@ -21,7 +21,6 @@ import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
-import com.mongodb.codecs.DocumentCodec;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateIndexOperation;
@@ -34,7 +33,8 @@ import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
-import org.mongodb.Document;
+import org.bson.codecs.DocumentCodec;
+import org.bson.types.Document;
 
 import java.util.ArrayList;
 import java.util.List;

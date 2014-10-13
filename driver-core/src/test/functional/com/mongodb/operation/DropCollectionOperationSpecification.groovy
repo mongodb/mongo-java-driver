@@ -19,9 +19,9 @@ package com.mongodb.operation
 import category.Async
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.codecs.DocumentCodec
+import org.bson.codecs.DocumentCodec
+import org.bson.types.Document
 import org.junit.experimental.categories.Category
-import org.mongodb.Document
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding

@@ -16,7 +16,7 @@
 
 package com.mongodb
 
-import com.mongodb.codecs.DocumentCodec
+import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 import spock.lang.Subject
 

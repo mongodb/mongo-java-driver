@@ -16,7 +16,7 @@
 
 package com.mongodb.async.rx.client
 
-import org.mongodb.Document
+import org.bson.types.Document
 import org.mongodb.WriteResult
 
 import static Fixture.get

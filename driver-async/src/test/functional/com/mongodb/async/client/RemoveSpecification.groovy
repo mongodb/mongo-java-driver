@@ -16,7 +16,7 @@
 
 package com.mongodb.async.client
 
-import org.mongodb.Document
+import org.bson.types.Document
 
 class RemoveSpecification extends FunctionalSpecification {
     def 'remove should remove all matching documents'() {

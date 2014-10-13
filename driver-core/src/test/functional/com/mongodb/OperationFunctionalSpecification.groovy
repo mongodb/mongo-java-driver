@@ -21,12 +21,12 @@ import com.mongodb.binding.PinnedBinding
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
 import com.mongodb.client.test.WorkerCodec
-import com.mongodb.codecs.DocumentCodec
 import com.mongodb.connection.ServerHelper
 import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.InsertRequest
 import org.bson.BsonDocument
-import org.mongodb.Document
+import org.bson.codecs.DocumentCodec
+import org.bson.types.Document
 import spock.lang.Specification
 
 import static com.mongodb.ClusterFixture.getPrimary

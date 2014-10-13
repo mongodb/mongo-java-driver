@@ -20,7 +20,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Immutable;
 import org.bson.codecs.Codec;
-import org.mongodb.Document;
+import org.bson.types.Document;
 
 /**
  * Default options for a Mongo collection.

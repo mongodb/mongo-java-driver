@@ -16,7 +16,7 @@
 
 package com.mongodb.async.client
 
-import org.mongodb.Document
+import org.bson.types.Document
 
 class ReplaceSpecification extends FunctionalSpecification {
      def 'should replace a document'() {
