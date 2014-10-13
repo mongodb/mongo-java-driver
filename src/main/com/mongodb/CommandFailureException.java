@@ -30,7 +30,7 @@ public class CommandFailureException extends MongoException {
      * @deprecated for internal use only
      */
     @Deprecated
-    public CommandFailureException(final CommandResult commandResult) {
+    public CommandFailureException(CommandResult commandResult){
         super(ServerError.getCode(commandResult), commandResult.toString());
         this.commandResult = commandResult;
     }

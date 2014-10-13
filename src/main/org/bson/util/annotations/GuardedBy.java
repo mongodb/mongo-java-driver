@@ -39,6 +39,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Deprecated
 public @interface GuardedBy {
-    @SuppressWarnings("JavaDoc")
     String value();
 }

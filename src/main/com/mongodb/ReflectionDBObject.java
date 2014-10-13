@@ -42,9 +42,6 @@ public abstract class ReflectionDBObject implements DBObject {
         return getWrapper().keySet();
     }
 
-    /**
-     * @deprecated
-     */
     @Deprecated
     @Override
     public boolean containsKey(final String s) {
@@ -120,7 +117,7 @@ public abstract class ReflectionDBObject implements DBObject {
     }
 
     /**
-     * This operation is not supported. 
+     * This operation is not supported. Throws a {@code RuntimeException}.
      */
     public Object removeField( String key ){
         throw new RuntimeException( "can't remove from a ReflectionDBObject" );

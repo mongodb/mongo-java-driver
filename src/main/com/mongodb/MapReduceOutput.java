@@ -17,8 +17,11 @@
 package com.mongodb;
 
 /**
- * Represents the result of a map/reduce operation.  Users should interact with the results of the map reduce via the results() method, or
- * by interacting directly with the collection the results were input into.
+ * <p>Represents the result of a map/reduce operation.  Users should interact with the results of the map reduce via the results() 
+ * method, or by interacting directly with the collection the results were input into.</p>
+ * 
+ * <p>There will be substantial changes to this class in the 3.x release, please check the deprecation tags for the methods that will be
+ * removed.</p>
  *
  * @mongodb.driver.manual applications/map-reduce Map-Reduce
  */

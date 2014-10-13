@@ -286,7 +286,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     }
 
     /**
-     * @deprecated 'babble' format is deprecated. Please use {@link #toHexString()} instead.
+     * @deprecated 'babble' format is deprecated and will be removed in 3.0. Please use {@link #toHexString()} instead.
      */
     @SuppressWarnings("JavaDoc")
     @Deprecated
@@ -353,7 +353,6 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     /**
      * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
-    @SuppressWarnings("JavaDoc")
     @Deprecated
     public static String babbleToMongod( String b ){
         if ( ! isValid( b ) )
@@ -502,7 +501,6 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
      * @deprecated 'new' flag breaks the immutability of the {@code ObjectId} class
      *             and will be dropped in 3.x versions of the driver
      */
-    @SuppressWarnings("JavaDoc")
     @Deprecated
     public boolean isNew() {
         return _new;
@@ -543,7 +541,6 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
      *
      * @deprecated Please use {@link #getCurrentCounter()} instead.
      */
-    @SuppressWarnings("JavaDoc")
     @Deprecated
     public static int getCurrentInc() {
         return _nextInc.get();
@@ -558,7 +555,6 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     /**
      * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
-    @SuppressWarnings("JavaDoc")
     @Deprecated
     public static int _flip( int x ){
         int z = 0;

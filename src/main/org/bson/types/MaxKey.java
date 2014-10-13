@@ -26,6 +26,9 @@ public class MaxKey implements Serializable {
 
     private static final long serialVersionUID = 5123414776151687185L;
 
+    public MaxKey() {
+    }
+
     @Override
     public boolean equals(Object o) {
        return o instanceof MaxKey;

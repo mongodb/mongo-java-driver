@@ -28,8 +28,8 @@ import java.util.Map;
 import java.util.Set;
 
 /** 
- * <p>Utility class to allow array {@code DBObject}s to be created. <p> Note: MongoDB will also create arrays from {@code java.util
- * .List}s.</p>
+ * <p>Utility class to allow array {@code DBObject}s to be created. <p> Note: MongoDB will also create arrays from 
+ * {@code java.util.List}s.</p>
  * <pre>
  * BSONObject obj = new BasicBSONList();
  * obj.put( "0", value1 );

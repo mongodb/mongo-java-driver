@@ -1057,6 +1057,7 @@ public abstract class DBCollection {
     // ---- DB COMMANDS ----
     /**
      * Drop all indexes on this collection.  The default index on the _id field will not be deleted.
+     * @throws MongoException
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public void dropIndexes(){

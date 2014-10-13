@@ -25,28 +25,22 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @deprecated This class is NOT a part of public API and will be dropped in 3.x versions.
  */
 @Deprecated
-@SuppressWarnings("JavaDoc")
 public abstract class SimplePool<T> {
 
-    @SuppressWarnings("JavaDoc")
     public SimplePool( int max ){
         _max = max;
     }
 
-    @SuppressWarnings("JavaDoc")
     public SimplePool(){
         _max = 1000;
     }
 
-    @SuppressWarnings("JavaDoc")
     protected abstract T createNew();
 
-    @SuppressWarnings("JavaDoc")
     protected boolean ok( T t ){
         return true;
     }
 
-    @SuppressWarnings("JavaDoc")
     public T get(){
         T t = _stored.poll();
         if ( t != null )
@@ -54,7 +48,6 @@ public abstract class SimplePool<T> {
         return createNew();
     }
 
-    @SuppressWarnings("JavaDoc")
     public void done( T t ){
         if ( ! ok( t ) )
             return;

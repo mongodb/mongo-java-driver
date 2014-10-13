@@ -97,15 +97,8 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
         return JSON.serialize(this);
     }
 
-    /**
-     * Add a key/value pair to this object
-     *
-     * @param key the field name
-     * @param val the field value
-     * @return this BasicDBObject with the new values added
-     */
     @Override
-    public BasicDBObject append(final String key, final Object val) {
+    public BasicDBObject append( String key , Object val ){
         put(key, val);
         return this;
     }

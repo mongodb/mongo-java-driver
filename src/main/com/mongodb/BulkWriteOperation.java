@@ -88,6 +88,7 @@ public class BulkWriteOperation {
      */
     public BulkWriteResult execute() {
         isTrue("already executed", !closed);
+
         closed = true;
         return collection.executeBulkWriteOperation(ordered, requests);
     }
@@ -103,6 +104,7 @@ public class BulkWriteOperation {
      */
     public BulkWriteResult execute(final WriteConcern writeConcern) {
         isTrue("already executed", !closed);
+
         closed = true;
         return collection.executeBulkWriteOperation(ordered, requests, writeConcern);
     }

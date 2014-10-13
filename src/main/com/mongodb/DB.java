@@ -158,7 +158,6 @@ public abstract class DB {
         return c;
     }
 
-
     /**
      * <p>Creates a collection with a given name and options. If the collection already exists, this throws a 
      * {@code CommandFailureException}.</p>
@@ -190,7 +189,6 @@ public abstract class DB {
         }
         return getCollection(name);
     }
-
 
     /**
      * Returns a collection matching a given string.
@@ -468,7 +466,7 @@ public abstract class DB {
      * @return the name
      */
     public String getName(){
-	return _name;
+	    return _name;
     }
 
     /**
@@ -582,7 +580,7 @@ public abstract class DB {
      * @see WriteConcern#ACKNOWLEDGED
      */
     @Deprecated
-    public CommandResult getLastError( final int w , final int wtimeout , final boolean fsync ){
+    public CommandResult getLastError(final int w, final int wtimeout, final boolean fsync) {
         return command( (new com.mongodb.WriteConcern( w, wtimeout , fsync )).getCommand() );
     }
 
@@ -761,7 +759,7 @@ public abstract class DB {
      * @deprecated Use {@code DB.command} to call either the createUser or updateUser command
      */
     @Deprecated
-    public WriteResult addUser(final String username, final char[] passwd) {
+    public WriteResult addUser( String username , char[] passwd ){
         return addUser(username, passwd, false);
     }
 

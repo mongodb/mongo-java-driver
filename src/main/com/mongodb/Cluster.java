@@ -20,10 +20,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Represents a cluster of MongoDB servers.  Implementations can define the behaviour depending upon the type of cluster.
- *
- * @since 3.0
  */
-public interface Cluster {
+interface Cluster {
 
     /**
      * Get the description of this cluster.  This method will not return normally until the cluster type is known.

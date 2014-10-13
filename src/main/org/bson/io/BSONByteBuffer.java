@@ -31,7 +31,6 @@ import java.nio.ByteOrder;
  * @author brendan
  * @deprecated use a simple byte array array instead, all of the classes that take a {@code BSONByteBuffer} also take a {@code byte[]}
  */
-@SuppressWarnings("JavaDoc")
 @Deprecated
 public class BSONByteBuffer {
 

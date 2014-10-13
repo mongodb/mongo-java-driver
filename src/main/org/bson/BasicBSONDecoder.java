@@ -368,7 +368,6 @@ public class BasicBSONDecoder implements BSONDecoder {
      * @deprecated This class should not be a part of API.
      *             Please see the class-level documentation for a migration instructions.
      */
-    @SuppressWarnings("JavaDoc")
     @Deprecated
     protected class BSONInput {
 

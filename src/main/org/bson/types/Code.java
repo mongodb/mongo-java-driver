@@ -32,7 +32,7 @@ public class Code implements Serializable {
      *
      * @param code the Javascript code
      */
-    public Code( final String code ){
+    public Code(final String code){
         _code = code;
     }
 

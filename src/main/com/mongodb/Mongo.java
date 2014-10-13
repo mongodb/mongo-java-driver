@@ -78,13 +78,13 @@ public class Mongo {
     // is applied and updates the version based on configuration in build.properties.
 
     /**
-     * @deprecated Replaced by <code>Mongo.getMajorVersion()</code>
+     * @deprecated Replaced by {@link #getMajorVersion()}
      */
     @Deprecated
     public static final int MAJOR_VERSION = 2;
 
     /**
-     * @deprecated Replaced by <code>Mongo.getMinorVersion()</code>
+     * @deprecated Replaced by {@link #getMinorVersion()}
      */
     @Deprecated
     public static final int MINOR_VERSION = 13;
@@ -399,7 +399,7 @@ public class Mongo {
     }
 
     /**
-     * Gets the current driver version.
+     * Gets this driver version.
      *
      * @return the full version string of this driver, e.g. "2.8.0"
      */

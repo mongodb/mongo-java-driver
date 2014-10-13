@@ -434,7 +434,7 @@ public class QueryBuilder {
      * Creates a {@code DBObject} query to be used for the driver's find operations
      *
      * @return {@code this}
-     * @throws RuntimeException if a key does not have a matching operand
+     * @throws QueryBuilderException if a key does not have a matching operand
      */
     public DBObject get() {
         for(String key : _query.keySet()) {

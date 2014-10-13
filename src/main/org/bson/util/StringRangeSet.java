@@ -36,7 +36,6 @@ public class StringRangeSet implements Set<String> {
             NUMSTRS[i] = String.valueOf(i);
     }
 
-    @SuppressWarnings("JavaDoc")
     public StringRangeSet(int size) {
         this.size = size;
     }

@@ -23,8 +23,8 @@ import java.util.List;
  *
  * @mongodb.server.release 2.6
  * @mongodb.driver.manual reference/command/delete/#delete-command-output Delete Result
- * @mongodb.driver.manual reference/command/update/#delete-command-output Delete Result
- * @mongodb.driver.manual reference/command/insert/#delete-command-output Delete Result
+ * @mongodb.driver.manual reference/command/update/#delete-command-output Update Result
+ * @mongodb.driver.manual reference/command/insert/#delete-command-output Insert Result
  * @since 2.12
  */
 public abstract class BulkWriteResult {

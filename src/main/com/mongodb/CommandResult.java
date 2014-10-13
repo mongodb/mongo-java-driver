@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-
 import java.util.List;
 
 /**
@@ -93,7 +92,7 @@ public class CommandResult extends BasicDBObject {
     }
 
     /**
-     * returns the "code" field, as an int
+     * Returns the "code" field, as an int
      *
      * @return -1 if there is no code
      */
@@ -116,7 +115,7 @@ public class CommandResult extends BasicDBObject {
     }
 
     /**
-     * check the "err" field
+     * Check the "err" field
      *
      * @return if it has it, and isn't null
      */

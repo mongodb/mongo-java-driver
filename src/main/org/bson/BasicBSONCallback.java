@@ -272,6 +272,7 @@ public class BasicBSONCallback implements BSONCallback {
         return (!_nameStack.isEmpty()) ? _nameStack.getLast() : null;
     }
 
+    @Override
     public Object get(){
 	    return _root;
     }

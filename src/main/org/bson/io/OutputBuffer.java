@@ -110,7 +110,6 @@ public abstract class OutputBuffer extends OutputStream {
     /**
      * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
-    @SuppressWarnings("JavaDoc")
     @Deprecated
     public String asString( String encoding )
         throws UnsupportedEncodingException {
@@ -120,7 +119,6 @@ public abstract class OutputBuffer extends OutputStream {
     /**
      * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
-    @SuppressWarnings("JavaDoc")
     @Deprecated
     public String hex(){
         final StringBuilder buf = new StringBuilder();
@@ -146,7 +144,6 @@ public abstract class OutputBuffer extends OutputStream {
     /**
      * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
-    @SuppressWarnings("JavaDoc")
     @Deprecated
     public String md5(){
         final MessageDigest md5 ;
@@ -192,7 +189,6 @@ public abstract class OutputBuffer extends OutputStream {
     /**
      * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
-    @SuppressWarnings("JavaDoc")
     @Deprecated
     public void writeIntBE( int x ){
         write( x >> 24 );
@@ -204,7 +200,6 @@ public abstract class OutputBuffer extends OutputStream {
     /**
      * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
-    @SuppressWarnings("JavaDoc")
     @Deprecated
     public void writeInt( int pos , int x ){
         final int save = getPosition();
