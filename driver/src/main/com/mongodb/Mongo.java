@@ -359,7 +359,7 @@ public class Mongo {
     }
 
     /**
-     * Gets the current driver version.
+     * Gets this driver version.
      *
      * @return the full version string, e.g. "3.0.0"
      */

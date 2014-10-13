@@ -328,7 +328,7 @@ public class MongoClientOptions {
      *     <li>Refuse to service any requests if any member of the seed list is not part of a replica set with the required name.</li> 
      * </ol>
      *
-     * @return the required replica set name since 3.0
+     * @return the required replica set name 
      * @since 2.12
      */
     public String getRequiredReplicaSetName() {
