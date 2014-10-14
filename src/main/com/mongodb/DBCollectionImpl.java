@@ -336,26 +336,31 @@ class DBCollectionImpl extends DBCollection {
 
     @SuppressWarnings("unchecked")
     public List<DBObject> getIndexInfo() {
-        List<DBObject> list = new ArrayList<DBObject>();
+        getDB().requestStart();
+        try {
+            List<DBObject> list = new ArrayList<DBObject>();
 
-        if (db.isServerVersionAtLeast(asList(2, 7, 6))) {
-            CommandResult res = _db.command(new BasicDBObject("listIndexes", getName()), ReadPreference.primary());
-            if (!res.ok() && res.getCode() == 26) {
-                return list;
+            if (db.isServerVersionAtLeast(asList(2, 7, 6))) {
+                CommandResult res = _db.command(new BasicDBObject("listIndexes", getName()), ReadPreference.primary());
+                if (!res.ok() && res.getCode() == 26) {
+                    return list;
+                }
+                res.throwOnError();
+                for (DBObject indexDocument : (List<DBObject>) res.get("indexes")) {
+                    list.add(indexDocument);
+                }
+            } else {
+                BasicDBObject cmd = new BasicDBObject("ns", getFullName());
+                DBCursor cur = _db.getCollection("system.indexes").find(cmd).setReadPreference(ReadPreference.primary());
+                while (cur.hasNext()) {
+                    list.add(cur.next());
+                }
             }
-            res.throwOnError();
-            for (DBObject indexDocument : (List<DBObject>) res.get("indexes")) {
-                list.add(indexDocument);
-            }
-        } else {
-            BasicDBObject cmd = new BasicDBObject("ns", getFullName());
-            DBCursor cur = _db.getCollection("system.indexes").find(cmd).setReadPreference(ReadPreference.primary());
-            while (cur.hasNext()) {
-                list.add(cur.next());
-            }
+
+            return list;
+        } finally {
+            getDB().requestDone();
         }
-
-        return list;
     }
 
     public void createIndex(final DBObject keys, final DBObject options, DBEncoder encoder) {

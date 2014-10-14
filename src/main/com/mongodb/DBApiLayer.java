@@ -139,7 +139,8 @@ public class DBApiLayer extends DB {
     @SuppressWarnings("unchecked")
     @Override
     public Set<String> getCollectionNames() {
-        {
+        requestStart();
+        try {
             List<String> collectionNames = new ArrayList<String>();
             if (isServerVersionAtLeast(asList(2, 7, 7))) {
                 CommandResult res = command(new BasicDBObject("listCollections", getName()), ReadPreference.primary());
@@ -163,6 +164,8 @@ public class DBApiLayer extends DB {
             }
             Collections.sort(collectionNames);
             return new LinkedHashSet<String>(collectionNames);
+        } finally {
+            requestDone();
         }
     }
 
@@ -233,8 +236,13 @@ public class DBApiLayer extends DB {
     }
 
     boolean isServerVersionAtLeast(final List<Integer> versionList) {
-        return getConnector().getServerDescription(getConnector().getPrimaryPort().getAddress())
-                .getVersion().compareTo(new ServerVersion(versionList)) >= 0;
+        DBPort primaryPort = getConnector().getPrimaryPort();
+        try {
+            return getConnector().getServerDescription(primaryPort.getAddress()).getVersion()
+                                 .compareTo(new ServerVersion(versionList)) >= 0;
+        } finally {
+           _connector.releasePort(primaryPort);
+        }
     }
 
     void addDeadCursor(final DeadCursor deadCursor) {
