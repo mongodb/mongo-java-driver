@@ -20,9 +20,9 @@ import com.mongodb.MongoCredential;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ConnectionListener;
 import com.mongodb.event.ConnectionPoolListener;
+import org.bson.types.ObjectId;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * The default factory for cluster implementations.
@@ -30,7 +30,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 3.0
  */
 public final class DefaultClusterFactory implements ClusterFactory {
-    private static final AtomicInteger NEXT_CLUSTER_ID = new AtomicInteger(1);
 
     @Override
     public Cluster create(final ClusterSettings settings, final ServerSettings serverSettings,
@@ -39,7 +38,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
                           final List<MongoCredential> credentialList,
                           final ClusterListener clusterListener, final ConnectionPoolListener connectionPoolListener,
                           final ConnectionListener connectionListener) {
-        String clusterId = Integer.toString(NEXT_CLUSTER_ID.getAndIncrement());
+        String clusterId = new ObjectId().toHexString();
         ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId,
                                                                                      serverSettings,
                                                                                      connectionPoolSettings,
