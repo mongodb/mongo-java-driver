@@ -87,7 +87,7 @@ public class BulkWriteRequestBuilder {
      * Specifies that the request being built should be an upsert.
      *
      * @return a new builder that allows only update and replace, since upsert does not apply to remove.
-     * @mongodb.driver.manual reference/method/db.collection.update/#upsert-parameter Upsert
+     * @mongodb.driver.manual tutorial/modify-documents/#upsert-option Upsert
      */
     public BulkUpdateRequestBuilder upsert() {
         return new BulkUpdateRequestBuilder(bulkWriteOperation, query, true, codec, replacementCodec);
