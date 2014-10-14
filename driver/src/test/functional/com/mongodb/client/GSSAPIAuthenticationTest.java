@@ -18,7 +18,9 @@ package com.mongodb.client;
 
 import com.mongodb.CommandFailureException;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.ServerAddress;
 import org.junit.Before;
 import org.junit.Test;
 import org.mongodb.Document;
@@ -28,8 +30,8 @@ import java.net.UnknownHostException;
 import static com.mongodb.AuthenticationMechanism.GSSAPI;
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getCredentialList;
-import static com.mongodb.ClusterFixture.getPrimary;
 import static com.mongodb.Fixture.getMongoClient;
+import static com.mongodb.Fixture.getMongoClientURI;
 import static com.mongodb.MongoCredential.createGSSAPICredential;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertTrue;
@@ -44,7 +46,7 @@ public class GSSAPIAuthenticationTest {
 
     @Test(expected = CommandFailureException.class)
     public void testUnsuccessfulAuthorization() throws InterruptedException, UnknownHostException {
-        MongoClient client = new MongoClient(getPrimary());
+        MongoClient client = new MongoClient(getServerAddress(), MongoClientOptions.builder().maxWaitTime(1000).build());
         MongoCollection<Document> collection = client.getDatabase(getConnectionString().getDatabase()).getCollection("test");
         try {
             collection.count();
@@ -61,7 +63,8 @@ public class GSSAPIAuthenticationTest {
 
     @Test(expected = MongoTimeoutException.class)
     public void testUnsuccessfulAuthentication() throws InterruptedException {
-        MongoClient client = new MongoClient(getPrimary(), asList(createGSSAPICredential("wrongUserName")));
+        MongoClient client = new MongoClient(getServerAddress(), asList(createGSSAPICredential("wrongUserName")),
+                                             MongoClientOptions.builder().maxWaitTime(1000).build());
         MongoCollection<Document> collection = client.getDatabase(getConnectionString().getDatabase()).getCollection("test");
         try {
             collection.count();
@@ -69,4 +72,9 @@ public class GSSAPIAuthenticationTest {
             client.close();
         }
     }
+
+    private ServerAddress getServerAddress() {
+        return new ServerAddress(getMongoClientURI().getHosts().get(0));
+    }
+
 }
