@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-// BasicBSONObject.java
-
 package org.bson;
-
-// BSON
 
 import com.mongodb.util.JSONSerializers;
 import org.bson.types.BasicBSONList;
@@ -33,15 +29,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
-// Java
-
 /**
- * A simple implementation of <code>DBObject</code>.
- * A <code>DBObject</code> can be created as follows, using this class:
- * <blockquote><pre>
- * DBObject obj = new BasicBSONObject();
- * obj.put( "foo", "bar" );
- * </pre></blockquote>
+ * A simple implementation of {@code DBObject}. A {@code DBObject} can be created as follows, using this class: {@code DBObject obj = new
+ * BasicBSONObject(); obj.put( "foo", "bar" ); }
  */
 public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSONObject {
 
@@ -53,14 +43,20 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
     public BasicBSONObject(){
     }
 
-    public BasicBSONObject(int size){
+    /**
+     * Creates an empty object.
+     *
+     * @param size the initial capacity for the Map storing this document.
+     */
+    public BasicBSONObject(final int size) {
     	super(size);
     }
 
     /**
-     * Convenience CTOR
+     * Creates a BSONObject initialised with a single key/value pair.
+     *
      * @param key  key under which to store
-     * @param value value to stor
+     * @param value value to store
      */
     public BasicBSONObject(String key, Object value){
         put(key, value);
@@ -68,6 +64,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
 
     /**
      * Creates a DBObject from a map.
+     *
      * @param m map to convert
      */
     @SuppressWarnings("unchecked")
@@ -77,13 +74,16 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
 
     /**
      * Converts a DBObject to a map.
+     *
      * @return the DBObject
      */
     public Map toMap() {
         return new LinkedHashMap<String,Object>(this);
     }
 
-    /** Deletes a field from this object.
+    /**
+     * Deletes a field from this object.
+     *
      * @param key the field name to remove
      * @return the object removed
      */
@@ -91,7 +91,9 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return remove( key );
     }
 
-    /** Checks if this object contains a given field
+    /**
+     * Checks if this object contains a given field
+     *
      * @param field field name
      * @return if the field exists
      */
@@ -99,15 +101,15 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return super.containsKey(field);
     }
 
-    /**
-     * @deprecated
-     */
     @Deprecated
-    public boolean containsKey( String key ){
+    @Override
+    public boolean containsKey(final String key) {
         return containsField(key);
     }
 
-    /** Gets a value from this object
+    /**
+     * Gets a value from this object
+     *
      * @param key field name
      * @return the value
      */
@@ -115,7 +117,9 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return super.get(key);
     }
 
-    /** Returns the value of a field as an <code>int</code>.
+    /**
+     * Returns the value of a field as an {@code int}.
+     *
      * @param key the field to look for
      * @return the field value (or default)
      */
@@ -127,7 +131,9 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return BSON.toInt(o);
     }
 
-    /** Returns the value of a field as an <code>int</code>.
+    /**
+     * Returns the value of a field as an {@code int}.
+     *
      * @param key the field to look for
      * @param def the default to return
      * @return the field value (or default)
@@ -141,7 +147,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
     }
 
     /**
-     * Returns the value of a field as a <code>long</code>.
+     * Returns the value of a field as a {@code long}.
      *
      * @param key the field to return
      * @return the field value
@@ -152,7 +158,8 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
     }
 
     /**
-     * Returns the value of a field as an <code>long</code>.
+     * Returns the value of a field as an {@code long}.
+     *
      * @param key the field to look for
      * @param def the default to return
      * @return the field value (or default)
@@ -166,7 +173,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
     }
 
     /**
-     * Returns the value of a field as a <code>double</code>.
+     * Returns the value of a field as a {@code double}.
      *
      * @param key the field to return
      * @return the field value
@@ -177,7 +184,8 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
     }
 
     /**
-     * Returns the value of a field as an <code>double</code>.
+     * Returns the value of a field as an {@code double}.
+     *
      * @param key the field to look for
      * @param def the default to return
      * @return the field value (or default)
@@ -190,7 +198,9 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return ((Number)foo).doubleValue();
     }
 
-    /** Returns the value of a field as a string
+    /**
+     * Returns the value of a field as a string
+     *
      * @param key the field to look up
      * @return the value of the field, converted to a string
      */
@@ -203,6 +213,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
 
     /**
      * Returns the value of a field as a string
+     *
      * @param key the field to look up
      * @param def the default to return
      * @return the value of the field, converted to a string
@@ -215,7 +226,9 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return foo.toString();
     }
 
-    /** Returns the value of a field as a boolean.
+    /**
+     * Returns the value of a field as a boolean.
+     *
      * @param key the field to look up
      * @return the value of the field, or false if field does not exist
      */
@@ -223,7 +236,9 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return getBoolean(key, false);
     }
 
-    /** Returns the value of a field as a boolean
+    /**
+     * Returns the value of a field as a boolean
+     *
      * @param key the field to look up
      * @param def the default value in case the field is not found
      * @return the value of the field, converted to a string
@@ -241,6 +256,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
 
     /**
      * Returns the object id or null if not set.
+     *
      * @param field The field to return
      * @return The field object value or null if not found (or if null :-^).
      */
@@ -250,6 +266,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
 
     /**
      * Returns the object id or def if not set.
+     *
      * @param field The field to return
      * @param def the default value in case the field is not found
      * @return The field object value or def if not set.
@@ -261,6 +278,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
 
     /**
      * Returns the date or null if not set.
+     *
      * @param field The field to return
      * @return The field object value or null if not found.
      */
@@ -270,6 +288,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
 
     /**
      * Returns the date or def if not set.
+     *
      * @param field The field to return
      * @param def the default value in case the field is not found
      * @return The field object value or def if not set.
@@ -279,32 +298,38 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return (foo != null) ? (Date)foo : def;
     }
 
-    /** Add a key/value pair to this object
+    /** 
+     * Add a key/value pair to this object
+     * 
      * @param key the field name
      * @param val the field value
-     * @return the <code>val</code> parameter
+     * @return the {@code val} parameter
      */
     public Object put( String key , Object val ){
         return super.put( key , val );
     }
 
     @SuppressWarnings("unchecked")
-    public void putAll( Map m ){
+    @Override
+    public void putAll(final Map m) {
         for ( Map.Entry entry : (Set<Map.Entry>)m.entrySet() ){
             put( entry.getKey().toString() , entry.getValue() );
         }
     }
 
-    public void putAll( BSONObject o ){
+    @Override
+    public void putAll(final BSONObject o) {
         for ( String k : o.keySet() ){
             put( k , o.get( k ) );
         }
    }
 
-    /** Add a key/value pair to this object
+    /**
+     * Add a key/value pair to this object
+     *
      * @param key the field name
      * @param val the field value
-     * @return <code>this</code>
+     * @return {@code this}
      */
     public BasicBSONObject append( String key , Object val ){
         put( key , val );
@@ -312,9 +337,12 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return this;
     }
 
-    /** Returns a JSON serialization of this object
+    /**
+     * Returns a JSON serialization of this object
+     *
      * @return JSON serialization
      */
+    @Override
     public String toString(){
         return JSONSerializers.getStrict().serialize(this);
     }

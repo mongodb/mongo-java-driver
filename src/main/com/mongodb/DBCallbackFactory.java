@@ -17,11 +17,17 @@
 package com.mongodb;
 
 /**
- * The DBCallback factory interface.
+ * Factory for creating concrete implementations of DBCallback.
  */
 public interface DBCallbackFactory {
 
-    public DBCallback create( DBCollection collection );
+    /**
+     * Creates a DBCallback for the given collection.
+     *
+     * @param collection a DBCollection for the DBCallback
+     * @return a new DBCallback that operates on the collection.
+     */
+    DBCallback create(DBCollection collection);
 
 }
 

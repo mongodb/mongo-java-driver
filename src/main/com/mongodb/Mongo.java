@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// Mongo.java
-
 package com.mongodb;
 
 import org.bson.io.PoolOutputBuffer;
@@ -80,13 +78,13 @@ public class Mongo {
     // is applied and updates the version based on configuration in build.properties.
 
     /**
-     * @deprecated Replaced by <code>Mongo.getMajorVersion()</code>
+     * @deprecated Replaced by {@link #getMajorVersion()}
      */
     @Deprecated
     public static final int MAJOR_VERSION = 2;
 
     /**
-     * @deprecated Replaced by <code>Mongo.getMinorVersion()</code>
+     * @deprecated Replaced by {@link #getMinorVersion()}
      */
     @Deprecated
     public static final int MINOR_VERSION = 13;
@@ -103,8 +101,8 @@ public class Mongo {
 
     /**
      * Gets the major version of this library
-     * @return the major version, e.g. 2
      *
+     * @return the major version, e.g. 2
      * @deprecated Please use {@link #getVersion()} instead.
      */
     @Deprecated
@@ -114,8 +112,8 @@ public class Mongo {
 
     /**
      * Gets the minor version of this library
-     * @return the minor version, e.g. 8
      *
+     * @return the minor version, e.g. 8
      * @deprecated Please use {@link #getVersion()} instead.
      */
     @Deprecated
@@ -138,167 +136,150 @@ public class Mongo {
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
+     *
      * @throws UnknownHostException
      * @throws MongoException
-     *
      * @deprecated Replaced by {@link MongoClient#MongoClient()})
-     *
      */
     @Deprecated
-    public Mongo()
-        throws UnknownHostException {
-        this( new ServerAddress() );
+    public Mongo() throws UnknownHostException {
+        this(new ServerAddress() );
     }
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (default port)
+     *
      * @param host server to connect to
      * @throws UnknownHostException if the database host cannot be resolved
      * @throws MongoException
-     *
      * @deprecated Replaced by {@link MongoClient#MongoClient(String)}
-     *
      */
     @Deprecated
-    public Mongo( String host )
+    public Mongo(String host)
         throws UnknownHostException{
         this( new ServerAddress( host ) );
     }
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (default port)
-     * @param host server to connect to
+     *
+     * @param host    server to connect to
      * @param options default query options
      * @throws UnknownHostException if the database host cannot be resolved
      * @throws MongoException
-     *
      * @deprecated Replaced by {@link MongoClient#MongoClient(String, MongoClientOptions)}
-     *
      */
     @Deprecated
-    public Mongo( String host , MongoOptions options )
+    public Mongo(String host, MongoOptions options)
         throws UnknownHostException {
         this( new ServerAddress( host ) , options );
     }
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node
+     *
      * @param host the database's host address
      * @param port the port on which the database is running
      * @throws UnknownHostException if the database host cannot be resolved
      * @throws MongoException
-     *
      * @deprecated Replaced by {@link MongoClient#MongoClient(String, int)}
-     *
      */
     @Deprecated
-    public Mongo( String host , int port )
+    public Mongo(String host, int port)
         throws UnknownHostException {
         this( new ServerAddress( host , port ) );
     }
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node
-     * @see com.mongodb.ServerAddress
+     *
      * @param addr the database address
      * @throws MongoException
-     *
+     * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress)}
-     *
      */
     @Deprecated
-    public Mongo( ServerAddress addr ) {
+    public Mongo(ServerAddress addr) {
         this(addr, new MongoOptions());
     }
 
     /**
      * Creates a Mongo instance based on a (single) mongo node using a given ServerAddress
-     * @see com.mongodb.ServerAddress
-     * @param addr the database address
+     *
+     * @param addr    the database address
      * @param options default query options
      * @throws MongoException
-     *
+     * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress, MongoClientOptions)}
-     *
      */
     @Deprecated
-    public Mongo( ServerAddress addr , MongoOptions options ) {
+    public Mongo(ServerAddress addr, MongoOptions options) {
         this(MongoAuthority.direct(addr), options);
     }
 
     /**
-     * <p>Creates a Mongo in paired mode. <br/> This will also work for
-     * a replica set and will find all members (the master will be used by
-     * default).</p>
+     * Creates a Mongo in paired mode. This will also work for a replica set and will find all members (the master will be used by
+     * default).
      *
-     * @see com.mongodb.ServerAddress
-     * @param left left side of the pair
+     * @param left  left side of the pair
      * @param right right side of the pair
      * @throws MongoException
+     * @see com.mongodb.ServerAddress
      */
     @Deprecated
-    public Mongo( ServerAddress left , ServerAddress right ) {
+    public Mongo(ServerAddress left, ServerAddress right) {
         this(left, right, new MongoOptions());
     }
 
     /**
-     * <p>Creates a Mongo connection in paired mode. <br/> This will also work for
-     * a replica set and will find all members (the master will be used by
-     * default).</p>
+     * Creates a Mongo connection in paired mode. This will also work for a replica set and will find all members (the master will be used
+     * by default).
      *
-     * @see com.mongodb.ServerAddress
-     * @param left left side of the pair
-     * @param right right side of the pair
+     * @param left    left side of the pair
+     * @param right   right side of the pair
      * @param options the optional settings for the Mongo instance
      * @throws MongoException
+     * @see com.mongodb.ServerAddress
      * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)} instead.
      */
     @Deprecated
-    public Mongo( ServerAddress left , ServerAddress right , MongoOptions options ) {
+    public Mongo(ServerAddress left, ServerAddress right, MongoOptions options) {
         this(MongoAuthority.dynamicSet(Arrays.asList(left, right)), options);
     }
 
     /**
-     * Creates a Mongo based on a list of replica set members or a list of mongos.
-     * It will find all members (the master will be used by default). If you pass in a single server in the list,
-     * the driver will still function as if it is a replica set. If you have a standalone server,
-     * use the Mongo(ServerAddress) constructor.
-     * <p>
-     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to,
-     * and automatically fail over to the next server if the closest is down.
+     * <p>Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
+     * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
+     * standalone server, use the Mongo(ServerAddress) constructor.</p>
      *
-     * @see com.mongodb.ServerAddress
-     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can
-     *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
-     *              sharded cluster.
+     * <p>If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically
+     * fail over to the next server if the closest is down.</p>
+     *
+     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
+     *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @throws MongoException
-     *
+     * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List)}
-     *
      */
     @Deprecated
-    public Mongo( List<ServerAddress> seeds ) {
+    public Mongo(List<ServerAddress> seeds) {
         this( seeds , new MongoOptions() );
     }
 
     /**
-     * Creates a Mongo based on a list of replica set members or a list of mongos.
-     * It will find all members (the master will be used by default). If you pass in a single server in the list,
-     * the driver will still function as if it is a replica set. If you have a standalone server,
-     * use the Mongo(ServerAddress) constructor.
-     * <p>
-     * If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to,
-     * and automatically fail over to the next server if the closest is down.
+     * <p>Creates a Mongo based on a list of replica set members or a list of mongos. It will find all members (the master will be used by
+     * default). If you pass in a single server in the list, the driver will still function as if it is a replica set. If you have a
+     * standalone server, use the Mongo(ServerAddress) constructor.</p>
      *
-     * @see com.mongodb.ServerAddress
-     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can
-     *              either be a list of mongod servers in the same replica set or a list of mongos servers in the same
-     *              sharded cluster.
+     * <p>If this is a list of mongos servers, it will pick the closest (lowest ping time) one to send all requests to, and automatically
+     * fail over to the next server if the closest is down.</p>
+     *
+     * @param seeds   Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of
+     *                mongod servers in the same replica set or a list of mongos servers in the same sharded cluster.
      * @param options for configuring this Mongo instance
      * @throws MongoException
-     *
+     * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)}
-     *
      */
     @Deprecated
     public Mongo( List<ServerAddress> seeds , MongoOptions options ) {
@@ -306,31 +287,30 @@ public class Mongo {
     }
 
     /**
-     * Creates a Mongo described by a URI.
-     * If only one address is used it will only connect to that node, otherwise it will discover all nodes.
-     * If the URI contains database credentials, the database will be authenticated lazily on first use
-     * with those credentials.
-     * @param uri the URI to connect to.
-     * <p>examples:<ul>
+     * <p>Creates a Mongo described by a URI. If only one address is used it will only connect to that node, otherwise it will discover all
+     * nodes. If the URI contains database credentials, the database will be authenticated lazily on first use with those credentials.</p>
+     * 
+     * <p>Examples:</p> 
+     * <ul>
      *   <li>mongodb://localhost</li>
      *   <li>mongodb://fred:foobar@localhost/</li>
-     * </ul></p>
+     * </ul>
+     *
+     * @param uri URI to connect to, optionally containing additional information like credentials
      * @throws MongoException
-     * @throws UnknownHostException
-     * @dochub connections
-     *
+     * @mongodb.driver.manual reference/connection-string Connection String URI Format
+     * @see MongoURI 
      * @deprecated Replaced by {@link MongoClient#MongoClient(MongoClientURI)}
-     *
      */
     @Deprecated
-    public Mongo( MongoURI uri ) throws UnknownHostException {
+    public Mongo(MongoURI uri) throws UnknownHostException {
         this(getMongoAuthorityFromURI(uri), uri.getOptions());
     }
 
     /**
-     * Creates a Mongo based on an authority and options.
-     * <p>
-     * Note: This constructor is provisional and is subject to change before the final release
+     * <p>Creates a Mongo based on an authority and options.</p>
+     * 
+     * <p>Note: This constructor is provisional and is subject to change before the final release</p>
      *
      * @param authority the authority
      * @param options the options
@@ -409,6 +389,7 @@ public class Mongo {
 
     /**
      * Drops the database if it exists.
+     *
      * @param dbName name of database to drop
      * @throws MongoException
      */
@@ -418,7 +399,8 @@ public class Mongo {
     }
 
     /**
-     * gets this driver version
+     * Gets this driver version.
+     *
      * @return the full version string of this driver, e.g. "2.8.0"
      */
     public String getVersion(){
@@ -467,6 +449,7 @@ public class Mongo {
 
     /**
      * Gets the address of the current master
+     *
      * @return the address
      */
     public ServerAddress getAddress(){
@@ -498,8 +481,7 @@ public class Mongo {
     }
 
     /**
-     * Closes the underlying connector, which in turn closes all open connections.
-     * Once called, this Mongo instance can no longer be used.
+     * Closes the underlying connector, which in turn closes all open connections. Once called, this Mongo instance can no longer be used.
      */
     public void close(){
 
@@ -519,9 +501,8 @@ public class Mongo {
     }
 
     /**
-     * Sets the write concern for this database. Will be used as default for
-     * writes to any collection in any database. See the
-     * documentation for {@link WriteConcern} for more information.
+     * Sets the write concern for this database. Will be used as default for writes to any collection in any database. See the documentation
+     * for {@link WriteConcern} for more information.
      *
      * @param concern write concern to use
      */
@@ -539,13 +520,12 @@ public class Mongo {
     }
 
     /**
-     * Sets the read preference for this database. Will be used as default for
-     * reads from any collection in any database. See the
+     * Sets the read preference for this database. Will be used as default for reads from any collection in any database. See the
      * documentation for {@link ReadPreference} for more information.
      *
      * @param preference Read Preference to use
      */
-    public void setReadPreference( ReadPreference preference ){
+    public void setReadPreference(ReadPreference preference) {
         _readPref = preference;
     }
 
@@ -559,13 +539,13 @@ public class Mongo {
     }
 
     /**
-     * makes it possible to run read queries on secondary nodes
+     * Makes it possible to run read queries on secondary nodes
      *
-     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
      * @see ReadPreference#secondaryPreferred()
+     * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
      */
     @Deprecated
-    public void slaveOk(){
+    public void slaveOk() {
         addOption( Bytes.QUERYOPTION_SLAVEOK );
     }
 
@@ -604,8 +584,7 @@ public class Mongo {
     }
 
     /**
-     * Helper method for setting up MongoOptions at instantiation
-     * so that any options which affect this connection can be set.
+     * Helper method for setting up MongoOptions at instantiation so that any options which affect this connection can be set.
      */
     @SuppressWarnings("deprecation")
     void _applyMongoOptions() {
@@ -621,9 +600,8 @@ public class Mongo {
     /**
      * Returns the mongo options.
      *
-     * @deprecated Please use {@link MongoClient}
-     *             and corresponding {@link com.mongodb.MongoClient#getMongoClientOptions()}
      * @return A {@link com.mongodb.MongoOptions} containing the settings for this MongoDB instance.
+     * @deprecated Please use {@link MongoClient} and corresponding {@link com.mongodb.MongoClient#getMongoClientOptions()}
      */
     @Deprecated
     public MongoOptions getMongoOptions() {
@@ -631,10 +609,10 @@ public class Mongo {
     }
 
     /**
-     * Gets the maximum size for a BSON object supported by the current master server.
-     * Note that this value may change over time depending on which server is master.
-     * If the size is not known yet, a request may be sent to the master server
-     * @return the maximum size
+     * Gets the maximum size for a BSON object supported by the current master server. Note that this value may change over time depending
+     * on which server is master.
+     *
+     * @return the maximum size, or 0 if not obtained from servers yet.
      * @throws MongoException
      */
     public int getMaxBsonObjectSize() {
@@ -744,10 +722,9 @@ public class Mongo {
 
     // -------
 
-
     /**
-     * Mongo.Holder can be used as a static place to hold several instances of Mongo.
-     * Security is not enforced at this level, and needs to be done on the application side.
+     * Mongo.Holder can be used as a static place to hold several instances of Mongo. Security is not enforced at this level, and needs to
+     * be done on the application side.
      */
     public static class Holder {
 
@@ -841,7 +818,7 @@ public class Mongo {
 
     /**
      * Gets the authority, which includes the connection type, the server address(es), and the credentials.
-
+     * 
      * @return the authority
      */
     MongoAuthority getAuthority() {

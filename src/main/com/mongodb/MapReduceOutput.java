@@ -17,13 +17,13 @@
 package com.mongodb;
 
 /**
- * Represents the result of a map/reduce operation.  Users should interact with the results of the map reduce via the results() method, or
- * by interacting directly with the collection the results were input into.
- * <p/>
- * There will be substantial changes to this class in the 3.x release, please check the deprecation tags for the methods that will be
- * removed.
+ * <p>Represents the result of a map/reduce operation.  Users should interact with the results of the map reduce via the results() 
+ * method, or by interacting directly with the collection the results were input into.</p>
+ * 
+ * <p>There will be substantial changes to this class in the 3.x release, please check the deprecation tags for the methods that will be
+ * removed.</p>
  *
- * @mongodb.driver.manual reference/command/mapReduce/ Map Reduce Command
+ * @mongodb.driver.manual applications/map-reduce Map-Reduce
  */
 public class MapReduceOutput {
 
@@ -92,7 +92,7 @@ public class MapReduceOutput {
      *
      * @return the collection or null
      */
-    public DBCollection getOutputCollection(){
+    public DBCollection getOutputCollection() {
         return _coll;
     }
 
@@ -106,7 +106,7 @@ public class MapReduceOutput {
      * that should be used to obtain the results of the map-reduce.  This method will be removed in 3.0.
      */
     @Deprecated
-    public BasicDBObject getRaw(){
+    public BasicDBObject getRaw() {
         return _commandResult;
     }
 
@@ -126,6 +126,7 @@ public class MapReduceOutput {
 
     /**
      * Get the original command that was sent to the database.
+     *
      * @return a DBObject containing the values of the original map-reduce command.
      */
     public DBObject getCommand() {
@@ -144,7 +145,7 @@ public class MapReduceOutput {
         return _commandResult.getServerUsed();
     }
 
-    public String toString(){
+    public String toString() {
         return _commandResult.toString();
     }
 

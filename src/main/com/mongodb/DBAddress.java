@@ -14,39 +14,34 @@
  * limitations under the License.
  */
 
-// DBAddress.java
-
 package com.mongodb;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 /**
- * Represents a database address
+ * Represents a database address, which includes the properties of ServerAddress (host and port) and adds a database name.
+ *
+ * @mongodb.driver.manual reference/default-mongodb-port/ MongoDB Ports
+ * @mongodb.driver.manual reference/connection-string/ MongoDB Connection String
  */
 public class DBAddress extends ServerAddress {
     
-    /** Creates a new address
-     * Accepts as the parameter format:
-     * <table border="1">
-     * <tr>
-     *   <td><i>name</i></td>
-     *   <td>"mydb"</td>
-     * </tr>
-     * <tr>
-     *   <td><i>&lt;host&gt;/name</i></td>
-     *   <td>"127.0.0.1/mydb"</td>
-     * </tr>
-     * <tr>
-     *   <td><i>&lt;host&gt;:&lt;port&gt;/name</i></td>
-     *   <td>"127.0.0.1:8080/mydb"</td>
-     * </tr>
-     * </table>
-     * @param urlFormat
-     * @throws UnknownHostException
+    /**
+     * Creates a new address. Accepts as the parameter format:
+     *
+     * <ul>
+     *     <li><i>name</i> "mydb"</li>
+     *     <li><i>&lt;host&gt;/name</i> "127.0.0.1/mydb"</li>
+     *     <li><i>&lt;host&gt;:&lt;port&gt;/name</i> "127.0.0.1:8080/mydb"</li>
+     * </ul>
+     *
+     * @param urlFormat the URL-formatted host and port
+     * @mongodb.driver.manual reference/connection-string/ MongoDB Connection String
+     * @see MongoClientURI
+     * @throws java.net.UnknownHostException
      */
-    public DBAddress( String urlFormat )
-        throws UnknownHostException {
+    public DBAddress(final String urlFormat) throws UnknownHostException {
         super( _getHostSection( urlFormat ) );
 
         _check( urlFormat , "urlFormat" );
@@ -80,7 +75,9 @@ public class DBAddress extends ServerAddress {
     }
 
     /**
-     * @param other an existing <code>DBAddress</code> that gives the host and port
+     * Create a DBAddress using the host and port from an existing DBAddress, and connected to a given database.
+     *
+     * @param other  an existing {@code DBAddress} that gives the host and port
      * @param dbname the database to which to connect
      * @throws UnknownHostException
      */
@@ -90,6 +87,8 @@ public class DBAddress extends ServerAddress {
     }
 
     /**
+     * Creates a DBAddress for the given database on the given host.
+     *
      * @param host host name
      * @param dbname database name
      * @throws UnknownHostException
@@ -100,6 +99,8 @@ public class DBAddress extends ServerAddress {
     }
     
     /**
+     * Creates a DBAddress for the given database on the given host at the given port.
+     *
      * @param host host name
      * @param port database port
      * @param dbname database name
@@ -150,11 +151,11 @@ public class DBAddress extends ServerAddress {
         return false;
     }
 
-
     /**
-     * creates a DBAddress pointing to a different database on the same server
+     * Creates a DBAddress pointing to a different database on the same server.
+     *
      * @param name database name
-     * @return
+     * @return the DBAddress for the given name with the same host and port as this
      * @throws MongoException
      */
     public DBAddress getSister( String name ){
@@ -165,17 +166,19 @@ public class DBAddress extends ServerAddress {
             throw new MongoInternalException( "shouldn't be possible" , uh );
         }
     }
-    
+
     /**
-     * gets the database name
-     * @return
+     * Gets the database name
+     *
+     * @return the name of the database
      */
     public String getDBName(){
         return _db;
     }
 
     /**
-     * gets a String representation of address as host:port/dbname.
+     * Gets a String representation of address as host:port/databaseName.
+     *
      * @return this address
      */
     @Override

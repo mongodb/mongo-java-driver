@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// BasicOutputBuffer.java
-
 package org.bson.io;
 
 import java.io.DataOutput;
@@ -23,6 +21,9 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 
+/**
+ * A BSON output stream that stores the output in a single, un-pooled byte array.
+ */
 public class BasicOutputBuffer extends OutputBuffer {
 
     @Override
@@ -76,30 +77,27 @@ public class BasicOutputBuffer extends OutputBuffer {
         _cur = 0;
     }
 
-    /**
-     * @return size of data so far
-     */
     @Override
     public int size(){
         return _size;
     }
 
-    /**
-     * @return bytes written
-     */
     @Override
-    public int pipe( OutputStream out )
+    public int pipe(OutputStream out)
         throws IOException {
         out.write( _buffer , 0 , _size );
         return _size;
     }
 
     /**
-     * @return bytes written
-     * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
+     * Pipe the contents of this output buffer into the given {@code DataOutput}
+     *
+     * @param out the {@code DataOutput} to pipe to
+     * @return number of bytes written to the stream
+     * @throws java.io.IOException if the stream throws an exception
      */
     @Deprecated
-    public int pipe( DataOutput out )
+    public int pipe(DataOutput out)
         throws IOException {
         out.write( _buffer , 0 , _size );
         return _size;

@@ -22,8 +22,7 @@ import com.mongodb.util.JSON;
 import org.bson.types.BasicBSONList;
 
 /**
- * a basic implementation of bson list that is mongo specific 
- * @author antoine
+ * An implementation of List that reflects the way BSON lists work.
  */
 public class BasicDBList extends BasicBSONList implements DBObject {
 
@@ -31,6 +30,7 @@ public class BasicDBList extends BasicBSONList implements DBObject {
 
     /**
      * Returns a JSON serialization of this object
+     *
      * @return JSON serialization
      */    
     @Override
@@ -38,14 +38,21 @@ public class BasicDBList extends BasicBSONList implements DBObject {
         return JSON.serialize( this );
     }
 
+    @Override
     public boolean isPartialObject(){
         return _isPartialObject;
     }
 
+    @Override
     public void markAsPartialObject(){
         _isPartialObject = true;
     }
 
+    /**
+     * Copies this instance into a new Object.
+     *
+     * @return a new BasicDBList with the same values as this instance
+     */
     public Object copy() {
         // copy field values into new object
         BasicDBList newobj = new BasicDBList();

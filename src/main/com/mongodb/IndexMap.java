@@ -20,9 +20,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Efficiently maps each integer in a set to another integer in a set, useful for merging bulk write errors when a bulk write must be
- * split into multiple batches. Has the ability to switch from a range-based to a hash-based map depending on the mappings that have been
- * added.
+ * <p>Efficiently maps each integer in a set to another integer in a set, useful for merging bulk write errors when a bulk write must be 
+ * split into multiple batches. Has the ability to switch from a range-based to a hash-based map depending on the mappings that have 
+ * been added.</p>
+ *
+ * <p>This class is not part of the public API.</p>
  */
 abstract class IndexMap {
 

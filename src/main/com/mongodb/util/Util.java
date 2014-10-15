@@ -25,6 +25,12 @@ import java.security.NoSuchAlgorithmException;
  */
 public class Util {
 
+    /**
+     * Converts the given byte buffer to a hexadecimal string using {@link java.lang.Integer#toHexString(int)}.
+     *
+     * @param b the bytes to convert to hex
+     * @return a String containing the hex representation of the given bytes.
+     */
     public static String toHex( byte b[] ){
         StringBuilder sb = new StringBuilder();
         
@@ -62,6 +68,14 @@ public class Util {
         }
     }
 
+    /**
+     * Produce hex representation of the MD5 digest of a byte array.
+     *
+     * @param buf    byte buffer containing the bytes to digest
+     * @param offset the position to start reading bytes from
+     * @param len    the number of bytes to read from the buffer
+     * @return hex string of the MD5 digest
+     */
     public static String hexMD5( ByteBuffer buf , int offset , int len ){
         byte b[] = new byte[len];
         for ( int i=0; i<len; i++ )

@@ -17,10 +17,13 @@
 package com.mongodb;
 
 /**
- *
+ * Creates concrete DBEncoder instances.
  */
 public interface DBEncoderFactory {
-
-    public DBEncoder create();
-    
+    /**
+     * Creates an instance.
+     *
+     * @return the concrete implementation of {@code DBEncoder}.
+     */
+    DBEncoder create();
 }

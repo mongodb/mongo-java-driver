@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-// WriteResult.java
-
 package com.mongodb;
 
 import java.io.IOException;
 
 
 /**
- * This class lets you access the results of the previous write.
- * if you have STRICT mode on, this just stores the result of that getLastError call
- * if you don't, then this will actually do the getlasterror call.
- * if another operation has been done on this connection in the interim, calls will fail
+ * This class lets you access the results of the previous write. if you have STRICT mode on, this just stores the result of that
+ * getLastError call if you don't, then this will actually do the getlasterror call. if another operation has been done on this connection
+ * in the interim, calls will fail
  */
 @SuppressWarnings("deprecation")
 public class WriteResult {
@@ -91,20 +88,23 @@ public class WriteResult {
     }
 
     /**
-     * This method does following:
-     * - returns the existing CommandResult if concern is null or less strict than the concern it was obtained with
-     * - otherwise attempts to obtain a CommandResult by calling getLastError with the concern
+     * This method does following: 
+     * <ul>
+     *     <li>returns the existing CommandResult if concern is null or less strict than the concern it was obtained with</li>
+     *     <li>otherwise attempts to obtain a CommandResult by calling getLastError with the concern</li>
+     * </ul>
+     *
      * @param concern the concern
      * @return the response to the write operation
      * @throws MongoException
-     * @deprecated Use the appropriate {@code WriteConcern} and rely on the write operation to throw an
-     * exception on failure.  For successful writes, use the helper methods to retrieve specific values from the write response.
      * @see #getN()
      * @see #getUpsertedId()
      * @see #isUpdateOfExisting()
+     * @deprecated Use the appropriate {@code WriteConcern} and rely on the write operation to throw an exception on failure.  For
+     * successful writes, use the helper methods to retrieve specific values from the write response.
      */
     @Deprecated
-    public synchronized CommandResult getLastError(WriteConcern concern){
+    public synchronized CommandResult getLastError(WriteConcern concern) {
         if ( _lastErrorResult != null ) {
             // do we have a satisfying concern?
             if ( concern == null || ( _lastConcern != null && _lastConcern.getW() >= concern.getW() ) )

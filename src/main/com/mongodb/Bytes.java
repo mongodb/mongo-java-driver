@@ -32,7 +32,6 @@ import java.util.logging.Logger;
 
 /**
  * Class that hold definitions of the wire protocol
- * @author antoine
  */
 public class Bytes extends BSON {
 
@@ -64,10 +63,9 @@ public class Bytes extends BSON {
     // --- network protocol options
 
     /**
-     * Tailable means cursor is not closed when the last data is retrieved.
-     * Rather, the cursor marks the final object's position.
-     * You can resume using the cursor later, from where it was located, if more data were received.
-     * Like any "latent cursor", the cursor may become invalid at some point (CursorNotFound) - for example if the final object it references were deleted.
+     * Tailable means cursor is not closed when the last data is retrieved. Rather, the cursor marks the final object's position. You can
+     * resume using the cursor later, from where it was located, if more data were received. Like any "latent cursor", the cursor may become
+     * invalid at some point (CursorNotFound) - for example if the final object it references were deleted.
      */
     public static final int QUERYOPTION_TAILABLE = 1 << 1;
     /**
@@ -79,61 +77,55 @@ public class Bytes extends BSON {
      */
     public static final int QUERYOPTION_OPLOGREPLAY = 1 << 3;
     /**
-     * The server normally times out idle cursors after an inactivity period (10 minutes) to prevent excess memory use.
-     * Set this option to prevent that.
+     * The server normally times out idle cursors after an inactivity period (10 minutes) to prevent excess memory use. Set this option to
+     * prevent that.
      */
     public static final int QUERYOPTION_NOTIMEOUT = 1 << 4;
 
     /**
-     * Use with TailableCursor.
-     * If we are at the end of the data, block for a while rather than returning no data.
-     * After a timeout period, we do return as normal.
+     * Use with TailableCursor. If we are at the end of the data, block for a while rather than returning no data. After a timeout period,
+     * we do return as normal.
      */
     public static final int QUERYOPTION_AWAITDATA = 1 << 5;
 
     /**
      * Stream the data down full blast in multiple "more" packages, on the assumption that the client will fully read all data queried.
-     * Faster when you are pulling a lot of data and know you want to pull it all down.
-     * Note: the client is not allowed to not read all the data unless it closes the connection.
+     * Faster when you are pulling a lot of data and know you want to pull it all down. Note: the client is not allowed to not read all the
+     * data unless it closes the connection.
      */
     public static final int QUERYOPTION_EXHAUST = 1 << 6;
 
     /**
-     * Use with sharding (mongos).
-     * Allows partial results from a sharded system if any shards are down/missing from the cluster. If not used an error will be returned
-     * from the mongos server.
+     * Use with sharding (mongos). Allows partial results from a sharded system if any shards are down/missing from the cluster. If not used
+     * an error will be returned from the mongos server.
      */
     public static final int QUERYOPTION_PARTIAL = 1 << 7;
 
     /**
-     * Set when getMore is called but the cursor id is not valid at the server.
-     * Returned with zero results.
+     * Set when getMore is called but the cursor id is not valid at the server. Returned with zero results.
      */
     public static final int RESULTFLAG_CURSORNOTFOUND = 1;
     /**
-     * Set when query failed.
-     * Results consist of one document containing an "$err" field describing the failure.
+     * Set when query failed. Results consist of one document containing an "$err" field describing the failure.
      */
     public static final int RESULTFLAG_ERRSET = 2;
     /**
-     * Drivers should ignore this.
-     * Only mongos will ever see this set, in which case, it needs to update config from the server.
+     * Drivers should ignore this. Only mongos will ever see this set, in which case, it needs to update config from the server.
      */
     public static final int RESULTFLAG_SHARDCONFIGSTALE = 4;
     /**
-     * Set when the server supports the AwaitData Query option.
-     * If it doesn't, a client should sleep a little between getMore's of a Tailable cursor.
-     * Mongod version 1.6 supports AwaitData and thus always sets AwaitCapable.
+     * Set when the server supports the AwaitData Query option. If it doesn't, a client should sleep a little between getMore's of a
+     * Tailable cursor. Mongod version 1.6 supports AwaitData and thus always sets AwaitCapable.
      */
     public static final int RESULTFLAG_AWAITCAPABLE = 8;
 
 
     static class OptionHolder {
-        OptionHolder( OptionHolder parent ){
+        OptionHolder(final OptionHolder parent) {
             _parent = parent;
         }
 
-        void set( int options ){
+        void set(final int options) {
             _options = options;
             _hasOptions = true;
         }
@@ -146,7 +138,7 @@ public class Bytes extends BSON {
             return _parent.get();
         }
 
-        void add( int option ){
+        void add(final int option) {
             set( get() | option );
         }
 
@@ -162,62 +154,63 @@ public class Bytes extends BSON {
 
     /**
      * Gets the type byte for a given object.
-     * @param o the object
+     *
+     * @param object the object
      * @return the byte value associated with the type, or -1 if no type is matched
      */
     @SuppressWarnings("deprecation")
-    public static byte getType( Object o ){
-        if ( o == null )
+    public static byte getType(final Object object) {
+        if ( object == null )
             return NULL;
 
-        if ( o instanceof DBPointer )
+        if ( object instanceof DBPointer )
             return REF;
 
-        if (o instanceof Integer
-                || o instanceof Short
-                || o instanceof Byte
-                || o instanceof AtomicInteger) {
+        if (object instanceof Integer
+                || object instanceof Short
+                || object instanceof Byte
+                || object instanceof AtomicInteger) {
             return NUMBER_INT;
         }
 
-        if (o instanceof Long || o instanceof AtomicLong) {
+        if (object instanceof Long || object instanceof AtomicLong) {
             return NUMBER_LONG;
         }
 
-        if ( o instanceof Number )
+        if ( object instanceof Number )
             return NUMBER;
 
-        if ( o instanceof String )
+        if ( object instanceof String )
             return STRING;
 
-        if ( o instanceof java.util.List )
+        if ( object instanceof java.util.List )
             return ARRAY;
 
-        if ( o instanceof byte[] )
+        if ( object instanceof byte[] )
             return BINARY;
 
-        if ( o instanceof ObjectId )
+        if ( object instanceof ObjectId )
             return OID;
 
-        if ( o instanceof Boolean )
+        if ( object instanceof Boolean )
             return BOOLEAN;
 
-        if ( o instanceof java.util.Date )
+        if ( object instanceof java.util.Date )
             return DATE;
 
-        if ( o instanceof BSONTimestamp )
+        if ( object instanceof BSONTimestamp )
             return TIMESTAMP;
 
-        if ( o instanceof java.util.regex.Pattern )
+        if ( object instanceof java.util.regex.Pattern )
             return REGEX;
 
-        if ( o instanceof DBObject || o instanceof DBRefBase )
+        if ( object instanceof DBObject || object instanceof DBRefBase )
             return OBJECT;
 
-        if ( o instanceof Code )
+        if ( object instanceof Code )
             return CODE;
 
-        if ( o instanceof CodeWScope )
+        if ( object instanceof CodeWScope )
             return CODE_W_SCOPE;
 
         return -1;

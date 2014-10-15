@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// Binary.java
-
 package org.bson.types;
 
 import org.bson.BSON;
@@ -24,7 +22,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 /**
- * generic binary holder
+ * Generic binary holder.
  */
 public class Binary implements Serializable {
 
@@ -40,24 +38,39 @@ public class Binary implements Serializable {
     }
 
     /**
-     * Creates a Binary object
+     * Creates a Binary with the specified type and data.
      *
-     * @param type type of the field as encoded in BSON
-     * @param data raw data
+     * @param type the binary type
+     * @param data the binary data
      */
     public Binary(byte type, byte[] data) {
         _type = type;
         _data = data;
     }
 
+    /**
+     * Get the binary sub type as a byte.
+     *
+     * @return the binary sub type as a byte.
+     */
     public byte getType() {
         return _type;
     }
 
+    /**
+     * Get a copy of the binary value.
+     *
+     * @return a copy of the binary value.
+     */
     public byte[] getData() {
         return _data;
     }
 
+    /**
+     * Get the length of the data.
+     *
+     * @return the length of the binary array.
+     */
     public int length() {
         return _data.length;
     }

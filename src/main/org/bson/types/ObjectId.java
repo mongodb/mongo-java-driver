@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// ObjectId.java
-
 package org.bson.types;
 
 import java.net.NetworkInterface;
@@ -28,18 +26,22 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A globally unique identifier for objects.
- * <p>Consists of 12 bytes, divided as follows:
- * <blockquote><pre>
- * <table border="1">
- * <tr><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td>
- *     <td>7</td><td>8</td><td>9</td><td>10</td><td>11</td></tr>
- * <tr><td colspan="4">time</td><td colspan="3">machine</td>
- *     <td colspan="2">pid</td><td colspan="3">inc</td></tr>
- * </table>
- * </pre></blockquote>
+ * <p>A globally unique identifier for objects.</p>
  *
- * @dochub objectids
+ * <p>Consists of 12 bytes, divided as follows:</p> 
+ * <table border="1">
+ *     <caption>ObjectID layout</caption>
+ *     <tr>
+ *         <td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td><td>10</td><td>11</td> 
+ *     </tr> 
+ *     <tr>
+ *         <td colspan="4">time</td><td colspan="3">machine</td> <td colspan="2">pid</td><td colspan="3">inc</td> 
+ *     </tr> 
+ * </table>
+ *
+ * <p>Instances of this class are immutable.</p>
+ *
+ * @mongodb.driver.manual core/object-id ObjectId
  */
 public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
@@ -47,7 +49,9 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
     static final Logger LOGGER = Logger.getLogger( "org.bson.ObjectId" );
 
-    /** Gets a new object id.
+    /**
+     * Gets a new object id.
+     *
      * @return the new id
      */
     public static ObjectId get(){
@@ -55,22 +59,20 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     }
 
     /**
-     * Creates an ObjectId using time, machine and inc values.  The Java driver has done it this way for a long time, but it
-     * does not match the <a href="http://docs.mongodb.org/manual/reference/object-id/">ObjectId specification</a>,
-     * which requires four values, not three.  The next major release of the Java driver will conform to this specification,
-     * but will still need to support clients that are relying on the current behavior.  To that end,
-     * the constructors that takes these three arguments are now deprecated in favor of this more explicit factory method,
-     * and in the next major release those constructors will be removed.
-     * <p>
-     * NOTE: This will not break any application that use ObjectIds.  The 12-byte representation will be round-trippable from old to new
-     * driver releases.
+     * <p>Creates an ObjectId using time, machine and inc values.  The Java driver used to create all ObjectIds this way, but it does not
+     * match the <a href="http://docs.mongodb.org/manual/reference/object-id/">ObjectId specification</a>, which requires four values, not
+     * three. This major release of the Java driver conforms to the specification, but still supports clients that are relying on the
+     * behavior of the previous major release by providing this explicit factory method that takes three parameters instead of four.</p>
      *
-     * </p>
+     * <p>Ordinary users of the driver will not need this method.  It's only for those that have written there own BSON decoders.</p>
      *
-     * @param time time in seconds
+     * <p>NOTE: This will not break any application that use ObjectIds.  The 12-byte representation will be round-trippable from old to new
+     * driver releases.</p>
+     *
+     * @param time    time in seconds
      * @param machine machine ID
-     * @param inc incremental value
-     * @see org.bson.types.ObjectId#ObjectId(int, int, int)
+     * @param inc     incremental value
+     * @return a new {@code ObjectId} created from the given values
      * @since 2.12.0
      */
     public static ObjectId createFromLegacyFormat(final int time, final int machine, final int inc) {
@@ -78,8 +80,12 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     }
 
 
-    /** Checks if a string could be an <code>ObjectId</code>.
+    /**
+     * Checks if a string could be an {@code ObjectId}.
+     *
+     * @param s a potential ObjectId as a String.
      * @return whether the string could be an object id
+     * @throws IllegalArgumentException if hexString is null
      */
     public static boolean isValid( String s ){
         if ( s == null )
@@ -104,12 +110,12 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         return true;
     }
 
-    /** Turn an object into an <code>ObjectId</code>, if possible.
-     * Strings will be converted into <code>ObjectId</code>s, if possible, and <code>ObjectId</code>s will
-     * be cast and returned.  Passing in <code>null</code> returns <code>null</code>.
-     * @param o the object to convert
-     * @return an <code>ObjectId</code> if it can be massaged, null otherwise
+    /**
+     * Turn an object into an {@code ObjectId}, if possible. Strings will be converted into {@code ObjectId}s, if possible, and
+     * {@code ObjectId}s will be cast and returned.  Passing in {@code null} returns {@code null}.
      *
+     * @param o the object to convert
+     * @return an {@code ObjectId} if it can be massaged, null otherwise
      * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
@@ -129,27 +135,40 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         return null;
     }
 
-    public ObjectId( Date time ){
+    /**
+     * Constructs a new instance using the given date.
+     *
+     * @param time the date
+     */
+    public ObjectId(Date time) {
         this(time, _genmachine, _nextInc.getAndIncrement());
     }
 
-    public ObjectId( Date time , int inc ){
-        this( time , _genmachine , inc );
+    /**
+     * Constructs a new instances using the given date and counter.
+     *
+     * @param time the date
+     * @param inc  the counter
+     * @throws IllegalArgumentException if the high order byte of counter is not zero
+     */
+    public ObjectId(Date time, int inc) {
+        this(time, _genmachine, inc);
     }
 
     /**
-     * Constructs an ObjectId using  time, machine and inc values.  The Java driver has done it this way for a long time, but it
-     * does not match the <a href="http://docs.mongodb.org/manual/reference/object-id/">ObjectId specification</a>,
-     * which requires four values, not three.  The next major release of the Java driver will conform to this specification,
-     * but will still need to support clients that are relying on the current behavior.  To that end,
-     * this constructor is now deprecated in favor of the more explicit factory method ObjectId#createFromLegacyFormat(int, int, int)},
-     * and in the next major release this constructor will be removed.
+     * Constructs an ObjectId using  time, machine and inc values.  The Java driver has done it this way for a long time, but it does not
+     * match the <a href="http://docs.mongodb.org/manual/reference/object-id/">ObjectId specification</a>, which requires four values, not
+     * three.  The next major release of the Java driver will conform to this specification, but will still need to support clients that are
+     * relying on the current behavior.  To that end, this constructor is now deprecated in favor of the more explicit factory method
+     * ObjectId#createFromLegacyFormat(int, int, int)}, and in the next major release this constructor will be removed.
      *
+     * @param time    the date
+     * @param machine the machine identifier
+     * @param inc     the counter
      * @see ObjectId#createFromLegacyFormat(int, int, int)
-     * @deprecated {@code ObjectId}'s constructed this way do not conform to
-     *             the <a href="http://docs.mongodb.org/manual/reference/object-id/">ObjectId specification</a>.
-     *             Please use {@link org.bson.types.ObjectId#ObjectId(byte[])} or
-     *             {@link ObjectId#createFromLegacyFormat(int, int, int)} instead.
+     * @deprecated {@code ObjectId}'s constructed this way do not conform to the 
+     * <a href="http://docs.mongodb.org/manual/reference/object-id/">ObjectId specification</a>. Please 
+     * use {@link org.bson.types.ObjectId#ObjectId(byte[])} or {@link ObjectId#createFromLegacyFormat(int, int, int)} instead.
      */
     @Deprecated
     public ObjectId( Date time , int machine , int inc ){
@@ -233,7 +252,8 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         _new = false;
     }
 
-    /** Create a new object id.
+    /**
+     * Create a new object id.
      */
     public ObjectId(){
         _time = (int) (System.currentTimeMillis() / 1000);
@@ -242,6 +262,7 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         _new = true;
     }
 
+    @Override
     public int hashCode(){
         int x = _time;
         x += ( _machine * 111 );
@@ -249,8 +270,8 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         return x;
     }
 
+    @Override
     public boolean equals( Object o ){
-
         if ( this == o )
             return true;
 
@@ -265,8 +286,9 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     }
 
     /**
-     * @deprecated 'babble' format is deprecated. Please use {@link #toHexString()} instead.
+     * @deprecated 'babble' format is deprecated and will be removed in 3.0. Please use {@link #toHexString()} instead.
      */
+    @SuppressWarnings("JavaDoc")
     @Deprecated
     public String toStringBabble(){
         return babbleToMongod( toStringMongod() );
@@ -289,8 +311,8 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
     /**
      * @return a string representation of the ObjectId in hexadecimal format
-     *
-     * @deprecated Please use {@link #toHexString()} instead.
+     * @see ObjectId#toHexString()
+     * @deprecated use {@link #toHexString()}
      */
     @Deprecated
     public String toStringMongod(){
@@ -309,6 +331,11 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
         return buf.toString();
     }
 
+    /**
+     * Convert to a byte array.  Note that the numbers are stored in big-endian order.
+     *
+     * @return the byte array
+     */
     public byte[] toByteArray(){
         byte b[] = new byte[12];
         ByteBuffer bb = ByteBuffer.wrap( b );
@@ -391,9 +418,10 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
     }
 
     /**
-     * Gets the time of this ID, in milliseconds
+     * Gets the time of this instance, in milliseconds.
      *
-     * @deprecated Please use {@link #getDate()} ()} instead.
+     * @deprecated Use #getDate instead
+     * @return the time component of this ID in milliseconds
      */
     @Deprecated
     public long getTime(){
@@ -402,13 +430,14 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
     /**
      * Gets the time of this ID, in seconds.
-     * @deprecated Please use {@link #getTimestamp()} ()} instead.
+     *
+     * @deprecated Use #getTimestamp instead
+     * @return the time component of this ID in seconds
      */
     @Deprecated
     public int getTimeSecond() {
         return _time;
     }
-
 
     /**
      * Gets the counter.
@@ -500,6 +529,8 @@ public class ObjectId implements Comparable<ObjectId> , java.io.Serializable {
 
     /**
      * Gets the current value of the auto-incrementing counter.
+     *
+     * @return the current counter value.
      */
     public static int getCurrentCounter() {
         return _nextInc.get();

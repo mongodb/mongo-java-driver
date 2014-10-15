@@ -17,7 +17,7 @@
 package com.mongodb;
 
 /**
- * An exception indicating a failed command.
+ * An exception indicating that a command sent to a MongoDB server returned a failure.
  */
 public class CommandFailureException extends MongoException {
     private static final long serialVersionUID = -1180715413196161037L;

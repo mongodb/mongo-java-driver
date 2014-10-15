@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// BasicDBObject.java
-
 package com.mongodb;
 
 import com.mongodb.util.JSON;
@@ -24,71 +22,92 @@ import org.bson.BasicBSONObject;
 import java.util.Map;
 
 /**
- * a basic implementation of bson object that is mongo specific.
- * A <code>DBObject</code> can be created as follows, using this class:
- * <blockquote><pre>
+ * A basic implementation of BSON object that is MongoDB specific. A {@code DBObject} can be created as follows, using this class:
+ * <pre>
  * DBObject obj = new BasicDBObject();
  * obj.put( "foo", "bar" );
- * </pre></blockquote>
+ * </pre>
+ *
+ * @mongodb.driver.manual core/document/ MongoDB Documents
  */
 public class BasicDBObject extends BasicBSONObject implements DBObject {
 
     private static final long serialVersionUID = -4415279469780082174L;
-    
+
     /**
-     *  Creates an empty object.
+     * Creates an empty object.
      */
-    public BasicDBObject(){
-    }
-    
-    /**
-     * creates an empty object
-     * @param size an estimate of number of fields that will be inserted
-     */
-    public BasicDBObject(int size){
-    	super(size);
+    public BasicDBObject() {
     }
 
     /**
-     * creates an object with the given key/value
-     * @param key  key under which to store
-     * @param value value to stor
+     * Creates an empty object
+     *
+     * @param size an estimate of number of fields that will be inserted
      */
-    public BasicDBObject(String key, Object value){
+    public BasicDBObject(final int size) {
+        super(size);
+    }
+
+    /**
+     * Creates an object with the given key/value
+     *
+     * @param key   key under which to store
+     * @param value value to store
+     */
+    public BasicDBObject(final String key, final Object value) {
         super(key, value);
     }
 
     /**
      * Creates an object from a map.
-     * @param m map to convert
+     *
+     * @param map map to convert
      */
-    public BasicDBObject(Map m) {
-        super(m);
+    public BasicDBObject(final Map map) {
+        super(map);
     }
 
-    public boolean isPartialObject(){
+    /**
+     * Whether {@link #markAsPartialObject} was ever called only matters if you are going to upsert and do not want to risk losing fields.
+     *
+     * @return true if this has been marked as a partial object
+     */
+    @Override
+    public boolean isPartialObject() {
         return _isPartialObject;
     }
 
-    public void markAsPartialObject(){
+    /**
+     * If this object was retrieved with only some fields (using a field filter) this method will be called to mark it as such.
+     */
+    public void markAsPartialObject() {
         _isPartialObject = true;
     }
 
     /**
-     * Returns a JSON serialization of this object
+     * <p>Returns a JSON serialization of this object</p>
+     *
+     * <p>The output will look like: {@code  {"a":1, "b":["x","y","z"]} }</p>
+     *
      * @return JSON serialization
-     */    
+     */
     @Override
-    public String toString(){
-        return JSON.serialize( this );
+    public String toString() {
+        return JSON.serialize(this);
     }
 
     @Override
     public BasicDBObject append( String key , Object val ){
-        put( key , val );
+        put(key, val);
         return this;
     }
 
+    /**
+     * Creates a new instance which is a copy of this BasicDBObject.
+     *
+     * @return a BasicDBObject with exactly the same values as this instance.
+     */
     public Object copy() {
         // copy field values into new object
         BasicDBObject newobj = new BasicDBObject(this.toMap());
@@ -96,13 +115,13 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
         for (String field : keySet()) {
             Object val = get(field);
             if (val instanceof BasicDBObject) {
-                newobj.put(field, ((BasicDBObject)val).copy());
+                newobj.put(field, ((BasicDBObject) val).copy());
             } else if (val instanceof BasicDBList) {
-                newobj.put(field, ((BasicDBList)val).copy());
+                newobj.put(field, ((BasicDBList) val).copy());
             }
         }
         return newobj;
     }
-    
+
     private boolean _isPartialObject;
 }

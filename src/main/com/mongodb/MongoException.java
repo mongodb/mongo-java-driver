@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-// MongoException.java
 
 package com.mongodb;
 
@@ -23,11 +22,9 @@ import org.bson.BSONObject;
 import java.io.IOException;
 
 /**
- * A general exception raised in Mongo
- * @author antoine
+ * Top level Exception for all Exceptions, server-side or client-side, that come from the driver.
  */
 public class MongoException extends RuntimeException {
-
     private static final long serialVersionUID = -4415279469780082174L;
 
     /**
@@ -155,7 +152,8 @@ public class MongoException extends RuntimeException {
 
     /**
      * Gets the exception code
-     * @return
+     *
+     * @return the error code.
      */
     public int getCode(){
         return _code;

@@ -34,13 +34,13 @@ public abstract class SimplePool<T> {
     public SimplePool(){
         _max = 1000;
     }
-    
+
     protected abstract T createNew();
 
     protected boolean ok( T t ){
         return true;
     }
-    
+
     public T get(){
         T t = _stored.poll();
         if ( t != null )

@@ -27,7 +27,6 @@ import java.util.List;
  * @see MongoOptions for the default values of all options
  */
 public class MongoURI {
-
     /**
      * The prefix for mongodb URIs.
      */
@@ -38,18 +37,23 @@ public class MongoURI {
 
     /**
      * Creates a MongoURI from a string.
+     *
      * @param uri the URI
-     * @dochub connections
-     *
+     * @mongodb.driver.manual reference/connection-string Connection String URI Format
      * @deprecated Replaced by {@link MongoClientURI#MongoClientURI(String)}
-     *
      */
     @Deprecated
-    public MongoURI( String uri ) {
+    public MongoURI(final String uri) {
         this.mongoClientURI = new MongoClientURI(uri, new MongoClientOptions.Builder().legacyDefaults());
         mongoOptions = new MongoOptions(mongoClientURI.getOptions());
     }
 
+    /**
+     * Create a new MongoURI from a MongoClientURI.  This class is deprecated, use {@link com.mongodb.MongoClientURI}.
+     *
+     * @param mongoClientURI the MongoClientURI to wrap with this deprecated class.
+     * @deprecated Replaced by {@link MongoClientURI})
+     */
     @Deprecated
     public MongoURI(final MongoClientURI mongoClientURI) {
         this.mongoClientURI = mongoClientURI;
@@ -59,48 +63,54 @@ public class MongoURI {
     // ---------------------------------
 
     /**
-     * Gets the username
-     * @return
+     * Gets the username.
+     *
+     * @return the username
      */
-    public String getUsername(){
+    public String getUsername() {
         return mongoClientURI.getUsername();
     }
 
     /**
-     * Gets the password
-     * @return
+     * Gets the password.
+     *
+     * @return the password
      */
-    public char[] getPassword(){
+    public char[] getPassword() {
         return mongoClientURI.getPassword();
     }
 
     /**
-     * Gets the list of hosts
-     * @return
+     * Gets the list of hosts.
+     *
+     * @return the list of hosts
      */
-    public List<String> getHosts(){
+    public List<String> getHosts() {
         return mongoClientURI.getHosts();
     }
 
     /**
-     * Gets the database name
-     * @return
+     * Gets the database name.
+     *
+     * @return the database name
      */
-    public String getDatabase(){
+    public String getDatabase() {
         return mongoClientURI.getDatabase();
     }
 
     /**
-     * Gets the collection name
-     * @return
+     * Gets the collection name.
+     *
+     * @return the collection name
      */
-    public String getCollection(){
+    public String getCollection() {
         return mongoClientURI.getCollection();
     }
 
     /**
-     * Gets the credentials
+     * Gets the credentials.
      *
+     * @return the MongoCredential for conneting to MongoDB servers.
      * @since 2.11.0
      */
     public MongoCredential getCredentials() {
@@ -108,33 +118,34 @@ public class MongoURI {
     }
 
     /**
-     * Gets the options.  This method will return the same instance of {@code MongoOptions} for every call, so it's
-     * possible to mutate the returned instance to change the defaults.
+     * Gets the options. This method will return the same instance of {@code MongoOptions} for every call, so it's possible to mutate the
+     * returned instance to change the defaults.
+     *
      * @return the mongo options
      */
-    public MongoOptions getOptions(){
+    public MongoOptions getOptions() {
         return mongoOptions;
     }
 
     /**
-     * creates a Mongo instance based on the URI
-     * @return a new Mongo instance.  There is no caching, so each call will create a new instance, each of which
-     * must be closed manually.
+     * Creates a Mongo instance based on the URI.
+     *
+     * @return a new Mongo instance.  There is no caching, so each call will create a new instance, each of which must be closed manually.
      * @throws MongoException
      * @throws UnknownHostException
      */
     @SuppressWarnings("deprecation")
     public Mongo connect()
-            throws UnknownHostException {
+    throws UnknownHostException {
         // TODO caching?
         // Note: we can't change this to new MongoClient(this) as that would silently change the default write concern.
         return new Mongo(this);
     }
 
     /**
-     * returns the DB object from a newly created Mongo instance based on this URI
-     * @return the database specified in the URI.  This will implicitly create a new Mongo instance,
-     * which must be closed manually.
+     * Returns the DB object from a newly created Mongo instance based on this URI.
+     *
+     * @return the database specified in the URI.  This will implicitly create a new Mongo instance, which must be closed manually.
      * @throws MongoException
      * @throws UnknownHostException
      */
@@ -143,30 +154,33 @@ public class MongoURI {
     }
 
     /**
-     * returns the URI's DB object from a given Mongo instance
+     * Returns the URI's DB object from a given Mongo instance.
+     *
      * @param mongo the Mongo instance to get the database from.
      * @return the database specified in this URI
      */
-    public DB connectDB( Mongo mongo ){
-        return mongo.getDB( getDatabase() );
+    public DB connectDB(Mongo mongo) {
+        return mongo.getDB(getDatabase());
     }
 
     /**
-     * returns the URI's Collection from a given DB object
+     * Returns the URI's Collection from a given DB object.
+     *
      * @param db the database to get the collection from
-     * @return
+     * @return the collection specified in this URI
      */
-    public DBCollection connectCollection( DB db ){
-        return db.getCollection( getCollection() );
+    public DBCollection connectCollection(DB db) {
+        return db.getCollection(getCollection());
     }
 
     /**
-     * returns the URI's Collection from a given Mongo instance
+     * Returns the URI's Collection from a given Mongo instance
+     *
      * @param mongo the mongo instance to get the collection from
      * @return the collection specified in this URI
      */
-    public DBCollection connectCollection( Mongo mongo ){
-        return connectDB( mongo ).getCollection( getCollection() );
+    public DBCollection connectCollection(Mongo mongo) {
+        return connectDB(mongo).getCollection(getCollection());
     }
 
     // ---------------------------------

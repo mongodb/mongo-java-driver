@@ -21,21 +21,32 @@ package org.bson.types;
 import java.io.Serializable;
 
 /** 
- * for using the Code type
+ * For using the Code type.
  */
 public class Code implements Serializable {
 
     private static final long serialVersionUID = 475535263314046697L;
 
-    public Code( String code ){
+    /**
+     * Construct a new instance with the given code.
+     *
+     * @param code the Javascript code
+     */
+    public Code(final String code){
         _code = code;
     }
 
+    /**
+     * Get the Javascript code.
+     *
+     * @return the code
+     */
     public String getCode(){
         return _code;
     }
 
-    public boolean equals( Object o ){
+    @Override
+    public boolean equals(final Object o) {
         if ( ! ( o instanceof Code ) )
             return false;
         
@@ -43,6 +54,7 @@ public class Code implements Serializable {
         return _code.equals( c._code );
     }
 
+    @Override
     public int hashCode(){
         return _code.hashCode();
     }

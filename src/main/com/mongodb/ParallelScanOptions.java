@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2008-2014 MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.mongodb;
 
 import org.bson.util.annotations.Immutable;
@@ -8,6 +24,7 @@ import static org.bson.util.Assertions.notNull;
 /**
  * The options to use for a parallel collection scan.
  *
+ * @mongodb.driver.manual reference/command/parallelCollectionScan/ Parallel Collection Scan
  * @since 2.12
  */
 @Immutable
@@ -34,12 +51,9 @@ public class ParallelScanOptions {
         private ReadPreference readPreference;
 
         /**
-         * Set the requested number of cursors to iterate in parallel.
-         * <p>
-         *     Note: this is the maximum number of cursors the server will return, it may return fewer cursors.
-         * </p>
+         * Set the requested number of cursors to iterate in parallel.  This is an upper bound and the server may provide fewer.
          *
-         * @param numCursors the number of cursors requested, which must be >= 1 and <= 10000
+         * @param numCursors the number of cursors requested, which must be &gt;= 1
          * @return this
          */
         public Builder numCursors(final int numCursors) {
@@ -53,7 +67,7 @@ public class ParallelScanOptions {
         /**
          * The batch size to use for each cursor.
          *
-         * @param batchSize the batch size, which must be >= 0
+         * @param batchSize the batch size, which must be &gt;= 0
          * @return this
          */
         public Builder batchSize(final int batchSize) {
@@ -73,13 +87,18 @@ public class ParallelScanOptions {
             return this;
         }
 
+        /**
+         * Creates a ParallelScanOptions with the settings initialised in this builder.
+         *
+         * @return a new ParallelScanOptions.
+         */
         public ParallelScanOptions build() {
             return new ParallelScanOptions(this);
         }
     }
 
     /**
-     * Gets the number of cursors requested.
+     * Gets the number of cursors requested.  The default value is 1.
      *
      * @return number of cursors requested.
      */
@@ -88,7 +107,7 @@ public class ParallelScanOptions {
     }
 
     /**
-     * Gets the batch size to use for each cursor.
+     * Gets the batch size to use for each cursor.  The default value is 0, which tells the server to use its own default batch size.
      *
      * @return batch size
      */

@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// ReflectionDBObject.java
-
 package com.mongodb;
 
 import org.bson.BSONObject;
@@ -34,38 +32,42 @@ import java.util.TreeMap;
  */
 public abstract class ReflectionDBObject implements DBObject {
     
-    public Object get( String key ){
+    @Override
+    public Object get(final String key) {
         return getWrapper().get( this , key );
     }
 
+    @Override
     public Set<String> keySet(){
         return getWrapper().keySet();
     }
 
-    /**
-     * @deprecated
-     */
     @Deprecated
-    public boolean containsKey( String s ){
-        return containsField( s );
+    @Override
+    public boolean containsKey(final String s) {
+        return containsField(s);
     }
 
-    public boolean containsField( String s ){
-        return getWrapper().containsKey( s );
+    @Override
+    public boolean containsField(final String s) {
+        return getWrapper().containsKey(s);
     }
 
-    public Object put( String key , Object v ){
+    @Override
+    public Object put(final String key, final Object v) {
         return getWrapper().set( this , key , v );
     }
 
     @SuppressWarnings("unchecked")
-    public void putAll( Map m ){
+    @Override
+    public void putAll(final Map m) {
         for ( Map.Entry entry : (Set<Map.Entry>)m.entrySet() ){
             put( entry.getKey().toString() , entry.getValue() );
         }
     } 
     
-    public void putAll( BSONObject o ){
+    @Override
+    public void putAll(final BSONObject o) {
         for ( String k : o.keySet() ){
             put( k , o.get( k ) );
         }
@@ -73,7 +75,8 @@ public abstract class ReflectionDBObject implements DBObject {
 
     /**
      * Gets the _id
-     * @return
+     *
+     * @return the _id of this document
      */
     public Object get_id(){
         return _id;
@@ -81,17 +84,20 @@ public abstract class ReflectionDBObject implements DBObject {
 
     /**
      * Sets the _id
-     * @param id
+     *
+     * @param id the unique identifier for this DBObject
      */
     public void set_id( Object id ){
         _id = id;
     }
 
+    @Override
     public boolean isPartialObject(){
         return false;
     }
 
     @SuppressWarnings("unchecked")
+    @Override
     public Map toMap() {
        Map m = new HashMap();
        Iterator i = this.keySet().iterator();
@@ -103,16 +109,15 @@ public abstract class ReflectionDBObject implements DBObject {
     }
 
     /**
-     * ReflectionDBObjects can't be partial
+     * ReflectionDBObjects can't be partial. This operation is not supported.
      */
+    @Override
     public void markAsPartialObject(){
         throw new RuntimeException( "ReflectionDBObjects can't be partial" );
     }
 
     /**
-     * can't remove from a ReflectionDBObject
-     * @param key
-     * @return
+     * This operation is not supported. Throws a {@code RuntimeException}.
      */
     public Object removeField( String key ){
         throw new RuntimeException( "can't remove from a ReflectionDBObject" );
@@ -168,11 +173,20 @@ public abstract class ReflectionDBObject implements DBObject {
             _keys = Collections.unmodifiableSet( _fields.keySet() );
         }
 
+        /**
+         * Gets all the fields on this object.
+         *
+         * @return a Set of all the field names.
+         */
         public Set<String> keySet(){
             return _keys;
         }
 
         /**
+         * Whether the document this represents contains the given field.
+         *
+         * @param key a field name
+         * @return true if the key exists
          * @deprecated
          */
         @Deprecated
@@ -180,19 +194,34 @@ public abstract class ReflectionDBObject implements DBObject {
             return _keys.contains( key );
         }
 
-        public Object get( ReflectionDBObject t , String name ){
-            FieldInfo i = _fields.get( name );
+        /**
+         * Gets the value for the given field from the given document.
+         *
+         * @param document  a ReflectionDBObject representing a MongoDB document
+         * @param fieldName the name of the field to get the value for
+         * @return the value for the given field name
+         */
+        public Object get(final ReflectionDBObject document, final String fieldName) {
+            FieldInfo i = _fields.get(fieldName);
             if ( i == null )
                 return null;
             try {
-                return i._getter.invoke( t );
+                return i._getter.invoke( document );
             }
             catch ( Exception e ){
-                throw new RuntimeException( "could not invoke getter for [" + name + "] on [" + _name + "]" , e );
+                throw new RuntimeException( "could not invoke getter for [" + fieldName + "] on [" + _name + "]" , e );
             }
         }
 
-        public Object set( ReflectionDBObject t , String name , Object val ){
+        /**
+         * Adds or sets the given field to the given value on the document.
+         *
+         * @param t    a ReflectionDBObject representing a MongoDB document
+         * @param name the name of the field to get the value for
+         * @param val  the value to set the field to
+         * @return the result of setting this value
+         */
+        public Object set(ReflectionDBObject t, String name, Object val) {
             FieldInfo i = _fields.get( name );
             if ( i == null )
                 throw new IllegalArgumentException( "no field [" + name + "] on [" + _name + "]" );
@@ -251,9 +280,10 @@ public abstract class ReflectionDBObject implements DBObject {
     }
         
     /**
-     * Returns the wrapper if this object can be assigned from this class
-     * @param c
-     * @return
+     * Returns the wrapper if this object can be assigned from this class.
+     *
+     * @param c the class to be wrapped
+     * @return the wrapper
      */
     public static JavaWrapper getWrapperIfReflectionObject( Class c ){
         if ( ReflectionDBObject.class.isAssignableFrom( c ) )
@@ -263,8 +293,9 @@ public abstract class ReflectionDBObject implements DBObject {
 
     /**
      * Returns an existing Wrapper instance associated with a class, or creates a new one.
-     * @param c
-     * @return
+     *
+     * @param c the class to be wrapped
+     * @return the wrapped
      */
     public static JavaWrapper getWrapper( Class c ){
         JavaWrapper w = _wrappers.get( c );

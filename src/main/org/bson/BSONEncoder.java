@@ -18,13 +18,46 @@ package org.bson;
 
 import org.bson.io.OutputBuffer;
 
-
+/**
+ * <p>A {@code BSONEncoder} is a class which can be used to turn documents into byte arrays. The {@code BSONEncoder} walks down through the
+ * object graph and writes corresponding {@code byte} sequences into underlying {@code OutputBuffer}.</p>
+ *
+ * <p>This class is a part of legacy API. Please check {@link org.bson.codecs.Encoder} for a new one.</p>
+ */
 public interface BSONEncoder {
-    public byte[] encode( BSONObject o );
 
-    public int putObject( BSONObject o );
+    /**
+     * Encode a document into byte array. This is a shortcut method which creates a new {@link OutputBuffer}, invokes the other 3 methods in
+     * a corresponding sequence: 
+     * <ul>
+     * <li>{@link #set(org.bson.io.OutputBuffer)}</li>
+     * <li>{@link #putObject(BSONObject)}</li>
+     * <li>{@link #done()}</li>
+     * </ul>
+     * and returns the contents of the {@code OutputBuffer}.
+     *
+     * @param o the document to be encoded
+     * @return a byte sequence
+     */
+    byte[] encode(BSONObject o);
 
-    public void done();
+    /**
+     * Encoder and write a document into underlying buffer.
+     *
+     * @param o the document to be encoded
+     * @return number of bytes written
+     */
+    int putObject(BSONObject o);
 
-    void set( OutputBuffer out );
+    /**
+     * Free the resources.
+     */
+    void done();
+
+    /**
+     * Sets the buffer to wrich the result of encoding will be written.
+     *
+     * @param buffer the buffer to be used to write a byte sequences to
+     */
+    void set(OutputBuffer buffer);
 }

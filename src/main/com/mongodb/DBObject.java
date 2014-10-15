@@ -14,27 +14,25 @@
  * limitations under the License.
  */
 
-// DBObject.java
-
 package com.mongodb;
 
 import org.bson.BSONObject;
 
 /**
- * A key-value map that can be saved to the database.
+ * This interface adds some specific behaviour to {@link org.bson.BSONObject} for MongoDB documents.
+ *
+ * @mongodb.driver.manual core/document/ Documents
  */
 public interface DBObject extends BSONObject {
-    
     /**
-     * if this object was retrieved with only some fields (using a field filter)
-     * this method will be called to mark it as such.
+     * If this object was retrieved with only some fields (using a field filter) this method will be called to mark it as such.
      */
-    public void markAsPartialObject();
+    void markAsPartialObject();
 
     /**
-     * whether markAsPartialObject was ever called
-     * only matters if you are going to upsert and do not want to risk losing fields
+     * Whether {@link #markAsPartialObject} was ever called only matters if you are going to upsert and do not want to risk losing fields.
+     *
+     * @return true if this has been marked as a partial object
      */
-    public boolean isPartialObject();
-
+    boolean isPartialObject();
 }

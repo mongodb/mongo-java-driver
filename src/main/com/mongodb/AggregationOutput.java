@@ -16,32 +16,39 @@
 
 package com.mongodb;
 
+/**
+ * Container for the result of aggregation operation.
+ *
+ * @mongodb.server.release 2.2
+ * @mongodb.driver.manual aggregation/ Aggregation
+ */
 @SuppressWarnings("deprecation")
 public class AggregationOutput {
 
     /**
-     * returns an iterator to the results of the aggregation
+     * Returns an iterator to the results of the aggregation
+     *
      * @return the results of the aggregation
      */
     public Iterable<DBObject> results() {
         return _resultSet;
     }
-    
+
     /**
-     * returns the command result of the aggregation
-     * @return the command result
+     * Returns the command result of the aggregation
      *
+     * @return the command result
      * @deprecated there is no replacement for this method
      */
     @Deprecated
-    public CommandResult getCommandResult(){
+    public CommandResult getCommandResult() {
         return _commandResult;
     }
 
     /**
-     * returns the original aggregation command
-     * @return the command
+     * Returns the original aggregation command
      *
+     * @return the command
      * @deprecated there is no replacement for this method
      */
     @Deprecated
@@ -50,9 +57,9 @@ public class AggregationOutput {
     }
 
     /**
-     * returns the address of the server used to execute the aggregation
-     * @return the server which executed the aggregation
+     * Returns the address of the server used to execute the aggregation
      *
+     * @return the server which executed the aggregation
      * @deprecated there is no replacement for this method
      */
     @Deprecated
@@ -63,21 +70,21 @@ public class AggregationOutput {
     /**
      * Constructs a new instance
      *
-     * @param command the aggregation command
+     * @param command       the aggregation command
      * @param commandResult the aggregation command result
-     *
      * @deprecated there is no replacement for this constructor
      */
     @SuppressWarnings("unchecked")
     @Deprecated
-    public AggregationOutput(DBObject command, CommandResult commandResult) {
+    public AggregationOutput(final DBObject command, final CommandResult commandResult) {
         _commandResult = commandResult;
         _cmd = command;
-        
-        if(commandResult.containsField("result"))
-            _resultSet = (Iterable<DBObject>) commandResult.get( "result" );
-        else 
+
+        if (commandResult.containsField("result")) {
+            _resultSet = (Iterable<DBObject>) commandResult.get("result");
+        } else {
             throw new IllegalArgumentException("result undefined");
+        }
     }
 
     /**

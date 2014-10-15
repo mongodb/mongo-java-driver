@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-// OutputBuffer.java
-
 package org.bson.io;
 
 import org.bson.BSONException;
@@ -27,15 +25,29 @@ import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+/**
+ * An abstract base class for classes implementing {@code BsonOutput}.
+ */
 public abstract class OutputBuffer extends OutputStream {
 
+    @Override
     public abstract void write(byte[] b);
+
+    @Override
     public abstract void write(byte[] b, int off, int len);
+
+    @Override
     public abstract void write(int b);
-    
+
+    /**
+     * Gets the current position in the stream.
+     *
+     * @return the current position
+     */
     public abstract int getPosition();
 
     /**
+     * @param position the position to set
      * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
      */
     @Deprecated
@@ -54,18 +66,26 @@ public abstract class OutputBuffer extends OutputStream {
     public abstract void seekStart();
     
     /**
-     * @return size of data so far
+     * Gets the output size in bytes.
+     * @return the size
      */
     public abstract int size();
 
     /**
-     * @return bytes written
+     * Pipe the contents of this output buffer into the given output stream
+     *
+     * @param out the stream to pipe to
+     * @return number of bytes written to the stream
+     * @throws java.io.IOException if the stream throws an exception
      */
     public abstract int pipe( OutputStream out )
         throws IOException;
 
     /**
-     * mostly for testing
+     * Gets a copy of the buffered bytes.
+     *
+     * @return the byte array
+     * @see org.bson.io.OutputBuffer#pipe(java.io.OutputStream)
      */
     public byte [] toByteArray(){
         try {
@@ -80,6 +100,7 @@ public abstract class OutputBuffer extends OutputStream {
 
     /**
      * @deprecated This method is NOT a part of public API and will be dropped in 3.x versions.
+     * @return the underlying byte array as a string
      */
     @Deprecated
     public String asString(){
@@ -153,6 +174,11 @@ public abstract class OutputBuffer extends OutputStream {
         return com.mongodb.util.Util.toHex( md5.digest() );
     }
 
+    /**
+     * Writes the given integer value to the buffer.
+     *
+     * @param x the value to write
+     */
     public void writeInt( int x ){
         write( x >> 0 );
         write( x >> 8 );
@@ -182,6 +208,11 @@ public abstract class OutputBuffer extends OutputStream {
         setPosition(save);
     }
 
+    /**
+     * Writes the given long value to the buffer.
+     *
+     * @param x the value to write
+     */
     public void writeLong( long x ){
         write( (byte)(0xFFL & ( x >> 0 ) ) );
         write( (byte)(0xFFL & ( x >> 8 ) ) );
@@ -193,10 +224,20 @@ public abstract class OutputBuffer extends OutputStream {
         write((byte) (0xFFL & (x >> 56)));
     }
 
+    /**
+     * Writes a BSON double to the stream.
+     *
+     * @param x the value
+     */
     public void writeDouble( double x ){
         writeLong(Double.doubleToRawLongBits(x));
     }
 
+    /**
+     * Writes a BSON String to the stream.
+     *
+     * @param str the value
+     */
     public void writeString(final String str) {
         writeInt(0); // making space for size
         final int strLen = writeCString(str, false);
@@ -254,6 +295,7 @@ public abstract class OutputBuffer extends OutputStream {
         return total;
     }
 
+    @Override
     public String toString(){
         return getClass().getName() + " size: " + size() + " pos: " + getPosition() ;
     }

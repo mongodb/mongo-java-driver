@@ -21,10 +21,10 @@ import org.bson.util.annotations.Immutable;
 import javax.net.SocketFactory;
 
 /**
- * Various settings to control the behavior of a <code>MongoClient</code>.
- * <p/>
- * Note: This class is a replacement for {@code MongoOptions}, to be used with {@code MongoClient}.  The main difference
- * in behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.
+ * <p>Various settings to control the behavior of a {@code MongoClient}.</p>
+ *
+ * <p>Note: This class is a replacement for {@code MongoOptions}, to be used with {@code MongoClient}.  The main difference in behavior is
+ * that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.</p>
  *
  * @see MongoClient
  * @since 2.10.0
@@ -32,8 +32,7 @@ import javax.net.SocketFactory;
 @Immutable
 public class MongoClientOptions {
     /**
-     * A builder for MongoClientOptions so that MongoClientOptions can be immutable, and to support easier
-     * construction through chaining.
+     * A builder for MongoClientOptions so that MongoClientOptions can be immutable, and to support easier construction through chaining.
      *
      * @since 2.10.0
      */
@@ -71,7 +70,7 @@ public class MongoClientOptions {
          *
          * @param heartbeatFrequency the heartbeat frequency, in milliseconds
          * @return {@code this}
-         * @throws IllegalArgumentException if heartbeatFrequency < 1, which must be > 0
+         * @throws IllegalArgumentException if heartbeatFrequency &lt; 1, which must be &gt; 0
          * @see com.mongodb.MongoClientOptions#getHeartbeatFrequency()
          * @since 2.12.0
          */
@@ -84,10 +83,10 @@ public class MongoClientOptions {
         }
 
         /**
-         * Sets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability,
-         * it will wait at least this long since the previous check to avoid wasted effort.  The default value is 10ms.
+         * Sets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability, it will
+         * wait at least this long since the previous check to avoid wasted effort.  The default value is 10ms.
          *
-         * @param minHeartbeatFrequency the minimum heartbeat frequency, in milliseconds, which must be > 0
+         * @param minHeartbeatFrequency the minimum heartbeat frequency, in milliseconds, which must be &gt; 0
          * @return {@code this}
          * @see MongoClientOptions#getMinHeartbeatFrequency()
          * @since 2.13
@@ -101,10 +100,10 @@ public class MongoClientOptions {
         }
 
         /**
-         * Sets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability,
-         * it will wait at least this long since the previous check to avoid pointless effort.  The default value is 10ms.
+         * Sets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability, it will
+         * wait at least this long since the previous check to avoid pointless effort.  The default value is 10ms.
          *
-         * @param minHeartbeatFrequency the minimum heartbeat frequency, in milliseconds, which must be > 0
+         * @param minHeartbeatFrequency the minimum heartbeat frequency, in milliseconds, which must be &gt; 0
          * @return {@code this}
          * @see MongoClientOptions#getMinHeartbeatFrequency() ()
          * @since 2.12
@@ -120,7 +119,7 @@ public class MongoClientOptions {
          *
          * @param heartbeatConnectTimeout the heartbeat connect timeout, in milliseconds
          * @return {@code this}
-         * @throws IllegalArgumentException if heartbeatConnectTimeout < 0
+         * @throws IllegalArgumentException if heartbeatConnectTimeout &lt; 0
          * @see com.mongodb.MongoClientOptions#getHeartbeatConnectTimeout()
          * @since 2.12.0
          */
@@ -137,7 +136,7 @@ public class MongoClientOptions {
          *
          * @param heartbeatSocketTimeout the heartbeat socket timeout, in milliseconds
          * @return {@code this}
-         * @throws IllegalArgumentException if heartbeatSocketTimeout < 0
+         * @throws IllegalArgumentException if heartbeatSocketTimeout &lt; 0
          * @see com.mongodb.MongoClientOptions#getHeartbeatSocketTimeout()
          * @since 2.12.0
          */
@@ -154,7 +153,7 @@ public class MongoClientOptions {
          *
          * @param heartbeatThreadCount the heartbeat thread count
          * @return {@code this}
-         * @throws IllegalArgumentException if heartbeatThreadCount < 1
+         * @throws IllegalArgumentException if heartbeatThreadCount &lt; 1
          * @see MongoClientOptions#getHeartbeatThreadCount()
          * @since 2.12.0
          * @deprecated this is no longer a configurable property
@@ -171,9 +170,9 @@ public class MongoClientOptions {
         /**
          * Sets the acceptable latency difference.
          *
-         * @param acceptableLatencyDifference the acceptable latency different, in milliseconds
+         * @param acceptableLatencyDifference the acceptable latency difference, in milliseconds
          * @return {@code this}
-         * @throws IllegalArgumentException if acceptableLatencyDifference < 0
+         * @throws IllegalArgumentException if acceptableLatencyDifference &lt; 0
          * @see com.mongodb.MongoClientOptions#getAcceptableLatencyDifference()
          * @since 2.12.0
          */
@@ -219,7 +218,7 @@ public class MongoClientOptions {
          *
          * @param connectionsPerHost maximum number of connections
          * @return {@code this}
-         * @throws IllegalArgumentException if <code>connnectionsPerHost < 1</code>
+         * @throws IllegalArgumentException if {@code connnectionsPerHost < 1}
          * @see com.mongodb.MongoClientOptions#getConnectionsPerHost()
          */
         public Builder connectionsPerHost(final int connectionsPerHost) {
@@ -233,10 +232,9 @@ public class MongoClientOptions {
         /**
          * Sets the multiplier for number of threads allowed to block waiting for a connection.
          *
-         * @param threadsAllowedToBlockForConnectionMultiplier
-         *         the multiplier
+         * @param threadsAllowedToBlockForConnectionMultiplier the multiplier
          * @return {@code this}
-         * @throws IllegalArgumentException if <code>threadsAllowedToBlockForConnectionMultiplier < 1</code>
+         * @throws IllegalArgumentException if {@code threadsAllowedToBlockForConnectionMultiplier < 1}
          * @see com.mongodb.MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
          */
         public Builder threadsAllowedToBlockForConnectionMultiplier(final int threadsAllowedToBlockForConnectionMultiplier) {
@@ -252,7 +250,7 @@ public class MongoClientOptions {
          *
          * @param maxWaitTime the maximum wait time (in milliseconds)
          * @return {@code this}
-         * @throws IllegalArgumentException if <code>maxWaitTime &lt; 0</code>
+         * @throws IllegalArgumentException if {@code maxWaitTime < 0}
          * @see com.mongodb.MongoClientOptions#getMaxWaitTime()
          */
         public Builder maxWaitTime(final int maxWaitTime) {
@@ -458,9 +456,8 @@ public class MongoClientOptions {
         }
 
         /**
-         * Sets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is
-         * Java 6 or greater. If false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if
-         * the VM is Java 5.
+         * Sets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is Java 6 or greater. If
+         * false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if the VM is Java 5.
          *
          * @param alwaysUseMBeans true if driver should always use MBeans, regardless of VM version
          * @return this
@@ -505,7 +502,7 @@ public class MongoClientOptions {
         public MongoClientOptions build() {
             return new MongoClientOptions(this);
         }
-  }
+    }
 
     /**
      * Create a new Builder instance.  This is a convenience method, equivalent to {@code new MongoClientOptions.Builder()}.
@@ -517,9 +514,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets the description for this MongoClient, which is used in various places like logging and JMX.
-     * <p/>
-     * Default is null.
+     * <p>Gets the description for this MongoClient, which is used in various places like logging and JMX.</p>
+     *
+     * <p>Default is null.</p>
      *
      * @return the description
      */
@@ -528,24 +525,22 @@ public class MongoClientOptions {
     }
 
     /**
-     * The minimum number of connections per host for this MongoClient instance. Those connections will be kept in a pool when idle, and the
-     * pool will ensure over time that it contains at least this minimum number.
-     * <p/>
-     * Default is 0.
+     * <p>The minimum number of connections per host for this MongoClient instance. Those connections will be kept in a pool when idle, and
+     * the pool will ensure over time that it contains at least this minimum number.</p>
+     *
+     * <p>Default is 0.</p>
      *
      * @return the minimum size of the connection pool per host
-     * @since 2.12
      */
     public int getMinConnectionsPerHost() {
         return minConnectionsPerHost;
     }
 
     /**
-     * The maximum number of connections allowed per host for this MongoClient instance.
-     * Those connections will be kept in a pool when idle.
-     * Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection.
-     * <p/>
-     * Default is 100.
+     * <p>The maximum number of connections allowed per host for this MongoClient instance. Those connections will be kept in a pool when
+     * idle. Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection.</p>
+     *
+     * <p>Default is 100.</p>
      *
      * @return the maximum size of the connection pool per host
      * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
@@ -555,12 +550,11 @@ public class MongoClientOptions {
     }
 
     /**
-     * this multiplier, multiplied with the connectionsPerHost setting, gives the maximum number of threads that
-     * may be waiting for a connection to become available from the pool. All further threads will get an exception right
-     * away. For example if connectionsPerHost is 10 and threadsAllowedToBlockForConnectionMultiplier is 5, then up to 50
-     * threads can wait for a connection.
-     * <p/>
-     * Default is 5.
+     * <p>This multiplier, multiplied with the connectionsPerHost setting, gives the maximum number of threads that may be waiting for a
+     * connection to become available from the pool. All further threads will get an exception right away. For example if connectionsPerHost
+     * is 10 and threadsAllowedToBlockForConnectionMultiplier is 5, then up to 50 threads can wait for a connection.</p>
+     *
+     * <p>Default is 5.</p>
      *
      * @return the multiplier
      */
@@ -569,9 +563,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * The maximum wait time in milliseconds that a thread may wait for a connection to become available.
-     * <p/>
-     * Default is 120,000. A value of 0 means that it will not wait.  A negative value means to wait indefinitely.
+     * <p>The maximum wait time in milliseconds that a thread may wait for a connection to become available.</p>
+     *
+     * <p>Default is 120,000. A value of 0 means that it will not wait.  A negative value means to wait indefinitely.</p>
      *
      * @return the maximum wait time.
      */
@@ -602,10 +596,10 @@ public class MongoClientOptions {
     }
 
     /**
-     * The connection timeout in milliseconds.  A value of 0 means no timeout.
-     * It is used solely when establishing a new connection {@link java.net.Socket#connect(java.net.SocketAddress, int) }
-     * <p/>
-     * Default is 10,000.
+     * <p>The connection timeout in milliseconds.  A value of 0 means no timeout. It is used solely when establishing a new connection
+     * {@link java.net.Socket#connect(java.net.SocketAddress, int) }</p>
+     *
+     * <p>Default is 10,000.</p>
      *
      * @return the socket connect timeout
      */
@@ -614,10 +608,10 @@ public class MongoClientOptions {
     }
 
     /**
-     * The socket timeout in milliseconds.
-     * It is used for I/O socket read and write operations {@link java.net.Socket#setSoTimeout(int)}
-     * <p/>
-     * Default is 0 and means no timeout.
+     * <p>The socket timeout in milliseconds. It is used for I/O socket read and write operations {@link
+     * java.net.Socket#setSoTimeout(int)}</p>
+     *
+     * <p>Default is 0 and means no timeout.</p>
      *
      * @return the socket timeout
      */
@@ -626,9 +620,10 @@ public class MongoClientOptions {
     }
 
     /**
-     * This flag controls the socket keep alive feature that keeps a connection alive through firewalls {@link java.net.Socket#setKeepAlive(boolean)}
-     * <p/>
-     * * Default is false.
+     * <p>This flag controls the socket keep alive feature that keeps a connection alive through firewalls {@link
+     * java.net.Socket#setKeepAlive(boolean)}</p>
+     *
+     * <p>Default is false.</p>
      *
      * @return whether keep-alive is enabled on each socket
      */
@@ -639,8 +634,8 @@ public class MongoClientOptions {
     /**
      * If true, the driver will keep trying to connect to the server in case that the socket cannot be established within the {code
      * connectTimeout} period. There is maximum amount of time to keep retrying, which is 15s by default. Note that use of this flag does
-     * not prevent exceptions from being thrown from read/write operations,  and they must be handled by the application. The default
-     * value is false.
+     * not prevent exceptions from being thrown from read/write operations,  and they must be handled by the application. The default value
+     * is false.
      *
      * @return whether socket connect is retried
      * @deprecated There is no replacement for this method.  Use the connectTimeout property to control connection timeout.
@@ -651,8 +646,8 @@ public class MongoClientOptions {
     }
 
     /**
-     * The maximum amount of time in MS to spend trying to open connection to the same server. The default is 0,
-     * which means to use the default 15s if autoConnectRetry is on.
+     * The maximum amount of time in MS to spend trying to open connection to the same server. The default is 0, which means to use the
+     * default 15s if autoConnectRetry is on.
      *
      * @return the maximum socket connect retry time.
      * @deprecated There is no replacement for this method.  Use the connectTimeout property to control connection timeout.
@@ -663,9 +658,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * The read preference to use for queries, map-reduce, aggregation, and count.
-     * <p/>
-     * Default is {@code ReadPreference.primary()}.
+     * <p>The read preference to use for queries, map-reduce, aggregation, and count.</p>
+     *
+     * <p>Default is {@code ReadPreference.primary()}.</p>
      *
      * @return the read preference
      * @see com.mongodb.ReadPreference#primary()
@@ -693,9 +688,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * The write concern to use.
-     * <p/>
-     * Default is {@code WriteConcern.ACKNOWLEDGED}.
+     * <p>The write concern to use.</p>
+     *
+     * <p>Default is {@code WriteConcern.ACKNOWLEDGED}.</p>
      *
      * @return the write concern
      * @see WriteConcern#ACKNOWLEDGED
@@ -705,9 +700,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * The socket factory for creating sockets to the mongo server.
-     * <p/>
-     * Default is SocketFactory.getDefault()
+     * <p>The socket factory for creating sockets to the mongo server.</p>
+     *
+     * <p>Default is SocketFactory.getDefault()</p>
      *
      * @return the socket factory
      */
@@ -716,10 +711,10 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets whether there is a a finalize method created that cleans up instances of DBCursor that the client
-     * does not close.  If you are careful to always call the close method of DBCursor, then this can safely be set to false.
-     * <p/>
-     * Default is true.
+     * <p>Gets whether there is a a finalize method created that cleans up instances of DBCursor that the client does not close.  If you are
+     * careful to always call the close method of DBCursor, then this can safely be set to false.</p>
+     *
+     * <p>Default is true.</p>
      *
      * @return whether finalizers are enabled on cursors
      * @see DBCursor
@@ -730,34 +725,31 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is
-     * Java 6 or greater. If false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if
-     * the VM is Java 5.
-     * <p>
-     * Default is false.
-     * </p>
+     * <p>Gets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is Java 6 or greater. If
+     * false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if the VM is Java 5.</p>
+     *
+     * <p> Default is false. </p>
+     *
+     * @return true if JMX beans should always be MBeans
      */
     public boolean isAlwaysUseMBeans() {
         return alwaysUseMBeans;
     }
 
     /**
-     * Gets the heartbeat frequency. This is the frequency that a background thread will attempt to connect to each MongoDB server that
-     * the MongoClient is connected to.
-     * <p>
-     * The default value is 5,000 milliseconds.
-     * </p>
+     * Gets the heartbeat frequency. This is the frequency that the driver will attempt to determine the current state of each server in the
+     * cluster. The default value is 5000 milliseconds.
      *
      * @return the heartbeat frequency, in milliseconds
-     * @since 2.12.0
+     * @since 2.12
      */
     public int getHeartbeatFrequency() {
         return heartbeatFrequency;
     }
 
     /**
-     * Gets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability,
-     * it will wait at least this long since the previous check to avoid wasted effort.  The default value is 10 ms.
+     * Gets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability, it will wait
+     * at least this long since the previous check to avoid wasted effort.  The default value is 10 ms.
      *
      * @return the minimum heartbeat frequency, in milliseconds
      * @since 2.13
@@ -767,8 +759,8 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability,
-     * it will wait at least this long since the previous check to avoid pointless effort.  The default value is 10 ms.
+     * Gets the minimum heartbeat frequency.  In the event that the driver has to frequently re-check a server's availability, it will wait
+     * at least this long since the previous check to avoid pointless effort.  The default value is 10 ms.
      *
      * @return the minimum heartbeat frequency, in milliseconds
      * @since 2.12
@@ -780,40 +772,33 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets the heartbeat connect timeout. This is the socket connect timeout for sockets used by the background thread that is
-     * monitoring each MongoDB server that the MongoClient is connected to.
-     * <p>
-     * The default value is 20,000 milliseconds.
-     * </p>
+     * <p>Gets the connect timeout for connections used for the cluster heartbeat.</p>
+     *
+     * <p>The default value is 20,000 milliseconds.</p>
      *
      * @return the heartbeat connect timeout, in milliseconds
-     * @since 2.12.0
+     * @since 2.12
      */
     public int getHeartbeatConnectTimeout() {
         return heartbeatConnectTimeout;
     }
 
     /**
-     * Gets the heartbeat socket timeout. This is the socket timeout for sockets used by the background thread that is monitoring each
-     * MongoDB server that the MongoClient is connected to.
-     * <p>
-     * The default value is 20,000 milliseconds.
-     * </p>
-
+     * Gets the socket timeout for connections used for the cluster heartbeat.  The default value is 20,000 milliseconds.
+     *
      * @return the heartbeat socket timeout, in milliseconds
-     * @since 2.12.0
+     * @since 2.12
      */
     public int getHeartbeatSocketTimeout() {
         return heartbeatSocketTimeout;
     }
 
     /**
-     * Gets the heartbeat thread count.  This is the number of threads that will be used to monitor the MongoDB servers that the
-     * MongoClient is connected to.
+     * Gets the heartbeat thread count.  This is the number of threads that will be used to monitor the MongoDB servers that the MongoClient
+     * is connected to.
      *
-     * <p>
-     * The default value is the number of servers in the seed list.
-     * </p>
+     * <p> The default value is the number of servers in the seed list. </p>
+     *
      * @return the heartbeat thread count
      * @since 2.12.0
      * @deprecated this is no longer a configurable property
@@ -824,20 +809,15 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets the acceptable latency difference.  When choosing among multiple MongoDB servers to send a request,
-     * the MongoClient will only send that request to a server whose ping time is less than or equal to the server with the fastest ping
-     * time plus the acceptable latency difference.
-     * <p>
-     * For example, let's say that the client is choosing a server to send a query when
-     * the read preference is {@code ReadPreference.secondary()}, and that there are three secondaries, server1, server2, and server3,
-     * whose ping times are 10, 15, and 16 milliseconds, respectively.  With an acceptable latency difference of 5 milliseconds,
-     * the client will send the query to either server1 or server2 (randomly selecting between the two).
-     * </p>
-     * <p>
-     * The default value is 15 milliseconds.
-     * </p>
+     * <p>Gets the acceptable latency difference.  When choosing among multiple MongoDB servers to send a request, the MongoClient will only
+     * send that request to a server whose ping time is less than or equal to the server with the fastest ping time plus the acceptable
+     * latency difference.</p>
      *
-
+     * <p>For example, let's say that the client is choosing a server to send a query when the read preference is {@code
+     * ReadPreference.secondary()}, and that there are three secondaries, server1, server2, and server3, whose ping times are 10, 15, and 16
+     * milliseconds, respectively.  With an acceptable latency difference of 5 milliseconds, the client will send the query to either
+     * server1 or server2 (randomly selecting between the two). </p> <p> The default value is 15 milliseconds. </p>
+     *
      * @return the acceptable latency difference, in milliseconds
      * @since 2.12.0
      */
@@ -846,15 +826,13 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets the required replica set name.  With this option set, the MongoClient instance will
-     * <p> 1. Connect in replica set mode, and discover all members of the set based on the given servers
-     * </p>
-     * <p> 2. Make sure that the set name reported by all members matches the required set name.
-     * </p>
-     * <p> 3. Refuse to service any requests if any member of the seed list is not part of a replica set with the required name.
-     * </p>
+     * <p>Gets the required replica set name.  With this option set, the MongoClient instance will</p>
      *
-     * @return the required replica set name
+     * <ol> <li>Connect in replica set mode, and discover all members of the set based on the given servers</li> <li>Make sure that the set
+     * name reported by all members matches the required set name.</li> <li>Refuse to service any requests if any member of the seed list is
+     * not part of a replica set with the required name.</li> </ol>
+     *
+     * @return the required replica set name 
      * @since 2.12
      */
     public String getRequiredReplicaSetName() {
@@ -870,7 +848,7 @@ public class MongoClientOptions {
             return false;
         }
 
-        final MongoClientOptions that = (MongoClientOptions) o;
+        MongoClientOptions that = (MongoClientOptions) o;
 
         if (acceptableLatencyDifference != that.acceptableLatencyDifference) {
             return false;

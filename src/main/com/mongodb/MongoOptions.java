@@ -296,16 +296,17 @@ public class MongoOptions {
     }
 
     /**
-     * <p>The description for <code>Mongo</code> instances created with these options. This is used in various places like logging.</p>
+     * <p>The description for {@code Mongo} instances created with these options. This is used in various places like logging.</p>
      */
     public String description;
 
     /**
-     * The maximum number of connections allowed per host for this Mongo instance.
-     * Those connections will be kept in a pool when idle.
-     * Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection.
-     * Default is 10.
-     * @see {@linkplain MongoOptions#threadsAllowedToBlockForConnectionMultiplier}</p>
+     * <p>The maximum number of connections allowed per host for this Mongo instance. Those connections will be kept in  a pool when idle.
+     * Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection.</p>
+     *
+     * <p>Default is 10.</p>
+     *
+     * @see MongoOptions#threadsAllowedToBlockForConnectionMultiplier
      */
     public int connectionsPerHost;
 
@@ -480,7 +481,7 @@ public class MongoOptions {
     String requiredReplicaSetName;
 
     /**
-     * @return The description for <code>MongoClient</code> instances created with these options
+     * @return The description for {@code MongoClient} instances created with these options
      */
     public synchronized String getDescription() {
         return description;
@@ -488,13 +489,14 @@ public class MongoOptions {
 
     /**
      *
-     * @param desc The description for <code>Mongo</code> instances created with these options
+     * @param desc The description for {@code Mongo} instances created with these options
      */
     public synchronized void setDescription(String desc) {
         description = desc;
     }
 
     /**
+     * Gets the maximum number of connections allowed per host for this Mongo instance.
      *
      * @return the maximum number of connections allowed per host for this Mongo instance
      */
@@ -503,6 +505,8 @@ public class MongoOptions {
     }
 
     /**
+     * Sets the maximum number of connections allowed per host for this Mongo instance. Those connections will be kept in a pool when idle.
+     * Once the pool is exhausted, any operation requiring a connection will block waiting for an available connection. Default is 10.
      *
      * @param connections sets the maximum number of connections allowed per host for this Mongo instance
      */
@@ -511,18 +515,22 @@ public class MongoOptions {
     }
 
     /**
+     * Gets the multiplier which, when multiplied with the connectionsPerHost setting, gives the maximum number of threads that may be
+     * waiting for a connection to become available from the pool.
      *
-     * @return the maximum number of threads that
-     * may be waiting for a connection
+     * @return the maximum number of threads that may be waiting for a connection
      */
     public synchronized int getThreadsAllowedToBlockForConnectionMultiplier() {
         return threadsAllowedToBlockForConnectionMultiplier;
     }
 
     /**
+     * Sets the multiplier which, when multiplied with the connectionsPerHost setting, gives the maximum number of threads that may be
+     * waiting for a connection to become available from the pool. All further threads will get an exception right away. For example if
+     * connectionsPerHost is 10 and threadsAllowedToBlockForConnectionMultiplier is 5, then up to 50 threads can wait for a connection.
+     * Default is 5.
      *
-     * @param threads multiplied with connectionsPerHost, sets the maximum number of threads that
-     * may be waiting for a connection
+     * @param threads multiplied with connectionsPerHost, sets the maximum number of threads that may be waiting for a connection
      */
     public synchronized void setThreadsAllowedToBlockForConnectionMultiplier(int threads) {
         threadsAllowedToBlockForConnectionMultiplier = threads;

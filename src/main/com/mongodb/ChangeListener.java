@@ -16,7 +16,16 @@
 
 package com.mongodb;
 
+/**
+ * Listener for ChangeEvents - classes that implement this will be informed if classes of type {@code T} are changed.
+ *
+ * @param <T> the type of the value that changed.
+ */
 interface ChangeListener<T> {
+    /**
+     * A {@code ChangeEvent} has been fired to notify listeners that {@code T} has changed.
+     *
+     * @param event an event containing the old and new values of {@code T}.
+     */
     void stateChanged(ChangeEvent<T> event);
 }
-

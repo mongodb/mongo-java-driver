@@ -40,25 +40,30 @@ public class StringRangeSet implements Set<String> {
         this.size = size;
     }
 
+    @Override
     public int size() {
         return size;
     }
 
+    @Override
     public Iterator<String> iterator() {
         return new Iterator<String>() {
 
             int index = 0;
 
+            @Override
             public boolean hasNext() {
                 return index < size;
             }
 
+            @Override
             public String next() {
                 if (index < NUMSTR_LEN)
                     return NUMSTRS[index++];
                 return String.valueOf(index++);
             }
-            
+
+            @Override
             public void remove() {
                 throw new UnsupportedOperationException();
             }

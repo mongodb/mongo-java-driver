@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!--
-  ~ Copyright (c) 2008 - 2013 10gen, Inc. <http://10gen.com>
+  ~ Copyright (c) 2008-2014 MongoDB, Inc.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@
 
     <!-- Checks for whitespace                               -->
     <!-- See http://checkstyle.sf.net/config_whitespace.html -->
-    <module name="FileTabCharacter"/>
+    <!--<module name="FileTabCharacter"/>-->
 
     <!-- Miscellaneous other checks.                   -->
     <!-- See http://checkstyle.sf.net/config_misc.html -->
@@ -67,12 +67,14 @@
         <!-- Checks for Javadoc comments.                     -->
         <!-- See http://checkstyle.sf.net/config_javadoc.html -->
         <!-- TODO: This has to be enabled at some point before we release -->
-        <!--<module name="JavadocType">-->
-        <!--<property name="scope" value="public"/>-->
-        <!--</module>-->
-        <!--<module name="JavadocMethod">-->
-        <!--<property name="scope" value="public"/>-->
-        <!--</module>-->
+        <module name="JavadocType">
+            <property name="scope" value="public"/>
+        </module>
+        <module name="JavadocMethod">
+            <property name="scope" value="protected"/>
+            <property name="allowUndeclaredRTE" value="true"/>
+            <property name="allowThrowsTagsForSubclasses" value="true"/>
+        </module>
         <!--<module name="JavadocVariable"/>-->
         <!--<module name="JavadocStyle"/>-->
 
@@ -81,13 +83,13 @@
         <!-- Checks for Naming Conventions.                  -->
         <!-- See http://checkstyle.sf.net/config_naming.html -->
         <!--<module name="ConstantName"/>-->
-        <module name="LocalFinalVariableName"/>
-        <module name="LocalVariableName"/>
+        <!--<module name="LocalFinalVariableName"/>-->
+        <!--<module name="LocalVariableName"/>-->
         <!--<module name="MemberName"/>-->
         <!--<module name="MethodName"/>-->
         <module name="PackageName"/>
-        <module name="ParameterName"/>
-        <module name="StaticVariableName"/>
+        <!--<module name="ParameterName"/>-->
+        <!--<module name="StaticVariableName"/>-->
         <module name="TypeName"/>
 
 
@@ -102,9 +104,9 @@
 
         <!-- Checks for Size Violations.                    -->
         <!-- See http://checkstyle.sf.net/config_sizes.html -->
-        <module name="LineLength">
-            <property name="max" value="140"/>
-        </module>
+        <!--<module name="LineLength">-->
+            <!--<property name="max" value="140"/>-->
+        <!--</module>-->
 
         <module name="MethodLength"/>
         <module name="ParameterNumber">
@@ -114,34 +116,32 @@
         <!-- Checks for whitespace                               -->
         <!-- See http://checkstyle.sf.net/config_whitespace.html -->
         <module name="EmptyForIteratorPad"/>
-        <module name="GenericWhitespace"/>
-        <module name="MethodParamPad"/>
-        <module name="NoWhitespaceAfter"/>
-        <module name="NoWhitespaceBefore"/>
-        <module name="OperatorWrap"/>
-        <module name="ParenPad"/>
+        <!--<module name="GenericWhitespace"/>-->
+        <!--<module name="MethodParamPad"/>-->
+        <!--<module name="NoWhitespaceAfter"/>-->
+        <!--<module name="NoWhitespaceBefore"/>-->
+        <!--<module name="OperatorWrap"/>-->
+        <!--<module name="ParenPad"/>-->
         <module name="TypecastParenPad"/>
-        <module name="WhitespaceAfter"/>
-        <module name="WhitespaceAround">
-            <property name="tokens" value="ASSIGN, BAND, BAND_ASSIGN, BOR, BOR_ASSIGN, BSR, BSR_ASSIGN, BXOR,
-            BXOR_ASSIGN, COLON, DIV, DIV_ASSIGN, EQUAL, GE, GT, LAND, LE, LITERAL_ASSERT, LITERAL_CATCH,
-            LITERAL_DO, LITERAL_ELSE, LITERAL_FINALLY, LITERAL_FOR, LITERAL_IF, LITERAL_RETURN, LITERAL_SYNCHRONIZED,
-            LITERAL_TRY, LITERAL_WHILE, LOR, LT, MINUS, MINUS_ASSIGN, MOD, MOD_ASSIGN, NOT_EQUAL, PLUS, PLUS_ASSIGN,
-            QUESTION, SL, SL_ASSIGN, SR, SR_ASSIGN, STAR, STAR_ASSIGN, TYPE_EXTENSION_AND"/>
-        </module>
-
+        <!--<module name="WhitespaceAfter"/>-->
+        <!--<module name="WhitespaceAround">-->
+            <!--<property name="tokens" value="ASSIGN, BAND, BAND_ASSIGN, BOR, BOR_ASSIGN, BSR, BSR_ASSIGN, BXOR,-->
+            <!--BXOR_ASSIGN, COLON, DIV, DIV_ASSIGN, EQUAL, GE, GT, LAND, LE, LITERAL_ASSERT, LITERAL_CATCH,-->
+            <!--LITERAL_DO, LITERAL_ELSE, LITERAL_FINALLY, LITERAL_FOR, LITERAL_IF, LITERAL_RETURN, LITERAL_SYNCHRONIZED,-->
+            <!--LITERAL_TRY, LITERAL_WHILE, LOR, LT, MINUS, MINUS_ASSIGN, MOD, MOD_ASSIGN, NOT_EQUAL, PLUS, PLUS_ASSIGN,-->
+            <!--QUESTION, SL, SL_ASSIGN, SR, SR_ASSIGN, STAR, STAR_ASSIGN, TYPE_EXTENSION_AND"/>-->
+        <!--</module>-->
 
         <!-- Modifier Checks                                    -->
         <!-- See http://checkstyle.sf.net/config_modifiers.html -->
-        <module name="ModifierOrder"/>
-        <module name="RedundantModifier"/>
-
+        <!--<module name="ModifierOrder"/>-->
+        <!--<module name="RedundantModifier"/>-->
 
         <!-- Checks for blocks. You know, those {}'s         -->
         <!-- See http://checkstyle.sf.net/config_blocks.html -->
-        <module name="AvoidNestedBlocks"/>
-        <module name="LeftCurly"/>
-        <module name="NeedBraces"/>
+        <!--<module name="AvoidNestedBlocks"/>-->
+        <!--<module name="LeftCurly"/>-->
+        <!--<module name="NeedBraces"/>-->
         <!-- Allow else's on their own line -->
         <module name="RightCurly">
             <property name="option" value="alone"/>
@@ -154,7 +154,7 @@
         <module name="EqualsHashCode"/>
         <module name="IllegalInstantiation"/>
         <module name="MissingSwitchDefault"/>
-        <module name="RedundantThrows"/>
+        <!--<module name="RedundantThrows"/>-->
         <module name="SimplifyBooleanExpression"/>
         <module name="SimplifyBooleanReturn"/>
 
@@ -166,27 +166,12 @@
 
         <!-- Miscellaneous other checks.                   -->
         <!-- See http://checkstyle.sf.net/config_misc.html -->
-        <module name="ArrayTypeStyle"/>
-        <module name="FinalParameters"/>
-        <!-- Too many failures with this while we work on the new API -->
+        <!--<module name="ArrayTypeStyle"/>-->
+        <!--<module name="FinalParameters"/>-->
         <!--<module name="TodoComment"/>-->
         <module name="UpperEll"/>
 
         <module name="FileContentsHolder"/>
-
-        <!--System.out.println not allowed-->
-        <module name="Regexp">
-            <property name="format" value="System\.out\.println"/>
-            <property name="illegalPattern" value="true"/>
-            <property name="ignoreComments" value="true"/>
-        </module>
-
-        <!--System.err.println not allowed-->
-        <module name="Regexp">
-            <property name="format" value="System\.err\.println"/>
-            <property name="illegalPattern" value="true"/>
-            <property name="ignoreComments" value="true"/>
-        </module>
 
         <!--e.printStackTrace(); not allowed-->
         <module name="Regexp">
@@ -196,5 +181,7 @@
         </module>
     </module>
     <module name="SuppressionCommentFilter"/>
-
+    <module name="SuppressionFilter">
+        <property name="file" value="config/checkstyle-exclude.xml"/>
+    </module>
 </module>

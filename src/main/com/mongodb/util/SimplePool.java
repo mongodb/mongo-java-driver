@@ -29,23 +29,29 @@ import java.util.concurrent.TimeUnit;
 @Deprecated
 public abstract class SimplePool<T> {
 
-    /** Initializes a new pool of objects.
+    /**
+     * Initializes a new pool of objects.
+     *
      * @param name name for the pool
-     * @param size max to hold to at any given time. if < 0 then no limit
+     * @param size max to hold to at any given time. if &lt; 0 then no limit
      */
-    public SimplePool(String name, int size){
+    public SimplePool(String name, int size) {
         _name = name;
         _size = size;
         _sem = new Semaphore(size);
     }
 
-    /** Creates a new object of this pool's type.  Implementations should throw a runtime exception if unable to create.
+    /**
+     * Creates a new object of this pool's type.  Implementations should throw a runtime exception if unable to create.
+     *
      * @return the new object.
      */
     protected abstract T createNew();
 
     /**
-     * override this if you need to do any cleanup
+     * Override this if you need to do any cleanup
+     *
+     * @param t the object that was added
      */
     public void cleanup( T t ) {
     }
@@ -55,15 +61,15 @@ public abstract class SimplePool<T> {
      *
      * @param recommended the recommended member to choose.
      * @param couldCreate  true if there is room in the pool to create a new object
-     * @return >= 0 the one to use, -1 create a new one
+     * @return &gt;= 0 the one to use, -1 create a new one
      */
     protected int pick( int recommended , boolean couldCreate ){
         return recommended;
     }
 
     /**
-     * call done when you are done with an object form the pool
-     * if there is room and the object is ok will get added
+     * Call done when you are done with an object form the pool. If there is room and the object is ok will get added
+     *
      * @param t Object to add
      */
     public void done( T t ){
@@ -93,18 +99,19 @@ public abstract class SimplePool<T> {
         done(t);
     }
 
-    /** Gets an object from the pool - will block if none are available
+    /**
+     * Gets an object from the pool - will block if none are available
+     *
      * @return An object from the pool
      */
     public T get() throws InterruptedException {
-	return get(-1);
+	    return get(-1);
     }
-    
-    /** Gets an object from the pool - will block if none are available
-     * @param waitTime 
-     *        negative - forever
-     *        0        - return immediately no matter what
-     *        positive ms to wait
+
+    /**
+     * Gets an object from the pool - will block if none are available
+     *
+     * @param waitTime negative - forever 0        - return immediately no matter what positive ms to wait
      * @return An object from the pool, or null if can't get one in the given waitTime
      */
     public T get(long waitTime) throws InterruptedException {

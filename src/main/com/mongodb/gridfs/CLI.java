@@ -67,6 +67,7 @@ public class CLI {
         return _gridfs;
     }
 
+    // CHECKSTYLE:OFF
     public static void main(String[] args) throws Exception {
         
         if ( args.length < 1 ){
@@ -165,5 +166,6 @@ public class CLI {
         }
         
     }
+    // CHECKSTYLE:ON
 
 }
