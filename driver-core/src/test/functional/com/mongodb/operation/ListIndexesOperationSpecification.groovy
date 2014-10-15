@@ -83,7 +83,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return created indexes on Collection'() {
         given:
-        def operation = new GetIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
         new CreateIndexOperation(namespace, new BsonDocument('unique', new BsonInt32(1))).unique(true).execute(getBinding())
@@ -103,7 +103,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
     @Category(Async)
     def 'should return created indexes on Collection asynchronously'() {
         given:
-        def operation = new GetIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
         new CreateIndexOperation(namespace, new BsonDocument('unique', new BsonInt32(1))).unique(true).execute(getBinding())

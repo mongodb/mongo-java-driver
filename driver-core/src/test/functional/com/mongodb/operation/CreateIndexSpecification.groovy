@@ -347,7 +347,7 @@ class CreateIndexSpecification extends OperationFunctionalSpecification {
     }
 
     def List<Document> getIndexes() {
-        new GetIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
+        new ListIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
     }
 
     def List<Document> getUserCreatedIndexes() {

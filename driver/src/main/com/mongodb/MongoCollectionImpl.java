@@ -56,9 +56,9 @@ import com.mongodb.operation.FindAndDeleteOperation;
 import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
 import com.mongodb.operation.FindOperation;
-import com.mongodb.operation.GetIndexesOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
+import com.mongodb.operation.ListIndexesOperation;
 import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
@@ -558,7 +558,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     public List<Document> getIndexes() {
-        return executor.execute(new GetIndexesOperation<Document>(namespace, getCodec(Document.class)), options.getReadPreference());
+        return executor.execute(new ListIndexesOperation<Document>(namespace, getCodec(Document.class)), options.getReadPreference());
     }
 
     @Override

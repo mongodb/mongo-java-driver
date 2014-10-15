@@ -52,8 +52,8 @@ import com.mongodb.operation.FindAndDeleteOperation
 import com.mongodb.operation.FindAndReplaceOperation
 import com.mongodb.operation.FindAndUpdateOperation
 import com.mongodb.operation.FindOperation
-import com.mongodb.operation.GetIndexesOperation
 import com.mongodb.operation.InsertOperation
+import com.mongodb.operation.ListIndexesOperation
 import com.mongodb.operation.MapReduceToCollectionOperation
 import com.mongodb.operation.MapReduceWithInlineResultsOperation
 import com.mongodb.operation.MixedBulkWriteOperation
@@ -832,7 +832,7 @@ class MongoCollectionSpecification extends Specification {
         collection.getIndexes()
 
         then:
-        executor.getReadOperation() instanceof GetIndexesOperation<Document>
+        executor.getReadOperation() instanceof ListIndexesOperation<Document>
     }
 
     def 'dropIndex should use DropIndexOperation properly'() {
