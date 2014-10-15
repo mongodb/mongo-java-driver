@@ -22,8 +22,8 @@ import com.mongodb.Block
 import com.mongodb.MongoCursor
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.async.MongoAsyncCursor
+import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.bson.types.Document
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 

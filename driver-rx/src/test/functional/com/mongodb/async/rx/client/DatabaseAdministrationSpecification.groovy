@@ -16,7 +16,7 @@
 
 package com.mongodb.async.rx.client
 
-import org.bson.types.Document
+import org.bson.Document
 import spock.lang.IgnoreIf
 
 import static Fixture.get

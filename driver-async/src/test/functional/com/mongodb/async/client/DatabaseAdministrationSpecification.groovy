@@ -16,7 +16,7 @@
 
 package com.mongodb.async.client
 
-import org.bson.types.Document
+import org.bson.Document
 import spock.lang.IgnoreIf
 
 import static com.mongodb.async.client.Fixture.dropDatabase

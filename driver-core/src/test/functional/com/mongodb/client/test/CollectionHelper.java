@@ -31,10 +31,10 @@ import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.InsertRequest;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DocumentCodec;
-import org.bson.types.Document;
 
 import java.util.ArrayList;
 import java.util.List;

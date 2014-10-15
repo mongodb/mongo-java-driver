@@ -18,8 +18,8 @@ package org.bson.codecs;
 
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
+import org.bson.Document;
 import org.bson.types.CodeWithScope;
-import org.bson.types.Document;
 
 /**
  * Encodes and decodes {@code CodeWithScope} instances.

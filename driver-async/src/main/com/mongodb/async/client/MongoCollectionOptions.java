@@ -19,8 +19,8 @@ package com.mongodb.async.client;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.annotations.Immutable;
+import org.bson.Document;
 import org.bson.codecs.Codec;
-import org.bson.types.Document;
 
 /**
  * Default options for a Mongo collection.

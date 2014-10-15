@@ -75,11 +75,11 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
-import org.bson.types.Document;
 import org.mongodb.BulkWriteResult;
 import org.mongodb.WriteResult;
 

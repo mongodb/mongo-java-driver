@@ -16,6 +16,8 @@
 
 package org.bson.types;
 
+import org.bson.Document;
+
 /**
  * A representation of the JavaScript Code with Scope BSON type.
  *

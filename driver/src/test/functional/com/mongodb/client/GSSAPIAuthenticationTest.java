@@ -19,7 +19,7 @@ package com.mongodb.client;
 import com.mongodb.CommandFailureException;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoTimeoutException;
-import org.bson.types.Document;
+import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
 

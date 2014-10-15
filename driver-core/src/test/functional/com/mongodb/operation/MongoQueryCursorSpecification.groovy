@@ -28,8 +28,8 @@ import com.mongodb.protocol.QueryProtocol
 import com.mongodb.protocol.QueryResult
 import org.bson.BsonDocument
 import org.bson.BsonTimestamp
+import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.bson.types.Document
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 

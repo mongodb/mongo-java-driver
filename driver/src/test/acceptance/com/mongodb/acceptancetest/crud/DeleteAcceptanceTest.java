@@ -17,7 +17,7 @@
 package com.mongodb.acceptancetest.crud;
 
 import com.mongodb.client.DatabaseTestCase;
-import org.bson.types.Document;
+import org.bson.Document;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;

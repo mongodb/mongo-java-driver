@@ -20,9 +20,9 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.operation.CommandWriteOperation;
 import org.bson.BsonDocumentWrapper;
+import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DocumentCodec;
-import org.bson.types.Document;
 
 class MongoDatabaseImpl implements MongoDatabase {
     private final String name;

@@ -19,7 +19,7 @@ package com.mongodb.async.client;
 import com.mongodb.CommandFailureException;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoNamespace;
-import org.bson.types.Document;
+import org.bson.Document;
 
 import static com.mongodb.connection.ClusterType.SHARDED;
 import static java.util.concurrent.TimeUnit.SECONDS;

@@ -17,7 +17,7 @@
 package com.mongodb.async.client
 
 import com.mongodb.MongoNamespace
-import org.bson.types.Document
+import org.bson.Document
 import spock.lang.Specification
 
 import static Fixture.drop

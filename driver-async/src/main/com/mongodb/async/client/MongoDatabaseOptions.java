@@ -18,9 +18,9 @@ package com.mongodb.async.client;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DocumentCodec;
-import org.bson.types.Document;
 
 import static com.mongodb.assertions.Assertions.notNull;
 

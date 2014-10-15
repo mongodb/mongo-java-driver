@@ -16,7 +16,7 @@
 
 package com.mongodb.async.client
 
-import org.bson.types.Document
+import org.bson.Document
 
 class ViewSpecification extends FunctionalSpecification {
 

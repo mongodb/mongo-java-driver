@@ -16,7 +16,7 @@
 
 package com.mongodb.client;
 
-import org.bson.types.Document;
+import org.bson.Document;
 import org.junit.Test;
 
 import static com.mongodb.QueryOperators.TYPE;

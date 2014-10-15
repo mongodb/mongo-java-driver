@@ -18,7 +18,7 @@ package com.mongodb.async.client
 
 import com.mongodb.Block
 import com.mongodb.MongoInternalException
-import org.bson.types.Document
+import org.bson.Document
 
 class ForEachSpecification extends FunctionalSpecification {
     def 'should complete with no results'() {

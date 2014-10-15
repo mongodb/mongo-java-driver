@@ -18,8 +18,8 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.OperationFunctionalSpecification
+import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.bson.types.Document
 import org.junit.experimental.categories.Category
 
 import static com.mongodb.ClusterFixture.getAsyncBinding

@@ -30,10 +30,10 @@ import com.mongodb.operation.UserExistsOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
+import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DocumentCodec;
-import org.bson.types.Document;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;

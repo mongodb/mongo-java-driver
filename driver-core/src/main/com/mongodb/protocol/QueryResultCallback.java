@@ -24,9 +24,9 @@ import com.mongodb.connection.ResponseBuffers;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.protocol.message.ReplyMessage;
+import org.bson.Document;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DocumentCodec;
-import org.bson.types.Document;
 
 import static com.mongodb.protocol.ProtocolHelper.getQueryFailureException;
 

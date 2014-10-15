@@ -66,10 +66,10 @@ import org.bson.BsonInt32
 import org.bson.BsonJavaScript
 import org.bson.BsonObjectId
 import org.bson.BsonString
+import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.configuration.RootCodecRegistry
-import org.bson.types.Document
 import org.bson.types.ObjectId
 import spock.lang.Specification
 

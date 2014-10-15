@@ -19,9 +19,9 @@ package org.bson.codecs;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
 import org.bson.ByteBufNIO;
+import org.bson.Document;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferBsonInput;
-import org.bson.types.Document;
 
 import static java.nio.ByteBuffer.wrap;
 

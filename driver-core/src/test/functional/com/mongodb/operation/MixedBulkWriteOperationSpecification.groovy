@@ -26,8 +26,8 @@ import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonObjectId
+import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.bson.types.Document
 import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import org.mongodb.BulkWriteException

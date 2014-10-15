@@ -27,8 +27,8 @@ import com.mongodb.operation.ListIndexesOperation;
 import com.mongodb.operation.RenameCollectionOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
-import org.bson.types.Document;
 
 import java.util.List;
 

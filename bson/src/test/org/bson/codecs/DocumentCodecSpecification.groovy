@@ -28,13 +28,13 @@ import org.bson.BsonTimestamp
 import org.bson.BsonUndefined
 import org.bson.BsonWriter
 import org.bson.ByteBufNIO
+import org.bson.Document
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.ByteBufferBsonInput
 import org.bson.json.JsonReader
 import org.bson.types.Binary
 import org.bson.types.Code
 import org.bson.types.CodeWithScope
-import org.bson.types.Document
 import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import org.bson.types.ObjectId

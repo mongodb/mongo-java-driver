@@ -44,10 +44,10 @@ import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.MongosHAServerSelector;
 import com.mongodb.selector.ServerSelector;
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
-import org.bson.types.Document;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;

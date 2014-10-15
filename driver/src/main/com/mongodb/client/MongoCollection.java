@@ -37,7 +37,7 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
-import org.bson.types.Document;
+import org.bson.Document;
 import org.mongodb.BulkWriteResult;
 
 import java.util.List;

@@ -16,10 +16,10 @@
 
 package org.bson.codecs;
 
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.CodeWithScope;
-import org.bson.types.Document;
 
 import java.util.HashMap;
 import java.util.List;

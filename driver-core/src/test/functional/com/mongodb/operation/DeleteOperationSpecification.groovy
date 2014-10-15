@@ -21,9 +21,9 @@ import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
-import org.bson.types.Document
 import org.junit.experimental.categories.Category
 
 import static com.mongodb.ClusterFixture.getAsyncBinding

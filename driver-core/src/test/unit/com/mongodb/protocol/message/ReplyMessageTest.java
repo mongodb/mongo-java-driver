@@ -19,8 +19,8 @@ package com.mongodb.protocol.message;
 import com.mongodb.MongoInternalException;
 import com.mongodb.connection.ReplyHeader;
 import org.bson.ByteBufNIO;
+import org.bson.Document;
 import org.bson.io.ByteBufferBsonInput;
-import org.bson.types.Document;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;

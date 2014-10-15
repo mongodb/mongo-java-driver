@@ -21,8 +21,8 @@ import com.mongodb.MongoServerException
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonDocument
 import org.bson.BsonString
+import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.bson.types.Document
 import org.junit.experimental.categories.Category
 
 import static com.mongodb.ClusterFixture.getAsyncBinding

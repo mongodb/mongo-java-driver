@@ -18,8 +18,8 @@ package org.bson.codecs
 
 import org.bson.BsonBinaryReader
 import org.bson.BsonWriter
+import org.bson.Document
 import org.bson.types.CodeWithScope
-import org.bson.types.Document
 import spock.lang.Specification
 import spock.lang.Subject
 

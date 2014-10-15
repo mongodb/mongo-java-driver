@@ -21,8 +21,8 @@ import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ServerHelper;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
-import org.bson.types.Document;
 import org.junit.After;
 import org.junit.Before;
 

@@ -18,7 +18,7 @@ package com.mongodb.async.client
 
 import com.mongodb.Block
 import com.mongodb.Function
-import org.bson.types.Document
+import org.bson.Document
 import org.bson.types.ObjectId
 
 class MapSpecification extends FunctionalSpecification {

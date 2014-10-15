@@ -20,7 +20,7 @@ import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.UpdateOptions;
-import org.bson.types.Document;
+import org.bson.Document;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;

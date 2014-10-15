@@ -39,9 +39,9 @@ import com.mongodb.operation.UpdateRequest;
 import com.mongodb.operation.WriteRequest;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
-import org.bson.types.Document;
 import org.mongodb.ConvertibleToDocument;
 import org.mongodb.WriteResult;
 

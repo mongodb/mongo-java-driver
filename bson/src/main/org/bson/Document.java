@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package org.bson.types;
+package org.bson;
 
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.DocumentCodec;
 import org.bson.json.JsonReader;
+import org.bson.types.ObjectId;
 
 import java.io.Serializable;
 import java.util.Collection;

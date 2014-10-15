@@ -53,13 +53,13 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.Encoder;
-import org.bson.types.Document;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;

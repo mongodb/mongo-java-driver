@@ -34,11 +34,11 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.ByteBuf
 import org.bson.ByteBufNIO
+import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.bson.codecs.EncoderContext
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.OutputBuffer
-import org.bson.types.Document
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 import spock.lang.Specification

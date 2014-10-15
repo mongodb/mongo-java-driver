@@ -19,6 +19,7 @@
 package org.bson.types
 
 import org.bson.BsonRegularExpression
+import org.bson.Document
 import org.bson.json.JsonParseException
 import spock.lang.Specification
 

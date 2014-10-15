@@ -18,7 +18,7 @@ package com.mongodb.acceptancetest.index;
 
 import com.mongodb.CommandFailureException;
 import com.mongodb.client.DatabaseTestCase;
-import org.bson.types.Document;
+import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
 

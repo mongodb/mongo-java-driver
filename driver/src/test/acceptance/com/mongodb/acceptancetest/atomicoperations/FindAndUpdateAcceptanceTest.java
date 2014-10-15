@@ -22,10 +22,10 @@ import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.test.Worker;
 import com.mongodb.client.test.WorkerCodecProvider;
+import org.bson.Document;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
-import org.bson.types.Document;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 

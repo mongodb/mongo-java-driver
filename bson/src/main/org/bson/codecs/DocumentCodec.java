@@ -23,11 +23,11 @@ import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
+import org.bson.Document;
 import org.bson.assertions.Assertions;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
-import org.bson.types.Document;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -37,7 +37,7 @@ import java.util.UUID;
 /**
  * A Codec for Document instances.
  *
- * @see org.bson.types.Document
+ * @see org.bson.Document
  * @since 3.0
  */
 public class DocumentCodec implements CollectibleCodec<Document> {

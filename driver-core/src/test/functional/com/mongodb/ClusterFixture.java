@@ -42,9 +42,9 @@ import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DocumentCodec;
-import org.bson.types.Document;
 
 import java.util.List;
 

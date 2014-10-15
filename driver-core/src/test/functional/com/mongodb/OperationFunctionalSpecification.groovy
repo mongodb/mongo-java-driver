@@ -25,8 +25,8 @@ import com.mongodb.connection.ServerHelper
 import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.InsertRequest
 import org.bson.BsonDocument
+import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.bson.types.Document
 import spock.lang.Specification
 
 import static com.mongodb.ClusterFixture.getPrimary
