@@ -15,6 +15,6 @@
  */
 
 /**
- * Contains classes for monitoring the server/driver via Java Management Extentions (JMX).
+ * Contains classes for monitoring the server/driver via Java Management Extensions (JMX).
  */
 package com.mongodb.management;
