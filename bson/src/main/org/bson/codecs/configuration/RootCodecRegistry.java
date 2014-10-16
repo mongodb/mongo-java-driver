@@ -19,7 +19,10 @@ package org.bson.codecs.configuration;
 import org.bson.codecs.Codec;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -33,7 +36,8 @@ import static java.lang.String.format;
  */
 public class RootCodecRegistry implements CodecRegistry {
     private final ConcurrentMap<Class<?>, Codec<?>> codecs = new ConcurrentHashMap<Class<?>, Codec<?>>();
-    private final List<CodecProvider> sources;
+    private final List<CodecProvider> codecProviders;
+    private final Map<Class<?>, Codec<?>> codecMap;
 
     /**
      * Construct a new {@code CodecRegistry} from the given list if {@code CodecProvider} instances.  The registry will use the codec
@@ -43,7 +47,26 @@ public class RootCodecRegistry implements CodecRegistry {
      * @param codecProviders the list of codec providers
      */
     public RootCodecRegistry(final List<? extends CodecProvider> codecProviders) {
-        this.sources = new ArrayList<CodecProvider>(codecProviders);
+        this(new ArrayList<CodecProvider>(codecProviders), Collections.<Class<?>, Codec<?>>emptyMap());
+    }
+
+    private RootCodecRegistry(final List<CodecProvider> codecProviders, final Map<Class<?>, Codec<?>> codecMap) {
+        this.codecProviders = codecProviders;
+        this.codecMap = codecMap;
+    }
+
+    /**
+     * Creates a new registry which is identical to this with the addition of the given codec.  Any codecs added with this method will
+     * take precedence over codecs that may be returned from the codec providers.
+     *
+     * @param codec the codec
+     * @param <T> the class type of the codec
+     * @return the new registry
+     */
+    public <T> RootCodecRegistry withCodec(final Codec<T> codec) {
+        Map<Class<?>, Codec<?>> newCodecMap = new HashMap<Class<?>, Codec<?>>(codecMap);
+        newCodecMap.put(codec.getEncoderClass(), codec);
+        return new RootCodecRegistry(codecProviders, newCodecMap);
     }
 
     /**
@@ -56,19 +79,16 @@ public class RootCodecRegistry implements CodecRegistry {
      */
     @Override
     public <T> Codec<T> get(final Class<T> clazz) {
-        Codec<T> result = get(new ChildCodecRegistry<T>(this, clazz));
-
-        if (result == null) {
-            throw new CodecConfigurationException(format("Can't find a codec for %s.", clazz));
-        }
-
-        return result;
+        return get(new ChildCodecRegistry<T>(this, clazz));
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     <T> Codec<T> get(final ChildCodecRegistry context) {
         if (!codecs.containsKey(context.getCodecClass())) {
-            Codec<T> codec = getCodecFromSources(context);
+            Codec<T> codec = (Codec<T>) codecMap.get(context.getCodecClass());
+            if (codec == null) {
+                codec = getCodecFromProviders(context);
+            }
             if (codec == null){
                 throw new CodecConfigurationException(format("Can't find a codec for %s.", context.getCodecClass()));
             }
@@ -78,9 +98,9 @@ public class RootCodecRegistry implements CodecRegistry {
         return (Codec<T>) codecs.get(context.getCodecClass());
     }
 
-    private <T> Codec<T> getCodecFromSources(final ChildCodecRegistry<T> context) {
-        for (CodecProvider source : sources) {
-            Codec<T> result = source.get(context.getCodecClass(), context);
+    private <T> Codec<T> getCodecFromProviders(final ChildCodecRegistry<T> context) {
+        for (CodecProvider provider : codecProviders) {
+            Codec<T> result = provider.get(context.getCodecClass(), context);
             if (result != null) {
                 return result;
             }
@@ -100,7 +120,11 @@ public class RootCodecRegistry implements CodecRegistry {
 
         RootCodecRegistry that = (RootCodecRegistry) o;
 
-        if (!sources.equals(that.sources)) {
+        if (!codecProviders.equals(that.codecProviders)) {
+            return false;
+        }
+
+        if (!codecMap.equals(that.codecMap)) {
             return false;
         }
 
@@ -109,6 +133,8 @@ public class RootCodecRegistry implements CodecRegistry {
 
     @Override
     public int hashCode() {
-        return sources != null ? sources.hashCode() : 0;
+        int result = codecProviders.hashCode();
+        result = 31 * result + codecMap.hashCode();
+        return result;
     }
 }

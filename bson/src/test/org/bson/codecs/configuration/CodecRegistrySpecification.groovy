@@ -25,9 +25,11 @@ import org.bson.ByteBufNIO
 import org.bson.codecs.Codec
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
+import org.bson.codecs.MaxKeyCodec
 import org.bson.codecs.MinKeyCodec
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.ByteBufferBsonInput
+import org.bson.types.MaxKey
 import org.bson.types.MinKey
 import spock.lang.Specification
 
@@ -43,6 +45,27 @@ class CodecRegistrySpecification extends Specification {
 
         then:
         thrown(CodecConfigurationException)
+    }
+
+    def 'should get codec added via withCodec'() {
+        when:
+        def minKeyCodec = new MinKeyCodec()
+        def providedMaxKeyCodec = new MaxKeyCodec()
+        def registry = new RootCodecRegistry([new SimpleCodecProvider(new MinKeyCodec()),
+                                              new SimpleCodecProvider(providedMaxKeyCodec)])
+                .withCodec(minKeyCodec)
+
+        then:
+        registry.get(MinKey) is minKeyCodec
+        registry.get(MaxKey) is providedMaxKeyCodec
+
+        when:
+        def maxKeyCodec = new MaxKeyCodec()
+        def newRegistry = registry.withCodec(maxKeyCodec)
+
+        then:
+        newRegistry.get(MaxKey) is maxKeyCodec
+        registry.get(MaxKey) is providedMaxKeyCodec
     }
 
     def 'get should return registered codec'() {
