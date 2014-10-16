@@ -74,6 +74,10 @@ class DBObjectCodecProvider implements CodecProvider {
             return (Codec<T>) codecs.get(clazz);
         }
 
+        if (clazz == DBObject.class) {
+            return (Codec<T>) new DBObjectCodec(registry, bsonTypeClassMap);
+        }
+
         return null;
     }
 
