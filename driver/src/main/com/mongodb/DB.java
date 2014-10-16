@@ -161,7 +161,7 @@ public class DB {
     }
 
     /**
-     * ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a replica set)
+     * Ensure that a connection is assigned to the current "consistent request" (from primary pool, if connected to a replica set)
      */
     public void requestEnsureConnection() {
         // do nothing for now

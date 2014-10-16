@@ -34,8 +34,9 @@ interface ClusterableServer extends Server {
     void invalidate();
 
     /**
-     * Closes the server.  Instances that have been closed will no longer be available for use. <p> Implementations should ensure that this
-     * method can be called multiple times with no ill effects. </p>
+     * <p>Closes the server.  Instances that have been closed will no longer be available for use.</p> 
+     * 
+     * <p>Implementations should ensure that this method can be called multiple times with no ill effects. </p>
      */
     void close();
 

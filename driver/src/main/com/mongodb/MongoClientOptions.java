@@ -281,7 +281,9 @@ public class MongoClientOptions {
     }
 
     /**
-     * Gets the connect timeout for connections used for the cluster heartbeat.  The default value is 20,000 milliseconds.
+     * <p>Gets the connect timeout for connections used for the cluster heartbeat.</p>  
+     *
+     * <p>The default value is 20,000 milliseconds.</p>
      *
      * @return the heartbeat connect timeout, in milliseconds
      * @since 2.12
@@ -326,7 +328,7 @@ public class MongoClientOptions {
      *     <li>Refuse to service any requests if any member of the seed list is not part of a replica set with the required name.</li> 
      * </ol>
      *
-     * @return the required replica set name since 3.0
+     * @return the required replica set name 
      * @since 2.12
      */
     public String getRequiredReplicaSetName() {

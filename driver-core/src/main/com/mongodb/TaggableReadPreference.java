@@ -143,8 +143,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     /**
      * Read from secondary if available, otherwise from primary, irrespective of tags.
-     *
-     * @author breinero
      */
     static class SecondaryPreferredReadPreference extends SecondaryReadPreference {
         SecondaryPreferredReadPreference() {

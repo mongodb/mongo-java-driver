@@ -23,7 +23,6 @@ import org.bson.BSONCallback;
 /**
  * Helper methods for JSON serialization and de-serialization
  */
-
 public class JSON {
 
     /**

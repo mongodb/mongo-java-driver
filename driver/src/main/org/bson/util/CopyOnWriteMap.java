@@ -119,8 +119,9 @@ abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, 
     }
 
     /**
-     * <p> Creates a new {@link CopyOnWriteMap} with an underlying {@link HashMap}. </p> This map has {@link View.Type#STABLE stable}
-     * views.
+     * <p> Creates a new {@link CopyOnWriteMap} with an underlying {@link HashMap}. </p>
+     *
+     * <p>This map has {@link View.Type#STABLE stable} views.</p>
      */
     public static <K, V> CopyOnWriteMap<K, V> newHashMap() {
         Builder<K, V> builder = builder();
@@ -128,8 +129,9 @@ abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, 
     }
 
     /**
-     * <p> Creates a new {@link CopyOnWriteMap} with an underlying {@link HashMap} using the supplied map as the initial values. </p> This
-     * map has {@link View.Type#STABLE stable} views.
+     * <p> Creates a new {@link CopyOnWriteMap} with an underlying {@link HashMap} using the supplied map as the initial values. </p>
+     *
+     * <p>This map has {@link View.Type#STABLE stable} views.</p>
      */
     public static <K, V> CopyOnWriteMap<K, V> newHashMap(final Map<? extends K, ? extends V> map) {
         Builder<K, V> builder = builder();
@@ -138,7 +140,9 @@ abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, 
 
     /**
      * <p>Creates a new {@link CopyOnWriteMap} with an underlying {@link java.util.LinkedHashMap}. Iterators for this map will be return
-     * elements in insertion order. </p> This map has {@link View.Type#STABLE stable} views.
+     * elements in insertion order. </p>
+     *
+     * <p>This map has {@link View.Type#STABLE stable} views.</p>
      */
     public static <K, V> CopyOnWriteMap<K, V> newLinkedMap() {
         Builder<K, V> builder = builder();
@@ -147,7 +151,9 @@ abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, 
 
     /**
      * <p>Creates a new {@link CopyOnWriteMap} with an underlying {@link java.util.LinkedHashMap} using the supplied map as the initial
-     * values. Iterators for this map will be return elements in insertion order. </p> This map has {@link View.Type#STABLE stable} views.
+     * values. Iterators for this map will be return elements in insertion order. </p>
+     *
+     * <p>This map has {@link View.Type#STABLE stable} views.</p>
      */
     public static <K, V> CopyOnWriteMap<K, V> newLinkedMap(final Map<? extends K, ? extends V> map) {
         Builder<K, V> builder = builder();

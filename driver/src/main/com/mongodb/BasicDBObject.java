@@ -44,7 +44,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
     }
 
     /**
-     * creates an empty object
+     * Creates an empty object
      *
      * @param size an estimate of number of fields that will be inserted
      */
@@ -53,7 +53,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
     }
 
     /**
-     * creates an object with the given key/value
+     * Creates an object with the given key/value
      *
      * @param key   key under which to store
      * @param value value to store
@@ -114,6 +114,8 @@ public class BasicDBObject extends BasicBSONObject implements DBObject {
     }
 
     /**
+     * Creates a new instance which is a copy of this BasicDBObject.
+     *
      * @return a BasicDBObject with exactly the same values as this instance.
      */
     public Object copy() {

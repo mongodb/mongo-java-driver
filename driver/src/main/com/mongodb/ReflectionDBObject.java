@@ -114,6 +114,8 @@ public abstract class ReflectionDBObject implements DBObject {
 
     /**
      * ReflectionDBObjects can't be partial. This operation is not supported.
+     *
+     * @throws RuntimeException
      */
     @Override
     public void markAsPartialObject() {
@@ -121,7 +123,11 @@ public abstract class ReflectionDBObject implements DBObject {
     }
 
     /**
-     * This operation is not supported. {@inheritDoc}
+     * This operation is not supported.
+     *
+     * @param key The name of the field to remove
+     * @return The value removed from this object
+     * @throws UnsupportedOperationException
      */
     @Override
     public Object removeField(final String key) {
