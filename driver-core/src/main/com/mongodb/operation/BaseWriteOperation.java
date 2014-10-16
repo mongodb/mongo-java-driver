@@ -181,18 +181,16 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
         BulkWriteError lastError = getLastError(e);
         if (lastError != null) {
             if (DUPLICATE_KEY_ERROR_CODES.contains(lastError.getCode())) {
-                return new MongoException.DuplicateKey(manufactureGetLastErrorResponse(e), e.getServerAddress(), manufactureWriteResult(e));
+                return new MongoException.DuplicateKey(manufactureGetLastErrorResponse(e), e.getServerAddress(),
+                                                       translateBulkWriteResult(e.getWriteResult()));
             } else {
-                return new WriteConcernException(manufactureGetLastErrorResponse(e), e.getServerAddress(), manufactureWriteResult(e));
+                return new WriteConcernException(manufactureGetLastErrorResponse(e), e.getServerAddress(),
+                                                 translateBulkWriteResult(e.getWriteResult()));
             }
         } else {
-            return new WriteConcernException(manufactureGetLastErrorResponse(e), e.getServerAddress(), manufactureWriteResult(e));
+            return new WriteConcernException(manufactureGetLastErrorResponse(e), e.getServerAddress(),
+                                             translateBulkWriteResult(e.getWriteResult()));
         }
-
-    }
-
-    private com.mongodb.WriteResult manufactureWriteResult(final BulkWriteException bulkWriteException) {
-        return translateBulkWriteResult2(bulkWriteException.getWriteResult());
 
     }
 
@@ -233,12 +231,6 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
 
     private WriteConcernResult translateBulkWriteResult(final BulkWriteResult bulkWriteResult) {
         return new AcknowledgedWriteConcernResult(getCount(bulkWriteResult), getUpdatedExisting(bulkWriteResult),
-                                           bulkWriteResult.getUpserts().isEmpty()
-                                           ? null : bulkWriteResult.getUpserts().get(0).getId());
-    }
-
-    private com.mongodb.WriteResult translateBulkWriteResult2(final BulkWriteResult bulkWriteResult) {
-        return new com.mongodb.WriteResult(getCount(bulkWriteResult), getUpdatedExisting(bulkWriteResult),
                                            bulkWriteResult.getUpserts().isEmpty()
                                            ? null : bulkWriteResult.getUpserts().get(0).getId());
     }

@@ -32,9 +32,9 @@ public class DuplicateKeyException extends WriteConcernException {
      *
      * @param response the response from the server
      * @param address the server address
-     * @param writeResult the write result
+     * @param writeConcernResult the write concern result
      */
-    public DuplicateKeyException(final BsonDocument response, final ServerAddress address, final WriteResult writeResult) {
-        super(response, address, writeResult);
+    public DuplicateKeyException(final BsonDocument response, final ServerAddress address, final WriteConcernResult writeConcernResult) {
+        super(response, address, writeConcernResult);
     }
 }

@@ -127,19 +127,13 @@ final class ProtocolHelper {
         return err != null && err.length() > 0;
     }
 
-    private static com.mongodb.WriteResult getWriteResult(final BsonDocument result) {
-        WriteConcernResult writeConcernResult = createWriteResult(result);
-        // TODO: translate upsertedId
-        return new com.mongodb.WriteResult(writeConcernResult.getCount(), writeConcernResult.isUpdateOfExisting(), writeConcernResult.getUpsertedId());
-    }
-
     @SuppressWarnings("deprecation")
     private static void throwWriteException(final BsonDocument result, final ServerAddress serverAddress) {
         int code = MongoWriteException.extractErrorCode(result);
         if (DUPLICATE_KEY_ERROR_CODES.contains(code)) {
-            throw new MongoException.DuplicateKey(result, serverAddress, getWriteResult(result));
+            throw new MongoException.DuplicateKey(result, serverAddress, createWriteResult(result));
         } else {
-            throw new WriteConcernException(result, serverAddress, getWriteResult(result));
+            throw new WriteConcernException(result, serverAddress, createWriteResult(result));
         }
     }
 

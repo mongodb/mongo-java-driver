@@ -21,6 +21,7 @@ import category.Slow;
 import org.bson.BSONObject;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonBinaryWriter;
+import org.bson.BsonObjectId;
 import org.bson.Document;
 import org.bson.io.OutputBuffer;
 import org.bson.types.BSONTimestamp;
@@ -840,7 +841,7 @@ public class DBCollectionTest extends DatabaseTestCase {
             WriteResult res = collection.insert(new BasicDBObject(), new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
         } catch (WriteConcernException e) {
-            assertEquals(0, e.getWriteResult().getN());
+            assertEquals(0, e.getWriteConcernResult().getCount());
         }
     }
 
@@ -854,9 +855,9 @@ public class DBCollectionTest extends DatabaseTestCase {
                                                 false, false, new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
         } catch (WriteConcernException e) {
-            assertEquals(1, e.getWriteResult().getN());
-            assertTrue(e.getWriteResult().isUpdateOfExisting());
-            assertEquals(null, e.getWriteResult().getUpsertedId());
+            assertEquals(1, e.getWriteConcernResult().getCount());
+            assertTrue(e.getWriteConcernResult().isUpdateOfExisting());
+            assertEquals(null, e.getWriteConcernResult().getUpsertedId());
         }
     }
 
@@ -869,9 +870,9 @@ public class DBCollectionTest extends DatabaseTestCase {
                                                 true, false, new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
         } catch (WriteConcernException e) {
-            assertEquals(1, e.getWriteResult().getN());
-            assertFalse(e.getWriteResult().isUpdateOfExisting());
-            assertEquals(id, e.getWriteResult().getUpsertedId());
+            assertEquals(1, e.getWriteConcernResult().getCount());
+            assertFalse(e.getWriteConcernResult().isUpdateOfExisting());
+            assertEquals(new BsonObjectId(id), e.getWriteConcernResult().getUpsertedId());
         }
     }
 
@@ -883,7 +884,7 @@ public class DBCollectionTest extends DatabaseTestCase {
             WriteResult res = collection.remove(new BasicDBObject(), new WriteConcern(5, 1, false, false));
             fail("Write should have failed but succeeded with result " + res);
         } catch (WriteConcernException e) {
-            assertEquals(1, e.getWriteResult().getN());
+            assertEquals(1, e.getWriteConcernResult().getCount());
         }
     }
 
