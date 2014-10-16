@@ -24,7 +24,6 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.MongoCollectionOptions;
 import org.bson.Document;
 import org.bson.codecs.Codec;
-import org.mongodb.ConvertibleToDocument;
 import org.mongodb.WriteResult;
 import rx.Observable;
 import rx.Subscriber;
@@ -115,19 +114,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoView<T> find(final ConvertibleToDocument filter) {
-            wrappedView.find(filter);
-            return this;
-        }
-
-        @Override
         public MongoView<T> sort(final Document sortCriteria) {
-            wrappedView.sort(sortCriteria);
-            return this;
-        }
-
-        @Override
-        public MongoView<T> sort(final ConvertibleToDocument sortCriteria) {
             wrappedView.sort(sortCriteria);
             return this;
         }
@@ -146,12 +133,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         public MongoView<T> fields(final Document selector) {
-            wrappedView.fields(selector);
-            return this;
-        }
-
-        @Override
-        public MongoView<T> fields(final ConvertibleToDocument selector) {
             wrappedView.fields(selector);
             return this;
         }

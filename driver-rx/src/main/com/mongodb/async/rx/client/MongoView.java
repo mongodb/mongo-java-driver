@@ -18,7 +18,6 @@ package com.mongodb.async.rx.client;
 
 import com.mongodb.annotations.NotThreadSafe;
 import org.bson.Document;
-import org.mongodb.ConvertibleToDocument;
 
 /**
  * A view onto a collection.  Operations on the view will change which, how many, and in what order the documents appear in the view when
@@ -44,14 +43,6 @@ public interface MongoView<T> extends MongoWritableView<T>, MongoReadableView<T>
      */
     MongoView<T> find(Document filter);
 
-    /**
-     * Updates the filter applied to the documents in the view.
-     *
-     * @param filter the filter
-     * @return this
-     */
-    MongoView<T> find(ConvertibleToDocument filter);
-
 
     /**
      * The sort criteria for documents in the view.
@@ -60,14 +51,6 @@ public interface MongoView<T> extends MongoWritableView<T>, MongoReadableView<T>
      * @return this
      */
     MongoView<T> sort(Document sortCriteria);
-
-    /**
-     * The sort criteria for documents in the view.
-     *
-     * @param sortCriteria the sort criteria
-     * @return this
-     */
-    MongoView<T> sort(ConvertibleToDocument sortCriteria);
 
     /**
      * Specifies the number of documents to skip in the underlying collection.
@@ -92,14 +75,6 @@ public interface MongoView<T> extends MongoWritableView<T>, MongoReadableView<T>
      * @return this
      */
     MongoView<T> fields(Document selector);
-
-    /**
-     * Specifies the fields to select in documents in the view of the underlying collection.
-     *
-     * @param selector the fields to select
-     * @return this
-     */
-    MongoView<T> fields(ConvertibleToDocument selector);
 
     /**
      * Specifies that update operations executed on this view will result in inserts if no document with the _id of the document exists

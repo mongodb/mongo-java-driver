@@ -18,7 +18,6 @@ package com.mongodb.client;
 
 import com.mongodb.QueryOperators;
 import org.bson.Document;
-import org.mongodb.ConvertibleToDocument;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,7 +30,7 @@ import java.util.regex.Pattern;
  *
  * @since 3.0
  */
-public class QueryBuilder implements ConvertibleToDocument {
+public class QueryBuilder {
     private final Document query;
     private String currentKey;
     private boolean hasNot;
@@ -463,9 +462,8 @@ public class QueryBuilder implements ConvertibleToDocument {
      * Creates a {@code Document} query to be used for the driver's find operations
      *
      * @return Returns a Document query instance
-     * @throws RuntimeException if a key does not have a matching operand
+     * @throws QueryBuilderException if a key does not have a matching operand
      */
-    @Override
     public Document toDocument() {
         for (final String key : query.keySet()) {
             if (query.get(key) instanceof NullObject) {

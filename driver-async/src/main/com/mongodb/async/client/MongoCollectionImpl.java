@@ -42,7 +42,6 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
-import org.mongodb.ConvertibleToDocument;
 import org.mongodb.WriteResult;
 
 import java.util.ArrayList;
@@ -195,11 +194,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return this;
         }
 
-        @Override
-        public MongoView<T> find(final ConvertibleToDocument filter) {
-            return find(filter.toDocument());
-        }
-
         MongoView<T> find(final BsonDocument filter) {
             criteria = filter;
             return this;
@@ -209,11 +203,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoView<T> sort(final Document sortCriteria) {
             findOptions.sort(asBson(sortCriteria));
             return this;
-        }
-
-        @Override
-        public MongoView<T> sort(final ConvertibleToDocument sortCriteria) {
-            return sort(sortCriteria.toDocument());
         }
 
         @Override
@@ -232,11 +221,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         public MongoView<T> fields(final Document selector) {
             findOptions.projection(new BsonDocumentWrapper<Document>(selector, options.getDocumentCodec()));
             return this;
-        }
-
-        @Override
-        public MongoView<T> fields(final ConvertibleToDocument selector) {
-            return fields(selector.toDocument());
         }
 
         @Override
