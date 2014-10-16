@@ -42,7 +42,6 @@ import com.mongodb.operation.WriteOperation;
 import com.mongodb.protocol.KillCursorProtocol;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.ServerSelector;
-import org.bson.Document;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
@@ -458,7 +457,7 @@ public class Mongo {
             return db;
         }
 
-        db = new DB(this, dbName, createOperationExecutor(true), options.getCodecRegistry().get(Document.class));
+        db = new DB(this, dbName, createOperationExecutor(true));
         DB temp = dbCache.putIfAbsent(dbName, db);
         if (temp != null) {
             return temp;

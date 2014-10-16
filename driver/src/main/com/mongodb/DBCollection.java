@@ -53,12 +53,10 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
-import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.Encoder;
 import org.bson.types.ObjectId;
 
@@ -127,12 +125,10 @@ public class DBCollection {
 
     /**
      * Constructs new {@code DBCollection} instance. This operation not reflected on the server.
-     *
-     * @param name          the name of the collection
+     *  @param name          the name of the collection
      * @param database      the database to which this collections belongs to
-     * @param documentCodec codec to be used for messages to server
      */
-    DBCollection(final String name, final DB database, final OperationExecutor executor, final Codec<Document> documentCodec) {
+    DBCollection(final String name, final DB database, final OperationExecutor executor) {
         this.name = name;
         this.database = database;
         this.executor = executor;
@@ -148,7 +144,7 @@ public class DBCollection {
      * @param name     the name of the collection
      */
     protected DBCollection(final DB database, final String name) {
-        this(name, database, database.getExecutor(), new DocumentCodec());
+        this(name, database, database.getExecutor());
     }
 
     private static BasicDBList toDBList(final MongoCursor<DBObject> source) {

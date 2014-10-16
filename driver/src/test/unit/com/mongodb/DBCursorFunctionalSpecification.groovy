@@ -16,7 +16,6 @@
 
 package com.mongodb
 
-import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 import spock.lang.Subject
 
@@ -330,7 +329,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
                 }
 
         def executor = new TestOperationExecutor([tailableCursor, tailableCursor, tailableCursor, tailableCursor])
-        def collection = new DBCollection('collectionName', database, executor, new DocumentCodec())
+        def collection = new DBCollection('collectionName', database, executor)
 
         when:
         collection.find().hasNext()

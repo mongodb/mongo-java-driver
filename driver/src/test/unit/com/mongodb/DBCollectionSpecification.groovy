@@ -19,7 +19,6 @@ package com.mongodb
 import com.mongodb.operation.CreateIndexOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.bson.codecs.DocumentCodec
 import spock.lang.Specification
 
 import static com.mongodb.Fixture.getMongoClient
@@ -30,7 +29,7 @@ class DBCollectionSpecification extends Specification {
 
         given:
         def executor = new TestOperationExecutor([null, null]);
-        def collection = new DB(getMongoClient(), 'myDatabase', executor, new DocumentCodec()).getCollection('test')
+        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
         def keys = new BasicDBObject('a', 1);
 
         when:

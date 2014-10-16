@@ -30,10 +30,8 @@ import com.mongodb.operation.UserExistsOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
-import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
-import org.bson.codecs.DocumentCodec;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -63,21 +61,19 @@ public class DB {
     private final Mongo mongo;
     private final String name;
     private final OperationExecutor executor;
-    private final Codec<Document> documentCodec;
     private final ConcurrentHashMap<String, DBCollection> collectionCache;
     private final Bytes.OptionHolder optionHolder;
     private final Codec<DBObject> commandCodec;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
 
-    DB(final Mongo mongo, final String name, final OperationExecutor executor, final Codec<Document> documentCodec) {
+    DB(final Mongo mongo, final String name, final OperationExecutor executor) {
         if (!isValidName(name)) {
             throw new IllegalArgumentException("Invalid database name format. Database name is either empty or it contains spaces.");
         }
         this.mongo = mongo;
         this.name = name;
         this.executor = executor;
-        this.documentCodec = documentCodec;
         this.collectionCache = new ConcurrentHashMap<String, DBCollection>();
         this.optionHolder = new Bytes.OptionHolder(mongo.getOptionHolder());
         this.commandCodec = new DBObjectCodec(this, null, getMongo().getDbObjectCodecRegistry(),
@@ -91,7 +87,7 @@ public class DB {
      * @param name  the database name - must not be empty and cannot contain spaces
      */
     public DB(final Mongo mongo, final String name) {
-        this(mongo, name, mongo.createOperationExecutor(true), new DocumentCodec());
+        this(mongo, name, mongo.createOperationExecutor(true));
     }
 
     /**
@@ -191,7 +187,7 @@ public class DB {
             return collection;
         }
 
-        collection = new DBCollection(name, this, executor, documentCodec);
+        collection = new DBCollection(name, this, executor);
         if (mongo.getMongoClientOptions().getDbDecoderFactory() != DefaultDBDecoder.FACTORY) {
             collection.setDBDecoderFactory(mongo.getMongoClientOptions().getDbDecoderFactory());
         }
