@@ -18,9 +18,9 @@ package com.mongodb.protocol;
 
 import com.mongodb.UnacknowledgedWriteException;
 import org.bson.BsonValue;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 
-class UnacknowledgedWriteResult implements WriteResult {
+class UnacknowledgedWriteConcernResult implements WriteConcernResult {
     @Override
     public boolean wasAcknowledged() {
         return false;

@@ -18,7 +18,7 @@ package com.mongodb.async.client;
 
 import com.mongodb.async.MongoFuture;
 import org.bson.Document;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 
 /**
  * Writable operations on a collection view.
@@ -34,7 +34,7 @@ public interface MongoWritableView<T> {
      * @param replacement the replacement document
      * @return the result of the replacement
      */
-    MongoFuture<WriteResult> replace(T replacement);
+    MongoFuture<WriteConcernResult> replace(T replacement);
 
     /**
      * With the given update operations, update all documents in the underlying collection matching the filter criteria in the view.
@@ -42,7 +42,7 @@ public interface MongoWritableView<T> {
      * @param updateOperations the update operations to apply to each document
      * @return the result of the update
      */
-    MongoFuture<WriteResult> update(Document updateOperations);
+    MongoFuture<WriteConcernResult> update(Document updateOperations);
 
     /**
      * With the given update operations, update a single document in the underlying collection matching the filter criteria in the view.
@@ -50,19 +50,19 @@ public interface MongoWritableView<T> {
      * @param updateOperations the update operations to apply to each document
      * @return the result of the update
      */
-    MongoFuture<WriteResult> updateOne(Document updateOperations);
+    MongoFuture<WriteConcernResult> updateOne(Document updateOperations);
 
     /**
      * Removes all the documents in the underlying collection matching the filter criteria in the view.
      *
      * @return the result of the remove
      */
-    MongoFuture<WriteResult> remove();
+    MongoFuture<WriteConcernResult> remove();
 
     /**
      * Removes one document in the underlying collection matching the filter criteria in the view.
      *
      * @return the result of the remove
      */
-    MongoFuture<WriteResult> removeOne();
+    MongoFuture<WriteConcernResult> removeOne();
 }

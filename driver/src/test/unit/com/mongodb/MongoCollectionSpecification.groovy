@@ -58,7 +58,7 @@ import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.ParallelCollectionScanOperation
 import com.mongodb.operation.RenameCollectionOperation
 import com.mongodb.operation.UpdateOperation
-import com.mongodb.protocol.AcknowledgedWriteResult
+import com.mongodb.protocol.AcknowledgedWriteConcernResult
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -106,7 +106,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'insertOne should use InsertOperation properly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
@@ -119,7 +119,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'insert should add _id to document'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
 
@@ -135,8 +135,8 @@ class MongoCollectionSpecification extends Specification {
 
     def 'insertMany should use InsertOperation properly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(2, false, null),
-                                                  new AcknowledgedWriteResult(2, false, null)])
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(2, false, null),
+                                                  new AcknowledgedWriteConcernResult(2, false, null)])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
@@ -158,7 +158,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'insertMany should add _id to documents'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(2, false, null)])
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(2, false, null)])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         def documents = [new Document(), new Document()]
@@ -175,7 +175,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'replace should use ReplaceOperation properly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
@@ -200,7 +200,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'updateOne should use UpdateOperation properly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
@@ -225,7 +225,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'updateMany should use UpdateOperation properly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
@@ -250,7 +250,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'deleteOne should use RemoveOperation properly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
@@ -268,7 +268,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'deleteMany should use RemoveOperation properly'() {
         given:
-        def executor = new TestOperationExecutor([new AcknowledgedWriteResult(1, false, null)])
+        def executor = new TestOperationExecutor([new AcknowledgedWriteConcernResult(1, false, null)])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:

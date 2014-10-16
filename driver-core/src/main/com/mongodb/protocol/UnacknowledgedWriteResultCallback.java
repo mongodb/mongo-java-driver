@@ -19,24 +19,24 @@ package com.mongodb.protocol;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.connection.Connection;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
+import com.mongodb.connection.Connection;
 import com.mongodb.protocol.message.RequestMessage;
 import org.bson.io.OutputBuffer;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED;
 
 class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
-    private final SingleResultFuture<WriteResult> future;
+    private final SingleResultFuture<WriteConcernResult> future;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage;
     private final OutputBuffer writtenBuffer;
     private final boolean ordered;
     private final Connection connection;
 
-    UnacknowledgedWriteResultCallback(final SingleResultFuture<WriteResult> future,
+    UnacknowledgedWriteResultCallback(final SingleResultFuture<WriteConcernResult> future,
                                       final MongoNamespace namespace, final RequestMessage nextMessage,
                                       final boolean ordered, final OutputBuffer writtenBuffer,
                                       final Connection connection) {
@@ -54,11 +54,11 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
         if (e != null) {
             future.init(null, e);
         } else if (nextMessage != null) {
-            MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace, nextMessage, ordered, UNACKNOWLEDGED)
+            MongoFuture<WriteConcernResult> newFuture = new GenericWriteProtocol(namespace, nextMessage, ordered, UNACKNOWLEDGED)
                                                  .executeAsync(connection);
-            newFuture.register(new SingleResultFutureCallback<WriteResult>(future));
+            newFuture.register(new SingleResultFutureCallback<WriteConcernResult>(future));
         } else {
-            future.init(new UnacknowledgedWriteResult(), null);
+            future.init(new UnacknowledgedWriteConcernResult(), null);
         }
     }
 }

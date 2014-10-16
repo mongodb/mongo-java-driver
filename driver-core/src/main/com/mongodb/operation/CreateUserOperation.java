@@ -26,7 +26,7 @@ import com.mongodb.connection.Connection;
 import com.mongodb.protocol.InsertProtocol;
 import com.mongodb.protocol.Protocol;
 import org.bson.BsonDocument;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
@@ -103,14 +103,14 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
                     return executeWrappedCommandProtocolAsync(credential.getSource(), getCommand(), connection,
                                                               new VoidTransformer<BsonDocument>());
                 } else {
-                    return executeProtocolAsync(getCollectionBasedProtocol(), connection, new VoidTransformer<WriteResult>());
+                    return executeProtocolAsync(getCollectionBasedProtocol(), connection, new VoidTransformer<WriteConcernResult>());
                 }
             }
         });
     }
 
     @SuppressWarnings("unchecked")
-    private Protocol<WriteResult> getCollectionBasedProtocol() {
+    private Protocol<WriteConcernResult> getCollectionBasedProtocol() {
         MongoNamespace namespace = new MongoNamespace(credential.getSource(), "system.users");
         return new InsertProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
                                   asList(new InsertRequest(asCollectionDocument(credential, readOnly)))

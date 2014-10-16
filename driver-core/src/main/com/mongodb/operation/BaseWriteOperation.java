@@ -29,14 +29,14 @@ import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteException;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.connection.Connection;
-import com.mongodb.protocol.AcknowledgedWriteResult;
+import com.mongodb.protocol.AcknowledgedWriteConcernResult;
 import com.mongodb.protocol.WriteCommandProtocol;
 import com.mongodb.protocol.WriteProtocol;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
@@ -55,7 +55,7 @@ import static com.mongodb.operation.WriteRequest.Type.UPDATE;
  *
  * @since 3.0
  */
-public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteResult>, WriteOperation<WriteResult> {
+public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteConcernResult>, WriteOperation<WriteConcernResult> {
 
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
@@ -101,10 +101,10 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
     }
 
     @Override
-    public WriteResult execute(final WriteBinding binding) {
-        return withConnection(binding, new CallableWithConnection<WriteResult>() {
+    public WriteConcernResult execute(final WriteBinding binding) {
+        return withConnection(binding, new CallableWithConnection<WriteConcernResult>() {
             @Override
-            public WriteResult call(final Connection connection) {
+            public WriteConcernResult call(final Connection connection) {
                 try {
                     if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection)) {
                         return translateBulkWriteResult(getCommandProtocol().execute(connection));
@@ -119,12 +119,12 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
     }
 
     @Override
-    public MongoFuture<WriteResult> executeAsync(final AsyncWriteBinding binding) {
-        return withConnection(binding, new AsyncCallableWithConnection<WriteResult>() {
+    public MongoFuture<WriteConcernResult> executeAsync(final AsyncWriteBinding binding) {
+        return withConnection(binding, new AsyncCallableWithConnection<WriteConcernResult>() {
 
             @Override
-            public MongoFuture<WriteResult> call(final Connection connection) {
-                final SingleResultFuture<WriteResult> future = new SingleResultFuture<WriteResult>();
+            public MongoFuture<WriteConcernResult> call(final Connection connection) {
+                final SingleResultFuture<WriteConcernResult> future = new SingleResultFuture<WriteConcernResult>();
                 if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection)) {
                     getCommandProtocol().executeAsync(connection)
                                         .register(new SingleResultCallback<BulkWriteResult>() {
@@ -138,9 +138,9 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
                                             }
                                         });
                 } else {
-                    getWriteProtocol().executeAsync(connection).register(new SingleResultCallback<WriteResult>() {
+                    getWriteProtocol().executeAsync(connection).register(new SingleResultCallback<WriteConcernResult>() {
                         @Override
-                        public void onResult(final WriteResult result, final MongoException e) {
+                        public void onResult(final WriteConcernResult result, final MongoException e) {
                             if (e != null) {
                                 future.init(null, translateException(e));
                             } else {
@@ -231,8 +231,8 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteRes
         }
     }
 
-    private WriteResult translateBulkWriteResult(final BulkWriteResult bulkWriteResult) {
-        return new AcknowledgedWriteResult(getCount(bulkWriteResult), getUpdatedExisting(bulkWriteResult),
+    private WriteConcernResult translateBulkWriteResult(final BulkWriteResult bulkWriteResult) {
+        return new AcknowledgedWriteConcernResult(getCount(bulkWriteResult), getUpdatedExisting(bulkWriteResult),
                                            bulkWriteResult.getUpserts().isEmpty()
                                            ? null : bulkWriteResult.getUpserts().get(0).getId());
     }

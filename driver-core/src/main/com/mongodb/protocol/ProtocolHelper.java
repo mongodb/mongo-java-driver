@@ -32,7 +32,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.io.BsonOutput;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 
 import java.util.Arrays;
 import java.util.List;
@@ -41,7 +41,7 @@ final class ProtocolHelper {
     private static final List<Integer> DUPLICATE_KEY_ERROR_CODES = Arrays.asList(11000, 11001, 12582);
     private static final List<Integer> EXECUTION_TIMEOUT_ERROR_CODES = Arrays.asList(50);
 
-    static WriteResult getWriteResult(final BsonDocument result, final ServerAddress serverAddress) {
+    static WriteConcernResult getWriteResult(final BsonDocument result, final ServerAddress serverAddress) {
         if (!isCommandOk(result)) {
             throw new CommandFailureException(result, serverAddress);
         }
@@ -53,10 +53,10 @@ final class ProtocolHelper {
         return createWriteResult(result);
     }
 
-    private static WriteResult createWriteResult(final BsonDocument result) {
+    private static WriteConcernResult createWriteResult(final BsonDocument result) {
         BsonBoolean updatedExisting = result.getBoolean("updatedExisting", BsonBoolean.FALSE);
 
-        return new AcknowledgedWriteResult(result.getNumber("n", new BsonInt32(0)).intValue(),
+        return new AcknowledgedWriteConcernResult(result.getNumber("n", new BsonInt32(0)).intValue(),
                                            updatedExisting.getValue(), result.get("upserted"));
     }
 
@@ -128,9 +128,9 @@ final class ProtocolHelper {
     }
 
     private static com.mongodb.WriteResult getWriteResult(final BsonDocument result) {
-        WriteResult writeResult = createWriteResult(result);
+        WriteConcernResult writeConcernResult = createWriteResult(result);
         // TODO: translate upsertedId
-        return new com.mongodb.WriteResult(writeResult.getCount(), writeResult.isUpdateOfExisting(), writeResult.getUpsertedId());
+        return new com.mongodb.WriteResult(writeConcernResult.getCount(), writeConcernResult.isUpdateOfExisting(), writeConcernResult.getUpsertedId());
     }
 
     @SuppressWarnings("deprecation")

@@ -47,7 +47,7 @@ import com.mongodb.protocol.WriteProtocol;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -433,7 +433,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                     return INSERT;
                 }
 
-                int getCount(final WriteResult writeResult) {
+                int getCount(final WriteConcernResult writeConcernResult) {
                     return 1;
                 }
             };
@@ -471,8 +471,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
             abstract WriteRequest.Type getType();
 
-            int getCount(final WriteResult writeResult) {
-                return getType() == INSERT ? 1 : writeResult.getCount();
+            int getCount(final WriteConcernResult writeConcernResult) {
+                return getType() == INSERT ? 1 : writeConcernResult.getCount();
             }
 
             BulkWriteResult execute() {
@@ -486,7 +486,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                         indexMap = indexMap.add(0, i);
                         WriteProtocol writeProtocol = getWriteProtocol(i);
                         try {
-                            WriteResult result = writeProtocol.execute(connection);
+                            WriteConcernResult result = writeProtocol.execute(connection);
                             if (result.wasAcknowledged()) {
                                 BulkWriteResult bulkWriteResult;
                                 if (getType() == UPDATE || getType() == REPLACE) {
@@ -528,10 +528,10 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                                                final SingleResultFuture<BulkWriteResult> future) {
 
                 final IndexMap indexMap = IndexMap.create(currentPosition, 1).add(0, currentPosition);
-                getWriteProtocol(currentPosition).executeAsync(connection).register(new SingleResultCallback<WriteResult>() {
+                getWriteProtocol(currentPosition).executeAsync(connection).register(new SingleResultCallback<WriteConcernResult>() {
 
                     @Override
-                    public void onResult(final WriteResult result, final MongoException e) {
+                    public void onResult(final WriteConcernResult result, final MongoException e) {
                         final int nextRunPosition = currentPosition + 1;
                         if (e != null) {
                             if (e instanceof MongoWriteException) {
@@ -567,31 +567,31 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 });
             }
 
-            BulkWriteResult getResult(final WriteResult writeResult) {
-                return getResult(writeResult, getUpsertedItems(writeResult));
+            BulkWriteResult getResult(final WriteConcernResult writeConcernResult) {
+                return getResult(writeConcernResult, getUpsertedItems(writeConcernResult));
             }
 
-            BulkWriteResult getResult(final WriteResult writeResult, final UpdateRequest updateRequest) {
-                return getResult(writeResult, getUpsertedItems(writeResult, updateRequest));
+            BulkWriteResult getResult(final WriteConcernResult writeConcernResult, final UpdateRequest updateRequest) {
+                return getResult(writeConcernResult, getUpsertedItems(writeConcernResult, updateRequest));
             }
 
-            BulkWriteResult getResult(final WriteResult writeResult, final List<BulkWriteUpsert> upsertedItems) {
-                int count = getCount(writeResult);
+            BulkWriteResult getResult(final WriteConcernResult writeConcernResult, final List<BulkWriteUpsert> upsertedItems) {
+                int count = getCount(writeConcernResult);
                 Integer modifiedCount = (getType() == UPDATE || getType() == REPLACE) ? null : 0;
                 return new AcknowledgedBulkWriteResult(getType(), count - upsertedItems.size(), modifiedCount, upsertedItems);
             }
 
-            List<BulkWriteUpsert> getUpsertedItems(final WriteResult writeResult) {
-                return writeResult.getUpsertedId() == null
+            List<BulkWriteUpsert> getUpsertedItems(final WriteConcernResult writeConcernResult) {
+                return writeConcernResult.getUpsertedId() == null
                        ? Collections.<BulkWriteUpsert>emptyList()
-                       : asList(new BulkWriteUpsert(0, writeResult.getUpsertedId()));
+                       : asList(new BulkWriteUpsert(0, writeConcernResult.getUpsertedId()));
             }
 
             @SuppressWarnings("unchecked")
-            List<BulkWriteUpsert> getUpsertedItems(final WriteResult writeResult,
+            List<BulkWriteUpsert> getUpsertedItems(final WriteConcernResult writeConcernResult,
                                                    final UpdateRequest updateRequest) {
-                if (writeResult.getUpsertedId() == null) {
-                    if (writeResult.isUpdateOfExisting() || !updateRequest.isUpsert()) {
+                if (writeConcernResult.getUpsertedId() == null) {
+                    if (writeConcernResult.isUpdateOfExisting() || !updateRequest.isUpsert()) {
                         return Collections.emptyList();
                     } else {
                         BsonDocument update = updateRequest.getUpdate();
@@ -606,7 +606,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                         }
                     }
                 } else {
-                    return asList(new BulkWriteUpsert(0, writeResult.getUpsertedId()));
+                    return asList(new BulkWriteUpsert(0, writeConcernResult.getUpsertedId()));
                 }
             }
 

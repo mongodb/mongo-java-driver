@@ -42,7 +42,7 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -94,13 +94,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public MongoFuture<WriteResult> insert(final T document) {
+    public MongoFuture<WriteConcernResult> insert(final T document) {
         notNull("document", document);
         return insert(asList(document));
     }
 
     @Override
-    public MongoFuture<WriteResult> insert(final List<T> documents) {
+    public MongoFuture<WriteConcernResult> insert(final List<T> documents) {
         notNull("documents", documents);
         List<InsertRequest> insertRequests = new ArrayList<InsertRequest>();
         for (T document : documents) {
@@ -113,7 +113,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public MongoFuture<WriteResult> save(final T document) {
+    public MongoFuture<WriteConcernResult> save(final T document) {
         if (!(codec instanceof CollectibleCodec)) {
             throw new UnsupportedOperationException();
         }
@@ -289,7 +289,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
 
         @Override
         @SuppressWarnings("unchecked")
-        public MongoFuture<WriteResult> replace(final T replacement) {
+        public MongoFuture<WriteConcernResult> replace(final T replacement) {
             notNull("replacement", replacement);
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
                                                    asList(new UpdateRequest(criteria, asBson(replacement), WriteRequest.Type.REPLACE)
@@ -298,7 +298,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoFuture<WriteResult> update(final Document updateOperations) {
+        public MongoFuture<WriteConcernResult> update(final Document updateOperations) {
             notNull("updateOperations", updateOperations);
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
                                                asList(new UpdateRequest(criteria,
@@ -310,7 +310,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoFuture<WriteResult> updateOne(final Document updateOperations) {
+        public MongoFuture<WriteConcernResult> updateOne(final Document updateOperations) {
             notNull("updateOperations", updateOperations);
             return execute(new UpdateOperation(getNamespace(), true, options.getWriteConcern(),
                                                asList(new UpdateRequest(criteria,
@@ -322,13 +322,13 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public MongoFuture<WriteResult> remove() {
+        public MongoFuture<WriteConcernResult> remove() {
             return execute(new DeleteOperation(getNamespace(), true, options.getWriteConcern(),
                                                asList(new DeleteRequest(criteria).multi(true))));
         }
 
         @Override
-        public MongoFuture<WriteResult> removeOne() {
+        public MongoFuture<WriteConcernResult> removeOne() {
             return execute(new DeleteOperation(getNamespace(), true, options.getWriteConcern(),
                                                asList(new DeleteRequest(criteria).multi(false))));
         }

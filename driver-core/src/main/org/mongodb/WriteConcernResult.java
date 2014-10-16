@@ -25,7 +25,7 @@ import org.bson.BsonValue;
  * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
  * @since 3.0
  */
-public interface WriteResult {
+public interface WriteConcernResult {
 
     /**
      * Returns true if the write was acknowledged.

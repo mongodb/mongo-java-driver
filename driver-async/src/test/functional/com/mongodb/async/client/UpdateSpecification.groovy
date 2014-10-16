@@ -17,7 +17,7 @@
 package com.mongodb.async.client
 
 import org.bson.Document
-import org.mongodb.WriteResult
+import org.mongodb.WriteConcernResult
 
 class UpdateSpecification extends FunctionalSpecification {
      def 'update should update all matching documents'() {
@@ -35,7 +35,7 @@ class UpdateSpecification extends FunctionalSpecification {
 
     def 'update with upsert should insert a single document if there are no matching documents'() {
         when:
-        WriteResult result = collection.find(new Document('x', true)).upsert().update(new Document('$set', new Document('y', false))).get()
+        WriteConcernResult result = collection.find(new Document('x', true)).upsert().update(new Document('$set', new Document('y', false))).get()
 
         then:
         collection.find(new Document()).into([]).get() ==
