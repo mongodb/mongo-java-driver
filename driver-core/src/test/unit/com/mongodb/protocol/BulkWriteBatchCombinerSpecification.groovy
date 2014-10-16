@@ -17,12 +17,12 @@
 package com.mongodb.protocol
 
 import com.mongodb.ServerAddress
+import com.mongodb.bulk.BulkWriteError
+import com.mongodb.bulk.BulkWriteException
+import com.mongodb.bulk.BulkWriteUpsert
+import com.mongodb.bulk.WriteConcernError
 import org.bson.BsonDocument
 import org.bson.BsonString
-import org.mongodb.BulkWriteError
-import org.mongodb.BulkWriteException
-import org.mongodb.BulkWriteUpsert
-import org.mongodb.WriteConcernError
 import spock.lang.Specification
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED

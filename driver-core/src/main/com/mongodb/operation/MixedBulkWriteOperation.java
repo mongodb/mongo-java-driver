@@ -25,6 +25,11 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.bulk.BulkWriteError;
+import com.mongodb.bulk.BulkWriteException;
+import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.bulk.BulkWriteUpsert;
+import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerVersion;
@@ -42,11 +47,6 @@ import com.mongodb.protocol.WriteProtocol;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.mongodb.BulkWriteError;
-import org.mongodb.BulkWriteException;
-import org.mongodb.BulkWriteResult;
-import org.mongodb.BulkWriteUpsert;
-import org.mongodb.WriteConcernError;
 import org.mongodb.WriteResult;
 
 import java.util.ArrayList;
@@ -137,7 +137,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
      *
      * @param binding the WriteBinding        for the operation
      * @return the bulk write result.
-     * @throws org.mongodb.BulkWriteException if a failure to complete the bulk write is detected based on the response from the server
+     * @throws com.mongodb.bulk.BulkWriteException if a failure to complete the bulk write is detected based on the response from the server
      * @throws MongoException     for general failures
      */
     @Override
@@ -170,7 +170,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
      *
      * @param binding the AsyncWriteBinding   for the operation
      * @return the future bulk write result.
-     * @throws org.mongodb.BulkWriteException if a failure to complete the bulk write is detected based on the response from the server
+     * @throws com.mongodb.bulk.BulkWriteException if a failure to complete the bulk write is detected based on the response from the server
      * @throws MongoException     for general failures
      */
     @Override

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.mongodb;
+package com.mongodb.bulk;
 
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;

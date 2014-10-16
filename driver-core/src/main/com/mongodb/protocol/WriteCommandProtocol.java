@@ -22,6 +22,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ResponseBuffers;
@@ -32,7 +33,6 @@ import com.mongodb.protocol.message.ReplyMessage;
 import com.mongodb.protocol.message.RequestMessage;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
-import org.mongodb.BulkWriteResult;
 
 import static com.mongodb.protocol.ProtocolHelper.getCommandFailureException;
 import static com.mongodb.protocol.ProtocolHelper.getMessageSettings;

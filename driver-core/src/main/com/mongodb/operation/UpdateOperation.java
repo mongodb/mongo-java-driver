@@ -18,11 +18,11 @@ package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.protocol.UpdateCommandProtocol;
 import com.mongodb.protocol.UpdateProtocol;
 import com.mongodb.protocol.WriteCommandProtocol;
 import com.mongodb.protocol.WriteProtocol;
-import org.mongodb.BulkWriteResult;
 
 import java.util.List;
 

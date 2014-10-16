@@ -22,6 +22,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.connection.Connection;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -29,7 +30,6 @@ import com.mongodb.operation.InsertRequest;
 import com.mongodb.operation.WriteRequest;
 import com.mongodb.protocol.message.InsertCommandMessage;
 import com.mongodb.protocol.message.MessageSettings;
-import org.mongodb.BulkWriteResult;
 
 import java.util.List;
 

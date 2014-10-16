@@ -18,13 +18,13 @@ package com.mongodb.protocol
 
 import com.mongodb.MongoInternalException
 import com.mongodb.ServerAddress
+import com.mongodb.bulk.BulkWriteError
+import com.mongodb.bulk.BulkWriteUpsert
+import com.mongodb.bulk.WriteConcernError
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
-import org.mongodb.BulkWriteError
-import org.mongodb.BulkWriteUpsert
-import org.mongodb.WriteConcernError
 import spock.lang.Specification
 
 import static com.mongodb.operation.WriteRequest.Type.DELETE

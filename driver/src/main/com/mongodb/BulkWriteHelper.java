@@ -27,7 +27,8 @@ import java.util.List;
 
 final class BulkWriteHelper {
 
-    static BulkWriteResult translateBulkWriteResult(final org.mongodb.BulkWriteResult bulkWriteResult, final Decoder<DBObject> decoder) {
+    static BulkWriteResult translateBulkWriteResult(final com.mongodb.bulk.BulkWriteResult bulkWriteResult,
+                                                    final Decoder<DBObject> decoder) {
         if (bulkWriteResult.isAcknowledged()) {
             Integer modifiedCount = (bulkWriteResult.isModifiedCountAvailable()) ? bulkWriteResult.getModifiedCount() : null;
             return new AcknowledgedBulkWriteResult(bulkWriteResult.getInsertedCount(), bulkWriteResult.getMatchedCount(),
@@ -38,32 +39,32 @@ final class BulkWriteHelper {
         }
     }
 
-    static List<BulkWriteUpsert> translateBulkWriteUpserts(final List<org.mongodb.BulkWriteUpsert> upserts,
+    static List<BulkWriteUpsert> translateBulkWriteUpserts(final List<com.mongodb.bulk.BulkWriteUpsert> upserts,
                                                            final Decoder<DBObject> decoder) {
         List<BulkWriteUpsert> retVal = new ArrayList<BulkWriteUpsert>(upserts.size());
-        for (org.mongodb.BulkWriteUpsert cur : upserts) {
+        for (com.mongodb.bulk.BulkWriteUpsert cur : upserts) {
             retVal.add(new com.mongodb.BulkWriteUpsert(cur.getIndex(), getUpsertedId(cur, decoder)));
         }
         return retVal;
     }
 
-    private static Object getUpsertedId(final org.mongodb.BulkWriteUpsert cur, final Decoder<DBObject> decoder) {
+    private static Object getUpsertedId(final com.mongodb.bulk.BulkWriteUpsert cur, final Decoder<DBObject> decoder) {
         return decoder.decode(new BsonDocumentReader(new BsonDocument("_id", cur.getId())), DecoderContext.builder().build()).get("_id");
     }
 
-    static BulkWriteException translateBulkWriteException(final org.mongodb.BulkWriteException e, final Decoder<DBObject> decoder) {
+    static BulkWriteException translateBulkWriteException(final com.mongodb.bulk.BulkWriteException e, final Decoder<DBObject> decoder) {
         return new BulkWriteException(translateBulkWriteResult(e.getWriteResult(), decoder), translateWriteErrors(e.getWriteErrors()),
                                       translateWriteConcernError(e.getWriteConcernError()), e.getServerAddress());
     }
 
-    static WriteConcernError translateWriteConcernError(final org.mongodb.WriteConcernError writeConcernError) {
+    static WriteConcernError translateWriteConcernError(final com.mongodb.bulk.WriteConcernError writeConcernError) {
         return writeConcernError == null ? null : new WriteConcernError(writeConcernError.getCode(), writeConcernError.getMessage(),
                                                                         DBObjects.toDBObject(writeConcernError.getDetails()));
     }
 
-    static List<BulkWriteError> translateWriteErrors(final List<org.mongodb.BulkWriteError> errors) {
+    static List<BulkWriteError> translateWriteErrors(final List<com.mongodb.bulk.BulkWriteError> errors) {
         List<BulkWriteError> retVal = new ArrayList<BulkWriteError>(errors.size());
-        for (org.mongodb.BulkWriteError cur : errors) {
+        for (com.mongodb.bulk.BulkWriteError cur : errors) {
             retVal.add(new BulkWriteError(cur.getCode(), cur.getMessage(), DBObjects.toDBObject(cur.getDetails()), cur.getIndex()));
         }
         return retVal;

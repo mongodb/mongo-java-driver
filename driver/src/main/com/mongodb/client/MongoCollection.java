@@ -19,6 +19,7 @@ package com.mongodb.client;
 import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.AggregateOptions;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
@@ -38,7 +39,6 @@ import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
-import org.mongodb.BulkWriteResult;
 
 import java.util.List;
 

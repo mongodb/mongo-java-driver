@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCollectionOptions;
 import com.mongodb.client.MongoIterable;
@@ -80,7 +81,6 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
-import org.mongodb.BulkWriteResult;
 import org.mongodb.WriteResult;
 
 import java.util.ArrayList;
