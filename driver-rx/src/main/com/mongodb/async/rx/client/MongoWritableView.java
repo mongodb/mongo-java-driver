@@ -16,8 +16,8 @@
 
 package com.mongodb.async.rx.client;
 
+import com.mongodb.WriteConcernResult;
 import org.bson.Document;
-import org.mongodb.WriteConcernResult;
 import rx.Observable;
 
 /**

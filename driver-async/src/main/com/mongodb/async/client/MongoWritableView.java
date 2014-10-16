@@ -16,9 +16,9 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.WriteConcernResult;
 import com.mongodb.async.MongoFuture;
 import org.bson.Document;
-import org.mongodb.WriteConcernResult;
 
 /**
  * Writable operations on a collection view.

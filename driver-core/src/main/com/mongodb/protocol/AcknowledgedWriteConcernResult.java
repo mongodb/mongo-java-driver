@@ -16,8 +16,8 @@
 
 package com.mongodb.protocol;
 
+import com.mongodb.WriteConcernResult;
 import org.bson.BsonValue;
-import org.mongodb.WriteConcernResult;
 
 /**
  * This class is not part of the public API.  It may change or be removed at any time.

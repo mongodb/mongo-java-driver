@@ -19,13 +19,13 @@ package com.mongodb.protocol;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.WriteConcernResult;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.Connection;
 import com.mongodb.protocol.message.RequestMessage;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
-import org.mongodb.WriteConcernResult;
 
 class WriteResultCallback extends CommandResultBaseCallback<BsonDocument> {
     private final SingleResultFuture<WriteConcernResult> future;

@@ -17,10 +17,10 @@
 package com.mongodb.async.rx.client;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.WriteConcernResult;
 import com.mongodb.async.client.MongoCollectionOptions;
 import org.bson.Document;
 import org.bson.codecs.Codec;
-import org.mongodb.WriteConcernResult;
 import rx.Observable;
 
 import java.util.List;
