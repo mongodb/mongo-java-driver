@@ -343,11 +343,12 @@ public class DBTest extends TestCase {
 
     @Test
     public void shouldDropItself() {
-        // given
+        // when
         String databaseName = "drop-test-" + System.nanoTime();
         DB db = getMongoClient().getDB(databaseName);
-        // creates the database in a much faster way than inserting something into it
-        db.getStats();
+        db.createCollection("drop-collection", new BasicDBObject());
+
+        // then
         assertThat(cleanupMongo.getDatabaseNames(), hasItem(databaseName));
 
         // when
