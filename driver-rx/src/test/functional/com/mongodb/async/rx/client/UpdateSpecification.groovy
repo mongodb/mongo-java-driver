@@ -17,7 +17,6 @@
 package com.mongodb.async.rx.client
 
 import org.bson.Document
-import org.mongodb.WriteConcernResult
 
 import static Fixture.get
 import static Fixture.getAsList
@@ -38,7 +37,7 @@ class UpdateSpecification extends FunctionalSpecification {
 
     def 'update with upsert should insert a single document if there are no matching documents'() {
         when:
-        WriteConcernResult result = get(collection.find(new Document('x', true)).upsert().update(new Document('$set', new Document('y', false))))
+        def result = get(collection.find(new Document('x', true)).upsert().update(new Document('$set', new Document('y', false))))
 
         then:
         getAsList(collection.find(new Document()).forEach()) ==

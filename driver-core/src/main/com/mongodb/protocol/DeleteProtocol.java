@@ -19,6 +19,7 @@ package com.mongodb.protocol;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.WriteConcernResult;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
@@ -29,7 +30,6 @@ import com.mongodb.operation.DeleteRequest;
 import com.mongodb.protocol.message.DeleteMessage;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
-import org.mongodb.WriteConcernResult;
 
 import java.util.List;
 

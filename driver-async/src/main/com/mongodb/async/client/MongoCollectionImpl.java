@@ -21,6 +21,7 @@ import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcernResult;
 import com.mongodb.async.MongoAsyncCursor;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
@@ -42,7 +43,6 @@ import org.bson.BsonDocumentWrapper;
 import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
-import org.mongodb.WriteConcernResult;
 
 import java.util.ArrayList;
 import java.util.Collection;

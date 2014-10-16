@@ -81,7 +81,6 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
-import org.mongodb.WriteConcernResult;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -23,6 +23,7 @@ import com.mongodb.MongoQueryFailureException;
 import com.mongodb.MongoWriteException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcernException;
+import com.mongodb.WriteConcernResult;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
@@ -32,7 +33,6 @@ import org.bson.BsonInt32;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.io.BsonOutput;
-import org.mongodb.WriteConcernResult;
 
 import java.util.Arrays;
 import java.util.List;

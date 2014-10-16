@@ -18,6 +18,7 @@ package com.mongodb.protocol;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.WriteConcernResult;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.ByteBufferBsonOutput;
@@ -31,7 +32,6 @@ import com.mongodb.protocol.message.RequestMessage;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
-import org.mongodb.WriteConcernResult;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.protocol.ProtocolHelper.encodeMessage;

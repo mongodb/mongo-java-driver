@@ -59,7 +59,6 @@ import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.Encoder;
 import org.bson.types.ObjectId;
-import org.mongodb.WriteConcernResult;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -314,7 +313,8 @@ public class DBCollection {
             return null;
         }
 
-        return translateWriteResult(writeConcernResult.getCount(), writeConcernResult.isUpdateOfExisting(), writeConcernResult.getUpsertedId());
+        return translateWriteResult(writeConcernResult.getCount(), writeConcernResult.isUpdateOfExisting(),
+                                    writeConcernResult.getUpsertedId());
     }
 
     private WriteResult translateWriteResult(final int count, final boolean isUpdateOfExisting, final BsonValue upsertedId) {
