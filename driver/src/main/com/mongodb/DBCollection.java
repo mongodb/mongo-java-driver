@@ -425,30 +425,16 @@ public class DBCollection {
             throw new IllegalArgumentException("update query can not be null");
         }
 
-        try {
-            if (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")) {
-                UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, encoder),
-                                                                com.mongodb.operation.WriteRequest.Type.UPDATE).upsert(upsert).multi(multi);
+        if (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")) {
+            UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, encoder),
+                                                            com.mongodb.operation.WriteRequest.Type.UPDATE).upsert(upsert).multi(multi);
 
-                return executeWriteOperation(new UpdateOperation(getNamespace(), false, aWriteConcern, asList(updateRequest)));
-            } else {
-                UpdateRequest replaceRequest = new UpdateRequest(wrap(query), wrap(update, encoder),
-                                                                 com.mongodb.operation.WriteRequest.Type.REPLACE)
-                                                   .upsert(upsert);
-                return executeWriteOperation(new UpdateOperation(getNamespace(), true, aWriteConcern, asList(replaceRequest)));
-            }
-        } catch (WriteConcernException e) {
-            if (e.getWriteResult().getUpsertedId() != null && e.getWriteResult().getUpsertedId() instanceof BsonValue) {
-                WriteConcernException translatedException =
-                    new WriteConcernException(e.getResponse(), e.getServerAddress(),
-                                              translateWriteResult(e.getWriteResult().getN(),
-                                                                   e.getWriteResult().isUpdateOfExisting(),
-                                                                   (BsonValue) e.getWriteResult().getUpsertedId()));
-                translatedException.setStackTrace(e.getStackTrace());
-                throw translatedException;
-            } else {
-                throw e;
-            }
+            return executeWriteOperation(new UpdateOperation(getNamespace(), false, aWriteConcern, asList(updateRequest)));
+        } else {
+            UpdateRequest replaceRequest = new UpdateRequest(wrap(query), wrap(update, encoder),
+                                                             com.mongodb.operation.WriteRequest.Type.REPLACE)
+                                           .upsert(upsert);
+            return executeWriteOperation(new UpdateOperation(getNamespace(), true, aWriteConcern, asList(replaceRequest)));
         }
     }
 

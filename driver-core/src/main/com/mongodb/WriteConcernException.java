@@ -24,19 +24,18 @@ import org.bson.BsonDocument;
 public class WriteConcernException extends MongoWriteException {
     private static final long serialVersionUID = 841056799207039974L;
 
-    private final WriteResult writeResult;
-
+    private final WriteConcernResult writeConcernResult;
 
     /**
      * Construct a new instance.
      *
      * @param response the response to the write operation
      * @param address the address of the server that executed the operation
-     * @param writeResult the result of the write operation
+     * @param writeConcernResult the write concern result
      */
-    public WriteConcernException(final BsonDocument response, final ServerAddress address, final WriteResult writeResult) {
+    public WriteConcernException(final BsonDocument response, final ServerAddress address, final WriteConcernResult writeConcernResult) {
         super(response, address);
-        this.writeResult = writeResult;
+        this.writeConcernResult = writeConcernResult;
     }
 
     /**
@@ -44,7 +43,7 @@ public class WriteConcernException extends MongoWriteException {
      *
      * @return the write result
      */
-    public WriteResult getWriteResult() {
-        return writeResult;
+    public WriteConcernResult getWriteConcernResult() {
+        return writeConcernResult;
     }
 }

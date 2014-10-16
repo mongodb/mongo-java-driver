@@ -20,7 +20,7 @@ package com.mongodb;
  * This exception is thrown if the application attempts to get information about the result of an unacknowledged write.
  *
  * @see WriteConcern#UNACKNOWLEDGED
- * @see WriteResult
+ * @see WriteConcernResult
  * @since 2.12
  */
 public class UnacknowledgedWriteException extends MongoClientException {
