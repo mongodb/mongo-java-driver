@@ -17,12 +17,12 @@
 package com.mongodb.protocol;
 
 import org.bson.BsonValue;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 
 /**
  * This class is not part of the public API.  It may change or be removed at any time.
  */
-public class AcknowledgedWriteResult implements WriteResult {
+public class AcknowledgedWriteConcernResult implements WriteConcernResult {
     private final int documentsAffectedCount;
     private final boolean isUpdateOfExisting;
     private final BsonValue upsertedId;
@@ -34,7 +34,7 @@ public class AcknowledgedWriteResult implements WriteResult {
      * @param isUpdateOfExisting whether an existing document was updated
      * @param upsertedId if an upsert resulted in an inserted document, this is the _id of that document.  This may be null
      */
-    public AcknowledgedWriteResult(final int count, final boolean isUpdateOfExisting, final BsonValue upsertedId) {
+    public AcknowledgedWriteConcernResult(final int count, final boolean isUpdateOfExisting, final BsonValue upsertedId) {
         this.documentsAffectedCount = count;
         this.isUpdateOfExisting = isUpdateOfExisting;
         this.upsertedId = upsertedId;
@@ -69,7 +69,7 @@ public class AcknowledgedWriteResult implements WriteResult {
             return false;
         }
 
-        AcknowledgedWriteResult that = (AcknowledgedWriteResult) o;
+        AcknowledgedWriteConcernResult that = (AcknowledgedWriteConcernResult) o;
 
         if (documentsAffectedCount != that.documentsAffectedCount) {
             return false;

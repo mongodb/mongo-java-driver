@@ -29,7 +29,7 @@ import com.mongodb.operation.DeleteRequest;
 import com.mongodb.protocol.message.DeleteMessage;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 
 import java.util.List;
 
@@ -61,22 +61,22 @@ public class DeleteProtocol extends WriteProtocol {
     }
 
     @Override
-    public WriteResult execute(final Connection connection) {
+    public WriteConcernResult execute(final Connection connection) {
         LOGGER.debug(format("Deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
                             connection.getId(), connection.getServerAddress()));
-        WriteResult writeResult = super.execute(connection);
+        WriteConcernResult writeConcernResult = super.execute(connection);
         LOGGER.debug("Delete completed");
-        return writeResult;
+        return writeConcernResult;
     }
 
     @Override
-    public MongoFuture<WriteResult> executeAsync(final Connection connection) {
+    public MongoFuture<WriteConcernResult> executeAsync(final Connection connection) {
         LOGGER.debug(format("Asynchronously deleting documents in namespace %s on connection [%s] to server %s", getNamespace(),
                             connection.getId(), connection.getServerAddress()));
-        final SingleResultFuture<WriteResult> future = new SingleResultFuture<WriteResult>();
-        super.executeAsync(connection).register(new SingleResultCallback<WriteResult>() {
+        final SingleResultFuture<WriteConcernResult> future = new SingleResultFuture<WriteConcernResult>();
+        super.executeAsync(connection).register(new SingleResultCallback<WriteConcernResult>() {
             @Override
-            public void onResult(final WriteResult result, final MongoException e) {
+            public void onResult(final WriteConcernResult result, final MongoException e) {
                 if (e == null) {
                     LOGGER.debug("Asynchronous delete completed");
                 }

@@ -17,7 +17,7 @@
 package com.mongodb.async.rx.client;
 
 import org.bson.Document;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 import rx.Observable;
 
 /**
@@ -35,7 +35,7 @@ public interface MongoWritableView<T> {
      * @return an Observable representing the completion of the replace. It will report exactly one event when the command completes
      * successfully.
      */
-    Observable<WriteResult> replace(T replacement);
+    Observable<WriteConcernResult> replace(T replacement);
 
 
     /**
@@ -45,7 +45,7 @@ public interface MongoWritableView<T> {
      * @return an Observable representing the completion of the update. It will report exactly one event when the command completes
      * successfully.
      */
-    Observable<WriteResult> update(Document updateOperations);
+    Observable<WriteConcernResult> update(Document updateOperations);
 
     /**
      /**
@@ -55,7 +55,7 @@ public interface MongoWritableView<T> {
      * @return an Observable representing the completion of the update. It will report exactly one event when the command completes
      * successfully.
      */
-    Observable<WriteResult> updateOne(Document updateOperations);
+    Observable<WriteConcernResult> updateOne(Document updateOperations);
 
     /**
      * Removes all the documents in the underlying collection matching the filter criteria in the view.
@@ -63,7 +63,7 @@ public interface MongoWritableView<T> {
      * @return an Observable representing the completion of the update. It will report exactly one event when the command completes
      * successfully.
      */
-    Observable<WriteResult> remove();
+    Observable<WriteConcernResult> remove();
 
     /**
      * Removes one document in the underlying collection matching the filter criteria in the view.
@@ -71,5 +71,5 @@ public interface MongoWritableView<T> {
      * @return an Observable representing the completion of the update. It will report exactly one event when the command completes
      * successfully.
      */
-    Observable<WriteResult> removeOne();
+    Observable<WriteConcernResult> removeOne();
 }

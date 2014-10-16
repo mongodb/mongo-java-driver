@@ -25,10 +25,10 @@ import com.mongodb.connection.Connection;
 import com.mongodb.protocol.message.RequestMessage;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 
 class WriteResultCallback extends CommandResultBaseCallback<BsonDocument> {
-    private final SingleResultFuture<WriteResult> future;
+    private final SingleResultFuture<WriteConcernResult> future;
     private final MongoNamespace namespace;
     private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
     private boolean ordered;
@@ -36,7 +36,7 @@ class WriteResultCallback extends CommandResultBaseCallback<BsonDocument> {
     private final Connection connection;
 
     // CHECKSTYLE:OFF
-    public WriteResultCallback(final SingleResultFuture<WriteResult> future, final Decoder<BsonDocument> decoder,
+    public WriteResultCallback(final SingleResultFuture<WriteConcernResult> future, final Decoder<BsonDocument> decoder,
                                final MongoNamespace namespace, final RequestMessage nextMessage,
                                final boolean ordered, final WriteConcern writeConcern, final long requestId,
                                final Connection connection) {
@@ -57,14 +57,14 @@ class WriteResultCallback extends CommandResultBaseCallback<BsonDocument> {
             future.init(null, e);
         } else {
             try {
-                WriteResult writeResult = ProtocolHelper.getWriteResult(result, connection.getServerAddress());
+                WriteConcernResult writeConcernResult = ProtocolHelper.getWriteResult(result, connection.getServerAddress());
                 if (nextMessage != null) {
-                    MongoFuture<WriteResult> newFuture = new GenericWriteProtocol(namespace, nextMessage, ordered, writeConcern)
+                    MongoFuture<WriteConcernResult> newFuture = new GenericWriteProtocol(namespace, nextMessage, ordered, writeConcern)
                                                          .executeAsync(connection);
-                    newFuture.register(new SingleResultFutureCallback<WriteResult>(future));
+                    newFuture.register(new SingleResultFutureCallback<WriteConcernResult>(future));
                     done = false;
                 } else {
-                    future.init(writeResult, null);
+                    future.init(writeConcernResult, null);
                 }
             } catch (MongoException writeException) {
                 future.init(null, writeException);

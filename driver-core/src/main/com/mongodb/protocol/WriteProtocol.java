@@ -31,7 +31,7 @@ import com.mongodb.protocol.message.RequestMessage;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.protocol.ProtocolHelper.encodeMessage;
@@ -44,7 +44,7 @@ import static java.lang.String.format;
  *
  * @since 3.0
  */
-public abstract class WriteProtocol implements Protocol<WriteResult> {
+public abstract class WriteProtocol implements Protocol<WriteConcernResult> {
 
     private final MongoNamespace namespace;
     private final boolean ordered;
@@ -64,13 +64,13 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
     }
 
     @Override
-    public WriteResult execute(final Connection connection) {
+    public WriteConcernResult execute(final Connection connection) {
         return receiveMessage(connection, sendMessage(connection));
     }
 
     @Override
-    public MongoFuture<WriteResult> executeAsync(final Connection connection) {
-        SingleResultFuture<WriteResult> retVal = new SingleResultFuture<WriteResult>();
+    public MongoFuture<WriteConcernResult> executeAsync(final Connection connection) {
+        SingleResultFuture<WriteConcernResult> retVal = new SingleResultFuture<WriteConcernResult>();
 
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         RequestMessage requestMessage = createRequestMessage(getMessageSettings(connection.getDescription()));
@@ -82,7 +82,7 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
                                                                     getMessageSettings(connection.getDescription()));
             encodeMessage(getLastErrorMessage, bsonOutput);
             connection.sendMessageAsync(bsonOutput.getByteBuffers(), getLastErrorMessage.getId(),
-                                        new SendMessageCallback<WriteResult>(connection,
+                                        new SendMessageCallback<WriteConcernResult>(connection,
                                                                              bsonOutput,
                                                                              getLastErrorMessage.getId(),
                                                                              retVal,
@@ -141,9 +141,9 @@ public abstract class WriteProtocol implements Protocol<WriteResult> {
         return command;
     }
 
-    private WriteResult receiveMessage(final Connection connection, final RequestMessage requestMessage) {
+    private WriteConcernResult receiveMessage(final Connection connection, final RequestMessage requestMessage) {
         if (requestMessage == null) {
-            return new UnacknowledgedWriteResult();
+            return new UnacknowledgedWriteConcernResult();
         }
         ResponseBuffers responseBuffers = connection.receiveMessage(requestMessage.getId());
         try {

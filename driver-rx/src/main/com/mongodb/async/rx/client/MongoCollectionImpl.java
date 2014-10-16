@@ -24,7 +24,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.MongoCollectionOptions;
 import org.bson.Document;
 import org.bson.codecs.Codec;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 import rx.Observable;
 import rx.Subscriber;
 
@@ -66,30 +66,30 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public Observable<WriteResult> insert(final T document) {
-        return Observable.create(new OnSubscribeAdapter<WriteResult>(new FutureFunction<WriteResult>() {
+    public Observable<WriteConcernResult> insert(final T document) {
+        return Observable.create(new OnSubscribeAdapter<WriteConcernResult>(new FutureFunction<WriteConcernResult>() {
             @Override
-            public MongoFuture<WriteResult> apply() {
+            public MongoFuture<WriteConcernResult> apply() {
                 return wrapped.insert(document);
             }
         }));
     }
 
     @Override
-    public Observable<WriteResult> insert(final List<T> documents) {
-        return Observable.create(new OnSubscribeAdapter<WriteResult>(new FutureFunction<WriteResult>() {
+    public Observable<WriteConcernResult> insert(final List<T> documents) {
+        return Observable.create(new OnSubscribeAdapter<WriteConcernResult>(new FutureFunction<WriteConcernResult>() {
             @Override
-            public MongoFuture<WriteResult> apply() {
+            public MongoFuture<WriteConcernResult> apply() {
                 return wrapped.insert(documents);
             }
         }));
     }
 
     @Override
-    public Observable<WriteResult> save(final T document) {
-        return Observable.create(new OnSubscribeAdapter<WriteResult>(new FutureFunction<WriteResult>() {
+    public Observable<WriteConcernResult> save(final T document) {
+        return Observable.create(new OnSubscribeAdapter<WriteConcernResult>(new FutureFunction<WriteConcernResult>() {
             @Override
-            public MongoFuture<WriteResult> apply() {
+            public MongoFuture<WriteConcernResult> apply() {
                 return wrapped.save(document);
             }
         }));
@@ -188,50 +188,50 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
         }
 
         @Override
-        public Observable<WriteResult> replace(final T replacement) {
-            return Observable.create(new OnSubscribeAdapter<WriteResult>(new FutureFunction<WriteResult>() {
+        public Observable<WriteConcernResult> replace(final T replacement) {
+            return Observable.create(new OnSubscribeAdapter<WriteConcernResult>(new FutureFunction<WriteConcernResult>() {
                 @Override
-                public MongoFuture<WriteResult> apply() {
+                public MongoFuture<WriteConcernResult> apply() {
                     return wrappedView.replace(replacement);
                 }
             }));
         }
 
         @Override
-        public Observable<WriteResult> update(final Document updateOperations) {
-            return Observable.create(new OnSubscribeAdapter<WriteResult>(new FutureFunction<WriteResult>() {
+        public Observable<WriteConcernResult> update(final Document updateOperations) {
+            return Observable.create(new OnSubscribeAdapter<WriteConcernResult>(new FutureFunction<WriteConcernResult>() {
                 @Override
-                public MongoFuture<WriteResult> apply() {
+                public MongoFuture<WriteConcernResult> apply() {
                     return wrappedView.update(updateOperations);
                 }
             }));
         }
 
         @Override
-        public Observable<WriteResult> updateOne(final Document updateOperations) {
-            return Observable.create(new OnSubscribeAdapter<WriteResult>(new FutureFunction<WriteResult>() {
+        public Observable<WriteConcernResult> updateOne(final Document updateOperations) {
+            return Observable.create(new OnSubscribeAdapter<WriteConcernResult>(new FutureFunction<WriteConcernResult>() {
                 @Override
-                public MongoFuture<WriteResult> apply() {
+                public MongoFuture<WriteConcernResult> apply() {
                     return wrappedView.updateOne(updateOperations);
                 }
             }));
         }
 
         @Override
-        public Observable<WriteResult> remove() {
-            return Observable.create(new OnSubscribeAdapter<WriteResult>(new FutureFunction<WriteResult>() {
+        public Observable<WriteConcernResult> remove() {
+            return Observable.create(new OnSubscribeAdapter<WriteConcernResult>(new FutureFunction<WriteConcernResult>() {
                 @Override
-                public MongoFuture<WriteResult> apply() {
+                public MongoFuture<WriteConcernResult> apply() {
                     return wrappedView.remove();
                 }
             }));
         }
 
         @Override
-        public Observable<WriteResult> removeOne() {
-            return Observable.create(new OnSubscribeAdapter<WriteResult>(new FutureFunction<WriteResult>() {
+        public Observable<WriteConcernResult> removeOne() {
+            return Observable.create(new OnSubscribeAdapter<WriteConcernResult>(new FutureFunction<WriteConcernResult>() {
                 @Override
-                public MongoFuture<WriteResult> apply() {
+                public MongoFuture<WriteConcernResult> apply() {
                     return wrappedView.removeOne();
                 }
             }));

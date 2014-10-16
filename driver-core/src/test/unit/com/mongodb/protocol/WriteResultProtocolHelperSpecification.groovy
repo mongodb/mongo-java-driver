@@ -39,7 +39,7 @@ class WriteResultProtocolHelperSpecification extends Specification {
         def writeResult = ProtocolHelper.getWriteResult(result, new ServerAddress())
 
         then:
-        writeResult == new AcknowledgedWriteResult(0, false, null)
+        writeResult == new AcknowledgedWriteConcernResult(0, false, null)
 
     }
 
@@ -53,7 +53,7 @@ class WriteResultProtocolHelperSpecification extends Specification {
         def writeResult = ProtocolHelper.getWriteResult(result, new ServerAddress())
 
         then:
-        writeResult == new AcknowledgedWriteResult(1, false, new BsonObjectId(id))
+        writeResult == new AcknowledgedWriteConcernResult(1, false, new BsonObjectId(id))
 
     }
 

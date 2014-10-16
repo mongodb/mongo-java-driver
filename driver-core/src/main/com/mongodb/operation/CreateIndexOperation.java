@@ -34,7 +34,7 @@ import org.bson.BsonDouble;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
@@ -480,9 +480,9 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
                             }
                         });
                 } else {
-                    asInsertProtocol(getIndex()).executeAsync(connection).register(new SingleResultCallback<WriteResult>() {
+                    asInsertProtocol(getIndex()).executeAsync(connection).register(new SingleResultCallback<WriteConcernResult>() {
                         @Override
-                        public void onResult(final WriteResult result, final MongoException e) {
+                        public void onResult(final WriteConcernResult result, final MongoException e) {
                             future.init(null, translateException(e));
                         }
                     });

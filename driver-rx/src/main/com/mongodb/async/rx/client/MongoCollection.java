@@ -20,7 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.async.client.MongoCollectionOptions;
 import org.bson.Document;
 import org.bson.codecs.Codec;
-import org.mongodb.WriteResult;
+import org.mongodb.WriteConcernResult;
 import rx.Observable;
 
 import java.util.List;
@@ -69,7 +69,7 @@ public interface MongoCollection<T> {
      * @return an Observable representing the completion of the insert. It will report exactly one event when the command completes
      * successfully.
      */
-    Observable<WriteResult> insert(T document);
+    Observable<WriteConcernResult> insert(T document);
 
     /**
      * Insert the documents into the collection.
@@ -78,7 +78,7 @@ public interface MongoCollection<T> {
      * @return an Observable representing the completion of the insert. It will report exactly one event when the command completes
      * successfully.
      */
-    Observable<WriteResult> insert(List<T> documents);
+    Observable<WriteConcernResult> insert(List<T> documents);
 
     /**
      * Saves a document into the collection.  If the document has no id, it is inserted.  Otherwise,
@@ -88,7 +88,7 @@ public interface MongoCollection<T> {
      * @return an Observable representing the completion of the save. It will report exactly one event when the command completes
      * successfully.
      */
-    Observable<WriteResult> save(T document);
+    Observable<WriteConcernResult> save(T document);
 
     /**
      * @return the CollectionAdministration that provides admin methods that can be performed
