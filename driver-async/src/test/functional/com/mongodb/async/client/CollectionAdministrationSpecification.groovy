@@ -94,7 +94,7 @@ class CollectionAdministrationSpecification extends FunctionalSpecification {
     def 'rename collection should rename the collection name'() {
 
         given:
-        def newCollectionName = 'NewCollection1234'
+        def newCollectionName = getCollectionName() + '.new'
         def client = getMongoClient()
         def database = client.getDatabase(databaseName)
 
