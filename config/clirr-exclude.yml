@@ -15,6 +15,7 @@ classes:
 - org.bson.util.annotations.Immutable              # JAVA-874
 - org.bson.util.annotations.NotThreadSafe          # JAVA-874
 - org.bson.util.annotations.ThreadSafe             # JAVA-874
+- com.mongodb.DBRefBase                            # JAVA-1505
 - com.mongodb.util.Args                            # JAVA-874
 - com.mongodb.util.Base64Codec                     # JAVA-874
 - com.mongodb.util.FastStack                       # JAVA-874
@@ -357,3 +358,8 @@ members:
   com.mongodb.LazyWriteableDBObject:
    - LazyWriteableDBObject(org.bson.io.BSONByteBuffer,org.bson.LazyBSONCallback)        # JAVA-1482
    - LazyWriteableDBObject(org.bson.io.BSONByteBuffer,int,org.bson.LazyBSONCallback)    # JAVA-1482
+
+  com.mongodb.DBRef:                                         # JAVA-1506
+  - DBRef(com.mongodb.DB,org.bson.BSONObject)
+  - DBRef(com.mongodb.DB,java.lang.String,java.lang.Object)
+  - fetch(com.mongodb.DB,com.mongodb.DBObject)

@@ -33,7 +33,7 @@ class LazyDBObjectSpecification extends FunctionalSpecification {
 
         then:
         document.get('f') instanceof DBRef
-        document.get('f') == new DBRef(database, 'a.b', new ObjectId('123456789012345678901234'))
+        document.get('f') == new DBRef('a.b', new ObjectId('123456789012345678901234'))
 
     }
 }

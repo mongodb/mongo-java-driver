@@ -192,7 +192,7 @@ public class Bytes extends BSON {
             return REGEX;
         }
 
-        if (object instanceof DBObject || object instanceof DBRefBase) {
+        if (object instanceof DBObject || object instanceof DBRef) {
             return OBJECT;
         }
 

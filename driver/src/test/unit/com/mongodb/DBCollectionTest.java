@@ -609,7 +609,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         doc.append("jsWithScope", new CodeWScope("code", new BasicDBObject()));
         doc.append("null", null);
         doc.append("uuid", UUID.randomUUID());
-        doc.append("db ref", new com.mongodb.DBRef(collection.getDB(), "test", new ObjectId()));
+        doc.append("db ref", new com.mongodb.DBRef("test", new ObjectId()));
         doc.append("binary", new Binary((byte) 42, new byte[]{10, 11, 12}));
         doc.append("byte array", new byte[]{1, 2, 3});
         doc.append("int array", new int[]{4, 5, 6});

@@ -24,11 +24,7 @@ import java.util.List;
 
 public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
 
-    //not private, because required by LazyWriteableDBCallback.
-    final DB db;
-
     public LazyDBCallback(final DBCollection collection) {
-        this.db = collection == null ? null : collection.getDB();
     }
 
     @Override
@@ -36,7 +32,7 @@ public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
         LazyDBObject document = new LazyDBObject(bytes, offset, this);
         Iterator<String> iterator = document.keySet().iterator();
         if (iterator.hasNext() && iterator.next().equals("$ref") && iterator.hasNext() && iterator.next().equals("$id")) {
-            return new DBRef(db, document);
+            return new DBRef((String) document.get("$ref"), document.get("$id"));
         }
         return document;
     }
@@ -49,6 +45,6 @@ public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
 
     @Override
     public Object createDBRef(final String ns, final ObjectId id) {
-        return new DBRef(db, ns, id);
+        return new DBRef(ns, id);
     }
 }

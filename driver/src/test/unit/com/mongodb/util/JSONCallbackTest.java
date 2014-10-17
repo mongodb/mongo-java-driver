@@ -19,11 +19,11 @@ package com.mongodb.util;
 import com.mongodb.DBObject;
 import com.mongodb.DBRef;
 import org.bson.BSON;
+import org.bson.BsonUndefined;
 import org.bson.Transformer;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
-import org.bson.BsonUndefined;
 import org.junit.Test;
 
 import java.text.ParsePosition;
@@ -116,7 +116,7 @@ public class JSONCallbackTest {
     @Test
     public void refParsing() {
         DBRef ref = (DBRef) JSON.parse(("{ \"$ref\" : \"friends\", \"$id\" : { \"$oid\" : \"01234567890123456789abcd\" } }"));
-        assertEquals("friends", ref.getRef());
+        assertEquals("friends", ref.getCollectionName());
         assertEquals(new ObjectId("01234567890123456789abcd"), ref.getId());
     }
 

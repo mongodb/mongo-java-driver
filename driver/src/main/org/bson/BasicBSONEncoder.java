@@ -16,7 +16,7 @@
 
 package org.bson;
 
-import com.mongodb.DBRefBase;
+import com.mongodb.DBRef;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.types.BSONTimestamp;
@@ -187,10 +187,10 @@ public class BasicBSONEncoder implements BSONEncoder {
             putCodeWScope(name, (CodeWScope) value);
         } else if (value instanceof Code) {
             putCode(name, (Code) value);
-        } else if (value instanceof DBRefBase) {
+        } else if (value instanceof DBRef) {
             BSONObject temp = new BasicBSONObject();
-            temp.put("$ref", ((DBRefBase) value).getRef());
-            temp.put("$id", ((DBRefBase) value).getId());
+            temp.put("$ref", ((DBRef) value).getCollectionName());
+            temp.put("$id", ((DBRef) value).getId());
             putObject(name, temp);
         } else if (value instanceof MinKey) {
             putMinKey(name);

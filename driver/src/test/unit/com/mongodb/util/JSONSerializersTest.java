@@ -17,7 +17,8 @@
 package com.mongodb.util;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.DBRefBase;
+import com.mongodb.DBRef;
+import org.bson.BsonUndefined;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
@@ -26,7 +27,6 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
-import org.bson.BsonUndefined;
 import org.junit.Test;
 
 import javax.xml.bind.DatatypeConverter;
@@ -117,7 +117,7 @@ public class JSONSerializersTest {
         // test  DB_OBJECT implicit in preceding tests
 
         // test  DB_REF_BASE
-        DBRefBase dbref = new DBRefBase(null, "test.test", "4d83ab59a39562db9c1ae2af");
+        DBRef dbref = new com.mongodb.DBRef("test.test", "4d83ab59a39562db9c1ae2af");
         buf = new StringBuilder();
         serializer.serialize(dbref, buf);
         assertEquals("{ \"$ref\" : \"test.test\" , \"$id\" : \"4d83ab59a39562db9c1ae2af\"}", buf.toString());

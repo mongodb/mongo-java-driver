@@ -24,7 +24,7 @@ public class DefaultDBDecoderTest extends DatabaseTestCase {
 
     @Test
     public void testDecodingDBRef() {
-        DBObject dbObject = new BasicDBObject("r", new DBRef(database, "test", 1));
+        DBObject dbObject = new BasicDBObject("r", new DBRef("test", 1));
         byte[] bytes = {37, 0, 0, 0, 3, 114, 0, 29, 0, 0, 0, 2, 36, 114, 101, 102, 0, 5, 0, 0, 0, 116, 101, 115, 116, 0, 16, 36, 105, 100,
                         0, 1, 0, 0, 0, 0, 0};
         DBObject o = new DefaultDBDecoder().decode(bytes, collection);

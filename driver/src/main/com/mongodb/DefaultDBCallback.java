@@ -29,7 +29,6 @@ import java.util.List;
  */
 public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
 
-    private final DB db;
     private final DBObjectFactory objectFactory;
 
     /**
@@ -40,10 +39,8 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
      */
     public DefaultDBCallback(final DBCollection collection) {
         if (collection != null) {
-            this.db = collection.getDB();
             this.objectFactory = collection.getObjectFactory();
         } else {
-            this.db = null;
             this.objectFactory = new DBCollectionObjectFactory();
         }
     }
@@ -60,7 +57,7 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
 
     @Override
     public void gotDBRef(final String name, final String namespace, final ObjectId id) {
-        _put(name, new DBRef(db, namespace, id));
+        _put(name, new DBRef(namespace, id));
     }
 
     @Override
@@ -68,9 +65,8 @@ public class DefaultDBCallback extends BasicBSONCallback implements DBCallback {
         String name = curName();
         BSONObject document = (BSONObject) super.objectDone();
         Iterator<String> iterator = document.keySet().iterator();
-        if (iterator.hasNext() && iterator.next().equals("$ref")
-            && iterator.hasNext() && iterator.next().equals("$id")) {
-            _put(name, new DBRef(db, document));
+        if (iterator.hasNext() && iterator.next().equals("$ref") && iterator.hasNext() && iterator.next().equals("$id")) {
+            _put(name, new DBRef((String) document.get("$ref"), document.get("$id")));
         }
 
         return document;

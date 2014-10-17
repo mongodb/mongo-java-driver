@@ -260,7 +260,7 @@ public class LazyDBObjectOldTest extends DatabaseTestCase {
         /*
         b.append( "code_scoped", new CodeWScope( "return x * 500;", test_doc ) );*/
         b.append("str", "foobarbaz");
-        b.append("ref", new DBRef(database, "testRef", referenceId));
+        b.append("ref", new DBRef("testRef", referenceId));
         b.append("object", document);
         b.append("array", array);
         b.append("binary", binary);

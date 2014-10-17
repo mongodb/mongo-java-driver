@@ -116,7 +116,7 @@ public class JSONCallback extends BasicBSONCallback {
                 o = new Code((String) b.get("$code"));
             }
         } else if (b.containsField("$ref")) {
-            o = new DBRef(null, (String) b.get("$ref"), b.get("$id"));
+            o = new DBRef((String) b.get("$ref"), b.get("$id"));
         } else if (b.containsField("$minKey")) {
             o = new MinKey();
         } else if (b.containsField("$maxKey")) {

@@ -33,14 +33,13 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 public class DBRefOldTest extends DatabaseTestCase {
 
     @Test
     public void testEqualsAndHashCode() {
-        DBRef referenceA = new DBRef(database, "foo.bar", 4);
-        DBRef referenceB = new DBRef(null, "foo.bar", 4);
+        DBRef referenceA = new DBRef("foo.bar", 4);
+        DBRef referenceB = new DBRef("foo.bar", 4);
         assertEquals(referenceA, referenceA);
         assertEquals(referenceA, referenceB);
         assertEquals(referenceA.hashCode(), referenceB.hashCode());
@@ -49,14 +48,14 @@ public class DBRefOldTest extends DatabaseTestCase {
     @Test
     public void testToString() {
         ObjectId id = new ObjectId("123456789012345678901234");
-        DBRef ref = new DBRef(database, "foo.bar", id);
+        DBRef ref = new DBRef("foo.bar", id);
 
         assertEquals("{ \"$ref\" : \"foo.bar\", \"$id\" : \"123456789012345678901234\" }", ref.toString());
     }
 
     @Test
     public void testDBRef() {
-        DBRef reference = new DBRef(database, "hello", "world");
+        DBRef reference = new DBRef("hello", "world");
         DBObject document = new BasicDBObject("!", reference);
 
         DBEncoder encoder = DefaultDBEncoder.FACTORY.create();
@@ -72,35 +71,15 @@ public class DBRefOldTest extends DatabaseTestCase {
         assertEquals("{\"!\":{\"$ref\":\"hello\",\"$id\":\"world\"}}", read.toString().replaceAll(" +", ""));
     }
 
-    @Test
-    public void testDBRefFetches() {
-        DBCollection coll = database.getCollection("x");
-        coll.drop();
-
-        BasicDBObject obj = new BasicDBObject("_id", 321325243);
-        coll.save(obj);
-
-        DBRef ref = new DBRef(database, "x", 321325243);
-        DBObject deref = ref.fetch();
-
-        assertTrue(deref != null);
-        assertEquals(321325243, ((Number) deref.get("_id")).intValue());
-
-        DBObject refobj = new BasicDBObject().append("$ref", "x").append("$id", 321325243);
-        deref = DBRef.fetch(database, refobj);
-
-        assertTrue(deref != null);
-        assertEquals(321325243, ((Number) deref.get("_id")).intValue());
-    }
 
     @SuppressWarnings("unchecked")
     @Test
     public void testRefListRoundTrip() {
         DBCollection a = database.getCollection("reflistfield");
         List<DBRef> refs = new ArrayList<DBRef>();
-        refs.add(new DBRef(database, "other", 12));
-        refs.add(new DBRef(database, "other", 14));
-        refs.add(new DBRef(database, "other", 16));
+        refs.add(new DBRef("other", 12));
+        refs.add(new DBRef("other", 14));
+        refs.add(new DBRef("other", 16));
         a.save(new BasicDBObject("refs", refs));
 
         DBObject loaded = a.findOne();
@@ -124,17 +103,15 @@ public class DBRefOldTest extends DatabaseTestCase {
         b.drop();
 
         a.save(new BasicDBObject("_id", 17).append("n", 111));
-        b.save(new BasicDBObject("n", 12).append("l", new DBRef(database, "refroundtripa", 17)));
+        b.save(new BasicDBObject("n", 12).append("l", new DBRef("refroundtripa", 17)));
 
         assertEquals(12, b.findOne().get("n"));
         assertEquals(DBRef.class, b.findOne().get("l").getClass());
-        assertEquals(111, ((DBRef) (b.findOne().get("l"))).fetch().get("n"));
-
     }
 
     @Test
     public void testFindByDBRef() {
-        DBRef ref = new DBRef(database, "fake", 17);
+        DBRef ref = new DBRef("fake", 17);
 
         collection.save(new BasicDBObject("n", 12).append("l", ref));
 
@@ -145,8 +122,7 @@ public class DBRefOldTest extends DatabaseTestCase {
         assertEquals(12, loaded.get("n"));
         assertEquals(DBRef.class, loaded.get("l").getClass());
         assertEquals(ref.getId(), ((DBRef) loaded.get("l")).getId());
-        assertEquals(ref.getRef(), ((DBRef) loaded.get("l")).getRef());
-        assertEquals(ref.getDB(), ((DBRef) loaded.get("l")).getDB());
+        assertEquals(ref.getCollectionName(), ((DBRef) loaded.get("l")).getCollectionName());
     }
 
     @Test
@@ -155,7 +131,7 @@ public class DBRefOldTest extends DatabaseTestCase {
         a.drop();
 
         BasicDBObject compoundId = new BasicDBObject("name", "someName").append("email", "test@example.com");
-        BasicDBObject entity = new BasicDBObject("_id", "testId").append("ref", new DBRef(database, "fake", compoundId));
+        BasicDBObject entity = new BasicDBObject("_id", "testId").append("ref", new DBRef("fake", compoundId));
         a.save(entity);
 
         DBObject fetched = a.findOne(new BasicDBObject("_id", "testId"));
@@ -173,8 +149,8 @@ public class DBRefOldTest extends DatabaseTestCase {
         BasicDBObject compoundId1 = new BasicDBObject("name", "someName").append("email", "test@example.com");
         BasicDBObject compoundId2 = new BasicDBObject("name", "someName2").append("email", "test2@example.com");
         BasicDBList listOfRefs = new BasicDBList();
-        listOfRefs.add(new DBRef(database, "fake", compoundId1));
-        listOfRefs.add(new DBRef(database, "fake", compoundId2));
+        listOfRefs.add(new DBRef("fake", compoundId1));
+        listOfRefs.add(new DBRef("fake", compoundId2));
         BasicDBObject entity = new BasicDBObject("_id", "testId").append("refs", listOfRefs);
         a.save(entity);
 
@@ -191,8 +167,8 @@ public class DBRefOldTest extends DatabaseTestCase {
 
         BasicDBObject compoundId1 = new BasicDBObject("name", "someName").append("email", "test@example.com");
         BasicDBObject compoundId2 = new BasicDBObject("name", "someName2").append("email", "test2@example.com");
-        BasicDBObject mapOfRefs = new BasicDBObject().append("someName", new DBRef(database, "compoundkeys", compoundId1))
-                                                     .append("someName2", new DBRef(database, "compoundkeys", compoundId2));
+        BasicDBObject mapOfRefs = new BasicDBObject().append("someName", new DBRef("compoundkeys", compoundId1))
+                                                     .append("someName2", new DBRef("compoundkeys", compoundId2));
         BasicDBObject entity = new BasicDBObject("_id", "testId").append("refs", mapOfRefs);
         base.save(entity);
 
@@ -206,7 +182,7 @@ public class DBRefOldTest extends DatabaseTestCase {
 
     @Test
     public void testSerialization() throws Exception {
-        DBRef dbRef = new DBRef(database, "col", 42);
+        DBRef dbRef = new DBRef("col", 42);
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);

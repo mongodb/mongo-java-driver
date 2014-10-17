@@ -49,8 +49,8 @@ public class DefaultDBEncoder extends BasicBSONEncoder implements DBEncoder {
      * @param name the name of the field in the document
      * @param ref  the database reference object
      */
-    protected void putDBRef(final String name, final DBRefBase ref) {
-        putObject(name, new BasicDBObject("$ref", ref.getRef()).append("$id", ref.getId()));
+    protected void putDBRef(final String name, final DBRef ref) {
+        putObject(name, new BasicDBObject("$ref", ref.getCollectionName()).append("$id", ref.getId()));
     }
 
     @Override

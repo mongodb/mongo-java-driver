@@ -18,56 +18,81 @@
 
 package com.mongodb;
 
-import org.bson.BSONObject;
+import java.io.Serializable;
+
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * <p>Extends DBRefBase to understand a BSONObject representation of a reference.</p>
+ * A representation of a database reference.
  *
- * <p>While instances of this class are {@code Serializable}, deserialized instances can not be fetched, as the {@code db} property is
- * transient.</p>
- *
- * @mongodb.driver.manual applications/database-references Database References
+ * @mongodb.driver.manual reference/database-references/ Database References
  */
-public class DBRef extends DBRefBase {
+public class DBRef implements Serializable {
 
     private static final long serialVersionUID = -849581217713362618L;
 
+    private final Object id;
+    private final String collectionName;
+
     /**
-     * Creates a DBRef.
+     * Construct an instance.
      *
-     * @param db            the database
-     * @param dbrefDocument a BSON object representing the reference
+     * @param collectionName the name of the collection where the document is stored
+     * @param id the object id
      */
-    public DBRef(final DB db, final BSONObject dbrefDocument) {
-        super(db, dbrefDocument.get("$ref").toString(), dbrefDocument.get("$id"));
+    public DBRef(final String collectionName, final Object id) {
+        this.id = notNull("id", id);
+        this.collectionName = notNull("ns", collectionName);
     }
 
     /**
-     * Creates a DBRef.
+     * Gets the _id of the referenced document
      *
-     * @param db        the database
-     * @param namespace the namespace where the object is stored
-     * @param id        the object id
+     * @return the _id of the referenced document
      */
-    public DBRef(final DB db, final String namespace, final Object id) {
-        super(db, namespace, id);
+    public Object getId() {
+        return id;
     }
 
     /**
-     * Fetches a referenced object from the database.
+     * Gets the name of the collection in which the referenced document is stored.
      *
-     * @param db            the database
-     * @param dbrefDocument the reference
-     * @return the referenced document
-     * @throws MongoException
+     * @return the name of the collection in which the referenced is stored
      */
-    public static DBObject fetch(final DB db, final DBObject dbrefDocument) {
-        String ns;
-        Object id;
+    public String getCollectionName() {
+        return collectionName;
+    }
 
-        if ((ns = (String) dbrefDocument.get("$ref")) != null && (id = dbrefDocument.get("$id")) != null) {
-            return db.getCollection(ns).findOne(new BasicDBObject("_id", id));
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
         }
-        return null;
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        DBRef dbRef = (DBRef) o;
+
+        if (!collectionName.equals(dbRef.collectionName)) {
+            return false;
+        }
+        if (!id.equals(dbRef.id)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id.hashCode();
+        result = 31 * result + collectionName.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "{ \"$ref\" : \"" + collectionName + "\", \"$id\" : \"" + id + "\" }";
     }
 }

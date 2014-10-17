@@ -145,8 +145,8 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         Object value = BSON.applyEncodingHooks(initialValue);
         if (value == null) {
             bsonWriter.writeNull();
-        } else if (value instanceof DBRefBase) {
-            encodeDBRef(bsonWriter, (DBRefBase) value);
+        } else if (value instanceof DBRef) {
+            encodeDBRef(bsonWriter, (DBRef) value);
         } else if (value instanceof BasicBSONList) {
             encodeIterable(bsonWriter, (BasicBSONList) value);
         } else if (value instanceof DBObject) {
@@ -194,10 +194,10 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
         bsonWriter.writeEndArray();
     }
 
-    private void encodeDBRef(final BsonWriter bsonWriter, final DBRefBase dbRef) {
+    private void encodeDBRef(final BsonWriter bsonWriter, final DBRef dbRef) {
         bsonWriter.writeStartDocument();
 
-        bsonWriter.writeString("$ref", dbRef.getRef());
+        bsonWriter.writeString("$ref", dbRef.getCollectionName());
         bsonWriter.writeName("$id");
         writeValue(bsonWriter, null, dbRef.getId());
 
@@ -240,7 +240,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
                 break;
             case DB_POINTER: //custom for driver-compat types
                 BsonDbPointer dbPointer = reader.readDBPointer();
-                initialRetVal = new DBRef(db, dbPointer.getNamespace(), dbPointer.getId());
+                initialRetVal = new DBRef(dbPointer.getNamespace(), dbPointer.getId());
                 break;
             case BINARY:
                 initialRetVal = readBinary(reader);
@@ -304,7 +304,7 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
 
     private Object verifyForDBRef(final DBObject document) {
         if (document.containsField("$ref") && document.containsField("$id")) {
-            return new DBRef(db, document);
+            return new DBRef((String) document.get("$ref"), document.get("$id"));
         } else {
             return document;
         }
