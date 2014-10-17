@@ -21,6 +21,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 
+@SuppressWarnings('BusyWait')
 class DefaultServerMonitorSpecification extends Specification {
 
     DefaultServerMonitor monitor
@@ -81,7 +82,7 @@ class DefaultServerMonitorSpecification extends Specification {
 
         when:
         monitor.invalidate()
-        while (monitorId == monitor.monitorThread.getId()) { monitor.monitorThread.wait(10) }
+        while (monitorId == monitor.monitorThread.getId()) { sleep(100) }
 
         then:
         !stateChanged
@@ -112,7 +113,7 @@ class DefaultServerMonitorSpecification extends Specification {
 
         when:
         monitor.close()
-        while (!monitor.monitorThread.isInterrupted()) { monitor.monitorThread.wait(10) }
+        while (!monitor.monitorThread.isInterrupted()) { sleep(100) }
 
         then:
         !stateChanged
