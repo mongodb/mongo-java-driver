@@ -69,6 +69,14 @@ public class MongoWriteException extends MongoServerException {
      * @return the code, or -1 if there is none
      */
     public static int extractErrorCode(final BsonDocument response) {
+        // mongos may set an err field containing duplicate key error information
+        if (response.containsKey("err")) {
+            String errorMessage = extractErrorMessage(response);
+            if (errorMessage.contains("E11000 duplicate key error")) {
+                return 11000;
+            }
+        }
+
         // mongos may return a list of documents representing getlasterror responses from each shard.  Return the one with a matching
         // "err" field, so that it can be used to get the error code
         if (!response.containsKey("code") && response.containsKey("errObjects")) {
@@ -78,7 +86,6 @@ public class MongoWriteException extends MongoServerException {
                 }
             }
         }
-
         return response.getNumber("code", new BsonInt32(-1)).intValue();
     }
 

@@ -103,4 +103,22 @@ class WriteResultProtocolHelperSpecification extends Specification {
         def e = thrown(MongoException.DuplicateKey)
         e.getCode() == 11000
     }
+
+
+    def 'should support duplicate key errors from sharded servers in extractErrorCode'() {
+        given:
+        def result = new BsonDocument('ok', new BsonInt32(1))
+                .append('err', new BsonString('error inserting 1 documents to shard shard0001:localhost:27021 at version '
+                                                      + '2|1||542e97e306f81b0cb5d8d78e :: caused by :: E11000 duplicate key error index: '
+                                                      + 'test.t.$_id_  dup key: { : 2 }'))
+                .append('code', new BsonInt32(16460))
+                .append('n', new BsonInt32(0))
+
+        when:
+        ProtocolHelper.getWriteResult(result, new ServerAddress())
+
+        then:
+        def e = thrown(MongoException.DuplicateKey)
+        e.getCode() == 11000
+    }
 }
