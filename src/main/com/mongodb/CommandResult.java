@@ -100,6 +100,11 @@ public class CommandResult extends BasicDBObject {
     int getCode() {
         int code = getInt("code", -1);
 
+        // mongos may set an err field containing duplicate key error information
+        if (get("err") != null && ((String) get("err")).contains("E11000 duplicate key error")) {
+            return 11000;
+        }
+
         // mongos may return a list of documents representing getlasterror responses from each shard.  Return the one with a matching
         // "err" field, so that it can be used to get the error code
         if (code == -1 && get("errObjects") != null) {

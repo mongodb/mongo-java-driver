@@ -101,6 +101,18 @@ public class CommandResultTest extends TestCase {
         commandResult.throwOnError();
     }
 
+    @Test(expected = MongoException.DuplicateKey.class)
+    public void shouldThrowDuplicateKeyWhenShardedErrorHasADuplicateKeyMessage() throws UnknownHostException {
+        CommandResult commandResult = new CommandResult(new ServerAddress());
+        commandResult.put("ok", 1);
+        commandResult.put("err", "error inserting 1 documents to shard shard0001:localhost:27021 at version "
+                + "2|1||542e97e306f81b0cb5d8d78e :: caused by :: E11000 duplicate key error index: test.t.$_id_  "
+                + "dup key: { : 2 }'))" );
+        commandResult.put("code", 16460);
+        commandResult.put("n", 0);
+        commandResult.throwOnError();
+    }
+
     @Test
     public void testNullErrorCode() throws UnknownHostException {
         CommandResult commandResult = new CommandResult(new ServerAddress("localhost"));
