@@ -461,7 +461,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
         return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<MongoCursor<T>>() {
             @Override
             public MongoCursor<T> call(final ConnectionSource source, final Connection connection) {
-                QueryResult<T> queryResult = asQueryProtocol(connection.getDescription(), binding.getReadPreference())
+                QueryResult<T> queryResult = getProtocol(connection.getDescription(), binding.getReadPreference())
                                              .execute(connection);
                 if (isExhaust()) {
                     return new MongoQueryCursor<T>(namespace, queryResult, limit, batchSize,
@@ -480,7 +480,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
             @Override
             public MongoFuture<MongoAsyncCursor<T>> call(final AsyncConnectionSource source, final Connection connection) {
                 final SingleResultFuture<MongoAsyncCursor<T>> future = new SingleResultFuture<MongoAsyncCursor<T>>();
-                asQueryProtocol(connection.getDescription(), binding.getReadPreference())
+                getProtocol(connection.getDescription(), binding.getReadPreference())
                 .executeAsync(connection)
                 .register(new SingleResultCallback<QueryResult<T>>() {
                               @Override
@@ -573,7 +573,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
 
     }
 
-    private QueryProtocol<T> asQueryProtocol(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
+    private QueryProtocol<T> getProtocol(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
         return new QueryProtocol<T>(namespace, skip, getNumberToReturn(), asDocument(connectionDescription, readPreference), projection,
                                     decoder).tailableCursor(isTailableCursor())
                                             .slaveOk(isSlaveOk() || readPreference.isSlaveOk())

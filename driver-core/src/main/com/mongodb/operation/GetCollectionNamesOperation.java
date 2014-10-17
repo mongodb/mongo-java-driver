@@ -50,12 +50,12 @@ public class GetCollectionNamesOperation implements AsyncReadOperation<List<Stri
 
     @Override
     public List<String> execute(final ReadBinding binding) {
-        return queryResultToList(getNamespace(), getProtocol(), binding, transformer());
+        return queryResultToList(getNamespace(), getProtocol(binding.getReadPreference().isSlaveOk()), binding, transformer());
     }
 
     @Override
     public MongoFuture<List<String>> executeAsync(final AsyncReadBinding binding) {
-        return queryResultToListAsync(getNamespace(), getProtocol(), binding, transformer());
+        return queryResultToListAsync(getNamespace(), getProtocol(binding.getReadPreference().isSlaveOk()), binding, transformer());
     }
 
     private Function<BsonDocument, String> transformer() {
@@ -75,8 +75,9 @@ public class GetCollectionNamesOperation implements AsyncReadOperation<List<Stri
         return new MongoNamespace(databaseName, "system.namespaces");
     }
 
-    private QueryProtocol<BsonDocument> getProtocol() {
-        return new QueryProtocol<BsonDocument>(getNamespace(), 0, 0, new BsonDocument(), null, new BsonDocumentCodec());
+    private QueryProtocol<BsonDocument> getProtocol(final boolean slaveOk) {
+        return new QueryProtocol<BsonDocument>(getNamespace(), 0, 0, new BsonDocument(), null, new BsonDocumentCodec())
+            .slaveOk(slaveOk);
     }
 
 }

@@ -74,7 +74,8 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
                         return CommandOperationHelper.rethrowIfNotNamespaceError(e, new ArrayList<String>());
                     }
                 } else {
-                    return queryResultToList(getNamespace(), getProtocol(), binding, queryResultTransformer());
+                    return queryResultToList(getNamespace(), getProtocol(binding.getReadPreference().isSlaveOk()), binding,
+                                             queryResultTransformer());
                 }
             }
         });
@@ -92,7 +93,8 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
                                                                                                                 commandTransformer()),
                                                                              new ArrayList<String>());
                 } else {
-                    return queryResultToListAsync(getNamespace(), getProtocol(), binding, queryResultTransformer());
+                    return queryResultToListAsync(getNamespace(), getProtocol(binding.getReadPreference().isSlaveOk()), binding,
+                                                  queryResultTransformer());
                 }
             }
         });
@@ -129,8 +131,9 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
         return new MongoNamespace(databaseName, "system.namespaces");
     }
 
-    private QueryProtocol<BsonDocument> getProtocol() {
-        return new QueryProtocol<BsonDocument>(getNamespace(), 0, 0, new BsonDocument(), null, new BsonDocumentCodec());
+    private QueryProtocol<BsonDocument> getProtocol(final boolean slaveOk) {
+        return new QueryProtocol<BsonDocument>(getNamespace(), 0, 0, new BsonDocument(), null, new BsonDocumentCodec())
+            .slaveOk(slaveOk);
     }
 
     private BsonDocument getCommand() {

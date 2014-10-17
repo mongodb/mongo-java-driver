@@ -79,7 +79,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
                         return CommandOperationHelper.rethrowIfNotNamespaceError(e, new ArrayList<T>());
                     }
                 } else {
-                    return queryResultToList(getIndexNamespace(), getProtocol(), decoder, binding);
+                    return queryResultToList(getIndexNamespace(), getProtocol(binding.getReadPreference().isSlaveOk()), decoder, binding);
                 }
             }
         });
@@ -98,7 +98,8 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
                                                                                                                 transformer()),
                                                                              new ArrayList<T>());
                 } else {
-                    return queryResultToListAsync(getIndexNamespace(), getProtocol(), decoder, binding);
+                    return queryResultToListAsync(getIndexNamespace(), getProtocol(binding.getReadPreference().isSlaveOk()), decoder,
+                                                  binding);
                 }
             }
         });
@@ -112,8 +113,9 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
         return new MongoNamespace(namespace.getDatabaseName(), "system.indexes");
     }
 
-    private QueryProtocol<T> getProtocol() {
-        return new QueryProtocol<T>(getIndexNamespace(), 0, 0, asQueryDocument(), null, decoder);
+    private QueryProtocol<T> getProtocol(final boolean slaveOk) {
+        return new QueryProtocol<T>(getIndexNamespace(), 0, 0, asQueryDocument(), null, decoder)
+            .slaveOk(slaveOk);
     }
 
     private BsonDocument getCommand() {

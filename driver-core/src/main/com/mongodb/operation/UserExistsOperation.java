@@ -67,7 +67,8 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
                     return executeWrappedCommandProtocol(databaseName, getCommand(), connection, binding.getReadPreference(),
                                                          transformer());
                 } else {
-                    return executeProtocol(getCollectionBasedProtocol(), connection, transformQueryResult());
+                    return executeProtocol(getProtocol(binding.getReadPreference().isSlaveOk()), connection,
+                                           transformQueryResult());
                 }
             }
         });
@@ -81,7 +82,8 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     return executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, transformer());
                 } else {
-                    return executeProtocolAsync(getCollectionBasedProtocol(), connection, transformQueryResult());
+                    return executeProtocolAsync(getProtocol(binding.getReadPreference().isSlaveOk()), connection,
+                                                transformQueryResult());
                 }
             }
         });
@@ -105,10 +107,11 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
         };
     }
 
-    private QueryProtocol<BsonDocument> getCollectionBasedProtocol() {
+    private QueryProtocol<BsonDocument> getProtocol(final boolean slaveOk) {
         MongoNamespace namespace = new MongoNamespace(databaseName, "system.users");
         return new QueryProtocol<BsonDocument>(namespace, 0, 1,
-                                               new BsonDocument("user", new BsonString(userName)), null, new BsonDocumentCodec());
+                                               new BsonDocument("user", new BsonString(userName)), null, new BsonDocumentCodec())
+                   .slaveOk(slaveOk);
     }
 
     private BsonDocument getCommand() {
