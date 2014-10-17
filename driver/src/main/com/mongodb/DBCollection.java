@@ -1967,8 +1967,9 @@ public class DBCollection {
     }
 
     DBObjectCodec getDefaultDBObjectCodec() {
-        return new DBObjectCodec(getDB(), getObjectFactory(), MongoClient.getDefaultCodecRegistry(),
-                                 DBObjectCodecProvider.getDefaultBsonTypeClassMap());
+        return new DBObjectCodec(MongoClient.getDefaultCodecRegistry(),
+                                 DBObjectCodec.getDefaultBsonTypeClassMap(),
+                                 getObjectFactory(), getDB());
     }
 
     private <T> T convertOptionsToType(final DBObject options, final String field, final Class<T> clazz) {

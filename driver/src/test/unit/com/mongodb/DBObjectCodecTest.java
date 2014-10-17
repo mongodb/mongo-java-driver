@@ -79,10 +79,8 @@ public class DBObjectCodecTest extends DatabaseTestCase {
 
     @Test
     public void shouldNotGenerateIdIfPresent() {
-        DBObjectCodec dbObjectCodec = new DBObjectCodec(null, new BasicDBObjectFactory(),
-                                                        new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
-                                                                                            new DBObjectCodecProvider())),
-                                                        DBObjectCodecProvider.createDefaultBsonTypeClassMap());
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
+                                            new DBObjectCodecProvider())));
         BasicDBObject document = new BasicDBObject("_id", 1);
         assertTrue(dbObjectCodec.documentHasId(document));
         dbObjectCodec.generateIdIfAbsentFromDocument(document);
@@ -92,10 +90,8 @@ public class DBObjectCodecTest extends DatabaseTestCase {
 
     @Test
     public void shouldGenerateIdIfAbsent() {
-        DBObjectCodec dbObjectCodec = new DBObjectCodec(null, new BasicDBObjectFactory(),
-                                                        new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
-                                                                                            new DBObjectCodecProvider())),
-                                                        DBObjectCodecProvider.createDefaultBsonTypeClassMap());
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
+                                            new DBObjectCodecProvider())));
         BasicDBObject document = new BasicDBObject();
         assertFalse(dbObjectCodec.documentHasId(document));
         dbObjectCodec.generateIdIfAbsentFromDocument(document);
@@ -105,10 +101,8 @@ public class DBObjectCodecTest extends DatabaseTestCase {
 
     @Test
     public void shouldRespectEncodeIdFirstPropertyInEncoderContext() {
-        DBObjectCodec dbObjectCodec = new DBObjectCodec(null, new BasicDBObjectFactory(),
-                                                        new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
-                                                                                            new DBObjectCodecProvider())),
-                                                        DBObjectCodecProvider.createDefaultBsonTypeClassMap());
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
+                                            new DBObjectCodecProvider())));
         // given
         DBObject doc = new BasicDBObject("x", 2).append("_id", 2);
 

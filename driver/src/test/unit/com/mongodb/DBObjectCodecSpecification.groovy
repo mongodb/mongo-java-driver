@@ -28,19 +28,18 @@ import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Shared
 import spock.lang.Specification
 
-/**
- *
- */
+import static java.util.Arrays.asList
+
 class DBObjectCodecSpecification extends Specification {
 
-    @Shared BsonDocument bsonDoc = new BsonDocument()
+    @Shared
+    BsonDocument bsonDoc = new BsonDocument()
 
     def 'should encode and decode UUIDs'() {
         given:
         UUID uuid = UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')
-        DBObjectCodec dbObjectCodec = new DBObjectCodec(null, new BasicDBObjectFactory(),
-                new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(), new DBObjectCodecProvider())),
-                DBObjectCodecProvider.createDefaultBsonTypeClassMap());
+        DBObjectCodec dbObjectCodec = new DBObjectCodec(new RootCodecRegistry(asList(new ValueCodecProvider(),
+                                                                                     new DBObjectCodecProvider())))
         BasicDBObject uuidObj = new BasicDBObject('uuid', uuid)
         BsonDocumentWriter writer = new BsonDocumentWriter(bsonDoc)
         dbObjectCodec.encode(writer, uuidObj, EncoderContext.builder().build())

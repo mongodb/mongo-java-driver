@@ -28,6 +28,7 @@ import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.codecs.BinaryToByteArrayTransformer;
 import org.bson.codecs.BinaryToUuidTransformer;
+import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
@@ -35,6 +36,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.IdGenerator;
 import org.bson.codecs.ObjectIdGenerator;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.types.BSONTimestamp;
 import org.bson.types.BasicBSONList;
 import org.bson.types.Binary;
 import org.bson.types.CodeWScope;
@@ -42,27 +44,72 @@ import org.bson.types.Symbol;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ * A collectible codec for a DBObject.
+ *
+ * @since 3.0
+ */
 @SuppressWarnings("rawtypes")
-class DBObjectCodec implements CollectibleCodec<DBObject> {
+public class DBObjectCodec implements CollectibleCodec<DBObject> {
+
+    private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = createDefaultBsonTypeClassMap();
     private static final String ID_FIELD_NAME = "_id";
 
     private final CodecRegistry codecRegistry;
-    private final Map<BsonType, Class<?>> bsonTypeClassMap;
+    private final BsonTypeClassMap bsonTypeClassMap;
     private final DB db;
     private final DBObjectFactory objectFactory;
     private final IdGenerator idGenerator = new ObjectIdGenerator();
 
-    public DBObjectCodec(final CodecRegistry codecRegistry, final Map<BsonType, Class<?>> bsonTypeClassMap) {
-        this(null, new BasicDBObjectFactory(), codecRegistry, bsonTypeClassMap);
+    static BsonTypeClassMap createDefaultBsonTypeClassMap() {
+        Map<BsonType, Class<?>> replacements = new HashMap<BsonType, Class<?>>();
+        replacements.put(BsonType.REGULAR_EXPRESSION, Pattern.class);
+        replacements.put(BsonType.SYMBOL, String.class);
+        replacements.put(BsonType.TIMESTAMP, BSONTimestamp.class);
+
+        return new BsonTypeClassMap(replacements);
     }
 
-    public DBObjectCodec(final DB db, final DBObjectFactory objectFactory,
-                         final CodecRegistry codecRegistry, final Map<BsonType, Class<?>> bsonTypeClassMap) {
+    static BsonTypeClassMap getDefaultBsonTypeClassMap() {
+        return DEFAULT_BSON_TYPE_CLASS_MAP;
+    }
+
+    /**
+     * Construct an instance with the given codec registry.
+     *
+     * @param codecRegistry the non-null codec registry
+     */
+    public DBObjectCodec(final CodecRegistry codecRegistry) {
+        this(codecRegistry, DEFAULT_BSON_TYPE_CLASS_MAP);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param codecRegistry the codec registry
+     * @param bsonTypeClassMap the non-null BsonTypeClassMap
+     */
+    public DBObjectCodec(final CodecRegistry codecRegistry, final BsonTypeClassMap bsonTypeClassMap) {
+        this(codecRegistry, bsonTypeClassMap, new BasicDBObjectFactory(), null);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param codecRegistry the non-null codec registry
+     * @param bsonTypeClassMap the non-null BsonTypeClassMap
+     * @param objectFactory the non-null object factory used to create empty DBObject instances when decoding
+     * @param db the DB
+     */
+    public DBObjectCodec(final CodecRegistry codecRegistry, final BsonTypeClassMap bsonTypeClassMap, final DBObjectFactory objectFactory,
+                         final DB db) {
         this.db = db;
         this.objectFactory = notNull("objectFactory", objectFactory);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);

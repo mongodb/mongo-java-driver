@@ -88,7 +88,13 @@ public class BsonTypeClassMap {
     }
 
 
-    Class<?> get(final BsonType bsonType) {
+    /**
+     * Gets the Class that is mapped to the given BSON type.
+     *
+     * @param bsonType the BSON type
+     * @return the Class that is mapped to the BSON type
+     */
+    public Class<?> get(final BsonType bsonType) {
         return map.get(bsonType);
     }
 

@@ -16,42 +16,43 @@
 
 package com.mongodb;
 
-import org.bson.BsonDbPointer;
-import org.bson.BsonType;
-import org.bson.BsonUndefined;
+import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BSONTimestamp;
-import org.bson.types.Binary;
-import org.bson.types.Code;
-import org.bson.types.MaxKey;
-import org.bson.types.MinKey;
-import org.bson.types.ObjectId;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.regex.Pattern;
+/**
+ * A provider for a DBObjectCodec.
+ *
+ * @since 3.0
+ */
+public class DBObjectCodecProvider implements CodecProvider {
+    private final BsonTypeClassMap bsonTypeClassMap;
 
-class DBObjectCodecProvider implements CodecProvider {
-    private static final Map<BsonType, Class<?>> bsonTypeClassMap = createDefaultBsonTypeClassMap();
-
-    private final Map<Class<?>, Codec<?>> codecs = new HashMap<Class<?>, Codec<?>>();
-
-    public static Map<BsonType, Class<?>> getDefaultBsonTypeClassMap() {
-        return bsonTypeClassMap;
+    /**
+     * Construct an instance using the default {@code BsonTypeClassMap}.
+     *
+     * @see DBObjectCodec#getDefaultBsonTypeClassMap()
+     */
+    public DBObjectCodecProvider() {
+        this(DBObjectCodec.getDefaultBsonTypeClassMap());
     }
 
-    public DBObjectCodecProvider() {
-        addCodecs();
+    /**
+     * Construct an instance with the given {@code BsonTypeClassMap}.
+     *
+     * @param bsonTypeClassMap the BsonTypeClassMap
+     */
+    public DBObjectCodecProvider(final BsonTypeClassMap bsonTypeClassMap) {
+        this.bsonTypeClassMap = bsonTypeClassMap;
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        if (codecs.containsKey(clazz)) {
-            return (Codec<T>) codecs.get(clazz);
+        if (clazz == BSONTimestamp.class) {
+            return (Codec<T>) new BSONTimestampCodec();
         }
 
         if (clazz == DBObject.class) {
@@ -59,36 +60,6 @@ class DBObjectCodecProvider implements CodecProvider {
         }
 
         return null;
-    }
-
-    static Map<BsonType, Class<?>> createDefaultBsonTypeClassMap() {
-        Map<BsonType, Class<?>> map = new HashMap<BsonType, Class<?>>();
-        map.put(BsonType.BINARY, Binary.class);
-        map.put(BsonType.BOOLEAN, Boolean.class);
-        map.put(BsonType.DATE_TIME, Date.class);
-        map.put(BsonType.DB_POINTER, BsonDbPointer.class);
-        map.put(BsonType.DOUBLE, Double.class);
-        map.put(BsonType.INT32, Integer.class);
-        map.put(BsonType.INT64, Long.class);
-        map.put(BsonType.MAX_KEY, MaxKey.class);
-        map.put(BsonType.MIN_KEY, MinKey.class);
-        map.put(BsonType.JAVASCRIPT, Code.class);
-        map.put(BsonType.OBJECT_ID, ObjectId.class);
-        map.put(BsonType.REGULAR_EXPRESSION, Pattern.class);
-        map.put(BsonType.STRING, String.class);
-        map.put(BsonType.SYMBOL, String.class);
-        map.put(BsonType.TIMESTAMP, BSONTimestamp.class);
-        map.put(BsonType.UNDEFINED, BsonUndefined.class);
-
-        return map;
-    }
-
-    private void addCodecs() {
-        addCodec(new BSONTimestampCodec());
-    }
-
-    private <T> void addCodec(final Codec<T> codec) {
-        codecs.put(codec.getEncoderClass(), codec);
     }
 
     @Override
