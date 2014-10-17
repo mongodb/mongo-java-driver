@@ -22,18 +22,19 @@ class TestServerMonitorFactory implements ServerMonitorFactory {
     public ServerMonitor create(final ChangeListener<ServerDescription> serverStateListener) {
         return new ServerMonitor(){
             @Override
-            public void connect() {
+            public void start() {
+            }
 
+            @Override
+            public void connect() {
             }
 
             @Override
             public void invalidate() {
-
             }
 
             @Override
             public void close() {
-
             }
         };
     }

@@ -24,6 +24,8 @@ import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
 
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize
+import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize
 
 class ConnectionSpecification extends OperationFunctionalSpecification {
 
@@ -44,9 +46,9 @@ class ConnectionSpecification extends OperationFunctionalSpecification {
         when:
         def commandResult = getIsMasterResult()
         def expectedMaxMessageSize = commandResult.getNumber('maxMessageSizeBytes',
-                                                             new BsonInt32(DescriptionHelper.DEFAULT_MAX_MESSAGE_SIZE)).intValue()
+                                                             new BsonInt32(getDefaultMaxMessageSize())).intValue()
         def expectedMaxBatchCount = commandResult.getNumber('maxWriteBatchSize',
-                                                            new BsonInt32(DescriptionHelper.DEFAULT_MAX_WRITE_BATCH_SIZE)).intValue()
+                                                            new BsonInt32(getDefaultMaxWriteBatchSize())).intValue()
         def source = getBinding().getReadConnectionSource()
         def connection = source.connection
 

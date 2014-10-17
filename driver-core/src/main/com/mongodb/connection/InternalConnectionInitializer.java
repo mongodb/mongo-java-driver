@@ -17,16 +17,11 @@
 package com.mongodb.connection;
 
 import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultCallback;
 
-interface ConnectionInitializer {
+interface InternalConnectionInitializer {
 
-    void initialize();
+    ConnectionDescription initialize(InternalConnection internalConnection);
 
-    MongoFuture<Void> initializeAsync(SingleResultCallback<Void> callback);
-
-    String getId();
-
-    ConnectionDescription getDescription();
+    MongoFuture<ConnectionDescription> initializeAsync(InternalConnection internalConnection);
 
 }

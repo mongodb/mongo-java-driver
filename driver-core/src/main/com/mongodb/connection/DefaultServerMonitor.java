@@ -95,10 +95,9 @@ class DefaultServerMonitor implements ServerMonitor {
 
     @Override
     public void close() {
-        isTrue("open", !isClosed);
-        isClosed = true;
         monitor.close();
         monitorThread.interrupt();
+        isClosed = true;
     }
 
     Thread createMonitorThread() {

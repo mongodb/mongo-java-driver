@@ -18,6 +18,8 @@ package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
 
+import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
+
 /**
  * A description of a connection to a MongoDB server.
  *
@@ -25,26 +27,42 @@ import com.mongodb.ServerAddress;
  */
 public class ConnectionDescription {
     private final ServerAddress serverAddress;
+    private final ConnectionId connectionId;
     private final ServerVersion serverVersion;
     private final ServerType serverType;
     private final int maxBatchCount;
     private final int maxDocumentSize;
     private final int maxMessageSize;
 
+    private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
+    private static final int DEFAULT_MAX_WRITE_BATCH_SIZE = 512;
+
+    /**
+     * Construct a defaulted connection description instance.
+     *
+     * @param serverAddress   the server address
+     */
+    public ConnectionDescription(final ServerAddress serverAddress) {
+        this(serverAddress, new ConnectionId(), new ServerVersion(), ServerType.UNKNOWN, DEFAULT_MAX_WRITE_BATCH_SIZE,
+             getDefaultMaxDocumentSize(), DEFAULT_MAX_MESSAGE_SIZE);
+    }
+
     /**
      * Construct an instance.
      *
      * @param serverAddress   the server address
+     * @param connectionId    the connection id
      * @param serverVersion   the server version
      * @param serverType      the server type
      * @param maxBatchCount   the max batch count
      * @param maxDocumentSize the max document size in bytes
      * @param maxMessageSize  the max message size in bytes
      */
-    public ConnectionDescription(final ServerAddress serverAddress, final ServerVersion serverVersion, final ServerType serverType,
-                                 final int maxBatchCount,
-                                 final int maxDocumentSize, final int maxMessageSize) {
+    public ConnectionDescription(final ServerAddress serverAddress, final ConnectionId connectionId,  final ServerVersion serverVersion,
+                                 final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
+                                 final int maxMessageSize) {
         this.serverAddress = serverAddress;
+        this.connectionId = connectionId;
         this.serverType = serverType;
         this.maxBatchCount = maxBatchCount;
         this.maxDocumentSize = maxDocumentSize;
@@ -59,6 +77,15 @@ public class ConnectionDescription {
      */
     public ServerAddress getServerAddress() {
         return serverAddress;
+    }
+
+    /**
+     * Gets the id of the connection. If possible, this id will correlate with the connection id that the server puts in its log messages.
+     *
+     * @return the connection id
+     */
+    public ConnectionId getConnectionId() {
+        return connectionId;
     }
 
     /**
@@ -104,6 +131,25 @@ public class ConnectionDescription {
      */
     public int getMaxMessageSize() {
         return maxMessageSize;
+    }
+
+    /**
+     * Get the default maximum message size.
+     *
+     * @return the default maximum message size.
+     */
+    public static int getDefaultMaxMessageSize() {
+        return DEFAULT_MAX_MESSAGE_SIZE;
+    }
+
+
+    /**
+     * Get the default maximum write batch size.
+     *
+     * @return the default maximum write batch size.
+     */
+    public static int getDefaultMaxWriteBatchSize() {
+        return DEFAULT_MAX_WRITE_BATCH_SIZE;
     }
 }
 

@@ -52,7 +52,7 @@ class PlainAuthenticator extends SaslAuthenticator {
             return Sasl.createSaslClient(new String[]{PLAIN.getMechanismName()},
                                          credential.getUserName(),
                                          DEFAULT_PROTOCOL,
-                                         getInternalConnection().getServerAddress().getHost(),
+                                         getServerAddress().getHost(),
                                          null,
                                          new CallbackHandler() {
                                              @Override

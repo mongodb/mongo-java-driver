@@ -163,5 +163,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                                                                               getCredentialList(),
                                                                               new NoOpConnectionListener()),
                                           new TestConnectionPool())
+        serverMonitor.start()
+        serverMonitor
     }
 }

@@ -16,8 +16,15 @@
 
 package com.mongodb.connection
 
+import category.Async
+import com.mongodb.MongoException
 import com.mongodb.ServerAddress
+import com.mongodb.async.SingleResultCallback
+import com.mongodb.async.SingleResultFuture
+import org.junit.experimental.categories.Category
+import spock.lang.IgnoreIf
 import spock.lang.Specification
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class UsageTrackingConnectionSpecification extends Specification {
 
@@ -34,6 +41,28 @@ class UsageTrackingConnectionSpecification extends Specification {
         def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
 
         then:
+        connection.openedAt == Long.MAX_VALUE
+
+        when:
+        connection.open()
+
+        then:
+        connection.openedAt <= System.currentTimeMillis()
+    }
+
+    @Category(Async)
+    @IgnoreIf({ javaVersion < 1.7 })
+    def 'openAt should be set on open asynchronously'() {
+        when:
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
+
+        then:
+        connection.openedAt == Long.MAX_VALUE
+
+        when:
+        connection.openAsync().get(10, SECONDS)
+
+        then:
         connection.openedAt <= System.currentTimeMillis()
     }
 
@@ -42,29 +71,101 @@ class UsageTrackingConnectionSpecification extends Specification {
         def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
 
         then:
+        connection.lastUsedAt == Long.MAX_VALUE
+
+        when:
+        connection.open()
+
+        then:
+        connection.lastUsedAt <= System.currentTimeMillis()
+    }
+
+    @Category(Async)
+    @IgnoreIf({ javaVersion < 1.7 })
+    def 'lastUsedAt should be set on open asynchronously'() {
+        when:
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
+
+        then:
+        connection.lastUsedAt == Long.MAX_VALUE
+
+        when:
+        connection.openAsync().get(10, SECONDS)
+
+        then:
         connection.lastUsedAt <= System.currentTimeMillis()
     }
 
     def 'lastUsedAt should be set on sendMessage'() {
         given:
         def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
-        Thread.sleep(5);
+        connection.open()
+        def openedLastUsedAt = connection.lastUsedAt
 
         when:
         connection.sendMessage(Arrays.asList(), 1)
 
         then:
+        connection.lastUsedAt >= openedLastUsedAt
+        connection.lastUsedAt <= System.currentTimeMillis()
+    }
+
+    @Category(Async)
+    @IgnoreIf({ javaVersion < 1.7 })
+    def 'lastUsedAt should be set on sendMessage asynchronously'() {
+        given:
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
+        connection.open()
+        def openedLastUsedAt = connection.lastUsedAt
+        def future = new SingleResultFuture<Void>()
+        def callback = new SingleResultCallback<Void>() {
+            @Override
+            void onResult(final Void result, final MongoException e) {
+                future.init(null, null)
+            }
+        }
+
+        when:
+        connection.sendMessageAsync(Arrays.asList(), 1, callback)
+        future.get(10, SECONDS)
+
+        then:
+        connection.lastUsedAt >= openedLastUsedAt
         connection.lastUsedAt <= System.currentTimeMillis()
     }
 
     def 'lastUsedAt should be set on receiveMessage'() {
         given:
         def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
-
+        connection.open()
+        def openedLastUsedAt = connection.lastUsedAt
         when:
         connection.receiveMessage(1)
 
         then:
+        connection.lastUsedAt >= openedLastUsedAt
+        connection.lastUsedAt <= System.currentTimeMillis()
+    }
+
+    def 'lastUsedAt should be set on receiveMessage asynchronously'() {
+        given:
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
+        connection.open()
+        def openedLastUsedAt = connection.lastUsedAt
+        def future = new SingleResultFuture<Void>()
+        def callback = new SingleResultCallback<Void>() {
+            @Override
+            void onResult(final Void result, final MongoException e) {
+                future.init(result, e)
+            }
+        }
+
+        when:
+        connection.receiveMessageAsync(1, callback)
+        future.get(10, SECONDS)
+
+        then:
+        connection.lastUsedAt >= openedLastUsedAt
         connection.lastUsedAt <= System.currentTimeMillis()
     }
 }

@@ -151,7 +151,7 @@ class DefaultServer implements ClusterableServer {
         @Override
         public ServerAddress getServerAddress() {
             isTrue("open", getCount() > 0);
-            return wrapped.getServerAddress();
+            return wrapped.getDescription().getServerAddress();
         }
 
         @Override
@@ -209,7 +209,7 @@ class DefaultServer implements ClusterableServer {
         @Override
         public String getId() {
             isTrue("open", getCount() > 0);
-            return wrapped.getId();
+            return wrapped.getDescription().getConnectionId().toString();
         }
    }
 }

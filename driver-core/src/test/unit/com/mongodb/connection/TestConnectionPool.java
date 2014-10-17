@@ -16,7 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.ByteBuf;
@@ -56,17 +55,17 @@ public class TestConnectionPool implements ConnectionPool {
             }
 
             @Override
-            public ServerAddress getServerAddress() {
-                throw new UnsupportedOperationException("Not implemented yet!");
-            }
-
-            @Override
-            public String getId() {
-                throw new UnsupportedOperationException("Not implemented yet!");
-            }
-
-            @Override
             public ConnectionDescription getDescription() {
+                throw new UnsupportedOperationException("Not implemented yet");
+            }
+
+            @Override
+            public void open() {
+                throw new UnsupportedOperationException("Not implemented yet");
+            }
+
+            @Override
+            public MongoFuture<Void> openAsync() {
                 throw new UnsupportedOperationException("Not implemented yet");
             }
 
@@ -76,17 +75,7 @@ public class TestConnectionPool implements ConnectionPool {
             }
 
             @Override
-            public void open() {
-                throw new UnsupportedOperationException("Not implemented yet!");
-            }
-
-            @Override
-            public MongoFuture<Void> openAsync() {
-                throw new UnsupportedOperationException("Not implemented yet!");
-            }
-
-            @Override
-            public boolean isOpened() {
+            public boolean opened() {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 

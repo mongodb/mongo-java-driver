@@ -16,9 +16,10 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.ServerAddress;
+import com.mongodb.MongoException;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.SingleResultFuture;
 import org.bson.ByteBuf;
 
 import java.util.List;
@@ -29,7 +30,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
  * A connection that tracks when it was opened and when it was last used.
  */
 class UsageTrackingInternalConnection implements InternalConnection {
-    private final long openedAt;
+    private volatile long openedAt;
     private volatile long lastUsedAt;
     private final int generation;
     private volatile InternalConnection wrapped;
@@ -37,29 +38,48 @@ class UsageTrackingInternalConnection implements InternalConnection {
     UsageTrackingInternalConnection(final InternalConnection wrapped, final int generation) {
         this.wrapped = wrapped;
         this.generation = generation;
+        openedAt = Long.MAX_VALUE;
+        lastUsedAt = openedAt;
+    }
+
+    @Override
+    public void open() {
+        isTrue("open", wrapped != null);
+        wrapped.open();
         openedAt = System.currentTimeMillis();
         lastUsedAt = openedAt;
     }
 
     @Override
+    public MongoFuture<Void> openAsync() {
+        isTrue("open", wrapped != null);
+        final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
+        wrapped.openAsync().register(new SingleResultCallback<Void>() {
+            @Override
+            public void onResult(final Void result, final MongoException e) {
+                if (e != null) {
+                    future.init(null, e);
+                } else {
+                    future.init(null, null);
+                    openedAt = System.currentTimeMillis();
+                    lastUsedAt = openedAt;
+                }
+            }
+        });
+        return future;
+    }
+
+    @Override
     public void close() {
+        isTrue("open", wrapped != null);
         wrapped.close();
         wrapped = null;
     }
 
     @Override
-    public void open() {
-        wrapped.open();
-    }
-
-    @Override
-    public MongoFuture<Void> openAsync() {
-        return wrapped.openAsync();
-    }
-
-    @Override
-    public boolean isOpened() {
-        return wrapped == null ? false : wrapped.isOpened();
+    public boolean opened() {
+        isTrue("open", wrapped != null);
+        return wrapped.opened();
     }
 
     @Override
@@ -68,26 +88,21 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
-    public ServerAddress getServerAddress() {
-        return wrapped.getServerAddress();
-    }
-
-    @Override
     public ByteBuf getBuffer(final int size) {
-        isTrue("open", !isClosed());
+        isTrue("open", wrapped != null);
         return wrapped.getBuffer(size);
     }
 
     @Override
     public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
-        isTrue("open", !isClosed());
+        isTrue("open", wrapped != null);
         wrapped.sendMessage(byteBuffers, lastRequestId);
         lastUsedAt = System.currentTimeMillis();
     }
 
     @Override
     public ResponseBuffers receiveMessage(final int responseTo) {
-        isTrue("open", !isClosed());
+        isTrue("open", wrapped != null);
         ResponseBuffers responseBuffers = wrapped.receiveMessage(responseTo);
         lastUsedAt = System.currentTimeMillis();
         return responseBuffers;
@@ -95,25 +110,33 @@ class UsageTrackingInternalConnection implements InternalConnection {
 
     @Override
     public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-        isTrue("open", !isClosed());
-        lastUsedAt = System.currentTimeMillis();
-        wrapped.sendMessageAsync(byteBuffers, lastRequestId, callback);
+        isTrue("open", wrapped != null);
+        SingleResultCallback<Void> wrappedCallback = new SingleResultCallback<Void>() {
+            @Override
+            public void onResult(final Void result, final MongoException e) {
+                lastUsedAt = System.currentTimeMillis();
+                callback.onResult(result, e);
+            }
+        };
+        wrapped.sendMessageAsync(byteBuffers, lastRequestId, wrappedCallback);
     }
 
     @Override
     public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-        isTrue("open", !isClosed());
-        lastUsedAt = System.currentTimeMillis();
-        wrapped.receiveMessageAsync(responseTo, callback);
-    }
-
-    @Override
-    public String getId() {
-        return wrapped.getId();
+        isTrue("open", wrapped != null);
+        SingleResultCallback<ResponseBuffers> wrappedCallback = new SingleResultCallback<ResponseBuffers>() {
+            @Override
+            public void onResult(final ResponseBuffers result, final MongoException e) {
+                lastUsedAt = System.currentTimeMillis();
+                callback.onResult(result, e);
+            }
+        };
+        wrapped.receiveMessageAsync(responseTo, wrappedCallback);
     }
 
     @Override
     public ConnectionDescription getDescription() {
+        isTrue("open", wrapped != null);
         return wrapped.getDescription();
     }
 

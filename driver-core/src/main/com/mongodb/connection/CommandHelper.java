@@ -70,7 +70,7 @@ final class CommandHelper {
     private static BsonDocument receiveCommandResult(final InternalConnection internalConnection, final CommandMessage message) {
         BsonDocument result = receiveReply(internalConnection, message).getDocuments().get(0);
         if (!isCommandOk(result)) {
-            throw new CommandFailureException(result, internalConnection.getServerAddress());
+            throw new CommandFailureException(result, internalConnection.getDescription().getServerAddress());
         }
 
         return result;

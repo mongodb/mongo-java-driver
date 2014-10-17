@@ -60,7 +60,9 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                                                   connectionPoolSettings, connectionPoolListener);
         ServerMonitorFactory serverMonitorFactory =
             new DefaultServerMonitorFactory(serverAddress, settings, clusterId,
-                                            new InternalStreamConnectionFactory(clusterId, heartbeatStreamFactory, credentialList,
+                                            new InternalStreamConnectionFactory(clusterId,
+                                                                                heartbeatStreamFactory,
+                                                                                credentialList,
                                                                                 connectionListener),
                                             connectionPool);
         return new DefaultServer(serverAddress, connectionPool, serverMonitorFactory);

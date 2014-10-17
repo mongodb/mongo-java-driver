@@ -45,14 +45,13 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
 
     public static class TestInternalConnection implements InternalConnection {
         private final ServerAddress serverAddress;
-        private boolean opened;
         private boolean closed;
+        private boolean opened;
 
         public TestInternalConnection(final ServerAddress serverAddress) {
             this.serverAddress = serverAddress;
         }
 
-        @Override
         public void open() {
             opened = true;
         }
@@ -60,7 +59,7 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         @Override
         public MongoFuture<Void> openAsync() {
             opened = true;
-            return new SingleResultFuture<Void>(null, null);
+            return new SingleResultFuture<Void>(null);
         }
 
         @Override
@@ -69,8 +68,8 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         }
 
         @Override
-        public boolean isOpened() {
-            return opened && !closed;
+        public boolean opened() {
+            return opened;
         }
 
         @Override
@@ -94,25 +93,17 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
 
         @Override
         public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
+            callback.onResult(null, null);
         }
 
         @Override
         public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-        }
-
-        @Override
-        public String getId() {
-            return Integer.toString(hashCode());
+            callback.onResult(null, null);
         }
 
         @Override
         public ConnectionDescription getDescription() {
-            throw new UnsupportedOperationException("Not implemented yet!");
-        }
-
-        @Override
-        public ServerAddress getServerAddress() {
-            return serverAddress;
+            return new ConnectionDescription(serverAddress);
         }
     }
 }

@@ -35,7 +35,7 @@ public class X509AuthenticatorUnitTest {
 
     @Before
     public void before() {
-        connection = new TestInternalConnection("1", new ServerAddress("localhost", 27017));
+        connection = new TestInternalConnection(new ServerAddress("localhost", 27017));
         credential = MongoCredential.createMongoX509Credential(
                 "CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US");
         subject = new X509Authenticator(this.credential, this.connection);

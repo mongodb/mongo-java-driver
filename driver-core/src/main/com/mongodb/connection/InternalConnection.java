@@ -16,7 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.ServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
@@ -34,18 +33,6 @@ import java.util.List;
 interface InternalConnection extends BufferProvider {
 
     /**
-     * Gets the server address of this connection
-     */
-    ServerAddress getServerAddress();
-
-    /**
-     * Gets the id of the connection.  If possible, this id will correlate with the connection id that the server puts in its log messages.
-     *
-     * @return the id
-     */
-    String getId();
-
-    /**
      * Gets the description of this connection.
      *
      * @return the connection description
@@ -53,26 +40,26 @@ interface InternalConnection extends BufferProvider {
     ConnectionDescription getDescription();
 
     /**
-     * Opens the connection and initializes it for use.
+     * Opens the connection so its ready for use
      */
     void open();
 
     /**
-     * Opens the connection and initializes it for use.
+     * Opens the connection so its ready for use
      */
     MongoFuture<Void> openAsync();
-
-    /**
-     * Returns the opened state of the connection
-     *
-     * @return true if connection has been opened
-     */
-    boolean isOpened();
 
     /**
      * Closes the connection.
      */
     void close();
+
+    /**
+     * Returns if the connection has been opened
+     *
+     * @return true if connection has been opened
+     */
+    boolean opened();
 
     /**
      * Returns the closed state of the connection
@@ -113,4 +100,5 @@ interface InternalConnection extends BufferProvider {
      * @param callback the callback to invoke on completion
      */
     void receiveMessageAsync(int responseTo, SingleResultCallback<ResponseBuffers> callback);
+
 }

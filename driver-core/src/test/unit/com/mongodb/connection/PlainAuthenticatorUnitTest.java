@@ -33,7 +33,7 @@ public class PlainAuthenticatorUnitTest {
 
     @Before
     public void before() {
-        connection = new TestInternalConnection("1", new ServerAddress("localhost", 27017));
+        connection = new TestInternalConnection(new ServerAddress("localhost", 27017));
         credential = MongoCredential.createPlainCredential("user", "$external", "pencil".toCharArray());
         subject = new PlainAuthenticator(this.credential, this.connection);
     }

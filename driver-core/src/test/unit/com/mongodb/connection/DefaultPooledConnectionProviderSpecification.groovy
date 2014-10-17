@@ -20,7 +20,6 @@ import category.Slow
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.ServerAddress
-import com.mongodb.event.ConnectionEvent
 import com.mongodb.event.ConnectionPoolEvent
 import com.mongodb.event.ConnectionPoolListener
 import com.mongodb.event.ConnectionPoolOpenedEvent
@@ -137,6 +136,9 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
             numberOfConnectionsCreated++
             Mock(InternalConnection) {
                 sendMessage(_, _) >> { throw new MongoSocketWriteException('', SERVER_ADDRESS, new IOException()) }
+                getDescription() >> {
+                    new ConnectionDescription(new ServerAddress());
+                }
             }
         }
 
@@ -254,14 +256,13 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
                                              ConnectionPoolSettings.builder().maxSize(10).maxWaitQueueSize(1).build(),
                                              listener)
         def connection = provider.get()
-        def connectionId = connection.getId()
         connection.close()
 
         when:
         provider.close()
 
         then:
-        1 * listener.connectionRemoved(new ConnectionEvent(CLUSTER_ID, SERVER_ADDRESS, connectionId))
+        1 * listener.connectionRemoved(_)
     }
 
     def 'should fire connection pool events on check out and check in'() {
@@ -272,7 +273,6 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
                                              ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
                                              listener)
         def connection = provider.get()
-        def connectionId = connection.getId()
         connection.close()
 
         when:
@@ -280,14 +280,14 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
 
         then:
         1 * listener.waitQueueEntered(new ConnectionPoolWaitQueueEvent(CLUSTER_ID, SERVER_ADDRESS, Thread.currentThread().getId()))
-        1 * listener.connectionCheckedOut(new ConnectionEvent(CLUSTER_ID, SERVER_ADDRESS, connectionId))
+        1 * listener.connectionCheckedOut(_)
         1 * listener.waitQueueExited(new ConnectionPoolWaitQueueEvent(CLUSTER_ID, SERVER_ADDRESS, Thread.currentThread().getId()))
 
         when:
         connection.close()
 
         then:
-        1 * listener.connectionCheckedIn(new ConnectionEvent(CLUSTER_ID, SERVER_ADDRESS, connectionId))
+        1 * listener.connectionCheckedIn(_)
     }
 
     def 'should not fire any more events after pool is closed'() {

@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
 
 abstract class Authenticator {
     private final MongoCredential credential;
@@ -33,6 +34,10 @@ abstract class Authenticator {
 
     InternalConnection getInternalConnection() {
         return internalConnection;
+    }
+
+    ServerAddress getServerAddress() {
+        return internalConnection.getDescription().getServerAddress();
     }
 
     abstract void authenticate();
