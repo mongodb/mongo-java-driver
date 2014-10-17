@@ -32,12 +32,12 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSSLSettings
-import static com.mongodb.connection.ServerMonitor.exceptionHasChanged
-import static com.mongodb.connection.ServerMonitor.stateHasChanged
+import static DefaultServerMonitor.exceptionHasChanged
+import static DefaultServerMonitor.stateHasChanged
 
 class ServerMonitorSpecification extends OperationFunctionalSpecification {
     ServerDescription newDescription
-    ServerMonitor serverMonitor
+    DefaultServerMonitor serverMonitor
     CountDownLatch latch = new CountDownLatch(1)
 
     def cleanup() {
@@ -149,7 +149,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
     }
 
     def initializeServerMonitor(ServerAddress address) {
-        serverMonitor = new ServerMonitor(address, ServerSettings.builder().build(), 'cluster-1',
+        serverMonitor = new DefaultServerMonitor(address, ServerSettings.builder().build(), 'cluster-1',
                                           new ChangeListener<ServerDescription>() {
                                               @Override
                                               void stateChanged(final ChangeEvent<ServerDescription> event) {

@@ -37,7 +37,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 @ThreadSafe
-class ServerMonitor {
+class DefaultServerMonitor {
 
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
@@ -53,9 +53,9 @@ class ServerMonitor {
     private long roundTripTimeSum;
     private volatile boolean isClosed;
 
-    ServerMonitor(final ServerAddress serverAddress, final ServerSettings settings,
-                  final String clusterId, final ChangeListener<ServerDescription> serverStateListener,
-                  final InternalConnectionFactory internalConnectionFactory, final ConnectionPool connectionPool) {
+    DefaultServerMonitor(final ServerAddress serverAddress, final ServerSettings settings,
+                         final String clusterId, final ChangeListener<ServerDescription> serverStateListener,
+                         final InternalConnectionFactory internalConnectionFactory, final ConnectionPool connectionPool) {
         this.settings = settings;
         this.serverAddress = serverAddress;
         this.serverStateListener = serverStateListener;

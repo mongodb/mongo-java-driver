@@ -35,7 +35,7 @@ import static java.lang.String.format;
 class DefaultServer implements ClusterableServer {
     private final ServerAddress serverAddress;
     private final ConnectionPool connectionPool;
-    private final ServerMonitor serverMonitor;
+    private final DefaultServerMonitor serverMonitor;
     private final Set<ChangeListener<ServerDescription>> changeListeners =
         Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
     private final ChangeListener<ServerDescription> serverStateListener;
@@ -53,7 +53,7 @@ class DefaultServer implements ClusterableServer {
         this.connectionPool = connectionPool;
         this.description = ServerDescription.builder().state(CONNECTING).address(serverAddress).build();
         serverStateListener = new DefaultServerStateListener();
-        this.serverMonitor = new ServerMonitor(serverAddress, settings, clusterId, serverStateListener, heartbeatStreamConnectionFactory,
+        this.serverMonitor = new DefaultServerMonitor(serverAddress, settings, clusterId, serverStateListener, heartbeatStreamConnectionFactory,
                                                connectionPool);
         this.serverMonitor.start();
     }
