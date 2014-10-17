@@ -19,18 +19,11 @@ package com.mongodb;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
 import org.bson.codecs.DecoderContext;
-import org.bson.codecs.configuration.CodecProvider;
-import org.bson.codecs.configuration.RootCodecRegistry;
-
-import java.util.Arrays;
 
 final class DBObjects {
-    static final DBObjectCodec codec =
-    new DBObjectCodec(null, new BasicDBObjectFactory(), new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider())),
-                      DBObjectCodecProvider.createDefaultBsonTypeClassMap());
-
     public static DBObject toDBObject(final BsonDocument document) {
-        return codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+        return MongoClient.getDefaultCodecRegistry().get(DBObject.class).decode(new BsonDocumentReader(document),
+                                                                                DecoderContext.builder().build());
     }
 
     private DBObjects() {

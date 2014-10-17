@@ -21,6 +21,7 @@ import com.mongodb.client.model.FindOptions;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.bson.codecs.DocumentCodecProvider;
+import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.ObjectId;
@@ -39,7 +40,9 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testFindAndUpdateWithGenerics() {
-        List<CodecProvider> codecs = Arrays.asList(new DocumentCodecProvider(), new ConcreteCodecProvider());
+        List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
+                                                   new DocumentCodecProvider(),
+                                                   new ConcreteCodecProvider());
         MongoCollectionOptions options =
                 MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         MongoCollection<Concrete> collection = database.getCollection(getCollectionName(), Concrete.class, options);
@@ -56,7 +59,9 @@ public class MongoCollectionTest extends DatabaseTestCase {
     @Test
     public void shouldBeAbleToQueryTypedCollectionAndMapResultsIntoTypedLists() {
         // given
-        List<CodecProvider> codecs = Arrays.asList(new DocumentCodecProvider(), new ConcreteCodecProvider());
+        List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
+                                                   new DocumentCodecProvider(),
+                                                   new ConcreteCodecProvider());
         MongoCollectionOptions options =
                 MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         MongoCollection<Concrete> concreteCollection = database.getCollection(getCollectionName(), Concrete.class, options);

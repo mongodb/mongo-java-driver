@@ -24,6 +24,7 @@ import com.mongodb.client.test.Worker;
 import com.mongodb.client.test.WorkerCodecProvider;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodecProvider;
+import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.bson.types.ObjectId;
@@ -64,7 +65,9 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldReplaceAndReturnOriginalItemWithDocumentRequiringACustomEncoder() {
         Worker pat = new Worker(new ObjectId(), "Pat", "Sales", new Date(), 0);
-        List<CodecProvider> codecs = Arrays.asList(new DocumentCodecProvider(), new WorkerCodecProvider());
+        List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
+                                                   new DocumentCodecProvider(),
+                                                   new WorkerCodecProvider());
         MongoCollectionOptions options =
                 MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         MongoCollection<Worker> collection = database.getCollection(getCollectionName(), Worker.class, options);
@@ -83,7 +86,9 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
     @Test
     public void shouldReplaceAndReturnNewItemWithDocumentRequiringACustomEncoder() {
         Worker pat = new Worker(new ObjectId(), "Pat", "Sales", new Date(), 3);
-        List<CodecProvider> codecs = Arrays.asList(new DocumentCodecProvider(), new WorkerCodecProvider());
+        List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
+                                                   new DocumentCodecProvider(),
+                                                   new WorkerCodecProvider());
         MongoCollectionOptions options =
                 MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         MongoCollection<Worker> collection = database.getCollection(getCollectionName(), Worker.class, options);

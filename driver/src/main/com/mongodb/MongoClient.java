@@ -18,8 +18,14 @@ package com.mongodb;
 
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoDatabaseOptions;
+import org.bson.codecs.BsonValueCodecProvider;
+import org.bson.codecs.DocumentCodecProvider;
+import org.bson.codecs.ValueCodecProvider;
+import org.bson.codecs.configuration.RootCodecRegistry;
 
 import java.util.List;
+
+import static java.util.Arrays.asList;
 
 /**
  * <p>A MongoDB client with internal connection pooling. For most applications, you should have one MongoClient instance for the entire
@@ -67,6 +73,29 @@ import java.util.List;
  * @since 2.10.0
  */
 public class MongoClient extends Mongo {
+
+    private static final RootCodecRegistry DEFAULT_CODEC_REGISTRY = new RootCodecRegistry(asList(new ValueCodecProvider(),
+                                                                                                 new DocumentCodecProvider(),
+                                                                                                 new DBObjectCodecProvider(),
+                                                                                                 new BsonValueCodecProvider()));
+
+    /**
+     * Gets the default codec registry.  It includes the following providers:
+     *
+     * <ul>
+     *     <li>{@link org.bson.codecs.ValueCodecProvider}</li>
+     *     <li>{@link org.bson.codecs.DocumentCodecProvider}</li>
+     *     <li>{@link com.mongodb.DBObjectCodecProvider}</li>
+     *     <li>{@link org.bson.codecs.BsonValueCodecProvider}</li>
+     * </ul>
+     *
+     * @return the default codec registry
+     * @see MongoClientOptions#getCodecRegistry()
+     * @since 3.0
+     */
+    public static RootCodecRegistry getDefaultCodecRegistry() {
+        return DEFAULT_CODEC_REGISTRY;
+    }
 
     /**
      * Creates an instance based on a (single) mongodb node (localhost, default port).

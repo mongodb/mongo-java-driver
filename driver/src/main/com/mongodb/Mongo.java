@@ -42,13 +42,9 @@ import com.mongodb.operation.WriteOperation;
 import com.mongodb.protocol.KillCursorProtocol;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.ServerSelector;
-import org.bson.codecs.configuration.CodecProvider;
-import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.RootCodecRegistry;
 
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -101,9 +97,6 @@ public class Mongo {
     private final ThreadLocal<BindingHolder> pinnedBinding = new ThreadLocal<BindingHolder>();
     private final ConcurrentLinkedQueue<ServerCursor> orphanedCursors = new ConcurrentLinkedQueue<ServerCursor>();
     private final ExecutorService cursorCleaningService;
-
-    // legacy codec registry for DBObjects
-    private final CodecRegistry dbObjectCodecRegistry = new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider()));
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
@@ -788,10 +781,6 @@ public class Mongo {
         } finally {
             binding.release();
         }
-    }
-
-    CodecRegistry getDbObjectCodecRegistry() {
-        return dbObjectCodecRegistry;
     }
 
     private ExecutorService createCursorCleaningService() {

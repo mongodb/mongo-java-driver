@@ -69,6 +69,7 @@ import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
+import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.RootCodecRegistry
 import org.bson.types.ObjectId
 import spock.lang.Specification
@@ -85,7 +86,8 @@ class MongoCollectionSpecification extends Specification {
     def collection;
     def options = MongoCollectionOptions.builder().writeConcern(WriteConcern.JOURNALED)
                                         .readPreference(secondary())
-                                        .codecRegistry(new RootCodecRegistry([new DocumentCodecProvider()]))
+                                        .codecRegistry(new RootCodecRegistry([new ValueCodecProvider(),
+                                                                              new DocumentCodecProvider()]))
                                         .build()
 
     def 'should get namespace'() {

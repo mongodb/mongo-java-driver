@@ -20,16 +20,13 @@ import com.mongodb.annotations.Immutable;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
-import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.configuration.RootCodecRegistry;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocketFactory;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -619,7 +616,7 @@ public class MongoClientOptions {
         private String description;
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
-        private CodecRegistry codecRegistry = new RootCodecRegistry(asList(new DocumentCodecProvider()));
+        private CodecRegistry codecRegistry = MongoClient.getDefaultCodecRegistry();
 
         private int minConnectionPoolSize;
         private int maxConnectionPoolSize = 100;

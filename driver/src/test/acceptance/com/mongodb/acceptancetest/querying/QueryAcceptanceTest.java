@@ -31,6 +31,7 @@ import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.EncoderContext;
+import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
@@ -73,7 +74,9 @@ public class QueryAcceptanceTest extends DatabaseTestCase {
 
     @Test
     public void shouldBeAbleToQueryTypedCollectionWithDocument() {
-        List<CodecProvider> codecs = Arrays.asList(new DocumentCodecProvider(), new PersonCodecProvider());
+        List<CodecProvider> codecs = Arrays.asList(new ValueCodecProvider(),
+                                                   new DocumentCodecProvider(),
+                                                   new PersonCodecProvider());
         MongoCollectionOptions options =
                 MongoCollectionOptions.builder().codecRegistry(new RootCodecRegistry(codecs)).build();
         MongoCollection<Person> personCollection = database.getCollection(getCollectionName(), Person.class, options);

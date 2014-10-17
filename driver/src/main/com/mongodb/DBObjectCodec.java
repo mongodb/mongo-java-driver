@@ -45,6 +45,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 @SuppressWarnings("rawtypes")
 class DBObjectCodec implements CollectibleCodec<DBObject> {
     private static final String ID_FIELD_NAME = "_id";
@@ -56,18 +58,15 @@ class DBObjectCodec implements CollectibleCodec<DBObject> {
     private final IdGenerator idGenerator = new ObjectIdGenerator();
 
     public DBObjectCodec(final CodecRegistry codecRegistry, final Map<BsonType, Class<?>> bsonTypeClassMap) {
-        this.codecRegistry = codecRegistry;
-        this.bsonTypeClassMap = bsonTypeClassMap;
-        this.db = null;
-        this.objectFactory = null;
+        this(null, new BasicDBObjectFactory(), codecRegistry, bsonTypeClassMap);
     }
 
     public DBObjectCodec(final DB db, final DBObjectFactory objectFactory,
                          final CodecRegistry codecRegistry, final Map<BsonType, Class<?>> bsonTypeClassMap) {
         this.db = db;
-        this.objectFactory = objectFactory;
-        this.codecRegistry = codecRegistry;
-        this.bsonTypeClassMap = bsonTypeClassMap;
+        this.objectFactory = notNull("objectFactory", objectFactory);
+        this.codecRegistry = notNull("codecRegistry", codecRegistry);
+        this.bsonTypeClassMap = notNull("bsonTypeClassMap", bsonTypeClassMap);
     }
 
     @Override

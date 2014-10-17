@@ -19,27 +19,7 @@ package com.mongodb;
 import org.bson.BsonDbPointer;
 import org.bson.BsonType;
 import org.bson.BsonUndefined;
-import org.bson.codecs.BinaryCodec;
-import org.bson.codecs.BooleanCodec;
-import org.bson.codecs.BsonDBPointerCodec;
-import org.bson.codecs.BsonRegularExpressionCodec;
-import org.bson.codecs.BsonUndefinedCodec;
-import org.bson.codecs.ByteArrayCodec;
-import org.bson.codecs.ByteCodec;
-import org.bson.codecs.CodeCodec;
 import org.bson.codecs.Codec;
-import org.bson.codecs.DateCodec;
-import org.bson.codecs.DoubleCodec;
-import org.bson.codecs.FloatCodec;
-import org.bson.codecs.IntegerCodec;
-import org.bson.codecs.LongCodec;
-import org.bson.codecs.MaxKeyCodec;
-import org.bson.codecs.MinKeyCodec;
-import org.bson.codecs.ObjectIdCodec;
-import org.bson.codecs.PatternCodec;
-import org.bson.codecs.ShortCodec;
-import org.bson.codecs.StringCodec;
-import org.bson.codecs.UuidCodec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BSONTimestamp;
@@ -104,27 +84,7 @@ class DBObjectCodecProvider implements CodecProvider {
     }
 
     private void addCodecs() {
-        addCodec(new ByteCodec());
-        addCodec(new BinaryCodec());
-        addCodec(new BooleanCodec());
-        addCodec(new DateCodec());
-        addCodec(new BsonDBPointerCodec());
-        addCodec(new DoubleCodec());
-        addCodec(new IntegerCodec());
-        addCodec(new LongCodec());
-        addCodec(new MinKeyCodec());
-        addCodec(new MaxKeyCodec());
-        addCodec(new CodeCodec());
-        addCodec(new ObjectIdCodec());
-        addCodec(new BsonRegularExpressionCodec());
-        addCodec(new StringCodec());
-        addCodec(new PatternCodec());
         addCodec(new BSONTimestampCodec());
-        addCodec(new BsonUndefinedCodec());
-        addCodec(new ShortCodec());
-        addCodec(new ByteArrayCodec());
-        addCodec(new FloatCodec());
-        addCodec(new UuidCodec());
     }
 
     private <T> void addCodec(final Codec<T> codec) {

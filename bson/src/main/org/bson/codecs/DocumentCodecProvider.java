@@ -21,9 +21,7 @@ import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.CodeWithScope;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * A {@code CodecProvider} for the Document class and all the default Codec implementations on which it depends.
@@ -31,7 +29,6 @@ import java.util.Map;
  * @since 3.0
  */
 public class DocumentCodecProvider implements CodecProvider {
-    private final Map<Class<?>, Codec<?>> codecs = new HashMap<Class<?>, Codec<?>>();
     private final BsonTypeClassMap bsonTypeClassMap;
 
     /**
@@ -49,16 +46,11 @@ public class DocumentCodecProvider implements CodecProvider {
      */
     public DocumentCodecProvider(final BsonTypeClassMap bsonTypeClassMap) {
         this.bsonTypeClassMap = bsonTypeClassMap;
-        addCodecs();
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-        if (codecs.containsKey(clazz)) {
-            return (Codec<T>) codecs.get(clazz);
-        }
-
         if (clazz == CodeWithScope.class) {
             return (Codec<T>) new CodeWithScopeCodec(registry.get(Document.class));
         }
@@ -72,30 +64,6 @@ public class DocumentCodecProvider implements CodecProvider {
         }
 
         return null;
-    }
-
-    private void addCodecs() {
-        addCodec(new BinaryCodec());
-        addCodec(new BooleanCodec());
-        addCodec(new DateCodec());
-        addCodec(new BsonDBPointerCodec());
-        addCodec(new DoubleCodec());
-        addCodec(new IntegerCodec());
-        addCodec(new LongCodec());
-        addCodec(new MinKeyCodec());
-        addCodec(new MaxKeyCodec());
-        addCodec(new CodeCodec());
-        addCodec(new ObjectIdCodec());
-        addCodec(new BsonRegularExpressionCodec());
-        addCodec(new StringCodec());
-        addCodec(new SymbolCodec());
-        addCodec(new BsonTimestampCodec());
-        addCodec(new BsonUndefinedCodec());
-        addCodec(new UuidCodec());
-    }
-
-    private <T> void addCodec(final Codec<T> codec) {
-        codecs.put(codec.getEncoderClass(), codec);
     }
 
     @Override

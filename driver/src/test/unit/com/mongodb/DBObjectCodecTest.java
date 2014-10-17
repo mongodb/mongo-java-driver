@@ -23,7 +23,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonObjectId;
 import org.bson.Transformer;
 import org.bson.codecs.EncoderContext;
-import org.bson.codecs.configuration.CodecProvider;
+import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.RootCodecRegistry;
 import org.junit.Test;
 
@@ -80,7 +80,8 @@ public class DBObjectCodecTest extends DatabaseTestCase {
     @Test
     public void shouldNotGenerateIdIfPresent() {
         DBObjectCodec dbObjectCodec = new DBObjectCodec(null, new BasicDBObjectFactory(),
-                                                        new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider())),
+                                                        new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
+                                                                                            new DBObjectCodecProvider())),
                                                         DBObjectCodecProvider.createDefaultBsonTypeClassMap());
         BasicDBObject document = new BasicDBObject("_id", 1);
         assertTrue(dbObjectCodec.documentHasId(document));
@@ -92,7 +93,8 @@ public class DBObjectCodecTest extends DatabaseTestCase {
     @Test
     public void shouldGenerateIdIfAbsent() {
         DBObjectCodec dbObjectCodec = new DBObjectCodec(null, new BasicDBObjectFactory(),
-                                                        new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider())),
+                                                        new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
+                                                                                            new DBObjectCodecProvider())),
                                                         DBObjectCodecProvider.createDefaultBsonTypeClassMap());
         BasicDBObject document = new BasicDBObject();
         assertFalse(dbObjectCodec.documentHasId(document));
@@ -104,7 +106,8 @@ public class DBObjectCodecTest extends DatabaseTestCase {
     @Test
     public void shouldRespectEncodeIdFirstPropertyInEncoderContext() {
         DBObjectCodec dbObjectCodec = new DBObjectCodec(null, new BasicDBObjectFactory(),
-                                                        new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider())),
+                                                        new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(),
+                                                                                            new DBObjectCodecProvider())),
                                                         DBObjectCodecProvider.createDefaultBsonTypeClassMap());
         // given
         DBObject doc = new BasicDBObject("x", 2).append("_id", 2);

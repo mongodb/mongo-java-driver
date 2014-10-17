@@ -1962,12 +1962,12 @@ public class DBCollection {
                                                                                          ordered, writeConcern)),
                                             getObjectCodec());
         } catch (com.mongodb.bulk.BulkWriteException e) {
-            throw BulkWriteHelper.translateBulkWriteException(e, DBObjects.codec);
+            throw BulkWriteHelper.translateBulkWriteException(e, MongoClient.getDefaultCodecRegistry().get(DBObject.class));
         }
     }
 
     DBObjectCodec getDefaultDBObjectCodec() {
-        return new DBObjectCodec(getDB(), getObjectFactory(), getDB().getMongo().getDbObjectCodecRegistry(),
+        return new DBObjectCodec(getDB(), getObjectFactory(), MongoClient.getDefaultCodecRegistry(),
                                  DBObjectCodecProvider.getDefaultBsonTypeClassMap());
     }
 

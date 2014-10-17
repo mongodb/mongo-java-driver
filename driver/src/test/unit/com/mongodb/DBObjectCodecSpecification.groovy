@@ -23,7 +23,7 @@ import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
-import org.bson.codecs.configuration.CodecProvider
+import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Shared
 import spock.lang.Specification
@@ -39,7 +39,7 @@ class DBObjectCodecSpecification extends Specification {
         given:
         UUID uuid = UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10')
         DBObjectCodec dbObjectCodec = new DBObjectCodec(null, new BasicDBObjectFactory(),
-                new RootCodecRegistry(Arrays.<CodecProvider>asList(new DBObjectCodecProvider())),
+                new RootCodecRegistry(Arrays.asList(new ValueCodecProvider(), new DBObjectCodecProvider())),
                 DBObjectCodecProvider.createDefaultBsonTypeClassMap());
         BasicDBObject uuidObj = new BasicDBObject('uuid', uuid)
         BsonDocumentWriter writer = new BsonDocumentWriter(bsonDoc)

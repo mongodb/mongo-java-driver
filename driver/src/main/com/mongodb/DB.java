@@ -76,7 +76,7 @@ public class DB {
         this.executor = executor;
         this.collectionCache = new ConcurrentHashMap<String, DBCollection>();
         this.optionHolder = new Bytes.OptionHolder(mongo.getOptionHolder());
-        this.commandCodec = new DBObjectCodec(this, null, getMongo().getDbObjectCodecRegistry(),
+        this.commandCodec = new DBObjectCodec(this, new BasicDBObjectFactory(), MongoClient.getDefaultCodecRegistry(),
                                               DBObjectCodecProvider.getDefaultBsonTypeClassMap());
     }
 
