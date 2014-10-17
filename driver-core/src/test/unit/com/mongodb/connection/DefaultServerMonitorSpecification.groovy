@@ -70,7 +70,7 @@ class DefaultServerMonitorSpecification extends Specification {
         def internalConnectionFactory = Mock(InternalConnectionFactory) {
             create(_) >> {
                 Mock(InternalConnection) {
-                    open() >> { sleep(10); }
+                    open() >> { sleep(100); }
                 }
             }
         }
@@ -102,7 +102,7 @@ class DefaultServerMonitorSpecification extends Specification {
         def internalConnectionFactory = Mock(InternalConnectionFactory) {
             create(_) >> {
                 Mock(InternalConnection) {
-                    open() >> { sleep(10); }
+                    open() >> { sleep(100); }
                 }
             }
         }
@@ -112,9 +112,9 @@ class DefaultServerMonitorSpecification extends Specification {
 
         when:
         monitor.close()
+        while (!monitor.monitorThread.isInterrupted()) { monitor.monitorThread.wait(10) }
 
         then:
-        monitor.monitorThread.isInterrupted()
         !stateChanged
     }
 
