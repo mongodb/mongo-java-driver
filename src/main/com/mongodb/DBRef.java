@@ -26,8 +26,9 @@ import org.bson.BSONObject;
  * <p>While instances of this class are {@code Serializable}, deserialized instances can not be fetched, as the {@code db} property is
  * transient.</p>
  *
- * @mongodb.driver.manual applications/database-references Database References
+ * @mongodb.driver.manual reference/database-references/ Database References
  */
+@SuppressWarnings("deprecation")
 public class DBRef extends DBRefBase {
 
     private static final long serialVersionUID = -849581217713362618L;
@@ -35,9 +36,21 @@ public class DBRef extends DBRefBase {
     /**
      * Creates a DBRef.
      *
+     * @param ns the namespace where the object is stored
+     * @param id the object id
+     */
+    public DBRef(String ns , Object id) {
+        this(null, ns, id);
+    }
+
+    /**
+     * Creates a DBRef.
+     *
      * @param db the database
      * @param o a BSON object representing the reference
+     * @deprecated Deprecated because {@link #fetch()} is deprecated. Use {@link #DBRef(String, Object)} instead
      */
+    @Deprecated
     public DBRef(DB db , BSONObject o ){
         super( db , o.get( "$ref" ).toString() , o.get( "$id" ) );
     }
@@ -48,14 +61,11 @@ public class DBRef extends DBRefBase {
      * @param db the database
      * @param ns the namespace where the object is stored
      * @param id the object id
+     * @deprecated Deprecated because {@link #fetch()} is deprecated. Use {@link #DBRef(String, Object)} instead
      */
+    @Deprecated
     public DBRef(DB db , String ns , Object id) {
         super(db, ns, id);
-    }
-
-    // Required for serialization framework
-    private DBRef() {
-        super();
     }
 
     /**
@@ -65,7 +75,9 @@ public class DBRef extends DBRefBase {
      * @param ref the reference
      * @return the referenced document
      * @throws MongoException
+     * @deprecated use {@link com.mongodb.DBCollection#findOne(Object)} instead
      */
+    @Deprecated
     public static DBObject fetch(DB db, DBObject ref) {
         String ns;
         Object id;

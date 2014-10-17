@@ -26,10 +26,24 @@ import java.io.Serializable;
  * <p>While instances of this class are {@code Serializable}, deserialized instances can not be fetched, as the {@code db} property is
  * transient.</p>
  *
- * @mongodb.driver.manual applications/database-references Database References
+ * @mongodb.driver.manual reference/database-references/ Database References
+ * @deprecated Use {@link com.mongodb.DBRef} class exclusively
  */
+@Deprecated
 public class DBRefBase implements Serializable {
     private static final long serialVersionUID = 3031885741395465814L;
+
+    /**
+     * Creates a DBRefBase
+     *
+     * @param ns the namespace where the object is stored
+     * @param id the object id
+     */
+    public DBRefBase(String ns , Object id) {
+        _db = null;
+        _ns = ns.intern();
+        _id = id;
+    }
 
     /**
      * Creates a DBRefBase
@@ -37,7 +51,10 @@ public class DBRefBase implements Serializable {
      * @param db the database
      * @param ns the namespace where the object is stored
      * @param id the object id
+     *
+     * @deprecated Deprecated because {@link #fetch()} is deprecated. Use {@link #DBRefBase(String, Object)} instead
      */
+    @Deprecated
     public DBRefBase(DB db , String ns , Object id) {
         _db = db;
         _ns = ns.intern();
@@ -58,7 +75,9 @@ public class DBRefBase implements Serializable {
      *
      * @return the document that this references.
      * @throws MongoException
+     * @deprecated use {@link com.mongodb.DBCollection#findOne(Object)} instead
      */
+    @Deprecated
     public DBObject fetch() throws MongoException {
         if (_loadedPointedTo)
             return _pointedTo;
@@ -79,18 +98,29 @@ public class DBRefBase implements Serializable {
     }
 
     /**
-     * Gets the object's id
+     * Gets the _id of the referenced document
      *
-     * @return the id of the referenced document
+     * @return the _id of the referenced document
      */
     public Object getId() {
         return _id;
     }
 
     /**
+     * Gets the name of the collection in which the referenced document is stored.
+     *
+     * @return the name of the collection in which the referenced is stored
+     */
+    public String getCollectionName() {
+        return _ns;
+    }
+
+    /**
      * Gets the object's namespace (collection name)
      * @return the name of the collection in which the reference is stored
+     * @deprecated use {@link #getCollectionName()} instead
      */
+    @Deprecated
     public String getRef() {
         return _ns;
     }
@@ -100,12 +130,15 @@ public class DBRefBase implements Serializable {
      *
      * @return the database
      * @see #fetch()
+     * @deprecated deprecated because {@link #fetch()} is deprecated
      */
+    @Deprecated
     public DB getDB() {
         return _db;
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
