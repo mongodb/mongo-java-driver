@@ -18,7 +18,9 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.SingleResultFuture;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 import org.bson.io.BsonInput;
@@ -36,6 +38,8 @@ class TestInternalConnection implements InternalConnection {
     private final String id;
     private final Deque<ResponseBuffers> replies;
     private final List<BsonInput> sent;
+    private volatile boolean opened;
+    private volatile boolean closed;
 
     public TestInternalConnection(final String id, final ServerAddress address) {
         this.id = id;
@@ -67,6 +71,32 @@ class TestInternalConnection implements InternalConnection {
     @Override
     public ConnectionDescription getDescription() {
         throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    @Override
+    public void open() {
+        opened = true;
+    }
+
+    @Override
+    public MongoFuture<Void> openAsync() {
+        opened = true;
+        return new SingleResultFuture<Void>(null, null);
+    }
+
+    @Override
+    public void close() {
+        closed = true;
+    }
+
+    @Override
+    public boolean isOpened() {
+        return opened && !closed;
+    }
+
+    @Override
+    public boolean isClosed() {
+        return closed;
     }
 
     @Override
@@ -131,16 +161,6 @@ class TestInternalConnection implements InternalConnection {
         } catch (MongoException ex) {
             callback.onResult(null, ex);
         }
-    }
-
-    @Override
-    public void close() {
-
-    }
-
-    @Override
-    public boolean isClosed() {
-        return false;
     }
 
     @Override

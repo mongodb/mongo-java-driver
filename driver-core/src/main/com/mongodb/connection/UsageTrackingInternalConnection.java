@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.ByteBuf;
 
@@ -44,6 +45,21 @@ class UsageTrackingInternalConnection implements InternalConnection {
     public void close() {
         wrapped.close();
         wrapped = null;
+    }
+
+    @Override
+    public void open() {
+        wrapped.open();
+    }
+
+    @Override
+    public MongoFuture<Void> openAsync() {
+        return wrapped.openAsync();
+    }
+
+    @Override
+    public boolean isOpened() {
+        return wrapped == null ? false : wrapped.isOpened();
     }
 
     @Override

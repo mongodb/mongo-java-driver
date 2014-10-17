@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.ByteBuf;
 
@@ -52,6 +53,35 @@ interface InternalConnection extends BufferProvider {
     ConnectionDescription getDescription();
 
     /**
+     * Opens the connection and initializes it for use.
+     */
+    void open();
+
+    /**
+     * Opens the connection and initializes it for use.
+     */
+    MongoFuture<Void> openAsync();
+
+    /**
+     * Returns the opened state of the connection
+     *
+     * @return true if connection has been opened
+     */
+    boolean isOpened();
+
+    /**
+     * Closes the connection.
+     */
+    void close();
+
+    /**
+     * Returns the closed state of the connection
+     *
+     * @return true if connection is closed
+     */
+    boolean isClosed();
+
+    /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.
      *
      * @param byteBuffers   the list of byte buffers to send.
@@ -83,16 +113,4 @@ interface InternalConnection extends BufferProvider {
      * @param callback the callback to invoke on completion
      */
     void receiveMessageAsync(int responseTo, SingleResultCallback<ResponseBuffers> callback);
-
-    /**
-     * Closes the connection.
-     */
-    void close();
-
-    /**
-     * Returns the closed state of the connection
-     *
-     * @return true if connection is closed
-     */
-    boolean isClosed();
 }

@@ -52,15 +52,18 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
 
     @Override
     public ClusterableServer create(final ServerAddress serverAddress) {
-        return new DefaultServer(serverAddress, settings, clusterId,
-                                 new DefaultConnectionPool(clusterId, serverAddress,
-                                                           new InternalStreamConnectionFactory(clusterId,
-                                                                                               streamFactory,
-                                                                                               credentialList,
-                                                                                               connectionListener),
-                                                           connectionPoolSettings, connectionPoolListener),
-                                 new InternalStreamConnectionFactory(clusterId, heartbeatStreamFactory,
-                                                                     credentialList, connectionListener));
+        ConnectionPool connectionPool = new DefaultConnectionPool(clusterId, serverAddress,
+                                                                  new InternalStreamConnectionFactory(clusterId,
+                                                                                                      streamFactory,
+                                                                                                      credentialList,
+                                                                                                      connectionListener),
+                                                                  connectionPoolSettings, connectionPoolListener);
+        ServerMonitorFactory serverMonitorFactory =
+            new DefaultServerMonitorFactory(serverAddress, settings, clusterId,
+                                            new InternalStreamConnectionFactory(clusterId, heartbeatStreamFactory, credentialList,
+                                                                                connectionListener),
+                                            connectionPool);
+        return new DefaultServer(serverAddress, connectionPool, serverMonitorFactory);
     }
 
     @Override

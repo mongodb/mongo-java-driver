@@ -16,17 +16,14 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultCallback;
+interface ServerMonitor {
 
-interface ConnectionInitializer {
+    void start();
 
-    void initialize();
+    void connect();
 
-    MongoFuture<Void> initializeAsync(SingleResultCallback<Void> callback);
+    void invalidate();
 
-    String getId();
-
-    ConnectionDescription getDescription();
+    void close();
 
 }

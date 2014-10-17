@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.ByteBuf;
@@ -35,34 +36,33 @@ import static java.lang.String.format;
 class DefaultServer implements ClusterableServer {
     private final ServerAddress serverAddress;
     private final ConnectionPool connectionPool;
-    private final DefaultServerMonitor serverMonitor;
+    private final ServerMonitor serverMonitor;
     private final Set<ChangeListener<ServerDescription>> changeListeners =
         Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
     private final ChangeListener<ServerDescription> serverStateListener;
     private volatile ServerDescription description;
     private volatile boolean isClosed;
 
-    public DefaultServer(final ServerAddress serverAddress,
-                         final ServerSettings settings,
-                         final String clusterId, final ConnectionPool connectionPool,
-                         final InternalConnectionFactory heartbeatStreamConnectionFactory) {
-        notNull("connectionPool", connectionPool);
-        notNull("heartbeatStreamConnectionFactory", heartbeatStreamConnectionFactory);
-
+    public DefaultServer(final ServerAddress serverAddress, final ConnectionPool connectionPool,
+                         final ServerMonitorFactory serverMonitorFactory) {
+        notNull("serverMonitorFactory", serverMonitorFactory);
         this.serverAddress = notNull("serverAddress", serverAddress);
-        this.connectionPool = connectionPool;
-        this.description = ServerDescription.builder().state(CONNECTING).address(serverAddress).build();
-        serverStateListener = new DefaultServerStateListener();
-        this.serverMonitor = new DefaultServerMonitor(serverAddress, settings, clusterId, serverStateListener, heartbeatStreamConnectionFactory,
-                                               connectionPool);
-        this.serverMonitor.start();
+        this.connectionPool = notNull("connectionPool", connectionPool);
+        this.serverStateListener = new DefaultServerStateListener();
+        description = ServerDescription.builder().state(CONNECTING).address(serverAddress).build();
+        serverMonitor = serverMonitorFactory.create(serverStateListener);
+        serverMonitor.start();
     }
 
     @Override
     public Connection getConnection() {
         isTrue("open", !isClosed());
-
-        return new DefaultServerConnection(connectionPool.get());
+        try {
+            return new DefaultServerConnection(connectionPool.get());
+        } catch (MongoSecurityException e) {
+            invalidate();
+            throw e;
+        }
     }
 
     @Override
@@ -87,6 +87,7 @@ class DefaultServer implements ClusterableServer {
                                                                                                           .state(CONNECTING)
                                                                                                           .address(serverAddress).build()));
         connectionPool.invalidate();
+        serverMonitor.invalidate();
     }
 
     @Override

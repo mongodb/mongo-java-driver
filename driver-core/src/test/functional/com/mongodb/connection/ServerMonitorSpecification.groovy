@@ -37,7 +37,7 @@ import static DefaultServerMonitor.stateHasChanged
 
 class ServerMonitorSpecification extends OperationFunctionalSpecification {
     ServerDescription newDescription
-    DefaultServerMonitor serverMonitor
+    ServerMonitor serverMonitor
     CountDownLatch latch = new CountDownLatch(1)
 
     def cleanup() {
@@ -163,6 +163,5 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                                                                               getCredentialList(),
                                                                               new NoOpConnectionListener()),
                                           new TestConnectionPool())
-        serverMonitor.start()
     }
 }

@@ -14,32 +14,21 @@
  * limitations under the License.
  */
 
-
-
-
-
-
-
 package com.mongodb.connection
 
+import com.mongodb.MongoSecurityException
 import com.mongodb.ServerAddress
 import spock.lang.Specification
+
+import static com.mongodb.MongoCredential.createCredential
 
 class DefaultServerSpecification extends Specification {
 
     DefaultServer server;
 
-    def setup() {
-        server = new DefaultServer(new ServerAddress(), ServerSettings.builder().build(), 'cluster-1', new TestConnectionPool(),
-                                   new TestInternalConnectionFactory())
-    }
-
-    def cleanup() {
-        server.close()
-    }
-
     def 'invalidate should invoke change listeners'() {
         given:
+        server = new DefaultServer(new ServerAddress(), new TestConnectionPool(), new TestServerMonitorFactory())
         def stateChanged = false;
 
         server.addChangeListener(new ChangeListener<ServerDescription>() {
@@ -54,5 +43,27 @@ class DefaultServerSpecification extends Specification {
 
         then:
         stateChanged
+
+        cleanup:
+        server?.close()
+    }
+
+    def 'failed open should invalidate the server'() {
+        given:
+        def connectionPool  = Mock(ConnectionPool)
+        def serverMonitorFactory = Stub(ServerMonitorFactory)
+        def serverMonitor = Mock(ServerMonitor)
+        connectionPool.get() >> { throw new MongoSecurityException(createCredential('jeff', 'admin', '123'.toCharArray()), 'Auth failed') }
+        serverMonitorFactory.create(_) >> { serverMonitor }
+
+        server = new DefaultServer(new ServerAddress(), connectionPool, serverMonitorFactory)
+
+        when:
+        server.getConnection()
+
+        then:
+        thrown(MongoSecurityException)
+        1 * connectionPool.invalidate()
+        1 * serverMonitor.invalidate()
     }
 }

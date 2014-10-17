@@ -16,17 +16,8 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultCallback;
+interface ConnectionInitializerFactory {
 
-interface ConnectionInitializer {
-
-    void initialize();
-
-    MongoFuture<Void> initializeAsync(SingleResultCallback<Void> callback);
-
-    String getId();
-
-    ConnectionDescription getDescription();
+    ConnectionInitializer create(InternalConnection connection);
 
 }

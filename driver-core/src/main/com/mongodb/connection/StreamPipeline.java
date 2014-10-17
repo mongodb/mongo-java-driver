@@ -27,7 +27,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.event.ConnectionEvent;
 import com.mongodb.event.ConnectionListener;
 import com.mongodb.event.ConnectionMessageReceivedEvent;
 import com.mongodb.event.ConnectionMessagesSentEvent;
@@ -55,7 +54,6 @@ class StreamPipeline {
     private final Stream stream;
     private final ConnectionListener connectionListener;
     private final InternalConnection internalConnection;
-    private volatile boolean initialized;
 
     private final LinkedList<SendMessageAsync> writeQueue = new LinkedList<SendMessageAsync>();
     private final ConcurrentHashMap<Integer, SingleResultCallback<ResponseBuffers>> readQueue =
@@ -69,34 +67,10 @@ class StreamPipeline {
 
     StreamPipeline(final String clusterId, final Stream stream, final ConnectionListener connectionListener,
                    final InternalConnection internalConnection) {
-        this(clusterId, stream, connectionListener, internalConnection, false);
-    }
-
-    StreamPipeline(final String clusterId, final Stream stream, final ConnectionListener connectionListener,
-                   final InternalConnection internalConnection, final boolean initialized) {
         this.clusterId = notNull("clusterId", clusterId);
         this.stream = notNull("stream", stream);
         this.connectionListener = notNull("connectionListener", connectionListener);
         this.internalConnection = notNull("internalConnection", internalConnection);
-        this.initialized = initialized;
-    }
-
-    public boolean isInitialized() {
-        return initialized;
-    }
-
-    public void initialized(final boolean initializedSucceed) {
-        initialized = true;
-        if (initializedSucceed) {
-            try {
-                connectionListener.connectionOpened(new ConnectionEvent(clusterId, stream.getAddress(), internalConnection.getId()));
-            } catch (Throwable t) {
-                LOGGER.warn("Exception when trying to signal connectionOpened to the connectionListener", t);
-            }
-        } else {
-            close();
-        }
-        processPendingWrites();
     }
     
     void close() {
@@ -114,8 +88,6 @@ class StreamPipeline {
     void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
         if (isClosed()) {
             throw new MongoSocketClosedException("Cannot write to a closed stream", getServerAddress());
-        } else if (!isInitialized()) {
-            throw new MongoException("Connection not initialized");
         } else {
             try {
                 writing.acquire();
@@ -383,7 +355,7 @@ class StreamPipeline {
     }
 
     private void processPendingWrites() {
-        if (isInitialized() && writing.tryAcquire()) {
+        if (writing.tryAcquire()) {
             if (writeQueue.isEmpty()) {
                 writing.release();
                 return;

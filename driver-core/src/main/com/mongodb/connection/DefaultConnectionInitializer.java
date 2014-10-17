@@ -19,16 +19,14 @@ package com.mongodb.connection;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.event.ConnectionEvent;
-import com.mongodb.event.ConnectionListener;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.bson.ByteBuf;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -36,80 +34,22 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.CommandHelper.executeCommand;
 import static com.mongodb.connection.DescriptionHelper.createConnectionDescription;
 
-class PipelinedConnectionInitializer implements ConnectionInitializer, InternalConnection {
+class DefaultConnectionInitializer implements ConnectionInitializer {
     private static final AtomicInteger INCREMENTING_ID = new AtomicInteger();
-    private final String clusterId;
-    private final Stream stream;
-    private final ConnectionListener connectionListener;
+    private final ServerAddress serverAddress;
     private final List<MongoCredential> credentialList;
-    private final StreamPipeline streamPipeline;
-    private volatile boolean isClosed;
-
-    static final Logger LOGGER = Loggers.getLogger("ConnectionInitializer");
+    private final InternalConnection connection;
 
     private String id;
     private ConnectionDescription connectionDescription;
 
-    PipelinedConnectionInitializer(final String clusterId, final Stream stream, final List<MongoCredential> credentialList,
-                                   final ConnectionListener connectionListener) {
-        this.clusterId = notNull("clusterId", clusterId);
-        this.stream = notNull("stream", stream);
-        this.connectionListener = notNull("connectionListener", connectionListener);
-        notNull("credentialList", credentialList);
-        this.credentialList = new ArrayList<MongoCredential>(credentialList);
-        this.streamPipeline = new StreamPipeline(clusterId, stream, connectionListener, this, true);
-    }
+    static final Logger LOGGER = Loggers.getLogger("ConnectionInitializer");
 
-    @Override
-    public ServerAddress getServerAddress() {
-        return stream.getAddress();
-    }
-
-    @Override
-    public String getId() {
-        return id;
-    }
-
-    @Override
-    public ConnectionDescription getDescription() {
-        return connectionDescription;
-    }
-
-    @Override
-    public ByteBuf getBuffer(final int size) {
-        return stream.getBuffer(size);
-    }
-
-    @Override
-    public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
-        streamPipeline.sendMessage(byteBuffers, lastRequestId);
-    }
-
-    @Override
-    public ResponseBuffers receiveMessage(final int responseTo) {
-        return streamPipeline.receiveMessage(responseTo);
-    }
-
-    @Override
-    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-        streamPipeline.sendMessageAsync(byteBuffers, lastRequestId, callback);
-    }
-
-    @Override
-    public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-        streamPipeline.receiveMessageAsync(responseTo, callback);
-    }
-
-    @Override
-    public void close() {
-        isClosed = true;
-        stream.close();
-        connectionListener.connectionClosed(new ConnectionEvent(clusterId, stream.getAddress(), getId()));
-    }
-
-    @Override
-    public boolean isClosed() {
-        return isClosed;
+    DefaultConnectionInitializer(final ServerAddress serverAddress, final List<MongoCredential> credentialList,
+                                 final InternalConnection connection) {
+        this.serverAddress = notNull("serverAddress", serverAddress);
+        this.credentialList = notNull("credentialList", credentialList);
+        this.connection = notNull("connection", connection);
     }
 
     @Override
@@ -125,7 +65,6 @@ class PipelinedConnectionInitializer implements ConnectionInitializer, InternalC
             }
         } catch (Throwable t) {
             LOGGER.warn("Exception initializing the connection", t);
-            close();
             if (t instanceof MongoException) {
                 throw (MongoException) t;
             } else {
@@ -135,30 +74,41 @@ class PipelinedConnectionInitializer implements ConnectionInitializer, InternalC
     }
 
     @Override
-    public void initialize(final SingleResultCallback<Void> initializationFuture) {
+    public MongoFuture<Void> initializeAsync(final SingleResultCallback<Void> callback) {
+        SingleResultFuture<Void> future = new SingleResultFuture<Void>();
         try {
             initialize();
+            future.init(null, null);
         } catch (MongoException e) {
-            LOGGER.warn("Exception initializing the connection", e);
-            initializationFuture.onResult(null, e);
-            return;
+            future.init(null, e);
         }
-        initializationFuture.onResult(null, null);
+        future.register(callback);
+        return future;
+    }
+
+    @Override
+    public String getId() {
+        return id;
+    }
+
+    @Override
+    public ConnectionDescription getDescription() {
+        return connectionDescription;
     }
 
     private void initializeConnectionId() {
         BsonDocument response = CommandHelper.executeCommandWithoutCheckingForFailure("admin",
                                                                                       new BsonDocument("getlasterror", new BsonInt32(1)),
-                                                                                      this);
+                                                                                      connection);
         id = "conn" + (response.containsKey("connectionId")
                        ? response.getNumber("connectionId").intValue()
                        : "*" + INCREMENTING_ID.incrementAndGet() + "*");
     }
 
     private void initializeServerDescription() {
-        BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), this);
-        BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), this);
-        connectionDescription = createConnectionDescription(stream.getAddress(), isMasterResult, buildInfoResult);
+        BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
+        BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
+        connectionDescription = createConnectionDescription(serverAddress, isMasterResult, buildInfoResult);
     }
 
 
@@ -186,18 +136,17 @@ class PipelinedConnectionInitializer implements ConnectionInitializer, InternalC
         }
         switch (actualCredential.getAuthenticationMechanism()) {
             case MONGODB_CR:
-                return new NativeAuthenticator(actualCredential, this);
+                return new NativeAuthenticator(actualCredential, connection);
             case GSSAPI:
-                return new GSSAPIAuthenticator(actualCredential, this);
+                return new GSSAPIAuthenticator(actualCredential, connection);
             case PLAIN:
-                return new PlainAuthenticator(actualCredential, this);
+                return new PlainAuthenticator(actualCredential, connection);
             case MONGODB_X509:
-                return new X509Authenticator(actualCredential, this);
+                return new X509Authenticator(actualCredential, connection);
             case SCRAM_SHA_1:
-                return new ScramSha1Authenticator(actualCredential, this);
+                return new ScramSha1Authenticator(actualCredential, connection);
             default:
                 throw new IllegalArgumentException("Unsupported authentication protocol: " + actualCredential.getMechanism());
         }
     }
-
 }

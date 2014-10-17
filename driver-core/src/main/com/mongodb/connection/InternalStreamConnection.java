@@ -18,7 +18,9 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.SingleResultFuture;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ConnectionEvent;
@@ -26,7 +28,6 @@ import com.mongodb.event.ConnectionListener;
 import org.bson.ByteBuf;
 
 import java.util.List;
-import java.util.concurrent.Semaphore;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -37,37 +38,18 @@ class InternalStreamConnection implements InternalConnection {
     private final ConnectionListener connectionListener;
     private final StreamPipeline streamPipeline;
     private final ConnectionInitializer connectionInitializer;
-    private final Semaphore initializing = new Semaphore(1);
-    private volatile boolean initializeCalled;
-    private volatile boolean isClosed;
+    private volatile boolean opened;
+    private volatile boolean closed;
 
     static final Logger LOGGER = Loggers.getLogger("connection");
 
-    InternalStreamConnection(final String clusterId, final Stream stream, final ConnectionInitializer connectionInitializer,
-                             final ConnectionListener connectionListener) {
+    InternalStreamConnection(final String clusterId, final Stream stream, final ConnectionListener connectionListener,
+                             final ConnectionInitializerFactory connectionInitializerFactory) {
         this.clusterId = notNull("clusterId", clusterId);
         this.stream = notNull("stream", stream);
         this.connectionListener = notNull("connectionListener", connectionListener);
-        this.connectionInitializer = connectionInitializer;
+        this.connectionInitializer = connectionInitializerFactory.create(this);
         this.streamPipeline = new StreamPipeline(clusterId, stream, connectionListener, this);
-        isClosed = false;
-        initializeCalled = false;
-    }
-
-    @Override
-    public void close() {
-        isClosed = true;
-        stream.close();
-        try {
-            connectionListener.connectionClosed(new ConnectionEvent(clusterId, stream.getAddress(), getId()));
-        } catch (Throwable t) {
-            LOGGER.warn("Exception when trying to signal connectionClosed to the connectionListener", t);
-        }
-    }
-
-    @Override
-    public boolean isClosed() {
-        return isClosed;
     }
 
     @Override
@@ -82,8 +64,71 @@ class InternalStreamConnection implements InternalConnection {
 
     @Override
     public ConnectionDescription getDescription() {
-        initialize();
         return connectionInitializer.getDescription();
+    }
+
+    @Override
+    public void open() {
+        try {
+            connectionInitializer.initialize();
+            opened = true;
+            try {
+                connectionListener.connectionOpened(new ConnectionEvent(clusterId, stream.getAddress(), getId()));
+            } catch (Throwable t) {
+                LOGGER.warn("Exception when trying to signal connectionOpened to the connectionListener", t);
+            }
+        } catch (Exception e) {
+            close();
+            if (e instanceof MongoException) {
+                throw (MongoException) e;
+            } else {
+                throw new MongoException(e.toString());
+            }
+        }
+    }
+
+    @Override
+    public MongoFuture<Void> openAsync() {
+        final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
+        connectionInitializer.initializeAsync(new SingleResultCallback<Void>() {
+            @Override
+            public void onResult(final Void result, final MongoException e) {
+                if (e != null) {
+                    close();
+                    future.init(null, e);
+                } else {
+                    opened = true;
+                    future.init(null, null);
+                }
+                try {
+                    connectionListener.connectionOpened(new ConnectionEvent(clusterId, stream.getAddress(), getId()));
+                } catch (Throwable t) {
+                    LOGGER.warn("Exception when trying to signal connectionOpened to the connectionListener", t);
+                }
+            }
+        });
+        return future;
+    }
+
+    @Override
+    public boolean isOpened() {
+        return opened && !closed;
+    }
+
+    @Override
+    public void close() {
+        closed = true;
+        stream.close();
+        try {
+            connectionListener.connectionClosed(new ConnectionEvent(clusterId, stream.getAddress(), getId()));
+        } catch (Throwable t) {
+            LOGGER.warn("Exception when trying to signal connectionClosed to the connectionListener", t);
+        }
+    }
+
+    @Override
+    public boolean isClosed() {
+        return closed;
     }
 
     @Override
@@ -92,29 +137,7 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
-        initialize();
         streamPipeline.sendMessage(byteBuffers, lastRequestId);
-    }
-
-    private void initialize() {
-        if (!initializeCalled) {
-            try {
-                if (initializing.tryAcquire() && !initializeCalled) {
-                    connectionInitializer.initialize();
-                    streamPipeline.initialized(true);
-                }
-            } catch (Exception e) {
-                streamPipeline.initialized(false);
-                if (e instanceof MongoException) {
-                    throw (MongoException) e;
-                } else {
-                    throw new MongoException(e.toString());
-                }
-            } finally {
-                initializeCalled = true;
-                initializing.release();
-            }
-        }
     }
 
     @Override
@@ -124,31 +147,7 @@ class InternalStreamConnection implements InternalConnection {
 
     @Override
     public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-        if (!initializeCalled) {
-            try {
-                if (initializing.tryAcquire() && !initializeCalled) {
-                    connectionInitializer.initialize(new SingleResultCallback<Void>() {
-                        @Override
-                        public void onResult(final Void result, final MongoException e) {
-                            if (e != null) {
-                                streamPipeline.initialized(false);
-                                callback.onResult(null, e);
-                            } else {
-                                streamPipeline.initialized(true);
-                                streamPipeline.sendMessageAsync(byteBuffers, lastRequestId, callback);
-                            }
-                        }
-                    });
-                } else {
-                    streamPipeline.sendMessageAsync(byteBuffers, lastRequestId, callback);
-                }
-            } finally {
-                initializeCalled = true;
-                initializing.release();
-            }
-        } else {
-            streamPipeline.sendMessageAsync(byteBuffers, lastRequestId, callback);
-        }
+        streamPipeline.sendMessageAsync(byteBuffers, lastRequestId, callback);
     }
 
     @Override

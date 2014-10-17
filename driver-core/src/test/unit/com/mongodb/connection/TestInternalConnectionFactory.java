@@ -17,7 +17,9 @@
 package com.mongodb.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.SingleResultFuture;
 import org.bson.ByteBuf;
 
 import java.util.ArrayList;
@@ -43,10 +45,37 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
 
     public static class TestInternalConnection implements InternalConnection {
         private final ServerAddress serverAddress;
+        private boolean opened;
         private boolean closed;
 
         public TestInternalConnection(final ServerAddress serverAddress) {
             this.serverAddress = serverAddress;
+        }
+
+        @Override
+        public void open() {
+            opened = true;
+        }
+
+        @Override
+        public MongoFuture<Void> openAsync() {
+            opened = true;
+            return new SingleResultFuture<Void>(null, null);
+        }
+
+        @Override
+        public void close() {
+            closed = true;
+        }
+
+        @Override
+        public boolean isOpened() {
+            return opened && !closed;
+        }
+
+        @Override
+        public boolean isClosed() {
+            return closed;
         }
 
         @Override
@@ -79,16 +108,6 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         @Override
         public ConnectionDescription getDescription() {
             throw new UnsupportedOperationException("Not implemented yet!");
-        }
-
-        @Override
-        public void close() {
-            closed = true;
-        }
-
-        @Override
-        public boolean isClosed() {
-            return closed;
         }
 
         @Override

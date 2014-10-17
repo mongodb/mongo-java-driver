@@ -17,10 +17,12 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoException;
+import com.mongodb.MongoInternalException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoWaitQueueFullException;
 import com.mongodb.ServerAddress;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -94,7 +96,20 @@ class DefaultConnectionPool implements ConnectionPool {
             }
             connectionPoolListener.connectionCheckedOut(new ConnectionEvent(clusterId, serverAddress, internalConnection.getId()));
             LOGGER.trace(format("Checked out connection [%s] to server %s", internalConnection.getId(), serverAddress));
-            return new PooledConnection(internalConnection);
+            InternalConnection connection = new PooledConnection(internalConnection);
+            if (!connection.isOpened()) {
+                try {
+                    connection.open();
+                } catch (Exception e) {
+                    pool.release(internalConnection, true);
+                    if (e instanceof MongoException) {
+                        throw (MongoException) e;
+                    } else {
+                        throw new MongoInternalException(e.toString(), e);
+                    }
+                }
+            }
+            return connection;
         } finally {
             waitQueueSize.decrementAndGet();
             connectionPoolListener.waitQueueExited(new ConnectionPoolWaitQueueEvent(clusterId, serverAddress, currentThread().getId()));
@@ -213,6 +228,17 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
+        public void open() {
+            wrapped.open();
+            LOGGER.info(format("Opened connection [%s] to %s", wrapped.getId(), serverAddress));
+        }
+
+        @Override
+        public MongoFuture<Void> openAsync() {
+            return wrapped.openAsync();
+        }
+
+        @Override
         public void close() {
             if (wrapped != null) {
                 if (!closed) {
@@ -222,6 +248,11 @@ class DefaultConnectionPool implements ConnectionPool {
                 pool.release(wrapped, wrapped.isClosed() || shouldPrune(wrapped));
                 wrapped = null;
             }
+        }
+
+        @Override
+        public boolean isOpened() {
+            return wrapped == null ? false : wrapped.isOpened();
         }
 
         @Override
@@ -296,7 +327,6 @@ class DefaultConnectionPool implements ConnectionPool {
         public UsageTrackingInternalConnection create() {
             UsageTrackingInternalConnection internalConnection =
             new UsageTrackingInternalConnection(internalConnectionFactory.create(serverAddress), generation.get());
-            LOGGER.info(format("Opened connection [%s] to %s", internalConnection.getId(), serverAddress));
             connectionPoolListener.connectionAdded(new ConnectionEvent(clusterId, serverAddress, internalConnection.getId()));
             return internalConnection;
         }

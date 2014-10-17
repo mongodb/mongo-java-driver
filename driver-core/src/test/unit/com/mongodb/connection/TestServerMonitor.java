@@ -16,17 +16,25 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultCallback;
+class TestServerMonitorFactory implements ServerMonitorFactory {
 
-interface ConnectionInitializer {
+    @Override
+    public ServerMonitor create(final ChangeListener<ServerDescription> serverStateListener) {
+        return new ServerMonitor(){
+            @Override
+            public void connect() {
 
-    void initialize();
+            }
 
-    MongoFuture<Void> initializeAsync(SingleResultCallback<Void> callback);
+            @Override
+            public void invalidate() {
 
-    String getId();
+            }
 
-    ConnectionDescription getDescription();
+            @Override
+            public void close() {
 
+            }
+        };
+    }
 }

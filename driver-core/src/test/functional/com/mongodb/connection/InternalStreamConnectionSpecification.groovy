@@ -61,26 +61,32 @@ class InternalStreamConnectionSpecification extends Specification {
     def stream = Stub(Stream)
     def listener = Mock(ConnectionListener)
     def connectionInitializer = Mock(ConnectionInitializer)
+    def connectionInitializerFactory = Mock(ConnectionInitializerFactory)
+
+    def getConnection() {
+        connectionInitializer.getDescription() >> { 'description' }
+        connectionInitializer.getId() >> { 'id' }
+        connectionInitializerFactory.create(_) >> { connectionInitializer }
+        new InternalStreamConnection(CLUSTER_ID, stream, listener, connectionInitializerFactory)
+    }
+
+    def getOpenConnection() {
+        InternalStreamConnection connection = getConnection()
+        connection.open()
+        connection
+    }
 
     def 'should fire connection opened event'() {
-        given:
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
-        def (buffers1, messageId1) =  helper.isMaster()
-        stream.read(_) >>> helper.read([messageId1])
-
         when:
-        connection.sendMessage(buffers1, messageId1)
+        getConnection().open()
 
         then:
         1 * listener.connectionOpened(_)
     }
 
     def 'should fire connection closed event'() {
-        given:
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
-
         when:
-        connection.close()
+        getOpenConnection().close()
 
         then:
         1 * listener.connectionClosed(_)
@@ -88,7 +94,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should fire messages sent event'() {
         given:
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
+        def connection = getOpenConnection()
         def (buffers1, messageId1) = helper.isMaster()
         stream.read(_) >>> helper.read([messageId1])
         when:
@@ -105,10 +111,7 @@ class InternalStreamConnectionSpecification extends Specification {
             callback.completed(null)
         }
         def (buffers1, messageId1) = helper.isMaster()
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
-        connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
-            callback.onResult(null, null);
-        }
+        def connection = getOpenConnection()
         def latch = new CountDownLatch(1);
 
         when:
@@ -126,7 +129,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def 'should fire message received event'() {
         given:
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
+        def connection = getOpenConnection()
         def (buffers1, messageId1) = helper.isMaster()
         stream.read(_) >>> helper.read([messageId1])
 
@@ -148,9 +151,9 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             handler.completed(helper.body())
         }
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
+        def connection = getOpenConnection()
 
-        connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
+        connectionInitializerFactory.open(_) >> { SingleResultCallback<Void> callback ->
             callback.onResult(null, null);
         }
         def latch = new CountDownLatch(1);
@@ -172,7 +175,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should handle out of order messages on the stream'() {
         // Connect then: Send(1), Send(2), Send(3), Receive(3), Receive(2), Receive(1)
         given:
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
+        def connection = getOpenConnection()
         def (buffers1, messageId1) = helper.isMaster()
         def (buffers2, messageId2) = helper.isMaster()
         def (buffers3, messageId3) = helper.isMaster()
@@ -215,8 +218,8 @@ class InternalStreamConnectionSpecification extends Specification {
             handler.completed(helper.body())
         }
 
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
-        connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
+        def connection = getOpenConnection()
+        connectionInitializerFactory.open(_) >> { SingleResultCallback<Void> callback ->
             callback.onResult(null, null);
         }
 
@@ -267,7 +270,7 @@ class InternalStreamConnectionSpecification extends Specification {
             handler.completed(helper.body())
         }
 
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
+        def connection = getOpenConnection()
 
         when:
         connection.sendMessage(buffers1, messageId1)
@@ -292,20 +295,18 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should close the stream when initialization throws an exception'() {
         given:
         connectionInitializer.initialize() >> { throw new MongoInternalException('Something went wrong') }
-
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
+        def connection = getConnection()
         def (buffers1, messageId1) = helper.isMaster()
-        def (buffers2, messageId2) = helper.isMaster()
 
         when:
-        connection.sendMessage(buffers1, messageId1)
+        connection.open()
 
         then:
         thrown MongoInternalException
         connection.isClosed()
 
         when:
-        connection.sendMessage(buffers2, messageId2)
+        connection.sendMessage(buffers1, messageId1)
 
         then:
         thrown MongoSocketClosedException
@@ -315,11 +316,10 @@ class InternalStreamConnectionSpecification extends Specification {
     @IgnoreIf({ javaVersion < 1.7 })
     def 'should close the stream when initialization throws an exception asynchronously'() {
         given:
-        def sndLatch = new CountDownLatch(2)
-        def rcvdLatch = new CountDownLatch(2)
+        def sndLatch = new CountDownLatch(1)
+        def rcvdLatch = new CountDownLatch(1)
         def (buffers1, messageId1, sndCallbck1, rcvdCallbck1, fSndResult1, fRespBuffers1) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2, fSndResult2, fRespBuffers2) = helper.isMasterAsync(sndLatch, rcvdLatch)
-        def headers = helper.generateHeaders([messageId1, messageId2])
+        def headers = helper.generateHeaders([messageId1])
 
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
             callback.completed(null)
@@ -330,28 +330,29 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             handler.completed(helper.body())
         }
-
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
-        connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
-            callback.onResult(null, new MongoInternalException('Something went wrong'));
+        connectionInitializer.initializeAsync(_) >> { SingleResultCallback<Void> callback ->
+            callback.onResult(null, new MongoInternalException('Something went wrong')) }
+        def connection = getConnection()
+        SingleResultFuture<Void> futureOpenResult = new SingleResultFuture<Void>()
+        SingleResultCallback<Void> openCallback = new SingleResultCallback<Void>()  {
+            @Override
+            void onResult(final Void result, final MongoException e) {
+                futureOpenResult.init(result, e)
+            }
         }
 
         when:
-        connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
-        connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
-        sndLatch.await(10, SECONDS)
-
-        then:
-        connection.isClosed()
-
-        when:
-        fSndResult1.get(10, SECONDS)
+        connection.openAsync(openCallback)
+        futureOpenResult.get(10, SECONDS)
 
         then:
         thrown MongoInternalException
+        connection.isClosed()
 
         when:
-        fSndResult2.get(10, SECONDS)
+        connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
+        sndLatch.await(10, SECONDS)
+        fSndResult1.get(10, SECONDS)
 
         then:
         thrown MongoSocketClosedException
@@ -361,7 +362,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         stream.write(_) >> { throw new IOException('Something went wrong') }
 
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
+        def connection = getOpenConnection()
         def (buffers1, messageId1) = helper.isMaster()
         def (buffers2, messageId2) = helper.isMaster()
 
@@ -404,10 +405,7 @@ class InternalStreamConnectionSpecification extends Specification {
             handler.completed(helper.body())
         }
 
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
-        connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
-            callback.onResult(null, null);
-        }
+        def connection = getOpenConnection()
 
         when:
         connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
@@ -435,7 +433,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(36) >> { throw new IOException('Something went wrong') }
         stream.read(74) >> helper.body()
 
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
+        def connection = getOpenConnection()
         def (buffers1, messageId1) = helper.isMaster()
         def (buffers2, messageId2) = helper.isMaster()
 
@@ -480,8 +478,8 @@ class InternalStreamConnectionSpecification extends Specification {
             handler.completed(helper.body())
         }
 
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
-        connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
+        def connection = getOpenConnection()
+        connectionInitializerFactory.open(_) >> { SingleResultCallback<Void> callback ->
             callback.onResult(null, null);
         }
 
@@ -522,7 +520,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(36) >> { headers.pop() }
         stream.read(74) >> { throw new IOException('Something went wrong') }
 
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
+        def connection = getOpenConnection()
 
         when:
         connection.sendMessage(buffers1, messageId1)
@@ -564,8 +562,8 @@ class InternalStreamConnectionSpecification extends Specification {
             }
             handler.completed(helper.body())
         }
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
-        connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
+        def connection = getOpenConnection()
+        connectionInitializerFactory.openAsync(_) >> { SingleResultCallback<Void> callback ->
             callback.onResult(null, null);
         }
 
@@ -610,7 +608,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(74) >> { helper.body() }
 
         when:
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
+        def connection = getOpenConnection()
 
         then:
         (1..numberOfOperations).each { n ->
@@ -658,10 +656,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        def connection = new InternalStreamConnection(CLUSTER_ID, stream, connectionInitializer, listener)
-        connectionInitializer.initialize(_) >> { SingleResultCallback<Void> callback ->
-            callback.onResult(null, null);
-        }
+        def connection = getOpenConnection()
 
         then:
         (1..numberOfOperations).each { n ->
