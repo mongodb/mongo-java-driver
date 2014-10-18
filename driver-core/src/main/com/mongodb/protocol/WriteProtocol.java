@@ -16,12 +16,10 @@
 
 package com.mongodb.protocol;
 
-import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.Connection;
@@ -36,7 +34,6 @@ import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
-import static com.mongodb.protocol.ProtocolHelper.checkExceptionForUnexpectedServerState;
 import static com.mongodb.protocol.ProtocolHelper.encodeMessage;
 import static com.mongodb.protocol.ProtocolHelper.getMessageSettings;
 import static java.lang.String.format;
@@ -102,12 +99,6 @@ public abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                                         new UnacknowledgedWriteResultCallback(retVal, getNamespace(), nextMessage, ordered, bsonOutput,
                                                                               connection));
         }
-        retVal.register(new SingleResultCallback<WriteConcernResult>() {
-            @Override
-            public void onResult(final WriteConcernResult result, final MongoException e) {
-                checkExceptionForUnexpectedServerState(connection, e);
-            }
-        });
         return retVal;
     }
 
@@ -158,12 +149,7 @@ public abstract class WriteProtocol implements Protocol<WriteConcernResult> {
         try {
             ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
                                                                                      requestMessage.getId());
-            try {
-                return ProtocolHelper.getWriteResult(replyMessage.getDocuments().get(0), connection.getServerAddress());
-            } catch (MongoException e) {
-                checkExceptionForUnexpectedServerState(connection, e);
-                throw e;
-            }
+            return ProtocolHelper.getWriteResult(replyMessage.getDocuments().get(0), connection.getServerAddress());
         } finally {
             responseBuffers.close();
         }
