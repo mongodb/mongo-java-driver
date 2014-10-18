@@ -22,7 +22,7 @@ import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.test.Worker
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.DropDatabaseOperation
-import com.mongodb.operation.GetCollectionNamesOperation
+import com.mongodb.operation.ListCollectionNamesOperation
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.configuration.RootCodecRegistry
 import spock.lang.Specification
@@ -127,7 +127,7 @@ class MongoDatabaseSpecification extends Specification {
         def result = database.getCollectionNames()
 
         then:
-        def operation = executor.getReadOperation() as GetCollectionNamesOperation
+        def operation = executor.getReadOperation() as ListCollectionNamesOperation
         operation.databaseName == 'name'
         result == ['collection1', 'collection2']
     }

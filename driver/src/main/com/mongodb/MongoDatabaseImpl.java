@@ -25,7 +25,7 @@ import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.GetCollectionNamesOperation;
+import com.mongodb.operation.ListCollectionNamesOperation;
 import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -81,7 +81,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public List<String> getCollectionNames() {
-        return executor.execute(new GetCollectionNamesOperation(name), primary());
+        return executor.execute(new ListCollectionNamesOperation(name), primary());
     }
 
     @Override
