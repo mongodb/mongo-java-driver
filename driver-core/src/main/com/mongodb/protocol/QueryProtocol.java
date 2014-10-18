@@ -16,10 +16,8 @@
 
 package com.mongodb.protocol;
 
-import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.Connection;
@@ -34,7 +32,6 @@ import org.bson.Document;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DocumentCodec;
 
-import static com.mongodb.protocol.ProtocolHelper.checkExceptionForUnexpectedServerState;
 import static com.mongodb.protocol.ProtocolHelper.encodeMessage;
 import static com.mongodb.protocol.ProtocolHelper.getMessageSettings;
 import static com.mongodb.protocol.ProtocolHelper.getQueryFailureException;
@@ -265,14 +262,9 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     public QueryResult<T> execute(final Connection connection) {
         LOGGER.debug(format("Sending query of namespace %s on connection [%s] to server %s", namespace, connection.getId(),
                             connection.getServerAddress()));
-        try {
-            QueryResult<T> queryResult = receiveMessage(connection, sendMessage(connection));
-            LOGGER.debug("Query completed");
-            return queryResult;
-        } catch (MongoException e) {
-            checkExceptionForUnexpectedServerState(connection, e);
-            throw e;
-        }
+        QueryResult<T> queryResult = receiveMessage(connection, sendMessage(connection));
+        LOGGER.debug("Query completed");
+        return queryResult;
     }
 
     @Override
@@ -292,12 +284,6 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
                                     message.getId(),
                                     new SendMessageCallback<QueryResult<T>>(connection, bsonOutput, message.getId(), retVal,
                                                                             receiveCallback));
-        retVal.register(new SingleResultCallback<QueryResult<T>>() {
-            @Override
-            public void onResult(final QueryResult<T> result, final MongoException e) {
-                checkExceptionForUnexpectedServerState(connection, e);
-            }
-        });
         return retVal;
     }
 

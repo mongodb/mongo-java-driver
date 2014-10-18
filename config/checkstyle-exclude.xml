@@ -31,6 +31,9 @@
     <!--DBCollection is insanely long, and we should not compromise every class length for this one-->
     <suppress checks="FileLength" files="DBCollection"/>
 
+    <suppress checks="ParameterNumber" files="Connection"/>
+    <suppress checks="ParameterNumber" files="DefaultServer"/>
+
     <!--Classes to be documented later - JAVA-1428 -->
     <suppress checks="Javadoc*" files="LazyBSONCallback"/>
     <suppress checks="Javadoc*" files="LazyBSONDecoder"/>

@@ -25,54 +25,14 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncConnectionSource;
-import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
-import com.mongodb.binding.ReadBinding;
-import com.mongodb.connection.Connection;
-import com.mongodb.protocol.QueryProtocol;
 import com.mongodb.protocol.QueryResult;
-import org.bson.BsonDocument;
-import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
-import static com.mongodb.operation.OperationHelper.IdentityTransformer;
-import static com.mongodb.operation.OperationHelper.executeProtocol;
-import static com.mongodb.operation.OperationHelper.withConnection;
-
 final class FindOperationHelper {
-    static <T> List<T> queryResultToList(final MongoNamespace namespace, final QueryProtocol<T> queryProtocol, final Decoder<T> decoder,
-                                         final ReadBinding binding) {
-        return queryResultToList(namespace, queryProtocol, decoder, binding, new Function<T, T>() {
-            @Override
-            public T apply(final T t) {
-                return t;
-            }
-        });
-    }
-
-    static <V> List<V> queryResultToList(final MongoNamespace namespace, final QueryProtocol<BsonDocument> queryProtocol,
-                                         final ReadBinding binding, final Function<BsonDocument, V> block) {
-        return queryResultToList(namespace, queryProtocol, new BsonDocumentCodec(), binding, block);
-    }
-
-    static <T, V> List<V> queryResultToList(final MongoNamespace namespace, final QueryProtocol<T> queryProtocol, final Decoder<T> decoder,
-                                            final ReadBinding binding, final Function<T, V> block) {
-        ConnectionSource source = binding.getReadConnectionSource();
-        try {
-            return queryResultToList(namespace, executeProtocol(queryProtocol, source), decoder, source, block);
-        } finally {
-            source.release();
-        }
-    }
-
-    static <T> List<T> queryResultToList(final MongoNamespace namespace, final QueryResult<T> queryResult, final Decoder<T> decoder,
-                                         final ConnectionSource source) {
-        return queryResultToList(namespace, queryResult, decoder, source, new IdentityTransformer<T>());
-    }
 
     static <T, V> List<V> queryResultToList(final MongoNamespace namespace, final QueryResult<T> queryResult, final Decoder<T> decoder,
                                             final ConnectionSource source,
@@ -92,34 +52,13 @@ final class FindOperationHelper {
         }
     }
 
-    static MongoFuture<List<BsonDocument>> queryResultToListAsync(final MongoNamespace namespace,
-                                                                  final QueryProtocol<BsonDocument> queryProtocol,
-                                                                  final AsyncReadBinding binding) {
-        return queryResultToListAsync(namespace, queryProtocol, binding, new IdentityTransformer<BsonDocument>());
-    }
-
-    static <T> MongoFuture<List<T>> queryResultToListAsync(final MongoNamespace namespace, final QueryProtocol<BsonDocument> queryProtocol,
-                                                           final AsyncReadBinding binding, final Function<BsonDocument, T> transformer) {
-        return queryResultToListAsync(namespace, queryProtocol, new BsonDocumentCodec(), binding, transformer);
-    }
-
-    static <T> MongoFuture<List<T>> queryResultToListAsync(final MongoNamespace namespace, final QueryProtocol<T> queryProtocol,
-                                                           final Decoder<T> decoder, final AsyncReadBinding binding) {
-        return queryResultToListAsync(namespace, queryProtocol, decoder, binding, new IdentityTransformer<T>());
-    }
-
-    static <T, V> MongoFuture<List<V>> queryResultToListAsync(final MongoNamespace namespace, final QueryProtocol<T> queryProtocol,
-                                                              final Decoder<T> decoder, final AsyncReadBinding binding,
+    static <T, V> MongoFuture<List<V>> queryResultToListAsync(final MongoNamespace namespace,
+                                                              final MongoFuture<QueryResult<T>> queryResultFuture,
+                                                              final Decoder<T> decoder, final AsyncConnectionSource source,
                                                               final Function<T, V> transformer) {
-        return withConnection(binding, new AsyncCallableWithConnectionAndSource<List<V>>() {
-            @Override
-            public MongoFuture<List<V>> call(final AsyncConnectionSource source, final Connection connection) {
-                final SingleResultFuture<List<V>> future = new SingleResultFuture<List<V>>();
-                queryProtocol.executeAsync(connection)
-                             .register(new QueryResultToListCallback<T, V>(future, namespace, decoder, source, transformer));
-                return future;
-            }
-        });
+        SingleResultFuture<List<V>> future = new SingleResultFuture<List<V>>();
+        queryResultFuture.register(new QueryResultToListCallback<T, V>(future, namespace, decoder, source, transformer));
+        return future;
     }
 
     private static class QueryResultToListCallback<T, V> implements SingleResultCallback<QueryResult<T>> {

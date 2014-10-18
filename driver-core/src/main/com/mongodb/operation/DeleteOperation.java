@@ -18,11 +18,10 @@ package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.WriteConcernResult;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.protocol.DeleteCommandProtocol;
-import com.mongodb.protocol.DeleteProtocol;
-import com.mongodb.protocol.WriteCommandProtocol;
-import com.mongodb.protocol.WriteProtocol;
+import com.mongodb.connection.Connection;
 
 import java.util.List;
 
@@ -60,13 +59,23 @@ public class DeleteOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected WriteProtocol getWriteProtocol() {
-        return new DeleteProtocol(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
+    protected WriteConcernResult executeProtocol(final Connection connection) {
+        return connection.delete(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
     }
 
     @Override
-    protected WriteCommandProtocol getCommandProtocol() {
-        return new DeleteCommandProtocol(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
+    protected MongoFuture<WriteConcernResult> executeProtocolAsync(final Connection connection) {
+        return connection.deleteAsync(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
+    }
+
+    @Override
+    protected BulkWriteResult executeCommandProtocol(final Connection connection) {
+        return connection.deleteCommand(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
+    }
+
+    @Override
+    protected MongoFuture<BulkWriteResult> executeCommandProtocolAsync(final Connection connection) {
+        return connection.deleteCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
     }
 
     @Override

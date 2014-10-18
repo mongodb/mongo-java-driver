@@ -65,7 +65,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                                                                                 credentialList,
                                                                                 connectionListener),
                                             connectionPool);
-        return new DefaultServer(serverAddress, connectionPool, serverMonitorFactory);
+        return new DefaultServer(serverAddress, connectionPool, new DefaultConnectionFactory(), serverMonitorFactory);
     }
 
     @Override

@@ -29,7 +29,6 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerVersion;
-import com.mongodb.protocol.Protocol;
 
 import java.util.List;
 
@@ -84,49 +83,28 @@ final class OperationHelper {
         return connection.getDescription().getServerVersion().compareTo(serverVersion) >= 0;
     }
 
-    static <T> T executeProtocol(final Protocol<T> protocol, final ConnectionSource source) {
-        Connection connection = source.getConnection();
-        try {
-            return protocol.execute(connection);
-        } finally {
-            connection.release();
-        }
-    }
-
-    static <T, R> R executeProtocol(final Protocol<T> protocol, final Connection connection, final Function<T, R> transformer) {
-        return transformer.apply(protocol.execute(connection));
-    }
-
-    static <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol, final AsyncWriteBinding binding) {
-        return withConnection(binding, new AsyncCallableWithConnection<T>() {
-            @Override
-            public MongoFuture<T> call(final Connection connection) {
-                return protocol.executeAsync(connection);
-            }
-        });
-    }
-
-    static <T, R> MongoFuture<R> executeProtocolAsync(final Protocol<T> protocol, final Connection connection,
-                                                      final Function<T, R> transformer) {
-        final SingleResultFuture<R> future = new SingleResultFuture<R>();
-        protocol.executeAsync(connection).register(new SingleResultCallback<T>() {
+    static <T, R> MongoFuture<R> transformFuture(final MongoFuture<T> future, final Function<T, R> transformer) {
+        final SingleResultFuture<R> transformedFuture = new SingleResultFuture<R>();
+        future.register(new SingleResultCallback<T>() {
             @Override
             public void onResult(final T result, final MongoException e) {
                 if (e != null) {
-                    future.init(null, e);
+                    transformedFuture.init(null, e);
                 } else {
                     try {
-                        R transformedResult = transformer.apply(result);
-                        future.init(transformedResult, null);
+                        transformedFuture.init(transformer.apply(result), null);
                     } catch (MongoException e1) {
-                        future.init(null, e1);
+                        transformedFuture.init(null, e1);
                     }
                 }
             }
         });
-        return future;
+        return transformedFuture;
     }
 
+    static <T> MongoFuture<Void> ignoreResult(final MongoFuture<T> future) {
+        return transformFuture(future, new VoidTransformer<T>());
+    }
 
     static <T> T withConnection(final ReadBinding binding, final CallableWithConnection<T> callable) {
         ConnectionSource source = binding.getReadConnectionSource();
@@ -246,26 +224,6 @@ final class OperationHelper {
             }
         });
     }
-
-    static <T> MongoFuture<Void> ignoreResult(final MongoFuture<T> future) {
-        return transformResult(future, new VoidTransformer<T>());
-    }
-
-    static <T, V> MongoFuture<V> transformResult(final MongoFuture<T> future, final Function<T, V> block) {
-        final SingleResultFuture<V> transformedFuture = new SingleResultFuture<V>();
-        future.register(new SingleResultCallback<T>() {
-            @Override
-            public void onResult(final T result, final MongoException e) {
-                if (e != null) {
-                    transformedFuture.init(null, e);
-                } else {
-                    transformedFuture.init(block.apply(result), null);
-                }
-            }
-        });
-        return transformedFuture;
-    }
-
 
     private static class AsyncCallableWithConnectionCallback<T> implements SingleResultCallback<AsyncConnectionSource> {
         private final SingleResultFuture<T> future;
