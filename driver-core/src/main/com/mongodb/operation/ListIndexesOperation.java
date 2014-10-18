@@ -20,10 +20,11 @@ import com.mongodb.CommandFailureException;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
+import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
+import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
-import com.mongodb.protocol.QueryProtocol;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
@@ -41,6 +42,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.FindOperationHelper.queryResultToList;
 import static com.mongodb.operation.FindOperationHelper.queryResultToListAsync;
+import static com.mongodb.operation.OperationHelper.IdentityTransformer;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotEight;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -68,9 +70,9 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
 
     @Override
     public List<T> execute(final ReadBinding binding) {
-        return withConnection(binding, new OperationHelper.CallableWithConnection<List<T>>() {
+        return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<List<T>>() {
             @Override
-            public List<T> call(final Connection connection) {
+            public List<T> call(final ConnectionSource source, final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotEight(connection)) {
                     try {
                         return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(), binding,
@@ -79,7 +81,10 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
                         return CommandOperationHelper.rethrowIfNotNamespaceError(e, new ArrayList<T>());
                     }
                 } else {
-                    return queryResultToList(getIndexNamespace(), getProtocol(binding.getReadPreference().isSlaveOk()), decoder, binding);
+                    return queryResultToList(getIndexNamespace(), connection.query(getIndexNamespace(), asQueryDocument(), null, 0, 0,
+                                                                                   binding.getReadPreference().isSlaveOk(), false,
+                                                                                   false, false, false, false, false,
+                                                                                   decoder), decoder, source, new IdentityTransformer<T>());
                 }
             }
         });
@@ -88,9 +93,9 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
 
     @Override
     public MongoFuture<List<T>> executeAsync(final AsyncReadBinding binding) {
-        return withConnection(binding, new OperationHelper.AsyncCallableWithConnection<List<T>>() {
+        return withConnection(binding, new OperationHelper.AsyncCallableWithConnectionAndSource<List<T>>() {
             @Override
-            public MongoFuture<List<T>> call(final Connection connection) {
+            public MongoFuture<List<T>> call(final AsyncConnectionSource source, final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotEight(connection)) {
                     return CommandOperationHelper.rethrowIfNotNamespaceError(executeWrappedCommandProtocolAsync(namespace.getDatabaseName(),
                                                                                                                 getCommand(),
@@ -98,8 +103,12 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
                                                                                                                 transformer()),
                                                                              new ArrayList<T>());
                 } else {
-                    return queryResultToListAsync(getIndexNamespace(), getProtocol(binding.getReadPreference().isSlaveOk()), decoder,
-                                                  binding);
+                    return queryResultToListAsync(getIndexNamespace(),
+                                                  connection.queryAsync(getIndexNamespace(), asQueryDocument(), null, 0, 0,
+                                                                        binding.getReadPreference().isSlaveOk(), false,
+                                                                        false, false, false, false, false,
+                                                                        decoder),
+                                                  decoder, source, new IdentityTransformer<T>());
                 }
             }
         });
@@ -111,11 +120,6 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
 
     private MongoNamespace getIndexNamespace() {
         return new MongoNamespace(namespace.getDatabaseName(), "system.indexes");
-    }
-
-    private QueryProtocol<T> getProtocol(final boolean slaveOk) {
-        return new QueryProtocol<T>(getIndexNamespace(), 0, 0, asQueryDocument(), null, decoder)
-            .slaveOk(slaveOk);
     }
 
     private BsonDocument getCommand() {

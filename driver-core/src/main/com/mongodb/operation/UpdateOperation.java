@@ -18,11 +18,10 @@ package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.WriteConcernResult;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.protocol.UpdateCommandProtocol;
-import com.mongodb.protocol.UpdateProtocol;
-import com.mongodb.protocol.WriteCommandProtocol;
-import com.mongodb.protocol.WriteProtocol;
+import com.mongodb.connection.Connection;
 
 import java.util.List;
 
@@ -60,13 +59,23 @@ public class UpdateOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected WriteProtocol getWriteProtocol() {
-        return new UpdateProtocol(getNamespace(), isOrdered(), getWriteConcern(), updates);
+    protected WriteConcernResult executeProtocol(final Connection connection) {
+        return connection.update(getNamespace(), isOrdered(), getWriteConcern(), updates);
     }
 
     @Override
-    protected WriteCommandProtocol getCommandProtocol() {
-        return new UpdateCommandProtocol(getNamespace(), isOrdered(), getWriteConcern(), updates);
+    protected MongoFuture<WriteConcernResult> executeProtocolAsync(final Connection connection) {
+        return connection.updateAsync(getNamespace(), isOrdered(), getWriteConcern(), updates);
+    }
+
+    @Override
+    protected BulkWriteResult executeCommandProtocol(final Connection connection) {
+        return connection.updateCommand(getNamespace(), isOrdered(), getWriteConcern(), updates);
+    }
+
+    @Override
+    protected MongoFuture<BulkWriteResult> executeCommandProtocolAsync(final Connection connection) {
+        return connection.updateCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), updates);
     }
 
     @Override
