@@ -102,7 +102,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
     Thread createMonitorThread() {
         monitor = new ServerMonitorRunnable();
-        Thread monitorThread = new Thread(new ServerMonitorRunnable(), "cluster-" + clusterId + "-" + serverAddress);
+        Thread monitorThread = new Thread(monitor, "cluster-" + clusterId + "-" + serverAddress);
         monitorThread.setDaemon(true);
         return monitorThread;
     }
@@ -167,8 +167,8 @@ class DefaultServerMonitor implements ServerMonitor {
                         } catch (Throwable t) {
                             LOGGER.warn("Exception in monitor thread during notification of server description state change", t);
                         }
+                        waitForNext();
                     }
-                    waitForNext();
                 }
             } finally {
                 if (connection != null) {

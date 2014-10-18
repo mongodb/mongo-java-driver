@@ -16,6 +16,7 @@
 
 package com.mongodb.connection
 
+import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
 import spock.lang.Specification
 
@@ -40,7 +41,7 @@ class DefaultServerMonitorSpecification extends Specification {
         def internalConnectionFactory = Mock(InternalConnectionFactory) {
             create(_) >> {
                 Mock(InternalConnection) {
-                    open() >> { throw new IOException() }
+                    open() >> { throw new MongoSocketOpenException("open", new ServerAddress(), new IOException()) }
                 }
             }
         }
@@ -78,11 +79,11 @@ class DefaultServerMonitorSpecification extends Specification {
         monitor = new DefaultServerMonitor(new ServerAddress(), ServerSettings.builder().build(), 'clusterId', changeListener,
                                            internalConnectionFactory, new TestConnectionPool())
         monitor.start()
-        def monitorId = monitor.monitorThread.getId()
+        def monitorThread = monitor.monitorThread
 
         when:
         monitor.invalidate()
-        while (monitorId == monitor.monitorThread.getId()) { sleep(100) }
+        monitorThread.join();
 
         then:
         !stateChanged
@@ -113,7 +114,7 @@ class DefaultServerMonitorSpecification extends Specification {
 
         when:
         monitor.close()
-        while (!monitor.monitorThread.isInterrupted()) { sleep(100) }
+        monitor.monitorThread.join();
 
         then:
         !stateChanged
