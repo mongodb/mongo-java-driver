@@ -29,21 +29,34 @@ final class MessageHelper {
     }
 
     public static ResponseBuffers buildSuccessfulReply(final int responseTo, final String json) {
+        return buildReply(responseTo, json, 0);
+    }
+
+    public static ResponseBuffers buildFailedReply(final String json) {
+        return buildFailedReply(0, json);
+    }
+
+    public static ResponseBuffers buildFailedReply(final int responseTo, final String json) {
+        return buildReply(responseTo, json, 2);
+    }
+
+    private static ResponseBuffers buildReply(final int responseTo, final String json, final int responseFlags) {
         ByteBuf body = encodeJson(json);
         body.flip();
 
-        ReplyHeader header = buildSuccessfulReplyHeader(responseTo, 1, body.remaining());
+        ReplyHeader header = buildReplyHeader(responseTo, 1, body.remaining(), responseFlags);
         return new ResponseBuffers(header, body);
     }
 
-    private static ReplyHeader buildSuccessfulReplyHeader(final int responseTo, final int numDocuments, final int documentsSize) {
+    private static ReplyHeader buildReplyHeader(final int responseTo, final int numDocuments, final int documentsSize,
+                                                final int responseFlags) {
         ByteBuffer headerByteBuffer = ByteBuffer.allocate(36);
         headerByteBuffer.order(ByteOrder.LITTLE_ENDIAN);
         headerByteBuffer.putInt(36 + documentsSize); // length
         headerByteBuffer.putInt(2456); //request id
         headerByteBuffer.putInt(responseTo); // response to
         headerByteBuffer.putInt(1); // opcode
-        headerByteBuffer.putInt(0); // responseFlags
+        headerByteBuffer.putInt(responseFlags); // responseFlags
         headerByteBuffer.putLong(0); // cursorId
         headerByteBuffer.putInt(0); // startingFrom
         headerByteBuffer.putInt(numDocuments); //numberReturned

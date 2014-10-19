@@ -211,5 +211,10 @@ class DefaultServer implements ClusterableServer {
             isTrue("open", getCount() > 0);
             return wrapped.getDescription().getConnectionId().toString();
         }
-   }
+
+        @Override
+        public void unexpectedServerState() {
+            invalidate();
+        }
+    }
 }

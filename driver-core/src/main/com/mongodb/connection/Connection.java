@@ -93,4 +93,9 @@ public interface Connection extends BufferProvider, ReferenceCounted {
      * @return the id
      */
     String getId();
+
+    /**
+     * Signals that the server state was not as expected
+     */
+    void unexpectedServerState();
 }

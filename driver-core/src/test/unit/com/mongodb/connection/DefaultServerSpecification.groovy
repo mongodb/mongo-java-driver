@@ -66,4 +66,25 @@ class DefaultServerSpecification extends Specification {
         1 * connectionPool.invalidate()
         1 * serverMonitor.invalidate()
     }
+
+    def 'connection calls to unexpectedServerState should invalidate the server'() {
+        given:
+        server = new DefaultServer(new ServerAddress(), new TestConnectionPool(), new TestServerMonitorFactory())
+        def stateChanged = false;
+        server.addChangeListener(new ChangeListener<ServerDescription>() {
+            @Override
+            void stateChanged(final ChangeEvent<ServerDescription> event) {
+                stateChanged = true;
+            }
+        })
+
+        when:
+        server.getConnection().unexpectedServerState()
+
+        then:
+        stateChanged
+
+        cleanup:
+        server?.close()
+    }
 }

@@ -20,10 +20,12 @@ import com.mongodb.CommandFailureException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoQueryFailureException;
+import com.mongodb.MongoServerException;
 import com.mongodb.MongoWriteException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcernException;
 import com.mongodb.WriteConcernResult;
+import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.protocol.message.MessageSettings;
 import com.mongodb.protocol.message.RequestMessage;
@@ -99,7 +101,7 @@ final class ProtocolHelper {
     }
 
     static int getErrorCode(final Document errorDocument) {
-        return (Integer) errorDocument.get("code");
+        return errorDocument.containsKey("code") ? (Integer) errorDocument.get("code") : -1;
     }
 
     static MessageSettings getMessageSettings(final ConnectionDescription connectionDescription) {
@@ -119,6 +121,16 @@ final class ProtocolHelper {
         } catch (Error e) {
             bsonOutput.close();
             throw e;
+        }
+    }
+
+    static void checkExceptionForUnexpectedServerState(final Connection connection, final MongoException e) {
+        if (e instanceof MongoServerException) {
+            String message = ((MongoServerException) e).getErrorMessage();
+            int errorCode = ((MongoServerException) e).getCode();
+            if (message.contains("not master") || message.contains("node is recovering") || errorCode == 10107) {
+                connection.unexpectedServerState();
+            }
         }
     }
 
