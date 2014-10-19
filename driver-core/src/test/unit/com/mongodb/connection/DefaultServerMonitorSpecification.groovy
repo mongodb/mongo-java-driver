@@ -41,7 +41,7 @@ class DefaultServerMonitorSpecification extends Specification {
         def internalConnectionFactory = Mock(InternalConnectionFactory) {
             create(_) >> {
                 Mock(InternalConnection) {
-                    open() >> { throw new MongoSocketOpenException("open", new ServerAddress(), new IOException()) }
+                    open() >> { throw new MongoSocketOpenException('open', new ServerAddress(), new IOException()) }
                 }
             }
         }
