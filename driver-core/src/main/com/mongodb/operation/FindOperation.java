@@ -32,7 +32,6 @@ import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.protocol.QueryProtocol;
 import com.mongodb.protocol.QueryResult;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -461,8 +460,19 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
         return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<MongoCursor<T>>() {
             @Override
             public MongoCursor<T> call(final ConnectionSource source, final Connection connection) {
-                QueryResult<T> queryResult = getProtocol(connection.getDescription(), binding.getReadPreference())
-                                             .execute(connection);
+                QueryResult<T> queryResult = connection.query(namespace,
+                                                              asDocument(connection.getDescription(), binding.getReadPreference()),
+                                                              projection,
+                                                              getNumberToReturn(),
+                                                              skip,
+                                                              isSlaveOk() || binding.getReadPreference().isSlaveOk(),
+                                                              isTailableCursor(),
+                                                              isAwaitData(),
+                                                              isNoCursorTimeout(),
+                                                              isExhaust(),
+                                                              isPartial(),
+                                                              isOplogReplay(),
+                                                              decoder);
                 if (isExhaust()) {
                     return new MongoQueryCursor<T>(namespace, queryResult, limit, batchSize,
                                                    decoder, connection);
@@ -480,27 +490,38 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
             @Override
             public MongoFuture<MongoAsyncCursor<T>> call(final AsyncConnectionSource source, final Connection connection) {
                 final SingleResultFuture<MongoAsyncCursor<T>> future = new SingleResultFuture<MongoAsyncCursor<T>>();
-                getProtocol(connection.getDescription(), binding.getReadPreference())
-                .executeAsync(connection)
-                .register(new SingleResultCallback<QueryResult<T>>() {
-                              @Override
-                              public void onResult(final QueryResult<T> queryResult, final MongoException e) {
-                                  if (e != null) {
-                                      future.init(null, e);
-                                  } else {
-                                      if (isExhaust()) {
-                                          future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, limit,
-                                                                                   batchSize, decoder,
-                                                                                   connection), null);
-                                      } else {
-                                          future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, limit,
-                                                                                   batchSize, decoder,
-                                                                                   source), null);
-                                      }
-                                  }
-                              }
-                          }
-                         );
+                connection.queryAsync(namespace,
+                                      asDocument(connection.getDescription(), binding.getReadPreference()),
+                                      projection,
+                                      getNumberToReturn(),
+                                      skip,
+                                      isSlaveOk() || binding.getReadPreference().isSlaveOk(),
+                                      isTailableCursor(),
+                                      isAwaitData(),
+                                      isNoCursorTimeout(),
+                                      isExhaust(),
+                                      isPartial(),
+                                      isOplogReplay(),
+                                      decoder)
+                          .register(new SingleResultCallback<QueryResult<T>>() {
+                                        @Override
+                                        public void onResult(final QueryResult<T> queryResult, final MongoException e) {
+                                            if (e != null) {
+                                                future.init(null, e);
+                                            } else {
+                                                if (isExhaust()) {
+                                                    future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, limit,
+                                                                                             batchSize, decoder,
+                                                                                             connection), null);
+                                                } else {
+                                                    future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, limit,
+                                                                                             batchSize, decoder,
+                                                                                             source), null);
+                                                }
+                                            }
+                                        }
+                                    }
+                                   );
                 return future;
             }
         });
@@ -565,23 +586,12 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
         explainModifiers.append("$explain", BsonBoolean.TRUE);
 
         return explainFindOperation.criteria(criteria)
-                             .projection(projection)
-                             .sort(sort)
-                             .skip(skip)
-                             .limit(limit)
-                             .modifiers(explainModifiers);
+                                   .projection(projection)
+                                   .sort(sort)
+                                   .skip(skip)
+                                   .limit(limit)
+                                   .modifiers(explainModifiers);
 
-    }
-
-    private QueryProtocol<T> getProtocol(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
-        return new QueryProtocol<T>(namespace, skip, getNumberToReturn(), asDocument(connectionDescription, readPreference), projection,
-                                    decoder).tailableCursor(isTailableCursor())
-                                            .slaveOk(isSlaveOk() || readPreference.isSlaveOk())
-                                            .oplogReplay(isOplogReplay())
-                                            .noCursorTimeout(isNoCursorTimeout())
-                                            .awaitData(isAwaitData())
-                                            .exhaust(isExhaust())
-                                            .partial(isPartial());
     }
 
     /**

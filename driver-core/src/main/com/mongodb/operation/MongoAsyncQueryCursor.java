@@ -29,10 +29,6 @@ import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.connection.Connection;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.protocol.GetMoreDiscardProtocol;
-import com.mongodb.protocol.GetMoreProtocol;
-import com.mongodb.protocol.GetMoreReceiveProtocol;
-import com.mongodb.protocol.KillCursorProtocol;
 import com.mongodb.protocol.QueryResult;
 import org.bson.codecs.Decoder;
 
@@ -104,8 +100,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     }
 
     private void handleExhaustCleanup(final int responseTo, final SingleResultFuture<Void> future, final MongoException e) {
-        new GetMoreDiscardProtocol(cursor != null ? cursor.getId() : 0, responseTo)
-        .executeAsync(exhaustConnection)
+        exhaustConnection.getMoreDiscardAsync(cursor != null ? cursor.getId() : 0, responseTo)
         .register(new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final MongoException exhaustException) {
@@ -122,27 +117,26 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             connectionSource.getConnection().register(new SingleResultCallback<Connection>() {
                 @Override
                 public void onResult(final Connection connection, final MongoException connectionException) {
-                    new KillCursorProtocol(asList(cursor))
-                        .executeAsync(connection)
-                        .register(new SingleResultCallback<Void>() {
-                            @Override
-                            public void onResult(final Void result, final MongoException killException) {
-                                connection.release();
-                                releaseConnectionSource();
-                                closed = true;
+                    connection.killCursorAsync(asList(cursor))
+                              .register(new SingleResultCallback<Void>() {
+                                  @Override
+                                  public void onResult(final Void result, final MongoException killException) {
+                                      connection.release();
+                                      releaseConnectionSource();
+                                      closed = true;
 
-                                MongoException exception = e;
-                                if (exception == null) {
-                                    exception = connectionException;
-                                }
-                                if (exception == null) {
-                                    exception = killException;
-                                }
+                                      MongoException exception = e;
+                                      if (exception == null) {
+                                          exception = connectionException;
+                                      }
+                                      if (exception == null) {
+                                          exception = killException;
+                                      }
 
                                 LOGGER.trace("Initializing forEach future " + (exception == null ? "" : " with  exception " + exception));
-                                future.init(null, exception);
-                            }
-                        });
+                                      future.init(null, exception);
+                                  }
+                              });
                 }
             });
         } else {
@@ -213,9 +207,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             } else {
                 // get more results
                 if (isExhaust()) {
-                    new GetMoreReceiveProtocol<T>(decoder, result.getRequestId())
-                    .executeAsync(exhaustConnection)
-                    .register(this);
+                    exhaustConnection.getMoreReceiveAsync(decoder, result.getRequestId()).register(this);
                 } else {
                     connectionSource.getConnection().register(new SingleResultCallback<Connection>() {
                         @Override
@@ -223,10 +215,9 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                             if (e != null) {
                                 close(0, future, e);
                             } else {
-                                new GetMoreProtocol<T>(namespace, new GetMore(result.getCursor(), limit, batchSize, numFetchedSoFar),
-                                                       decoder)
-                                .executeAsync(connection)
-                                .register(new QueryResultSingleResultCallback(block, future, connection));
+                                connection.getMoreAsync(namespace, new GetMore(result.getCursor(), limit, batchSize, numFetchedSoFar),
+                                                        decoder)
+                                          .register(new QueryResultSingleResultCallback(block, future, connection));
                             }
                         }
                     });

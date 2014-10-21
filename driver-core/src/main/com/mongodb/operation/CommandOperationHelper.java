@@ -32,7 +32,6 @@ import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.protocol.CommandProtocol;
-import com.mongodb.protocol.Protocol;
 import com.mongodb.protocol.message.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
@@ -181,8 +180,8 @@ final class CommandOperationHelper {
                                                   final Connection connection, final ReadPreference readPreference,
                                                   final Function<D, T> transformer) {
 
-        return transformer.apply(new CommandProtocol<D>(database, wrapCommand(command, readPreference, connection.getDescription()),
-                                                        readPreference.isSlaveOk(), fieldNameValidator, decoder).execute(connection));
+        return transformer.apply(connection.command(database, wrapCommand(command, readPreference, connection.getDescription()),
+                                                    readPreference.isSlaveOk(), fieldNameValidator, decoder));
     }
 
     /* Async Read Binding Helpers */
@@ -377,11 +376,6 @@ final class CommandOperationHelper {
             this.readPreference = readPreference;
         }
 
-        protected Protocol<D> getProtocol(final ConnectionDescription connectionDescription) {
-            return new CommandProtocol<D>(database, wrapCommand(command, readPreference, connectionDescription),
-                                          readPreference.isSlaveOk(), fieldNameValidator, decoder);
-        }
-
         @Override
         public void onResult(final AsyncConnectionSource source, final MongoException e) {
             if (e != null) {
@@ -393,23 +387,23 @@ final class CommandOperationHelper {
                         if (e != null) {
                             future.init(null, e);
                         } else {
-                            getProtocol(connection.getDescription())
-                            .executeAsync(connection)
-                            .register(new SingleResultCallback<D>() {
-                                @Override
-                                public void onResult(final D response, final MongoException e) {
-                                    try {
-                                        if (e != null) {
-                                            future.init(null, e);
-                                        } else {
-                                            future.init(transformer.apply(response), null);
-                                        }
-                                    } finally {
-                                        connection.release();
-                                        source.release();
-                                    }
-                                }
-                            });
+                            connection.commandAsync(database, wrapCommand(command, readPreference, connection.getDescription()),
+                                                    readPreference.isSlaveOk(), fieldNameValidator, decoder)
+                                      .register(new SingleResultCallback<D>() {
+                                          @Override
+                                          public void onResult(final D response, final MongoException e) {
+                                              try {
+                                                  if (e != null) {
+                                                      future.init(null, e);
+                                                  } else {
+                                                      future.init(transformer.apply(response), null);
+                                                  }
+                                              } finally {
+                                                  connection.release();
+                                                  source.release();
+                                              }
+                                          }
+                                      });
                         }
                     }
                 });

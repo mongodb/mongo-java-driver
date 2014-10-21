@@ -16,11 +16,9 @@
 
 package com.mongodb.protocol;
 
-import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.Connection;
@@ -37,7 +35,6 @@ import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.protocol.ProtocolHelper.checkExceptionForUnexpectedServerState;
 import static com.mongodb.protocol.ProtocolHelper.encodeMessage;
 import static com.mongodb.protocol.ProtocolHelper.getCommandFailureException;
 import static com.mongodb.protocol.ProtocolHelper.getMessageSettings;
@@ -84,14 +81,9 @@ public class CommandProtocol<T> implements Protocol<T> {
         LOGGER.debug(format("Sending command {%s : %s} to database %s on connection [%s] to server %s",
                             command.keySet().iterator().next(), command.values().iterator().next(),
                             namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
-        try {
-            T retval = receiveMessage(connection, sendMessage(connection).getId());
-            LOGGER.debug("Command execution completed");
-            return retval;
-        } catch (MongoException e) {
-            checkExceptionForUnexpectedServerState(connection, e);
-            throw e;
-        }
+        T retval = receiveMessage(connection, sendMessage(connection).getId());
+        LOGGER.debug("Command execution completed");
+        return retval;
     }
 
     private CommandMessage sendMessage(final Connection connection) {
@@ -136,12 +128,6 @@ public class CommandProtocol<T> implements Protocol<T> {
         connection.sendMessageAsync(bsonOutput.getByteBuffers(),
                                     message.getId(),
                                     new SendMessageCallback<T>(connection, bsonOutput, message.getId(), retVal, receiveCallback));
-        retVal.register(new SingleResultCallback<T>() {
-            @Override
-            public void onResult(final T result, final MongoException e) {
-                checkExceptionForUnexpectedServerState(connection, e);
-            }
-        });
         return retVal;
     }
 
