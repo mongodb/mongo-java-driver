@@ -20,6 +20,8 @@ package com.mongodb;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -133,5 +135,29 @@ public class ServerAddressTest {
     @Test(expected = MongoException.class)
     public void testParseUrlWithMissingPort() throws UnknownHostException {
         new ServerAddress("mongodb://somewhere/");
+    }
+
+    @Test
+    public void testParseListUrls() throws UnknownHostException {
+        final String addresses = "localhost,localhost:2919,192.168.0.1:2781,192.168.1.1";
+        final List<ServerAddress> serverAddresses = ServerAddress.parse(addresses);
+
+        assertEquals(Arrays.asList(new ServerAddress("localhost"), new ServerAddress("localhost", 2919), new ServerAddress(
+                "192.168.0.1", 2781), new ServerAddress("192.168.1.1")), serverAddresses);
+    }
+
+    @Test
+    public void should_serverAddresses_do_the_right_job_with_only_one() throws UnknownHostException {
+        final String addresses = "localhost";
+        final List<ServerAddress> serverAddresses = ServerAddress.parse(addresses);
+
+        assertEquals(Arrays.asList(new ServerAddress("localhost")), serverAddresses);
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void should_not_serverAddresses_parse_and_invalid_string() throws UnknownHostException {
+        String addresses = "localhost:localhost";
+
+        ServerAddress.parse(addresses);
     }
 }

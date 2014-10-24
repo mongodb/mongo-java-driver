@@ -21,6 +21,8 @@ import org.bson.util.annotations.Immutable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents the location of a Mongo server - i.e. server name and port number
@@ -195,6 +197,24 @@ public class ServerAddress {
      */
     public InetSocketAddress getSocketAddress() throws UnknownHostException {
         return new InetSocketAddress(InetAddress.getByName(_host), _port);
+    }
+
+    /**
+     * Parse a string of addresses to a List of ServerAddress.
+     *
+     * @param addresses array of strings of form "host[:port],..."
+     * @return a list of ServerAddress from the {@code addresses}
+     * @throws UnknownHostException
+     */
+    public static List<ServerAddress> parse(String addresses) throws UnknownHostException {
+        final String[] addrs = addresses.split(" *, *");
+        final List<ServerAddress> result = new ArrayList<ServerAddress>(addrs.length);
+        for (String addressString : addrs) {
+            int idx = addressString.indexOf(':');
+            result.add((idx == -1) ? new ServerAddress(addressString) : new ServerAddress(addressString.substring(0, idx),
+                    Integer.parseInt(addressString.substring(idx + 1))));
+        }
+        return result;
     }
 
     @Override
