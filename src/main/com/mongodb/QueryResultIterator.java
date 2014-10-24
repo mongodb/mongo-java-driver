@@ -42,7 +42,7 @@ class QueryResultIterator implements Cursor {
     private int _curSize;
     private int _batchSize;
 
-    private boolean closed;
+    private final boolean[] closed = new boolean[] { false };
 
     private final List<Integer> _sizes = new ArrayList<Integer>();
     private int _numGetMores = 0;
@@ -103,7 +103,7 @@ class QueryResultIterator implements Cursor {
     }
 
     public DBObject next() {
-        if (closed) {
+        if (closed[0]) {
             throw new IllegalStateException("Iterator has been closed");
         }
 
@@ -115,7 +115,7 @@ class QueryResultIterator implements Cursor {
     }
 
     public boolean hasNext() {
-        if (closed) {
+        if (closed[0]) {
            throw new IllegalStateException("Iterator has been closed");
         }
 
@@ -166,8 +166,8 @@ class QueryResultIterator implements Cursor {
     }
 
     public void close(){
-        if (!closed) {
-            closed = true;
+        if (!closed[0]) {
+            closed[0] = true;
             killCursor();
         }
     }
@@ -242,13 +242,31 @@ class QueryResultIterator implements Cursor {
 
     private OptionalFinalizer getOptionalFinalizer(final DBCollectionImpl coll) {
         return coll.getDB().getMongo().getMongoOptions().isCursorFinalizerEnabled() && _cursorId != 0 ?
-               new OptionalFinalizer() : null;
+               new OptionalFinalizer(_db, _cursorId, _host, closed) : null;
     }
 
-    private class OptionalFinalizer {
+    private static class OptionalFinalizer {
+      
+        private final DBApiLayer _db;
+      
+        private final long _cursorId;
+      
+        private final ServerAddress _host;
+      
+        private final boolean[] closed;
+      
+        public OptionalFinalizer(DBApiLayer _db, long _cursorId, 
+                ServerAddress _host, boolean[] closed) {
+        
+            this._db = _db;
+            this._cursorId = _cursorId;
+            this._host = _host;
+            this.closed = closed;
+        }
+      
         @Override
         protected void finalize() throws Throwable {
-            if (!closed && _cursorId != 0) {
+            if (!closed[0] && _cursorId != 0) {
                 _db.addDeadCursor(new DeadCursor(_cursorId, _host));
             }
             super.finalize();
