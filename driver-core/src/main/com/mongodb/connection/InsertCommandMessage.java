@@ -18,7 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.operation.InsertRequest;
+import com.mongodb.bulk.InsertRequest;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;

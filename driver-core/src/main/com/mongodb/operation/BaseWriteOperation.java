@@ -29,6 +29,7 @@ import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteException;
 import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.bulk.WriteRequest;
 import com.mongodb.connection.AcknowledgedWriteConcernResult;
 import com.mongodb.connection.Connection;
 import org.bson.BsonBoolean;
@@ -37,15 +38,15 @@ import org.bson.BsonInt32;
 import org.bson.BsonString;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.bulk.WriteRequest.Type.DELETE;
+import static com.mongodb.bulk.WriteRequest.Type.INSERT;
+import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
+import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.DUPLICATE_KEY_ERROR_CODES;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.WriteRequest.Type.DELETE;
-import static com.mongodb.operation.WriteRequest.Type.INSERT;
-import static com.mongodb.operation.WriteRequest.Type.REPLACE;
-import static com.mongodb.operation.WriteRequest.Type.UPDATE;
 
 
 /**

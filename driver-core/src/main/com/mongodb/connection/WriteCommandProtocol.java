@@ -23,7 +23,7 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.operation.WriteRequest;
+import com.mongodb.bulk.WriteRequest;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 

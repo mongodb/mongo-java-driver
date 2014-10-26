@@ -20,6 +20,7 @@ import category.Async
 import category.Slow
 import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.bulk.InsertRequest
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32

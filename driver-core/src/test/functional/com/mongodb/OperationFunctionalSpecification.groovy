@@ -18,12 +18,12 @@ package com.mongodb
 
 import com.mongodb.binding.AsyncSingleConnectionBinding
 import com.mongodb.binding.PinnedBinding
+import com.mongodb.bulk.InsertRequest
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
 import com.mongodb.client.test.WorkerCodec
 import com.mongodb.connection.ServerHelper
 import com.mongodb.operation.InsertOperation
-import com.mongodb.operation.InsertRequest
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.DocumentCodec

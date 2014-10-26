@@ -16,7 +16,7 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.operation.DeleteRequest;
+import com.mongodb.bulk.DeleteRequest;
 import org.bson.io.BsonOutput;
 
 import java.util.List;

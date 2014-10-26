@@ -21,6 +21,8 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.bulk.InsertRequest;
+import com.mongodb.bulk.WriteRequest;
 import com.mongodb.connection.Connection;
 
 import java.util.List;

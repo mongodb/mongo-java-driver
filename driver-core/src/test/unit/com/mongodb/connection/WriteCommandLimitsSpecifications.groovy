@@ -19,14 +19,14 @@ package com.mongodb.connection
 
 import com.mongodb.MongoNamespace
 import com.mongodb.WriteConcern
-import com.mongodb.operation.DeleteRequest
-import com.mongodb.operation.InsertRequest
-import com.mongodb.operation.UpdateRequest
+import com.mongodb.bulk.DeleteRequest
+import com.mongodb.bulk.InsertRequest
+import com.mongodb.bulk.UpdateRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification
 
-import static com.mongodb.operation.WriteRequest.Type.REPLACE
+import static com.mongodb.bulk.WriteRequest.Type.REPLACE
 
 class WriteCommandLimitsSpecifications extends Specification {
     def 'should split an insert command when the number of items exceeds the maximum'() {

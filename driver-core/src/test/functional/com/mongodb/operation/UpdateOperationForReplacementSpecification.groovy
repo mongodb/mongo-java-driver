@@ -19,6 +19,8 @@ package com.mongodb.operation
 import category.Async
 import category.Slow
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.bulk.InsertRequest
+import com.mongodb.bulk.UpdateRequest
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -29,7 +31,7 @@ import org.junit.experimental.categories.Category
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
-import static com.mongodb.operation.WriteRequest.Type.REPLACE
+import static com.mongodb.bulk.WriteRequest.Type.REPLACE
 import static java.util.Arrays.asList
 
 class UpdateOperationForReplacementSpecification extends OperationFunctionalSpecification {

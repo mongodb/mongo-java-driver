@@ -19,10 +19,10 @@ package com.mongodb.connection
 import com.mongodb.MongoNamespace
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
-import com.mongodb.operation.DeleteRequest
-import com.mongodb.operation.InsertRequest
-import com.mongodb.operation.UpdateRequest
-import com.mongodb.operation.WriteRequest
+import com.mongodb.bulk.DeleteRequest
+import com.mongodb.bulk.InsertRequest
+import com.mongodb.bulk.UpdateRequest
+import com.mongodb.bulk.WriteRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.operation;
+package com.mongodb.bulk;
 
 import org.bson.BsonDocument;
 

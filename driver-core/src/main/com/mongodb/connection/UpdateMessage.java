@@ -16,12 +16,12 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.operation.UpdateRequest;
+import com.mongodb.bulk.UpdateRequest;
 import org.bson.io.BsonOutput;
 
 import java.util.List;
 
-import static com.mongodb.operation.WriteRequest.Type.REPLACE;
+import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
 
 /**
  * An OP_UPDATE message.
