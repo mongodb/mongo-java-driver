@@ -277,7 +277,8 @@ public class AggregateOperation<T> implements AsyncReadOperation<MongoAsyncCurso
             cursorId = ((BsonInt64) cursor.get("id")).getValue();
             results = cursor.getArray(FIRST_BATCH);
         }
-        return new QueryResult<T>(BsonDocumentWrapperHelper.<T>toList(results), cursorId, connection.getServerAddress(), 0);
+        return new QueryResult<T>(BsonDocumentWrapperHelper.<T>toList(results), cursorId, connection.getDescription().getServerAddress(),
+                                  0);
     }
 
     private Function<BsonDocument, MongoCursor<T>> transformer(final ConnectionSource source, final Connection connection) {

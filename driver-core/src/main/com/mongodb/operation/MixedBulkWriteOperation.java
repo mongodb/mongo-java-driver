@@ -510,7 +510,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 if (shouldUseWriteCommands(connection)) {
                     return executeWriteCommandProtocol();
                 } else {
-                    BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getServerAddress(),
+                    BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription()
+                                                                                                         .getServerAddress(),
                                                                                                ordered, writeConcern);
                     for (int i = 0; i < runWrites.size(); i++) {
                         IndexMap indexMap = IndexMap.create(i, 1);
@@ -545,8 +546,9 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 if (shouldUseWriteCommands(connection)) {
                     return executeWriteCommandProtocolAsync();
                 } else {
-                    final BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getServerAddress(),
-                                                                                                     ordered, writeConcern);
+                    BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription()
+                                                                                                         .getServerAddress(),
+                                                                                               ordered, writeConcern);
                     SingleResultFuture<BulkWriteResult> future = new SingleResultFuture<BulkWriteResult>();
                     executeRunWritesAsync(runWrites.size(), 0, bulkWriteBatchCombiner, future);
                     return future;

@@ -24,7 +24,6 @@ import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.operation.InsertRequest
 import com.mongodb.operation.UpdateRequest
 import com.mongodb.operation.WriteRequest
-import com.mongodb.selector.PrimaryServerSelector
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -32,19 +31,27 @@ import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.getCluster
+import static com.mongodb.ClusterFixture.getCredentialList
+import static com.mongodb.ClusterFixture.getPrimary
+import static com.mongodb.ClusterFixture.getSSLSettings
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
-import static java.util.concurrent.TimeUnit.SECONDS
 
 @IgnoreIf({ !serverVersionAtLeast([2, 6, 0]) })
 class WriteCommandProtocolSpecification extends OperationFunctionalSpecification {
 
-    def server = getCluster().selectServer(new PrimaryServerSelector(), 1, SECONDS)
-    def connection = server.connection
+    InternalStreamConnection connection;
+
+    def setup() {
+        connection = new InternalStreamConnection('1', getPrimary(),
+                                                  new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
+                                                  new InternalStreamConnectionInitializer(getCredentialList()),
+                                                  new NoOpConnectionListener());
+        connection.open();
+    }
 
     def cleanup() {
-        connection?.release()
+        connection?.close()
     }
 
     def 'should insert a document'() {

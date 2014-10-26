@@ -345,7 +345,8 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
             @Override
             public MapReduceCursor<T> apply(final BsonDocument result) {
                 return new MapReduceInlineResultsCursor<T>(BsonDocumentWrapperHelper.<T>toList(result.getArray("results")),
-                                                           MapReduceHelper.createStatistics(result), connection.getServerAddress());
+                                                           MapReduceHelper.createStatistics(result),
+                                                           connection.getDescription().getServerAddress());
             }
         };
     }

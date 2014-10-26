@@ -253,18 +253,18 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     @Override
-    public QueryResult<T> execute(final Connection connection) {
-        LOGGER.debug(format("Sending query of namespace %s on connection [%s] to server %s", namespace, connection.getId(),
-                            connection.getServerAddress()));
+    public QueryResult<T> execute(final InternalConnection connection) {
+        LOGGER.debug(format("Sending query of namespace %s on connection [%s] to server %s", namespace,
+                            connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
         QueryResult<T> queryResult = receiveMessage(connection, sendMessage(connection));
         LOGGER.debug("Query completed");
         return queryResult;
     }
 
     @Override
-    public MongoFuture<QueryResult<T>> executeAsync(final Connection connection) {
-        LOGGER.debug(format("Asynchronously sending query of namespace %s on connection [%s] to server %s", namespace, connection.getId(),
-                            connection.getServerAddress()));
+    public MongoFuture<QueryResult<T>> executeAsync(final InternalConnection connection) {
+        LOGGER.debug(format("Asynchronously sending query of namespace %s on connection [%s] to server %s", namespace,
+                            connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
@@ -273,7 +273,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         QueryResultCallback<T> receiveCallback = new QueryResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
                                                                             resultDecoder,
                                                                             message.getId(),
-                                                                            connection.getServerAddress());
+                                                                            connection.getDescription().getServerAddress());
         connection.sendMessageAsync(bsonOutput.getByteBuffers(),
                                     message.getId(),
                                     new SendMessageCallback<QueryResult<T>>(connection, bsonOutput, message.getId(), retVal,
@@ -293,7 +293,7 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
                                   .partial(isPartial());
     }
 
-    private QueryMessage sendMessage(final Connection connection) {
+    private QueryMessage sendMessage(final InternalConnection connection) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
             QueryMessage message = createQueryMessage(connection.getDescription());
@@ -305,18 +305,18 @@ public class QueryProtocol<T> implements Protocol<QueryResult<T>> {
         }
     }
 
-    private QueryResult<T> receiveMessage(final Connection connection, final QueryMessage message) {
+    private QueryResult<T> receiveMessage(final InternalConnection connection, final QueryMessage message) {
         ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             if (responseBuffers.getReplyHeader().isQueryFailure()) {
                 Document errorDocument = new ReplyMessage<Document>(responseBuffers,
                                                                     new DocumentCodec(),
                                                                     message.getId()).getDocuments().get(0);
-                throw getQueryFailureException(connection.getServerAddress(), errorDocument);
+                throw getQueryFailureException(connection.getDescription().getServerAddress(), errorDocument);
             }
             ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, resultDecoder, message.getId());
 
-            return new QueryResult<T>(replyMessage, connection.getServerAddress());
+            return new QueryResult<T>(replyMessage, connection.getDescription().getServerAddress());
         } finally {
             responseBuffers.close();
         }

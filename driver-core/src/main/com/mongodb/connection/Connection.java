@@ -17,13 +17,11 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.ReferenceCounted;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.operation.DeleteRequest;
@@ -31,7 +29,6 @@ import com.mongodb.operation.GetMore;
 import com.mongodb.operation.InsertRequest;
 import com.mongodb.operation.UpdateRequest;
 import org.bson.BsonDocument;
-import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
@@ -350,55 +347,4 @@ public interface Connection extends BufferProvider, ReferenceCounted {
      * @return the future
      */
     MongoFuture<Void> killCursorAsync(List<ServerCursor> cursors);
-
-    /**
-     * Send a message to the server. The connection may not make any attempt to validate the integrity of the message. <p> This method
-     * blocks until all bytes have been written.  This method is not thread safe: only one thread at a time can have an active call to this
-     * method. </p>
-     *
-     * @param byteBuffers   the list of byte buffers to send.
-     * @param lastRequestId the request id of the last message in byteBuffers
-     */
-    void sendMessage(List<ByteBuf> byteBuffers, int lastRequestId);
-
-    /**
-     * Receive a response to a sent message from the server. <p> This method blocks until the entire message has been read. This method is
-     * not thread safe: only one thread at a time can have an active call to this method. </p>
-     *
-     * @param responseTo the expected responseTo of the received message
-     * @return the response
-     */
-    ResponseBuffers receiveMessage(int responseTo);
-
-    /**
-     * Asynchronously send a message to the server. The connection may not make any attempt to validate the integrity of the message.
-     *
-     * @param byteBuffers   the list of byte buffers to send
-     * @param lastRequestId the request id of the last message in byteBuffers
-     * @param callback      the callback to invoke on completion
-     */
-    void sendMessageAsync(List<ByteBuf> byteBuffers, int lastRequestId, SingleResultCallback<Void> callback);
-
-    /**
-     * Asynchronously receive a response to a sent message from the server.
-     *
-     * @param responseTo the request id that this message is a response to
-     * @param callback   the callback to invoke on completion
-     */
-    void receiveMessageAsync(int responseTo, SingleResultCallback<ResponseBuffers> callback);
-
-    /**
-     * Gets the server address of this connection
-     *
-     * @return a ServerAddress for this connection.
-     */
-    ServerAddress getServerAddress();
-
-    /**
-     * Gets the id of the connection.  If possible, this id will correlate with the connection id that the server puts in its log messages.
-     *
-     * @return the id
-     */
-    String getId();
-
 }

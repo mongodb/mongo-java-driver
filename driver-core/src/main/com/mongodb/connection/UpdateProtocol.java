@@ -57,18 +57,18 @@ public class UpdateProtocol extends WriteProtocol {
     }
 
     @Override
-    public WriteConcernResult execute(final Connection connection) {
-        LOGGER.debug(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(), connection.getId(),
-                            connection.getServerAddress()));
+    public WriteConcernResult execute(final InternalConnection connection) {
+        LOGGER.debug(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(),
+                            connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
         WriteConcernResult writeConcernResult = super.execute(connection);
         LOGGER.debug("Update completed");
         return writeConcernResult;
     }
 
     @Override
-    public MongoFuture<WriteConcernResult> executeAsync(final Connection connection) {
+    public MongoFuture<WriteConcernResult> executeAsync(final InternalConnection connection) {
         LOGGER.debug(format("Asynchronously updating documents in namespace %s on connection [%s] to server %s", getNamespace(),
-                            connection.getId(), connection.getServerAddress()));
+                            connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
         final SingleResultFuture<WriteConcernResult> future = new SingleResultFuture<WriteConcernResult>();
         super.executeAsync(connection).register(new SingleResultCallback<WriteConcernResult>() {
             @Override

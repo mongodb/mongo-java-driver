@@ -234,12 +234,12 @@ class DefaultServerSpecification extends Specification {
         }
 
         @Override
-        Object execute(final Connection connection) {
+        Object execute(final InternalConnection connection) {
             throw mongoException;
         }
 
         @Override
-        MongoFuture executeAsync(final Connection connection) {
+        MongoFuture executeAsync(final InternalConnection connection) {
             new SingleResultFuture(null, mongoException)
         }
     }

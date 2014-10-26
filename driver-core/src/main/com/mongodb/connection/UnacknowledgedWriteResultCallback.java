@@ -32,12 +32,12 @@ class UnacknowledgedWriteResultCallback implements SingleResultCallback<Void> {
     private final RequestMessage nextMessage;
     private final OutputBuffer writtenBuffer;
     private final boolean ordered;
-    private final Connection connection;
+    private final InternalConnection connection;
 
     UnacknowledgedWriteResultCallback(final SingleResultFuture<WriteConcernResult> future,
                                       final MongoNamespace namespace, final RequestMessage nextMessage,
                                       final boolean ordered, final OutputBuffer writtenBuffer,
-                                      final Connection connection) {
+                                      final InternalConnection connection) {
         this.future = future;
         this.namespace = namespace;
         this.nextMessage = nextMessage;

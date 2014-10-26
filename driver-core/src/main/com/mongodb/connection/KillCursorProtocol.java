@@ -49,9 +49,9 @@ public class KillCursorProtocol implements Protocol<Void> {
     }
 
     @Override
-    public Void execute(final Connection connection) {
-        LOGGER.debug(format("Killing cursors [%s] on connection [%s] to server %s", getCursorIdListAsString(), connection.getId(),
-                            connection.getServerAddress()));
+    public Void execute(final InternalConnection connection) {
+        LOGGER.debug(format("Killing cursors [%s] on connection [%s] to server %s", getCursorIdListAsString(),
+                            connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
             KillCursorsMessage message = new KillCursorsMessage(cursors);
@@ -64,10 +64,9 @@ public class KillCursorProtocol implements Protocol<Void> {
     }
 
     @Override
-    public MongoFuture<Void> executeAsync(final Connection connection) {
+    public MongoFuture<Void> executeAsync(final InternalConnection connection) {
         LOGGER.debug(format("Asynchronously killing cursors [%s] on connection [%s] to server %s", getCursorIdListAsString(),
-                            connection.getId(),
-                            connection.getServerAddress()));
+                            connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
         final SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
         final ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         KillCursorsMessage message = new KillCursorsMessage(cursors);

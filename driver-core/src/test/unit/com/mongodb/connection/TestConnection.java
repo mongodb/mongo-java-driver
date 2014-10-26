@@ -17,12 +17,10 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.operation.DeleteRequest;
 import com.mongodb.operation.GetMore;
@@ -220,48 +218,18 @@ class TestConnection implements Connection {
     }
 
     @Override
-    public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
-        throw new UnsupportedOperationException("Not implemented yet!");
-    }
-
-    @Override
-    public ResponseBuffers receiveMessage(final int responseTo) {
-        throw new UnsupportedOperationException("Not implemented yet!");
-    }
-
-    @Override
-    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-        throw new UnsupportedOperationException("Not implemented yet!");
-    }
-
-    @Override
-    public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-        throw new UnsupportedOperationException("Not implemented yet!");
-    }
-
-    @Override
-    public ServerAddress getServerAddress() {
-        return internalConnection.getDescription().getServerAddress();
-    }
-
-    @Override
-    public String getId() {
-        return internalConnection.getDescription().getConnectionId().toString();
-    }
-
-    @Override
     public ByteBuf getBuffer(final int size) {
         throw new UnsupportedOperationException("Not implemented yet!");
     }
 
     @SuppressWarnings("unchecked")
     private <T> T executeEnqueuedProtocol() {
-        return (T) executor.execute(enqueuedProtocol, this);
+        return (T) executor.execute(enqueuedProtocol, internalConnection);
     }
 
     @SuppressWarnings("unchecked")
     private <T> T executeEnqueuedProtocolAsync() {
-        return (T) executor.executeAsync(enqueuedProtocol, this);
+        return (T) executor.executeAsync(enqueuedProtocol, internalConnection);
     }
 
     void enqueueProtocol(final Protocol protocol) {
