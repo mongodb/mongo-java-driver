@@ -20,7 +20,6 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
 import com.mongodb.operation.DeleteRequest
-import com.mongodb.operation.GetMore
 import com.mongodb.operation.InsertRequest
 import com.mongodb.operation.UpdateRequest
 import com.mongodb.operation.WriteRequest
@@ -108,7 +107,7 @@ class DefaultServerConnectionSpecification extends Specification {
 
     def 'should execute getmore protocol'() {
         when:
-        connection.getMore(namespace, new GetMore(new ServerCursor(1, new ServerAddress()), 0, 0, 0), new BsonDocumentCodec())
+        connection.getMore(namespace, 1L, 1, new BsonDocumentCodec())
 
         then:
         1 * executor.execute(_ as GetMoreProtocol, internalConnection)
@@ -207,7 +206,7 @@ class DefaultServerConnectionSpecification extends Specification {
 
     def 'should execute getmore protocol asynchronously'() {
         when:
-        connection.getMoreAsync(namespace, new GetMore(new ServerCursor(1, new ServerAddress()), 0, 0, 0), new BsonDocumentCodec())
+        connection.getMoreAsync(namespace, 1L, 0, new BsonDocumentCodec())
 
         then:
         1 * executor.executeAsync(_ as GetMoreProtocol, internalConnection)

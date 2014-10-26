@@ -32,6 +32,7 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.codecs.Decoder;
 
+import static com.mongodb.operation.CursorHelper.getNumberToReturn;
 import static java.util.Arrays.asList;
 
 
@@ -46,7 +47,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     private final Decoder<T> decoder;
     private final AsyncConnectionSource connectionSource;
     private final Connection exhaustConnection;
-    private long numFetchedSoFar;
+    private int numFetchedSoFar;
     private ServerCursor cursor;
     private boolean closed;
 
@@ -117,7 +118,7 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             connectionSource.getConnection().register(new SingleResultCallback<Connection>() {
                 @Override
                 public void onResult(final Connection connection, final MongoException connectionException) {
-                    connection.killCursorAsync(asList(cursor))
+                    connection.killCursorAsync(asList(cursor.getId()))
                               .register(new SingleResultCallback<Void>() {
                                   @Override
                                   public void onResult(final Void result, final MongoException killException) {
@@ -215,7 +216,8 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
                             if (e != null) {
                                 close(0, future, e);
                             } else {
-                                connection.getMoreAsync(namespace, new GetMore(result.getCursor(), limit, batchSize, numFetchedSoFar),
+                                connection.getMoreAsync(namespace, result.getCursor().getId(),
+                                                        getNumberToReturn(limit, batchSize, numFetchedSoFar),
                                                         decoder)
                                           .register(new QueryResultSingleResultCallback(block, future, connection));
                             }

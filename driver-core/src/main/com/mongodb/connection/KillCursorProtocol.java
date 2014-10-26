@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoException;
-import com.mongodb.ServerCursor;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
@@ -36,14 +35,14 @@ import static java.lang.String.format;
 class KillCursorProtocol implements Protocol<Void> {
     public static final Logger LOGGER = Loggers.getLogger("protocol.killcursor");
 
-    private final List<ServerCursor> cursors;
+    private final List<Long> cursors;
 
     /**
      * Construct an instance.
      *
      * @param cursors the list of cursors to kill
      */
-    public KillCursorProtocol(final List<ServerCursor> cursors) {
+    public KillCursorProtocol(final List<Long> cursors) {
         this.cursors = cursors;
     }
 
@@ -83,8 +82,8 @@ class KillCursorProtocol implements Protocol<Void> {
     private String getCursorIdListAsString() {
         StringBuilder builder = new StringBuilder();
         for (int i = 0; i < cursors.size(); i++) {
-            ServerCursor cursor = cursors.get(i);
-            builder.append(cursor.getId());
+            Long cursor = cursors.get(i);
+            builder.append(cursor);
             if (i < cursors.size() - 1) {
                 builder.append(", ");
             }

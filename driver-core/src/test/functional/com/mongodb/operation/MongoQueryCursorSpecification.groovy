@@ -432,7 +432,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
                                                 connectionSource)
 
         def connection = connectionSource.getConnection()
-        connection.killCursor(asList(cursor.getServerCursor()))
+        connection.killCursor(asList(cursor.getServerCursor().id))
         connection.release()
         cursor.next()
         cursor.next()
@@ -469,7 +469,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
     private void makeAdditionalGetMoreCall(ServerCursor serverCursor) {
         def connection = connectionSource.getConnection()
         try {
-            connection.getMore(getNamespace(), new GetMore(serverCursor, 1, 1, 1), new DocumentCodec())
+            connection.getMore(getNamespace(), serverCursor.getId(), 1, new DocumentCodec())
         } finally {
             connection.release()
         }

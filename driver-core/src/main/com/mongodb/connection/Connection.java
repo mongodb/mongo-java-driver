@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.ServerCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
@@ -25,7 +24,6 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.ReferenceCounted;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.operation.DeleteRequest;
-import com.mongodb.operation.GetMore;
 import com.mongodb.operation.InsertRequest;
 import com.mongodb.operation.UpdateRequest;
 import org.bson.BsonDocument;
@@ -265,7 +263,7 @@ public interface Connection extends BufferProvider, ReferenceCounted {
      * @param partial         whether partial results from sharded clusters are acceptable
      * @param oplogReplay     whether to replay the oplog
      * @param resultDecoder   the decoder for the query result documents
-     * @param <T>                  the type of the result
+     * @param <T>             the type of the result
      * @return the query results
      */
     <T> MongoFuture<QueryResult<T>> queryAsync(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
@@ -277,24 +275,26 @@ public interface Connection extends BufferProvider, ReferenceCounted {
     /**
      * Get more result documents from a cursor.
      *
-     * @param namespace     the namespace to get more documents from
-     * @param getMore       the cursor
-     * @param resultDecoder the decoder for the query result documents
-     * @param <T>           the type of the query result documents
+     * @param namespace      the namespace to get more documents from
+     * @param cursorId       the cursor id
+     * @param numberToReturn the number of documents to return
+     * @param resultDecoder  the decoder for the query results
+     * @param <T>            the type of the query result documents
      * @return the query results
      */
-    <T> QueryResult<T> getMore(MongoNamespace namespace, GetMore getMore, Decoder<T> resultDecoder);
+    <T> QueryResult<T> getMore(MongoNamespace namespace, long cursorId, int numberToReturn, Decoder<T> resultDecoder);
 
     /**
      * Get more result documents from a cursor asynchronously.
      *
-     * @param namespace     the namespace to get more documents from
-     * @param getMore       the cursor
-     * @param resultDecoder the decoder for the query result documents
-     * @param <T>           the type of the query result documents
+     * @param namespace      the namespace to get more documents from
+     * @param cursorId       the cursor id
+     * @param numberToReturn the number of documents to return
+     * @param resultDecoder  the decoder for the query result documents
+     * @param <T>            the type of the query result documents
      * @return the query results
      */
-    <T> MongoFuture<QueryResult<T>> getMoreAsync(MongoNamespace namespace, GetMore getMore, Decoder<T> resultDecoder);
+    <T> MongoFuture<QueryResult<T>> getMoreAsync(MongoNamespace namespace, long cursorId, int numberToReturn, Decoder<T> resultDecoder);
 
     /**
      * Get more result documents from an exhaust cursor.
@@ -338,7 +338,7 @@ public interface Connection extends BufferProvider, ReferenceCounted {
      *
      * @param cursors the cursors
      */
-    void killCursor(List<ServerCursor> cursors);
+    void killCursor(List<Long> cursors);
 
     /**
      * Asynchronously Kills the given list of cursors.
@@ -346,5 +346,5 @@ public interface Connection extends BufferProvider, ReferenceCounted {
      * @param cursors the cursors
      * @return the future
      */
-    MongoFuture<Void> killCursorAsync(List<ServerCursor> cursors);
+    MongoFuture<Void> killCursorAsync(List<Long> cursors);
 }
