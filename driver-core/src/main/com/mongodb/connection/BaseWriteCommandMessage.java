@@ -31,9 +31,8 @@ import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 /**
  * Abstract base class for write command message.  Supports splitting into multiple messages.
  *
- * @since 3.0
  */
-public abstract class BaseWriteCommandMessage extends RequestMessage {
+abstract class BaseWriteCommandMessage extends RequestMessage {
     // Server allows command document to exceed max document size by 16K, so that it can comfortably fit a stored document inside it
     private static final int HEADROOM = 16 * 1024;
 

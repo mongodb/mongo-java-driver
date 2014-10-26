@@ -22,9 +22,8 @@ import com.mongodb.async.MongoFuture;
  * An interface for the execution of a MongoDB wire protocol conversation
  *
  * @param <T> the return value of the Protocol response message
- * @since 3.0
  */
-public interface Protocol<T> {
+interface Protocol<T> {
     /**
      * Execute the protocol.
      *

@@ -35,9 +35,8 @@ import static java.lang.String.format;
  * An implementation of the MongoDB OP_UPDATE wire protocol.
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-update OP_UPDATE
- * @since 3.0
  */
-public class UpdateProtocol extends WriteProtocol {
+class UpdateProtocol extends WriteProtocol {
     private static final com.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.update");
 
     private final List<UpdateRequest> updates;

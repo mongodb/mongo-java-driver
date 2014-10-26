@@ -37,9 +37,8 @@ import static java.lang.String.format;
  * An implementation of the delete command.
  *
  * @mongodb.driver.manual reference/command/insert/#dbcmd.delete Delete Command
- * @since 3.0
  */
-public class DeleteCommandProtocol extends WriteCommandProtocol {
+class DeleteCommandProtocol extends WriteCommandProtocol {
 
     private static final Logger LOGGER = Loggers.getLogger("protocol.delete");
 

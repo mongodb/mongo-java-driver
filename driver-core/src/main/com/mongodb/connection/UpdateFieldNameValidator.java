@@ -20,8 +20,10 @@ import org.bson.FieldNameValidator;
 
 /**
  * A field name validator for update documents.  It ensures that all top-level fields start with a '$'.
+ * <p>
+ * This class should not be considered as part of the public API.
+ * </p>
  *
- * @since 3.0
  */
 public class UpdateFieldNameValidator implements org.bson.FieldNameValidator {
     @Override

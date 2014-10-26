@@ -34,9 +34,8 @@ import static java.lang.String.format;
  *
  * @param <T> the type of document to decode query results to
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
- * @since 3.0
  */
-public class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
+class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
 
     public static final Logger LOGGER = Loggers.getLogger("protocol.getmore");
 

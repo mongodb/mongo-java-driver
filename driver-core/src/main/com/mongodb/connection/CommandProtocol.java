@@ -37,9 +37,8 @@ import static java.lang.String.format;
  *
  * @param <T> the type returned from execution
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
- * @since 3.0
  */
-public class CommandProtocol<T> implements Protocol<T> {
+class CommandProtocol<T> implements Protocol<T> {
 
     public static final Logger LOGGER = Loggers.getLogger("protocol.command");
 
