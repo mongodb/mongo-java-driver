@@ -28,8 +28,6 @@ import com.mongodb.ServerAddress
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.async.SingleResultFuture
 import com.mongodb.event.ConnectionListener
-import com.mongodb.protocol.message.CommandMessage
-import com.mongodb.protocol.message.MessageSettings
 import org.bson.BsonBinaryWriter
 import org.bson.BsonDocument
 import org.bson.BsonInt32

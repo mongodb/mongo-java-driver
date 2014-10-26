@@ -37,6 +37,7 @@ import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.client.model.UpdateManyModel
 import com.mongodb.client.model.UpdateOneModel
 import com.mongodb.client.model.UpdateOptions
+import com.mongodb.connection.AcknowledgedWriteConcernResult
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.CountOperation
@@ -58,7 +59,6 @@ import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.ParallelCollectionScanOperation
 import com.mongodb.operation.RenameCollectionOperation
 import com.mongodb.operation.UpdateOperation
-import com.mongodb.protocol.AcknowledgedWriteConcernResult
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -401,7 +401,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'bulk insert should use BulkWriteOperation properly'() {
         given:
-        def executor = new TestOperationExecutor([new com.mongodb.protocol.AcknowledgedBulkWriteResult(1, 0, 0, 0, [])])
+        def executor = new TestOperationExecutor([new com.mongodb.connection.AcknowledgedBulkWriteResult(1, 0, 0, 0, [])])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
         def document = new Document();
 
@@ -461,7 +461,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'bulk insert should generate _id'() {
         given:
-        def executor = new TestOperationExecutor([new com.mongodb.protocol.AcknowledgedBulkWriteResult(1, 0, 0, 0, [])])
+        def executor = new TestOperationExecutor([new com.mongodb.connection.AcknowledgedBulkWriteResult(1, 0, 0, 0, [])])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
         def document = new Document();
 

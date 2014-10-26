@@ -23,7 +23,7 @@ import com.mongodb.ServerCursor;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.connection.Connection;
-import com.mongodb.protocol.QueryResult;
+import com.mongodb.connection.QueryResult;
 import org.bson.codecs.Decoder;
 
 import java.util.ArrayList;

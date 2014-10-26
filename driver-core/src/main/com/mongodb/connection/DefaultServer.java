@@ -23,7 +23,6 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.protocol.Protocol;
 
 import java.util.Collections;
 import java.util.Set;

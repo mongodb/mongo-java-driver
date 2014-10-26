@@ -30,7 +30,6 @@ import com.mongodb.operation.DeleteRequest;
 import com.mongodb.operation.GetMore;
 import com.mongodb.operation.InsertRequest;
 import com.mongodb.operation.UpdateRequest;
-import com.mongodb.protocol.QueryResult;
 import org.bson.BsonDocument;
 import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
