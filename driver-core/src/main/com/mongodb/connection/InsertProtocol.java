@@ -23,9 +23,9 @@ import com.mongodb.WriteConcernResult;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
+import com.mongodb.bulk.InsertRequest;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.operation.InsertRequest;
 
 import java.util.List;
 

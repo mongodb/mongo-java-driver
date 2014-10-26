@@ -26,6 +26,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.bulk.InsertRequest;
 import com.mongodb.connection.AcknowledgedWriteConcernResult;
 import com.mongodb.connection.Connection;
 import org.bson.BsonArray;

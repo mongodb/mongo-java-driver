@@ -48,10 +48,10 @@ class ReplaceRequest extends WriteRequest {
     }
 
     @Override
-    com.mongodb.operation.WriteRequest toNew() {
-        return new com.mongodb.operation.UpdateRequest(new BsonDocumentWrapper<DBObject>(query, codec),
+    com.mongodb.bulk.WriteRequest toNew() {
+        return new com.mongodb.bulk.UpdateRequest(new BsonDocumentWrapper<DBObject>(query, codec),
                                                        new BsonDocumentWrapper<DBObject>(document, replacementCodec),
-                                                       com.mongodb.operation.WriteRequest.Type.REPLACE)
+                                                       com.mongodb.bulk.WriteRequest.Type.REPLACE)
                .upsert(isUpsert());
     }
 }

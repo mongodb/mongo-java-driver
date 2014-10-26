@@ -24,7 +24,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernException
 import com.mongodb.async.MongoFuture
 import com.mongodb.async.SingleResultFuture
-import com.mongodb.operation.InsertRequest
+import com.mongodb.bulk.InsertRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString

@@ -33,7 +33,7 @@ class InsertRequest extends WriteRequest {
     }
 
     @Override
-    com.mongodb.operation.WriteRequest toNew() {
-        return new com.mongodb.operation.InsertRequest(new BsonDocumentWrapper<DBObject>(document, codec));
+    com.mongodb.bulk.WriteRequest toNew() {
+        return new com.mongodb.bulk.InsertRequest(new BsonDocumentWrapper<DBObject>(document, codec));
     }
 }

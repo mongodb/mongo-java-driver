@@ -18,6 +18,8 @@
 
 package com.mongodb.operation
 
+import com.mongodb.bulk.DeleteRequest
+import com.mongodb.bulk.WriteRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification

@@ -23,10 +23,10 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.bulk.DeleteRequest;
+import com.mongodb.bulk.WriteRequest;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.operation.DeleteRequest;
-import com.mongodb.operation.WriteRequest;
 
 import java.util.List;
 

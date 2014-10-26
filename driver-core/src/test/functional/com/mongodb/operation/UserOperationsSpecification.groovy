@@ -21,6 +21,7 @@ import com.mongodb.MongoCredential
 import com.mongodb.MongoServerException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.bulk.InsertRequest
 import com.mongodb.connection.ClusterSettings
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionPoolSettings

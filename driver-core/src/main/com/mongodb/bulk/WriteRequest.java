@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.operation;
+package com.mongodb.bulk;
 
 /**
  * An abstract base class for a write request.

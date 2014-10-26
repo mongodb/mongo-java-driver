@@ -16,6 +16,8 @@
 
 package com.mongodb.operation
 
+import com.mongodb.bulk.UpdateRequest
+import com.mongodb.bulk.WriteRequest
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32

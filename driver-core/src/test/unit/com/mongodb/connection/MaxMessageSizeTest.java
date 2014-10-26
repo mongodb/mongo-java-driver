@@ -16,7 +16,7 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.operation.InsertRequest;
+import com.mongodb.bulk.InsertRequest;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.junit.After;

@@ -18,8 +18,8 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.operation.UpdateRequest;
-import com.mongodb.operation.WriteRequest;
+import com.mongodb.bulk.UpdateRequest;
+import com.mongodb.bulk.WriteRequest;
 import org.bson.BsonBinaryWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;

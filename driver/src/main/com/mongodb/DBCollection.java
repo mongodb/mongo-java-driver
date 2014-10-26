@@ -17,6 +17,9 @@
 package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.bulk.DeleteRequest;
+import com.mongodb.bulk.InsertRequest;
+import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
@@ -24,7 +27,6 @@ import com.mongodb.operation.BaseWriteOperation;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.CreateIndexOperation;
 import com.mongodb.operation.DeleteOperation;
-import com.mongodb.operation.DeleteRequest;
 import com.mongodb.operation.DistinctOperation;
 import com.mongodb.operation.DropCollectionOperation;
 import com.mongodb.operation.DropIndexOperation;
@@ -33,7 +35,6 @@ import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.InsertOperation;
-import com.mongodb.operation.InsertRequest;
 import com.mongodb.operation.ListIndexesOperation;
 import com.mongodb.operation.MapReduceCursor;
 import com.mongodb.operation.MapReduceStatistics;
@@ -44,7 +45,6 @@ import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ParallelCollectionScanOperation;
 import com.mongodb.operation.RenameCollectionOperation;
 import com.mongodb.operation.UpdateOperation;
-import com.mongodb.operation.UpdateRequest;
 import com.mongodb.operation.WriteOperation;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -377,7 +377,7 @@ public class DBCollection {
         DBObject filter = new BasicDBObject(ID_FIELD_NAME, id);
 
         UpdateRequest replaceRequest = new UpdateRequest(wrap(filter), wrap(obj, objectCodec),
-                                                         com.mongodb.operation.WriteRequest.Type.REPLACE).upsert(true);
+                                                         com.mongodb.bulk.WriteRequest.Type.REPLACE).upsert(true);
 
         return executeWriteOperation(new UpdateOperation(getNamespace(), false, writeConcern, asList(replaceRequest)));
     }
@@ -427,12 +427,12 @@ public class DBCollection {
 
         if (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")) {
             UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, encoder),
-                                                            com.mongodb.operation.WriteRequest.Type.UPDATE).upsert(upsert).multi(multi);
+                                                            com.mongodb.bulk.WriteRequest.Type.UPDATE).upsert(upsert).multi(multi);
 
             return executeWriteOperation(new UpdateOperation(getNamespace(), false, aWriteConcern, asList(updateRequest)));
         } else {
             UpdateRequest replaceRequest = new UpdateRequest(wrap(query), wrap(update, encoder),
-                                                             com.mongodb.operation.WriteRequest.Type.REPLACE)
+                                                             com.mongodb.bulk.WriteRequest.Type.REPLACE)
                                            .upsert(upsert);
             return executeWriteOperation(new UpdateOperation(getNamespace(), true, aWriteConcern, asList(replaceRequest)));
         }

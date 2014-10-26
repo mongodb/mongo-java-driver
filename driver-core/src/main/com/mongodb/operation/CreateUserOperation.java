@@ -23,6 +23,7 @@ import com.mongodb.WriteConcernResult;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.bulk.InsertRequest;
 import com.mongodb.connection.Connection;
 import org.bson.BsonDocument;
 
