@@ -802,7 +802,7 @@ public class Mongo {
                 try {
                     Connection connection = source.getConnection();
                     try {
-                        connection.killCursor(asList(cur));
+                        connection.killCursor(asList(cur.getId()));
                     } finally {
                         connection.release();
                     }

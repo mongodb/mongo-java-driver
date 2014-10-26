@@ -16,7 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.operation.GetMore;
 import org.bson.io.BsonOutput;
 
 /**
@@ -26,17 +25,20 @@ import org.bson.io.BsonOutput;
  * @since 3.0
  */
 public class GetMoreMessage extends RequestMessage {
-    private final GetMore getMore;
+    private final long cursorId;
+    private final int numberToReturn;
 
     /**
      * Construct an instance.
      *
      * @param collectionName the collection name
-     * @param getMore        the get-more request
+     * @param cursorId       the cursor id
+     * @param numberToReturn the number of documents to return
      */
-    public GetMoreMessage(final String collectionName, final GetMore getMore) {
+    public GetMoreMessage(final String collectionName, final long cursorId, final int numberToReturn) {
         super(collectionName, OpCode.OP_GETMORE, MessageSettings.builder().build());
-        this.getMore = getMore;
+        this.cursorId = cursorId;
+        this.numberToReturn = numberToReturn;
     }
 
     /**
@@ -45,7 +47,7 @@ public class GetMoreMessage extends RequestMessage {
      * @return the cursor id
      */
     public long getCursorId() {
-        return getMore.getServerCursor().getId();
+        return cursorId;
     }
 
     @Override
@@ -57,8 +59,8 @@ public class GetMoreMessage extends RequestMessage {
     private void writeGetMore(final BsonOutput buffer) {
         buffer.writeInt32(0);
         buffer.writeCString(getCollectionName());
-        buffer.writeInt32(getMore.getNumberToReturn());
-        buffer.writeInt64(getMore.getServerCursor().getId());
+        buffer.writeInt32(numberToReturn);
+        buffer.writeInt64(cursorId);
     }
 
 }

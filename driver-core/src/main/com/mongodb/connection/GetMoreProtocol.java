@@ -22,7 +22,6 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.operation.GetMore;
 import org.bson.Document;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DocumentCodec;
@@ -39,27 +38,30 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
 
     public static final Logger LOGGER = Loggers.getLogger("protocol.getmore");
 
-    private final GetMore getMore;
     private final Decoder<T> resultDecoder;
     private final MongoNamespace namespace;
+    private final long cursorId;
+    private final int numberToReturn;
 
     /**
      * Construct an instance.
      *
-     * @param namespace     the namespace
-     * @param getMore       the values to apply to the OP_GET_MORE
-     * @param resultDecoder the decoder for the result documents.
+     * @param namespace      the namespace
+     * @param cursorId       the cursor id
+     * @param numberToReturn the number of documents to return
+     * @param resultDecoder  the decoder for the result documents.
      */
-    public GetMoreProtocol(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder) {
+    public GetMoreProtocol(final MongoNamespace namespace, final long cursorId, final int numberToReturn, final Decoder<T> resultDecoder) {
         this.namespace = namespace;
-        this.getMore = getMore;
+        this.cursorId = cursorId;
+        this.numberToReturn = numberToReturn;
         this.resultDecoder = resultDecoder;
     }
 
     @Override
     public QueryResult<T> execute(final InternalConnection connection) {
         LOGGER.debug(format("Getting more documents from namespace %s with cursor %d on connection [%s] to server %s",
-                            namespace, getMore.getServerCursor().getId(), connection.getDescription().getConnectionId(),
+                            namespace, cursorId, connection.getDescription().getConnectionId(),
                             connection.getDescription().getServerAddress()));
         QueryResult<T> queryResult = receiveMessage(connection, sendMessage(connection));
         LOGGER.debug("Get-more completed");
@@ -69,16 +71,16 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     @Override
     public MongoFuture<QueryResult<T>> executeAsync(final InternalConnection connection) {
         LOGGER.debug(format("Asynchronously getting more documents from namespace %s with cursor %d on connection [%s] to server %s",
-                            namespace, getMore.getServerCursor().getId(), connection.getDescription().getConnectionId(),
+                            namespace, cursorId, connection.getDescription().getConnectionId(),
                             connection.getDescription().getServerAddress()));
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
-        GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore);
+        GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), cursorId, numberToReturn);
         ProtocolHelper.encodeMessage(message, bsonOutput);
         GetMoreResultCallback<T> receiveCallback = new GetMoreResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
                                                                                 resultDecoder,
-                                                                                getMore.getServerCursor().getId(),
+                                                                                cursorId,
                                                                                 message.getId(),
                                                                                 connection.getDescription().getServerAddress());
         connection.sendMessageAsync(bsonOutput.getByteBuffers(),
@@ -92,7 +94,7 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     private GetMoreMessage sendMessage(final InternalConnection connection) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
-            GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), getMore);
+            GetMoreMessage message = new GetMoreMessage(namespace.getFullName(), cursorId, numberToReturn);
             message.encode(bsonOutput);
             connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             return message;

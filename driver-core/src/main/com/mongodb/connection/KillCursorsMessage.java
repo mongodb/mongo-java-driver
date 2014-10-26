@@ -16,7 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.ServerCursor;
 import org.bson.io.BsonOutput;
 
 import java.util.List;
@@ -29,14 +28,14 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-kill-cursors OP_KILL_CURSOR
  */
 class KillCursorsMessage extends RequestMessage {
-    private final List<ServerCursor> cursors;
+    private final List<Long> cursors;
 
     /**
      * Construct an instance.
      *
      * @param cursors the list of cursors to kill
      */
-    public KillCursorsMessage(final List<ServerCursor> cursors) {
+    public KillCursorsMessage(final List<Long> cursors) {
         super(OpCode.OP_KILL_CURSORS, MessageSettings.builder().build());
         this.cursors = notNull("cursors", cursors);
     }
@@ -44,8 +43,8 @@ class KillCursorsMessage extends RequestMessage {
     @Override
     protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
         writeKillCursorsPrologue(cursors.size(), bsonOutput);
-        for (final ServerCursor cur : cursors) {
-            bsonOutput.writeInt64(cur.getId());
+        for (final Long cur : cursors) {
+            bsonOutput.writeInt64(cur);
         }
         return null;
     }

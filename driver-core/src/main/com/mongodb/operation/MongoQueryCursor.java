@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static com.mongodb.operation.CursorHelper.getNumberToReturn;
 import static java.util.Arrays.asList;
 
 @NotThreadSafe
@@ -44,7 +45,7 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
     private final ConnectionSource source;
     private QueryResult<T> currentResult;
     private Iterator<T> currentIterator;
-    private long nextCount;
+    private int nextCount;
     private final List<Integer> sizes = new ArrayList<Integer>();
     private boolean closed;
 
@@ -219,7 +220,9 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
         } else {
             Connection connection = source.getConnection();
             try {
-                currentResult = connection.getMore(namespace, new GetMore(currentResult.getCursor(), limit, batchSize, nextCount), decoder);
+                currentResult = connection.getMore(namespace, currentResult.getCursor().getId(),
+                                                   getNumberToReturn(limit, batchSize, nextCount),
+                                                   decoder);
                 if (limitReached()) {
                     killCursor(connection);
                 }
@@ -249,7 +252,7 @@ class MongoQueryCursor<T> implements MongoCursor<T> {
 
     private void killCursor(final Connection connection) {
         if (currentResult.getCursor() != null) {
-            connection.killCursor(asList(currentResult.getCursor()));
+            connection.killCursor(asList(currentResult.getCursor().getId()));
         }
     }
 

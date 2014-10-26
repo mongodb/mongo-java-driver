@@ -17,13 +17,11 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.ServerCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.operation.DeleteRequest;
-import com.mongodb.operation.GetMore;
 import com.mongodb.operation.InsertRequest;
 import com.mongodb.operation.UpdateRequest;
 import org.bson.BsonDocument;
@@ -177,12 +175,13 @@ class TestConnection implements Connection {
     }
 
     @Override
-    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final GetMore getMore, final Decoder<T> resultDecoder) {
+    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
+                                      final Decoder<T> resultDecoder) {
         return executeEnqueuedProtocol();
     }
 
     @Override
-    public <T> MongoFuture<QueryResult<T>> getMoreAsync(final MongoNamespace namespace, final GetMore getMore,
+    public <T> MongoFuture<QueryResult<T>> getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
                                                         final Decoder<T> resultDecoder) {
         return executeEnqueuedProtocolAsync();
     }
@@ -208,12 +207,12 @@ class TestConnection implements Connection {
     }
 
     @Override
-    public void killCursor(final List<ServerCursor> cursors) {
+    public void killCursor(final List<Long> cursors) {
         executeEnqueuedProtocol();
     }
 
     @Override
-    public MongoFuture<Void> killCursorAsync(final List<ServerCursor> cursors) {
+    public MongoFuture<Void> killCursorAsync(final List<Long> cursors) {
         return executeEnqueuedProtocolAsync();
     }
 
