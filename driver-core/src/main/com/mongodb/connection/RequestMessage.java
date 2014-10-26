@@ -35,10 +35,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Abstract base class for all MongoDB Wire Protocol request messages.
- *
- * @since 3.0
  */
-public abstract class RequestMessage {
+abstract class RequestMessage {
 
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
 

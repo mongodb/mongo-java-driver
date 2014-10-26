@@ -26,9 +26,7 @@ import java.util.Map;
  * split into multiple batches. Has the ability to switch from a range-based to a hash-based map depending on the mappings that have 
  * been added.</p>
  * 
- * <p>This class should not be a part of the public API.</p>
- *
- * @since 3.0
+ * <p>This class should not be considered a part of the public API.</p>
  */
 public abstract class IndexMap {
 

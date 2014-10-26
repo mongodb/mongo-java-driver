@@ -35,9 +35,8 @@ import static java.lang.String.format;
  * Base class for wire protocol messages that perform writes.  In particular, it handles the write followed by the getlasterror command to
  * apply the write concern.
  *
- * @since 3.0
  */
-public abstract class WriteProtocol implements Protocol<WriteConcernResult> {
+abstract class WriteProtocol implements Protocol<WriteConcernResult> {
 
     private final MongoNamespace namespace;
     private final boolean ordered;

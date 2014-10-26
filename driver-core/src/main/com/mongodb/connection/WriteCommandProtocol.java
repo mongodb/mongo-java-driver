@@ -36,9 +36,8 @@ import static java.lang.String.format;
 /**
  * A base class for implementations of the bulk write commands.
  *
- * @since 3.0
  */
-public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
+abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
     private final MongoNamespace namespace;
     private final boolean ordered;
     private final WriteConcern writeConcern;

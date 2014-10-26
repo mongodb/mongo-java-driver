@@ -35,9 +35,8 @@ import static java.lang.String.format;
  * An implementation of the insert wire protocol.  This class also takes care of applying the write concern.
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-insert OP_INSERT
- * @since 3.0
  */
-public class InsertProtocol extends WriteProtocol {
+class InsertProtocol extends WriteProtocol {
 
     private static final Logger LOGGER = Loggers.getLogger("protocol.insert");
 

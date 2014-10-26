@@ -26,9 +26,8 @@ import com.mongodb.async.SingleResultFuture;
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-get-more OP_GET_MORE
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
- * @since 3.0
  */
-public class GetMoreDiscardProtocol implements Protocol<Void> {
+class GetMoreDiscardProtocol implements Protocol<Void> {
     private final long cursorId;
     private final int responseTo;
 

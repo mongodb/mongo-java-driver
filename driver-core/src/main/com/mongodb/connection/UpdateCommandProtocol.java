@@ -36,9 +36,8 @@ import static java.lang.String.format;
  * An implementation of the update command.
  *
  * @mongodb.driver.manual reference/command/insert/#dbcmd.update Update Command
- * @since 3.0
  */
-public class UpdateCommandProtocol extends WriteCommandProtocol {
+class UpdateCommandProtocol extends WriteCommandProtocol {
 
     private static final com.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.update");
 

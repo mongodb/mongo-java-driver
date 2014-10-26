@@ -34,9 +34,8 @@ import java.util.Map;
  * A message for the update command.
  *
  * @mongodb.driver.manual reference/command/insert/#dbcmd.update Update Command
- * @since 3.0
  */
-public class UpdateCommandMessage extends BaseWriteCommandMessage {
+class UpdateCommandMessage extends BaseWriteCommandMessage {
     private final List<UpdateRequest> updates;
 
     /**

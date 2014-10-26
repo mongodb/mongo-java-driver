@@ -22,9 +22,8 @@ import org.bson.io.BsonOutput;
  * Base class for OP_QUERY messages.
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
- * @since 3.0
  */
-public abstract class BaseQueryMessage extends RequestMessage {
+abstract class BaseQueryMessage extends RequestMessage {
     private final int skip;
     private final int numberToReturn;
     private boolean tailableCursor;
