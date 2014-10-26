@@ -69,16 +69,17 @@ public class CommandProtocol<T> implements Protocol<T> {
     }
 
     @Override
-    public T execute(final Connection connection) {
+    public T execute(final InternalConnection connection) {
         LOGGER.debug(format("Sending command {%s : %s} to database %s on connection [%s] to server %s",
                             command.keySet().iterator().next(), command.values().iterator().next(),
-                            namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
+                            namespace.getDatabaseName(), connection.getDescription().getConnectionId(),
+                            connection.getDescription().getServerAddress()));
         T retval = receiveMessage(connection, sendMessage(connection).getId());
         LOGGER.debug("Command execution completed");
         return retval;
     }
 
-    private CommandMessage sendMessage(final Connection connection) {
+    private CommandMessage sendMessage(final InternalConnection connection) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
             CommandMessage message = new CommandMessage(namespace.getFullName(), command, slaveOk, fieldNameValidator,
@@ -91,21 +92,22 @@ public class CommandProtocol<T> implements Protocol<T> {
         }
     }
 
-    private T receiveMessage(final Connection connection, final int messageId) {
+    private T receiveMessage(final InternalConnection connection, final int messageId) {
         ResponseBuffers responseBuffers = connection.receiveMessage(messageId);
         try {
             ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(), messageId);
-            return createCommandResult(replyMessage, connection.getServerAddress());
+            return createCommandResult(replyMessage, connection.getDescription().getServerAddress());
         } finally {
             responseBuffers.close();
         }
     }
 
     @Override
-    public MongoFuture<T> executeAsync(final Connection connection) {
+    public MongoFuture<T> executeAsync(final InternalConnection connection) {
         LOGGER.debug(format("Asynchronously sending command {%s : %s} to database %s on connection [%s] to server %s",
                             command.keySet().iterator().next(), command.values().iterator().next(),
-                            namespace.getDatabaseName(), connection.getId(), connection.getServerAddress()));
+                            namespace.getDatabaseName(), connection.getDescription().getConnectionId(),
+                            connection.getDescription().getServerAddress()));
         SingleResultFuture<T> retVal = new SingleResultFuture<T>();
 
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
@@ -116,7 +118,7 @@ public class CommandProtocol<T> implements Protocol<T> {
         CommandResultCallback<T> receiveCallback = new CommandResultCallback<T>(new SingleResultFutureCallback<T>(retVal),
                                                                                 commandResultDecoder,
                                                                                 message.getId(),
-                                                                                connection.getServerAddress());
+                                                                                connection.getDescription().getServerAddress());
         connection.sendMessageAsync(bsonOutput.getByteBuffers(),
                                     message.getId(),
                                     new SendMessageCallback<T>(connection, bsonOutput, message.getId(), retVal, receiveCallback));

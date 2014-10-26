@@ -66,9 +66,10 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
     }
 
     @Override
-    public BulkWriteResult execute(final Connection connection) {
+    public BulkWriteResult execute(final InternalConnection connection) {
         BaseWriteCommandMessage message = createRequestMessage(getMessageSettings(connection.getDescription()));
-        BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getServerAddress(), ordered, writeConcern);
+        BulkWriteBatchCombiner bulkWriteBatchCombiner = new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(),
+                                                                                   ordered, writeConcern);
         int batchNum = 0;
         int currentRangeStartIndex = 0;
         do {
@@ -83,7 +84,8 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
             }
 
             if (WriteCommandResultHelper.hasError(result)) {
-                bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), result, connection.getServerAddress()), indexMap);
+                bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), result,
+                                                                            connection.getDescription().getServerAddress()), indexMap);
             } else {
                 bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), result), indexMap);
             }
@@ -95,14 +97,15 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
     }
 
     @Override
-    public MongoFuture<BulkWriteResult> executeAsync(final Connection connection) {
+    public MongoFuture<BulkWriteResult> executeAsync(final InternalConnection connection) {
         SingleResultFuture<BulkWriteResult> future = new SingleResultFuture<BulkWriteResult>();
         executeBatchesAsync(connection, createRequestMessage(getMessageSettings(connection.getDescription())),
-                            new BulkWriteBatchCombiner(connection.getServerAddress(), ordered, writeConcern), 0, 0, future);
+                            new BulkWriteBatchCombiner(connection.getDescription().getServerAddress(), ordered, writeConcern), 0, 0,
+                            future);
         return future;
     }
 
-    private void executeBatchesAsync(final Connection connection, final BaseWriteCommandMessage message,
+    private void executeBatchesAsync(final InternalConnection connection, final BaseWriteCommandMessage message,
                                      final BulkWriteBatchCombiner bulkWriteBatchCombiner, final int batchNum,
                                      final int currentRangeStartIndex, final SingleResultFuture<BulkWriteResult> future) {
 
@@ -133,7 +136,8 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
 
                         if (WriteCommandResultHelper.hasError(result)) {
                             bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), result,
-                                                                                        connection.getServerAddress()), indexMap);
+                                                                                        connection.getDescription().getServerAddress()),
+                                                                  indexMap);
                         } else {
                             bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), result), indexMap);
                         }
@@ -155,7 +159,8 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
 
     protected abstract BaseWriteCommandMessage createRequestMessage(final MessageSettings messageSettings);
 
-    private BaseWriteCommandMessage sendMessage(final Connection connection, final BaseWriteCommandMessage message, final int batchNum) {
+    private BaseWriteCommandMessage sendMessage(final InternalConnection connection, final BaseWriteCommandMessage message,
+                                                final int batchNum) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
             BaseWriteCommandMessage nextMessage = message.encode(bsonOutput);
@@ -169,14 +174,14 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
         }
     }
 
-    private BsonDocument receiveMessage(final Connection connection, final RequestMessage message) {
+    private BsonDocument receiveMessage(final InternalConnection connection, final RequestMessage message) {
         ResponseBuffers responseBuffers = connection.receiveMessage(message.getId());
         try {
             ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
                                                                                      message.getId());
             BsonDocument result = replyMessage.getDocuments().get(0);
             if (!ProtocolHelper.isCommandOk(result)) {
-                throw getCommandFailureException(result, connection.getServerAddress());
+                throw getCommandFailureException(result, connection.getDescription().getServerAddress());
             }
 
             return result;
@@ -186,13 +191,13 @@ public abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> 
         }
     }
 
-    private MongoFuture<BsonDocument> sendMessageAsync(final Connection connection, final int messageId,
+    private MongoFuture<BsonDocument> sendMessageAsync(final InternalConnection connection, final int messageId,
                                                        final ByteBufferBsonOutput buffer) {
         SingleResultFuture<BsonDocument> future = new SingleResultFuture<BsonDocument>();
 
         CommandResultCallback<BsonDocument> receiveCallback =
         new CommandResultCallback<BsonDocument>(new SingleResultFutureCallback<BsonDocument>(future), new BsonDocumentCodec(),
-                                                messageId, connection.getServerAddress());
+                                                messageId, connection.getDescription().getServerAddress());
         connection.sendMessageAsync(buffer.getByteBuffers(), messageId,
                                     new SendMessageCallback<BsonDocument>(connection, buffer, messageId, future, receiveCallback));
 

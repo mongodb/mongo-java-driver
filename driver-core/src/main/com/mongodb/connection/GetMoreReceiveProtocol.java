@@ -45,21 +45,22 @@ public class GetMoreReceiveProtocol<T> implements Protocol<QueryResult<T>> {
     }
 
     @Override
-    public QueryResult<T> execute(final Connection connection) {
+    public QueryResult<T> execute(final InternalConnection connection) {
         ResponseBuffers responseBuffers = connection.receiveMessage(responseTo);
         try {
-            return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, responseTo), connection.getServerAddress());
+            return new QueryResult<T>(new ReplyMessage<T>(responseBuffers, resultDecoder, responseTo),
+                                      connection.getDescription().getServerAddress());
         } finally {
             responseBuffers.close();
         }
     }
 
     @Override
-    public MongoFuture<QueryResult<T>> executeAsync(final Connection connection) {
+    public MongoFuture<QueryResult<T>> executeAsync(final InternalConnection connection) {
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
         connection.receiveMessageAsync(responseTo, new GetMoreResultCallback<T>(new SingleResultFutureCallback<QueryResult<T>>(retVal),
                                                                                 resultDecoder, 0, responseTo,
-                                                                                connection.getServerAddress()));
+                                                                                connection.getDescription().getServerAddress()));
 
         return retVal;
     }

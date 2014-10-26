@@ -50,7 +50,7 @@ public class AsyncSingleConnectionBindingTest  {
         for (int i = 0; i < 100; i++) {
             AsyncConnectionSource connectionSource = binding.getReadConnectionSource().get();
             Connection connection = connectionSource.getConnection().get();
-            assertEquals(connection.getId(), asyncConnection.getId());
+            assertEquals(connection.getDescription().getConnectionId(), asyncConnection.getDescription().getConnectionId());
             connection.release();
             connectionSource.release();
         }
@@ -66,7 +66,7 @@ public class AsyncSingleConnectionBindingTest  {
 
         AsyncConnectionSource readSource = binding.getReadConnectionSource().get();
         Connection readConnection = readSource.getConnection().get();
-        assertEquals(writeConnection.getId(), readConnection.getId());
+        assertEquals(writeConnection.getDescription().getConnectionId(), readConnection.getDescription().getConnectionId());
 
         writeConnection.release();
         readConnection.release();

@@ -91,7 +91,7 @@ public class PinnedBindingTest {
         readConnectionSource = binding.getReadConnectionSource();
         Connection connection = readConnectionSource.getConnection();
         try {
-            assertEquals(readServerAddress, connection.getServerAddress());
+            assertEquals(readServerAddress, connection.getDescription().getServerAddress());
         } finally {
             connection.release();
             readConnectionSource.release();
@@ -142,7 +142,7 @@ public class PinnedBindingTest {
         Connection readConnection = readSource.getConnection();
         try {
             assertEquals(writeSource.getServerDescription().getAddress(), readSource.getServerDescription().getAddress());
-            assertEquals(writeConnection.getId(), readConnection.getId());
+            assertEquals(writeConnection.getDescription().getConnectionId(), readConnection.getDescription().getConnectionId());
         } finally {
             writeConnection.release();
             readConnection.release();

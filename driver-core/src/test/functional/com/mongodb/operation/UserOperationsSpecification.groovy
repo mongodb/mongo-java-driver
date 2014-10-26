@@ -18,24 +18,21 @@ package com.mongodb.operation
 
 import category.Async
 import com.mongodb.MongoCredential
-import com.mongodb.MongoNamespace
 import com.mongodb.MongoServerException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.connection.ClusterSettings
-import com.mongodb.connection.CommandMessage
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionPoolSettings
 import com.mongodb.connection.DefaultClusterFactory
-import com.mongodb.connection.MessageSettings
+import com.mongodb.connection.NoOpFieldNameValidator
 import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SocketStreamFactory
 import com.mongodb.selector.PrimaryServerSelector
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.bson.io.BasicOutputBuffer
-import org.bson.io.OutputBuffer
+import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
@@ -45,7 +42,6 @@ import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSSLSettings
 import static com.mongodb.ClusterFixture.isAuthenticated
 import static com.mongodb.MongoCredential.createMongoCRCredential
-import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -92,7 +88,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         when:
         def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
         def connection = server.getConnection()
-        sendMessage(connection)
+        testConnection(connection)
 
         then:
         connection
@@ -112,7 +108,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         when:
         def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
         def connection = server.getConnection()
-        sendMessage(connection)
+        testConnection(connection)
 
         then:
         connection
@@ -166,7 +162,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         when:
         def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
         def connection = server.getConnection()
-        sendMessage(connection)
+        testConnection(connection)
 
         then:
         connection
@@ -188,7 +184,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         when:
         def server = cluster.selectServer(new PrimaryServerSelector(), 1, SECONDS)
         def connection = server.getConnection()
-        sendMessage(connection)
+        testConnection(connection)
 
         then:
         connection
@@ -318,11 +314,8 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
                 streamFactory, streamFactory, asList(credential), null, null, null)
     }
 
-    def sendMessage(Connection connection) {
-        def command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME).getFullName(),
-                                         new BsonDocument('ismaster', new BsonInt32(1)), false, MessageSettings.builder().build());
-        OutputBuffer buffer = new BasicOutputBuffer();
-        command.encode(buffer);
-        connection.sendMessage(buffer.byteBuffers, command.getId())
+    def testConnection(Connection connection) {
+        connection.command('admin', new BsonDocument('ismaster', new BsonInt32(1)), false, new NoOpFieldNameValidator(),
+                           new BsonDocumentCodec())
     }
 }

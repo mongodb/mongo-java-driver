@@ -31,7 +31,7 @@ public interface Protocol<T> {
      * @param connection the connection to execute the protocol on
      * @return the response from execution of the protocol
      */
-    T execute(final Connection connection);
+    T execute(final InternalConnection connection);
 
     /**
      * Execute the protocol asynchronously.
@@ -39,5 +39,5 @@ public interface Protocol<T> {
      * @param connection the connection to execute the protocol on
      * @return a future for the response from execution of the protocol
      */
-    MongoFuture<T> executeAsync(final Connection connection);
+    MongoFuture<T> executeAsync(final InternalConnection connection);
 }

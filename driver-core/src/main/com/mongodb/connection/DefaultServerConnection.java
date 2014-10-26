@@ -16,14 +16,11 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.MongoFuture;
-import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.operation.DeleteRequest;
 import com.mongodb.operation.GetMore;
@@ -37,7 +34,6 @@ import org.bson.codecs.Decoder;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
-import static java.lang.String.format;
 
 class DefaultServerConnection extends AbstractReferenceCounted implements Connection {
     private final InternalConnection wrapped;
@@ -60,12 +56,6 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
         if (getCount() == 0) {
             wrapped.close();
         }
-    }
-
-    @Override
-    public ServerAddress getServerAddress() {
-        isTrue("open", getCount() > 0);
-        return wrapped.getDescription().getServerAddress();
     }
 
     @Override
@@ -249,47 +239,11 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
         return executeProtocolAsync(new KillCursorProtocol(cursors));
     }
 
-    @Override
-    public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
-        isTrue("open", getCount() > 0);
-        wrapped.sendMessage(byteBuffers, lastRequestId);
-    }
-
-    @Override
-    public ResponseBuffers receiveMessage(final int responseTo) {
-        isTrue("open", getCount() > 0);
-        ResponseBuffers responseBuffers = wrapped.receiveMessage(responseTo);
-        if (responseBuffers.getReplyHeader().getResponseTo() != responseTo) {
-            throw new MongoInternalException(format("The responseTo (%d) in the reply message does not match the "
-                                                    + "requestId (%d) in the request message",
-                                                    responseBuffers.getReplyHeader().getResponseTo(), responseTo));
-        }
-        return responseBuffers;
-    }
-
-    @Override
-    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-        isTrue("open", getCount() > 0);
-        wrapped.sendMessageAsync(byteBuffers, lastRequestId, callback);
-    }
-
-    @Override
-    public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-        isTrue("open", getCount() > 0);
-        wrapped.receiveMessageAsync(responseTo, callback);
-    }
-
-    @Override
-    public String getId() {
-        isTrue("open", getCount() > 0);
-        return wrapped.getDescription().getConnectionId().toString();
-    }
-
     private <T> T executeProtocol(final Protocol<T> protocol) {
-        return protocolExecutor.execute(protocol, this);
+        return protocolExecutor.execute(protocol, this.wrapped);
     }
 
     private <T> MongoFuture<T> executeProtocolAsync(final Protocol<T> protocol) {
-        return protocolExecutor.executeAsync(protocol, this);
+        return protocolExecutor.executeAsync(protocol, this.wrapped);
     }
 }

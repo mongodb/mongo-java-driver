@@ -23,12 +23,12 @@ import org.bson.io.OutputBuffer;
 
 class SendMessageCallback<T> implements SingleResultCallback<Void> {
     private final OutputBuffer buffer;
-    private final Connection connection;
+    private final InternalConnection connection;
     private final SingleResultCallback<ResponseBuffers> receiveMessageCallback;
     private final int requestId;
     private final SingleResultFuture<T> future;
 
-    SendMessageCallback(final Connection connection, final OutputBuffer buffer,
+    SendMessageCallback(final InternalConnection connection, final OutputBuffer buffer,
                         final int requestId, final SingleResultFuture<T> future,
                         final SingleResultCallback<ResponseBuffers> receiveMessageCallback) {
         this.buffer = buffer;

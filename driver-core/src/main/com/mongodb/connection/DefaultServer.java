@@ -130,7 +130,7 @@ class DefaultServer implements ClusterableServer {
 
     private class DefaultServerProtocolExecutor implements ProtocolExecutor {
         @Override
-        public <T> T execute(final Protocol<T> protocol, final Connection connection) {
+        public <T> T execute(final Protocol<T> protocol, final InternalConnection connection) {
             try {
                 return protocol.execute(connection);
             } catch (MongoException e) {
@@ -140,7 +140,7 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public <T> MongoFuture<T> executeAsync(final Protocol<T> protocol, final Connection connection) {
+        public <T> MongoFuture<T> executeAsync(final Protocol<T> protocol, final InternalConnection connection) {
             MongoFuture<T> future = protocol.executeAsync(connection);
             future.register(new InvalidServerStateCheckCallback<T>());
             return future;

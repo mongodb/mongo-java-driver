@@ -44,7 +44,7 @@ public class GetMoreDiscardProtocol implements Protocol<Void> {
     }
 
     @Override
-    public Void execute(final Connection connection) {
+    public Void execute(final InternalConnection connection) {
         long curCursorId = cursorId;
         int curResponseTo = responseTo;
         while (curCursorId != 0) {
@@ -60,7 +60,7 @@ public class GetMoreDiscardProtocol implements Protocol<Void> {
     }
 
     @Override
-    public MongoFuture<Void> executeAsync(final Connection connection) {
+    public MongoFuture<Void> executeAsync(final InternalConnection connection) {
         SingleResultFuture<Void> retVal = new SingleResultFuture<Void>();
 
         if (cursorId == 0) {
@@ -73,10 +73,10 @@ public class GetMoreDiscardProtocol implements Protocol<Void> {
     }
 
     private class DiscardCallback implements SingleResultCallback<ResponseBuffers> {
-        private final Connection connection;
+        private final InternalConnection connection;
         private final SingleResultFuture<Void> future;
 
-        public DiscardCallback(final Connection connection, final SingleResultFuture<Void> future) {
+        public DiscardCallback(final InternalConnection connection, final SingleResultFuture<Void> future) {
             this.connection = connection;
             this.future = future;
         }

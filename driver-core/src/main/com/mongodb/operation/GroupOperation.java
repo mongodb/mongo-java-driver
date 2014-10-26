@@ -182,7 +182,7 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
             public MongoCursor<T> call(final Connection connection) {
                 return executeWrappedCommandProtocol(namespace.getDatabaseName(), getCommand(),
                                                      CommandResultDocumentCodec.create(decoder, "retval"),
-                                                     connection, transformer(connection.getServerAddress()));
+                                                     connection, transformer(connection.getDescription().getServerAddress()));
             }
         });
     }

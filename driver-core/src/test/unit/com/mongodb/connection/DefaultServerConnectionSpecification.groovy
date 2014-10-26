@@ -43,7 +43,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.insert(namespace, true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
         then:
-        1 * executor.execute(_ as InsertProtocol, connection)
+        1 * executor.execute(_ as InsertProtocol, internalConnection)
     }
 
     def 'should execute update protocol'() {
@@ -52,7 +52,7 @@ class DefaultServerConnectionSpecification extends Specification {
                                                                                   WriteRequest.Type.REPLACE)))
 
         then:
-        1 * executor.execute(_ as UpdateProtocol, connection)
+        1 * executor.execute(_ as UpdateProtocol, internalConnection)
     }
 
     def 'should execute delete protocol'() {
@@ -60,7 +60,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.delete(namespace, true, ACKNOWLEDGED, asList(new DeleteRequest(new BsonDocument())))
 
         then:
-        1 * executor.execute(_ as DeleteProtocol, connection)
+        1 * executor.execute(_ as DeleteProtocol, internalConnection)
     }
 
     def 'should execute insert command protocol'() {
@@ -68,7 +68,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.insertCommand(namespace, true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
         then:
-        1 * executor.execute(_ as InsertCommandProtocol, connection)
+        1 * executor.execute(_ as InsertCommandProtocol, internalConnection)
     }
 
     def 'should execute update command protocol'() {
@@ -77,7 +77,7 @@ class DefaultServerConnectionSpecification extends Specification {
                                                                                   WriteRequest.Type.REPLACE)))
 
         then:
-        1 * executor.execute(_ as UpdateCommandProtocol, connection)
+        1 * executor.execute(_ as UpdateCommandProtocol, internalConnection)
     }
 
     def 'should execute delete command protocol'() {
@@ -85,7 +85,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.deleteCommand(namespace, true, ACKNOWLEDGED, asList(new DeleteRequest(new BsonDocument())))
 
         then:
-        1 * executor.execute(_ as DeleteCommandProtocol, connection)
+        1 * executor.execute(_ as DeleteCommandProtocol, internalConnection)
     }
 
     def 'should execute command protocol'() {
@@ -94,7 +94,7 @@ class DefaultServerConnectionSpecification extends Specification {
                            new BsonDocumentCodec())
 
         then:
-        1 * executor.execute(_ as CommandProtocol, connection)
+        1 * executor.execute(_ as CommandProtocol, internalConnection)
     }
 
     def 'should execute query protocol'() {
@@ -103,7 +103,7 @@ class DefaultServerConnectionSpecification extends Specification {
                          new BsonDocumentCodec())
 
         then:
-        1 * executor.execute(_ as QueryProtocol, connection)
+        1 * executor.execute(_ as QueryProtocol, internalConnection)
     }
 
     def 'should execute getmore protocol'() {
@@ -111,7 +111,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.getMore(namespace, new GetMore(new ServerCursor(1, new ServerAddress()), 0, 0, 0), new BsonDocumentCodec())
 
         then:
-        1 * executor.execute(_ as GetMoreProtocol, connection)
+        1 * executor.execute(_ as GetMoreProtocol, internalConnection)
     }
 
     def 'should execute getmore receive protocol'() {
@@ -119,7 +119,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.getMoreReceive(new BsonDocumentCodec(), 1)
 
         then:
-        1 * executor.execute(_ as GetMoreReceiveProtocol, connection)
+        1 * executor.execute(_ as GetMoreReceiveProtocol, internalConnection)
     }
 
     def 'should execute getmore discard protocol'() {
@@ -127,14 +127,14 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.getMoreDiscard(5, 1)
 
         then:
-        1 * executor.execute(_ as GetMoreDiscardProtocol, connection)
+        1 * executor.execute(_ as GetMoreDiscardProtocol, internalConnection)
     }
 
     def 'should execute kill cursor protocol'() {
         when:
         connection.killCursor(asList(new ServerCursor(5, new ServerAddress())))
         then:
-        1 * executor.execute(_ as KillCursorProtocol, connection)
+        1 * executor.execute(_ as KillCursorProtocol, internalConnection)
     }
 
     def 'should execute insert protocol asynchronously'() {
@@ -142,7 +142,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.insertAsync(namespace, true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
         then:
-        1 * executor.executeAsync(_ as InsertProtocol, connection)
+        1 * executor.executeAsync(_ as InsertProtocol, internalConnection)
     }
 
     def 'should execute update protocol asynchronously'() {
@@ -151,7 +151,7 @@ class DefaultServerConnectionSpecification extends Specification {
                                                                                   WriteRequest.Type.REPLACE)))
 
         then:
-        1 * executor.executeAsync(_ as UpdateProtocol, connection)
+        1 * executor.executeAsync(_ as UpdateProtocol, internalConnection)
     }
 
     def 'should execute delete protocol asynchronously'() {
@@ -159,7 +159,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.deleteAsync(namespace, true, ACKNOWLEDGED, asList(new DeleteRequest(new BsonDocument())))
 
         then:
-        1 * executor.executeAsync(_ as DeleteProtocol, connection)
+        1 * executor.executeAsync(_ as DeleteProtocol, internalConnection)
     }
 
     def 'should execute insert command protocol asynchronously'() {
@@ -167,7 +167,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.insertCommandAsync(namespace, true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
         then:
-        1 * executor.executeAsync(_ as InsertCommandProtocol, connection)
+        1 * executor.executeAsync(_ as InsertCommandProtocol, internalConnection)
     }
 
     def 'should execute update command protocol asynchronously'() {
@@ -176,7 +176,7 @@ class DefaultServerConnectionSpecification extends Specification {
                                                                                          WriteRequest.Type.REPLACE)))
 
         then:
-        1 * executor.executeAsync(_ as UpdateCommandProtocol, connection)
+        1 * executor.executeAsync(_ as UpdateCommandProtocol, internalConnection)
     }
 
     def 'should execute delete command protocol asynchronously'() {
@@ -184,7 +184,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.deleteCommandAsync(namespace, true, ACKNOWLEDGED, asList(new DeleteRequest(new BsonDocument())))
 
         then:
-        1 * executor.executeAsync(_ as DeleteCommandProtocol, connection)
+        1 * executor.executeAsync(_ as DeleteCommandProtocol, internalConnection)
     }
 
     def 'should execute command protocol asynchronously'() {
@@ -193,7 +193,7 @@ class DefaultServerConnectionSpecification extends Specification {
                                 new BsonDocumentCodec())
 
         then:
-        1 * executor.executeAsync(_ as CommandProtocol, connection)
+        1 * executor.executeAsync(_ as CommandProtocol, internalConnection)
     }
 
     def 'should execute query protocol asynchronously'() {
@@ -202,7 +202,7 @@ class DefaultServerConnectionSpecification extends Specification {
                          new BsonDocumentCodec())
 
         then:
-        1 * executor.executeAsync(_ as QueryProtocol, connection)
+        1 * executor.executeAsync(_ as QueryProtocol, internalConnection)
     }
 
     def 'should execute getmore protocol asynchronously'() {
@@ -210,7 +210,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.getMoreAsync(namespace, new GetMore(new ServerCursor(1, new ServerAddress()), 0, 0, 0), new BsonDocumentCodec())
 
         then:
-        1 * executor.executeAsync(_ as GetMoreProtocol, connection)
+        1 * executor.executeAsync(_ as GetMoreProtocol, internalConnection)
     }
 
     def 'should execute getmore receive protocol asynchronously'() {
@@ -218,7 +218,7 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.getMoreReceiveAsync(new BsonDocumentCodec(), 1)
 
         then:
-        1 * executor.executeAsync(_ as GetMoreReceiveProtocol, connection)
+        1 * executor.executeAsync(_ as GetMoreReceiveProtocol, internalConnection)
     }
 
     def 'should execute getmore discard protocol asynchronously'() {
@@ -226,13 +226,13 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.getMoreDiscardAsync(5, 1)
 
         then:
-        1 * executor.executeAsync(_ as GetMoreDiscardProtocol, connection)
+        1 * executor.executeAsync(_ as GetMoreDiscardProtocol, internalConnection)
     }
 
     def 'should execute kill cursor protocol asynchronously'() {
         when:
         connection.killCursorAsync(asList(new ServerCursor(5, new ServerAddress())))
         then:
-        1 * executor.executeAsync(_ as KillCursorProtocol, connection)
+        1 * executor.executeAsync(_ as KillCursorProtocol, internalConnection)
     }
 }

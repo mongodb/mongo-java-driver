@@ -57,12 +57,12 @@ public abstract class WriteProtocol implements Protocol<WriteConcernResult> {
     }
 
     @Override
-    public WriteConcernResult execute(final Connection connection) {
+    public WriteConcernResult execute(final InternalConnection connection) {
         return receiveMessage(connection, sendMessage(connection));
     }
 
     @Override
-    public MongoFuture<WriteConcernResult> executeAsync(final Connection connection) {
+    public MongoFuture<WriteConcernResult> executeAsync(final InternalConnection connection) {
         SingleResultFuture<WriteConcernResult> retVal = new SingleResultFuture<WriteConcernResult>();
 
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
@@ -96,7 +96,7 @@ public abstract class WriteProtocol implements Protocol<WriteConcernResult> {
     }
 
 
-    private CommandMessage sendMessage(final Connection connection) {
+    private CommandMessage sendMessage(final InternalConnection connection) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
         try {
             RequestMessage lastMessage = createRequestMessage(getMessageSettings(connection.getDescription()));
@@ -134,7 +134,7 @@ public abstract class WriteProtocol implements Protocol<WriteConcernResult> {
         return command;
     }
 
-    private WriteConcernResult receiveMessage(final Connection connection, final RequestMessage requestMessage) {
+    private WriteConcernResult receiveMessage(final InternalConnection connection, final RequestMessage requestMessage) {
         if (requestMessage == null) {
             return new UnacknowledgedWriteConcernResult();
         }
@@ -142,7 +142,7 @@ public abstract class WriteProtocol implements Protocol<WriteConcernResult> {
         try {
             ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
                                                                                      requestMessage.getId());
-            return ProtocolHelper.getWriteResult(replyMessage.getDocuments().get(0), connection.getServerAddress());
+            return ProtocolHelper.getWriteResult(replyMessage.getDocuments().get(0), connection.getDescription().getServerAddress());
         } finally {
             responseBuffers.close();
         }

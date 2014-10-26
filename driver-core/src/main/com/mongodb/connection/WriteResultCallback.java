@@ -31,15 +31,15 @@ class WriteResultCallback extends CommandResultBaseCallback<BsonDocument> {
     private final RequestMessage nextMessage; // only used for batch inserts that need to be split into multiple messages
     private boolean ordered;
     private final WriteConcern writeConcern;
-    private final Connection connection;
+    private final InternalConnection connection;
 
     // CHECKSTYLE:OFF
     public WriteResultCallback(final SingleResultFuture<WriteConcernResult> future, final Decoder<BsonDocument> decoder,
                                final MongoNamespace namespace, final RequestMessage nextMessage,
                                final boolean ordered, final WriteConcern writeConcern, final long requestId,
-                               final Connection connection) {
+                               final InternalConnection connection) {
         // CHECKSTYLE:ON
-        super(decoder, requestId, connection.getServerAddress());
+        super(decoder, requestId, connection.getDescription().getServerAddress());
         this.future = future;
         this.namespace = namespace;
         this.nextMessage = nextMessage;
@@ -55,7 +55,8 @@ class WriteResultCallback extends CommandResultBaseCallback<BsonDocument> {
             future.init(null, e);
         } else {
             try {
-                WriteConcernResult writeConcernResult = ProtocolHelper.getWriteResult(result, connection.getServerAddress());
+                WriteConcernResult writeConcernResult = ProtocolHelper.getWriteResult(result,
+                                                                                      connection.getDescription().getServerAddress());
                 if (nextMessage != null) {
                     MongoFuture<WriteConcernResult> newFuture = new GenericWriteProtocol(namespace, nextMessage, ordered, writeConcern)
                                                          .executeAsync(connection);

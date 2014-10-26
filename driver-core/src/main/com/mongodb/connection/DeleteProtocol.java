@@ -57,18 +57,18 @@ public class DeleteProtocol extends WriteProtocol {
     }
 
     @Override
-    public WriteConcernResult execute(final Connection connection) {
+    public WriteConcernResult execute(final InternalConnection connection) {
         LOGGER.debug(format("Deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
-                            connection.getId(), connection.getServerAddress()));
+                            connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
         WriteConcernResult writeConcernResult = super.execute(connection);
         LOGGER.debug("Delete completed");
         return writeConcernResult;
     }
 
     @Override
-    public MongoFuture<WriteConcernResult> executeAsync(final Connection connection) {
+    public MongoFuture<WriteConcernResult> executeAsync(final InternalConnection connection) {
         LOGGER.debug(format("Asynchronously deleting documents in namespace %s on connection [%s] to server %s", getNamespace(),
-                            connection.getId(), connection.getServerAddress()));
+                            connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
         final SingleResultFuture<WriteConcernResult> future = new SingleResultFuture<WriteConcernResult>();
         super.executeAsync(connection).register(new SingleResultCallback<WriteConcernResult>() {
             @Override

@@ -35,7 +35,7 @@ class ConnectionSpecification extends OperationFunctionalSpecification {
         def connection = source.connection
 
         then:
-        connection.getId() != null
+        connection.getDescription().getConnectionId() != null
 
         cleanup:
         connection?.release()
