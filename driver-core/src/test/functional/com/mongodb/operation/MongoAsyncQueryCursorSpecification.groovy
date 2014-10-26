@@ -27,7 +27,7 @@ import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.binding.AsyncReadBinding
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.Connection
-import com.mongodb.protocol.QueryResult
+import com.mongodb.connection.QueryResult
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonTimestamp
 import org.bson.Document

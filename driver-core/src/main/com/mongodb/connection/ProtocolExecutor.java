@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.async.MongoFuture;
-import com.mongodb.protocol.Protocol;
 
 interface ProtocolExecutor {
     <T> T execute(final Protocol<T> protocol, Connection connection);

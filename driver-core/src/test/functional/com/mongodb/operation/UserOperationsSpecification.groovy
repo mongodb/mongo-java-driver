@@ -23,14 +23,14 @@ import com.mongodb.MongoServerException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.connection.ClusterSettings
+import com.mongodb.connection.CommandMessage
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionPoolSettings
 import com.mongodb.connection.DefaultClusterFactory
+import com.mongodb.connection.MessageSettings
 import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SocketStreamFactory
-import com.mongodb.protocol.message.CommandMessage
-import com.mongodb.protocol.message.MessageSettings
 import com.mongodb.selector.PrimaryServerSelector
 import org.bson.BsonDocument
 import org.bson.BsonInt32

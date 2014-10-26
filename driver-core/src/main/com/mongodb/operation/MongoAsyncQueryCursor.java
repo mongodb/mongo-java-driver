@@ -27,9 +27,9 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.QueryResult;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.protocol.QueryResult;
 import org.bson.codecs.Decoder;
 
 import static java.util.Arrays.asList;

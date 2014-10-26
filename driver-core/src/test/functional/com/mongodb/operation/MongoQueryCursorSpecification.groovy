@@ -22,7 +22,7 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerCursor
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.protocol.QueryResult
+import com.mongodb.connection.QueryResult
 import org.bson.BsonDocument
 import org.bson.BsonTimestamp
 import org.bson.Document

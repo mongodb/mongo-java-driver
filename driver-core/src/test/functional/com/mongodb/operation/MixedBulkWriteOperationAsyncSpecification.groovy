@@ -23,7 +23,7 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.BulkWriteException
 import com.mongodb.bulk.BulkWriteUpsert
-import com.mongodb.protocol.AcknowledgedBulkWriteResult
+import com.mongodb.connection.AcknowledgedBulkWriteResult
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
 import org.bson.BsonDocument

@@ -31,8 +31,7 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.protocol.CommandProtocol;
-import com.mongodb.protocol.message.NoOpFieldNameValidator;
+import com.mongodb.connection.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
@@ -265,7 +264,7 @@ final class CommandOperationHelper {
         return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), connection);
     }
 
-    static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
                                                                     final Connection connection,
                                                                     final Function<BsonDocument, T> transformer) {
         return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), connection, primary(),
@@ -286,18 +285,18 @@ final class CommandOperationHelper {
                                                                     final ReadPreference readPreference,
                                                                     final Function<D, T> transformer) {
         final SingleResultFuture<T> future = new SingleResultFuture<T>();
-        new CommandProtocol<D>(database, wrapCommand(command, readPreference, connection.getDescription()),
-                               readPreference.isSlaveOk(), new NoOpFieldNameValidator(), decoder)
-        .executeAsync(connection).register(new SingleResultCallback<D>() {
-            @Override
-            public void onResult(final D result, final MongoException e) {
-                if (e != null) {
-                    future.init(null, e);
-                } else {
-                    future.init(transformer.apply(result), null);
-                }
-            }
-        });
+        connection.commandAsync(database, wrapCommand(command, readPreference, connection.getDescription()),
+                                readPreference.isSlaveOk(), new NoOpFieldNameValidator(), decoder)
+                  .register(new SingleResultCallback<D>() {
+                      @Override
+                      public void onResult(final D result, final MongoException e) {
+                          if (e != null) {
+                              future.init(null, e);
+                          } else {
+                              future.init(transformer.apply(result), null);
+                          }
+                      }
+                  });
         return future;
     }
 
