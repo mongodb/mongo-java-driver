@@ -91,10 +91,12 @@ public class LazyBSONObject implements BSONObject {
 
     class LazyBSONKeyIterator implements Iterator<String> {
 
+        @Override
         public boolean hasNext(){
             return !isElementEmpty( offset );
         }
 
+        @Override
         public String next(){
             int fieldSize = sizeCString( offset + 1);
             int elementSize = getElementBSONSize( offset );
@@ -103,6 +105,7 @@ public class LazyBSONObject implements BSONObject {
             return key;
         }
 
+        @Override
         public void remove(){
             throw new UnsupportedOperationException( "Read only" );
         }
@@ -200,10 +203,12 @@ public class LazyBSONObject implements BSONObject {
 
     class LazyBSONEntryIterator implements Iterator<Map.Entry<String, Object>> {
 
+        @Override
         public boolean hasNext(){
             return !isElementEmpty( offset );
         }
 
+        @Override
         public Map.Entry<String, Object> next(){
             int fieldSize = sizeCString(offset + 1);
             int elementSize = getElementBSONSize(offset);
@@ -246,6 +251,7 @@ public class LazyBSONObject implements BSONObject {
             };
         }
 
+        @Override
         public void remove(){
             throw new UnsupportedOperationException( "Read only" );
         }
@@ -361,6 +367,7 @@ public class LazyBSONObject implements BSONObject {
      * @return will not return normally
      * @throws java.lang.UnsupportedOperationException
      */
+    @Override
     public Object put( String key, Object v ){
         throw new UnsupportedOperationException( "Object is read only" );
     }
@@ -371,6 +378,7 @@ public class LazyBSONObject implements BSONObject {
      * @param o the object
      * @throws java.lang.UnsupportedOperationException
      */
+    @Override
     public void putAll( BSONObject o ){
         throw new UnsupportedOperationException( "Object is read only" );
     }
@@ -381,6 +389,7 @@ public class LazyBSONObject implements BSONObject {
      * @param m the map
      * @throws java.lang.UnsupportedOperationException
      */
+    @Override
     public void putAll( Map m ){
         throw new UnsupportedOperationException( "Object is read only" );
     }
@@ -442,6 +451,7 @@ public class LazyBSONObject implements BSONObject {
         return elements;
     }
 
+    @Override
     public Map toMap(){
         throw new UnsupportedOperationException( "Not Supported" );
     }
@@ -453,6 +463,7 @@ public class LazyBSONObject implements BSONObject {
      * @return will not return normally
      * @throws java.lang.UnsupportedOperationException
      */
+    @Override
     public Object removeField( String key ){
         throw new UnsupportedOperationException( "Object is read only" );
     }
@@ -462,6 +473,7 @@ public class LazyBSONObject implements BSONObject {
         return containsField( s );
     }
 
+    @Override
     public boolean containsField( String s ){
         return keySet().contains( s );
     }
@@ -470,6 +482,7 @@ public class LazyBSONObject implements BSONObject {
      *
      * @return the set of all keys in the document
      */
+    @Override
     public Set<String> keySet(){
         return new LazyBSONKeySet();
     }
@@ -743,6 +756,7 @@ public class LazyBSONObject implements BSONObject {
      *
      * @return JSON serialization
      */
+    @Override
     public String toString(){
         return com.mongodb.util.JSON.serialize( this );
     }

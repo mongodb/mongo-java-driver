@@ -95,6 +95,7 @@ public class RawDBObject implements DBObject {
      * @return will not return normally
      * @throws java.lang.UnsupportedOperationException
      */
+    @Override
     public Object put( String key , Object v ){
         throw new UnsupportedOperationException( "Object is read only" );
     }
@@ -106,6 +107,7 @@ public class RawDBObject implements DBObject {
      * @param o the object
      * @throws java.lang.UnsupportedOperationException
      */
+    @Override
     public void putAll( BSONObject o ){
         throw new UnsupportedOperationException( "Object is read only" );
     }
@@ -116,6 +118,7 @@ public class RawDBObject implements DBObject {
      * @param m the map
      * @throws java.lang.UnsupportedOperationException
      */
+    @Override
     public void putAll( Map m ){
         throw new UnsupportedOperationException( "Object is read only" );
     }
@@ -127,6 +130,7 @@ public class RawDBObject implements DBObject {
      * @return will not return normally
      * @throws java.lang.UnsupportedOperationException
      */
+    @Override
     public Object removeField( String key ){
         throw new UnsupportedOperationException( "Object is read only" );
     }
@@ -135,15 +139,18 @@ public class RawDBObject implements DBObject {
      * @deprecated
      */
     @Deprecated
+    @Override
     public boolean containsKey( String key ){
         return containsField(key);
     }
 
+    @Override
     public boolean containsField( String field ){
         return findElement( field ) != null;
     }
 
-    public Set<String> keySet(){    
+    @Override
+    public Set<String> keySet(){
         Set<String> keys = new HashSet<String>();
         
         ElementIter i = new ElementIter();
@@ -226,11 +233,12 @@ public class RawDBObject implements DBObject {
         return null;
     }
 
+    @Override
     public boolean isPartialObject(){
         return false;
     }
 
-
+    @Override
     public void markAsPartialObject(){
         throw new RuntimeException( "RawDBObject can't be a partial object" );
     }
