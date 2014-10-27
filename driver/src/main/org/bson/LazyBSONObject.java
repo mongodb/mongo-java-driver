@@ -305,22 +305,48 @@ public class LazyBSONObject implements BSONObject {
 
     /* ----------------- Unsupported operations --------------------- */
 
+    /**
+     * Always throws {@code UnsupportedOperationException}.
+     *
+     * @param key Name to set
+     * @param v   Corresponding value
+     * @return will not return normally
+     * @throws java.lang.UnsupportedOperationException
+     */
     @Override
     public Object put(final String key, final Object v) {
         throw new UnsupportedOperationException("Object is read only");
     }
 
+    /**
+     * Always throws {@code UnsupportedOperationException}.
+     *
+     * @param o the object
+     * @throws java.lang.UnsupportedOperationException
+     */
     @Override
     public void putAll(final BSONObject o) {
         throw new UnsupportedOperationException("Object is read only");
     }
 
-    @Override
+    /**
+     * Always throws {@code UnsupportedOperationException}.
+     *
+     * @param m the map
+     * @throws java.lang.UnsupportedOperationException
+     */@Override
     @SuppressWarnings("rawtypes")
     public void putAll(final Map m) {
         throw new UnsupportedOperationException("Object is read only");
     }
 
+    /**
+     * Always throws {@code UnsupportedOperationException}.
+     *
+     * @param key The name of the field to remove
+     * @return will not return normally
+     * @throws java.lang.UnsupportedOperationException
+     */
     @Override
     public Object removeField(final String key) {
         throw new UnsupportedOperationException("Object is read only");
