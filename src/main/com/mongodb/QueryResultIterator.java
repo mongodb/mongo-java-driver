@@ -116,7 +116,7 @@ class QueryResultIterator implements Cursor {
     }
 
     public boolean tryHasNext() {
-        if (closed) {
+        if (closed[0]) {
             throw new IllegalStateException("Iterator has been closed");
         }
 
@@ -124,7 +124,7 @@ class QueryResultIterator implements Cursor {
             return true;
         }
 
-        if (_cursorId != 0) {
+        if (_cursorId[0] != 0) {
             getMore();
         }
         return _curSize > 0;
