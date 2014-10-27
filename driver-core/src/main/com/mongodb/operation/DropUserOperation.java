@@ -22,8 +22,8 @@ import com.mongodb.WriteConcernResult;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.connection.Connection;
-import com.mongodb.protocol.DeleteProtocol;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
@@ -33,8 +33,8 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.VoidTransformer;
-import static com.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
+import static com.mongodb.operation.OperationHelper.transformFuture;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.util.Arrays.asList;
 
@@ -66,7 +66,7 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     executeWrappedCommandProtocol(databaseName, getCommand(), connection);
                 } else {
-                    getCollectionBasedProtocol().execute(connection);
+                    connection.delete(getNamespace(), true, WriteConcern.ACKNOWLEDGED, asList(getDeleteRequest()));
                 }
                 return null;
             }
@@ -81,17 +81,19 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     return executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, new VoidTransformer<BsonDocument>());
                 } else {
-                    return executeProtocolAsync(getCollectionBasedProtocol(), connection, new VoidTransformer<WriteConcernResult>());
+                    return transformFuture(connection.deleteAsync(getNamespace(), true, WriteConcern.ACKNOWLEDGED,
+                                                                  asList(getDeleteRequest())), new VoidTransformer<WriteConcernResult>());
                 }
             }
         });
     }
 
-    private DeleteProtocol getCollectionBasedProtocol() {
-        MongoNamespace namespace = new MongoNamespace(databaseName, "system.users");
-        return new DeleteProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                  asList(new DeleteRequest(new BsonDocument("user", new BsonString(userName))))
-        );
+    private MongoNamespace getNamespace() {
+        return new MongoNamespace(databaseName, "system.users");
+    }
+
+    private DeleteRequest getDeleteRequest() {
+        return new DeleteRequest(new BsonDocument("user", new BsonString(userName)));
     }
 
     private BsonDocument getCommand() {

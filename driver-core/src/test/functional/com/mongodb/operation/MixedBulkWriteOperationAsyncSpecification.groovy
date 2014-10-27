@@ -23,7 +23,11 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.BulkWriteException
 import com.mongodb.bulk.BulkWriteUpsert
-import com.mongodb.protocol.AcknowledgedBulkWriteResult
+import com.mongodb.bulk.DeleteRequest
+import com.mongodb.bulk.InsertRequest
+import com.mongodb.bulk.UpdateRequest
+import com.mongodb.bulk.WriteRequest
+import com.mongodb.connection.AcknowledgedBulkWriteResult
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -40,9 +44,9 @@ import static ClusterFixture.getAsyncSingleConnectionBinding
 import static ClusterFixture.serverVersionAtLeast
 import static WriteConcern.ACKNOWLEDGED
 import static WriteConcern.UNACKNOWLEDGED
-import static com.mongodb.operation.WriteRequest.Type.DELETE
-import static com.mongodb.operation.WriteRequest.Type.REPLACE
-import static com.mongodb.operation.WriteRequest.Type.UPDATE
+import static com.mongodb.bulk.WriteRequest.Type.DELETE
+import static com.mongodb.bulk.WriteRequest.Type.REPLACE
+import static com.mongodb.bulk.WriteRequest.Type.UPDATE
 
 @Category(Async)
 class MixedBulkWriteOperationAsyncSpecification extends OperationFunctionalSpecification {

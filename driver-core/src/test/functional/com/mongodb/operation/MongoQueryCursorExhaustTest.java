@@ -21,9 +21,8 @@ import com.mongodb.ReadPreference;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.QueryResult;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.protocol.QueryProtocol;
-import com.mongodb.protocol.QueryResult;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -42,7 +41,6 @@ import static org.junit.Assume.assumeFalse;
 public class MongoQueryCursorExhaustTest extends FunctionalTest {
 
     private final BsonBinary binary = new BsonBinary(new byte[10000]);
-    private final int exhaustFlag = 1 << 6;
     private QueryResult<Document> firstBatch;
     private Connection exhaustConnection;
     private ConnectionSource readConnectionSource;
@@ -59,9 +57,9 @@ public class MongoQueryCursorExhaustTest extends FunctionalTest {
 
         readConnectionSource = getBinding().getReadConnectionSource();
         exhaustConnection = readConnectionSource.getConnection();
-        firstBatch = new QueryProtocol<Document>(getNamespace(), 0, 0, new BsonDocument(), null,
-                                                 new DocumentCodec()).exhaust(true)
-                     .execute(exhaustConnection);
+        firstBatch = exhaustConnection.query(getNamespace(), new BsonDocument(), null, 0, 0,
+                                             false, false, false, false, true, false, false,
+                                             new DocumentCodec());
     }
 
     @After
@@ -102,8 +100,8 @@ public class MongoQueryCursorExhaustTest extends FunctionalTest {
             cursor.next();
             cursor.close();
 
-            new QueryProtocol<Document>(getNamespace(), 0, 0, new BsonDocument(), null, new DocumentCodec())
-            .execute(connection);
+            connection.query(getNamespace(), new BsonDocument(), null, 0, 0, false, false, false, false, false, false, false,
+                             new DocumentCodec());
 
         } finally {
             connection.release();

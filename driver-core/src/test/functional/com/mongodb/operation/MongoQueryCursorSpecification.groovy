@@ -22,10 +22,7 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ServerCursor
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.protocol.GetMoreProtocol
-import com.mongodb.protocol.KillCursorProtocol
-import com.mongodb.protocol.QueryProtocol
-import com.mongodb.protocol.QueryResult
+import com.mongodb.connection.QueryResult
 import org.bson.BsonDocument
 import org.bson.BsonTimestamp
 import org.bson.Document
@@ -224,8 +221,8 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
     def 'test tailable'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
-        def firstBatch = executeQueryProtocol(getQueryProtocol(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2)
-                                                      .tailableCursor(true).awaitData(true))
+        def firstBatch = executeQueryProtocol(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 2, true, true);
+
 
         when:
         cursor = new MongoQueryCursor<Document>(getNamespace(),
@@ -265,7 +262,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1))
 
-        def firstBatch = executeQueryProtocol(getQueryProtocol(new BsonDocument(), 2).tailableCursor(true).awaitData(true))
+        def firstBatch = executeQueryProtocol(new BsonDocument(), 2, true, true)
 
         when:
         cursor = new MongoQueryCursor<Document>(getNamespace(),
@@ -435,7 +432,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
                                                 connectionSource)
 
         def connection = connectionSource.getConnection()
-        new KillCursorProtocol(asList(cursor.getServerCursor())).execute(connection)
+        connection.killCursor(asList(cursor.getServerCursor().id))
         connection.release()
         cursor.next()
         cursor.next()
@@ -455,26 +452,24 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
     }
 
     private QueryResult<Document> executeQuery(int numToReturn) {
-        executeQueryProtocol(getQueryProtocol(new BsonDocument(), numToReturn))
+        executeQueryProtocol(new BsonDocument(), numToReturn, false, false)
     }
 
-    private QueryResult<Document> executeQueryProtocol(QueryProtocol<Document> protocol) {
+    private QueryResult<Document> executeQueryProtocol(BsonDocument query, int numberToReturn, boolean tailable, boolean awaitData) {
         def connection = connectionSource.getConnection()
         try {
-            protocol.execute(connection)
+            connection.query(getNamespace(), query, null, numberToReturn, 0,
+                             false, tailable, awaitData, false, false, false, false,
+                             new DocumentCodec());
         } finally {
             connection.release();
         }
     }
 
-    private QueryProtocol<Document> getQueryProtocol(final BsonDocument query, final int numberToReturn) {
-        new QueryProtocol<Document>(getNamespace(), 0, numberToReturn, query, null, new DocumentCodec());
-    }
-
     private void makeAdditionalGetMoreCall(ServerCursor serverCursor) {
         def connection = connectionSource.getConnection()
         try {
-            new GetMoreProtocol<Document>(getNamespace(), new GetMore(serverCursor, 1, 1, 1), new DocumentCodec()).execute(connection)
+            connection.getMore(getNamespace(), serverCursor.getId(), 1, new DocumentCodec())
         } finally {
             connection.release()
         }

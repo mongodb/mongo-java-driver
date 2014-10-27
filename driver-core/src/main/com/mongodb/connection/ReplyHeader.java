@@ -25,9 +25,8 @@ import static java.lang.String.format;
  * Contains the details of a reply from a MongoDB server.
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#database-response-messages Database Response Messages
- * @since 3.0
  */
-public class ReplyHeader {
+class ReplyHeader {
     /**
      * The length of the reply header in the MongoDB wire protocol.
      */

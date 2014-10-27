@@ -20,10 +20,11 @@ import com.mongodb.CommandFailureException;
 import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.MongoFuture;
+import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
+import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
-import com.mongodb.protocol.QueryProtocol;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -60,9 +61,9 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
 
     @Override
     public List<String> execute(final ReadBinding binding) {
-        return withConnection(binding, new OperationHelper.CallableWithConnection<List<String>>() {
+        return withConnection(binding, new OperationHelper.CallableWithConnectionAndSource<List<String>>() {
             @Override
-            public List<String> call(final Connection connection) {
+            public List<String> call(final ConnectionSource source, final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotEight(connection)) {
                     try {
                         return executeWrappedCommandProtocol(databaseName,
@@ -74,8 +75,11 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
                         return CommandOperationHelper.rethrowIfNotNamespaceError(e, new ArrayList<String>());
                     }
                 } else {
-                    return queryResultToList(getNamespace(), getProtocol(binding.getReadPreference().isSlaveOk()), binding,
-                                             queryResultTransformer());
+                    return queryResultToList(getNamespace(), connection.query(getNamespace(), new BsonDocument(), null, 0, 0,
+                                                                              binding.getReadPreference().isSlaveOk(), false,
+                                                                              false, false, false, false, false,
+                                                                              new BsonDocumentCodec()),
+                                             new BsonDocumentCodec(), source, queryResultTransformer());
                 }
             }
         });
@@ -83,9 +87,9 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
 
     @Override
     public MongoFuture<List<String>> executeAsync(final AsyncReadBinding binding) {
-        return withConnection(binding, new OperationHelper.AsyncCallableWithConnection<List<String>>() {
+        return withConnection(binding, new OperationHelper.AsyncCallableWithConnectionAndSource<List<String>>() {
             @Override
-            public MongoFuture<List<String>> call(final Connection connection) {
+            public MongoFuture<List<String>> call(final AsyncConnectionSource source, final Connection connection) {
                 if (serverIsAtLeastVersionTwoDotEight(connection)) {
                     return CommandOperationHelper.rethrowIfNotNamespaceError(executeWrappedCommandProtocolAsync(databaseName,
                                                                                                                 getCommand(),
@@ -93,8 +97,11 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
                                                                                                                 commandTransformer()),
                                                                              new ArrayList<String>());
                 } else {
-                    return queryResultToListAsync(getNamespace(), getProtocol(binding.getReadPreference().isSlaveOk()), binding,
-                                                  queryResultTransformer());
+                    return queryResultToListAsync(getNamespace(), connection.queryAsync(getNamespace(), new BsonDocument(), null, 0, 0,
+                                                                                        binding.getReadPreference().isSlaveOk(), false,
+                                                                                        false, false, false, false, false,
+                                                                                        new BsonDocumentCodec()),
+                                                  new BsonDocumentCodec(), source, queryResultTransformer());
                 }
             }
         });
@@ -131,13 +138,7 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
         return new MongoNamespace(databaseName, "system.namespaces");
     }
 
-    private QueryProtocol<BsonDocument> getProtocol(final boolean slaveOk) {
-        return new QueryProtocol<BsonDocument>(getNamespace(), 0, 0, new BsonDocument(), null, new BsonDocumentCodec())
-            .slaveOk(slaveOk);
-    }
-
     private BsonDocument getCommand() {
         return new BsonDocument("listCollections", new BsonInt32(1));
     }
-
 }

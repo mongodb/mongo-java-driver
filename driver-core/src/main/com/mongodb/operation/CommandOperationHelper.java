@@ -31,9 +31,7 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.protocol.CommandProtocol;
-import com.mongodb.protocol.Protocol;
-import com.mongodb.protocol.message.NoOpFieldNameValidator;
+import com.mongodb.connection.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
@@ -181,8 +179,8 @@ final class CommandOperationHelper {
                                                   final Connection connection, final ReadPreference readPreference,
                                                   final Function<D, T> transformer) {
 
-        return transformer.apply(new CommandProtocol<D>(database, wrapCommand(command, readPreference, connection.getDescription()),
-                                                        readPreference.isSlaveOk(), fieldNameValidator, decoder).execute(connection));
+        return transformer.apply(connection.command(database, wrapCommand(command, readPreference, connection.getDescription()),
+                                                    readPreference.isSlaveOk(), fieldNameValidator, decoder));
     }
 
     /* Async Read Binding Helpers */
@@ -266,7 +264,7 @@ final class CommandOperationHelper {
         return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), connection);
     }
 
-    static <D, T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
+    static <T> MongoFuture<T> executeWrappedCommandProtocolAsync(final String database, final BsonDocument command,
                                                                     final Connection connection,
                                                                     final Function<BsonDocument, T> transformer) {
         return executeWrappedCommandProtocolAsync(database, command, new BsonDocumentCodec(), connection, primary(),
@@ -287,18 +285,18 @@ final class CommandOperationHelper {
                                                                     final ReadPreference readPreference,
                                                                     final Function<D, T> transformer) {
         final SingleResultFuture<T> future = new SingleResultFuture<T>();
-        new CommandProtocol<D>(database, wrapCommand(command, readPreference, connection.getDescription()),
-                               readPreference.isSlaveOk(), new NoOpFieldNameValidator(), decoder)
-        .executeAsync(connection).register(new SingleResultCallback<D>() {
-            @Override
-            public void onResult(final D result, final MongoException e) {
-                if (e != null) {
-                    future.init(null, e);
-                } else {
-                    future.init(transformer.apply(result), null);
-                }
-            }
-        });
+        connection.commandAsync(database, wrapCommand(command, readPreference, connection.getDescription()),
+                                readPreference.isSlaveOk(), new NoOpFieldNameValidator(), decoder)
+                  .register(new SingleResultCallback<D>() {
+                      @Override
+                      public void onResult(final D result, final MongoException e) {
+                          if (e != null) {
+                              future.init(null, e);
+                          } else {
+                              future.init(transformer.apply(result), null);
+                          }
+                      }
+                  });
         return future;
     }
 
@@ -377,11 +375,6 @@ final class CommandOperationHelper {
             this.readPreference = readPreference;
         }
 
-        protected Protocol<D> getProtocol(final ConnectionDescription connectionDescription) {
-            return new CommandProtocol<D>(database, wrapCommand(command, readPreference, connectionDescription),
-                                          readPreference.isSlaveOk(), fieldNameValidator, decoder);
-        }
-
         @Override
         public void onResult(final AsyncConnectionSource source, final MongoException e) {
             if (e != null) {
@@ -393,23 +386,23 @@ final class CommandOperationHelper {
                         if (e != null) {
                             future.init(null, e);
                         } else {
-                            getProtocol(connection.getDescription())
-                            .executeAsync(connection)
-                            .register(new SingleResultCallback<D>() {
-                                @Override
-                                public void onResult(final D response, final MongoException e) {
-                                    try {
-                                        if (e != null) {
-                                            future.init(null, e);
-                                        } else {
-                                            future.init(transformer.apply(response), null);
-                                        }
-                                    } finally {
-                                        connection.release();
-                                        source.release();
-                                    }
-                                }
-                            });
+                            connection.commandAsync(database, wrapCommand(command, readPreference, connection.getDescription()),
+                                                    readPreference.isSlaveOk(), fieldNameValidator, decoder)
+                                      .register(new SingleResultCallback<D>() {
+                                          @Override
+                                          public void onResult(final D response, final MongoException e) {
+                                              try {
+                                                  if (e != null) {
+                                                      future.init(null, e);
+                                                  } else {
+                                                      future.init(transformer.apply(response), null);
+                                                  }
+                                              } finally {
+                                                  connection.release();
+                                                  source.release();
+                                              }
+                                          }
+                                      });
                         }
                     }
                 });

@@ -26,9 +26,9 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.bulk.InsertRequest;
+import com.mongodb.connection.AcknowledgedWriteConcernResult;
 import com.mongodb.connection.Connection;
-import com.mongodb.protocol.AcknowledgedWriteConcernResult;
-import com.mongodb.protocol.InsertProtocol;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -459,7 +459,7 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
                         throw checkForDuplicateKeyError(e);
                     }
                 } else {
-                    asInsertProtocol(getIndex()).execute(connection);
+                    connection.insert(systemIndexes, true, WriteConcern.ACKNOWLEDGED, asList(new InsertRequest(getIndex())));
                 }
                 return null;
             }
@@ -481,12 +481,13 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
                             }
                         });
                 } else {
-                    asInsertProtocol(getIndex()).executeAsync(connection).register(new SingleResultCallback<WriteConcernResult>() {
-                        @Override
-                        public void onResult(final WriteConcernResult result, final MongoException e) {
-                            future.init(null, translateException(e));
-                        }
-                    });
+                    connection.insertAsync(systemIndexes, true, WriteConcern.ACKNOWLEDGED, asList(new InsertRequest(getIndex())))
+                              .register(new SingleResultCallback<WriteConcernResult>() {
+                                  @Override
+                                  public void onResult(final WriteConcernResult result, final MongoException e) {
+                                      future.init(null, translateException(e));
+                                  }
+                              });
                 }
                 return future;
             }
@@ -551,11 +552,6 @@ public class CreateIndexOperation implements AsyncWriteOperation<Void>, WriteOpe
         BsonArray array = new BsonArray(asList(getIndex()));
         command.put("indexes", array);
         return command;
-    }
-
-    @SuppressWarnings("unchecked")
-    private InsertProtocol asInsertProtocol(final BsonDocument index) {
-        return new InsertProtocol(systemIndexes, true, WriteConcern.ACKNOWLEDGED, asList(new InsertRequest(index)));
     }
 
     private MongoException translateException(final MongoException e) {

@@ -17,34 +17,36 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoException;
-import com.mongodb.MongoInternalException;
 import com.mongodb.MongoSecurityException;
+import com.mongodb.MongoServerException;
+import com.mongodb.MongoSocketException;
 import com.mongodb.ServerAddress;
+import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
-import org.bson.ByteBuf;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
-import static java.lang.String.format;
 
 class DefaultServer implements ClusterableServer {
     private final ServerAddress serverAddress;
     private final ConnectionPool connectionPool;
+    private final ConnectionFactory connectionFactory;
     private final ServerMonitor serverMonitor;
     private final Set<ChangeListener<ServerDescription>> changeListeners =
-        Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
+    Collections.newSetFromMap(new ConcurrentHashMap<ChangeListener<ServerDescription>, Boolean>());
     private final ChangeListener<ServerDescription> serverStateListener;
     private volatile ServerDescription description;
     private volatile boolean isClosed;
 
     public DefaultServer(final ServerAddress serverAddress, final ConnectionPool connectionPool,
+                         final ConnectionFactory connectionFactory,
                          final ServerMonitorFactory serverMonitorFactory) {
+        this.connectionFactory = connectionFactory;
         notNull("serverMonitorFactory", serverMonitorFactory);
         this.serverAddress = notNull("serverAddress", serverAddress);
         this.connectionPool = notNull("connectionPool", connectionPool);
@@ -58,7 +60,7 @@ class DefaultServer implements ClusterableServer {
     public Connection getConnection() {
         isTrue("open", !isClosed());
         try {
-            return new DefaultServerConnection(connectionPool.get());
+            return connectionFactory.create(connectionPool.get(), new DefaultServerProtocolExecutor());
         } catch (MongoSecurityException e) {
             invalidate();
             throw e;
@@ -113,8 +115,45 @@ class DefaultServer implements ClusterableServer {
         return connectionPool;
     }
 
-    private void handleException() {
-        invalidate();  // TODO: handle different exceptions sub-classes differently
+    private void handleException(final MongoException mongoException) {
+        if (mongoException instanceof MongoSocketException) {
+            invalidate();
+        } else if (mongoException instanceof MongoServerException) {
+            MongoServerException serverException = (MongoServerException) mongoException;
+            if (serverException.getErrorMessage().contains("not master")
+                || serverException.getErrorMessage().contains("node is recovering")
+                || serverException.getCode() == 10107) {
+                invalidate();
+            }
+        }
+    }
+
+    private class DefaultServerProtocolExecutor implements ProtocolExecutor {
+        @Override
+        public <T> T execute(final Protocol<T> protocol, final InternalConnection connection) {
+            try {
+                return protocol.execute(connection);
+            } catch (MongoException e) {
+                handleException(e);
+                throw e;
+            }
+        }
+
+        @Override
+        public <T> MongoFuture<T> executeAsync(final Protocol<T> protocol, final InternalConnection connection) {
+            MongoFuture<T> future = protocol.executeAsync(connection);
+            future.register(new InvalidServerStateCheckCallback<T>());
+            return future;
+        }
+    }
+
+    private class InvalidServerStateCheckCallback<T> implements SingleResultCallback<T> {
+        @Override
+        public void onResult(final T result, final MongoException e) {
+            if (e != null) {
+                handleException(e);
+            }
+        }
     }
 
     private final class DefaultServerStateListener implements ChangeListener<ServerDescription> {
@@ -124,97 +163,6 @@ class DefaultServer implements ClusterableServer {
             for (ChangeListener<ServerDescription> listener : changeListeners) {
                 listener.stateChanged(event);
             }
-        }
-    }
-
-    private class DefaultServerConnection extends AbstractReferenceCounted implements Connection {
-        private final InternalConnection wrapped;
-
-        public DefaultServerConnection(final InternalConnection wrapped) {
-            this.wrapped = wrapped;
-        }
-
-        @Override
-        public DefaultServerConnection retain() {
-            super.retain();
-            return this;
-        }
-
-        @Override
-        public void release() {
-            super.release();
-            if (getCount() == 0) {
-                wrapped.close();
-            }
-        }
-
-        @Override
-        public ServerAddress getServerAddress() {
-            isTrue("open", getCount() > 0);
-            return wrapped.getDescription().getServerAddress();
-        }
-
-        @Override
-        public ByteBuf getBuffer(final int capacity) {
-            isTrue("open", getCount() > 0);
-            return wrapped.getBuffer(capacity);
-        }
-
-        @Override
-        public ConnectionDescription getDescription() {
-            isTrue("open", getCount() > 0);
-            return wrapped.getDescription();
-        }
-
-        @Override
-        public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
-            isTrue("open", getCount() > 0);
-            try {
-                wrapped.sendMessage(byteBuffers, lastRequestId);
-            } catch (MongoException e) {
-                handleException();
-                throw e;
-            }
-        }
-
-        @Override
-        public ResponseBuffers receiveMessage(final int responseTo) {
-            isTrue("open", getCount() > 0);
-            try {
-                ResponseBuffers responseBuffers = wrapped.receiveMessage(responseTo);
-                if (responseBuffers.getReplyHeader().getResponseTo() != responseTo) {
-                    throw new MongoInternalException(format("The responseTo (%d) in the reply message does not match the "
-                                                            + "requestId (%d) in the request message",
-                                                            responseBuffers.getReplyHeader().getResponseTo(), responseTo));
-                }
-                return responseBuffers;
-            } catch (MongoException e) {
-                handleException();
-                throw e;
-            }
-        }
-
-        @Override
-        public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-            isTrue("open", getCount() > 0);
-            wrapped.sendMessageAsync(byteBuffers, lastRequestId, callback);
-        }
-
-        @Override
-        public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-            isTrue("open", getCount() > 0);
-            wrapped.receiveMessageAsync(responseTo, callback);
-        }
-
-        @Override
-        public String getId() {
-            isTrue("open", getCount() > 0);
-            return wrapped.getDescription().getConnectionId().toString();
-        }
-
-        @Override
-        public void unexpectedServerState() {
-            invalidate();
         }
     }
 }

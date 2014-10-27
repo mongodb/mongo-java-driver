@@ -16,36 +16,35 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.ServerAddress;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.MongoNamespace;
+import com.mongodb.WriteConcern;
+import com.mongodb.WriteConcernResult;
+import com.mongodb.async.MongoFuture;
+import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.bulk.DeleteRequest;
+import com.mongodb.bulk.InsertRequest;
+import com.mongodb.bulk.UpdateRequest;
+import org.bson.BsonDocument;
 import org.bson.ByteBuf;
-import org.bson.io.BsonInput;
+import org.bson.FieldNameValidator;
+import org.bson.codecs.Decoder;
 
 import java.util.List;
 
-public class TestConnection implements Connection {
-    private final TestInternalConnection wrapped;
-    private boolean unexpectedServerState;
+@SuppressWarnings("rawtypes")
+class TestConnection implements Connection {
+    private final InternalConnection internalConnection;
+    private final ProtocolExecutor executor;
+    private Protocol enqueuedProtocol;
 
-    TestConnection(final ServerAddress serverAddress) {
-        wrapped = new TestInternalConnection(serverAddress);
-    }
-
-    public void enqueueReply(final ResponseBuffers buffers) {
-        wrapped.enqueueReply(buffers);
-    }
-
-    public List<BsonInput> getSent() {
-        return wrapped.getSent();
-    }
-
-    public boolean unexpectedServerStateCalled() {
-        return unexpectedServerState;
+    public TestConnection(final InternalConnection internalConnection, final ProtocolExecutor executor) {
+        this.internalConnection = internalConnection;
+        this.executor = executor;
     }
 
     @Override
     public int getCount() {
-        return 0;
+        return 1;
     }
 
     @Override
@@ -55,50 +54,184 @@ public class TestConnection implements Connection {
 
     @Override
     public void release() {
+
     }
 
     @Override
     public ConnectionDescription getDescription() {
-        return wrapped.getDescription();
+        throw new UnsupportedOperationException("Not implemented yet!");
     }
 
     @Override
-    public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
-        wrapped.sendMessage(byteBuffers, lastRequestId);
+    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                     final List<InsertRequest> inserts) {
+        return executeEnqueuedProtocol();
     }
 
     @Override
-    public ResponseBuffers receiveMessage(final int responseTo) {
-        return wrapped.receiveMessage(responseTo);
+    public MongoFuture<WriteConcernResult> insertAsync(final MongoNamespace namespace, final boolean ordered,
+                                                       final WriteConcern writeConcern,
+                                                       final List<InsertRequest> inserts) {
+        return executeEnqueuedProtocolAsync();
     }
 
     @Override
-    public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final SingleResultCallback<Void> callback) {
-        wrapped.sendMessageAsync(byteBuffers, lastRequestId, callback);
+    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                     final List<UpdateRequest> updates) {
+        return executeEnqueuedProtocol();
     }
 
     @Override
-    public void receiveMessageAsync(final int responseTo, final SingleResultCallback<ResponseBuffers> callback) {
-        wrapped.receiveMessageAsync(responseTo, callback);
+    public MongoFuture<WriteConcernResult> updateAsync(final MongoNamespace namespace, final boolean ordered,
+                                                       final WriteConcern writeConcern,
+                                                       final List<UpdateRequest> updates) {
+        return executeEnqueuedProtocolAsync();
     }
 
     @Override
-    public ServerAddress getServerAddress() {
-        return null;
+    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                     final List<DeleteRequest> deletes) {
+        return executeEnqueuedProtocol();
     }
 
     @Override
-    public String getId() {
-        return null;
+    public MongoFuture<WriteConcernResult> deleteAsync(final MongoNamespace namespace, final boolean ordered,
+                                                       final WriteConcern writeConcern,
+                                                       final List<DeleteRequest> deletes) {
+        return executeEnqueuedProtocolAsync();
     }
 
     @Override
-    public void unexpectedServerState() {
-        unexpectedServerState = true;
+    public BulkWriteResult insertCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                         final List<InsertRequest> inserts) {
+        return executeEnqueuedProtocol();
+    }
+
+    @Override
+    public MongoFuture<BulkWriteResult> insertCommandAsync(final MongoNamespace namespace, final boolean ordered,
+                                                           final WriteConcern writeConcern,
+                                                           final List<InsertRequest> inserts) {
+        return executeEnqueuedProtocolAsync();
+    }
+
+    @Override
+    public BulkWriteResult updateCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                         final List<UpdateRequest> updates) {
+        return executeEnqueuedProtocol();
+    }
+
+    @Override
+    public MongoFuture<BulkWriteResult> updateCommandAsync(final MongoNamespace namespace, final boolean ordered,
+                                                           final WriteConcern writeConcern,
+                                                           final List<UpdateRequest> updates) {
+        return executeEnqueuedProtocolAsync();
+    }
+
+    @Override
+    public BulkWriteResult deleteCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                         final List<DeleteRequest> deletes) {
+        return executeEnqueuedProtocol();
+    }
+
+    @Override
+    public MongoFuture<BulkWriteResult> deleteCommandAsync(final MongoNamespace namespace, final boolean ordered,
+                                                           final WriteConcern writeConcern,
+                                                           final List<DeleteRequest> deletes) {
+        return executeEnqueuedProtocolAsync();
+    }
+
+    @Override
+    public <T> T command(final String database, final BsonDocument command, final boolean slaveOk,
+                         final FieldNameValidator fieldNameValidator,
+                         final Decoder<T> commandResultDecoder) {
+        return executeEnqueuedProtocol();
+    }
+
+    @Override
+    public <T> MongoFuture<T> commandAsync(final String database, final BsonDocument command, final boolean slaveOk,
+                                           final FieldNameValidator fieldNameValidator,
+                                           final Decoder<T> commandResultDecoder) {
+        return executeEnqueuedProtocolAsync();
+    }
+
+    @Override
+    public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
+                                    final int numberToReturn, final int skip,
+                                    final boolean slaveOk, final boolean tailableCursor, final boolean awaitData,
+                                    final boolean noCursorTimeout, final boolean exhaust,
+                                    final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder) {
+        return executeEnqueuedProtocol();
+    }
+
+    @Override
+    public <T> MongoFuture<QueryResult<T>> queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument,
+                                                      final BsonDocument fields,
+                                                      final int numberToReturn, final int skip, final boolean slaveOk,
+                                                      final boolean tailableCursor,
+                                                      final boolean awaitData, final boolean noCursorTimeout, final boolean exhaust,
+                                                      final boolean partial,
+                                                      final boolean oplogReplay, final Decoder<T> resultDecoder) {
+        return executeEnqueuedProtocolAsync();
+    }
+
+    @Override
+    public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
+                                      final Decoder<T> resultDecoder) {
+        return executeEnqueuedProtocol();
+    }
+
+    @Override
+    public <T> MongoFuture<QueryResult<T>> getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
+                                                        final Decoder<T> resultDecoder) {
+        return executeEnqueuedProtocolAsync();
+    }
+
+    @Override
+    public <T> QueryResult<T> getMoreReceive(final Decoder<T> resultDecoder, final int responseTo) {
+        return executeEnqueuedProtocol();
+    }
+
+    @Override
+    public <T> MongoFuture<QueryResult<T>> getMoreReceiveAsync(final Decoder<T> resultDecoder, final int responseTo) {
+        return executeEnqueuedProtocolAsync();
+    }
+
+    @Override
+    public void getMoreDiscard(final long cursorId, final int responseTo) {
+        executeEnqueuedProtocol();
+    }
+
+    @Override
+    public MongoFuture<Void> getMoreDiscardAsync(final long cursorId, final int responseTo) {
+        return executeEnqueuedProtocolAsync();
+    }
+
+    @Override
+    public void killCursor(final List<Long> cursors) {
+        executeEnqueuedProtocol();
+    }
+
+    @Override
+    public MongoFuture<Void> killCursorAsync(final List<Long> cursors) {
+        return executeEnqueuedProtocolAsync();
     }
 
     @Override
     public ByteBuf getBuffer(final int size) {
-        return wrapped.getBuffer(size);
+        throw new UnsupportedOperationException("Not implemented yet!");
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T executeEnqueuedProtocol() {
+        return (T) executor.execute(enqueuedProtocol, internalConnection);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T executeEnqueuedProtocolAsync() {
+        return (T) executor.executeAsync(enqueuedProtocol, internalConnection);
+    }
+
+    void enqueueProtocol(final Protocol protocol) {
+        enqueuedProtocol = protocol;
     }
 }

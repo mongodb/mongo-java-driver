@@ -23,9 +23,8 @@ import com.mongodb.WriteConcernResult;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.bulk.InsertRequest;
 import com.mongodb.connection.Connection;
-import com.mongodb.protocol.InsertProtocol;
-import com.mongodb.protocol.Protocol;
 import org.bson.BsonDocument;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -34,8 +33,8 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.VoidTransformer;
-import static com.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
+import static com.mongodb.operation.OperationHelper.transformFuture;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.UserOperationHelper.asCollectionDocument;
 import static com.mongodb.operation.UserOperationHelper.asCommandDocument;
@@ -87,7 +86,7 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     executeWrappedCommandProtocol(getCredential().getSource(), getCommand(), connection);
                 } else {
-                    getCollectionBasedProtocol().execute(connection);
+                    connection.insert(getNamespace(), true, WriteConcern.ACKNOWLEDGED, asList(getInsertRequest()));
                 }
                 return null;
             }
@@ -103,18 +102,20 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
                     return executeWrappedCommandProtocolAsync(credential.getSource(), getCommand(), connection,
                                                               new VoidTransformer<BsonDocument>());
                 } else {
-                    return executeProtocolAsync(getCollectionBasedProtocol(), connection, new VoidTransformer<WriteConcernResult>());
+                    return transformFuture(connection.insertAsync(getNamespace(), true, WriteConcern.ACKNOWLEDGED,
+                                                                  asList(getInsertRequest())),
+                                           new VoidTransformer<WriteConcernResult>());
                 }
             }
         });
     }
 
-    @SuppressWarnings("unchecked")
-    private Protocol<WriteConcernResult> getCollectionBasedProtocol() {
-        MongoNamespace namespace = new MongoNamespace(credential.getSource(), "system.users");
-        return new InsertProtocol(namespace, true, WriteConcern.ACKNOWLEDGED,
-                                  asList(new InsertRequest(asCollectionDocument(credential, readOnly)))
-        );
+    private InsertRequest getInsertRequest() {
+        return new InsertRequest(asCollectionDocument(credential, readOnly));
+    }
+
+    private MongoNamespace getNamespace() {
+        return new MongoNamespace(credential.getSource(), "system.users");
     }
 
     private BsonDocument getCommand() {

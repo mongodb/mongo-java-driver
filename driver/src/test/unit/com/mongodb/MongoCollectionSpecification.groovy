@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import com.mongodb.bulk.DeleteRequest
 import com.mongodb.client.MongoCollectionOptions
 import com.mongodb.client.model.AggregateOptions
 import com.mongodb.client.model.BulkWriteOptions
@@ -37,12 +38,12 @@ import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.client.model.UpdateManyModel
 import com.mongodb.client.model.UpdateOneModel
 import com.mongodb.client.model.UpdateOptions
+import com.mongodb.connection.AcknowledgedWriteConcernResult
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.CreateIndexOperation
 import com.mongodb.operation.DeleteOperation
-import com.mongodb.operation.DeleteRequest
 import com.mongodb.operation.DistinctOperation
 import com.mongodb.operation.DropCollectionOperation
 import com.mongodb.operation.DropIndexOperation
@@ -58,7 +59,6 @@ import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.ParallelCollectionScanOperation
 import com.mongodb.operation.RenameCollectionOperation
 import com.mongodb.operation.UpdateOperation
-import com.mongodb.protocol.AcknowledgedWriteConcernResult
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -76,8 +76,8 @@ import spock.lang.Specification
 import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.operation.WriteRequest.Type.REPLACE
-import static com.mongodb.operation.WriteRequest.Type.UPDATE
+import static com.mongodb.bulk.WriteRequest.Type.REPLACE
+import static com.mongodb.bulk.WriteRequest.Type.UPDATE
 
 class MongoCollectionSpecification extends Specification {
 
@@ -401,7 +401,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'bulk insert should use BulkWriteOperation properly'() {
         given:
-        def executor = new TestOperationExecutor([new com.mongodb.protocol.AcknowledgedBulkWriteResult(1, 0, 0, 0, [])])
+        def executor = new TestOperationExecutor([new com.mongodb.connection.AcknowledgedBulkWriteResult(1, 0, 0, 0, [])])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
         def document = new Document();
 
@@ -424,24 +424,24 @@ class MongoCollectionSpecification extends Specification {
         then:
         def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
-        def insertRequest = operation.writeRequests[0] as com.mongodb.operation.InsertRequest
+        def insertRequest = operation.writeRequests[0] as com.mongodb.bulk.InsertRequest
         insertRequest.document == new BsonDocument('_id', new BsonObjectId(document.getObjectId('_id')))
 
-        def updateOneRequest = operation.writeRequests[1] as com.mongodb.operation.UpdateRequest
+        def updateOneRequest = operation.writeRequests[1] as com.mongodb.bulk.UpdateRequest
         updateOneRequest.type == UPDATE
         !updateOneRequest.multi
         updateOneRequest.upsert
         updateOneRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
         updateOneRequest.update == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
 
-        def updateManyRequest = operation.writeRequests[2] as com.mongodb.operation.UpdateRequest
+        def updateManyRequest = operation.writeRequests[2] as com.mongodb.bulk.UpdateRequest
         updateManyRequest.type == UPDATE
         updateManyRequest.multi
         updateManyRequest.upsert
         updateManyRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
         updateManyRequest.update == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
 
-        def replaceRequest = operation.writeRequests[3] as com.mongodb.operation.UpdateRequest
+        def replaceRequest = operation.writeRequests[3] as com.mongodb.bulk.UpdateRequest
         replaceRequest.type == REPLACE
         !replaceRequest.multi
         replaceRequest.upsert
@@ -461,7 +461,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'bulk insert should generate _id'() {
         given:
-        def executor = new TestOperationExecutor([new com.mongodb.protocol.AcknowledgedBulkWriteResult(1, 0, 0, 0, [])])
+        def executor = new TestOperationExecutor([new com.mongodb.connection.AcknowledgedBulkWriteResult(1, 0, 0, 0, [])])
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
         def document = new Document();
 

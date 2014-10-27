@@ -22,8 +22,7 @@ import com.mongodb.async.MongoFuture;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
-import com.mongodb.protocol.QueryProtocol;
-import com.mongodb.protocol.QueryResult;
+import com.mongodb.connection.QueryResult;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
@@ -33,9 +32,8 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
-import static com.mongodb.operation.OperationHelper.executeProtocol;
-import static com.mongodb.operation.OperationHelper.executeProtocolAsync;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
+import static com.mongodb.operation.OperationHelper.transformFuture;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
@@ -67,8 +65,11 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
                     return executeWrappedCommandProtocol(databaseName, getCommand(), connection, binding.getReadPreference(),
                                                          transformer());
                 } else {
-                    return executeProtocol(getProtocol(binding.getReadPreference().isSlaveOk()), connection,
-                                           transformQueryResult());
+                    return transformQueryResult().apply(connection.query(new MongoNamespace(databaseName, "system.users"),
+                                                                         new BsonDocument("user", new BsonString(userName)), null, 1, 0,
+                                                                         binding.getReadPreference().isSlaveOk(), false,
+                                                                         false, false, false, false, false,
+                                                                         new BsonDocumentCodec()));
                 }
             }
         });
@@ -82,8 +83,12 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
                 if (serverIsAtLeastVersionTwoDotSix(connection)) {
                     return executeWrappedCommandProtocolAsync(databaseName, getCommand(), connection, transformer());
                 } else {
-                    return executeProtocolAsync(getProtocol(binding.getReadPreference().isSlaveOk()), connection,
-                                                transformQueryResult());
+                    return transformFuture(connection.queryAsync(new MongoNamespace(databaseName, "system.users"),
+                                                                 new BsonDocument("user", new BsonString(userName)), null, 1, 0,
+                                                                 binding.getReadPreference().isSlaveOk(), false,
+                                                                 false, false, false, false, false,
+                                                                 new BsonDocumentCodec()),
+                                           transformQueryResult());
                 }
             }
         });
@@ -105,13 +110,6 @@ public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOpe
                 return !queryResult.getResults().isEmpty();
             }
         };
-    }
-
-    private QueryProtocol<BsonDocument> getProtocol(final boolean slaveOk) {
-        MongoNamespace namespace = new MongoNamespace(databaseName, "system.users");
-        return new QueryProtocol<BsonDocument>(namespace, 0, 1,
-                                               new BsonDocument("user", new BsonString(userName)), null, new BsonDocumentCodec())
-                   .slaveOk(slaveOk);
     }
 
     private BsonDocument getCommand() {

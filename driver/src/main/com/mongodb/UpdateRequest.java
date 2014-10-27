@@ -52,10 +52,10 @@ class UpdateRequest extends WriteRequest {
     }
 
     @Override
-    com.mongodb.operation.WriteRequest toNew() {
-        return new com.mongodb.operation.UpdateRequest(new BsonDocumentWrapper<DBObject>(query, codec),
+    com.mongodb.bulk.WriteRequest toNew() {
+        return new com.mongodb.bulk.UpdateRequest(new BsonDocumentWrapper<DBObject>(query, codec),
                                                        new BsonDocumentWrapper<DBObject>(update, codec),
-                                                       com.mongodb.operation.WriteRequest.Type.UPDATE)
+                                                       com.mongodb.bulk.WriteRequest.Type.UPDATE)
                .upsert(isUpsert())
                .multi(isMulti());
     }

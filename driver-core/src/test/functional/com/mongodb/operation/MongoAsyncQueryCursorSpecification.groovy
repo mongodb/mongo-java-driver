@@ -27,8 +27,7 @@ import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.binding.AsyncReadBinding
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.Connection
-import com.mongodb.protocol.QueryProtocol
-import com.mongodb.protocol.QueryResult
+import com.mongodb.connection.QueryResult
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonTimestamp
 import org.bson.Document
@@ -102,7 +101,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
     def 'Cursor should support Exhaust'() {
         setup:
         Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = getQueryProtocol(getOrderedByIdQuery(), 2).exhaust(true).execute(connection)
+        QueryResult<Document> firstBatch = executeExhaustQuery(getOrderedByIdQuery(), 2, connection)
 
         when:
         new MongoAsyncQueryCursor<Document>(getNamespace(),
@@ -121,7 +120,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
     def 'Cursor should support Exhaust and limit'() {
         setup:
         Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = getQueryProtocol(getOrderedByIdQuery(), 2).exhaust(true).execute(connection)
+        QueryResult<Document> firstBatch = executeExhaustQuery(getOrderedByIdQuery(), 2, connection)
 
         when:
         new MongoAsyncQueryCursor<Document>(getNamespace(),
@@ -141,7 +140,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         setup:
         AsyncConnectionSource readConnectionSource = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = readConnectionSource.getConnection().get()
-        QueryResult<Document> firstBatch = getQueryProtocol(getOrderedByIdQuery(), 2).exhaust(true).execute(connection)
+        QueryResult<Document> firstBatch = executeExhaustQuery(getOrderedByIdQuery(), 2, connection)
 
         when:
         new MongoAsyncQueryCursor<Document>(getNamespace(), firstBatch, 5, 2, new DocumentCodec(), connection)
@@ -150,7 +149,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         then:
         thrown(MongoInternalException)
         documentResultList == documentList[0..0]
-        def docs = getQueryProtocol(getOrderedByIdQuery(), 1).exhaust(true).execute(connection).getResults()
+        def docs = executeExhaustQuery(getOrderedByIdQuery(), 1, connection).getResults()
         [[_id: 1]] == docs
 
         cleanup:
@@ -163,7 +162,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = getQueryProtocol(getOrderedByIdQuery(), 2).exhaust(true).execute(connection)
+        QueryResult<Document> firstBatch = executeExhaustQuery(getOrderedByIdQuery(), 2, connection)
         TestBlock block = new TestBlock(1)
 
         when:
@@ -190,10 +189,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         def timestamp = new BsonTimestamp(5, 0)
         getCollectionHelper().insertDocuments(new DocumentCodec(), [_id: 1, ts: timestamp] as Document)
 
-        QueryResult<Document> firstBatch = getQueryProtocol([ts: ['$gte': timestamp] as Document ] as Document, 2)
-                .tailableCursor(true)
-                .awaitData(true)
-                .execute(connection)
+        QueryResult<Document> firstBatch = executeTailableQuery([ts: ['$gte': timestamp] as Document] as Document, 2, connection)
         TestBlock block = new TestBlock(2)
 
         when:
@@ -224,7 +220,7 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         setup:
         AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
         Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = getQueryProtocol(getOrderedByIdQuery(), 2).exhaust(true).execute(connection);
+        QueryResult<Document> firstBatch = executeExhaustQuery(getOrderedByIdQuery(), 2, connection)
 
         when:
         MongoAsyncQueryCursor<Document> asyncCursor = new MongoAsyncQueryCursor<Document>(getNamespace(),
@@ -247,17 +243,31 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
     }
 
     private QueryResult<Document> executeQuery() {
+        executeQuery(getOrderedByIdQuery(), 0, false, false, false)
+    }
+
+    private QueryResult<Document> executeExhaustQuery(Document query, int numberToReturn, Connection connection) {
+        executeQuery(query, numberToReturn, true, false, false, connection)
+    }
+
+    private QueryResult<Document> executeTailableQuery(Document query, int numberToReturn, Connection connection) {
+        executeQuery(query, numberToReturn, false, true, true, connection)
+    }
+
+    private QueryResult<Document> executeQuery(Document query, int numberToReturn, boolean exhaust, boolean tailable,
+                                               boolean awaitData) {
         Connection connection = source.getConnection().get()
         try {
-            getQueryProtocol(getOrderedByIdQuery(), 0).execute(connection)
+            executeQuery(query, numberToReturn, exhaust, tailable, awaitData, connection)
         } finally {
             connection.release()
         }
     }
 
-    private QueryProtocol<Document> getQueryProtocol(final Document query, final int numberToReturn) {
-        new QueryProtocol<Document>(getNamespace(), 0, numberToReturn, new BsonDocumentWrapper<Document>(query, new DocumentCodec()), null,
-                                    new DocumentCodec());
+    private QueryResult<Document> executeQuery(Document query, int numberToReturn, boolean exhaust, boolean tailable,
+                                               boolean awaitData, Connection connection) {
+        connection.query(getNamespace(), new BsonDocumentWrapper<Document>(query, new DocumentCodec()), null, numberToReturn, 0,
+                         false, tailable, awaitData, false, exhaust, false, false, new DocumentCodec())
     }
 
     private final class TestBlock implements Block<Document> {
