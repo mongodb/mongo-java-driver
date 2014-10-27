@@ -52,17 +52,11 @@ public class LazyWriteableDBObject extends LazyDBObject {
         super(data, offset, cbk);
     }
 
-    /* (non-Javadoc)
-	 * @see org.bson.LazyBSONObject#put(java.lang.String, java.lang.Object)
-	 */
 	@Override
 	public Object put(String key, Object v) {
 		return writeable.put(key, v);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.bson.LazyBSONObject#putAll(org.bson.BSONObject)
-	 */
 	@Override
 	public void putAll(BSONObject o) {
 		for(String key : o.keySet()){
@@ -70,45 +64,30 @@ public class LazyWriteableDBObject extends LazyDBObject {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.bson.LazyBSONObject#putAll(java.util.Map)
-	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public void putAll(Map m) {
 		writeable.putAll(m);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.bson.LazyBSONObject#get(java.lang.String)
-	 */
 	@Override
 	public Object get(String key) {
 		Object o = writeable.get(key);
 		return (o!=null) ? o : super.get(key);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.bson.LazyBSONObject#removeField(java.lang.String)
-	 */
 	@Override
 	public Object removeField(String key) {
 		Object o = writeable.remove(key);
 		return (o!=null) ? o : super.removeField(key);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.bson.LazyBSONObject#containsField(java.lang.String)
-	 */
 	@Override
 	public boolean containsField(String s) {
 		boolean has = writeable.containsKey(s);
 		return (has) ? has : super.containsField(s);
 	}
 
-	/* (non-Javadoc)
-	 * @see org.bson.LazyBSONObject#keySet()
-	 */
 	@Override
 	public Set<String> keySet() {
 		Set<String> combined = new HashSet<String>();
@@ -117,9 +96,6 @@ public class LazyWriteableDBObject extends LazyDBObject {
 		return combined;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.bson.LazyBSONObject#isEmpty()
-	 */
 	@Override
 	public boolean isEmpty() {
 		return writeable.isEmpty() || super.isEmpty();

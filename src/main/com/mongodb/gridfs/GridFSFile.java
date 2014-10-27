@@ -189,7 +189,8 @@ public abstract class GridFSFile implements DBObject {
     // ------------------------------
     // --------- DBOBject methods ---
     // ------------------------------
-    
+
+    @Override
     public Object put( String key , Object v ){
         if ( key == null )
             throw new RuntimeException( "key should never be null" );
@@ -212,6 +213,7 @@ public abstract class GridFSFile implements DBObject {
         return v;
     }
 
+    @Override
     public Object get( String key ){
         if ( key == null )
             throw new RuntimeException( "key should never be null" );
@@ -232,30 +234,33 @@ public abstract class GridFSFile implements DBObject {
         return _extradata.get( key );
     }
 
+    @Override
     public void putAll( BSONObject o ){
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public void putAll( Map m ){
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public Map toMap(){
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public Object removeField( String key ){
         throw new UnsupportedOperationException();
     }
 
-    /*
-     * @deprecated
-     */
+    @Override
     @Deprecated
     public boolean containsKey( String s ){
         return containsField( s );
     }
 
+    @Override
     public boolean containsField(String s){
         return keySet().contains( s );
     }
@@ -268,10 +273,12 @@ public abstract class GridFSFile implements DBObject {
         return keys;
     }
 
+    @Override
     public boolean isPartialObject(){
         return false;
     }
 
+    @Override
     public void markAsPartialObject(){
         throw new RuntimeException( "can't load partial GridFSFile file" );
     }

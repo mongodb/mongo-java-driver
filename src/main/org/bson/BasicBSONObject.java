@@ -298,13 +298,7 @@ public class BasicBSONObject extends LinkedHashMap<String,Object> implements BSO
         return (foo != null) ? (Date)foo : def;
     }
 
-    /** 
-     * Add a key/value pair to this object
-     * 
-     * @param key the field name
-     * @param val the field value
-     * @return the {@code val} parameter
-     */
+    @Override
     public Object put( String key , Object val ){
         return super.put( key , val );
     }

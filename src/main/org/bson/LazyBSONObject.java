@@ -40,10 +40,6 @@ import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
- * @author antoine
- * @author brendan
- * @author scotthernandez
- * @author Kilroy Wuz Here
  */
 public class LazyBSONObject implements BSONObject {
 
@@ -357,18 +353,39 @@ public class LazyBSONObject implements BSONObject {
         }
     }
 
+    /**
+     * Always throws {@code UnsupportedOperationException}.
+     *
+     * @param key Name to set
+     * @param v   Corresponding value
+     * @return will not return normally
+     * @throws java.lang.UnsupportedOperationException
+     */
     public Object put( String key, Object v ){
         throw new UnsupportedOperationException( "Object is read only" );
     }
 
+    /**
+     * Always throws {@code UnsupportedOperationException}.
+     *
+     * @param o the object
+     * @throws java.lang.UnsupportedOperationException
+     */
     public void putAll( BSONObject o ){
         throw new UnsupportedOperationException( "Object is read only" );
     }
 
+    /**
+     * Always throws {@code UnsupportedOperationException}.
+     *
+     * @param m the map
+     * @throws java.lang.UnsupportedOperationException
+     */
     public void putAll( Map m ){
         throw new UnsupportedOperationException( "Object is read only" );
     }
 
+    @Override
     public Object get( String key ){
         //get element up to the key
         ElementRecord element = getElement(key);
@@ -429,6 +446,13 @@ public class LazyBSONObject implements BSONObject {
         throw new UnsupportedOperationException( "Not Supported" );
     }
 
+    /**
+     * Always throws {@code UnsupportedOperationException}.
+     *
+     * @param key The name of the field to remove
+     * @return will not return normally
+     * @throws java.lang.UnsupportedOperationException
+     */
     public Object removeField( String key ){
         throw new UnsupportedOperationException( "Object is read only" );
     }

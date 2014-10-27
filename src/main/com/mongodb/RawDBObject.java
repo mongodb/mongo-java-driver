@@ -87,20 +87,48 @@ public class RawDBObject implements DBObject {
         return m;
     }
 
+    /**
+     * Always throws {@code UnsupportedOperationException}.
+     *
+     * @param key Name to set
+     * @param v   Corresponding value
+     * @return will not return normally
+     * @throws java.lang.UnsupportedOperationException
+     */
     public Object put( String key , Object v ){
-        throw new RuntimeException( "read only" );
+        throw new UnsupportedOperationException( "Object is read only" );
     }
 
+
+    /**
+     * Always throws {@code UnsupportedOperationException}.
+     *
+     * @param o the object
+     * @throws java.lang.UnsupportedOperationException
+     */
     public void putAll( BSONObject o ){
-        throw new RuntimeException( "read only" );
-    }
-    
-    public void putAll( Map m ){
-        throw new RuntimeException( "read only" );
+        throw new UnsupportedOperationException( "Object is read only" );
     }
 
+    /**
+     * Always throws {@code UnsupportedOperationException}.
+     *
+     * @param m the map
+     * @throws java.lang.UnsupportedOperationException
+     */
+    public void putAll( Map m ){
+        throw new UnsupportedOperationException( "Object is read only" );
+    }
+
+    /**
+     * Always throws {@code UnsupportedOperationException}.
+     *
+     * @param key The name of the field to remove
+     * @return will not return normally
+     * @throws java.lang.UnsupportedOperationException
+     */
     public Object removeField( String key ){
-        throw new RuntimeException( "read only" );
+        throw new UnsupportedOperationException( "Object is read only" );
     }
 
     /**

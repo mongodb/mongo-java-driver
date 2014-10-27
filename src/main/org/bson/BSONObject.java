@@ -28,8 +28,9 @@ public interface BSONObject {
      * Sets a name/value pair in this object.
      *
      * @param key Name to set
-     * @param v Corresponding value
-     * @return <tt>v</tt>
+     * @param v   Corresponding value
+     * @return the previous value associated with <tt>key</tt>, or <tt>null</tt> if there was no mapping for <tt>key</tt>. (A <tt>null</tt>
+     * return can also indicate that the map previously associated <tt>null</tt> with <tt>key</tt>.)
      */
     public Object put( String key , Object v );
 
