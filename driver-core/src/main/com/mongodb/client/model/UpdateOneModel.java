@@ -19,7 +19,7 @@ package com.mongodb.client.model;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * A model describing an update to at most one document that matches the query criteria. The update to apply must include only update
+ * A model describing an update to at most one document that matches the query filter. The update to apply must include only update
  * operators.
  *
  * @param <T> the type of document to update.  In practice this doesn't actually apply to updates but is here for consistency with the other
@@ -29,24 +29,24 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  */
 public final class UpdateOneModel<T> extends WriteModel<T> {
-    private final Object criteria;
+    private final Object filter;
     private final Object update;
     private final UpdateOptions options;
 
     /**
      * Construct a new instance.
      *
-     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a {@code Codec} is
+     * @param filter a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec} is
      *                 registered
      * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. This
      *                 can be of any type for which a {@code Codec} is registered
      */
-    public UpdateOneModel(final Object criteria, final Object update) {
-        this(criteria, update, new UpdateOptions() {
+    public UpdateOneModel(final Object filter, final Object update) {
+        this(filter, update, new UpdateOptions() {
             /**
-             * Set to true if a new document should be inserted if there are no matches to the query criteria.
+             * Set to true if a new document should be inserted if there are no matches to the query filter.
              *
-             * @param upsert true if a new document should be inserted if there are no matches to the query criteria
+             * @param upsert true if a new document should be inserted if there are no matches to the query filter
              * @return this
              */
             public UpdateOptions upsert(final boolean upsert) {
@@ -59,25 +59,25 @@ public final class UpdateOneModel<T> extends WriteModel<T> {
     /**
      * Construct a new instance.
      *
-     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a {@code Codec} is
+     * @param filter a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec} is
      *                 registered
      * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. This
      *                 can be of any type for which a {@code Codec} is registered
      * @param options the options to apply
      */
-    public UpdateOneModel(final Object criteria, final Object update, final UpdateOptions options) {
-        this.criteria = notNull("criteria", criteria);
+    public UpdateOneModel(final Object filter, final Object update, final UpdateOptions options) {
+        this.filter = notNull("filter", filter);
         this.update = notNull("update", update);
         this.options = notNull("options", options);
     }
 
     /**
-     * Gets the query criteria.
+     * Gets the query filter.
      *
-     * @return the query criteria
+     * @return the query filter
      */
-    public Object getCriteria() {
-        return criteria;
+    public Object getFilter() {
+        return filter;
     }
 
     /**

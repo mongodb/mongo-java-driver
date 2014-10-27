@@ -90,7 +90,7 @@ class GroupOperationSpecification extends OperationFunctionalSpecification {
     }
 
 
-    def 'should be able to group with criteria'() {
+    def 'should be able to group with filter'() {
         given:
         Document pete = new Document('name', 'Pete').append('job', 'handyman')
         Document sam = new Document('name', 'Sam').append('job', 'plumber')
@@ -102,7 +102,7 @@ class GroupOperationSpecification extends OperationFunctionalSpecification {
                                         new BsonJavaScript('function ( curr, result ) { }'),
                                         new BsonDocument(), new DocumentCodec())
                 .key(new BsonDocument('name', new BsonInt32(1)))
-                .criteria(new BsonDocument('name': new BsonString('Pete')))
+                .filter(new BsonDocument('name': new BsonString('Pete')))
                 .execute(getBinding());
 
         then:

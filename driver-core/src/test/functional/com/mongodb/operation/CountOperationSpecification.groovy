@@ -166,7 +166,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw with bad hint with mongod 2.6+'() {
         given:
         def countOperation = new CountOperation(getNamespace())
-                .criteria(new BsonDocument('a', new BsonInt32(1)))
+                .filter(new BsonDocument('a', new BsonInt32(1)))
                 .hint(new BsonString('BAD HINT'))
 
         when:
@@ -181,7 +181,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should throw with bad hint with mongod 2.6+ asynchronously'() {
         given:
         def countOperation = new CountOperation(getNamespace())
-                .criteria(new BsonDocument('a', new BsonInt32(1)))
+                .filter(new BsonDocument('a', new BsonInt32(1)))
                 .hint(new BsonString('BAD HINT'))
 
         when:
@@ -195,7 +195,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should ignore with bad hint with mongod < 2.6'() {
         given:
         def countOperation = new CountOperation(getNamespace())
-                .criteria(new BsonDocument('a', new BsonInt32(1)))
+                .filter(new BsonDocument('a', new BsonInt32(1)))
                 .hint(new BsonString('BAD HINT'))
 
         when:
@@ -210,7 +210,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should ignore with bad hint with mongod < 2.6 asynchronously'() {
         given:
         def countOperation = new CountOperation(getNamespace())
-                .criteria(new BsonDocument('a', new BsonInt32(1)))
+                .filter(new BsonDocument('a', new BsonInt32(1)))
                 .hint(new BsonString('BAD HINT'))
 
         when:
@@ -224,7 +224,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should explain'() {
         given:
         def countOperation = new CountOperation(getNamespace())
-                .criteria(new BsonDocument('a', new BsonInt32(1)))
+                .filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
         BsonDocument result = countOperation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER).execute(getBinding())
@@ -238,7 +238,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should explain asynchronously'() {
         given:
         def countOperation = new CountOperation(getNamespace())
-                .criteria(new BsonDocument('a', new BsonInt32(1)))
+                .filter(new BsonDocument('a', new BsonInt32(1)))
 
         when:
         BsonDocument result = countOperation.asExplainableOperationAsync(ExplainVerbosity.QUERY_PLANNER).executeAsync(getAsyncBinding())

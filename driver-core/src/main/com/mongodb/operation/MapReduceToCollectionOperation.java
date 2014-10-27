@@ -59,7 +59,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
     private final String collectionName;
     private BsonJavaScript finalizeFunction;
     private BsonDocument scope;
-    private BsonDocument criteria;
+    private BsonDocument filter;
     private BsonDocument sort;
     private int limit;
     private boolean jsMode;
@@ -160,24 +160,24 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
     }
 
     /**
-     * Gets the query criteria.
+     * Gets the query filter.
      *
-     * @return the query criteria
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     * @return the query filter
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    public BsonDocument getCriteria() {
-        return criteria;
+    public BsonDocument getFilter() {
+        return filter;
     }
 
     /**
-     * Sets the criteria to apply to the query.
+     * Sets the filter to apply to the query.
      *
-     * @param criteria the criteria to apply to the query.
+     * @param filter the filter to apply to the query.
      * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    public MapReduceToCollectionOperation criteria(final BsonDocument criteria) {
-        this.criteria = criteria;
+    public MapReduceToCollectionOperation filter(final BsonDocument filter) {
+        this.filter = filter;
         return this;
     }
 
@@ -452,7 +452,7 @@ public class MapReduceToCollectionOperation implements AsyncWriteOperation<MapRe
                                            .append("map", getMapFunction())
                                            .append("reduce", getReduceFunction())
                                            .append("out", outputDocument)
-                                           .append("query", asValueOrNull(getCriteria()))
+                                           .append("query", asValueOrNull(getFilter()))
                                            .append("sort", asValueOrNull(getSort()))
                                            .append("finalize", asValueOrNull(getFinalizeFunction()))
                                            .append("scope", asValueOrNull(getScope()))

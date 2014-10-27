@@ -50,7 +50,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private final BsonDocument update;
-    private BsonDocument criteria;
+    private BsonDocument filter;
     private BsonDocument projection;
     private BsonDocument sort;
     private long maxTimeMS;
@@ -98,24 +98,24 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
     }
 
     /**
-     * Gets the query criteria.
+     * Gets the query filter.
      *
-     * @return the query criteria
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     * @return the query filter
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    public BsonDocument getCriteria() {
-        return criteria;
+    public BsonDocument getFilter() {
+        return filter;
     }
 
     /**
-     * Sets the criteria to apply to the query.
+     * Sets the filter to apply to the query.
      *
-     * @param criteria the criteria, which may be null.
+     * @param filter the filter, which may be null.
      * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    public FindAndUpdateOperation<T> criteria(final BsonDocument criteria) {
-        this.criteria = criteria;
+    public FindAndUpdateOperation<T> filter(final BsonDocument filter) {
+        this.filter = filter;
         return this;
     }
 
@@ -245,7 +245,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
 
     private BsonDocument getCommand() {
         BsonDocument command = new BsonDocument("findandmodify", new BsonString(namespace.getCollectionName()));
-        putIfNotNull(command, "query", getCriteria());
+        putIfNotNull(command, "query", getFilter());
         putIfNotNull(command, "fields", getProjection());
         putIfNotNull(command, "sort", getSort());
         putIfTrue(command, "new", isReturnUpdated());

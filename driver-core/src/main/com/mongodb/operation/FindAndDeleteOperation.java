@@ -43,7 +43,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
-    private BsonDocument criteria;
+    private BsonDocument filter;
     private BsonDocument projection;
     private BsonDocument sort;
     private long maxTimeMS;
@@ -78,24 +78,24 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
     }
 
     /**
-     * Gets the query criteria.
+     * Gets the query filter.
      *
-     * @return the query criteria
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     * @return the query filter
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    public BsonDocument getCriteria() {
-        return criteria;
+    public BsonDocument getFilter() {
+        return filter;
     }
 
     /**
-     * Sets the criteria to apply to the query.
+     * Sets the filter to apply to the query.
      *
-     * @param criteria the criteria, which may be null.
+     * @param filter the filter, which may be null.
      * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    public FindAndDeleteOperation<T> criteria(final BsonDocument criteria) {
-        this.criteria = criteria;
+    public FindAndDeleteOperation<T> filter(final BsonDocument filter) {
+        this.filter = filter;
         return this;
     }
 
@@ -185,7 +185,7 @@ public class FindAndDeleteOperation<T> implements AsyncWriteOperation<T>, WriteO
 
     private BsonDocument getFindAndRemoveDocument() {
         BsonDocument command = new BsonDocument("findandmodify", new BsonString(namespace.getCollectionName()));
-        putIfNotNull(command, "query", getCriteria());
+        putIfNotNull(command, "query", getFilter());
         putIfNotNull(command, "fields", getProjection());
         putIfNotNull(command, "sort", getSort());
         putIfNotZero(command, "maxTimeMS", getMaxTime(MILLISECONDS));

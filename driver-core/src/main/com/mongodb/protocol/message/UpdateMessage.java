@@ -59,7 +59,7 @@ public class UpdateMessage extends RequestMessage {
         }
         bsonOutput.writeInt32(flags);
 
-        addDocument(updateRequest.getCriteria(), bsonOutput, new NoOpFieldNameValidator());
+        addDocument(updateRequest.getFilter(), bsonOutput, new NoOpFieldNameValidator());
         if (updateRequest.getType() == REPLACE) {
             addCollectibleDocument(updateRequest.getUpdate(), bsonOutput, new CollectibleDocumentFieldNameValidator());
         } else {

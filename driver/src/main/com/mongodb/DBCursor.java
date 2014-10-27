@@ -60,7 +60,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class DBCursor implements Cursor, Iterable<DBObject> {
     private final DBCollection collection;
     private final OperationExecutor executor;
-    private final BsonDocument criteria;
+    private final BsonDocument filter;
     private final FindOptions findOptions;
     private int options;
     private ReadPreference readPreference;
@@ -100,7 +100,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
     }
 
-    private DBCursor(final DBCollection collection, final OperationExecutor executor, final BsonDocument criteria,
+    private DBCursor(final DBCollection collection, final OperationExecutor executor, final BsonDocument filter,
                      final FindOptions findOptions,
                      final ReadPreference readPreference) {
         if (collection == null) {
@@ -108,7 +108,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
         this.collection = collection;
         this.executor = executor;
-        this.criteria = criteria;
+        this.filter = filter;
         this.findOptions = findOptions;
         this.readPreference = readPreference;
         this.resultDecoder = collection.getObjectCodec();
@@ -123,7 +123,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the new cursor
      */
     public DBCursor copy() {
-        return new DBCursor(collection, executor, criteria, new FindOptions(findOptions), readPreference);
+        return new DBCursor(collection, executor, filter, new FindOptions(findOptions), readPreference);
     }
 
     /**
@@ -498,8 +498,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         if ((this.options & Bytes.QUERYOPTION_PARTIAL) != 0) {
             operation.partial(true);
         }
-        if (criteria != null) {
-            operation.criteria(criteria);
+        if (filter != null) {
+            operation.filter(filter);
         }
         return operation;
     }
@@ -726,7 +726,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the query that cursor used
      */
     public DBObject getQuery() {
-        return DBObjects.toDBObject(criteria);
+        return DBObjects.toDBObject(filter);
     }
 
     /**

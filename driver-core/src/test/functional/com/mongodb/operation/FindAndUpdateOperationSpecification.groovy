@@ -47,7 +47,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         when:
         def update = new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1)))
         FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update)
-                .criteria(new BsonDocument('name', new BsonString('Pete')))
+                .filter(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.execute(getBinding())
 
         then:
@@ -68,7 +68,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         when:
         def update = new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1)))
         FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update)
-                .criteria(new BsonDocument('name', new BsonString('Pete')))
+                .filter(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:
@@ -88,7 +88,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         when:
         def update = new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1)))
         FindAndUpdateOperation<Worker> operation = new FindAndUpdateOperation<Worker>(getNamespace(), workerCodec, update)
-                .criteria(new BsonDocument('name', new BsonString('Pete')))
+                .filter(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 
         then:
@@ -109,7 +109,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         when:
         def update = new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1)))
         FindAndUpdateOperation<Worker> operation = new FindAndUpdateOperation<Worker>(getNamespace(), workerCodec, update)
-                .criteria(new BsonDocument('name', new BsonString('Pete')))
+                .filter(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:

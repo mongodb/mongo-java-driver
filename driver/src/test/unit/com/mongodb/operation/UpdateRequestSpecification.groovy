@@ -45,7 +45,7 @@ class UpdateRequestSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
-    def 'should not allow null criteria'() {
+    def 'should not allow null filter'() {
         when:
         new UpdateRequest(null, new BsonDocument(), WriteRequest.Type.UPDATE)
 
@@ -63,14 +63,14 @@ class UpdateRequestSpecification extends Specification {
 
     def 'should set fields from constructor'() {
         given:
-        def criteria = new BsonDocument('_id', new BsonInt32(1))
+        def filter = new BsonDocument('_id', new BsonInt32(1))
         def update = new BsonDocument('$set', new BsonDocument('x', BsonBoolean.TRUE))
 
         when:
-        def updateRequest = new UpdateRequest(criteria, update, WriteRequest.Type.UPDATE)
+        def updateRequest = new UpdateRequest(filter, update, WriteRequest.Type.UPDATE)
 
         then:
-        updateRequest.criteria == criteria
+        updateRequest.filter == filter
         updateRequest.update == update
 
     }

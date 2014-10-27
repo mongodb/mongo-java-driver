@@ -29,7 +29,7 @@ class DeleteRequestSpecification extends Specification {
         new DeleteRequest(new BsonDocument()).getType() == WriteRequest.Type.DELETE
     }
 
-    def 'should not allow null criteria'() {
+    def 'should not allow null filter'() {
         when:
         new DeleteRequest(null)
 
@@ -39,13 +39,13 @@ class DeleteRequestSpecification extends Specification {
 
     def 'should set fields from constructor'() {
         given:
-        def criteria = new BsonDocument('_id', new BsonInt32(1))
+        def filter = new BsonDocument('_id', new BsonInt32(1))
 
         when:
-        def removeRequest = new DeleteRequest(criteria)
+        def removeRequest = new DeleteRequest(filter)
 
         then:
-        removeRequest.criteria == criteria
+        removeRequest.filter == filter
     }
 
     def 'multi property should default to true'() {

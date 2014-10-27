@@ -38,12 +38,12 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(secondDocument);
 
         // When
-        Document searchCriteria = new Document("_id", 2);
+        Document filter = new Document("_id", 2);
         Document newDocumentWithoutFieldForA = new Document("_id", 2).append("x", 7);
-        collection.replaceOne(searchCriteria, newDocumentWithoutFieldForA);
+        collection.replaceOne(filter, newDocumentWithoutFieldForA);
 
         // Then
-        Document document = collection.find(searchCriteria, new FindOptions()).first();
+        Document document = collection.find(filter, new FindOptions()).first();
         assertThat(document, is(newDocumentWithoutFieldForA));
     }
 
@@ -84,10 +84,10 @@ public class ReplaceAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(firstDocument);
 
         // When
-        Document searchCriteria = new Document("a", 1);
+        Document filter = new Document("a", 1);
         Document newDocumentWithDifferentId = new Document("_id", 2).append("a", 3);
         try {
-            collection.replaceOne(searchCriteria, newDocumentWithDifferentId);
+            collection.replaceOne(filter, newDocumentWithDifferentId);
             fail("Should have thrown an exception");
         } catch (WriteConcernException e) {
             // Then

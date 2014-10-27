@@ -16,8 +16,10 @@
 
 package com.mongodb.client.model;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
- * A model describing the removal of at most one document matching the query criteria.
+ * A model describing the removal of at most one document matching the query filter.
  *
  * @param <T> the type of document to update.  In practice this doesn't actually apply to updates but is here for consistency with the
  *           other write models
@@ -25,24 +27,24 @@ package com.mongodb.client.model;
  * @mongodb.driver.manual tutorial/remove-documents/ Remove
  */
 public class DeleteOneModel<T> extends WriteModel<T> {
-    private final Object criteria;
+    private final Object filter;
 
     /**
      * Construct a new instance.
      *
-     * @param criteria a document describing the query criteria, which may not be null. The criteria can be of any type for which a
+     * @param filter a document describing the query filter, which may not be null. The filter can be of any type for which a
      * {@code Codec} is registered
      */
-    public DeleteOneModel(final Object criteria) {
-        this.criteria = criteria;
+    public DeleteOneModel(final Object filter) {
+        this.filter = notNull("filter", filter);
     }
 
     /**
-     * Gets the query criteria.
+     * Gets the query filter.
      *
-     * @return the query criteria
+     * @return the query filter
      */
-    public Object getCriteria() {
-        return criteria;
+    public Object getFilter() {
+        return filter;
     }
 }

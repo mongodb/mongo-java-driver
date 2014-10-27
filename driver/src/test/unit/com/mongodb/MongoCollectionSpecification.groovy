@@ -190,7 +190,7 @@ class MongoCollectionSpecification extends Specification {
         replaceRequest.type == REPLACE
         !replaceRequest.multi
         replaceRequest.upsert
-        replaceRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        replaceRequest.filter == new BsonDocument('_id', new BsonInt32(1))
         replaceRequest.update == new BsonDocument('color', new BsonString('blue'))
 
         result.modifiedCount == 0
@@ -215,7 +215,7 @@ class MongoCollectionSpecification extends Specification {
         updateRequest.type == UPDATE
         !updateRequest.multi
         updateRequest.upsert
-        updateRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        updateRequest.filter == new BsonDocument('_id', new BsonInt32(1))
         updateRequest.update == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
 
         result.modifiedCount == 0
@@ -240,7 +240,7 @@ class MongoCollectionSpecification extends Specification {
         updateRequest.type == UPDATE
         updateRequest.multi
         updateRequest.upsert
-        updateRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        updateRequest.filter == new BsonDocument('_id', new BsonInt32(1))
         updateRequest.update == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
 
         result.modifiedCount == 0
@@ -261,7 +261,7 @@ class MongoCollectionSpecification extends Specification {
 
         def removeRequest = operation.deleteRequests[0]
         !removeRequest.multi
-        removeRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        removeRequest.filter == new BsonDocument('_id', new BsonInt32(1))
 
         result.deletedCount == 1
     }
@@ -279,7 +279,7 @@ class MongoCollectionSpecification extends Specification {
 
         def deleteRequest = operation.deleteRequests[0]
         deleteRequest.multi
-        deleteRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        deleteRequest.filter == new BsonDocument('_id', new BsonInt32(1))
 
         result.deletedCount == 1
     }
@@ -306,7 +306,7 @@ class MongoCollectionSpecification extends Specification {
         then:
         def operation = executor.getReadOperation() as FindOperation
         operation.with {
-            criteria == new BsonDocument('cold', BsonBoolean.TRUE)
+            filter == new BsonDocument('cold', BsonBoolean.TRUE)
             batchSize == 4
             getMaxTime(TimeUnit.SECONDS) == 1
             skip == 5
@@ -362,7 +362,7 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         def operation = executor.getReadOperation() as CountOperation
-        operation.criteria == new BsonDocument('cold', BsonBoolean.TRUE)
+        operation.filter == new BsonDocument('cold', BsonBoolean.TRUE)
         operation.getMaxTime(TimeUnit.SECONDS) == 1
         operation.skip == 5
         operation.limit == 100
@@ -389,12 +389,11 @@ class MongoCollectionSpecification extends Specification {
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
 
         when:
-        collection.distinct('fieldName1', new DistinctOptions().criteria(new Document('cold', true))
-                                                               .maxTime(1, TimeUnit.SECONDS))
+        collection.distinct('fieldName1', new Document('cold', true), new DistinctOptions().maxTime(1, TimeUnit.SECONDS))
 
         then:
         def operation = executor.getReadOperation() as DistinctOperation
-        operation.criteria == new BsonDocument('cold', BsonBoolean.TRUE)
+        operation.filter == new BsonDocument('cold', BsonBoolean.TRUE)
         operation.getMaxTime(TimeUnit.SECONDS) == 1
         executor.readPreference == secondary()
     }
@@ -431,30 +430,30 @@ class MongoCollectionSpecification extends Specification {
         updateOneRequest.type == UPDATE
         !updateOneRequest.multi
         updateOneRequest.upsert
-        updateOneRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        updateOneRequest.filter == new BsonDocument('_id', new BsonInt32(1))
         updateOneRequest.update == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
 
         def updateManyRequest = operation.writeRequests[2] as com.mongodb.operation.UpdateRequest
         updateManyRequest.type == UPDATE
         updateManyRequest.multi
         updateManyRequest.upsert
-        updateManyRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        updateManyRequest.filter == new BsonDocument('_id', new BsonInt32(1))
         updateManyRequest.update == new BsonDocument('$set', new BsonDocument('color', new BsonString('blue')))
 
         def replaceRequest = operation.writeRequests[3] as com.mongodb.operation.UpdateRequest
         replaceRequest.type == REPLACE
         !replaceRequest.multi
         replaceRequest.upsert
-        replaceRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        replaceRequest.filter == new BsonDocument('_id', new BsonInt32(1))
         replaceRequest.update == new BsonDocument('color', new BsonString('blue'))
 
         def deleteOneRequest = operation.writeRequests[4] as DeleteRequest
         !deleteOneRequest.multi
-        deleteOneRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        deleteOneRequest.filter == new BsonDocument('_id', new BsonInt32(1))
 
         def deleteManyRequest = operation.writeRequests[5] as DeleteRequest
         deleteManyRequest.multi
-        deleteManyRequest.criteria == new BsonDocument('_id', new BsonInt32(1))
+        deleteManyRequest.filter == new BsonDocument('_id', new BsonInt32(1))
 
         document.containsKey('_id')
     }
@@ -536,7 +535,7 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         def operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation<Document>
-        operation.getCriteria() == null
+        operation.getFilter() == null
         operation.getFinalizeFunction() == null
         operation.getLimit() == 0
         operation.getMapFunction() == new BsonJavaScript('map')
@@ -556,7 +555,7 @@ class MongoCollectionSpecification extends Specification {
         collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
         def options = new MapReduceOptions()
                 .finalizeFunction('finalize')
-                .criteria([criteria: 1] as Document)
+                .filter([filter: 1] as Document)
                 .limit(10)
                 .scope([scope: 1] as Document)
                 .sort([sort: 1] as Document)
@@ -572,7 +571,7 @@ class MongoCollectionSpecification extends Specification {
         operation.getMapFunction() == new BsonJavaScript('map')
         operation.getReduceFunction() == new BsonJavaScript('reduce')
         operation.getFinalizeFunction() == new BsonJavaScript('finalize')
-        operation.getCriteria() == new BsonDocument('criteria', new BsonInt32(1))
+        operation.getFilter() == new BsonDocument('filter', new BsonInt32(1))
         operation.getLimit() == 10
         operation.getScope() == new BsonDocument('scope', new BsonInt32(1))
         operation.getSort() == new BsonDocument('sort', new BsonInt32(1))
@@ -594,7 +593,7 @@ class MongoCollectionSpecification extends Specification {
                 .sharded(true)
                 .nonAtomic(true)
                 .finalizeFunction('finalize')
-                .criteria([criteria: 1] as Document)
+                .filter([filter: 1] as Document)
                 .limit(10)
                 .scope([scope: 1] as Document)
                 .sort([sort: 1] as Document)
@@ -610,7 +609,7 @@ class MongoCollectionSpecification extends Specification {
         operation.getMapFunction() == new BsonJavaScript('map')
         operation.getReduceFunction() == new BsonJavaScript('reduce')
         operation.getFinalizeFunction() == new BsonJavaScript('finalize')
-        operation.getCriteria() == new BsonDocument('criteria', new BsonInt32(1))
+        operation.getFilter() == new BsonDocument('filter', new BsonInt32(1))
         operation.getLimit() == 10
         operation.getScope() == new BsonDocument('scope', new BsonInt32(1))
         operation.getSort() == new BsonDocument('sort', new BsonInt32(1))
@@ -644,7 +643,7 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         def operation = executor.getWriteOperation() as FindAndDeleteOperation
-        operation.getCriteria() == new BsonDocument('cold', new BsonBoolean(true))
+        operation.getFilter() == new BsonDocument('cold', new BsonBoolean(true))
         operation.getProjection() == new BsonDocument('field', new BsonInt32(1))
         operation.getSort() == new BsonDocument('sort', new BsonInt32(-1))
 
@@ -664,7 +663,7 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         def operation = executor.getWriteOperation() as FindAndReplaceOperation
-        operation.getCriteria() == new BsonDocument('cold', new BsonBoolean(true))
+        operation.getFilter() == new BsonDocument('cold', new BsonBoolean(true))
         operation.getReplacement() == new BsonDocument('hot', new BsonBoolean(false))
         operation.getProjection() == new BsonDocument('field', new BsonInt32(1))
         operation.getSort() == new BsonDocument('sort', new BsonInt32(-1))
@@ -699,7 +698,7 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         def operation = executor.getWriteOperation() as FindAndUpdateOperation
-        operation.getCriteria() == new BsonDocument('cold', new BsonBoolean(true))
+        operation.getFilter() == new BsonDocument('cold', new BsonBoolean(true))
         operation.getUpdate() == new BsonDocument('hot', new BsonBoolean(false))
         operation.getProjection() == new BsonDocument('field', new BsonInt32(1))
         operation.getSort() == new BsonDocument('sort', new BsonInt32(-1))

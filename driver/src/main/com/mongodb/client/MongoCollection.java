@@ -77,38 +77,40 @@ public interface MongoCollection<T> {
     /**
      * Counts the number of documents in the collection according to the given options.
      *
-     * @param criteria the query criteria
+     * @param filter the query filter
      * @return the number of documents in the collection
      */
-    long count(Object criteria);
+    long count(Object filter);
 
     /**
      * Counts the number of documents in the collection according to the given options.
      *
-     * @param criteria the query criteria
+     * @param filter the query filter
      * @param options the options describing the count
      * @return the number of documents in the collection
      */
-    long count(Object criteria, CountOptions options);
+    long count(Object filter, CountOptions options);
 
     /**
      * Gets the distinct values of the specified field name.
      *
      * @param fieldName the field name
+     * @param filter the query filter
      * @return a non-null list of distinct values
      * @mongodb.driver.manual reference/command/distinct/ Distinct
      */
-    List<Object> distinct(String fieldName);
+    List<Object> distinct(String fieldName, Object filter);
 
     /**
      * Gets the distinct values of the specified field name.
      *
      * @param fieldName the field name
+     * @param filter the query filter
      * @param distinctOptions the options to apply to the distinct operation
      * @return a non-null list of distinct values
      * @mongodb.driver.manual reference/command/distinct/ Distinct
      */
-    List<Object> distinct(String fieldName, DistinctOptions distinctOptions);
+    List<Object> distinct(String fieldName, Object filter, DistinctOptions distinctOptions);
 
     /**
      * Finds all documents in the collection.
@@ -131,44 +133,44 @@ public interface MongoCollection<T> {
     /**
      * Finds all documents in the collection.
      *
-     * @param criteria the query criteria
+     * @param filter the query filter
      * @return an iterable containing the result of the find operation
      * @mongodb.driver.manual tutorial/query-documents/ Find
      */
-    MongoIterable<T> find(Object criteria);
+    MongoIterable<T> find(Object filter);
 
     /**
      * Finds all documents in the collection.
      *
-     * @param criteria the query criteria
+     * @param filter the query filter
      * @param clazz the class to decode each document into
      * @param <C> the target document type of the iterable.
      * @return an iterable containing the result of the find operation
      * @mongodb.driver.manual tutorial/query-documents/ Find
      */
-    <C> MongoIterable<C> find(Object criteria, Class<C> clazz);
+    <C> MongoIterable<C> find(Object filter, Class<C> clazz);
 
     /**
      * Finds documents in the collection according to the specified options.
      *
-     * @param criteria the query criteria
+     * @param filter the query filter
      * @param findOptions the options to apply to the find operation
      * @return an iterable containing the result of the find operation
      * @mongodb.driver.manual tutorial/query-documents/ Find
      */
-    MongoIterable<T> find(Object criteria, FindOptions findOptions);
+    MongoIterable<T> find(Object filter, FindOptions findOptions);
 
     /**
-     * Finds documents according to the specified criteria.
+     * Finds documents according to the specified query filter.
      *
-     * @param criteria the query criteria
+     * @param filter the query filter
      * @param findOptions the options describing the find operation
      * @param clazz the class to decode each document into
      * @param <C> the target document type of the iterable.
      * @return an iterable containing the result of the find operation
      * @mongodb.driver.manual tutorial/query-documents/ Find
      */
-    <C> MongoIterable<C> find(Object criteria, FindOptions findOptions, Class<C> clazz);
+    <C> MongoIterable<C> find(Object filter, FindOptions findOptions, Class<C> clazz);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.
@@ -319,49 +321,49 @@ public interface MongoCollection<T> {
     void insertMany(List<? extends T> documents, InsertManyOptions options);
 
     /**
-     * Removes at most one document from the collection that matches the given criteria.  If no documents match,
+     * Removes at most one document from the collection that matches the given filter.  If no documents match,
      * the collection is not modified.
      *
-     * @param criteria the query criteria to apply the the delete operation
+     * @param filter the query filter to apply the the delete operation
      * @return the result of the remove one operation
      * @throws com.mongodb.MongoException
      */
-    DeleteResult deleteOne(Object criteria);
+    DeleteResult deleteOne(Object filter);
 
     /**
-     * Removes all documents from the collection that match the given criteria.  If no documents match, the collection is not modified.
+     * Removes all documents from the collection that match the given query filter.  If no documents match, the collection is not modified.
      *
-     * @param criteria the query criteria to apply the the delete operation
+     * @param filter the query filter to apply the the delete operation
      * @return the result of the remove many operation
      * @throws com.mongodb.MongoException
      */
-    DeleteResult deleteMany(Object criteria);
+    DeleteResult deleteMany(Object filter);
 
     /**
      * Replace a document in the collection according to the specified arguments.
      *
      * @return the result of the replace one operation
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
-     * @param criteria the query criteria to apply the the replace operation
+     * @param filter the query filter to apply the the replace operation
      * @param replacement the replacement document
      */
-    UpdateResult replaceOne(Object criteria, T replacement);
+    UpdateResult replaceOne(Object filter, T replacement);
 
     /**
      * Replace a document in the collection according to the specified arguments.
      *
      * @return the result of the replace one operation
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
-     * @param criteria the query criteria to apply the the replace operation
+     * @param filter the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @param options the options to apply to the replace operation
      */
-    UpdateResult replaceOne(Object criteria, T replacement, UpdateOptions options);
+    UpdateResult replaceOne(Object filter, T replacement, UpdateOptions options);
 
     /**
      * Update a single document in the collection according to the specified arguments.
      *
-     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
+     * @param filter a document describing the query filter, which may not be null. This can be of any type for which a
      * {@code Codec} is registered
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
@@ -369,12 +371,12 @@ public interface MongoCollection<T> {
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    UpdateResult updateOne(Object criteria, Object update);
+    UpdateResult updateOne(Object filter, Object update);
 
     /**
      * Update a single document in the collection according to the specified arguments.
      *
-     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
+     * @param filter a document describing the query filter, which may not be null. This can be of any type for which a
      * {@code Codec} is registered
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
@@ -383,7 +385,7 @@ public interface MongoCollection<T> {
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    UpdateResult updateOne(Object criteria, Object update, UpdateOptions options);
+    UpdateResult updateOne(Object filter, Object update, UpdateOptions options);
 
     /**
      * Update a single document in the collection according to the specified arguments.
@@ -398,7 +400,7 @@ public interface MongoCollection<T> {
     /**
      * Update a single document in the collection according to the specified arguments.
      *
-     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
+     * @param filter a document describing the query filter, which may not be null. This can be of any type for which a
      * {@code Codec} is registered
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
@@ -406,12 +408,12 @@ public interface MongoCollection<T> {
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    UpdateResult updateMany(Object criteria, Object update);
+    UpdateResult updateMany(Object filter, Object update);
 
     /**
      * Update a single document in the collection according to the specified arguments.
      *
-     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
+     * @param filter a document describing the query filter, which may not be null. This can be of any type for which a
      * {@code Codec} is registered
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
@@ -420,74 +422,74 @@ public interface MongoCollection<T> {
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
-    UpdateResult updateMany(Object criteria, Object update, UpdateOptions options);
+    UpdateResult updateMany(Object filter, Object update, UpdateOptions options);
 
     /**
      * Atomically find a document and remove it.
      *
-     * @param criteria the query criteria to find the document with
-     * @return the document that was removed.  If no documents matched the criteria, then null will be returned
+     * @param filter the query filter to find the document with
+     * @return the document that was removed.  If no documents matched the query filter, then null will be returned
      */
-    T findOneAndDelete(Object criteria);
+    T findOneAndDelete(Object filter);
 
     /**
      * Atomically find a document and remove it.
      *
-     * @param criteria the query criteria to find the document with
+     * @param filter the query filter to find the document with
      * @param options the options to apply to the operation
-     * @return the document that was removed.  If no documents matched the criteria, then null will be returned
+     * @return the document that was removed.  If no documents matched the query filter, then null will be returned
      */
-    T findOneAndDelete(Object criteria, FindOneAndDeleteOptions options);
+    T findOneAndDelete(Object filter, FindOneAndDeleteOptions options);
 
     /**
      * Atomically find a document and replace it.
      *
-     * @param criteria the query criteria to apply the the replace operation
+     * @param filter the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @return the document that was replaced.  Depending on the value of the {@code returnReplaced} property,
-     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the criteria,
+     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the query filter,
      * then null will be returned
      */
-    T findOneAndReplace(Object criteria, T replacement);
+    T findOneAndReplace(Object filter, T replacement);
 
     /**
      * Atomically find a document and replace it.
      *
-     * @param criteria the query criteria to apply the the replace operation
+     * @param filter the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @param options the options to apply to the operation
      * @return the document that was replaced.  Depending on the value of the {@code returnReplaced} property,
-     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the criteria,
+     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the query filter,
      * then null will be returned
      */
-    T findOneAndReplace(Object criteria, T replacement, FindOneAndReplaceOptions options);
+    T findOneAndReplace(Object filter, T replacement, FindOneAndReplaceOptions options);
 
     /**
      * Atomically find a document and update it.
      *
-     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
+     * @param filter a document describing the query filter, which may not be null. This can be of any type for which a
      * {@code Codec} is registered
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
      * @return the document that was updated.  Depending on the value of the {@code returnUpdated} property,
-     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the criteria,
+     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the query filter,
      * then null will be returned
      */
-    T findOneAndUpdate(Object criteria, Object update);
+    T findOneAndUpdate(Object filter, Object update);
 
     /**
      * Atomically find a document and update it.
      *
-     * @param criteria a document describing the query criteria, which may not be null. This can be of any type for which a
+     * @param filter a document describing the query filter, which may not be null. This can be of any type for which a
      * {@code Codec} is registered
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
      * @param options the options to apply to the operation
      * @return the document that was updated.  Depending on the value of the {@code returnUpdated} property,
-     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the criteria,
+     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the query filter,
      * then null will be returned
      */
-    T findOneAndUpdate(Object criteria, Object update, FindOneAndUpdateOptions options);
+    T findOneAndUpdate(Object filter, Object update, FindOneAndUpdateOptions options);
 
     /**
      * Create multiple parallel cursors for reading all the documents from a collection, thereby increasing throughput.

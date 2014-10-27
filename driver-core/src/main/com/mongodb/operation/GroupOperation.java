@@ -50,7 +50,7 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     private final BsonDocument initial;
     private BsonDocument key;
     private BsonJavaScript keyFunction;
-    private BsonDocument criteria;
+    private BsonDocument filter;
     private BsonJavaScript finalizeFunction;
 
     /**
@@ -129,22 +129,22 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
     }
 
     /**
-     * Gets the selection criteria to determine which documents in the collection to process.
+     * Gets the query filter to determine which documents in the collection to process.
      *
-     * @return the selection criteria to determine which documents in the collection to process.
+     * @return the query filter to determine which documents in the collection to process.
      */
-    public BsonDocument getCriteria() {
-        return criteria;
+    public BsonDocument getFilter() {
+        return filter;
     }
 
     /**
-     * Sets the optional selection criteria to determine which documents in the collection to process.
+     * Sets the optional query filter to determine which documents in the collection to process.
      *
-     * @param criteria the selection criteria to determine which documents in the collection to process.
+     * @param filter the query filter to determine which documents in the collection to process.
      * @return this
      */
-    public GroupOperation<T> criteria(final BsonDocument criteria) {
-        this.criteria = criteria;
+    public GroupOperation<T> filter(final BsonDocument filter) {
+        this.filter = filter;
         return this;
     }
 
@@ -240,8 +240,8 @@ public class GroupOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>
             document.put("finalize", getFinalizeFunction());
         }
 
-        if (getCriteria() != null) {
-            document.put("cond", getCriteria());
+        if (getFilter() != null) {
+            document.put("cond", getFilter());
         }
 
         return new BsonDocument("group", document);

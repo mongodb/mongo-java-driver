@@ -58,12 +58,12 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         cursor.next() == document
     }
 
-    def 'should apply criteria'() {
+    def 'should apply filter'() {
         given:
         def document = new Document('_id', 1)
         getCollectionHelper().insertDocuments(new DocumentCodec(), document, new Document());
         def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .criteria(new BsonDocument('_id', new BsonInt32(1)))
+                .filter(new BsonDocument('_id', new BsonInt32(1)))
 
         when:
         def cursor = findOperation.execute(getBinding())
@@ -210,7 +210,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.createIndex(new BsonDocument('x', new BsonInt32(1)))
 
         def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .criteria(new BsonDocument('x', new BsonInt32(7)))
+                .filter(new BsonDocument('x', new BsonInt32(7)))
                 .modifiers(new BsonDocument('$returnKey', BsonBoolean.TRUE))
 
         when:

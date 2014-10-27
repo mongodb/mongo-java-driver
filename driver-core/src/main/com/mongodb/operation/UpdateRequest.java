@@ -28,22 +28,22 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class UpdateRequest extends WriteRequest {
     private final BsonDocument update;
     private final Type updateType;
-    private final BsonDocument criteria;
+    private final BsonDocument filter;
     private boolean isMulti = true;
     private boolean isUpsert = false;
 
     /**
      * Construct a new instance.
-     *  @param criteria the non-null query criteria
+     * @param filter the non-null query filter
      * @param update the non-null update operations
      * @param updateType the update type, which must be either UPDATE or REPLACE
      */
-    public UpdateRequest(final BsonDocument criteria, final BsonDocument update, final Type updateType) {
+    public UpdateRequest(final BsonDocument filter, final BsonDocument update, final Type updateType) {
         if (updateType != Type.UPDATE && updateType != Type.REPLACE) {
             throw new IllegalArgumentException("Update type must be UPDATE or REPLACE");
         }
 
-        this.criteria = notNull("criteria", criteria);
+        this.filter = notNull("filter", filter);
         this.update = notNull("update", update);
         this.updateType = updateType;
         this.isMulti = updateType == Type.UPDATE;
@@ -55,12 +55,12 @@ public final class UpdateRequest extends WriteRequest {
     }
 
     /**
-     * Gets the query criteria for the update.
+     * Gets the query filter for the update.
      *
-     * @return the criteria
+     * @return the filter
      */
-    public BsonDocument getCriteria() {
-        return criteria;
+    public BsonDocument getFilter() {
+        return filter;
     }
 
     /**
@@ -73,18 +73,18 @@ public final class UpdateRequest extends WriteRequest {
     }
 
     /**
-     * Gets whether this update will update all documents matching the criteria.  The default is true.
+     * Gets whether this update will update all documents matching the filter.  The default is true.
      *
-     * @return whether this update will update all documents matching the criteria
+     * @return whether this update will update all documents matching the filter
      */
     public boolean isMulti() {
         return isMulti;
     }
 
     /**
-     * Sets whether this will update all documents matching the query criteria.
+     * Sets whether this will update all documents matching the query filter.
      *
-     * @param isMulti whether this will update all documents matching the query criteria
+     * @param isMulti whether this will update all documents matching the query filter
      * @return this
      */
     public UpdateRequest multi(final boolean isMulti) {
@@ -96,16 +96,16 @@ public final class UpdateRequest extends WriteRequest {
     }
 
     /**
-     * Gets whether this update will insert a new document if no documents match the criteria.  The default is false.
-     * @return whether this update will insert a new document if no documents match the criteria
+     * Gets whether this update will insert a new document if no documents match the filter.  The default is false.
+     * @return whether this update will insert a new document if no documents match the filter
      */
     public boolean isUpsert() {
         return isUpsert;
     }
 
     /**
-     * Sets whether this update will insert a new document if no documents match the criteria.
-     * @param isUpsert whether this update will insert a new document if no documents match the criteria
+     * Sets whether this update will insert a new document if no documents match the filter.
+     * @param isUpsert whether this update will insert a new document if no documents match the filter
      * @return this
      */
     public UpdateRequest upsert(final boolean isUpsert) {

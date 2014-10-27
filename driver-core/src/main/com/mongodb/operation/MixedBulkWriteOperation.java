@@ -595,7 +595,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                         return Collections.emptyList();
                     } else {
                         BsonDocument update = updateRequest.getUpdate();
-                        BsonDocument filter = updateRequest.getCriteria();
+                        BsonDocument filter = updateRequest.getFilter();
 
                         if (update.containsKey("_id")) {
                             return asList(new BulkWriteUpsert(0, update.get("_id")));

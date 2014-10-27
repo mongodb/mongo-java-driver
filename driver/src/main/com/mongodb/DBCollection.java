@@ -688,7 +688,7 @@ public class DBCollection {
                                                     .batchSize(-1)
                                                     .maxTime(maxTime, maxTimeUnit);
         if (query != null) {
-            operation.criteria(wrap(query));
+            operation.filter(wrap(query));
         }
         MongoCursor<DBObject> cursor = executor.execute(operation, readPreference);
         return cursor.hasNext() ? cursor.next() : null;
@@ -909,7 +909,7 @@ public class DBCollection {
                                        .limit(limit)
                                        .maxTime(maxTime, maxTimeUnit);
         if (query != null) {
-            operation.criteria(wrap(query));
+            operation.filter(wrap(query));
         }
         return executor.execute(operation, readPreference);
     }
@@ -1063,7 +1063,7 @@ public class DBCollection {
      */
     @SuppressWarnings("unchecked")
     public List distinct(final String fieldName, final DBObject query, final ReadPreference readPreference) {
-        BsonArray distinctArray = executor.execute(new DistinctOperation(getNamespace(), fieldName).criteria(wrapAllowNull(query)),
+        BsonArray distinctArray = executor.execute(new DistinctOperation(getNamespace(), fieldName).filter(wrapAllowNull(query)),
                                                    readPreference);
 
         List distinctList = new ArrayList();
@@ -1147,7 +1147,7 @@ public class DBCollection {
                                                                   new BsonJavaScript(command.getReduce()),
                                                                   getDefaultDBObjectCodec());
 
-            operation.criteria(wrapAllowNull(command.getQuery()));
+            operation.filter(wrapAllowNull(command.getQuery()));
             operation.limit(command.getLimit());
             operation.maxTime(command.getMaxTime(MILLISECONDS), MILLISECONDS);
             operation.jsMode(command.getJsMode() == null ? false : command.getJsMode());
@@ -1183,7 +1183,7 @@ public class DBCollection {
                                                    new BsonJavaScript(command.getMap()),
                                                    new BsonJavaScript(command.getReduce()),
                                                    command.getOutputTarget())
-                    .criteria(wrapAllowNull(command.getQuery()))
+                    .filter(wrapAllowNull(command.getQuery()))
                     .limit(command.getLimit())
                     .maxTime(command.getMaxTime(MILLISECONDS), MILLISECONDS)
                     .jsMode(command.getJsMode() == null ? false : command.getJsMode())
@@ -1589,7 +1589,7 @@ public class DBCollection {
         WriteOperation<DBObject> operation;
         if (remove) {
             operation = new FindAndDeleteOperation<DBObject>(getNamespace(), objectCodec)
-                            .criteria(wrapAllowNull(query))
+                            .filter(wrapAllowNull(query))
                             .projection(wrapAllowNull(fields))
                             .sort(wrapAllowNull(sort))
                             .maxTime(maxTime, maxTimeUnit);
@@ -1599,7 +1599,7 @@ public class DBCollection {
             }
             if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
                 operation = new FindAndUpdateOperation<DBObject>(getNamespace(), objectCodec, wrapAllowNull(update))
-                                .criteria(wrap(query))
+                                .filter(wrap(query))
                                 .projection(wrapAllowNull(fields))
                                 .sort(wrapAllowNull(sort))
                                 .returnUpdated(returnNew)
@@ -1607,7 +1607,7 @@ public class DBCollection {
                                 .maxTime(maxTime, maxTimeUnit);
             } else {
                 operation = new FindAndReplaceOperation<DBObject>(getNamespace(), objectCodec, wrap(update))
-                                .criteria(wrapAllowNull(query))
+                                .filter(wrapAllowNull(query))
                                 .projection(wrapAllowNull(fields))
                                 .sort(wrapAllowNull(sort))
                                 .returnReplaced(returnNew)

@@ -232,7 +232,7 @@ public final class FindOptions {
      * Use with the tailable property. If there are no more matching documents, the server will block for a
      * while rather than returning no documents.
      *
-     * @return whether the cursor will wait for more documents that match the criteria
+     * @return whether the cursor will wait for more documents that match the filter
      * @see com.mongodb.client.model.FindOptions#isTailable()
      */
     public boolean isAwaitData() {
@@ -243,7 +243,7 @@ public final class FindOptions {
      * Use with the tailable property. If there are no more matching documents, the server will block for a
      * while rather than returning no documents.
      *
-     * @param awaitData whether the cursor will wait for more documents that match the criteria
+     * @param awaitData whether the cursor will wait for more documents that match the filter
      * @return this
      */
     public FindOptions awaitData(final boolean awaitData) {

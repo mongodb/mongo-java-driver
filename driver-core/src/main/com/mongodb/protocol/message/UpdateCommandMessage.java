@@ -75,7 +75,7 @@ public class UpdateCommandMessage extends BaseWriteCommandMessage {
             writer.writeStartDocument();
             writer.pushMaxDocumentSize(getSettings().getMaxDocumentSize());
             writer.writeName("q");
-            getCodec(update.getCriteria()).encode(writer, update.getCriteria(), EncoderContext.builder().build());
+            getCodec(update.getFilter()).encode(writer, update.getFilter(), EncoderContext.builder().build());
             writer.writeName("u");
             getCodec(update.getUpdate()).encode(writer, update.getUpdate(), EncoderContext.builder().build());
             if (update.isMulti()) {

@@ -26,32 +26,32 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  */
 public final class DeleteRequest extends WriteRequest {
-    private final BsonDocument criteria;
+    private final BsonDocument filter;
     private boolean isMulti = true;
 
     /**
      * Construct a new instance.
      *
-     * @param criteria the non-null query criteria
+     * @param filter the non-null query filter
      */
-    public DeleteRequest(final BsonDocument criteria) {
+    public DeleteRequest(final BsonDocument filter) {
         super();
-        this.criteria = notNull("criteria", criteria);
+        this.filter = notNull("filter", filter);
     }
 
     /**
-     * Gets the query criteria.
+     * Gets the query Object filter.
      *
-     * @return the criteria
+     * @return the Object filter
      */
-    public BsonDocument getCriteria() {
-        return criteria;
+    public BsonDocument getFilter() {
+        return filter;
     }
 
     /**
-     * Sets whether all documents matching the query criteria will be removed.
+     * Sets whether all documents matching the query filter will be removed.
      *
-     * @param isMulti true if all documents matching the query criteria will be removed
+     * @param isMulti true if all documents matching the query filter will be removed
      * @return this
      */
     public DeleteRequest multi(final boolean isMulti) {
@@ -60,9 +60,9 @@ public final class DeleteRequest extends WriteRequest {
     }
 
     /**
-     * Gets whether all documents matching the query criteria will be removed.  The default is true.
+     * Gets whether all documents matching the query filter will be removed.  The default is true.
      *
-     * @return whether all documents matching the query criteria will be removed
+     * @return whether all documents matching the query filter will be removed
      */
     public boolean isMulti() {
         return isMulti;

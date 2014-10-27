@@ -27,18 +27,18 @@ public class UpdateOptions {
     private boolean upsert;
 
     /**
-     * Returns true if a new document should be inserted if there are no matches to the query criteria.  The default is false.
+     * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
      *
-     * @return true if a new document should be inserted if there are no matches to the query criteria
+     * @return true if a new document should be inserted if there are no matches to the query filter
      */
     public boolean isUpsert() {
         return upsert;
     }
 
     /**
-     * Set to true if a new document should be inserted if there are no matches to the query criteria.
+     * Set to true if a new document should be inserted if there are no matches to the query filter.
      *
-     * @param upsert true if a new document should be inserted if there are no matches to the query criteria
+     * @param upsert true if a new document should be inserted if there are no matches to the query filter
      * @return this
      */
     public UpdateOptions upsert(final boolean upsert) {

@@ -38,8 +38,8 @@ public class DeleteAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(secondDocument);
 
         // When
-        Document searchCriteria = new Document("a", 1);
-        collection.deleteOne(searchCriteria);
+        Document filter = new Document("a", 1);
+        collection.deleteOne(filter);
 
         // Then
         assertThat(collection.count(), is(1L));
@@ -54,8 +54,8 @@ public class DeleteAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(secondDocument);
 
         // When
-        Document searchCriteria = new Document("a", 1);
-        collection.deleteMany(searchCriteria);
+        Document filter = new Document("a", 1);
+        collection.deleteMany(filter);
 
         // Then
         assertThat(collection.count(), is(0L));

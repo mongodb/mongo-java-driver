@@ -78,7 +78,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
-        op.criteria = new BsonDocument('age', new BsonInt32(25))
+        op.filter = new BsonDocument('age', new BsonInt32(25))
         def result = op.execute(getBinding());
 
         then:
@@ -95,7 +95,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         DistinctOperation op = new DistinctOperation(getNamespace(), 'name')
-        op.criteria = new BsonDocument('age', new BsonInt32(25))
+        op.filter = new BsonDocument('age', new BsonInt32(25))
         def result = op.executeAsync(getAsyncBinding()).get()
 
         then:

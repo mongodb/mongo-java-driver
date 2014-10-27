@@ -56,7 +56,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
 public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>, ReadOperation<MongoCursor<T>> {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
-    private BsonDocument criteria;
+    private BsonDocument filter;
     private int batchSize;
     private int limit;
     private BsonDocument modifiers;
@@ -102,24 +102,24 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
     }
 
     /**
-     * Gets the query criteria.
+     * Gets the query filter.
      *
-     * @return the query criteria
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     * @return the query filter
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    public BsonDocument getCriteria() {
-        return criteria;
+    public BsonDocument getFilter() {
+        return filter;
     }
 
     /**
-     * Sets the criteria to apply to the query.
+     * Sets the query filter to apply to the query.
      *
-     * @param criteria the criteria, which may be null.
+     * @param filter the filter, which may be null.
      * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    public FindOperation<T> criteria(final BsonDocument criteria) {
-        this.criteria = criteria;
+    public FindOperation<T> filter(final BsonDocument filter) {
+        this.filter = filter;
         return this;
     }
 
@@ -564,7 +564,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
         }
         explainModifiers.append("$explain", BsonBoolean.TRUE);
 
-        return explainFindOperation.criteria(criteria)
+        return explainFindOperation.filter(filter)
                              .projection(projection)
                              .sort(sort)
                              .skip(skip)
@@ -612,7 +612,7 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
 
     private BsonDocument asDocument(final ConnectionDescription connectionDescription, final ReadPreference readPreference) {
         BsonDocument document = modifiers != null ? modifiers : new BsonDocument();
-        document.put("$query", criteria != null ? criteria : new BsonDocument());
+        document.put("$query", filter != null ? filter : new BsonDocument());
         if (sort != null) {
             document.put("$orderby", sort);
         }

@@ -69,13 +69,13 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(originalDocument);
 
         // when
-        Document searchCriteria = new Document("_id", 2);
-        collection.updateMany(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
+        Document filter = new Document("_id", 2);
+        collection.updateMany(filter, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(), is(2L));
         Document expectedDocument = new Document("_id", 2).append("x", 5);
-        assertThat(collection.find(searchCriteria, new FindOptions()).iterator().next(), is(expectedDocument));
+        assertThat(collection.find(filter, new FindOptions()).iterator().next(), is(expectedDocument));
     }
 
     @Test
@@ -85,13 +85,13 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(originalDocument);
 
         // when
-        Document searchCriteria = new Document("_id", 2);
-        collection.updateOne(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
+        Document filter = new Document("_id", 2);
+        collection.updateOne(filter, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(), is(2L));
         Document expectedDocument = new Document("_id", 2).append("x", 5);
-        assertThat(collection.find(searchCriteria, new FindOptions()).iterator().next(), is(expectedDocument));
+        assertThat(collection.find(filter, new FindOptions()).iterator().next(), is(expectedDocument));
     }
 
     @Test
@@ -103,8 +103,8 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(secondDocument);
 
         // when
-        Document searchCriteria = new Document("x", 3);
-        collection.updateMany(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
+        Document filter = new Document("x", 3);
+        collection.updateMany(filter, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(new Document("x", 5), new CountOptions()), is(2L));
@@ -119,8 +119,8 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(secondDocument);
 
         // when
-        Document searchCriteria = new Document("x", 3);
-        collection.updateOne(searchCriteria, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
+        Document filter = new Document("x", 3);
+        collection.updateOne(filter, new Document("$set", new Document("x", 5)), new UpdateOptions().upsert(true));
 
         // then
         assertThat(collection.count(new Document("x", 5), new CountOptions()), is(1L));
@@ -135,9 +135,9 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(secondDocument);
 
         // When
-        Document searchCriteria = new Document("a", 1);
+        Document filter = new Document("a", 1);
         Document incrementXValueByOne = new Document("$inc", new Document("x", 1));
-        collection.updateOne(searchCriteria, incrementXValueByOne);
+        collection.updateOne(filter, incrementXValueByOne);
 
         // Then
         assertThat(collection.count(new Document("x", 4), new CountOptions()), is(1L));
@@ -152,9 +152,9 @@ public class UpdateAcceptanceTest extends DatabaseTestCase {
         collection.insertOne(secondDocument);
 
         // When
-        Document searchCriteria = new Document("a", 1);
+        Document filter = new Document("a", 1);
         Document incrementXValueByOne = new Document("$inc", new Document("x", 1));
-        collection.updateMany(searchCriteria, incrementXValueByOne);
+        collection.updateMany(filter, incrementXValueByOne);
 
         // Then
         assertThat(collection.count(new Document("x", 4), new CountOptions()), is(2L));

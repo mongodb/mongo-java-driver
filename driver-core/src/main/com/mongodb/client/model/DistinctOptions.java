@@ -27,31 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual reference/command/distinct/ Distinct
  */
 public class DistinctOptions {
-    private Object criteria;
     private long maxTimeMS;
-
-    /**
-     * Gets the query criteria.
-     *
-     * @return the query criteria
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
-     */
-    public Object getCriteria() {
-        return criteria;
-    }
-
-    /**
-     * Sets the criteria to apply to the query.
-     *
-     * @param criteria the criteria, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
-     */
-    public DistinctOptions criteria(final Object criteria) {
-        this.criteria = criteria;
-        return this;
-    }
-
 
     /**
      * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.

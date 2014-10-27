@@ -42,7 +42,7 @@ import static com.mongodb.operation.DocumentHelper.putIfNotZero;
  */
 public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private final MongoNamespace namespace;
-    private BsonDocument criteria;
+    private BsonDocument filter;
     private BsonValue hint;
     private long skip;
     private long limit;
@@ -58,24 +58,24 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     }
 
     /**
-     * Gets the query criteria.
+     * Gets the query filter.
      *
-     * @return the query criteria
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     * @return the query filter
+     * @mongodb.driver.manual reference/method/db.collection.find/ filter
      */
-    public BsonDocument getCriteria() {
-        return criteria;
+    public BsonDocument getFilter() {
+        return filter;
     }
 
     /**
-     * Sets the criteria to apply to the query.
+     * Sets the filter to apply to the query.
      *
-     * @param criteria the criteria, which may be null.
+     * @param filter the filter, which may be null.
      * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    public CountOperation criteria(final BsonDocument criteria) {
-        this.criteria = criteria;
+    public CountOperation filter(final BsonDocument filter) {
+        this.filter = filter;
         return this;
     }
 
@@ -215,7 +215,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     private BsonDocument getCommand() {
         BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
-        putIfNotNull(document, "query", criteria);
+        putIfNotNull(document, "query", filter);
         putIfNotZero(document, "limit", limit);
         putIfNotZero(document, "skip", skip);
         putIfNotNull(document, "hint", hint);

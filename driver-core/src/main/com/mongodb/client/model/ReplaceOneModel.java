@@ -19,42 +19,42 @@ package com.mongodb.client.model;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * A model describing the replacement of at most one document that matches the query criteria.
+ * A model describing the replacement of at most one document that matches the query filter.
  *
  * @param <T> the type of document to replace. This can be of any type for which a {@code Codec} is registered
  * @since 3.0
  * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
  */
 public final class ReplaceOneModel<T> extends WriteModel<T> {
-    private final Object criteria;
+    private final Object filter;
     private final T replacement;
     private final UpdateOptions options;
 
     /**
      * Construct a new instance.
      *
-     * @param criteria    a document describing the query criteria, which may not be null. This can be of any type for which a {@code Codec}
+     * @param filter    a document describing the query filter, which may not be null. This can be of any type for which a {@code Codec}
      *                    is registered
      * @param replacement the replacement document
      * @param options     the options to apply
      */
-    public ReplaceOneModel(final Object criteria, final T replacement, final UpdateOptions options) {
-        this.criteria = notNull("criteria", criteria);
+    public ReplaceOneModel(final Object filter, final T replacement, final UpdateOptions options) {
+        this.filter = notNull("filter", filter);
         this.replacement = notNull("replacement", replacement);
         this.options = notNull("options", options);
     }
 
     /**
-     * Gets the query criteria.
+     * Gets the query filter.
      *
-     * @return the query criteria
+     * @return the query filter
      */
-    public Object getCriteria() {
-        return criteria;
+    public Object getFilter() {
+        return filter;
     }
 
     /**
-     * Gets the document which will replace the document matching the query criteria.
+     * Gets the document which will replace the document matching the query filter.
      *
      * @return the replacement document
      */

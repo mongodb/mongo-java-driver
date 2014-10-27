@@ -44,7 +44,7 @@ import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 public class DistinctOperation implements AsyncReadOperation<BsonArray>, ReadOperation<BsonArray> {
     private final MongoNamespace namespace;
     private final String fieldName;
-    private BsonDocument criteria;
+    private BsonDocument filter;
     private long maxTimeMS;
 
     /**
@@ -59,24 +59,24 @@ public class DistinctOperation implements AsyncReadOperation<BsonArray>, ReadOpe
     }
 
     /**
-     * Gets the query criteria.
+     * Gets the query filter.
      *
-     * @return the query criteria
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     * @return the query filter
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    public BsonDocument getCriteria() {
-        return criteria;
+    public BsonDocument getFilter() {
+        return filter;
     }
 
     /**
-     * Sets the criteria to apply to the query.
+     * Sets the query filter to apply to the query.
      *
-     * @param criteria the criteria, which may be null.
+     * @param filter the query filter, which may be null.
      * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    public DistinctOperation criteria(final BsonDocument criteria) {
-        this.criteria = criteria;
+    public DistinctOperation filter(final BsonDocument filter) {
+        this.filter = filter;
         return this;
     }
 
@@ -127,7 +127,7 @@ public class DistinctOperation implements AsyncReadOperation<BsonArray>, ReadOpe
     private BsonDocument getCommand() {
         BsonDocument cmd = new BsonDocument("distinct", new BsonString(namespace.getCollectionName()));
         cmd.put("key", new BsonString(fieldName));
-        putIfNotNull(cmd, "query", criteria);
+        putIfNotNull(cmd, "query", filter);
         putIfNotZero(cmd, "maxTimeMS", maxTimeMS);
 
         return cmd;

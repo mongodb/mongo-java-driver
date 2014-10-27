@@ -87,7 +87,7 @@ public class GroupCommand {
         }
 
         if (condition != null) {
-            operation.criteria(new BsonDocumentWrapper<DBObject>(condition, codec));
+            operation.filter(new BsonDocumentWrapper<DBObject>(condition, codec));
         }
 
         if (finalize != null) {

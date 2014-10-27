@@ -33,7 +33,7 @@ public class MapReduceOptions {
     private final String collectionName;
     private String finalizeFunction;
     private Object scope;
-    private Object criteria;
+    private Object filter;
     private Object sort;
     private int limit;
     private boolean jsMode;
@@ -150,25 +150,25 @@ public class MapReduceOptions {
     }
 
     /**
-     * Sets the criteria to apply to the query.
+     * Sets the query filter to apply to the query.
      *
-     * @param criteria the criteria to apply to the query.
+     * @param filter the filter to apply to the query.
      * @return this
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    public MapReduceOptions criteria(final Object criteria) {
-        this.criteria = criteria;
+    public MapReduceOptions filter(final Object filter) {
+        this.filter = filter;
         return this;
     }
 
     /**
-     * Gets the query criteria.
+     * Gets the query filter.
      *
-     * @return the query criteria
-     * @mongodb.driver.manual reference/method/db.collection.find/ Criteria
+     * @return the query filter
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    public Object getCriteria() {
-        return criteria;
+    public Object getFilter() {
+        return filter;
     }
 
     /**

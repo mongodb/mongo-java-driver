@@ -43,7 +43,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
 
         when:
         FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
-                .criteria(new BsonDocument('name', new BsonString('Pete')))
+                .filter(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.execute(getBinding())
 
         then:
@@ -63,7 +63,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
 
         when:
         FindAndDeleteOperation<Document> operation = new FindAndDeleteOperation<Document>(getNamespace(), documentCodec)
-                .criteria(new BsonDocument('name', new BsonString('Pete')))
+                .filter(new BsonDocument('name', new BsonString('Pete')))
         Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:
@@ -80,7 +80,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
 
         when:
         FindAndDeleteOperation<Worker> operation = new FindAndDeleteOperation<Document>(getNamespace(), workerCodec)
-                .criteria(new BsonDocument('name', new BsonString('Pete')))
+                .filter(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 
         then:
@@ -98,7 +98,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
 
         when:
         FindAndDeleteOperation<Worker> operation = new FindAndDeleteOperation<Document>(getNamespace(), workerCodec)
-                .criteria(new BsonDocument('name', new BsonString('Pete')))
+                .filter(new BsonDocument('name', new BsonString('Pete')))
         Worker returnedDocument = operation.execute(getBinding())
 
         then:

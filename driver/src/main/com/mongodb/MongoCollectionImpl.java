@@ -121,14 +121,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public long count(final Object criteria) {
-        return count(criteria, new CountOptions());
+    public long count(final Object filter) {
+        return count(filter, new CountOptions());
     }
 
     @Override
-    public long count(final Object criteria, final CountOptions options) {
+    public long count(final Object filter, final CountOptions options) {
         CountOperation operation = new CountOperation(namespace)
-                                       .criteria(asBson(criteria))
+                                       .filter(asBson(filter))
                                        .skip(options.getSkip())
                                        .limit(options.getLimit())
                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS);
@@ -141,14 +141,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public List<Object> distinct(final String fieldName) {
-        return distinct(fieldName, new DistinctOptions());
+    public List<Object> distinct(final String fieldName, final Object filter) {
+        return distinct(fieldName, filter, new DistinctOptions());
     }
 
     @Override
-    public List<Object> distinct(final String fieldName, final DistinctOptions distinctOptions) {
+    public List<Object> distinct(final String fieldName, final Object filter, final DistinctOptions distinctOptions) {
         DistinctOperation operation = new DistinctOperation(namespace, fieldName)
-                                          .criteria(asBson(distinctOptions.getCriteria()))
+                                          .filter(asBson(filter))
                                           .maxTime(distinctOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
         BsonArray distinctArray = executor.execute(operation, options.getReadPreference());
         List<Object> distinctList = new ArrayList<Object>();
@@ -173,23 +173,23 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public MongoIterable<T> find(final Object criteria) {
-        return find(criteria, new FindOptions());
+    public MongoIterable<T> find(final Object filter) {
+        return find(filter, new FindOptions());
     }
 
     @Override
-    public <C> MongoIterable<C> find(final Object criteria, final Class<C> clazz) {
-        return find(criteria, new FindOptions(), clazz);
+    public <C> MongoIterable<C> find(final Object filter, final Class<C> clazz) {
+        return find(filter, new FindOptions(), clazz);
     }
 
     @Override
-    public MongoIterable<T> find(final Object criteria, final FindOptions findOptions) {
-        return find(criteria, findOptions, clazz);
+    public MongoIterable<T> find(final Object filter, final FindOptions findOptions) {
+        return find(filter, findOptions, clazz);
     }
 
     @Override
-    public <C> MongoIterable<C> find(final Object criteria, final FindOptions findOptions, final Class<C> clazz) {
-        return new OperationIterable<C>(createQueryOperation(namespace, criteria, findOptions, getCodec(clazz)),
+    public <C> MongoIterable<C> find(final Object filter, final FindOptions findOptions, final Class<C> clazz) {
+        return new OperationIterable<C>(createQueryOperation(namespace, filter, findOptions, getCodec(clazz)),
                                         options.getReadPreference());
     }
 
@@ -257,7 +257,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                            new BsonJavaScript(mapFunction),
                                                            new BsonJavaScript(reduceFunction),
                                                            getCodec(clazz))
-                    .criteria(asBson(options.getCriteria()))
+                    .filter(asBson(options.getFilter()))
                     .limit(options.getLimit())
                     .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                     .jsMode(options.isJsMode())
@@ -274,7 +274,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                    new BsonJavaScript(mapFunction),
                                                    new BsonJavaScript(reduceFunction),
                                                    options.getCollectionName())
-                    .criteria(asBson(options.getCriteria()))
+                    .filter(asBson(options.getFilter()))
                     .limit(options.getLimit())
                     .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                     .jsMode(options.isJsMode())
@@ -317,27 +317,27 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 writeRequest = new InsertRequest(asBson(insertOneModel.getDocument()));
             } else if (writeModel instanceof ReplaceOneModel) {
                 ReplaceOneModel<T> replaceOneModel = (ReplaceOneModel<T>) writeModel;
-                writeRequest = new UpdateRequest(asBson(replaceOneModel.getCriteria()), asBson(replaceOneModel.getReplacement()),
+                writeRequest = new UpdateRequest(asBson(replaceOneModel.getFilter()), asBson(replaceOneModel.getReplacement()),
                                                  WriteRequest.Type.REPLACE)
                                    .upsert(replaceOneModel.getOptions().isUpsert());
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel<T> updateOneModel = (UpdateOneModel<T>) writeModel;
-                writeRequest = new UpdateRequest(asBson(updateOneModel.getCriteria()), asBson(updateOneModel.getUpdate()),
+                writeRequest = new UpdateRequest(asBson(updateOneModel.getFilter()), asBson(updateOneModel.getUpdate()),
                                                  WriteRequest.Type.UPDATE)
                                    .multi(false)
                                    .upsert(updateOneModel.getOptions().isUpsert());
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel<T> updateManyModel = (UpdateManyModel<T>) writeModel;
-                writeRequest = new UpdateRequest(asBson(updateManyModel.getCriteria()), asBson(updateManyModel.getUpdate()),
+                writeRequest = new UpdateRequest(asBson(updateManyModel.getFilter()), asBson(updateManyModel.getUpdate()),
                                                  WriteRequest.Type.UPDATE)
                                    .multi(true)
                                    .upsert(updateManyModel.getOptions().isUpsert());
             } else if (writeModel instanceof DeleteOneModel) {
                 DeleteOneModel<T> deleteOneModel = (DeleteOneModel<T>) writeModel;
-                writeRequest = new DeleteRequest(asBson(deleteOneModel.getCriteria())).multi(false);
+                writeRequest = new DeleteRequest(asBson(deleteOneModel.getFilter())).multi(false);
             } else if (writeModel instanceof DeleteManyModel) {
                 DeleteManyModel<T> deleteManyModel = (DeleteManyModel<T>) writeModel;
-                writeRequest = new DeleteRequest(asBson(deleteManyModel.getCriteria())).multi(true);
+                writeRequest = new DeleteRequest(asBson(deleteManyModel.getFilter())).multi(true);
             } else {
                 throw new UnsupportedOperationException(format("WriteModel of type %s is not supported", writeModel.getClass()));
             }
@@ -377,54 +377,54 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public DeleteResult deleteOne(final Object criteria) {
+    public DeleteResult deleteOne(final Object filter) {
         WriteConcernResult writeConcernResult = executor.execute(new DeleteOperation(namespace, true, options.getWriteConcern(),
-                                                                       asList(new DeleteRequest(asBson(criteria))
+                                                                       asList(new DeleteRequest(asBson(filter))
                                                                                   .multi(false))));
         return new DeleteResult(writeConcernResult.getCount());
     }
 
     @Override
-    public DeleteResult deleteMany(final Object criteria) {
+    public DeleteResult deleteMany(final Object filter) {
         WriteConcernResult writeConcernResult = executor.execute(new DeleteOperation(namespace, true, options.getWriteConcern(),
-                                                                       asList(new DeleteRequest(asBson(criteria))
+                                                                       asList(new DeleteRequest(asBson(filter))
                                                                                   .multi(true))));
         return new DeleteResult(writeConcernResult.getCount());
     }
 
     @Override
-    public UpdateResult replaceOne(final Object criteria, final T replacement) {
-        return replaceOne(criteria, replacement, new UpdateOptions());
+    public UpdateResult replaceOne(final Object filter, final T replacement) {
+        return replaceOne(filter, replacement, new UpdateOptions());
     }
 
     @Override
-    public UpdateResult replaceOne(final Object criteria, final T replacement, final UpdateOptions options) {
-        return replaceOne(new ReplaceOneModel<T>(criteria, replacement, options));
+    public UpdateResult replaceOne(final Object filter, final T replacement, final UpdateOptions options) {
+        return replaceOne(new ReplaceOneModel<T>(filter, replacement, options));
     }
 
     private UpdateResult replaceOne(final ReplaceOneModel<T> model) {
         List<UpdateRequest> requests = new ArrayList<UpdateRequest>();
-        requests.add(new UpdateRequest(asBson(model.getCriteria()), asBson(model.getReplacement()), WriteRequest.Type.REPLACE)
+        requests.add(new UpdateRequest(asBson(model.getFilter()), asBson(model.getReplacement()), WriteRequest.Type.REPLACE)
                          .upsert(model.getOptions().isUpsert()));
         WriteConcernResult writeConcernResult = executor.execute(new UpdateOperation(namespace, true, options.getWriteConcern(), requests));
         return createUpdateResult(writeConcernResult);
     }
 
     @Override
-    public UpdateResult updateOne(final Object criteria, final Object update) {
-        return updateOne(criteria, update, new UpdateOptions());
+    public UpdateResult updateOne(final Object filter, final Object update) {
+        return updateOne(filter, update, new UpdateOptions());
     }
 
     @Override
-    public UpdateResult updateOne(final Object criteria, final Object update, final UpdateOptions options) {
-        return updateOne(new UpdateOneModel<T>(criteria, update, options));
+    public UpdateResult updateOne(final Object filter, final Object update, final UpdateOptions options) {
+        return updateOne(new UpdateOneModel<T>(filter, update, options));
     }
 
     @Override
     public UpdateResult updateOne(final UpdateOneModel<T> model) {
         WriteConcernResult writeConcernResult = executor
                                       .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
-                                                                   asList(new UpdateRequest(asBson(model.getCriteria()),
+                                                                   asList(new UpdateRequest(asBson(model.getFilter()),
                                                                                             asBson(model.getUpdate()),
                                                                                             WriteRequest.Type.UPDATE)
                                                                               .multi(false)
@@ -433,19 +433,19 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public UpdateResult updateMany(final Object criteria, final Object update) {
-        return updateMany(criteria, update, new UpdateOptions());
+    public UpdateResult updateMany(final Object filter, final Object update) {
+        return updateMany(filter, update, new UpdateOptions());
     }
 
     @Override
-    public UpdateResult updateMany(final Object criteria, final Object update, final UpdateOptions options) {
-        return updateMany(new UpdateManyModel<T>(criteria, update, options));
+    public UpdateResult updateMany(final Object filter, final Object update, final UpdateOptions options) {
+        return updateMany(new UpdateManyModel<T>(filter, update, options));
     }
 
     private UpdateResult updateMany(final UpdateManyModel<T> model) {
         WriteConcernResult writeConcernResult = executor
                                       .execute(new UpdateOperation(namespace, true, options.getWriteConcern(),
-                                                                   asList(new UpdateRequest(asBson(model.getCriteria()),
+                                                                   asList(new UpdateRequest(asBson(model.getFilter()),
                                                                                             asBson(model.getUpdate()),
                                                                                             WriteRequest.Type.UPDATE)
                                                                               .multi(true)
@@ -454,14 +454,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public T findOneAndDelete(final Object criteria) {
-        return findOneAndDelete(criteria, new FindOneAndDeleteOptions());
+    public T findOneAndDelete(final Object filter) {
+        return findOneAndDelete(filter, new FindOneAndDeleteOptions());
     }
 
     @Override
-    public T findOneAndDelete(final Object criteria, final FindOneAndDeleteOptions options) {
+    public T findOneAndDelete(final Object filter, final FindOneAndDeleteOptions options) {
         return executor.execute(new FindAndDeleteOperation<T>(namespace, getCodec())
-                                                  .criteria(asBson(criteria))
+                                                  .filter(asBson(filter))
                                                   .projection(asBson(options.getProjection()))
                                                   .sort(asBson(options.getSort())));
     }
@@ -472,14 +472,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public T findOneAndReplace(final Object criteria, final T replacement) {
-        return findOneAndReplace(criteria, replacement, new FindOneAndReplaceOptions());
+    public T findOneAndReplace(final Object filter, final T replacement) {
+        return findOneAndReplace(filter, replacement, new FindOneAndReplaceOptions());
     }
 
     @Override
-    public T findOneAndReplace(final Object criteria, final T replacement, final FindOneAndReplaceOptions options) {
+    public T findOneAndReplace(final Object filter, final T replacement, final FindOneAndReplaceOptions options) {
         return executor.execute(new FindAndReplaceOperation<T>(namespace, getCodec(), asBson(replacement))
-                                                   .criteria(asBson(criteria))
+                                                   .filter(asBson(filter))
                                                    .projection(asBson(options.getProjection()))
                                                    .sort(asBson(options.getSort()))
                                                    .returnReplaced(options.getReturnReplaced())
@@ -487,14 +487,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     }
 
     @Override
-    public T findOneAndUpdate(final Object criteria, final Object update) {
-        return findOneAndUpdate(criteria, update, new FindOneAndUpdateOptions());
+    public T findOneAndUpdate(final Object filter, final Object update) {
+        return findOneAndUpdate(filter, update, new FindOneAndUpdateOptions());
     }
 
     @Override
-    public T findOneAndUpdate(final Object criteria, final Object update, final FindOneAndUpdateOptions options) {
+    public T findOneAndUpdate(final Object filter, final Object update, final FindOneAndUpdateOptions options) {
         return executor.execute(new FindAndUpdateOperation<T>(namespace, getCodec(), asBson(update))
-                                                  .criteria(asBson(criteria))
+                                                  .filter(asBson(filter))
                                                   .projection(asBson(options.getProjection()))
                                                   .sort(asBson(options.getSort()))
                                                   .returnUpdated(options.getReturnUpdated())
@@ -604,7 +604,7 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
     private <C> FindOperation<C> createQueryOperation(final MongoNamespace namespace, final Object criteria, final FindOptions options,
                                                       final Decoder<C> decoder) {
         return new FindOperation<C>(namespace, decoder)
-                   .criteria(asBson(criteria))
+                   .filter(asBson(criteria))
                    .batchSize(options.getBatchSize())
                    .skip(options.getSkip())
                    .limit(options.getLimit())
