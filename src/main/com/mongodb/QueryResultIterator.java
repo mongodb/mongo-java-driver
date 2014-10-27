@@ -49,7 +49,7 @@ class QueryResultIterator implements Cursor {
     private int _numFetched = 0;
 
     // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
-    private final OptionalFinalizer _optionalFinalizer;
+    private OptionalFinalizer _optionalFinalizer;
     private boolean batchSizeTrackingDisabled;
 
     // Constructor to use for normal queries
@@ -63,7 +63,6 @@ class QueryResultIterator implements Cursor {
         _host = res._host;
         _decoder = decoder;
         initFromQueryResponse(res);
-        _optionalFinalizer = getOptionalFinalizer(collection);
     }
 
     // Constructor to use for aggregate queries
@@ -77,7 +76,6 @@ class QueryResultIterator implements Cursor {
         _options = 0;
         _decoder = decoder;
         initFromCursorDocument(cursorDocument);
-        _optionalFinalizer = getOptionalFinalizer(collection);
     }
 
     static int chooseBatchSize(int batchSize, int limit, int fetched) {
@@ -214,8 +212,14 @@ class QueryResultIterator implements Cursor {
         }
         _numFetched += size;
 
+        if (_optionalFinalizer == null) {
+            _optionalFinalizer = createFinalizerIfNeeded(cursorId);
+        }
+
+        setCursorIdOnFinalizer(cursorId);
         throwOnQueryFailure(_cursorId, flags);
         _cursorId = cursorId;
+
 
         if (cursorId != 0 && _limit > 0 && _limit - _numFetched <= 0) {
             // fetched all docs within limit, close cursor server-side
@@ -223,6 +227,11 @@ class QueryResultIterator implements Cursor {
         }
     }
 
+    private void setCursorIdOnFinalizer(final long cursorId) {
+        if (_optionalFinalizer != null) {
+            _optionalFinalizer.setCursorId(cursorId);
+        }
+    }
     private void throwOnQueryFailure(final long cursorId, int flags) {
         if ((flags & Bytes.RESULTFLAG_ERRSET) > 0) {
             BSONObject errorDocument = _cur.next();
@@ -240,6 +249,8 @@ class QueryResultIterator implements Cursor {
 
 
     void killCursor() {
+        setCursorIdOnFinalizer(0);
+
         if (_cursorId == 0)
             return;
 
@@ -264,18 +275,30 @@ class QueryResultIterator implements Cursor {
         return _optionalFinalizer != null;
     }
 
-    private OptionalFinalizer getOptionalFinalizer(final DBCollectionImpl coll) {
-        return coll.getDB().getMongo().getMongoOptions().isCursorFinalizerEnabled() && _cursorId != 0 ?
-               new OptionalFinalizer() : null;
+    private OptionalFinalizer createFinalizerIfNeeded(final long cursorId) {
+        return _collection.getDB().getMongo().getMongoOptions().isCursorFinalizerEnabled() && cursorId != 0 ?
+               new OptionalFinalizer(_db, _host) : null;
     }
 
-    private class OptionalFinalizer {
+    private static class OptionalFinalizer {
+        private final DBApiLayer db;
+        private final ServerAddress host;
+        private volatile long cursorId;
+
+        private OptionalFinalizer(final DBApiLayer db, final ServerAddress host) {
+            this.db = db;
+            this.host = host;
+        }
+
+        public void setCursorId(final long cursorId) {
+            this.cursorId = cursorId;
+        }
+
         @Override
         protected void finalize() throws Throwable {
-            if (!closed && _cursorId != 0) {
-                _db.addDeadCursor(new DeadCursor(_cursorId, _host));
+            if (cursorId != 0) {
+                db.addDeadCursor(new DeadCursor(cursorId, host));
             }
-            super.finalize();
         }
     }
 
