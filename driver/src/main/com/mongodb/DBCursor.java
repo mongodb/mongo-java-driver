@@ -33,6 +33,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -74,7 +75,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private MongoCursor<DBObject> cursor;
     // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
     @SuppressWarnings("UnusedDeclaration")// IDEs will say it can be converted to a local variable, resist the urge
-    private final OptionalFinalizer optionalFinalizer;
+    private OptionalFinalizer optionalFinalizer;
 
 
     /**
@@ -113,8 +114,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         this.readPreference = readPreference;
         this.resultDecoder = collection.getObjectCodec();
         this.decoderFactory = collection.getDBDecoderFactory();
-        optionalFinalizer = collection.getDB().getMongo().getMongoClientOptions().isCursorFinalizerEnabled()
-                            ? new OptionalFinalizer() : null;
     }
 
     /**
@@ -146,10 +145,12 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             if (operation.isTailableCursor()) {
                 operation.awaitData(true);
             }
-            cursor = executor.execute(operation, getReadPreferenceForCursor());
+            initializeCursor(operation);
         }
 
-        return cursor.hasNext();
+        boolean hasNext = cursor.hasNext();
+        setServerCursorOnFinalizer(cursor.getServerCursor());
+        return hasNext;
     }
 
     /**
@@ -187,9 +188,11 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             if (!operation.isTailableCursor()) {
                 throw new IllegalArgumentException("Can only be used with a tailable cursor");
             }
-            cursor = executor.execute(operation, getReadPreferenceForCursor());
+            initializeCursor(operation);
         }
-        return currentObject(cursor.tryNext());
+        DBObject next = cursor.tryNext();
+        setServerCursorOnFinalizer(cursor.getServerCursor());
+        return currentObject(next);
     }
 
 
@@ -584,6 +587,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         if (cursor != null) {
             cursor.close();
             cursor = null;
+            setServerCursorOnFinalizer(null);
         }
 
         currentObject = null;
@@ -799,6 +803,23 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
                + '}';
     }
 
+    private void initializeCursor(final FindOperation<DBObject> operation) {
+        cursor = executor.execute(operation, getReadPreferenceForCursor());
+        if (isCursorFinalizerEnabled() && cursor.getServerCursor() != null) {
+            optionalFinalizer = new OptionalFinalizer(collection.getDB().getMongo());
+        }
+    }
+
+    private boolean isCursorFinalizerEnabled() {
+        return collection.getDB().getMongo().getMongoClientOptions().isCursorFinalizerEnabled();
+    }
+
+    private void setServerCursorOnFinalizer(final ServerCursor serverCursor) {
+        if (optionalFinalizer != null) {
+            optionalFinalizer.setServerCursor(serverCursor);
+        }
+    }
+
     private void checkCursorType(final CursorType type) {
         if (cursorType == null) {
             cursorType = type;
@@ -832,7 +853,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             checkCursorType(CursorType.ITERATOR);
         }
 
-        return currentObject(cursor.next());
+        DBObject next = cursor.next();
+        setServerCursorOnFinalizer(cursor.getServerCursor());
+        return currentObject(next);
     }
 
     private DBObject currentObject(final DBObject newCurrentObject){
@@ -867,16 +890,23 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         ARRAY
     }
 
-    private class OptionalFinalizer {
+    private static class OptionalFinalizer {
+        private final Mongo mongo;
+        private volatile ServerCursor serverCursor;
+
+        private OptionalFinalizer(final Mongo mongo) {
+            this.mongo = notNull("mongo", mongo);
+        }
+
+        private void setServerCursor(final ServerCursor serverCursor) {
+            this.serverCursor = serverCursor;
+        }
+
         @Override
         protected void finalize() {
-            if (cursor != null) {
-                ServerCursor serverCursor = cursor.getServerCursor();
-                if (serverCursor != null) {
-                    getCollection().getDB().getMongo().addOrphanedCursor(serverCursor);
-                }
+            if (serverCursor != null) {
+                mongo.addOrphanedCursor(serverCursor);
             }
         }
     }
-
 }
