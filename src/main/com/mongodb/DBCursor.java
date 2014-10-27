@@ -171,6 +171,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         c._snapshot = _snapshot;
         c._explain = _explain;
         c._maxTimeMS = _maxTimeMS;
+        c._disableBatchSizeTracking = _disableBatchSizeTracking;
         if ( _specialFields != null )
             c._specialFields = new BasicDBObject( _specialFields.toMap() );
         return c;
@@ -477,6 +478,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
 
         _it = _collection.find(builder.get(), _keysWanted, _skip, _batchSize, _limit, _options, _readPref, getDecoder());
+        if (_disableBatchSizeTracking) {
+            _it.disableBatchSizeTracking();
+        }
     }
 
     // Only create a new decoder if there is a decoder factory explicitly set on the collection.  Otherwise return null
@@ -563,6 +567,36 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     @Deprecated
     public List<Integer> getSizes() {
         return _it == null ? Collections.<Integer>emptyList() : _it.getSizes();
+    }
+
+    /**
+     * Disable tracking of batch sizes in order to reduce memory consumption with high-frequency tailable cursors. This method must be
+     * called before iterating the cursor.
+     *
+     * @return this
+     * @see #getSizes()
+     * @deprecated This method is being added temporarily, and will be removed along with {@link #getSizes()} in the next major release
+     */
+    @Deprecated
+    public DBCursor disableBatchSizeTracking() {
+        if ( _it != null )
+            throw new IllegalStateException( "can't disable batch size tracking after executing query" );
+
+        _disableBatchSizeTracking = true;
+        return this;
+    }
+
+    /**
+     * Returns true if tracking of batch sizes is disabled in order to reduce memory consumption with high-frequency tailable cursors.
+     *
+     * @return true if tracking of batch sizes is disabled
+     * @see #getSizes()
+     * @see #disableBatchSizeTracking()
+     * @deprecated This method is being added temporarily, and will be removed along with {@link #getSizes()} in the next major release
+     */
+    @Deprecated
+    public boolean isBatchSizeTrackingDisabled() {
+        return _disableBatchSizeTracking;
     }
 
     private boolean _hasNext() {
@@ -904,6 +938,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private CursorType _cursorType = null;
     private DBObject _cur = null;
     private int _num = 0;
+    private boolean _disableBatchSizeTracking;
 
     private final ArrayList<DBObject> _all = new ArrayList<DBObject>();
 }

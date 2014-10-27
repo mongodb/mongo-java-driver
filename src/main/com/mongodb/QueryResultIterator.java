@@ -50,6 +50,7 @@ class QueryResultIterator implements Cursor {
 
     // This allows us to easily enable/disable finalizer for cleaning up un-closed cursors
     private final OptionalFinalizer _optionalFinalizer;
+    private boolean batchSizeTrackingDisabled;
 
     // Constructor to use for normal queries
     QueryResultIterator(DBApiLayer db, DBCollectionImpl collection, Response res, int batchSize, int limit,
@@ -208,7 +209,9 @@ class QueryResultIterator implements Cursor {
     private void init(int flags, long cursorId, int size, Iterator<DBObject> iterator){
         _curSize = size;
         _cur = iterator;
-        _sizes.add(size);
+        if (!batchSizeTrackingDisabled) {
+            _sizes.add(size);
+        }
         _numFetched += size;
 
         throwOnQueryFailure(_cursorId, flags);
@@ -250,6 +253,11 @@ class QueryResultIterator implements Cursor {
 
     public ServerAddress getServerAddress() {
         return _host;
+    }
+
+    void disableBatchSizeTracking() {
+        batchSizeTrackingDisabled = true;
+        _sizes.clear();
     }
 
     boolean hasFinalizer() {

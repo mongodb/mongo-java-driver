@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
@@ -902,4 +903,44 @@ public class DBCursorTest extends TestCase {
         }
     }
 
+    @SuppressWarnings("deprecation")
+    @Test
+    public void testBatchSizeTracking() {
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                          .batchSize(2);
+
+        assertFalse(cursor.isBatchSizeTrackingDisabled());
+        assertFalse(cursor.copy().isBatchSizeTrackingDisabled());
+
+        // Insert some data.
+        for (int i = 0; i < 10; i++) {
+            collection.insert(new BasicDBObject("one", "two"));
+        }
+
+        while (cursor.hasNext()) {
+            cursor.next();
+        }
+
+        assertEquals(asList(2, 2, 2, 2, 2, 0), cursor.getSizes());
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    public void testDisabledBatchSizeTracking() {
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
+                          .disableBatchSizeTracking().batchSize(1);
+        assertTrue(cursor.isBatchSizeTrackingDisabled());
+        assertTrue(cursor.copy().isBatchSizeTrackingDisabled());
+
+        // Insert some data.
+        for (int i = 0; i < 10; i++) {
+            collection.insert(new BasicDBObject("one", "two"));
+        }
+
+        while (cursor.hasNext()) {
+            cursor.next();
+        }
+
+        assertEquals(Collections.<Integer>emptyList(), cursor.getSizes());
+    }
 }
