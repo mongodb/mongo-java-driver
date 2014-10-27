@@ -160,6 +160,8 @@ members:
 
   com.mongodb.DBCursor:
   - getSizes()
+  - disableBatchSizeTracking()
+  - isBatchSizeTrackingDisabled()
   - numGetMores()
 
   org.bson.types.ObjectId:                        # JAVA-839: Fix up ObjectId API
