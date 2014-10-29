@@ -93,11 +93,8 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
         then:
         indexes.size() == 4
-        indexes[0].name == '_id_'
-        indexes[1].name == 'theField_1'
-        indexes[2].name == 'compound_1_index_-1'
-        indexes[3].name == 'unique_1'
-        indexes[3].unique
+        indexes*.name.containsAll(['_id_', 'theField_1', 'compound_1_index_-1', 'unique_1'])
+        indexes.find { it.name == 'unique_1' }.unique
     }
 
     @Category(Async)
@@ -113,12 +110,8 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
         then:
         indexes.size() == 4
-        indexes[0].name == '_id_'
-        indexes[1].name == 'theField_1'
-        indexes[2].name == 'compound_1_index_-1'
-        indexes[3].name == 'unique_1'
-        indexes[3].unique
-
+        indexes*.name.containsAll(['_id_', 'theField_1', 'compound_1_index_-1', 'unique_1'])
+        indexes.find { it.name == 'unique_1' }.unique
     }
 
 }

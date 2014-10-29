@@ -103,7 +103,6 @@ public class DatabaseAcceptanceTest extends DatabaseTestCase {
 
         List<String> collections = database.getCollectionNames();
 
-        assertThat(collections.contains("system.indexes"), is(true));
         assertThat(collections.contains(getCollectionName()), is(true));
     }
 

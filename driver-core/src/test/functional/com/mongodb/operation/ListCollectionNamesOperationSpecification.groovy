@@ -59,7 +59,7 @@ class ListCollectionNamesOperationSpecification extends OperationFunctionalSpeci
         collectionHelper.dropDatabase(madeUpDatabase)
     }
 
-    def 'should return default system.index and collection names if a Collection exists'() {
+    def 'should return collection names if a collection exists'() {
         given:
         def operation = new ListCollectionNamesOperation(databaseName)
         def helper = getCollectionHelper()
@@ -72,12 +72,11 @@ class ListCollectionNamesOperationSpecification extends OperationFunctionalSpeci
         List<String> names = operation.execute(getBinding())
 
         then:
-        names.size() == 3
-        names.containsAll(['system.indexes', collectionName, 'collection2'])
+        names.containsAll([collectionName, 'collection2'])
     }
 
     @Category(Async)
-    def 'should return default system.index and collection names if a Collection exists asynchronously'() {
+    def 'should return and collection names if a collection exists asynchronously'() {
         given:
         def operation = new ListCollectionNamesOperation(databaseName)
         def helper = getCollectionHelper()
@@ -90,8 +89,7 @@ class ListCollectionNamesOperationSpecification extends OperationFunctionalSpeci
         List<String> names = operation.executeAsync(getAsyncBinding()).get()
 
         then:
-        names.size() == 3
-        names.containsAll(['system.indexes', collectionName, 'collection2'])
+        names.containsAll([collectionName, 'collection2'])
     }
 
 }
