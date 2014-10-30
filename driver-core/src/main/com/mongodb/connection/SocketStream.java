@@ -23,6 +23,8 @@ import org.bson.ByteBuf;
 
 import javax.net.SocketFactory;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.List;
 
@@ -31,6 +33,8 @@ class SocketStream implements Stream {
     private final ServerAddress address;
     private final SocketSettings settings;
     private final BufferProvider bufferProvider;
+    private final OutputStream outputStream;
+    private final InputStream inputStream;
     private volatile boolean isClosed;
 
     public SocketStream(final ServerAddress address, final SocketSettings settings, final SocketFactory socketFactory,
@@ -41,6 +45,8 @@ class SocketStream implements Stream {
         try {
             socket = socketFactory.createSocket();
             SocketStreamHelper.initialize(socket, address, settings);
+            outputStream = socket.getOutputStream();
+            inputStream = socket.getInputStream();
         } catch (IOException e) {
             close();
             throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
@@ -55,7 +61,7 @@ class SocketStream implements Stream {
     @Override
     public void write(final List<ByteBuf> buffers) throws IOException {
         for (final ByteBuf cur : buffers) {
-            socket.getOutputStream().write(cur.array(), 0, cur.limit());
+            outputStream.write(cur.array(), 0, cur.limit());
         }
     }
 
@@ -65,7 +71,7 @@ class SocketStream implements Stream {
         int totalBytesRead = 0;
         byte[] bytes = buffer.array();
         while (totalBytesRead < buffer.limit()) {
-            int bytesRead = socket.getInputStream().read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
+            int bytesRead = inputStream.read(bytes, totalBytesRead, buffer.limit() - totalBytesRead);
             if (bytesRead == -1) {
                 throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());
             }
