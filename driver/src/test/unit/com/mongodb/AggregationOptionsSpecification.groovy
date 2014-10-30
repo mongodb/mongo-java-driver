@@ -32,11 +32,9 @@ class AggregationOptionsSpecification extends Specification {
                                         .maxTime(42, MILLISECONDS)
                                         .build()
         then:
-        options.with {
-            allowDiskUse
-            batchSize == 3
-            outputMode == CURSOR
-            getMaxTime(MILLISECONDS) == 42
-        }
+        options.allowDiskUse
+        options.batchSize == 3
+        options.outputMode == CURSOR
+        options.getMaxTime(MILLISECONDS) == 42
     }
 }

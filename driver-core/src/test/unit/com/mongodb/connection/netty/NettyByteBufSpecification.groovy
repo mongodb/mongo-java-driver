@@ -48,11 +48,10 @@ class NettyByteBufSpecification extends Specification {
         }
 
         then:
-        buffer.with {
-            get() == 42
-            get() == 43
-            get() == 44
-        }
+        buffer.get() == 42
+        buffer.get() == 43
+        buffer.get() == 44
+
         where:
         provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
     }
@@ -77,14 +76,12 @@ class NettyByteBufSpecification extends Specification {
         }
 
         then:
-        buffer.with {
-            get() == 22
-            get() == 23
-            get() == 24
-            get() == 25
-            get() == 43
-            get() == 44
-        }
+        buffer.get() == 22
+        buffer.get() == 23
+        buffer.get() == 24
+        buffer.get() == 25
+        buffer.get() == 43
+        buffer.get() == 44
 
         where:
         provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
@@ -165,17 +162,15 @@ class NettyByteBufSpecification extends Specification {
         def nioBuffer = buffer.asNIO()
 
         then:
-        nioBuffer.with {
-            limit() == 6
-            position() == 0
-            get() == 42
-            get() == 43
-            get() == 44
-            get() == 45
-            get() == 46
-            get() == 47
-            remaining() == 0
-        }
+        nioBuffer.limit() == 6
+        nioBuffer.position() == 0
+        nioBuffer.get() == 42
+        nioBuffer.get() == 43
+        nioBuffer.get() == 44
+        nioBuffer.get() == 45
+        nioBuffer.get() == 46
+        nioBuffer.get() == 47
+        nioBuffer.remaining() == 0
 
         where:
         provider << [new NettyBufferProvider(), new SimpleBufferProvider()]

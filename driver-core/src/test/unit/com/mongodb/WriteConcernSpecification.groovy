@@ -169,19 +169,24 @@ class WriteConcernSpecification extends Specification {
     }
 
     def 'majority write concern'() {
-        expect:
-        new WriteConcern.Majority().with {
-            getWString() == 'majority'
-            getWtimeout() == 0
-            !getFsync()
-            !getJ()
-        }
+        given:
+        def majority = new WriteConcern.Majority()
 
-        new WriteConcern.Majority(10, true, true).with {
-            getWString() == 'majority'
-            getWtimeout() == 10
-            getFsync()
-            getJ()
-        }
+        expect:
+        majority.getWString() == 'majority'
+        majority.getWtimeout() == 0
+        !majority.getFsync()
+        !majority.getJ()
+    }
+
+    def 'majority with options write concern'() {
+        given:
+        def majorityWithOptions = new WriteConcern.Majority(10, true, true)
+
+        expect:
+        majorityWithOptions.getWString() == 'majority'
+        majorityWithOptions.getWtimeout() == 10
+        majorityWithOptions.getFsync()
+        majorityWithOptions.getJ()
     }
 }

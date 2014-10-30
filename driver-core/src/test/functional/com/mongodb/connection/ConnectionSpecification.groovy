@@ -53,14 +53,12 @@ class ConnectionSpecification extends OperationFunctionalSpecification {
         def connection = source.connection
 
         then:
-        connection.description.with {
-            serverAddress == source.getServerDescription().getAddress()
-            serverVersion == ClusterFixture.getServerVersion()
-            serverType == source.getServerDescription().getType()
-            maxDocumentSize == source.getServerDescription().getMaxDocumentSize()
-            maxMessageSize == expectedMaxMessageSize
-            maxBatchCount == expectedMaxBatchCount
-        }
+        connection.description.serverAddress == source.getServerDescription().getAddress()
+        connection.description.serverVersion == ClusterFixture.getServerVersion()
+        connection.description.serverType == source.getServerDescription().getType()
+        connection.description.maxDocumentSize == source.getServerDescription().getMaxDocumentSize()
+        connection.description.maxMessageSize == expectedMaxMessageSize
+        connection.description.maxBatchCount == expectedMaxBatchCount
 
         cleanup:
         connection?.release()

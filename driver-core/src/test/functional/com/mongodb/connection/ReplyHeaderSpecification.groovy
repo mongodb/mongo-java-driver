@@ -44,15 +44,13 @@ class ReplyHeaderSpecification extends Specification {
         def replyHeader = new ReplyHeader(buffer);
 
         then:
-        replyHeader.with {
-            messageLength == 36
-            requestId == 45
-            responseTo == 23
-            responseFlags == 1
-            cursorId == 9000
-            startingFrom == 4
-            numberReturned == 30
-        }
+        replyHeader.messageLength == 36
+        replyHeader.requestId == 45
+        replyHeader.responseTo == 23
+        replyHeader.responseFlags == 1
+        replyHeader.cursorId == 9000
+        replyHeader.startingFrom == 4
+        replyHeader.numberReturned == 30
     }
 
     def 'should throw MongoInternalException on incorrect opCode'() {

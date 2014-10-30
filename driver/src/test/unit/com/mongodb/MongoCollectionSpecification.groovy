@@ -303,27 +303,25 @@ class MongoCollectionSpecification extends Specification {
                 .projection(new Document('x', 1))
                 .sort(new Document('y', 1))
 
-        collection.find(new Document('cold', true), options).first()
+        collection.find(new Document('cold', true), options).iterator()
 
         then:
         def operation = executor.getReadOperation() as FindOperation
-        operation.with {
-            filter == new BsonDocument('cold', BsonBoolean.TRUE)
-            batchSize == 4
-            getMaxTime(TimeUnit.SECONDS) == 1
-            skip == 5
-            limit == 100
-            modifiers == new BsonDocument('$hint', new BsonString('i1'))
-            projection == new BsonDocument('x', new BsonInt32(1))
-            sort == new BsonDocument('y', new BsonInt32(1))
-            !isTailableCursor()
-            !isSlaveOk()
-            !isOplogReplay()
-            !isNoCursorTimeout()
-            !isAwaitData()
-            !isExhaust()
-            !isPartial()
-        }
+        operation.filter == new BsonDocument('cold', BsonBoolean.TRUE)
+        operation.batchSize == 4
+        operation.getMaxTime(TimeUnit.SECONDS) == 1
+        operation.skip == 5
+        operation.limit == 100
+        operation.modifiers == new BsonDocument('$hint', new BsonString('i1'))
+        operation.projection == new BsonDocument('x', new BsonInt32(1))
+        operation.sort == new BsonDocument('y', new BsonInt32(1))
+        !operation.isTailableCursor()
+        !operation.isSlaveOk()
+        !operation.isOplogReplay()
+        !operation.isNoCursorTimeout()
+        !operation.isAwaitData()
+        !operation.isExhaust()
+        !operation.isPartial()
         executor.readPreference == secondary()
 
         when:
@@ -335,19 +333,16 @@ class MongoCollectionSpecification extends Specification {
                                    .tailable(true)
                                    .oplogReplay(true)
 
-        collection.find(new Document(), options).first()
+        collection.find(new Document(), options).iterator()
 
         then: 'cursor flags contains all flags'
         def operation2 = executor.getReadOperation() as FindOperation
-        operation2.with {
-            isTailableCursor()
-            isSlaveOk()
-            isOplogReplay()
-            isNoCursorTimeout()
-            isAwaitData()
-            isExhaust()
-            isPartial()
-        }
+        operation2.isTailableCursor()
+        operation2.isOplogReplay()
+        operation2.isNoCursorTimeout()
+        operation2.isAwaitData()
+        operation2.isExhaust()
+        operation2.isPartial()
     }
 
     def 'count should use CountOperation properly'() {
@@ -545,8 +540,8 @@ class MongoCollectionSpecification extends Specification {
         operation.getScope() == null
         operation.getSort() == null
         operation.getMaxTime(TimeUnit.MILLISECONDS) == 0
-        operation.isJsMode() == false
-        operation.isVerbose() == true
+        !operation.isJsMode()
+        operation.isVerbose()
         executor.readPreference == secondary()
     }
 
@@ -578,8 +573,8 @@ class MongoCollectionSpecification extends Specification {
         operation.getScope() == new BsonDocument('scope', new BsonInt32(1))
         operation.getSort() == new BsonDocument('sort', new BsonInt32(1))
         operation.getMaxTime(TimeUnit.MILLISECONDS) == 10
-        operation.isJsMode() == true
-        operation.isVerbose() == false
+        operation.isJsMode()
+        !operation.isVerbose()
         executor.readPreference == secondary()
     }
 
@@ -616,13 +611,13 @@ class MongoCollectionSpecification extends Specification {
         operation.getScope() == new BsonDocument('scope', new BsonInt32(1))
         operation.getSort() == new BsonDocument('sort', new BsonInt32(1))
         operation.getMaxTime(TimeUnit.MILLISECONDS) == 10
-        operation.isJsMode() == true
-        operation.isVerbose() == false
-        operation.isJsMode() == true
+        operation.isJsMode()
+        !operation.isVerbose()
+        operation.isJsMode()
         operation.action == 'merge'
         operation.getDatabaseName() == 'db'
-        operation.isSharded() == true
-        operation.isNonAtomic() == true
+        operation.isSharded()
+        operation.isNonAtomic()
 
         when:
         def findOperation = executor.getReadOperation() as FindOperation<Document>
