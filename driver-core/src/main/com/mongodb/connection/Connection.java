@@ -33,9 +33,9 @@ import org.bson.codecs.Decoder;
 import java.util.List;
 
 /**
- * A connection to a MongoDB server with blocking and non-blocking operations. <p> Implementations of this class are thread safe.  At a
- * minimum, they must support concurrent calls to sendMessage and receiveMessage, but at most one of each.  But multiple concurrent calls to
- * either sendMessage or receiveMessage may block. </p>
+ * A connection to a MongoDB server with blocking and non-blocking operations.
+ *
+ * <p> Implementations of this class are thread safe.  </p>
  *
  * @since 3.0
  */

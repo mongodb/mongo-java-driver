@@ -16,20 +16,14 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.ByteBuf;
 
 import java.util.List;
 
-/**
- * A connection to a MongoDB server with blocking operations. <p> This class is not completely thread safe.  At most one thread can have an
- * active call to sendMessage, and one thread an active call to receiveMessage. </p>
- *
- * @since 3.0
- */
-@NotThreadSafe
+@ThreadSafe
 interface InternalConnection extends BufferProvider {
 
     /**
