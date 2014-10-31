@@ -157,7 +157,7 @@ class TestConnection implements Connection {
     public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
                                     final int numberToReturn, final int skip,
                                     final boolean slaveOk, final boolean tailableCursor, final boolean awaitData,
-                                    final boolean noCursorTimeout, final boolean exhaust,
+                                    final boolean noCursorTimeout,
                                     final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder) {
         return executeEnqueuedProtocol();
     }
@@ -167,7 +167,7 @@ class TestConnection implements Connection {
                                                       final BsonDocument fields,
                                                       final int numberToReturn, final int skip, final boolean slaveOk,
                                                       final boolean tailableCursor,
-                                                      final boolean awaitData, final boolean noCursorTimeout, final boolean exhaust,
+                                                      final boolean awaitData, final boolean noCursorTimeout,
                                                       final boolean partial,
                                                       final boolean oplogReplay, final Decoder<T> resultDecoder) {
         return executeEnqueuedProtocolAsync();
@@ -182,26 +182,6 @@ class TestConnection implements Connection {
     @Override
     public <T> MongoFuture<QueryResult<T>> getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
                                                         final Decoder<T> resultDecoder) {
-        return executeEnqueuedProtocolAsync();
-    }
-
-    @Override
-    public <T> QueryResult<T> getMoreReceive(final Decoder<T> resultDecoder, final int responseTo) {
-        return executeEnqueuedProtocol();
-    }
-
-    @Override
-    public <T> MongoFuture<QueryResult<T>> getMoreReceiveAsync(final Decoder<T> resultDecoder, final int responseTo) {
-        return executeEnqueuedProtocolAsync();
-    }
-
-    @Override
-    public void getMoreDiscard(final long cursorId, final int responseTo) {
-        executeEnqueuedProtocol();
-    }
-
-    @Override
-    public MongoFuture<Void> getMoreDiscardAsync(final long cursorId, final int responseTo) {
         return executeEnqueuedProtocolAsync();
     }
 

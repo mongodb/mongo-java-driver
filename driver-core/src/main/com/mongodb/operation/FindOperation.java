@@ -68,7 +68,6 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
     private boolean oplogReplay;
     private boolean noCursorTimeout;
     private boolean awaitData;
-    private boolean exhaust;
     private boolean partial;
 
     /**
@@ -406,34 +405,6 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
     }
 
     /**
-     * Gets if cursor should get all the data immediately.
-     *
-     * <p>Stream the data down full blast in multiple "more" packages, on the assumption that the client will fully read all data
-     * queried. Faster when you are pulling a lot of data and know you want to pull it all down</p>
-     *
-     * @return if cursor should get all the data immediately
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
-     */
-    public boolean isExhaust() {
-        return exhaust;
-    }
-
-    /**
-     * Should the cursor get all the data immediately.
-     *
-     * <p>Stream the data down full blast in multiple "more" packages, on the assumption that the client will fully read all data
-     * queried. Faster when you are pulling a lot of data and know you want to pull it all down</p>
-     *
-     * @param exhaust should the cursor get all the data immediately.
-     * @return this
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
-     */
-    public FindOperation<T> exhaust(final boolean exhaust) {
-        this.exhaust = exhaust;
-        return this;
-    }
-
-    /**
      * Returns true if can get partial results from a mongos if some shards are down.
      *
      * @return if can get partial results from a mongos if some shards are down
@@ -469,17 +440,10 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
                                                               isTailableCursor(),
                                                               isAwaitData(),
                                                               isNoCursorTimeout(),
-                                                              isExhaust(),
                                                               isPartial(),
                                                               isOplogReplay(),
                                                               decoder);
-                if (isExhaust()) {
-                    return new MongoQueryCursor<T>(namespace, queryResult, limit, batchSize,
-                                                   decoder, connection);
-                } else {
-                    return new MongoQueryCursor<T>(namespace, queryResult, limit, batchSize,
-                                                   decoder, source);
-                }
+                return new MongoQueryCursor<T>(namespace, queryResult, limit, batchSize, decoder, source);
             }
         });
     }
@@ -499,7 +463,6 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
                                       isTailableCursor(),
                                       isAwaitData(),
                                       isNoCursorTimeout(),
-                                      isExhaust(),
                                       isPartial(),
                                       isOplogReplay(),
                                       decoder)
@@ -509,15 +472,8 @@ public class FindOperation<T> implements AsyncReadOperation<MongoAsyncCursor<T>>
                                             if (e != null) {
                                                 future.init(null, e);
                                             } else {
-                                                if (isExhaust()) {
-                                                    future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, limit,
-                                                                                             batchSize, decoder,
-                                                                                             connection), null);
-                                                } else {
-                                                    future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, limit,
-                                                                                             batchSize, decoder,
-                                                                                             source), null);
-                                                }
+                                                future.init(new MongoAsyncQueryCursor<T>(namespace, queryResult, limit, batchSize, decoder,
+                                                                                         source), null);
                                             }
                                         }
                                     }

@@ -250,31 +250,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         findOperation.execute(binding) != null // if it didn't throw, the query was executed
     }
 
-    @IgnoreIf({ isSharded() })
-    @Category(Slow)
-    def 'should exhaust'() {
-        (1..500).each {
-            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', it))
-        }
-        def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec()).exhaust(true)
-
-        when:
-        def count = 0;
-
-        def cursor = findOperation.execute(getBinding())
-        try {
-            while (cursor.hasNext()) {
-                cursor.next();
-                count++;
-            }
-        } finally {
-            cursor.close()
-        }
-
-        then:
-        count == 500
-    }
-
     @Category([Async, Slow])
     @IgnoreIf({ isSharded() })
     def 'should iterate asynchronously'() {
@@ -283,29 +258,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
             collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', it))
         }
         def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-
-        when:
-        def count = 0;
-
-        def cursor = findOperation.executeAsync(getAsyncBinding())
-        cursor.get().forEach(new Block<Document>() {
-            @Override
-            void apply(final Document document) {
-                count++;
-            }
-        }).get()
-
-        then:
-        count == 500
-    }
-
-    @Category([Async, Slow])
-    @IgnoreIf({ isSharded() })
-    def 'should exhaust asynchronously'() {
-        (1..500).each {
-            collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', it))
-        }
-        def findOperation = new FindOperation<Document>(getNamespace(), new DocumentCodec()).exhaust(true)
 
         when:
         def count = 0;

@@ -613,7 +613,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                    .projection(asBson(options.getProjection()))
                    .sort(asBson(options.getSort()))
                    .awaitData(options.isAwaitData())
-                   .exhaust(options.isExhaust())
                    .noCursorTimeout(options.isNoCursorTimeout())
                    .oplogReplay(options.isOplogReplay())
                    .partial(options.isPartial())
@@ -664,7 +663,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                           .oplogReplay(findOp.isOplogReplay())
                                                           .noCursorTimeout(findOp.isNoCursorTimeout())
                                                           .awaitData(findOp.isAwaitData())
-                                                          .exhaust(findOp.isExhaust())
                                                           .partial(findOp.isPartial())
                                                           .batchSize(0)
                                                           .limit(-1);

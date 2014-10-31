@@ -159,7 +159,7 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
     public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
                                     final int numberToReturn, final int skip,
                                     final boolean slaveOk, final boolean tailableCursor,
-                                    final boolean awaitData, final boolean noCursorTimeout, final boolean exhaust,
+                                    final boolean awaitData, final boolean noCursorTimeout,
                                     final boolean partial, final boolean oplogReplay,
                                     final Decoder<T> resultDecoder) {
         return executeProtocol(new QueryProtocol<T>(namespace, skip, numberToReturn, queryDocument, fields, resultDecoder)
@@ -168,7 +168,6 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
                                .oplogReplay(oplogReplay)
                                .noCursorTimeout(noCursorTimeout)
                                .awaitData(awaitData)
-                               .exhaust(exhaust)
                                .partial(partial));
     }
 
@@ -176,7 +175,7 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
     public <T> MongoFuture<QueryResult<T>> queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument,
                                                       final BsonDocument fields, final int numberToReturn, final int skip,
                                                       final boolean slaveOk, final boolean tailableCursor,
-                                                      final boolean awaitData, final boolean noCursorTimeout, final boolean exhaust,
+                                                      final boolean awaitData, final boolean noCursorTimeout,
                                                       final boolean partial, final boolean oplogReplay,
                                                       final Decoder<T> resultDecoder) {
         return executeProtocolAsync(new QueryProtocol<T>(namespace, skip, numberToReturn, queryDocument, fields, resultDecoder)
@@ -185,7 +184,6 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
                                     .oplogReplay(oplogReplay)
                                     .noCursorTimeout(noCursorTimeout)
                                     .awaitData(awaitData)
-                                    .exhaust(exhaust)
                                     .partial(partial));
     }
 
@@ -199,26 +197,6 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
     public <T> MongoFuture<QueryResult<T>> getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
                                                         final Decoder<T> resultDecoder) {
         return executeProtocolAsync(new GetMoreProtocol<T>(namespace, cursorId, numberToReturn, resultDecoder));
-    }
-
-    @Override
-    public <T> QueryResult<T> getMoreReceive(final Decoder<T> resultDecoder, final int responseTo) {
-        return executeProtocol(new GetMoreReceiveProtocol<T>(resultDecoder, responseTo));
-    }
-
-    @Override
-    public <T> MongoFuture<QueryResult<T>> getMoreReceiveAsync(final Decoder<T> resultDecoder, final int responseTo) {
-        return executeProtocolAsync(new GetMoreReceiveProtocol<T>(resultDecoder, responseTo));
-    }
-
-    @Override
-    public void getMoreDiscard(final long cursorId, final int responseTo) {
-        executeProtocol(new GetMoreDiscardProtocol(cursorId, responseTo));
-    }
-
-    @Override
-    public MongoFuture<Void> getMoreDiscardAsync(final long cursorId, final int responseTo) {
-        return executeProtocolAsync(new GetMoreDiscardProtocol(cursorId, responseTo));
     }
 
     @Override

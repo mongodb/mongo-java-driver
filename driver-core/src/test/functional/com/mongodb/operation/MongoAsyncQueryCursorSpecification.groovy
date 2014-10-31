@@ -33,12 +33,10 @@ import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
-import spock.lang.IgnoreIf
 import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncCluster
-import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ReadPreference.primary
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -97,89 +95,6 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         documentResultList == documentList[0..99]
     }
 
-    @IgnoreIf({ isSharded() })
-    def 'Cursor should support Exhaust'() {
-        setup:
-        Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = executeExhaustQuery(getOrderedByIdQuery(), 2, connection)
-
-        when:
-        new MongoAsyncQueryCursor<Document>(getNamespace(),
-                                            firstBatch, 0, 2, new DocumentCodec(),
-                                            connection)
-                .forEach(new TestBlock()).get()
-
-        then:
-        documentResultList == documentList
-
-        cleanup:
-        connection?.release()
-    }
-
-    @IgnoreIf({ isSharded() })
-    def 'Cursor should support Exhaust and limit'() {
-        setup:
-        Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = executeExhaustQuery(getOrderedByIdQuery(), 2, connection)
-
-        when:
-        new MongoAsyncQueryCursor<Document>(getNamespace(),
-                                            firstBatch, 5, 2, new DocumentCodec(),
-                                            connection)
-                .forEach(new TestBlock()).get()
-
-        then:
-        documentResultList == documentList[0..4]
-
-        cleanup:
-        connection?.release()
-    }
-
-    @IgnoreIf({ isSharded() })
-    def 'Cursor should support Exhaust and Discard'() {
-        setup:
-        AsyncConnectionSource readConnectionSource = getAsyncBinding().getReadConnectionSource().get()
-        Connection connection = readConnectionSource.getConnection().get()
-        QueryResult<Document> firstBatch = executeExhaustQuery(getOrderedByIdQuery(), 2, connection)
-
-        when:
-        new MongoAsyncQueryCursor<Document>(getNamespace(), firstBatch, 5, 2, new DocumentCodec(), connection)
-                .forEach(new TestBlock(1)).get()
-
-        then:
-        thrown(MongoInternalException)
-        documentResultList == documentList[0..0]
-        def docs = executeExhaustQuery(getOrderedByIdQuery(), 1, connection).getResults()
-        [[_id: 1]] == docs
-
-        cleanup:
-        connection?.release()
-        readConnectionSource?.release()
-    }
-
-    @IgnoreIf({ isSharded() })
-    def 'exhaust cursor should support early termination'() {
-        setup:
-        AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
-        Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = executeExhaustQuery(getOrderedByIdQuery(), 2, connection)
-        TestBlock block = new TestBlock(1)
-
-        when:
-        new MongoAsyncQueryCursor<Document>(getNamespace(),
-                                            firstBatch, 5, 2, new DocumentCodec(),
-                                            connection)
-                .forEach(block).get()
-
-        then:
-        thrown(MongoInternalException)
-        block.getIterations() == 1
-
-        cleanup:
-        connection?.release()
-        source?.release()
-    }
-
     @Category(Slow)
     def 'Cursor should be tailable'() {
         setup:
@@ -215,59 +130,31 @@ class MongoAsyncQueryCursorSpecification extends OperationFunctionalSpecificatio
         source.release()
     }
 
-    @IgnoreIf({ isSharded() })
-    def 'should get Exceptions for operations on the exhaust cursor after closing'() throws InterruptedException {
-        setup:
-        AsyncConnectionSource source = getAsyncBinding().getReadConnectionSource().get()
-        Connection connection = source.getConnection().get()
-        QueryResult<Document> firstBatch = executeExhaustQuery(getOrderedByIdQuery(), 2, connection)
-
-        when:
-        MongoAsyncQueryCursor<Document> asyncCursor = new MongoAsyncQueryCursor<Document>(getNamespace(),
-                                                                                          firstBatch, 5, 2, new DocumentCodec(),
-                                                                                          connection);
-
-        asyncCursor.forEach(new TestBlock()).get()
-        asyncCursor.forEach(new TestBlock()).get()
-
-        then:
-        thrown(IllegalStateException)
-
-        cleanup:
-        connection?.release()
-        source?.release()
-    }
-
     private static Document getOrderedByIdQuery() {
         new Document('$query', new Document()).append('$orderby', new Document('_id', 1))
     }
 
     private QueryResult<Document> executeQuery() {
-        executeQuery(getOrderedByIdQuery(), 0, false, false, false)
-    }
-
-    private QueryResult<Document> executeExhaustQuery(Document query, int numberToReturn, Connection connection) {
-        executeQuery(query, numberToReturn, true, false, false, connection)
+        executeQuery(getOrderedByIdQuery(), 0, false, false)
     }
 
     private QueryResult<Document> executeTailableQuery(Document query, int numberToReturn, Connection connection) {
-        executeQuery(query, numberToReturn, false, true, true, connection)
+        executeQuery(query, numberToReturn, true, true, connection)
     }
 
-    private QueryResult<Document> executeQuery(Document query, int numberToReturn, boolean exhaust, boolean tailable,
-                                               boolean awaitData) {
+    private QueryResult<Document> executeQuery(Document query, int numberToReturn, boolean tailable, boolean awaitData) {
         Connection connection = source.getConnection().get()
         try {
-            executeQuery(query, numberToReturn, exhaust, tailable, awaitData, connection)
+            executeQuery(query, numberToReturn, tailable, awaitData, connection)
         } finally {
             connection.release()
         }
     }
 
-    private QueryResult<Document> executeQuery(Document query, int numberToReturn, boolean exhaust, boolean tailable,
-                                               boolean awaitData, Connection connection) {
+    private QueryResult<Document> executeQuery(Document query, int numberToReturn, boolean tailable, boolean awaitData,
+                                               Connection connection) {
         connection.query(getNamespace(), new BsonDocumentWrapper<Document>(query, new DocumentCodec()), null, numberToReturn, 0,
-                         false, tailable, awaitData, false, exhaust, false, false, new DocumentCodec())
+                         false, tailable, awaitData, false, false, false, new DocumentCodec())
     }
 
     private final class TestBlock implements Block<Document> {

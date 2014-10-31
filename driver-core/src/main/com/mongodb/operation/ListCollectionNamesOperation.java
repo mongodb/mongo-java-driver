@@ -77,7 +77,7 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
                 } else {
                     return queryResultToList(getNamespace(), connection.query(getNamespace(), new BsonDocument(), null, 0, 0,
                                                                               binding.getReadPreference().isSlaveOk(), false,
-                                                                              false, false, false, false, false,
+                                                                              false, false, false, false,
                                                                               new BsonDocumentCodec()),
                                              new BsonDocumentCodec(), source, queryResultTransformer());
                 }
@@ -99,7 +99,7 @@ public class ListCollectionNamesOperation implements AsyncReadOperation<List<Str
                 } else {
                     return queryResultToListAsync(getNamespace(), connection.queryAsync(getNamespace(), new BsonDocument(), null, 0, 0,
                                                                                         binding.getReadPreference().isSlaveOk(), false,
-                                                                                        false, false, false, false, false,
+                                                                                        false, false, false, false,
                                                                                         new BsonDocumentCodec()),
                                                   new BsonDocumentCodec(), source, queryResultTransformer());
                 }

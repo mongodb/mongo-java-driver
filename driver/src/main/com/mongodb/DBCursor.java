@@ -232,6 +232,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
     public DBCursor setOptions(final int options) {
+        if ((options & Bytes.QUERYOPTION_EXHAUST) != 0) {
+            throw new UnsupportedOperationException("exhaust query option is not supported");
+        }
         this.options = options;
         return this;
     }
@@ -477,7 +480,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
                                                 .skip(options.getSkip())
                                                 .sort((BsonDocument) options.getSort())
                                                 .awaitData(options.isAwaitData())
-                                                .exhaust(options.isExhaust())
                                                 .noCursorTimeout(options.isNoCursorTimeout())
                                                 .oplogReplay(options.isOplogReplay())
                                                 .partial(options.isPartial())
@@ -494,9 +496,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
         if ((this.options & Bytes.QUERYOPTION_AWAITDATA) != 0) {
             operation.awaitData(true);
-        }
-        if ((this.options & Bytes.QUERYOPTION_EXHAUST) != 0) {
-            operation.exhaust(true);
         }
         if ((this.options & Bytes.QUERYOPTION_PARTIAL) != 0) {
             operation.partial(true);

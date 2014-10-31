@@ -36,7 +36,6 @@ public final class FindOptions {
     private int skip;
     private Object sort;
     private boolean awaitData;
-    private boolean exhaust;
     private boolean noCursorTimeout;
     private boolean oplogReplay;
     private boolean partial;
@@ -61,7 +60,6 @@ public final class FindOptions {
         skip = from.skip;
         sort = from.sort;
         awaitData = from.awaitData;
-        exhaust = from.exhaust;
         noCursorTimeout = from.noCursorTimeout;
         oplogReplay = from.oplogReplay;
         partial = from.partial;
@@ -252,30 +250,6 @@ public final class FindOptions {
     }
 
     /**
-     * If true, stream the data down full blast in multiple "more" packages, on the assumption that
-     * the client will fully read all data queried. Faster when you are pulling a lot of
-     * data and know you want to pull it all down, but note that it is not currently supported in sharded clusters.
-     *
-     * @return whether exhaust mode is enabled
-     */
-    public boolean isExhaust() {
-        return exhaust;
-    }
-
-    /**
-     * If true, stream the data down full blast in multiple "more" packages, on the assumption that
-     * the client will fully read all data queried. Faster when you are pulling a lot of
-     * data and know you want to pull it all down, but note that it is not currently supported in sharded clusters.
-     *
-     * @param exhaust whether exhaust mode is enabled
-     * @return this
-     */
-    public FindOptions exhaust(final boolean exhaust) {
-        this.exhaust = exhaust;
-        return this;
-    }
-
-    /**
      * The server normally times out idle cursors after an inactivity period (10 minutes)
      * to prevent excess memory use.  If true, that timeout is disabled.
      *
@@ -376,7 +350,6 @@ public final class FindOptions {
                + ", skip=" + skip
                + ", sort=" + sort
                + ", awaitData=" + awaitData
-               + ", exhaust=" + exhaust
                + ", noCursorTimeout=" + noCursorTimeout
                + ", oplogReplay=" + oplogReplay
                + ", partial=" + partial

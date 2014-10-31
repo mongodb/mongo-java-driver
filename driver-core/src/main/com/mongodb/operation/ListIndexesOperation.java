@@ -83,7 +83,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
                 } else {
                     return queryResultToList(getIndexNamespace(), connection.query(getIndexNamespace(), asQueryDocument(), null, 0, 0,
                                                                                    binding.getReadPreference().isSlaveOk(), false,
-                                                                                   false, false, false, false, false,
+                                                                                   false, false, false, false,
                                                                                    decoder), decoder, source, new IdentityTransformer<T>());
                 }
             }
@@ -106,7 +106,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<List<T>>, Rea
                     return queryResultToListAsync(getIndexNamespace(),
                                                   connection.queryAsync(getIndexNamespace(), asQueryDocument(), null, 0, 0,
                                                                         binding.getReadPreference().isSlaveOk(), false,
-                                                                        false, false, false, false, false,
+                                                                        false, false, false, false,
                                                                         decoder),
                                                   decoder, source, new IdentityTransformer<T>());
                 }

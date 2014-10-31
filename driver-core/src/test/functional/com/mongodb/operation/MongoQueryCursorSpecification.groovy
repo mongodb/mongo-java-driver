@@ -459,7 +459,7 @@ class MongoQueryCursorSpecification extends OperationFunctionalSpecification {
         def connection = connectionSource.getConnection()
         try {
             connection.query(getNamespace(), query, null, numberToReturn, 0,
-                             false, tailable, awaitData, false, false, false, false,
+                             false, tailable, awaitData, false, false, false,
                              new DocumentCodec());
         } finally {
             connection.release();

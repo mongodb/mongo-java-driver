@@ -32,6 +32,7 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.codecs.Decoder;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CursorHelper.getNumberToReturn;
 import static java.util.Arrays.asList;
 
@@ -46,7 +47,6 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     private final int batchSize;
     private final Decoder<T> decoder;
     private final AsyncConnectionSource connectionSource;
-    private final Connection exhaustConnection;
     private int numFetchedSoFar;
     private ServerCursor cursor;
     private boolean closed;
@@ -54,31 +54,12 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
     // For normal queries
     MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
                           final Decoder<T> decoder, final AsyncConnectionSource connectionSource) {
-        this(namespace, firstBatch, limit, batchSize, decoder, connectionSource, null);
-    }
-
-    // For exhaust queries
-    MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
-                          final Decoder<T> decoder, final Connection exhaustConnection) {
-        this(namespace, firstBatch, limit, batchSize, decoder, null, exhaustConnection);
-    }
-
-    private MongoAsyncQueryCursor(final MongoNamespace namespace, final QueryResult<T> firstBatch, final int limit, final int batchSize,
-                                  final Decoder<T> decoder, final AsyncConnectionSource connectionSource,
-                                  final Connection exhaustConnection) {
         this.namespace = namespace;
         this.firstBatch = firstBatch;
         this.limit = limit;
         this.batchSize = batchSize;
         this.decoder = decoder;
-        this.connectionSource = connectionSource;
-        if (this.connectionSource != null) {
-            this.connectionSource.retain();
-        }
-        this.exhaustConnection = exhaustConnection;
-        if (this.exhaustConnection != null) {
-            this.exhaustConnection.retain();
-        }
+        this.connectionSource = notNull("connectionSource", connectionSource).retain();
     }
 
     @Override
@@ -88,29 +69,8 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
         return retVal;
     }
 
-    private void close(final int responseTo, final SingleResultFuture<Void> future, final MongoException e) {
-        if (isExhaust()) {
-            handleExhaustCleanup(responseTo, future, e);
-        } else {
-            killCursorAndCompleteFuture(future, e);
-        }
-    }
-
-    private boolean isExhaust() {
-        return exhaustConnection != null;
-    }
-
-    private void handleExhaustCleanup(final int responseTo, final SingleResultFuture<Void> future, final MongoException e) {
-        exhaustConnection.getMoreDiscardAsync(cursor != null ? cursor.getId() : 0, responseTo)
-        .register(new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final MongoException exhaustException) {
-                exhaustConnection.release();
-                releaseConnectionSource();
-                closed = true;
-                future.init(null, e == null ? exhaustException : e);
-            }
-        });
+    private void close(final SingleResultFuture<Void> future, final MongoException e) {
+        killCursorAndCompleteFuture(future, e);
     }
 
     private void killCursorAndCompleteFuture(final SingleResultFuture<Void> future, final MongoException e) {
@@ -174,11 +134,11 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             if (closed) {
                 throw new IllegalStateException("Cursor has been closed");
             }
-            if (!isExhaust() & connection != null) {
+            if (connection != null) {
                 connection.release();
             }
             if (e != null) {
-                close(0, future, e);
+                close(future, e);
                 return;
             }
 
@@ -204,26 +164,22 @@ class MongoAsyncQueryCursor<T> implements MongoAsyncCursor<T> {
             }
 
             if (result.getCursor() == null || breakEarly) {
-                close(result.getRequestId(), future, exceptionFromApply);
+                close(future, exceptionFromApply);
             } else {
                 // get more results
-                if (isExhaust()) {
-                    exhaustConnection.getMoreReceiveAsync(decoder, result.getRequestId()).register(this);
-                } else {
-                    connectionSource.getConnection().register(new SingleResultCallback<Connection>() {
-                        @Override
-                        public void onResult(final Connection connection, final MongoException e) {
-                            if (e != null) {
-                                close(0, future, e);
-                            } else {
-                                connection.getMoreAsync(namespace, result.getCursor().getId(),
-                                                        getNumberToReturn(limit, batchSize, numFetchedSoFar),
-                                                        decoder)
-                                          .register(new QueryResultSingleResultCallback(block, future, connection));
-                            }
+                connectionSource.getConnection().register(new SingleResultCallback<Connection>() {
+                    @Override
+                    public void onResult(final Connection connection, final MongoException e) {
+                        if (e != null) {
+                            close(future, e);
+                        } else {
+                            connection.getMoreAsync(namespace, result.getCursor().getId(),
+                                                    getNumberToReturn(limit, batchSize, numFetchedSoFar),
+                                                    decoder)
+                                      .register(new QueryResultSingleResultCallback(block, future, connection));
                         }
-                    });
-                }
+                    }
+                });
             }
         }
     }

@@ -234,17 +234,16 @@ public interface Connection extends ReferenceCounted {
      * @param tailableCursor  whether to return a tailable cursor
      * @param awaitData       whether a tailable cursor should wait before returning if no documents are available
      * @param noCursorTimeout whether the cursor should not timeout
-     * @param exhaust         whether all documents should be retrieved immediately
      * @param partial         whether partial results from sharded clusters are acceptable
      * @param oplogReplay     whether to replay the oplog
      * @param resultDecoder   the decoder for the query result documents
-     * @param <T>                  the type of the result
+     * @param <T>             the query result document type
      * @return the query results
      */
     <T> QueryResult<T> query(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
                              int numberToReturn, int skip,
                              boolean slaveOk, boolean tailableCursor, boolean awaitData, boolean noCursorTimeout,
-                             boolean exhaust, boolean partial, boolean oplogReplay,
+                             boolean partial, boolean oplogReplay,
                              Decoder<T> resultDecoder);
 
     /**
@@ -259,17 +258,16 @@ public interface Connection extends ReferenceCounted {
      * @param tailableCursor  whether to return a tailable cursor
      * @param awaitData       whether a tailable cursor should wait before returning if no documents are available
      * @param noCursorTimeout whether the cursor should not timeout
-     * @param exhaust         whether all documents should be retrieved immediately
      * @param partial         whether partial results from sharded clusters are acceptable
      * @param oplogReplay     whether to replay the oplog
      * @param resultDecoder   the decoder for the query result documents
-     * @param <T>             the type of the result
+     * @param <T>             the query result document type
      * @return the query results
      */
     <T> MongoFuture<QueryResult<T>> queryAsync(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
                                                int numberToReturn, int skip,
                                                boolean slaveOk, boolean tailableCursor, boolean awaitData, boolean noCursorTimeout,
-                                               boolean exhaust, boolean partial, boolean oplogReplay,
+                                               boolean partial, boolean oplogReplay,
                                                Decoder<T> resultDecoder);
 
     /**
@@ -295,43 +293,6 @@ public interface Connection extends ReferenceCounted {
      * @return the query results
      */
     <T> MongoFuture<QueryResult<T>> getMoreAsync(MongoNamespace namespace, long cursorId, int numberToReturn, Decoder<T> resultDecoder);
-
-    /**
-     * Get more result documents from an exhaust cursor.
-     *
-     * @param resultDecoder the decoder for the query result documents
-     * @param responseTo    the id that the next reply is a response to
-     * @param <T>           the type of the query result documents
-     * @return the query results
-     */
-    <T> QueryResult<T> getMoreReceive(Decoder<T> resultDecoder, int responseTo);
-
-    /**
-     * Get more result documents from an exhaust cursor asynchronously.
-     *
-     * @param resultDecoder the decoder for the query result documents
-     * @param responseTo    the id that the next reply is a response to
-     * @param <T>           the type of the query result documents
-     * @return the query results
-     */
-    <T> MongoFuture<QueryResult<T>> getMoreReceiveAsync(Decoder<T> resultDecoder, int responseTo);
-
-    /**
-     * Discard all remaining results from an exhaust cursor.
-     *
-     * @param cursorId   the cursor
-     * @param responseTo the id that the next reply is a response to
-     */
-    void getMoreDiscard(long cursorId, int responseTo);
-
-    /**
-     * Discard all remaining results from an exhaust cursor asynchronously.
-     *
-     * @param cursorId   the cursor
-     * @param responseTo the id that the next reply is a response to
-     * @return the future
-     */
-    MongoFuture<Void> getMoreDiscardAsync(long cursorId, int responseTo);
 
     /**
      * Kills the given list of cursors.

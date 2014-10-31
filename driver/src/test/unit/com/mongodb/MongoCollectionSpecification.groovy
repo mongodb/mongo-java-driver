@@ -286,7 +286,7 @@ class MongoCollectionSpecification extends Specification {
         result.deletedCount == 1
     }
 
-    def 'find should use FindOperation properly'() {
+    def 'find iteration should use FindOperation properly'() {
         given:
         def cursor = Stub(MongoCursor)
         cursor.hasNext() >>> [true, false]
@@ -320,14 +320,12 @@ class MongoCollectionSpecification extends Specification {
         !operation.isOplogReplay()
         !operation.isNoCursorTimeout()
         !operation.isAwaitData()
-        !operation.isExhaust()
         !operation.isPartial()
         executor.readPreference == secondary()
 
         when:
         'all the boolean properties are enabled'
         options = new FindOptions().awaitData(true)
-                                   .exhaust(true)
                                    .noCursorTimeout(true)
                                    .partial(true)
                                    .tailable(true)
@@ -341,7 +339,6 @@ class MongoCollectionSpecification extends Specification {
         operation2.isOplogReplay()
         operation2.isNoCursorTimeout()
         operation2.isAwaitData()
-        operation2.isExhaust()
         operation2.isPartial()
     }
 
@@ -377,7 +374,6 @@ class MongoCollectionSpecification extends Specification {
         !operation.isOplogReplay()
         !operation.isNoCursorTimeout()
         !operation.isAwaitData()
-        !operation.isExhaust()
         !operation.isPartial()
         operation.batchSize == 0
         operation.limit == -1
@@ -399,7 +395,6 @@ class MongoCollectionSpecification extends Specification {
         !operation2.isOplogReplay()
         !operation2.isNoCursorTimeout()
         !operation2.isAwaitData()
-        !operation2.isExhaust()
         !operation2.isPartial()
         operation2.batchSize == 4
         operation2.limit == 100

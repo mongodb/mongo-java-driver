@@ -98,7 +98,7 @@ class DefaultServerConnectionSpecification extends Specification {
 
     def 'should execute query protocol'() {
         when:
-        connection.query(namespace, new BsonDocument(), null, 0, 0, false, false, false, false, false, false, false,
+        connection.query(namespace, new BsonDocument(), null, 0, 0, false, false, false, false, false, false,
                          new BsonDocumentCodec())
 
         then:
@@ -111,22 +111,6 @@ class DefaultServerConnectionSpecification extends Specification {
 
         then:
         1 * executor.execute(_ as GetMoreProtocol, internalConnection)
-    }
-
-    def 'should execute getmore receive protocol'() {
-        when:
-        connection.getMoreReceive(new BsonDocumentCodec(), 1)
-
-        then:
-        1 * executor.execute(_ as GetMoreReceiveProtocol, internalConnection)
-    }
-
-    def 'should execute getmore discard protocol'() {
-        when:
-        connection.getMoreDiscard(5, 1)
-
-        then:
-        1 * executor.execute(_ as GetMoreDiscardProtocol, internalConnection)
     }
 
     def 'should execute kill cursor protocol'() {
@@ -197,8 +181,8 @@ class DefaultServerConnectionSpecification extends Specification {
 
     def 'should execute query protocol asynchronously'() {
         when:
-        connection.queryAsync(namespace, new BsonDocument(), null, 0, 0, false, false, false, false, false, false, false,
-                         new BsonDocumentCodec())
+        connection.queryAsync(namespace, new BsonDocument(), null, 0, 0, false, false, false, false, false, false,
+                              new BsonDocumentCodec())
 
         then:
         1 * executor.executeAsync(_ as QueryProtocol, internalConnection)
@@ -210,22 +194,6 @@ class DefaultServerConnectionSpecification extends Specification {
 
         then:
         1 * executor.executeAsync(_ as GetMoreProtocol, internalConnection)
-    }
-
-    def 'should execute getmore receive protocol asynchronously'() {
-        when:
-        connection.getMoreReceiveAsync(new BsonDocumentCodec(), 1)
-
-        then:
-        1 * executor.executeAsync(_ as GetMoreReceiveProtocol, internalConnection)
-    }
-
-    def 'should execute getmore discard protocol asynchronously'() {
-        when:
-        connection.getMoreDiscardAsync(5, 1)
-
-        then:
-        1 * executor.executeAsync(_ as GetMoreDiscardProtocol, internalConnection)
     }
 
     def 'should execute kill cursor protocol asynchronously'() {

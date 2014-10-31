@@ -240,30 +240,30 @@ public class DBCursorTest extends DatabaseTestCase {
     @Test
     public void testMaxScan() {
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .addSpecial("$maxScan", 4), 4);
+                     .addSpecial("$maxScan", 4), 4);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).maxScan(4), 4);
     }
-    
+
     @Test
     public void testMax() {
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .addSpecial("$max", new BasicDBObject("x", 4)), 4);
+                     .addSpecial("$max", new BasicDBObject("x", 4)), 4);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .max(new BasicDBObject("x", 4)), 4);
+                     .max(new BasicDBObject("x", 4)), 4);
     }
-    
+
     @Test
     public void testMin() {
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .addSpecial("$min", new BasicDBObject("x", 4)), 6);
+                     .addSpecial("$min", new BasicDBObject("x", 4)), 6);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .min(new BasicDBObject("x", 4)), 6);
+                     .min(new BasicDBObject("x", 4)), 6);
     }
 
     @Test
     public void testReturnKey() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .addSpecial("$returnKey", true);
+                          .addSpecial("$returnKey", true);
         try {
             while (cursor.hasNext()) {
                 Assert.assertNull(cursor.next()
@@ -273,7 +273,7 @@ public class DBCursorTest extends DatabaseTestCase {
             cursor.close();
         }
         cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .returnKey();
+                 .returnKey();
         try {
             while (cursor.hasNext()) {
                 Assert.assertNull(cursor.next()
@@ -283,11 +283,11 @@ public class DBCursorTest extends DatabaseTestCase {
             cursor.close();
         }
     }
-    
+
     @Test
     public void testShowDiskLoc() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .addSpecial("$showDiskLoc", true);
+                          .addSpecial("$showDiskLoc", true);
         try {
             while (cursor.hasNext()) {
                 DBObject next = cursor.next();
@@ -297,7 +297,7 @@ public class DBCursorTest extends DatabaseTestCase {
             cursor.close();
         }
         cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .showDiskLoc();
+                 .showDiskLoc();
         try {
             while (cursor.hasNext()) {
                 DBObject next = cursor.next();
@@ -307,11 +307,11 @@ public class DBCursorTest extends DatabaseTestCase {
             cursor.close();
         }
     }
-    
+
     @Test
     public void testSnapshot() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-            .addSpecial("$snapshot", true);
+                          .addSpecial("$snapshot", true);
         try {
             while (cursor.hasNext()) {
                 cursor.next();
@@ -320,7 +320,7 @@ public class DBCursorTest extends DatabaseTestCase {
             cursor.close();
         }
     }
-    
+
     private void countResults(final DBCursor cursor, final int expected) {
         int count = 0;
         while (cursor.hasNext()) {
@@ -341,7 +341,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
         // when
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                              .comment(expectedComment);
+                          .comment(expectedComment);
         while (cursor.hasNext()) {
             cursor.next();
         }
@@ -350,7 +350,7 @@ public class DBCursorTest extends DatabaseTestCase {
         DBCollection profileCollection = database.getCollection("system.profile");
         assertEquals(1, profileCollection.count());
         assertEquals(expectedComment, ((DBObject) profileCollection.findOne().get("query")).get("$comment"));
-        
+
         // finally
         database.command(new BasicDBObject("profile", 0));
         profileCollection.drop();
@@ -459,6 +459,12 @@ public class DBCursorTest extends DatabaseTestCase {
         } finally {
             disableMaxTimeFailPoint();
         }
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void exhaustOptionShouldThrowUnsupportedOperationException() {
+        DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
+        cursor.addOption(Bytes.QUERYOPTION_EXHAUST);
     }
 
     @Test
