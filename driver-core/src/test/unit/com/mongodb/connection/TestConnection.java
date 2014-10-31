@@ -25,7 +25,6 @@ import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import org.bson.BsonDocument;
-import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
@@ -214,11 +213,6 @@ class TestConnection implements Connection {
     @Override
     public MongoFuture<Void> killCursorAsync(final List<Long> cursors) {
         return executeEnqueuedProtocolAsync();
-    }
-
-    @Override
-    public ByteBuf getBuffer(final int size) {
-        throw new UnsupportedOperationException("Not implemented yet!");
     }
 
     @SuppressWarnings("unchecked")

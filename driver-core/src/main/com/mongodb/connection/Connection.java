@@ -40,7 +40,7 @@ import java.util.List;
  * @since 3.0
  */
 @ThreadSafe
-public interface Connection extends BufferProvider, ReferenceCounted {
+public interface Connection extends ReferenceCounted {
 
     @Override
     Connection retain();

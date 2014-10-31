@@ -25,7 +25,6 @@ import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import org.bson.BsonDocument;
-import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
@@ -54,12 +53,6 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
         if (getCount() == 0) {
             wrapped.close();
         }
-    }
-
-    @Override
-    public ByteBuf getBuffer(final int capacity) {
-        isTrue("open", getCount() > 0);
-        return wrapped.getBuffer(capacity);
     }
 
     @Override
