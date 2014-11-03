@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 
 /**
@@ -30,16 +31,39 @@ import static java.lang.String.format;
 public class ConnectionId {
     private static final AtomicInteger INCREMENTING_ID = new AtomicInteger();
 
+    private final ServerId serverId;
     private final int localValue;
     private final Integer serverValue;
 
-    ConnectionId() {
-        this(INCREMENTING_ID.incrementAndGet(), null);
+    /**
+     * Construct an instance with the given server id.
+     *
+     * @param serverId the server id
+     */
+    ConnectionId(final ServerId serverId) {
+        this(serverId, INCREMENTING_ID.incrementAndGet(), null);
     }
 
-    ConnectionId(final int localValue, final Integer serverValue) {
+    /**
+     * Construct an instance with the given local value, server value, and server id.
+     *
+     * @param serverId the server id
+     * @param localValue the local, client-generated value that identifies this connection
+     * @param serverValue the server-generated value that identifies this connection, or null if it can't be determined
+     */
+    ConnectionId(final ServerId serverId, final int localValue, final Integer serverValue) {
+        this.serverId = notNull("serverId", serverId);
         this.localValue = localValue;
         this.serverValue = serverValue;
+    }
+
+    /**
+     * Gets the server id.
+     *
+     * @return the server id
+     */
+    public ServerId getServerId() {
+        return serverId;
     }
 
     /**
@@ -58,6 +82,34 @@ public class ConnectionId {
      */
     public Integer getServerValue() {
         return serverValue;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        ConnectionId that = (ConnectionId) o;
+
+        if (localValue != that.localValue) {
+            return false;
+        }
+        if (!serverId.equals(that.serverId)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = serverId.hashCode();
+        result = 31 * result + localValue;
+        return result;
     }
 
     @Override

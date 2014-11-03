@@ -16,6 +16,36 @@
 
 package com.mongodb.connection;
 
-interface InternalConnectionFactory {
-    InternalConnection create(ServerId serverId);
+import org.bson.types.ObjectId;
+
+/**
+ * A client-generated identifier that uniquely identifies a connection to a MongoDB cluster, which could be sharded, replica set,
+ * or standalone.
+ *
+ * @since 3.0
+ */
+public class ClusterId {
+    private final String value;
+
+    /**
+     * Construct an instance.
+     *
+     */
+    public ClusterId() {
+        this.value = new ObjectId().toHexString();
+    }
+
+    /**
+     * Gets the value of the identifier.
+     *
+     * @return the value
+     */
+    public String getValue() {
+        return value;
+    }
+
+    @Override
+    public String toString() {
+        return value;
+    }
 }

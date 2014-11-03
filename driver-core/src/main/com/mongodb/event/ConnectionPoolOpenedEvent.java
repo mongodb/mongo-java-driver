@@ -16,8 +16,8 @@
 
 package com.mongodb.event;
 
-import com.mongodb.ServerAddress;
 import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.ServerId;
 
 /**
  * An event signifying the opening of a connection pool.
@@ -30,12 +30,11 @@ public class ConnectionPoolOpenedEvent extends ConnectionPoolEvent {
     /**
      * Constructs a new instance of the event.
      *
-     * @param clusterId     the cluster id
-     * @param serverAddress the server address
+     * @param serverId      the server identifier
      * @param settings      the connection pool settings
      */
-    public ConnectionPoolOpenedEvent(final String clusterId, final ServerAddress serverAddress, final ConnectionPoolSettings settings) {
-        super(clusterId, serverAddress);
+    public ConnectionPoolOpenedEvent(final ServerId serverId, final ConnectionPoolSettings settings) {
+        super(serverId);
         this.settings = settings;
     }
 
@@ -46,36 +45,5 @@ public class ConnectionPoolOpenedEvent extends ConnectionPoolEvent {
      */
     public ConnectionPoolSettings getSettings() {
         return settings;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        ConnectionPoolOpenedEvent that = (ConnectionPoolOpenedEvent) o;
-
-        if (!getClusterId().equals(that.getClusterId())) {
-            return false;
-        }
-        if (!getServerAddress().equals(that.getServerAddress())) {
-            return false;
-        }
-        if (!settings.equals(that.getSettings())) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + settings.hashCode();
-        return result;
     }
 }

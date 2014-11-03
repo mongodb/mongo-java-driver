@@ -16,28 +16,24 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.ServerAddress;
-
 import static com.mongodb.assertions.Assertions.notNull;
 
 class DefaultServerMonitorFactory implements ServerMonitorFactory {
-    private final ServerAddress serverAddress;
+    private final ServerId serverId;
     private final ServerSettings settings;
-    private final String clusterId;
     private final InternalConnectionFactory internalConnectionFactory;
     private final ConnectionPool connectionPool;
 
-    DefaultServerMonitorFactory(final ServerAddress serverAddress, final ServerSettings settings, final String clusterId,
+    DefaultServerMonitorFactory(final ServerId serverId, final ServerSettings settings,
                                 final InternalConnectionFactory internalConnectionFactory, final ConnectionPool connectionPool) {
-        this.serverAddress = notNull("serverAddress", serverAddress);
+        this.serverId = notNull("serverId", serverId);
         this.settings = notNull("settings", settings);
-        this.clusterId = notNull("clusterId", clusterId);
         this.internalConnectionFactory = notNull("internalConnectionFactory", internalConnectionFactory);
         this.connectionPool = notNull("connectionPool", connectionPool);
     }
 
     @Override
     public ServerMonitor create(final ChangeListener<ServerDescription> serverStateListener) {
-        return new DefaultServerMonitor(serverAddress, settings, clusterId, serverStateListener, internalConnectionFactory, connectionPool);
+        return new DefaultServerMonitor(serverId, settings, serverStateListener, internalConnectionFactory, connectionPool);
     }
 }

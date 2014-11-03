@@ -16,7 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
@@ -29,8 +28,8 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
     private final List<TestInternalConnection> createdConnections = new ArrayList<TestInternalConnection>();
 
     @Override
-    public InternalConnection create(final ServerAddress serverAddress) {
-        TestInternalConnection connection = new TestInternalConnection(serverAddress);
+    public InternalConnection create(final ServerId serverId) {
+        TestInternalConnection connection = new TestInternalConnection(serverId);
         createdConnections.add(connection);
         return connection;
     }
@@ -44,12 +43,12 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
     }
 
     public static class TestInternalConnection implements InternalConnection {
-        private final ServerAddress serverAddress;
+        private final ServerId serverId;
         private boolean closed;
         private boolean opened;
 
-        public TestInternalConnection(final ServerAddress serverAddress) {
-            this.serverAddress = serverAddress;
+        public TestInternalConnection(final ServerId serverId) {
+            this.serverId = serverId;
         }
 
         public void open() {
@@ -103,7 +102,7 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
 
         @Override
         public ConnectionDescription getDescription() {
-            return new ConnectionDescription(serverAddress);
+            return new ConnectionDescription(serverId);
         }
     }
 }

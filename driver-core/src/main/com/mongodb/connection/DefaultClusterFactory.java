@@ -20,7 +20,6 @@ import com.mongodb.MongoCredential;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ConnectionListener;
 import com.mongodb.event.ConnectionPoolListener;
-import org.bson.types.ObjectId;
 
 import java.util.List;
 
@@ -38,7 +37,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
                           final List<MongoCredential> credentialList,
                           final ClusterListener clusterListener, final ConnectionPoolListener connectionPoolListener,
                           final ConnectionListener connectionListener) {
-        String clusterId = new ObjectId().toHexString();
+        ClusterId clusterId = new ClusterId();
         ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId,
                                                                                      serverSettings,
                                                                                      connectionPoolSettings,

@@ -16,7 +16,7 @@
 
 package com.mongodb.event;
 
-import com.mongodb.ServerAddress;
+import com.mongodb.connection.ConnectionId;
 
 /**
  * A connection-related event.
@@ -24,29 +24,16 @@ import com.mongodb.ServerAddress;
  * @since 3.0
  */
 public class ConnectionEvent extends ClusterEvent {
-    private final ServerAddress serverAddress;
-    private final String connectionId;
+    private final ConnectionId connectionId;
 
     /**
      * Constructs a new instance of the event.
      *
-     * @param clusterId     the cluster id
-     * @param serverAddress the server address
-     * @param connectionId  the connection id
+     * @param connectionId the connection id
      */
-    public ConnectionEvent(final String clusterId, final ServerAddress serverAddress, final String connectionId) {
-        super(clusterId);
-        this.serverAddress = serverAddress;
+    public ConnectionEvent(final ConnectionId connectionId) {
+        super(connectionId.getServerId().getClusterId());
         this.connectionId = connectionId;
-    }
-
-    /**
-     * Gets the server address associated with this connection.
-     *
-     * @return the server address
-     */
-    public ServerAddress getServerAddress() {
-        return serverAddress;
     }
 
     /**
@@ -54,45 +41,7 @@ public class ConnectionEvent extends ClusterEvent {
      *
      * @return the connection id
      */
-    public String getConnectionId() {
+    public ConnectionId getConnectionId() {
         return connectionId;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        if (!super.equals(o)) {
-            return false;
-        }
-
-        ConnectionEvent that = (ConnectionEvent) o;
-
-        if (!getClusterId().equals(that.getClusterId())) {
-            return false;
-        }
-        if (!getServerAddress().equals(that.getServerAddress())) {
-            return false;
-        }
-        if (!connectionId.equals(that.connectionId)) {
-            return false;
-        }
-        if (!serverAddress.equals(that.serverAddress)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + serverAddress.hashCode();
-        result = 31 * result + connectionId.hashCode();
-        return result;
     }
 }

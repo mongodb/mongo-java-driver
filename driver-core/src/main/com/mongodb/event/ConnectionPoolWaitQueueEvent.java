@@ -16,7 +16,7 @@
 
 package com.mongodb.event;
 
-import com.mongodb.ServerAddress;
+import com.mongodb.connection.ServerId;
 
 /**
  * An event related to the connection pool's wait queue..
@@ -29,12 +29,11 @@ public class ConnectionPoolWaitQueueEvent extends ConnectionPoolEvent {
     /**
      * Constructs a new instance of the event.
      *
-     * @param clusterId     the cluster id
-     * @param serverAddress the server address
-     * @param threadId      the identifier of the waiting thread
+     * @param serverId the server id
+     * @param threadId the identifier of the waiting thread
      */
-    public ConnectionPoolWaitQueueEvent(final String clusterId, final ServerAddress serverAddress, final long threadId) {
-        super(clusterId, serverAddress);
+    public ConnectionPoolWaitQueueEvent(final ServerId serverId, final long threadId) {
+        super(serverId);
         this.threadId = threadId;
     }
 
@@ -45,37 +44,6 @@ public class ConnectionPoolWaitQueueEvent extends ConnectionPoolEvent {
      */
     public long getThreadId() {
         return threadId;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        ConnectionPoolWaitQueueEvent that = (ConnectionPoolWaitQueueEvent) o;
-
-        if (!getClusterId().equals(that.getClusterId())) {
-            return false;
-        }
-        if (!getServerAddress().equals(that.getServerAddress())) {
-            return false;
-        }
-        if (threadId != that.threadId) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (int) (threadId ^ (threadId >>> 32));
-        return result;
     }
 }
 

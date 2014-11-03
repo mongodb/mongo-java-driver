@@ -18,7 +18,6 @@ package com.mongodb.connection
 
 import com.mongodb.MongoTimeoutException
 import com.mongodb.ServerAddress
-import com.mongodb.event.ClusterEvent
 import com.mongodb.event.ClusterListener
 import com.mongodb.selector.PrimaryServerSelector
 import spock.lang.Specification
@@ -38,7 +37,8 @@ import static java.util.concurrent.TimeUnit.SECONDS
 
 class MultiServerClusterSpecification extends Specification {
     private static final ClusterListener CLUSTER_LISTENER = new NoOpClusterListener()
-    private static final String CLUSTER_ID = '1';
+    private static final ClusterId CLUSTER_ID = new ClusterId()
+
     private final ServerAddress firstServer = new ServerAddress('localhost:27017')
     private final ServerAddress secondServer = new ServerAddress('localhost:27018')
     private final ServerAddress thirdServer = new ServerAddress('localhost:27019')
@@ -416,13 +416,13 @@ class MultiServerClusterSpecification extends Specification {
                 clusterListener)
 
         then:
-        1 * clusterListener.clusterOpened(new ClusterEvent(CLUSTER_ID))
+        1 * clusterListener.clusterOpened(_)
 
         when:
         cluster.close()
 
         then:
-        1 * clusterListener.clusterClosed(new ClusterEvent(CLUSTER_ID))
+        1 * clusterListener.clusterClosed(_)
     }
 
     def 'should fire cluster description changed event'() {

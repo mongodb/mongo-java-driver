@@ -54,8 +54,7 @@ import static com.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 import static java.lang.String.format;
 
 class InternalStreamConnection implements InternalConnection {
-    private final String clusterId;
-    private final ServerAddress serverAddress;
+    private final ServerId serverId;
     private final StreamFactory streamFactory;
     private final InternalConnectionInitializer connectionInitializer;
     private final ConnectionListener connectionListener;
@@ -75,15 +74,14 @@ class InternalStreamConnection implements InternalConnection {
 
     static final Logger LOGGER = Loggers.getLogger("connection");
 
-    InternalStreamConnection(final String clusterId, final ServerAddress serverAddress, final StreamFactory streamFactory,
+    InternalStreamConnection(final ServerId serverId, final StreamFactory streamFactory,
                              final InternalConnectionInitializer connectionInitializer,
                              final ConnectionListener connectionListener) {
-        this.clusterId = notNull("clusterId", clusterId);
-        this.serverAddress = notNull("serverAddress", serverAddress);
+        this.serverId = notNull("serverId", serverId);
         this.streamFactory = notNull("streamFactory", streamFactory);
         this.connectionInitializer = notNull("connectionInitializer", connectionInitializer);
         this.connectionListener = notNull("connectionListener", connectionListener);
-        description = new ConnectionDescription(serverAddress);
+        description = new ConnectionDescription(serverId);
     }
 
     @Override
@@ -94,12 +92,12 @@ class InternalStreamConnection implements InternalConnection {
     @Override
     public void open() {
         isTrue("Open already called", stream == null);
-        stream = streamFactory.create(serverAddress);
+        stream = streamFactory.create(serverId.getAddress());
         try {
             description = connectionInitializer.initialize(this);
-            LOGGER.info(format("Opened connection [%s] to %s", getId(), serverAddress));
+            LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
             try {
-                connectionListener.connectionOpened(new ConnectionEvent(clusterId, serverAddress, getId()));
+                connectionListener.connectionOpened(new ConnectionEvent(getId()));
             } catch (Throwable t) {
                 LOGGER.warn("Exception when trying to signal connectionOpened to the connectionListener", t);
             }
@@ -118,7 +116,7 @@ class InternalStreamConnection implements InternalConnection {
     public MongoFuture<Void> openAsync() {
         isTrue("Open already called", stream == null);
         final SingleResultFuture<Void> future = new SingleResultFuture<Void>();
-        stream = streamFactory.create(serverAddress);
+        stream = streamFactory.create(serverId.getAddress());
         connectionInitializer.initializeAsync(this)
                              .register(new SingleResultCallback<ConnectionDescription>() {
                                  @Override
@@ -129,9 +127,9 @@ class InternalStreamConnection implements InternalConnection {
                                      } else {
                                          description = result;
                                          future.init(null, null);
-                                         LOGGER.info(format("Opened connection [%s] to %s", getId(), serverAddress));
+                                         LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
                                          try {
-                                             connectionListener.connectionOpened(new ConnectionEvent(clusterId, serverAddress, getId()));
+                                             connectionListener.connectionOpened(new ConnectionEvent(getId()));
                                          } catch (Throwable t) {
                                              LOGGER.warn("Exception when trying to signal connectionOpened to the connectionListener", t);
                                          }
@@ -149,7 +147,7 @@ class InternalStreamConnection implements InternalConnection {
         }
         isClosed = true;
         try {
-            connectionListener.connectionClosed(new ConnectionEvent(clusterId, getServerAddress(), getId()));
+            connectionListener.connectionClosed(new ConnectionEvent(getId()));
         } catch (Throwable t) {
             LOGGER.warn("Exception when trying to signal connectionClosed to the connectionListener", t);
         }
@@ -175,9 +173,7 @@ class InternalStreamConnection implements InternalConnection {
                 writing.acquire();
                 stream.write(byteBuffers);
                 try {
-                    connectionListener.messagesSent(new ConnectionMessagesSentEvent(clusterId,
-                                                                                    getServerAddress(),
-                                                                                    getId(),
+                    connectionListener.messagesSent(new ConnectionMessagesSentEvent(getId(),
                                                                                     lastRequestId,
                                                                                     getTotalRemaining(byteBuffers)));
                 } catch (Throwable t) {
@@ -206,9 +202,7 @@ class InternalStreamConnection implements InternalConnection {
                     }
                     ResponseBuffers responseBuffers = receiveResponseBuffers();
                     try {
-                        connectionListener.messageReceived(new ConnectionMessageReceivedEvent(clusterId,
-                                                                                              getServerAddress(),
-                                                                                              getId(),
+                        connectionListener.messageReceived(new ConnectionMessageReceivedEvent(getId(),
                                                                                               responseBuffers.getReplyHeader()
                                                                                                              .getResponseTo(),
                                                                                               responseBuffers.getReplyHeader()
@@ -246,8 +240,8 @@ class InternalStreamConnection implements InternalConnection {
         processPendingReads();
     }
 
-    private String getId() {
-        return description.getConnectionId().toString();
+    private ConnectionId getId() {
+        return description.getConnectionId();
     }
 
     private ServerAddress getServerAddress() {
@@ -367,9 +361,7 @@ class InternalStreamConnection implements InternalConnection {
             }
 
             try {
-                connectionListener.messageReceived(new ConnectionMessageReceivedEvent(clusterId,
-                                                                                      stream.getAddress(),
-                                                                                      getId(),
+                connectionListener.messageReceived(new ConnectionMessageReceivedEvent(getId(),
                                                                                       responseBuffers.getReplyHeader().getResponseTo(),
                                                                                       responseBuffers.getReplyHeader().getMessageLength()));
             } catch (Throwable t) {
@@ -485,8 +477,7 @@ class InternalStreamConnection implements InternalConnection {
                     public void completed(final Void v) {
                         writing.release();
                         try {
-                            connectionListener.messagesSent(new ConnectionMessagesSentEvent(clusterId, stream.getAddress(),
-                                                                                            getId(),
+                            connectionListener.messagesSent(new ConnectionMessagesSentEvent(getId(),
                                                                                             message.getMessageId(),
                                                                                             getTotalRemaining(message.getByteBuffers())));
                         } catch (Throwable t) {

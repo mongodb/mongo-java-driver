@@ -36,7 +36,7 @@ final class ConnectionPoolStatistics extends ConnectionPoolListenerAdapter imple
     private final AtomicInteger waitQueueSize = new AtomicInteger();
 
     public ConnectionPoolStatistics(final ConnectionPoolOpenedEvent event) {
-        serverAddress = event.getServerAddress();
+        serverAddress = event.getServerId().getAddress();
         settings = event.getSettings();
     }
 

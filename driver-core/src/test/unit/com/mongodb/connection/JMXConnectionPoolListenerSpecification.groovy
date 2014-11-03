@@ -27,8 +27,7 @@ import javax.management.ObjectName
 import java.lang.management.ManagementFactory
 
 class JMXConnectionPoolListenerSpecification extends Specification {
-    private static final String CLUSTER_ID = '1'
-    private static final ServerAddress SERVER_ADDRESS = new ServerAddress()
+    private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress('host1', 27018))
 
     private final connectionFactory = new TestInternalConnectionFactory()
 
@@ -39,7 +38,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
 
     def 'statistics should reflect values from the provider'() {
         given:
-        provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build(),
                 jmxListener)
 
@@ -48,9 +47,9 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         provider.get().close()
 
         then:
-        with(jmxListener.getMBean(CLUSTER_ID, SERVER_ADDRESS)) {
-            host == SERVER_ADDRESS.host
-            port == SERVER_ADDRESS.port
+        with(jmxListener.getMBean(SERVER_ID)) {
+            host == SERVER_ID.address.host
+            port == SERVER_ID.address.port
             minSize == 0
             maxSize == 5
             size == 2
@@ -61,69 +60,61 @@ class JMXConnectionPoolListenerSpecification extends Specification {
 
     def 'should add MBean'() {
         when:
-        provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build(),
                 jmxListener)
 
         then:
         ManagementFactory.getPlatformMBeanServer().isRegistered(
-                new ObjectName(jmxListener.getMBeanObjectName(CLUSTER_ID, SERVER_ADDRESS)))
+                new ObjectName(jmxListener.getMBeanObjectName(SERVER_ID)))
     }
 
     def 'should remove MBean'() {
         given:
-        provider = new DefaultConnectionPool(CLUSTER_ID, SERVER_ADDRESS, connectionFactory,
+        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1).build(),
                 jmxListener)
         when:
         provider.close()
 
         then:
-        jmxListener.getMBean(CLUSTER_ID, SERVER_ADDRESS) == null
-        !ManagementFactory.getPlatformMBeanServer().isRegistered(new ObjectName(jmxListener.getMBeanObjectName(CLUSTER_ID, SERVER_ADDRESS)))
+        jmxListener.getMBean(SERVER_ID) == null
+        !ManagementFactory.getPlatformMBeanServer().isRegistered(new ObjectName(jmxListener.getMBeanObjectName(SERVER_ID)))
     }
 
     def 'should create a valid ObjectName for hostname'() {
         given:
-        String beanName = jmxListener.getMBeanObjectName(CLUSTER_ID, new ServerAddress('localhost'));
+        String beanName = jmxListener.getMBeanObjectName(SERVER_ID);
 
         when:
         ObjectName objectName = new ObjectName(beanName)
 
         then:
-        objectName.toString() == 'org.mongodb.driver:type=ConnectionPool,clusterId=1,host=localhost,port=27017'
+        objectName.toString() == "org.mongodb.driver:type=ConnectionPool,clusterId=${SERVER_ID.clusterId.value}," +
+        "host=${SERVER_ID.address.host},port=${SERVER_ID.address.port}"
     }
 
     def 'should create a valid ObjectName for ipv4 addresses'() {
         given:
-        String beanName = jmxListener.getMBeanObjectName(CLUSTER_ID, new ServerAddress('127.0.0.1'))
+        def serverId = new ServerId(new ClusterId(), new ServerAddress('127.0.0.1'))
+        String beanName = jmxListener.getMBeanObjectName(serverId)
 
         when:
         ObjectName objectName = new ObjectName(beanName)
 
         then:
-        objectName.toString() == 'org.mongodb.driver:type=ConnectionPool,clusterId=1,host=127.0.0.1,port=27017'
+        objectName.toString() == "org.mongodb.driver:type=ConnectionPool,clusterId=${serverId.clusterId.value},host=127.0.0.1,port=27017"
     }
 
     def 'should create a valid ObjectName for ipv6 address'() {
         given:
-        String beanName = jmxListener.getMBeanObjectName(CLUSTER_ID, new ServerAddress('[::1]'))
+        def serverId = new ServerId(new ClusterId(), new ServerAddress('[::1]'))
+        String beanName = jmxListener.getMBeanObjectName(serverId)
 
         when:
         ObjectName objectName = new ObjectName(beanName)
 
         then:
-        objectName.toString() == 'org.mongodb.driver:type=ConnectionPool,clusterId=1,host=%3A%3A1,port=27017'
-    }
-
-    def 'should create a valid ObjectName when cluster id has a :'() {
-        given:
-        String beanName = jmxListener.getMBeanObjectName('kd:dk', new ServerAddress())
-
-        when:
-        ObjectName objectName = new ObjectName(beanName)
-
-        then:
-        objectName.toString() == 'org.mongodb.driver:type=ConnectionPool,clusterId=kd%3Adk,host=127.0.0.1,port=27017'
+        objectName.toString() == "org.mongodb.driver:type=ConnectionPool,clusterId=${serverId.clusterId.value},host=%3A%3A1,port=27017"
     }
 }

@@ -28,12 +28,12 @@ import org.bson.codecs.BsonDocumentCodec
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+import static DefaultServerMonitor.exceptionHasChanged
+import static DefaultServerMonitor.stateHasChanged
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSSLSettings
-import static DefaultServerMonitor.exceptionHasChanged
-import static DefaultServerMonitor.stateHasChanged
 
 class ServerMonitorSpecification extends OperationFunctionalSpecification {
     ServerDescription newDescription
@@ -149,7 +149,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
     }
 
     def initializeServerMonitor(ServerAddress address) {
-        serverMonitor = new DefaultServerMonitor(address, ServerSettings.builder().build(), 'cluster-1',
+        serverMonitor = new DefaultServerMonitor(new ServerId(new ClusterId(), address), ServerSettings.builder().build(),
                                           new ChangeListener<ServerDescription>() {
                                               @Override
                                               void stateChanged(final ChangeEvent<ServerDescription> event) {
@@ -157,8 +157,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                                                   latch.countDown()
                                               }
                                           },
-                                          new InternalStreamConnectionFactory('1',
-                                                                              new SocketStreamFactory(SocketSettings.builder().build(),
+                                          new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
                                                                                                       getSSLSettings()),
                                                                               getCredentialList(),
                                                                               new NoOpConnectionListener()),

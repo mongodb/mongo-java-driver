@@ -14,8 +14,19 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.connection
 
-interface InternalConnectionFactory {
-    InternalConnection create(ServerId serverId);
+import spock.lang.Specification
+
+
+class ClusterIdSpecification extends Specification {
+    def 'should set value to string with length 24'() {
+        expect:
+        new ClusterId().value.length() == 24
+    }
+
+    def 'different ids should have different values'() {
+        expect:
+        new ClusterId().value != new ClusterId().value
+    }
 }

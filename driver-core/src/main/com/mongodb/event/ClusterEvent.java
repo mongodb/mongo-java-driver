@@ -16,20 +16,22 @@
 
 package com.mongodb.event;
 
+import com.mongodb.connection.ClusterId;
+
 /**
  * A cluster-related event.
  *
  * @since 3.0
  */
 public class ClusterEvent {
-    private final String clusterId;
+    private final ClusterId clusterId;
 
     /**
      * Constructs a new instance of the event.
      *
      * @param clusterId the cluster id
      */
-    public ClusterEvent(final String clusterId) {
+    public ClusterEvent(final ClusterId clusterId) {
         this.clusterId = clusterId;
     }
 
@@ -38,30 +40,8 @@ public class ClusterEvent {
      *
      * @return the cluster id
      */
-    public String getClusterId() {
+    public ClusterId getClusterId() {
         return clusterId;
     }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        ClusterEvent that = (ClusterEvent) o;
-
-        if (!clusterId.equals(that.clusterId)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return clusterId.hashCode();
-    }
 }
+
