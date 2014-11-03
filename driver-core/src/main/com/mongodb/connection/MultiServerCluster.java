@@ -58,7 +58,7 @@ final class MultiServerCluster extends BaseCluster {
         }
     }
 
-    public MultiServerCluster(final String clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
+    public MultiServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
                               final ClusterListener clusterListener) {
         super(clusterId, settings, serverFactory, clusterListener);
         isTrue("connection mode is multiple", settings.getMode() == ClusterConnectionMode.MULTIPLE);

@@ -37,7 +37,7 @@ public class ScramSha1SaslAuthenticatorTest {
 
     @Before
     public void before() {
-        this.connection = new TestInternalConnection(new ServerAddress("localhost", 27017));
+        this.connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         this.credential = MongoCredential.createScramSha1Credential("user", "database", "pencil".toCharArray());
         ScramSha1Authenticator.RandomStringGenerator randomStringGenerator = new ScramSha1Authenticator.RandomStringGenerator() {
             @Override

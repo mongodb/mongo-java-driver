@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
 import com.mongodb.event.ConnectionListener;
 
 import java.util.List;
@@ -25,22 +24,20 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class InternalStreamConnectionFactory implements InternalConnectionFactory {
-    private final String clusterId;
     private final StreamFactory streamFactory;
     private final List<MongoCredential> credentialList;
     private final ConnectionListener connectionListener;
 
-    public InternalStreamConnectionFactory(final String clusterId, final StreamFactory streamFactory,
-                                           final List<MongoCredential> credentialList, final ConnectionListener connectionListener) {
-        this.clusterId = notNull("clusterId", clusterId);
+    public InternalStreamConnectionFactory(final StreamFactory streamFactory, final List<MongoCredential> credentialList,
+                                           final ConnectionListener connectionListener) {
         this.streamFactory = notNull("streamFactory", streamFactory);
         this.credentialList = notNull("credentialList", credentialList);
         this.connectionListener = notNull("connectionListener", connectionListener);
     }
 
     @Override
-    public InternalConnection create(final ServerAddress serverAddress) {
-        return new InternalStreamConnection(clusterId, serverAddress, streamFactory,
+    public InternalConnection create(final ServerId serverId) {
+        return new InternalStreamConnection(serverId, streamFactory,
                                             new InternalStreamConnectionInitializer(credentialList), connectionListener);
     }
 

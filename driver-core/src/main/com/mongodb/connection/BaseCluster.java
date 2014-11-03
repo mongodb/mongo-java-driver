@@ -49,14 +49,14 @@ abstract class BaseCluster implements Cluster {
     private final AtomicReference<CountDownLatch> phase = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
     private final ClusterableServerFactory serverFactory;
     private final ThreadLocal<Random> random = new ThreadLocal<Random>();
-    private final String clusterId;
+    private final ClusterId clusterId;
     private final ClusterSettings settings;
     private final ClusterListener clusterListener;
 
     private volatile boolean isClosed;
     private volatile ClusterDescription description;
 
-    public BaseCluster(final String clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
+    public BaseCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
                        final ClusterListener clusterListener) {
         this.clusterId = notNull("clusterId", clusterId);
         this.settings = notNull("settings", settings);

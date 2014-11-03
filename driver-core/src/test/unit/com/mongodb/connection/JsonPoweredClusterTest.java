@@ -186,9 +186,9 @@ public class JsonPoweredClusterTest {
                                                   .build();
 
         if (settings.getMode() == ClusterConnectionMode.SINGLE) {
-            return new SingleServerCluster("1", settings, factory, new NoOpClusterListener());
+            return new SingleServerCluster(new ClusterId(), settings, factory, new NoOpClusterListener());
         } else {
-            return new MultiServerCluster("1", settings, factory, new NoOpClusterListener());
+            return new MultiServerCluster(new ClusterId(), settings, factory, new NoOpClusterListener());
         }
     }
 

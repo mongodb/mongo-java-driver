@@ -43,7 +43,7 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
     InternalStreamConnection connection;
 
     def setup() {
-        connection = new InternalStreamConnection('1', getPrimary(),
+        connection = new InternalStreamConnection(new ServerId(new ClusterId(), getPrimary()),
                                                   new SocketStreamFactory(SocketSettings.builder().build(), getSSLSettings()),
                                                   new InternalStreamConnectionInitializer(getCredentialList()),
                                                   new NoOpConnectionListener());

@@ -26,7 +26,6 @@ import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
  * @since 3.0
  */
 public class ConnectionDescription {
-    private final ServerAddress serverAddress;
     private final ConnectionId connectionId;
     private final ServerVersion serverVersion;
     private final ServerType serverType;
@@ -40,17 +39,16 @@ public class ConnectionDescription {
     /**
      * Construct a defaulted connection description instance.
      *
-     * @param serverAddress   the server address
+     * @param serverId   the server address
      */
-    public ConnectionDescription(final ServerAddress serverAddress) {
-        this(serverAddress, new ConnectionId(), new ServerVersion(), ServerType.UNKNOWN, DEFAULT_MAX_WRITE_BATCH_SIZE,
+    public ConnectionDescription(final ServerId serverId) {
+        this(new ConnectionId(serverId), new ServerVersion(), ServerType.UNKNOWN, DEFAULT_MAX_WRITE_BATCH_SIZE,
              getDefaultMaxDocumentSize(), DEFAULT_MAX_MESSAGE_SIZE);
     }
 
     /**
      * Construct an instance.
      *
-     * @param serverAddress   the server address
      * @param connectionId    the connection id
      * @param serverVersion   the server version
      * @param serverType      the server type
@@ -58,10 +56,9 @@ public class ConnectionDescription {
      * @param maxDocumentSize the max document size in bytes
      * @param maxMessageSize  the max message size in bytes
      */
-    public ConnectionDescription(final ServerAddress serverAddress, final ConnectionId connectionId,  final ServerVersion serverVersion,
+    public ConnectionDescription(final ConnectionId connectionId,  final ServerVersion serverVersion,
                                  final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
                                  final int maxMessageSize) {
-        this.serverAddress = serverAddress;
         this.connectionId = connectionId;
         this.serverType = serverType;
         this.maxBatchCount = maxBatchCount;
@@ -76,7 +73,7 @@ public class ConnectionDescription {
      * @return the server address
      */
     public ServerAddress getServerAddress() {
-        return serverAddress;
+        return connectionId.getServerId().getAddress();
     }
 
     /**

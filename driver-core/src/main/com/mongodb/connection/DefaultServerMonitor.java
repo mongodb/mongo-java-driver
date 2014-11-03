@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoSocketException;
-import com.mongodb.ServerAddress;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -42,12 +41,11 @@ class DefaultServerMonitor implements ServerMonitor {
 
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
-    private final ServerAddress serverAddress;
+    private final ServerId serverId;
     private final ChangeListener<ServerDescription> serverStateListener;
     private final InternalConnectionFactory internalConnectionFactory;
     private final ConnectionPool connectionPool;
     private final ServerSettings settings;
-    private final String clusterId;
     private volatile ServerMonitorRunnable monitor;
     private volatile Thread monitorThread;
     private final Lock lock = new ReentrantLock();
@@ -56,15 +54,14 @@ class DefaultServerMonitor implements ServerMonitor {
     private long roundTripTimeSum;
     private volatile boolean isClosed;
 
-    DefaultServerMonitor(final ServerAddress serverAddress, final ServerSettings settings,
-                         final String clusterId, final ChangeListener<ServerDescription> serverStateListener,
+    DefaultServerMonitor(final ServerId serverId, final ServerSettings settings,
+                         final ChangeListener<ServerDescription> serverStateListener,
                          final InternalConnectionFactory internalConnectionFactory, final ConnectionPool connectionPool) {
         this.settings = settings;
-        this.serverAddress = serverAddress;
+        this.serverId = serverId;
         this.serverStateListener = serverStateListener;
         this.internalConnectionFactory = internalConnectionFactory;
         this.connectionPool = connectionPool;
-        this.clusterId = clusterId;
         monitorThread = createMonitorThread();
         isClosed = false;
     }
@@ -102,7 +99,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
     Thread createMonitorThread() {
         monitor = new ServerMonitorRunnable();
-        Thread monitorThread = new Thread(monitor, "cluster-" + clusterId + "-" + serverAddress);
+        Thread monitorThread = new Thread(monitor, "cluster-" + serverId.getClusterId() + "-" + serverId.getAddress());
         monitorThread.setDaemon(true);
         return monitorThread;
     }
@@ -126,7 +123,7 @@ class DefaultServerMonitor implements ServerMonitor {
                     Throwable previousException = currentException;
                     try {
                         if (connection == null) {
-                            connection = internalConnectionFactory.create(serverAddress);
+                            connection = internalConnectionFactory.create(serverId);
                             try {
                                 connection.open();
                             } catch (Throwable t) {
@@ -140,7 +137,7 @@ class DefaultServerMonitor implements ServerMonitor {
                             reset();
                             connection.close();
                             connection = null;
-                            connection = internalConnectionFactory.create(serverAddress);
+                            connection = internalConnectionFactory.create(serverId);
                             try {
                                 connection.open();
                             } catch (Throwable t) {
@@ -192,7 +189,8 @@ class DefaultServerMonitor implements ServerMonitor {
             if (descriptionHasChanged(previousServerDescription, currentServerDescription)
                 || exceptionHasChanged(previousException, currentException)) {
                 if (currentException != null) {
-                    LOGGER.info(format("Exception in monitor thread while connecting to server %s", serverAddress), currentException);
+                    LOGGER.info(format("Exception in monitor thread while connecting to server %s", serverId.getAddress()),
+                                currentException);
                 } else {
                     LOGGER.info(format("Monitor thread successfully connected to server with description %s", currentServerDescription));
                 }
@@ -258,17 +256,17 @@ class DefaultServerMonitor implements ServerMonitor {
     }
 
     private ServerDescription lookupServerDescription(final InternalConnection connection) {
-        LOGGER.debug(format("Checking status of %s", serverAddress));
+        LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
         long start = System.nanoTime();
         BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
         count++;
         roundTripTimeSum += System.nanoTime() - start;
 
         BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), connection);
-        return createServerDescription(serverAddress, isMasterResult, buildInfoResult, roundTripTimeSum / count);
+        return createServerDescription(serverId.getAddress(), isMasterResult, buildInfoResult, roundTripTimeSum / count);
     }
 
     private ServerDescription getConnectingServerDescription(final Throwable exception) {
-        return ServerDescription.builder().type(UNKNOWN).state(CONNECTING).address(serverAddress).exception(exception).build();
+        return ServerDescription.builder().type(UNKNOWN).state(CONNECTING).address(serverId.getAddress()).exception(exception).build();
     }
 }

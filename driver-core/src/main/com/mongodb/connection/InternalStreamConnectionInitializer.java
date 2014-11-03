@@ -47,8 +47,7 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
 
             // try again if there was an exception calling getlasterror before authenticating
             if (connectionDescription.getConnectionId().getServerValue() == null) {
-                connectionDescription = new ConnectionDescription(connectionDescription.getServerAddress(),
-                                                                  initializeConnectionId(internalConnection),
+                connectionDescription = new ConnectionDescription(initializeConnectionId(internalConnection),
                                                                   connectionDescription.getServerVersion(),
                                                                   connectionDescription.getServerType(),
                                                                   connectionDescription.getMaxBatchCount(),
@@ -82,7 +81,8 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
                                                                                       new BsonDocument("getlasterror", new BsonInt32(1)),
                                                                                       internalConnection);
         if (response.containsKey("connectionId")) {
-            return new ConnectionId(internalConnection.getDescription().getConnectionId().getLocalValue(),
+            return new ConnectionId(internalConnection.getDescription().getConnectionId().getServerId(),
+                                    internalConnection.getDescription().getConnectionId().getLocalValue(),
                                     response.getNumber("connectionId").intValue());
         } else {
             return internalConnection.getDescription().getConnectionId();
@@ -93,7 +93,7 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
                                                               final ConnectionId connectionId) {
         BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), internalConnection);
         BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), internalConnection);
-        return createConnectionDescription(internalConnection.getDescription().getServerAddress(), connectionId, isMasterResult,
+        return createConnectionDescription(connectionId, isMasterResult,
                                            buildInfoResult);
     }
 

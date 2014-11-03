@@ -58,10 +58,11 @@ import static java.util.concurrent.TimeUnit.SECONDS
 
 @SuppressWarnings(['UnusedVariable'])
 class InternalStreamConnectionSpecification extends Specification {
-    private static final String CLUSTER_ID = '1'
+    private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress())
+
     def helper = new StreamHelper()
     def serverAddress = new ServerAddress()
-    def connectionDescription = new ConnectionDescription(serverAddress, new ConnectionId(1, 1), new ServerVersion(), ServerType.STANDALONE,
+    def connectionDescription = new ConnectionDescription(new ConnectionId(SERVER_ID, 1, 1), new ServerVersion(), ServerType.STANDALONE,
                                                           getDefaultMaxWriteBatchSize(), getDefaultMaxDocumentSize(),
                                                           getDefaultMaxMessageSize())
     def stream = Mock(Stream)
@@ -75,7 +76,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def listener = Mock(ConnectionListener)
 
     def getConnection() {
-        new InternalStreamConnection(CLUSTER_ID, serverAddress, streamFactory, initializer, listener)
+        new InternalStreamConnection(SERVER_ID, streamFactory, initializer, listener)
     }
 
     def getOpenedConnection() {
@@ -336,7 +337,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def failedInitializer = Mock(InternalConnectionInitializer) {
             initialize(_) >> { throw new MongoInternalException('Something went wrong') }
         }
-        def connection = new InternalStreamConnection(CLUSTER_ID, serverAddress, streamFactory, failedInitializer, listener)
+        def connection = new InternalStreamConnection(SERVER_ID, streamFactory, failedInitializer, listener)
 
         when:
         connection.open()
@@ -355,7 +356,7 @@ class InternalStreamConnectionSpecification extends Specification {
                 new SingleResultFuture<ConnectionDescription>(null, new MongoInternalException('Something went wrong'));
             }
         }
-        def connection = new InternalStreamConnection(CLUSTER_ID, serverAddress, streamFactory, failedInitializer, listener)
+        def connection = new InternalStreamConnection(SERVER_ID, streamFactory, failedInitializer, listener)
 
         when:
         connection.openAsync().get(10, SECONDS)
