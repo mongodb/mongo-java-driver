@@ -50,6 +50,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+import static MongoNamespace.COMMAND_COLLECTION_NAME
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
