@@ -145,6 +145,15 @@ public class FilterAcceptanceTest extends DatabaseTestCase {
         collection.find(new Document("loc", new Document("$near", asList(0.0, 0.0))), new FindOptions()).first();
     }
 
+    @Test
+    public void shouldReturnTheExpectedFirstDocument() {
+        int numberOfDocuments = 6;
+        initialiseCollectionWithDocuments(numberOfDocuments);
+        Document document = collection.find(new Document(), new FindOptions().skip(3)).first();
+
+        assertThat((Integer) document.get("_id"), is(3));
+    }
+
     private void initialiseCollectionWithDocuments(final int numberOfDocuments) {
         for (int i = 0; i < numberOfDocuments; i++) {
             collection.insertOne(new Document("_id", i));

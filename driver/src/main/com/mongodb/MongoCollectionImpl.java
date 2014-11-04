@@ -647,13 +647,31 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
             return executor.execute(operation, readPreference);
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public D first() {
-            MongoCursor<D> iterator = iterator();
-            if (!iterator.hasNext()) {
-                return null;
+            if (operation instanceof FindOperation) {
+                FindOperation<D> findOp = (FindOperation<D>) operation;
+                FindOperation<D> findFirstOperation = new FindOperation<D>(findOp.getNamespace(), findOp.getDecoder())
+                                                          .filter(findOp.getFilter())
+                                                          .modifiers(findOp.getModifiers())
+                                                          .projection(findOp.getProjection())
+                                                          .maxTime(findOp.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                                          .skip(findOp.getSkip())
+                                                          .sort(findOp.getSort())
+                                                          .tailableCursor(findOp.isTailableCursor())
+                                                          .slaveOk(findOp.isSlaveOk())
+                                                          .oplogReplay(findOp.isOplogReplay())
+                                                          .noCursorTimeout(findOp.isNoCursorTimeout())
+                                                          .awaitData(findOp.isAwaitData())
+                                                          .exhaust(findOp.isExhaust())
+                                                          .partial(findOp.isPartial())
+                                                          .batchSize(0)
+                                                          .limit(-1);
+                return new OperationIterable<D>(findFirstOperation, readPreference).getFirstOrNull();
+            } else {
+                return getFirstOrNull();
             }
-            return iterator.next();
         }
 
         @Override
@@ -677,6 +695,14 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                 }
             });
             return target;
+        }
+
+        private D getFirstOrNull() {
+            MongoCursor<D> iterator = iterator();
+            if (!iterator.hasNext()) {
+                return null;
+            }
+            return iterator.next();
         }
     }
 

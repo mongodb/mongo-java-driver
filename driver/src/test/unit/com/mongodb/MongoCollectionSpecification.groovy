@@ -345,6 +345,66 @@ class MongoCollectionSpecification extends Specification {
         operation2.isPartial()
     }
 
+    def 'find with first() should temporarily set limit to -1 and batchSize to 0'() {
+        given:
+        def cursor = Stub(MongoCursor)
+        cursor.hasNext() >>> [true, false]
+        def executor = new TestOperationExecutor([cursor, cursor])
+        collection = new MongoCollectionImpl<Document>(namespace, Document, options, executor)
+
+        when:
+        def options = new FindOptions()
+                .batchSize(4)
+                .maxTime(1, TimeUnit.SECONDS)
+                .skip(5)
+                .limit(100)
+                .modifiers(new Document('$hint', 'i1'))
+                .projection(new Document('x', 1))
+                .sort(new Document('y', 1))
+
+        collection.find(new Document('cold', true), options).first()
+
+        then:
+        def operation = executor.getReadOperation() as FindOperation
+        operation.filter == new BsonDocument('cold', BsonBoolean.TRUE)
+        operation.getMaxTime(TimeUnit.SECONDS) == 1
+        operation.modifiers == new BsonDocument('$hint', new BsonString('i1'))
+        operation.projection == new BsonDocument('x', new BsonInt32(1))
+        operation.sort == new BsonDocument('y', new BsonInt32(1))
+        operation.skip == 5
+        !operation.isTailableCursor()
+        !operation.isSlaveOk()
+        !operation.isOplogReplay()
+        !operation.isNoCursorTimeout()
+        !operation.isAwaitData()
+        !operation.isExhaust()
+        !operation.isPartial()
+        operation.batchSize == 0
+        operation.limit == -1
+        executor.readPreference == secondary()
+
+        when:
+        collection.find(new Document('cold', true), options).iterator()
+
+        then: 'cursor flags contains all flags'
+        def operation2 = executor.getReadOperation() as FindOperation
+        operation2.filter == new BsonDocument('cold', BsonBoolean.TRUE)
+        operation2.getMaxTime(TimeUnit.SECONDS) == 1
+        operation2.modifiers == new BsonDocument('$hint', new BsonString('i1'))
+        operation2.projection == new BsonDocument('x', new BsonInt32(1))
+        operation2.sort == new BsonDocument('y', new BsonInt32(1))
+        operation2.skip == 5
+        !operation2.isTailableCursor()
+        !operation2.isSlaveOk()
+        !operation2.isOplogReplay()
+        !operation2.isNoCursorTimeout()
+        !operation2.isAwaitData()
+        !operation2.isExhaust()
+        !operation2.isPartial()
+        operation2.batchSize == 4
+        operation2.limit == 100
+    }
+
     def 'count should use CountOperation properly'() {
         given:
         def executor = new TestOperationExecutor([42L])
