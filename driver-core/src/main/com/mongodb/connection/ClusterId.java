@@ -24,7 +24,7 @@ import org.bson.types.ObjectId;
  *
  * @since 3.0
  */
-public class ClusterId {
+public final class ClusterId {
     private final String value;
 
     /**

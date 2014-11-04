@@ -28,7 +28,7 @@ import static java.lang.String.format;
  *
  * @since 3.0
  */
-public class ConnectionId {
+public final class ConnectionId {
     private static final AtomicInteger INCREMENTING_ID = new AtomicInteger();
 
     private final ServerId serverId;

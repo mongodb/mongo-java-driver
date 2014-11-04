@@ -27,7 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  */
 @Immutable
-public class ServerId {
+public final class ServerId {
     private final ClusterId clusterId;
     private final ServerAddress address;
 
