@@ -685,7 +685,7 @@ public class DBCollection {
                                                                             objectCodec)
                                                     .projection(wrapAllowNull(projection))
                                                     .sort(wrapAllowNull(sort))
-                                                    .batchSize(-1)
+                                                    .limit(-1)
                                                     .maxTime(maxTime, maxTimeUnit);
         if (query != null) {
             operation.filter(wrap(query));
