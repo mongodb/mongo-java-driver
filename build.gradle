@@ -126,6 +126,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
 
         if (project.buildingWith('gssapi.enabled')) {
             systemProperties(
+                    'sun.security.krb5.debug': project.getProperty('sun.security.krb5.debug'),
                     'javax.security.auth.useSubjectCredsOnly': "false",
                     'java.security.krb5.kdc': project.getProperty('krb5.kdc'),
                     'java.security.krb5.realm': project.getProperty('krb5.realm'),
