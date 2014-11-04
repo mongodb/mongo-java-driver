@@ -24,13 +24,15 @@ import com.mongodb.async.SingleResultFuture
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 import spock.lang.Specification
+
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class UsageTrackingConnectionSpecification extends Specification {
+    private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress())
 
     def 'generation is initialized'() {
         when:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 1);
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 1);
 
         then:
         connection.generation == 1
@@ -38,7 +40,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'openAt should be set on open'() {
         when:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
 
         then:
         connection.openedAt == Long.MAX_VALUE
@@ -54,7 +56,7 @@ class UsageTrackingConnectionSpecification extends Specification {
     @IgnoreIf({ javaVersion < 1.7 })
     def 'openAt should be set on open asynchronously'() {
         when:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
 
         then:
         connection.openedAt == Long.MAX_VALUE
@@ -68,7 +70,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'lastUsedAt should be set on open'() {
         when:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
 
         then:
         connection.lastUsedAt == Long.MAX_VALUE
@@ -84,7 +86,7 @@ class UsageTrackingConnectionSpecification extends Specification {
     @IgnoreIf({ javaVersion < 1.7 })
     def 'lastUsedAt should be set on open asynchronously'() {
         when:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
 
         then:
         connection.lastUsedAt == Long.MAX_VALUE
@@ -98,7 +100,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'lastUsedAt should be set on sendMessage'() {
         given:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
         connection.open()
         def openedLastUsedAt = connection.lastUsedAt
 
@@ -114,7 +116,7 @@ class UsageTrackingConnectionSpecification extends Specification {
     @IgnoreIf({ javaVersion < 1.7 })
     def 'lastUsedAt should be set on sendMessage asynchronously'() {
         given:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
         connection.open()
         def openedLastUsedAt = connection.lastUsedAt
         def future = new SingleResultFuture<Void>()
@@ -136,7 +138,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'lastUsedAt should be set on receiveMessage'() {
         given:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
         connection.open()
         def openedLastUsedAt = connection.lastUsedAt
         when:
@@ -149,7 +151,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
     def 'lastUsedAt should be set on receiveMessage asynchronously'() {
         given:
-        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(new ServerAddress()), 0);
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
         connection.open()
         def openedLastUsedAt = connection.lastUsedAt
         def future = new SingleResultFuture<Void>()

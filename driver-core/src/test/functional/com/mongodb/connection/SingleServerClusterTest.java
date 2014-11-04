@@ -38,13 +38,13 @@ public class SingleServerClusterTest {
     public void setUp() throws Exception {
         SocketStreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(),
                                                                     getSSLSettings());
-        cluster = new SingleServerCluster("1",
+        ClusterId clusterId = new ClusterId();
+        cluster = new SingleServerCluster(clusterId,
                                           ClusterSettings.builder()
                                                          .mode(ClusterConnectionMode.SINGLE)
                                                          .hosts(Arrays.asList(getPrimary()))
                                                          .build(),
-                                          new DefaultClusterableServerFactory("1",
-                                                                              ServerSettings.builder().build(),
+                                          new DefaultClusterableServerFactory(clusterId, ServerSettings.builder().build(),
                                                                               ConnectionPoolSettings.builder().maxSize(1).build(),
                                                                               streamFactory,
                                                                               streamFactory,

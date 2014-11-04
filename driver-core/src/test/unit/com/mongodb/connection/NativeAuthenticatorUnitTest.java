@@ -35,7 +35,7 @@ public class NativeAuthenticatorUnitTest {
 
     @Before
     public void before() {
-        connection = new TestInternalConnection(new ServerAddress("localhost", 27017));
+        connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         credential = MongoCredential.createMongoCRCredential("user", "database", "pencil".toCharArray());
         subject = new NativeAuthenticator(this.credential, this.connection);
     }

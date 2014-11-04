@@ -39,7 +39,7 @@ class DefaultSingleServerClusterSpecification extends Specification {
     def 'should fire change event on cluster change'() {
         given:
         def listener = Mock(ClusterListener)
-        def cluster = new SingleServerCluster('1',
+        def cluster = new SingleServerCluster(new ClusterId(),
                                               ClusterSettings.builder().mode(ClusterConnectionMode.SINGLE).hosts([SERVER_ADDRESS]).build(),
                                               factory, listener)
 

@@ -16,7 +16,7 @@
 
 package com.mongodb.event;
 
-import com.mongodb.ServerAddress;
+import com.mongodb.connection.ServerId;
 
 /**
  * A connection pool-related event.
@@ -24,18 +24,17 @@ import com.mongodb.ServerAddress;
  * @since 3.0
  */
 public class ConnectionPoolEvent extends ClusterEvent {
-    private final ServerAddress serverAddress;
+    private final ServerId serverId;
 
     /**
      * Constructs a new instance of the event.
      *
-     * @param clusterId     the cluster id
-     * @param serverAddress the server address
+     * @param serverId the server id
      */
 
-    public ConnectionPoolEvent(final String clusterId, final ServerAddress serverAddress) {
-        super(clusterId);
-        this.serverAddress = serverAddress;
+    public ConnectionPoolEvent(final ServerId serverId) {
+        super(serverId.getClusterId());
+        this.serverId = serverId;
     }
 
     /**
@@ -43,34 +42,7 @@ public class ConnectionPoolEvent extends ClusterEvent {
      *
      * @return the server address
      */
-    public ServerAddress getServerAddress() {
-        return serverAddress;
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        ConnectionPoolEvent that = (ConnectionPoolEvent) o;
-
-        if (!getClusterId().equals(that.getClusterId())) {
-            return false;
-        }
-        if (!serverAddress.equals(that.serverAddress)) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = super.hashCode();
-        return 31 * result + serverAddress.hashCode();
+    public ServerId getServerId() {
+        return serverId;
     }
 }

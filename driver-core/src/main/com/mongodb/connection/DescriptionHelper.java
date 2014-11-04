@@ -50,10 +50,10 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 final class DescriptionHelper {
 
-    static ConnectionDescription createConnectionDescription(final ServerAddress address, final ConnectionId connectionId,
+    static ConnectionDescription createConnectionDescription(final ConnectionId connectionId,
                                                              final BsonDocument isMasterResult,
                                                              final BsonDocument buildInfoResult) {
-        return new ConnectionDescription(address, connectionId, getVersion(buildInfoResult), getServerType(isMasterResult),
+        return new ConnectionDescription(connectionId, getVersion(buildInfoResult), getServerType(isMasterResult),
                                          getMaxWriteBatchSize(isMasterResult), getMaxBsonObjectSize(isMasterResult),
                                          getMaxMessageSizeBytes(isMasterResult));
 

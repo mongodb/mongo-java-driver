@@ -35,7 +35,7 @@ final class SingleServerCluster extends BaseCluster {
 
     private final ClusterableServer server;
 
-    public SingleServerCluster(final String clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
+    public SingleServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory,
                                final ClusterListener clusterListener) {
         super(clusterId, settings, serverFactory, clusterListener);
         isTrue("one server in a direct cluster", settings.getHosts().size() == 1);

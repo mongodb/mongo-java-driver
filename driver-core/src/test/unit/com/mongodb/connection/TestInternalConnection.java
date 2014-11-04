@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoException;
-import com.mongodb.ServerAddress;
 import com.mongodb.async.MongoFuture;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.SingleResultFuture;
@@ -40,8 +39,8 @@ class TestInternalConnection implements InternalConnection {
     private boolean opened;
     private boolean closed;
 
-    public TestInternalConnection(final ServerAddress address) {
-        this.description = new ConnectionDescription(address);
+    public TestInternalConnection(final ServerId serverId) {
+        this.description = new ConnectionDescription(serverId);
         this.bufferProvider = new SimpleBufferProvider();
 
         this.replies = new LinkedList<ResponseBuffers>();

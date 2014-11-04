@@ -17,6 +17,7 @@
 package com.mongodb.event;
 
 import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterId;
 
 /**
  * An event signifying that the cluster description has changed.
@@ -32,7 +33,7 @@ public class ClusterDescriptionChangedEvent extends ClusterEvent {
      * @param clusterId          the cluster id
      * @param clusterDescription the cluster description
      */
-    public ClusterDescriptionChangedEvent(final String clusterId, final ClusterDescription clusterDescription) {
+    public ClusterDescriptionChangedEvent(final ClusterId clusterId, final ClusterDescription clusterDescription) {
         super(clusterId);
         this.clusterDescription = clusterDescription;
     }

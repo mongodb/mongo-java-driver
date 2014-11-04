@@ -45,8 +45,8 @@ class DefaultServerMonitorSpecification extends Specification {
                 }
             }
         }
-        monitor = new DefaultServerMonitor(new ServerAddress(), ServerSettings.builder().build(), 'clusterId', changeListener,
-                                           internalConnectionFactory, new TestConnectionPool())
+        monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()), ServerSettings.builder().build(),
+                                           changeListener, internalConnectionFactory, new TestConnectionPool())
         monitor.start()
 
         when:
@@ -76,8 +76,8 @@ class DefaultServerMonitorSpecification extends Specification {
                 }
             }
         }
-        monitor = new DefaultServerMonitor(new ServerAddress(), ServerSettings.builder().build(), 'clusterId', changeListener,
-                                           internalConnectionFactory, new TestConnectionPool())
+        monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()), ServerSettings.builder().build(),
+                                           changeListener, internalConnectionFactory, new TestConnectionPool())
         monitor.start()
         def monitorThread = monitor.monitorThread
 
@@ -108,8 +108,8 @@ class DefaultServerMonitorSpecification extends Specification {
                 }
             }
         }
-        monitor = new DefaultServerMonitor(new ServerAddress(), ServerSettings.builder().build(), 'clusterId', changeListener,
-                                           internalConnectionFactory, new TestConnectionPool())
+        monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()), ServerSettings.builder().build(),
+                                           changeListener, internalConnectionFactory, new TestConnectionPool())
         monitor.start()
 
         when:

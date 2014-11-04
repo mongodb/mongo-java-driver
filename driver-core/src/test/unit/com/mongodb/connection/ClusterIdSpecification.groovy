@@ -14,34 +14,29 @@
  * limitations under the License.
  */
 
-package com.mongodb.event;
+package com.mongodb.connection
 
-import com.mongodb.connection.ClusterId;
+import spock.lang.Specification
 
-/**
- * A cluster-related event.
- *
- * @since 3.0
- */
-public class ClusterEvent {
-    private final ClusterId clusterId;
 
-    /**
-     * Constructs a new instance of the event.
-     *
-     * @param clusterId the cluster id
-     */
-    public ClusterEvent(final ClusterId clusterId) {
-        this.clusterId = clusterId;
+class ClusterIdSpecification extends Specification {
+    def 'should set value to string with length 24'() {
+        expect:
+        new ClusterId().value.length() == 24
     }
 
-    /**
-     * Gets the cluster id associated with this event.
-     *
-     * @return the cluster id
-     */
-    public ClusterId getClusterId() {
-        return clusterId;
+    def 'different ids should have different values'() {
+        expect:
+        new ClusterId().value != new ClusterId().value
     }
+
+    def 'equivalent ids should be equal and have same hash code'() {
+        def id1 = new ClusterId('id1')
+        def id2 = new ClusterId('id1')
+
+        expect:
+        id1 == id2
+        id1.hashCode() == id2.hashCode()
+    }
+
 }
-

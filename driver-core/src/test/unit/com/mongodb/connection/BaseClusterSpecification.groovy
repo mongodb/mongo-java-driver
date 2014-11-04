@@ -36,7 +36,6 @@ import static java.util.concurrent.TimeUnit.SECONDS
 class BaseClusterSpecification extends Specification {
 
     private static final ClusterListener CLUSTER_LISTENER = new NoOpClusterListener()
-    private static final String CLUSTER_ID = '1';
     private final ServerAddress firstServer = new ServerAddress('localhost:27017')
     private final ServerAddress secondServer = new ServerAddress('localhost:27018')
     private final ServerAddress thirdServer = new ServerAddress('localhost:27019')
@@ -45,7 +44,7 @@ class BaseClusterSpecification extends Specification {
 
     def 'should compose server selector passed to selectServer with server selector in cluster settings'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID,
+        def cluster = new MultiServerCluster(new ClusterId(),
                                              builder().mode(MULTIPLE)
                                                       .hosts([firstServer, secondServer, thirdServer])
                                                       .serverSelector(new DefaultPortServerSelector())
@@ -61,7 +60,7 @@ class BaseClusterSpecification extends Specification {
 
     def 'should use server selector passed to selectServer if server selector in cluster settings is null'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID,
+        def cluster = new MultiServerCluster(new ClusterId(),
                                              builder().mode(MULTIPLE)
                                                       .hosts([firstServer, secondServer, thirdServer])
                                                       .build(),
@@ -76,7 +75,7 @@ class BaseClusterSpecification extends Specification {
 
     def 'should timeout with useful message'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID,
+        def cluster = new MultiServerCluster(new ClusterId(),
                                              builder().mode(MULTIPLE)
                                                       .hosts([firstServer, secondServer])
                                                       .build(),

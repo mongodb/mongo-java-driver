@@ -34,7 +34,7 @@ import static com.mongodb.connection.ServerType.STANDALONE
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class SingleServerClusterSpecification extends Specification {
-    private static final String CLUSTER_ID = '1'
+    private static final ClusterId CLUSTER_ID = new ClusterId()
     private static final ClusterListener CLUSTER_LISTENER = new NoOpClusterListener()
     private final ServerAddress firstServer = new ServerAddress('localhost:27017')
 

@@ -24,7 +24,7 @@ import com.mongodb.event.ConnectionPoolListener;
 import java.util.List;
 
 class DefaultClusterableServerFactory implements ClusterableServerFactory {
-    private final String clusterId;
+    private final ClusterId clusterId;
     private final ServerSettings settings;
     private final ConnectionPoolSettings connectionPoolSettings;
     private final StreamFactory streamFactory;
@@ -33,7 +33,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final ConnectionListener connectionListener;
     private final StreamFactory heartbeatStreamFactory;
 
-    public DefaultClusterableServerFactory(final String clusterId, final ServerSettings settings,
+    public DefaultClusterableServerFactory(final ClusterId clusterId, final ServerSettings settings,
                                            final ConnectionPoolSettings connectionPoolSettings,
                                            final StreamFactory streamFactory,
                                            final StreamFactory heartbeatStreamFactory,
@@ -52,16 +52,14 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
 
     @Override
     public ClusterableServer create(final ServerAddress serverAddress) {
-        ConnectionPool connectionPool = new DefaultConnectionPool(clusterId, serverAddress,
-                                                                  new InternalStreamConnectionFactory(clusterId,
-                                                                                                      streamFactory,
+        ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(clusterId, serverAddress),
+                                                                  new InternalStreamConnectionFactory(streamFactory,
                                                                                                       credentialList,
                                                                                                       connectionListener),
                                                                   connectionPoolSettings, connectionPoolListener);
         ServerMonitorFactory serverMonitorFactory =
-            new DefaultServerMonitorFactory(serverAddress, settings, clusterId,
-                                            new InternalStreamConnectionFactory(clusterId,
-                                                                                heartbeatStreamFactory,
+            new DefaultServerMonitorFactory(new ServerId(clusterId, serverAddress), settings,
+                                            new InternalStreamConnectionFactory(heartbeatStreamFactory,
                                                                                 credentialList,
                                                                                 connectionListener),
                                             connectionPool);
