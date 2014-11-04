@@ -189,6 +189,29 @@ public class DBCursorTest extends TestCase {
     }
 
     @Test
+    public void testLimit() {
+        DBCollection c = collection;
+        for (int i = 0; i < 100; i++) {
+            c.save(new BasicDBObject("x", i));
+        }
+
+        DBCursor dbCursor = c.find();
+        assertEquals(0, dbCursor.getLimit());
+        assertEquals(0, dbCursor.getBatchSize());
+        assertEquals(100, dbCursor.toArray().size());
+
+        dbCursor = c.find().limit(50);
+        assertEquals(50, dbCursor.getLimit());
+        assertEquals(0, dbCursor.getBatchSize());
+        assertEquals(50, dbCursor.toArray().size());
+
+        dbCursor = c.find().limit(-50);
+        assertEquals(0, dbCursor.getLimit());
+        assertEquals(-50, dbCursor.getBatchSize());
+        assertEquals(50, dbCursor.toArray().size());
+    }
+
+    @Test
     public void testTailable() {
         DBCollection c = getDatabase().getCollection("tail1");
         c.drop();
