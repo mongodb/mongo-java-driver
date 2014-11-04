@@ -214,7 +214,7 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
                                              listener)
 
         then:
-        1 * listener.connectionPoolOpened(_)
+        1 * listener.connectionPoolOpened { it.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId && it.settings == settings }
     }
 
     def 'should invoke connection pool closed event'() {
@@ -226,7 +226,7 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
         provider.close()
 
         then:
-        1 * listener.connectionPoolClosed(_)
+        1 * listener.connectionPoolClosed { it.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId }
     }
 
     def 'should fire connection added to pool event'() {
@@ -241,7 +241,7 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
         provider.get()
 
         then:
-        1 * listener.connectionAdded(_)
+        1 * listener.connectionAdded { it.connectionId.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId }
     }
 
     def 'should fire connection removed from pool event'() {
@@ -258,7 +258,7 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
         provider.close()
 
         then:
-        1 * listener.connectionRemoved(_)
+        1 * listener.connectionRemoved { it.connectionId.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId }
     }
 
     def 'should fire connection pool events on check out and check in'() {
@@ -275,15 +275,15 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
         connection = provider.get()
 
         then:
-        1 * listener.waitQueueEntered(_)
-        1 * listener.connectionCheckedOut(_)
-        1 * listener.waitQueueExited(_)
+        1 * listener.waitQueueEntered { it.serverId == SERVER_ID && it.threadId == Thread.currentThread().getId() }
+        1 * listener.connectionCheckedOut { it.connectionId.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId }
+        1 * listener.waitQueueExited { it.serverId == SERVER_ID && it.threadId == Thread.currentThread().getId() }
 
         when:
         connection.close()
 
         then:
-        1 * listener.connectionCheckedIn(_)
+        1 * listener.connectionCheckedIn { it.connectionId.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId }
     }
 
     def 'should not fire any more events after pool is closed'() {
@@ -299,7 +299,7 @@ class DefaultPooledConnectionProviderSpecification extends Specification {
         connection.close()
 
         then:
-        0 * listener.connectionCheckedIn(_)
-        0 * listener.connectionRemoved(_)
+        0 * listener.connectionCheckedIn { it.connectionId.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId }
+        0 * listener.connectionRemoved { it.connectionId.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId }
     }
 }

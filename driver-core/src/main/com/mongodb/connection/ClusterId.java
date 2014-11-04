@@ -18,6 +18,8 @@ package com.mongodb.connection;
 
 import org.bson.types.ObjectId;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * A client-generated identifier that uniquely identifies a connection to a MongoDB cluster, which could be sharded, replica set,
  * or standalone.
@@ -35,6 +37,11 @@ public final class ClusterId {
         this.value = new ObjectId().toHexString();
     }
 
+    // for testing only, as cluster identifiers should really be unique
+    ClusterId(final String value) {
+        this.value = notNull("value", value);
+    }
+
     /**
      * Gets the value of the identifier.
      *
@@ -42,6 +49,29 @@ public final class ClusterId {
      */
     public String getValue() {
         return value;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        ClusterId clusterId = (ClusterId) o;
+
+        if (!value.equals(clusterId.value)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return value.hashCode();
     }
 
     @Override

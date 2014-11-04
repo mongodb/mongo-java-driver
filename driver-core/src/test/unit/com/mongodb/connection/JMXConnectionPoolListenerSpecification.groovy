@@ -117,4 +117,17 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         then:
         objectName.toString() == "org.mongodb.driver:type=ConnectionPool,clusterId=${serverId.clusterId.value},host=%3A%3A1,port=27017"
     }
+
+    def 'should replace colon in cluster id value'() {
+        given:
+        def clusterId = new ClusterId('foo:far')
+        def serverId = new ServerId(clusterId, new ServerAddress())
+        String beanName = jmxListener.getMBeanObjectName(serverId)
+
+        when:
+        ObjectName objectName = new ObjectName(beanName)
+
+        then:
+        objectName.toString() == 'org.mongodb.driver:type=ConnectionPool,clusterId=foo%3Afar,host=127.0.0.1,port=27017'
+    }
 }
