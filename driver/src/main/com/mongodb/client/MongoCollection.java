@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.MongoCursor;
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.bulk.BulkWriteResult;
@@ -31,7 +30,6 @@ import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.MapReduceOptions;
-import com.mongodb.client.model.ParallelCollectionScanOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
@@ -490,49 +488,6 @@ public interface MongoCollection<T> {
      * then null will be returned
      */
     T findOneAndUpdate(Object filter, Object update, FindOneAndUpdateOptions options);
-
-    /**
-     * Create multiple parallel cursors for reading all the documents from a collection, thereby increasing throughput.
-     *
-     * @param numCursors the number of cursors requested to iterate in parallel.
-     * @return a list of MongoIterable, whose size may be less than the number requested
-     * @mongodb.server.release 2.6
-     */
-    List<MongoCursor<T>> parallelCollectionScan(int numCursors);
-
-    /**
-     * Create multiple parallel cursors for reading all the documents from a collection, thereby increasing throughput.
-     *
-     * @param numCursors the number of cursors requested to iterate in parallel.
-     * @param parallelCollectionScanOptions the options to use with operation.
-     * @return a list of MongoIterable, whose size may be less than the number requested
-     * @mongodb.server.release 2.6
-     */
-    List<MongoCursor<T>> parallelCollectionScan(int numCursors, ParallelCollectionScanOptions parallelCollectionScanOptions);
-
-    /**
-     * Create multiple parallel cursors for reading all the documents from a collection, thereby increasing throughput.
-     *
-     * @param numCursors the number of cursors requested to iterate in parallel.
-     * @param clazz the class to decode each document into.
-     * @param <C> the target document type of the iterable.
-     * @return a list of MongoIterable, whose size may be less than the number requested
-     * @mongodb.server.release 2.6
-     */
-    <C> List<MongoCursor<C>> parallelCollectionScan(int numCursors, Class<C> clazz);
-
-    /**
-     * Create multiple parallel cursors for reading all the documents from a collection, thereby increasing throughput.
-     *
-     * @param numCursors the number of cursors requested to iterate in parallel.
-     * @param parallelCollectionScanOptions the options to use with operation.
-     * @param clazz the class to decode each document into.
-     * @param <C> the target document type of the iterable.
-     * @return a list of MongoIterable, whose size may be less than the number requested
-     * @mongodb.server.release 2.6
-     */
-    <C> List<MongoCursor<C>> parallelCollectionScan(int numCursors, ParallelCollectionScanOptions parallelCollectionScanOptions,
-                                                      Class<C> clazz);
 
     /**
      * Drops this collection from the Database.

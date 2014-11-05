@@ -38,7 +38,6 @@ import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.MapReduceOptions;
-import com.mongodb.client.model.ParallelCollectionScanOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.UpdateManyModel;
@@ -65,7 +64,6 @@ import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import com.mongodb.operation.OperationExecutor;
-import com.mongodb.operation.ParallelCollectionScanOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.RenameCollectionOperation;
 import com.mongodb.operation.UpdateOperation;
@@ -499,30 +497,6 @@ class MongoCollectionImpl<T> implements MongoCollection<T> {
                                                   .sort(asBson(options.getSort()))
                                                   .returnUpdated(options.getReturnUpdated())
                                                   .upsert(options.isUpsert()));
-    }
-
-    @Override
-    public List<MongoCursor<T>> parallelCollectionScan(final int numCursors) {
-        return parallelCollectionScan(numCursors, new ParallelCollectionScanOptions());
-    }
-
-    @Override
-    public List<MongoCursor<T>> parallelCollectionScan(final int numCursors,
-                                                       final ParallelCollectionScanOptions parallelCollectionScanOptions) {
-        return parallelCollectionScan(numCursors, parallelCollectionScanOptions, clazz);
-    }
-
-    @Override
-    public <C> List<MongoCursor<C>> parallelCollectionScan(final int numCursors, final Class<C> clazz) {
-       return parallelCollectionScan(numCursors, new ParallelCollectionScanOptions(), clazz);
-    }
-
-    @Override
-    public <C> List<MongoCursor<C>> parallelCollectionScan(final int numCursors,
-                                                           final ParallelCollectionScanOptions parallelCollectionScanOptions,
-                                                           final Class<C> clazz) {
-        return executor.execute(new ParallelCollectionScanOperation<C>(namespace, numCursors, getCodec(clazz))
-                                .batchSize(parallelCollectionScanOptions.getBatchSize()), options.getReadPreference());
     }
 
     @Override
