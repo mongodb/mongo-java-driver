@@ -104,7 +104,9 @@ class DefaultConnectionPool implements ConnectionPool {
                 }
             }
             connectionPoolListener.connectionCheckedOut(new ConnectionEvent(getId(internalConnection)));
-            LOGGER.trace(format("Checked out connection [%s] to server %s", getId(internalConnection), serverId.getAddress()));
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(format("Checked out connection [%s] to server %s", getId(internalConnection), serverId.getAddress()));
+            }
             return new PooledConnection(internalConnection);
         } finally {
             waitQueueSize.decrementAndGet();
@@ -149,11 +151,15 @@ class DefaultConnectionPool implements ConnectionPool {
                 @Override
                 public synchronized void run() {
                     if (shouldPrune()) {
-                        LOGGER.debug(format("Pruning pooled connections to %s", serverId.getAddress()));
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug(format("Pruning pooled connections to %s", serverId.getAddress()));
+                        }
                         pool.prune();
                     }
                     if (shouldEnsureMinSize()) {
-                        LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverId.getAddress()));
+                        if (LOGGER.isDebugEnabled()) {
+                            LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverId.getAddress()));
+                        }
                         pool.ensureMinSize(settings.getMinSize());
                     }
                 }
@@ -244,7 +250,9 @@ class DefaultConnectionPool implements ConnectionPool {
             if (wrapped != null) {
                 if (!closed) {
                     connectionPoolListener.connectionCheckedIn(new ConnectionEvent(getId(wrapped)));
-                    LOGGER.trace(format("Checked in connection [%s] to server %s", getId(wrapped), serverId.getAddress()));
+                    if (LOGGER.isTraceEnabled()) {
+                        LOGGER.trace(format("Checked in connection [%s] to server %s", getId(wrapped), serverId.getAddress()));
+                    }
                 }
                 pool.release(wrapped, wrapped.isClosed() || shouldPrune(wrapped));
                 wrapped = null;

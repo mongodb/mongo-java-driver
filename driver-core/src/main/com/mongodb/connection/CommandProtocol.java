@@ -69,10 +69,12 @@ class CommandProtocol<T> implements Protocol<T> {
 
     @Override
     public T execute(final InternalConnection connection) {
-        LOGGER.debug(format("Sending command {%s : %s} to database %s on connection [%s] to server %s",
-                            command.keySet().iterator().next(), command.values().iterator().next(),
-                            namespace.getDatabaseName(), connection.getDescription().getConnectionId(),
-                            connection.getDescription().getServerAddress()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Sending command {%s : %s} to database %s on connection [%s] to server %s",
+                                command.keySet().iterator().next(), command.values().iterator().next(),
+                                namespace.getDatabaseName(), connection.getDescription().getConnectionId(),
+                                connection.getDescription().getServerAddress()));
+        }
         T retval = receiveMessage(connection, sendMessage(connection).getId());
         LOGGER.debug("Command execution completed");
         return retval;
@@ -103,10 +105,12 @@ class CommandProtocol<T> implements Protocol<T> {
 
     @Override
     public MongoFuture<T> executeAsync(final InternalConnection connection) {
-        LOGGER.debug(format("Asynchronously sending command {%s : %s} to database %s on connection [%s] to server %s",
-                            command.keySet().iterator().next(), command.values().iterator().next(),
-                            namespace.getDatabaseName(), connection.getDescription().getConnectionId(),
-                            connection.getDescription().getServerAddress()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Asynchronously sending command {%s : %s} to database %s on connection [%s] to server %s",
+                                command.keySet().iterator().next(), command.values().iterator().next(),
+                                namespace.getDatabaseName(), connection.getDescription().getConnectionId(),
+                                connection.getDescription().getServerAddress()));
+        }
         SingleResultFuture<T> retVal = new SingleResultFuture<T>();
 
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);

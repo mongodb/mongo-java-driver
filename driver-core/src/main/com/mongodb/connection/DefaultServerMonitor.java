@@ -256,7 +256,9 @@ class DefaultServerMonitor implements ServerMonitor {
     }
 
     private ServerDescription lookupServerDescription(final InternalConnection connection) {
-        LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Checking status of %s", serverId.getAddress()));
+        }
         long start = System.nanoTime();
         BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
         count++;

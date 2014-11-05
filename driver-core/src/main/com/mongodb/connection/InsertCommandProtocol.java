@@ -59,8 +59,13 @@ class InsertCommandProtocol extends WriteCommandProtocol {
 
     @Override
     public BulkWriteResult execute(final InternalConnection connection) {
-        LOGGER.debug(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insertRequests.size(),
-                            getNamespace(), connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Inserting %d documents into namespace %s on connection [%s] to server %s",
+                                insertRequests.size(),
+                                getNamespace(),
+                                connection.getDescription().getConnectionId(),
+                                connection.getDescription().getServerAddress()));
+        }
         BulkWriteResult writeResult = super.execute(connection);
         LOGGER.debug("Insert completed");
         return writeResult;
@@ -68,9 +73,11 @@ class InsertCommandProtocol extends WriteCommandProtocol {
 
     @Override
     public MongoFuture<BulkWriteResult> executeAsync(final InternalConnection connection) {
-        LOGGER.debug(format("Asynchronously inserting %d documents into namespace %s on connection [%s] to server %s",
-                            insertRequests.size(), getNamespace(), connection.getDescription().getConnectionId(),
-                            connection.getDescription().getServerAddress()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Asynchronously inserting %d documents into namespace %s on connection [%s] to server %s",
+                                insertRequests.size(), getNamespace(), connection.getDescription().getConnectionId(),
+                                connection.getDescription().getServerAddress()));
+        }
         final SingleResultFuture<BulkWriteResult> future = new SingleResultFuture<BulkWriteResult>();
         super.executeAsync(connection).register(new SingleResultCallback<BulkWriteResult>() {
             @Override

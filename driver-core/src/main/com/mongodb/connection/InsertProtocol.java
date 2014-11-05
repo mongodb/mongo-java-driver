@@ -58,8 +58,13 @@ class InsertProtocol extends WriteProtocol {
 
     @Override
     public WriteConcernResult execute(final InternalConnection connection) {
-        LOGGER.debug(format("Inserting %d documents into namespace %s on connection [%s] to server %s", insertRequestList.size(),
-                            getNamespace(), connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Inserting %d documents into namespace %s on connection [%s] to server %s",
+                                insertRequestList.size(),
+                                getNamespace(),
+                                connection.getDescription().getConnectionId(),
+                                connection.getDescription().getServerAddress()));
+        }
         WriteConcernResult writeConcernResult = super.execute(connection);
         LOGGER.debug("Insert completed");
         return writeConcernResult;
@@ -67,9 +72,11 @@ class InsertProtocol extends WriteProtocol {
 
     @Override
     public MongoFuture<WriteConcernResult> executeAsync(final InternalConnection connection) {
-        LOGGER.debug(format("Asynchronously inserting %d documents into namespace %s on connection [%s] to server %s",
-                            insertRequestList.size(), getNamespace(), connection.getDescription().getConnectionId(),
-                            connection.getDescription().getServerAddress()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Asynchronously inserting %d documents into namespace %s on connection [%s] to server %s",
+                                insertRequestList.size(), getNamespace(), connection.getDescription().getConnectionId(),
+                                connection.getDescription().getServerAddress()));
+        }
         final SingleResultFuture<WriteConcernResult> future = new SingleResultFuture<WriteConcernResult>();
         super.executeAsync(connection).register(new SingleResultCallback<WriteConcernResult>() {
             @Override

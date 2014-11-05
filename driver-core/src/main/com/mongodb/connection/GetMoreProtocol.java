@@ -60,9 +60,11 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
 
     @Override
     public QueryResult<T> execute(final InternalConnection connection) {
-        LOGGER.debug(format("Getting more documents from namespace %s with cursor %d on connection [%s] to server %s",
-                            namespace, cursorId, connection.getDescription().getConnectionId(),
-                            connection.getDescription().getServerAddress()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Getting more documents from namespace %s with cursor %d on connection [%s] to server %s",
+                                namespace, cursorId, connection.getDescription().getConnectionId(),
+                                connection.getDescription().getServerAddress()));
+        }
         QueryResult<T> queryResult = receiveMessage(connection, sendMessage(connection));
         LOGGER.debug("Get-more completed");
         return queryResult;
@@ -70,9 +72,11 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
 
     @Override
     public MongoFuture<QueryResult<T>> executeAsync(final InternalConnection connection) {
-        LOGGER.debug(format("Asynchronously getting more documents from namespace %s with cursor %d on connection [%s] to server %s",
-                            namespace, cursorId, connection.getDescription().getConnectionId(),
-                            connection.getDescription().getServerAddress()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Asynchronously getting more documents from namespace %s with cursor %d on connection [%s] to server %s",
+                                namespace, cursorId, connection.getDescription().getConnectionId(),
+                                connection.getDescription().getServerAddress()));
+        }
         SingleResultFuture<QueryResult<T>> retVal = new SingleResultFuture<QueryResult<T>>();
 
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);

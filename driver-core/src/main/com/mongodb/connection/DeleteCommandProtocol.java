@@ -60,8 +60,10 @@ class DeleteCommandProtocol extends WriteCommandProtocol {
 
     @Override
     public BulkWriteResult execute(final InternalConnection connection) {
-        LOGGER.debug(format("Deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
-                            connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
+                                connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
+        }
         BulkWriteResult writeResult = super.execute(connection);
         LOGGER.debug("Delete completed");
         return writeResult;
@@ -69,8 +71,10 @@ class DeleteCommandProtocol extends WriteCommandProtocol {
 
     @Override
     public MongoFuture<BulkWriteResult> executeAsync(final InternalConnection connection) {
-        LOGGER.debug(format("Asynchronously deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
-                            connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Asynchronously deleting documents from namespace %s on connection [%s] to server %s", getNamespace(),
+                                connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
+        }
         final SingleResultFuture<BulkWriteResult> future = new SingleResultFuture<BulkWriteResult>();
         super.executeAsync(connection).register(new SingleResultCallback<BulkWriteResult>() {
             @Override

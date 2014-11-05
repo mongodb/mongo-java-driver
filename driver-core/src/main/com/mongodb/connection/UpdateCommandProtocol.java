@@ -59,8 +59,10 @@ class UpdateCommandProtocol extends WriteCommandProtocol {
 
     @Override
     public BulkWriteResult execute(final InternalConnection connection) {
-        LOGGER.debug(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(),
-                            connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Updating documents in namespace %s on connection [%s] to server %s", getNamespace(),
+                                connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
+        }
         BulkWriteResult writeResult = super.execute(connection);
         LOGGER.debug("Update completed");
         return writeResult;
@@ -68,8 +70,10 @@ class UpdateCommandProtocol extends WriteCommandProtocol {
 
     @Override
     public MongoFuture<BulkWriteResult> executeAsync(final InternalConnection connection) {
-        LOGGER.debug(format("Asynchronously updating documents in namespace %s on connection [%s] to server %s", getNamespace(),
-                            connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Asynchronously updating documents in namespace %s on connection [%s] to server %s", getNamespace(),
+                                connection.getDescription().getConnectionId(), connection.getDescription().getServerAddress()));
+        }
         final SingleResultFuture<BulkWriteResult> future = new SingleResultFuture<BulkWriteResult>();
         super.executeAsync(connection).register(new SingleResultCallback<BulkWriteResult>() {
             @Override
