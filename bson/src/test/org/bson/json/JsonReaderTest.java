@@ -464,9 +464,19 @@ public class JsonReaderTest {
     }
 
     @Test
-    public void testTimestamp() {
-        String json = "{ \"$timestamp\" : NumberLong(1234) }";
+    public void testTimestampStrict() {
+        String json = "{ \"$timestamp\" : { \"t\" : 1234, \"i\" : 1 } }";
         bsonReader = new JsonReader(json);
+        assertEquals(BsonType.TIMESTAMP, bsonReader.readBsonType());
+        assertEquals(new BsonTimestamp(1234, 1), bsonReader.readTimestamp());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    @Test
+    public void testTimestampShell() {
+        String json = "Timestamp(1234, 1)";
+        bsonReader = new JsonReader(json);
+
         assertEquals(BsonType.TIMESTAMP, bsonReader.readBsonType());
         assertEquals(new BsonTimestamp(1234, 1), bsonReader.readTimestamp());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());

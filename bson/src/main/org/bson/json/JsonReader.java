@@ -195,6 +195,9 @@ public class JsonReader extends AbstractBsonReader {
                 } else if ("ObjectId".equals(value)) {
                     setCurrentBsonType(BsonType.OBJECT_ID);
                     currentValue = visitObjectIdConstructor();
+                } else if ("Timestamp".equals(value)) {
+                    setCurrentBsonType(BsonType.TIMESTAMP);
+                    currentValue = visitTimestampConstructor();
                 } else if ("RegExp".equals(value)) {
                     setCurrentBsonType(BsonType.REGULAR_EXPRESSION);
                     currentValue = visitRegularExpressionConstructor();
@@ -671,6 +674,28 @@ public class JsonReader extends AbstractBsonReader {
         return new ObjectId(valueToken.getValue(String.class));
     }
 
+    private BsonTimestamp visitTimestampConstructor() {
+        verifyToken("(");
+        JsonToken timeToken = popToken();
+        int time;
+        if (timeToken.getType() != JsonTokenType.INT32) {
+            throw new JsonParseException("JSON reader expected an integer but found '%s'.", timeToken.getValue());
+        } else {
+            time = timeToken.getValue(Integer.class);
+        }
+        verifyToken(",");
+        JsonToken incrementToken = popToken();
+        int increment;
+        if (incrementToken.getType() != JsonTokenType.INT32) {
+            throw new JsonParseException("JSON reader expected an integer but found '%s'.", timeToken.getValue());
+        } else {
+            increment = incrementToken.getValue(Integer.class);
+        }
+
+        verifyToken(")");
+        return new BsonTimestamp(time, increment);
+    }
+
     private BsonDbPointer visitDBPointerConstructor() {
         verifyToken("(");
         JsonToken namespaceToken = popToken();
@@ -911,18 +936,31 @@ public class JsonReader extends AbstractBsonReader {
 
     private BsonTimestamp visitTimestampExtendedJson() {
         verifyToken(":");
-        JsonToken valueToken = popToken();
-        JsonTokenType type = valueToken.getType();
-        int value;
-        if (type == JsonTokenType.INT32 || type == JsonTokenType.INT64) {
-            value = valueToken.getValue(Integer.class);
-        } else if (type == JsonTokenType.UNQUOTED_STRING && "NumberLong".equals(valueToken.getValue())) {
-            value = (int) visitNumberLongConstructor();
+        verifyToken("{");
+        verifyString("t");
+        verifyToken(":");
+
+        JsonToken timeToken = popToken();
+        int time;
+        if (timeToken.getType() == JsonTokenType.INT32) {
+            time = timeToken.getValue(Integer.class);
         } else {
-            throw new JsonParseException("JSON reader expected an integer but found '%s'.", valueToken.getValue());
+            throw new JsonParseException("JSON reader expected an integer but found '%s'.", timeToken.getValue());
         }
+        verifyToken(",");
+        verifyString("i");
+        verifyToken(":");
+        JsonToken incrementToken = popToken();
+        int increment;
+        if (incrementToken.getType() == JsonTokenType.INT32) {
+            increment = incrementToken.getValue(Integer.class);
+        } else {
+            throw new JsonParseException("JSON reader expected an integer but found '%s'.", timeToken.getValue());
+        }
+
         verifyToken("}");
-        return new BsonTimestamp(value, 1);
+        verifyToken("}");
+        return new BsonTimestamp(time, increment);
     }
 
     private void visitJavaScriptExtendedJson() {
