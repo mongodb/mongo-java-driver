@@ -34,6 +34,7 @@ public final class ConnectionId {
     private final ServerId serverId;
     private final int localValue;
     private final Integer serverValue;
+    private final String stringValue;
 
     /**
      * Construct an instance with the given server id.
@@ -55,6 +56,11 @@ public final class ConnectionId {
         this.serverId = notNull("serverId", serverId);
         this.localValue = localValue;
         this.serverValue = serverValue;
+        if (serverValue == null) {
+            stringValue = format("connectionId{localValue:%s}", localValue);
+        } else {
+            stringValue = format("connectionId{localValue:%s, serverValue:%s}", localValue, serverValue);
+        }
     }
 
     /**
@@ -114,10 +120,6 @@ public final class ConnectionId {
 
     @Override
     public String toString() {
-        if (serverValue == null) {
-            return format("connectionId{localValue:%s}", localValue);
-        } else {
-            return format("connectionId{localValue:%s, serverValue:%s}", localValue, serverValue);
-        }
+        return stringValue;
     }
 }
