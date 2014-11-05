@@ -28,6 +28,7 @@ import java.net.UnknownHostException;
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.getBinding;
+import static com.mongodb.ClusterFixture.isAuthenticated;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
@@ -204,6 +205,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldInsertDocumentsUsingEval() {
+        assumeFalse(isAuthenticated());
         // when
         database.eval("db." + collectionName + ".insert({name: 'Bob'})");
 
