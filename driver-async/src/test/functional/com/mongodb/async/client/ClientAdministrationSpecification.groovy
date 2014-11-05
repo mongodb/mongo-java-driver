@@ -22,7 +22,7 @@ class ClientAdministrationSpecification extends FunctionalSpecification {
 
     def 'should return the database name in getDatabaseNames'() {
         when:
-        collection.insert(['_id': 1] as Document)
+        collection.insert(['_id': 1] as Document).get()
         def client = Fixture.getMongoClient()
 
         then:

@@ -20,12 +20,13 @@ import org.bson.Document
 
 import static Fixture.getAsList
 import static Fixture.getMongoClient
+import static com.mongodb.async.rx.client.Fixture.get
 
 class ClientAdministrationSpecification extends FunctionalSpecification {
 
     def 'should return the database name in getDatabaseNames'() {
         when:
-        collection.insert(['_id': 1] as Document)
+        get(collection.insert(['_id': 1] as Document))
         def client = getMongoClient()
 
         then:
