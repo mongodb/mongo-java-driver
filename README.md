@@ -74,5 +74,6 @@ MongoDB project, please report it according to the [instructions here]
 * Kristina Chodorow
 * Mike Dirolf
 
-We proudly develop this project with [![Intellij IDEA](http://www.jetbrains.com/img/logos/logo_intellij_idea.png)](http://www.jetbrains.com/idea/)
-and [JProfiler](https://www.ej-technologies.com/products/jprofiler/overview.html).
+We proudly develop this project with [![Intellij IDEA](http://www.jetbrains.com/img/logos/logo_intellij_idea.png)](http://www.jetbrains.com/idea/).
+
+YourKit is kindly supporting this open source project with its [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp)
