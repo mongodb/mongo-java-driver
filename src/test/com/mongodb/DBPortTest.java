@@ -24,6 +24,7 @@ import java.net.UnknownHostException;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.mongodb.MongoCredential.createCredential;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -49,15 +50,15 @@ public class DBPortTest extends TestCase {
             assertFalse(port.getAuthenticatedDatabases().contains("DBPortTest1"));
             assertFalse(port.getAuthenticatedDatabases().contains("DBPortTest2"));
 
-            m.getAuthority().getCredentialsStore().add(MongoCredential.createMongoCRCredential("u1", "DBPortTest1", "e".toCharArray()));
-            m.getAuthority().getCredentialsStore().add(MongoCredential.createMongoCRCredential("u2", "DBPortTest2", "e".toCharArray()));
+            m.getAuthority().getCredentialsStore().add(createCredential("u1", "DBPortTest1", "e".toCharArray()));
+            m.getAuthority().getCredentialsStore().add(createCredential("u2", "DBPortTest2", "e".toCharArray()));
 
             port.checkAuth(m);
 
             assertTrue(port.getAuthenticatedDatabases().contains("DBPortTest1"));
             assertTrue(port.getAuthenticatedDatabases().contains("DBPortTest2"));
 
-            m.getAuthority().getCredentialsStore().add(MongoCredential.createMongoCRCredential("u2", "DBPortTest3", "e".toCharArray()));
+            m.getAuthority().getCredentialsStore().add(createCredential("u2", "DBPortTest3", "e".toCharArray()));
 
             try {
                 port.checkAuth(m);
