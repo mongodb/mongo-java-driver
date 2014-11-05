@@ -42,13 +42,13 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSSLSettings
 import static com.mongodb.ClusterFixture.isAuthenticated
-import static com.mongodb.MongoCredential.createMongoCRCredential
+import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class UserOperationsSpecification extends OperationFunctionalSpecification {
-    def credential = createMongoCRCredential('jeff', databaseName, '123'.toCharArray())
+    def credential = createCredential('jeff', databaseName, '123'.toCharArray())
 
     def 'an added user should be found'() {
         given:
@@ -156,7 +156,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
     def 'a replaced user should authenticate with its new password'() {
         given:
         new CreateUserOperation(credential, true).execute(getBinding())
-        def newCredentials = createMongoCRCredential(credential.userName, credential.source, '234'.toCharArray())
+        def newCredentials = createCredential(credential.userName, credential.source, '234'.toCharArray())
         new UpdateUserOperation(newCredentials, true).execute(getBinding())
         def cluster = getCluster(newCredentials)
 
@@ -178,7 +178,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
     def 'a replaced user should authenticate with its new password asynchronously'() {
         given:
         new CreateUserOperation(credential, true).executeAsync(getAsyncBinding()).get()
-        def newCredentials = createMongoCRCredential(credential.userName, credential.source, '234'.toCharArray())
+        def newCredentials = createCredential(credential.userName, credential.source, '234'.toCharArray())
         new UpdateUserOperation(newCredentials, true).executeAsync(getAsyncBinding()).get()
         def cluster = getCluster(newCredentials)
 
@@ -250,7 +250,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !isAuthenticated() })
     def 'a read write admin user should be able to write to a different database'() {
         given:
-        def rwCredential = createMongoCRCredential('jeff-rw-admin', 'admin', '123'.toCharArray());
+        def rwCredential = createCredential('jeff-rw-admin', 'admin', '123'.toCharArray());
         new CreateUserOperation(rwCredential, false).execute(getBinding())
         def cluster = getCluster(rwCredential)
 
@@ -269,7 +269,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !isAuthenticated() })
     def 'a read only admin user should not be able to write to a different database'() {
         given:
-        def roCredential = createMongoCRCredential('jeff-ro-admin', 'admin', '123'.toCharArray());
+        def roCredential = createCredential('jeff-ro-admin', 'admin', '123'.toCharArray());
         new CreateUserOperation(roCredential, true).execute(getBinding())
         def cluster = getCluster(roCredential)
 
@@ -288,7 +288,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !isAuthenticated() })
     def 'a read only admin user should be able to read from a different database'() {
         given:
-        def roCredential = createMongoCRCredential('jeff-ro-admin', 'admin', '123'.toCharArray());
+        def roCredential = createCredential('jeff-ro-admin', 'admin', '123'.toCharArray());
         new CreateUserOperation(roCredential, true).execute(getBinding())
         def cluster = getCluster(roCredential)
 
