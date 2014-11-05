@@ -76,4 +76,4 @@ MongoDB project, please report it according to the [instructions here]
 
 We proudly develop this project with [![Intellij IDEA](http://www.jetbrains.com/img/logos/logo_intellij_idea.png)](http://www.jetbrains.com/idea/).
 
-YourKit is kindly supporting this open source project with its [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp)
+YourKit is kindly supporting this open source project with its [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp).
