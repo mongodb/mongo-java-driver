@@ -23,10 +23,13 @@ import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolOpenedEvent;
 import com.mongodb.event.ConnectionPoolWaitQueueEvent;
 
+import javax.management.ObjectName;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 
 /**
  * A connection pool listener that manages a set of JMX MBeans, one for each connection pool.
@@ -99,13 +102,14 @@ public class JMXConnectionPoolListener implements ConnectionPoolListener {
     }
 
     String getMBeanObjectName(final ServerId serverId) {
-        // we could do a url encode, but since : is the only invalid character in an object name, then
-        // we'll simply do it.
-        String adjustedClusterId = serverId.getClusterId().getValue().replace(":", "%3A");
-        String adjustedHost = serverId.getAddress().getHost().replace(":", "%3A");
-
-        return format("org.mongodb.driver:type=ConnectionPool,clusterId=%s,host=%s,port=%s", adjustedClusterId, adjustedHost,
-                      serverId.getAddress().getPort());
+        String name = format("org.mongodb.driver:type=ConnectionPool,clusterId=%s,host=%s,port=%s",
+                             ensureValidValue(serverId.getClusterId().getValue()),
+                             ensureValidValue(serverId.getAddress().getHost()),
+                             serverId.getAddress().getPort());
+        if (serverId.getClusterId().getDescription() != null) {
+            name = format("%s,description=%s", name, ensureValidValue(serverId.getClusterId().getDescription()));
+        }
+        return name;
     }
 
     ConnectionPoolStatisticsMBean getMBean(final ServerId serverId) {
@@ -122,5 +126,26 @@ public class JMXConnectionPoolListener implements ConnectionPoolListener {
 
     private ConnectionPoolStatistics getStatistics(final ServerId serverId) {
         return map.get(serverId);
+    }
+
+    private String ensureValidValue(final String value) {
+        if (containsQuotableCharacter(value)) {
+            return ObjectName.quote(value);
+        } else {
+            return value;
+        }
+    }
+
+    private boolean containsQuotableCharacter(final String value) {
+        if (value == null || value.length() == 0) {
+            return false;
+        }
+        List<String> quoteableCharacters = asList(",", ":", "?", "*", "=", "\"", "\\", "\n");
+        for (String quotable : quoteableCharacters) {
+            if (value.contains(quotable)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

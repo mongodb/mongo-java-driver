@@ -37,7 +37,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
                           final List<MongoCredential> credentialList,
                           final ClusterListener clusterListener, final ConnectionPoolListener connectionPoolListener,
                           final ConnectionListener connectionListener) {
-        ClusterId clusterId = new ClusterId();
+        ClusterId clusterId = new ClusterId(settings.getDescription());
         ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId,
                                                                                      serverSettings,
                                                                                      connectionPoolSettings,

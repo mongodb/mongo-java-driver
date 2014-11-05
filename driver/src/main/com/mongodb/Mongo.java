@@ -648,6 +648,7 @@ public class Mongo {
         return createCluster(ClusterSettings.builder().hosts(createNewSeedList(seedList))
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                             .serverSelector(createServerSelector(options))
+                                            .description(options.getDescription())
                                             .build(),
                              credentialsList, options);
     }
@@ -659,6 +660,7 @@ public class Mongo {
                                             .hosts(asList(serverAddress))
                                             .requiredReplicaSetName(options.getRequiredReplicaSetName())
                                             .serverSelector(createServerSelector(options))
+                                            .description(options.getDescription())
                                             .build(),
                              credentialsList, options);
     }

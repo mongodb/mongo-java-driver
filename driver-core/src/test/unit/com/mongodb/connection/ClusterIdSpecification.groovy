@@ -17,6 +17,7 @@
 package com.mongodb.connection
 
 import spock.lang.Specification
+import spock.lang.Unroll
 
 
 class ClusterIdSpecification extends Specification {
@@ -30,13 +31,20 @@ class ClusterIdSpecification extends Specification {
         new ClusterId().value != new ClusterId().value
     }
 
+    @Unroll
     def 'equivalent ids should be equal and have same hash code'() {
-        def id1 = new ClusterId('id1')
-        def id2 = new ClusterId('id1')
+        when:
+        def id1 = new ClusterId(id, description)
+        def id2 = new ClusterId(id, description)
 
-        expect:
+        then:
         id1 == id2
         id1.hashCode() == id2.hashCode()
+
+        where:
+          id  | description
+        'id1' | null
+        'id2' | 'my server'
     }
 
 }

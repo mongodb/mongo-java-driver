@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-
-
 package com.mongodb.connection
 
 import com.mongodb.ServerAddress
 import com.mongodb.management.JMXConnectionPoolListener
 import spock.lang.Specification
 import spock.lang.Subject
+import spock.lang.Unroll
 
 import javax.management.ObjectName
 import java.lang.management.ManagementFactory
@@ -56,6 +55,9 @@ class JMXConnectionPoolListenerSpecification extends Specification {
             checkedOutCount == 1
             waitQueueSize == 0
         }
+
+        cleanup:
+        provider.close()
     }
 
     def 'should add MBean'() {
@@ -67,6 +69,9 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         then:
         ManagementFactory.getPlatformMBeanServer().isRegistered(
                 new ObjectName(jmxListener.getMBeanObjectName(SERVER_ID)))
+
+        cleanup:
+        provider.close()
     }
 
     def 'should remove MBean'() {
@@ -115,19 +120,44 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         ObjectName objectName = new ObjectName(beanName)
 
         then:
-        objectName.toString() == "org.mongodb.driver:type=ConnectionPool,clusterId=${serverId.clusterId.value},host=%3A%3A1,port=27017"
+        objectName.toString() == "org.mongodb.driver:type=ConnectionPool,clusterId=${serverId.clusterId.value},host=\"::1\",port=27017"
     }
 
-    def 'should replace colon in cluster id value'() {
-        given:
-        def clusterId = new ClusterId('foo:far')
-        def serverId = new ServerId(clusterId, new ServerAddress())
-        String beanName = jmxListener.getMBeanObjectName(serverId)
-
+    def 'should include the description in the object name if set'() {
         when:
-        ObjectName objectName = new ObjectName(beanName)
+        def serverId = new ServerId(new ClusterId(), new ServerAddress())
 
         then:
-        objectName.toString() == 'org.mongodb.driver:type=ConnectionPool,clusterId=foo%3Afar,host=127.0.0.1,port=27017'
+        !jmxListener.getMBeanObjectName(serverId).contains('description')
+
+        when:
+        serverId = new ServerId(new ClusterId('my app server'), new ServerAddress())
+
+        then:
+        jmxListener.getMBeanObjectName(serverId).contains('description')
+    }
+
+    @Unroll
+    def 'should quote values containing special characters'() {
+        when:
+        def clusterId = new ClusterId(clusterIdName, description)
+        def serverId = new ServerId(clusterId, new ServerAddress(host))
+        def objectName = new ObjectName(jmxListener.getMBeanObjectName(serverId))
+
+        then:
+        objectName.toString() == "org.mongodb.driver:type=ConnectionPool,clusterId=${expectedClusterIdName},host=${expectedHost}" +
+        ",port=27017,description=${expectedDescription}"
+
+        where:
+        clusterIdName | expectedClusterIdName | host         | expectedHost     | description            | expectedDescription
+        'cluster Id'  | 'cluster Id'          | 'host name'  | 'host name'      | 'client description'   | 'client description'
+        'cluster,Id'  | '"cluster,Id"'        | 'host,name'  | '"host,name"'    | 'client, description'  | '"client, description"'
+        'cluster:Id'  | '"cluster:Id"'        | 'hostname'   | 'hostname'       | 'client: description'  | '"client: description"'
+        'cluster=Id'  | '"cluster=Id"'        | 'host=name'  | '"host=name"'    | 'client= description'  | '"client= description"'
+        'cluster"Id'  | '"cluster\\"Id"'      | 'host"name'  | '"host\\"name"'  | 'client" description'  | '"client\\" description"'
+        'cluster*Id'  | '"cluster\\*Id"'      | 'host*name'  | '"host\\*name"'  | 'client* description'  | '"client\\* description"'
+        'cluster?Id'  | '"cluster\\?Id"'      | 'host?name'  | '"host\\?name"'  | 'client? description'  | '"client\\? description"'
+        'cluster\\Id' | '"cluster\\\\Id"'     | 'host\\name' | '"host\\\\name"' | 'client\\ description' | '"client\\\\ description"'
+        'cluster\nId' | '"cluster\\nId"'      | 'host\nname' | '"host\\nname"'  | 'client\n description' | '"client\\n description"'
     }
 }

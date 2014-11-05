@@ -28,18 +28,30 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class ClusterId {
     private final String value;
+    private final String description;
 
     /**
      * Construct an instance.
      *
      */
     public ClusterId() {
+        this(null);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param description the user defined description of the MongoClient
+     */
+    public ClusterId(final String description) {
         this.value = new ObjectId().toHexString();
+        this.description = description;
     }
 
     // for testing only, as cluster identifiers should really be unique
-    ClusterId(final String value) {
+    ClusterId(final String value, final String description) {
         this.value = notNull("value", value);
+        this.description = description;
     }
 
     /**
@@ -49,6 +61,15 @@ public final class ClusterId {
      */
     public String getValue() {
         return value;
+    }
+
+    /**
+     * Gets the user defined description of the MongoClient.
+     *
+     * @return the user defined description of the MongoClient
+     */
+    public String getDescription() {
+        return description;
     }
 
     @Override
@@ -65,17 +86,25 @@ public final class ClusterId {
         if (!value.equals(clusterId.value)) {
             return false;
         }
+        if (description != null ? !description.equals(clusterId.description) : clusterId.description != null) {
+            return false;
+        }
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        return value.hashCode();
+        int result = value.hashCode();
+        result = 31 * result + (description != null ? description.hashCode() : 0);
+        return result;
     }
 
     @Override
     public String toString() {
-        return value;
+        return "ClusterId{"
+               + "value='" + value + '\''
+               + ", description='" + description + '\''
+               + '}';
     }
 }

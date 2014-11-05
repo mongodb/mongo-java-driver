@@ -42,6 +42,7 @@ public final class ClusterSettings {
     private final ClusterType requiredClusterType;
     private final String requiredReplicaSetName;
     private final ServerSelector serverSelector;
+    private final String description;
 
     /**
      * Get a builder for this class.
@@ -61,8 +62,20 @@ public final class ClusterSettings {
         private ClusterType requiredClusterType = ClusterType.UNKNOWN;
         private String requiredReplicaSetName;
         private ServerSelector serverSelector;
+        private String description;
 
         private Builder() {
+        }
+
+        /**
+         * Sets the user defined description of the MongoClient.
+         *
+         * @param description the user defined description of the MongoClient
+         * @return this
+         */
+        public Builder description(final String description) {
+            this.description = description;
+            return this;
         }
 
         /**
@@ -142,7 +155,6 @@ public final class ClusterSettings {
                 mode(ClusterConnectionMode.MULTIPLE).hosts(seedList);
             }
             requiredReplicaSetName(connectionString.getRequiredReplicaSetName());
-
             return this;
         }
 
@@ -154,6 +166,15 @@ public final class ClusterSettings {
         public ClusterSettings build() {
             return new ClusterSettings(this);
         }
+    }
+
+    /**
+     * Gets the user defined description of the MongoClient.
+     *
+     * @return the user defined description of the MongoClient
+     */
+    public String getDescription() {
+        return description;
     }
 
     /**
@@ -211,6 +232,7 @@ public final class ClusterSettings {
                + ", requiredClusterType=" + requiredClusterType
                + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
                + ", serverSelector='" + serverSelector + '\''
+               + ", description='" + description + '\''
                + '}';
     }
 
@@ -225,6 +247,7 @@ public final class ClusterSettings {
                + ", mode=" + mode
                + ", requiredClusterType=" + requiredClusterType
                + (requiredReplicaSetName == null ? "" : ", requiredReplicaSetName='" + requiredReplicaSetName + '\'')
+               + (description == null ? "" : ", description='" + description + '\'')
                + '}';
     }
 
@@ -249,6 +272,7 @@ public final class ClusterSettings {
             }
         }
 
+        description = builder.description;
         hosts = builder.hosts;
         mode = builder.mode;
         requiredReplicaSetName = builder.requiredReplicaSetName;
