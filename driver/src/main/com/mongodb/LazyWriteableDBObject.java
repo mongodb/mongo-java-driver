@@ -25,14 +25,31 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * A {@code LazyDBObject} that adds the capability to write new fields to the document.  The newly written and read-only fields will be
+ * combined, with the newly written ones taking precedence over the existing read-only ones.
+ */
 public class LazyWriteableDBObject extends LazyDBObject {
 
     private final Map<String, Object> writable = new HashMap<String, Object>();
 
+    /**
+     * Construct an instance.
+     *
+     * @param bytes the raw bytes
+     * @param callback the callback to use to construct nested values
+     */
     public LazyWriteableDBObject(final byte[] bytes, final LazyBSONCallback callback) {
         super(bytes, callback);
     }
 
+    /**
+     * Construct an instance.
+     *
+     * @param bytes the raw bytes
+     * @param offset the offset into the raw bytes
+     * @param callback the callback to use to construct nested values
+     */
     public LazyWriteableDBObject(final byte[] bytes, final int offset, final LazyBSONCallback callback) {
         super(bytes, offset, callback);
     }

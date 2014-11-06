@@ -23,6 +23,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 
+/**
+ *  A decoder for {@code LazyBSONObject} instances.
+ */
 public class LazyBSONDecoder implements BSONDecoder {
     private static final int BYTES_IN_INTEGER = 4;
 

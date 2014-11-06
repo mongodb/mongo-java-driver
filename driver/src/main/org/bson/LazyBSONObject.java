@@ -44,26 +44,52 @@ import java.util.regex.Pattern;
 
 import static org.bson.io.Bits.readLong;
 
+/**
+ * A read-only {@code BSONObject} backed by a byte buffer that lazily provides keys and values on request.
+ */
 public class LazyBSONObject implements BSONObject {
     private final byte[] bytes;
     private final int offset;
     private final LazyBSONCallback callback;
 
 
+    /**
+     * Construct an instance.
+     *
+     * @param bytes the raw bytes
+     * @param callback the callback to use to construct nested values
+     */
     public LazyBSONObject(final byte[] bytes, final LazyBSONCallback callback) {
         this(bytes, 0, callback);
     }
 
+    /**
+     * Construct an instance.
+     *
+     * @param bytes the raw bytes
+     * @param offset the offset into the raw bytes
+     * @param callback the callback to use to construct nested values
+     */
     public LazyBSONObject(final byte[] bytes, final int offset, final LazyBSONCallback callback) {
         this.bytes = bytes;
         this.callback = callback;
         this.offset = offset;
     }
 
+    /**
+     * Gets the offset.
+     *
+     * @return the offset
+     */
     protected int getOffset() {
         return offset;
     }
 
+    /**
+     * Gets the raw bytes.
+     *
+     * @return the raw bytes
+     */
     protected byte[] getBytes() {
         return bytes;
     }
@@ -223,19 +249,41 @@ public class LazyBSONObject implements BSONObject {
         return buffer;
     }
 
+    /**
+     * Gets whether this is an empty {@code BSONObject}.
+     *
+     * @return true if this has no keys
+     */
     public boolean isEmpty() {
         return keySet().size() == 0;
     }
 
+    /**
+     * Gets the size in bytes of the BSON document.
+     *
+     * @return the size in bytes
+     */
     public int getBSONSize() {
         return getBufferForInternalBytes().getInt();
     }
 
+    /**
+     * Pipe the raw bytes into the given output stream.
+     *
+     * @param os the output stream
+     * @return the number of bytes written
+     * @throws IOException any IOException thrown by the output stream
+     */
     public int pipe(final OutputStream os) throws IOException {
         WritableByteChannel channel = Channels.newChannel(os);
         return channel.write(getBufferForInternalBytes());
     }
 
+    /**
+     * Gets the entry set for all the key/value pairs in this {@code BSONObject}.
+     *
+     * @return then entry set
+     */
     public Set<Map.Entry<String, Object>> entrySet() {
         Set<Map.Entry<String, Object>> entries = new LinkedHashSet<Map.Entry<String, Object>>();
         BsonBinaryReader reader = getBsonReader();

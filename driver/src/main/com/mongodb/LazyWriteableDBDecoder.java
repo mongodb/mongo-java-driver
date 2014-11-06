@@ -16,6 +16,9 @@
 
 package com.mongodb;
 
+/**
+ *  A decoder for {@code LazyWriteableDBObject} instances.
+ */
 public class LazyWriteableDBDecoder extends LazyDBDecoder {
     @Override
     public DBCallback getDBCallback(final DBCollection collection) {

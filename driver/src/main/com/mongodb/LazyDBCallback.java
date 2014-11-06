@@ -22,8 +22,16 @@ import org.bson.types.ObjectId;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * A {@code BSONCallback} for the creation of {@code LazyDBObject} and {@code LazyDBList} instances.
+ */
 public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
 
+    /**
+     * Construct an instance.
+     *
+     * @param collection the {@code DBCollection} containing the document.  This parameter is no longer used.
+     */
     public LazyDBCallback(final DBCollection collection) {
     }
 

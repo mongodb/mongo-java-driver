@@ -18,8 +18,16 @@ package com.mongodb;
 
 import java.util.Arrays;
 
+/**
+ * A {@code BSONCallback} for the creation of {@code LazyWritableDBObject} instances.
+ */
 public class LazyWriteableDBCallback extends LazyDBCallback {
 
+    /**
+     * Construct an instance.
+     *
+     * @param collection the DBCollection containing the document.  This parameter is no longer used.
+     */
     public LazyWriteableDBCallback(final DBCollection collection) {
         super(collection);
     }

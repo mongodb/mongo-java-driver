@@ -24,15 +24,31 @@ import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+/**
+ * A {@code LazyBSONObject} representing a BSON array.
+ */
 @SuppressWarnings("rawtypes")
 public class LazyBSONList extends LazyBSONObject implements List {
 
+    /**
+     * Construct an instance with the given raw bytes and offset.
+     *
+     * @param bytes the raw BSON bytes
+     * @param callback the callback to use to create nested values
+     */
     public LazyBSONList(final byte[] bytes, final LazyBSONCallback callback) {
         super(bytes, callback);
     }
 
-    public LazyBSONList(final byte[] data, final int offset, final LazyBSONCallback callback) {
-        super(data, offset, callback);
+    /**
+     * Construct an instance with the given raw bytes and offset.
+     *
+     * @param bytes the raw BSON bytes
+     * @param offset the offset into the raw bytes
+     * @param callback the callback to use to create nested values
+     */
+    public LazyBSONList(final byte[] bytes, final int offset, final LazyBSONCallback callback) {
+        super(bytes, offset, callback);
     }
 
     @Override
@@ -89,10 +105,16 @@ public class LazyBSONList extends LazyBSONObject implements List {
         return lastFound;
     }
 
+    /**
+     * An iterator over the values in a LazyBsonList.
+     */
     public class LazyBSONListIterator implements Iterator {
         private final BsonBinaryReader reader;
         private BsonType cachedBsonType;
 
+        /**
+         * Construct an instance
+         */
         public LazyBSONListIterator() {
             reader = getBsonReader();
             reader.readStartDocument();

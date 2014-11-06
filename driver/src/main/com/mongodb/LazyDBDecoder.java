@@ -21,6 +21,9 @@ import org.bson.LazyBSONDecoder;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ *  A decoder for {@code LazyDBObject} instances.
+ */
 public class LazyDBDecoder extends LazyBSONDecoder implements DBDecoder {
 
     @Override

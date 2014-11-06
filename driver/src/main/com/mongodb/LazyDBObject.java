@@ -19,14 +19,30 @@ package com.mongodb;
 import org.bson.LazyBSONCallback;
 import org.bson.LazyBSONObject;
 
+/**
+ * A read-only {@code DBObject} backed by a byte buffer that lazily provides keys and values on request.
+ */
 public class LazyDBObject extends LazyBSONObject implements DBObject {
 
     private boolean isPartial = false;
 
+    /**
+     * Construct an instance.
+     *
+     * @param bytes the raw bytes
+     * @param callback the callback to use to construct nested values
+     */
     public LazyDBObject(final byte[] bytes, final LazyBSONCallback callback) {
         super(bytes, callback);
     }
 
+    /**
+     * Construct an instance.
+     *
+     * @param bytes the raw bytes
+     * @param offset the offset into the raw bytes
+     * @param callback the callback to use to construct nested values
+     */
     public LazyDBObject(final byte[] bytes, final int offset, final LazyBSONCallback callback) {
         super(bytes, offset, callback);
     }
