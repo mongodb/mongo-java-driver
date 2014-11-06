@@ -256,22 +256,38 @@ public class DBTest extends DatabaseTestCase {
         String userName = "jeff";
         char[] password = "123".toCharArray();
         boolean readOnly = true;
-        database.addUser(userName, password, readOnly);
+        try {
+            database.removeUser(userName);
+        } catch (Exception e) {
+            // NOOP
+        }
+
+        WriteResult result = database.addUser(userName, password, readOnly);
+        assertEquals(1, result.getN());
+        assertFalse(result.isUpdateOfExisting());
         assertTrue(new UserExistsOperation(database.getName(), userName).execute(getBinding()));
     }
 
     @Test
     public void shouldUpdateUser() {
         String userName = "jeff";
-
         char[] password = "123".toCharArray();
         boolean readOnly = true;
-        database.addUser(userName, password, readOnly);
+        try {
+            database.removeUser(userName);
+        } catch (Exception e) {
+            // NOOP
+        }
+
+        WriteResult result = database.addUser(userName, password, readOnly);
+        assertEquals(1, result.getN());
+        assertFalse(result.isUpdateOfExisting());
 
         char[] newPassword = "345".toCharArray();
         boolean newReadOnly = false;
-        database.addUser(userName, newPassword, newReadOnly);
-
+        result = database.addUser(userName, newPassword, newReadOnly);
+        assertEquals(1, result.getN());
+        assertTrue(result.isUpdateOfExisting());
         assertTrue(new UserExistsOperation(database.getName(), userName).execute(getBinding()));
     }
 
