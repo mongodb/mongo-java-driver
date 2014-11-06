@@ -18,7 +18,6 @@ package com.mongodb;
 
 import org.bson.BSON;
 import org.bson.BsonBinary;
-import org.bson.BsonBinarySubType;
 import org.bson.BsonDbPointer;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
@@ -26,8 +25,6 @@ import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
-import org.bson.codecs.BinaryToByteArrayTransformer;
-import org.bson.codecs.BinaryToUuidTransformer;
 import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
@@ -47,9 +44,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static org.bson.BsonBinarySubType.BINARY;
+import static org.bson.BsonBinarySubType.OLD_BINARY;
+import static org.bson.BsonBinarySubType.UUID_LEGACY;
+import static org.bson.BsonBinarySubType.UUID_STANDARD;
 
 /**
  * A collectible codec for a DBObject.
@@ -285,7 +287,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
                 initialRetVal = new DBRef(dbPointer.getNamespace(), dbPointer.getId());
                 break;
             case BINARY:
-                initialRetVal = readBinary(reader);
+                initialRetVal = readBinary(reader, decoderContext);
                 break;
             case NULL:
                 reader.readNull();
@@ -303,17 +305,15 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
         return BSON.applyDecodingHooks(initialRetVal);
     }
 
-    private Object readBinary(final BsonReader reader) {
-        BsonBinary binary = reader.readBinaryData();
-        if (binary.getType() == BsonBinarySubType.BINARY.getValue()) {
-            return new BinaryToByteArrayTransformer().transform(binary);
-        } else if (binary.getType() == BsonBinarySubType.OLD_BINARY.getValue()) {
-            return new BinaryToByteArrayTransformer().transform(binary);
-        } else if (binary.getType() == BsonBinarySubType.UUID_LEGACY.getValue()
-                || binary.getType() == BsonBinarySubType.UUID_STANDARD.getValue()) {
-            return new BinaryToUuidTransformer().transform(binary);
+    private Object readBinary(final BsonReader reader, final DecoderContext decoderContext) {
+        byte bsonSubType = reader.peekBinarySubType();
+
+        if (bsonSubType == UUID_STANDARD.getValue() || bsonSubType == UUID_LEGACY.getValue()) {
+            return codecRegistry.get(UUID.class).decode(reader, decoderContext);
+        } else if (bsonSubType == BINARY.getValue() || bsonSubType == OLD_BINARY.getValue()) {
+            return codecRegistry.get(byte[].class).decode(reader, decoderContext);
         } else {
-            return new Binary(binary.getType(), binary.getData());
+            return codecRegistry.get(Binary.class).decode(reader, decoderContext);
         }
     }
 

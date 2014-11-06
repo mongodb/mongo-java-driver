@@ -20,10 +20,13 @@ import org.bson.BSONException;
 import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonReader;
+import org.bson.BsonSerializationException;
 import org.bson.BsonWriter;
 import org.bson.UuidRepresentation;
 
 import java.util.UUID;
+
+import static org.bson.codecs.UuidCodecHelper.reverseByteArray;
 
 /**
  * Encodes and decodes {@code UUID} objects.
@@ -32,29 +35,27 @@ import java.util.UUID;
  */
 public class UuidCodec implements Codec<UUID> {
 
-     private final UuidRepresentation encoderUuidRepresentation;
-     private final UuidRepresentation decoderUuidRepresentation;
-
-     /**
-      * The default UUIDRepresentation is JAVA_LEGACY to be compatible with existing documents
-      *
-      * @param uuidRepresentation the representation of UUID
-      *
-      * @since 3.0
-      * @see org.bson.UuidRepresentation
-      */
-     public UuidCodec(final UuidRepresentation uuidRepresentation) {
-         this.encoderUuidRepresentation = uuidRepresentation;
-         this.decoderUuidRepresentation = uuidRepresentation;
-     }
+    private final UuidRepresentation encoderUuidRepresentation;
+    private final UuidRepresentation decoderUuidRepresentation;
 
     /**
-      * The constructor for UUIDCodec, default is JAVA_LEGACY
-      */
-     public UuidCodec() {
-         this.encoderUuidRepresentation = UuidRepresentation.JAVA_LEGACY;
-         this.decoderUuidRepresentation = UuidRepresentation.JAVA_LEGACY;
-     }
+     * The default UUIDRepresentation is JAVA_LEGACY to be compatible with existing documents
+     *
+     * @param uuidRepresentation the representation of UUID
+     * @see org.bson.UuidRepresentation
+     */
+    public UuidCodec(final UuidRepresentation uuidRepresentation) {
+        this.encoderUuidRepresentation = uuidRepresentation;
+        this.decoderUuidRepresentation = uuidRepresentation;
+    }
+
+    /**
+     * The constructor for UUIDCodec, default is JAVA_LEGACY
+     */
+    public UuidCodec() {
+        this.encoderUuidRepresentation = UuidRepresentation.JAVA_LEGACY;
+        this.decoderUuidRepresentation = UuidRepresentation.JAVA_LEGACY;
+    }
 
     @Override
     public void encode(final BsonWriter writer, final UUID value, final EncoderContext encoderContext) {
@@ -87,15 +88,45 @@ public class UuidCodec implements Codec<UUID> {
 
     @Override
     public UUID decode(final BsonReader reader, final DecoderContext decoderContext) {
-        BsonBinary binaryData = reader.readBinaryData();
-        BinaryToUuidTransformer transformer = new BinaryToUuidTransformer(decoderUuidRepresentation);
-        return transformer.transform(binaryData);
+        byte subType = reader.peekBinarySubType();
+
+        if (subType != BsonBinarySubType.UUID_LEGACY.getValue() && subType != BsonBinarySubType.UUID_STANDARD.getValue()) {
+            throw new BSONException("Unexpected BsonBinarySubType");
+        }
+
+        byte[] bytes = reader.readBinaryData().getData();
+
+        if (bytes.length != 16) {
+            throw new BsonSerializationException(String.format("Expected length to be 16, not %d.", bytes.length));
+        }
+
+        if (subType == BsonBinarySubType.UUID_LEGACY.getValue()) {
+            switch (decoderUuidRepresentation) {
+                case C_SHARP_LEGACY:
+                    reverseByteArray(bytes, 0, 4);
+                    reverseByteArray(bytes, 4, 2);
+                    reverseByteArray(bytes, 6, 2);
+                    break;
+                case JAVA_LEGACY:
+                    reverseByteArray(bytes, 0, 8);
+                    reverseByteArray(bytes, 8, 8);
+                    break;
+                case PYTHON_LEGACY:
+                case STANDARD:
+                    break;
+                default:
+                    throw new BSONException("Unexpected UUID representation");
+            }
+        }
+
+        return new UUID(readLongFromArrayBigEndian(bytes, 0), readLongFromArrayBigEndian(bytes, 8));
     }
 
     @Override
     public Class<UUID> getEncoderClass() {
         return UUID.class;
     }
+
     private static void writeLongToArrayBigEndian(final byte[] bytes, final int offset, final long x) {
         bytes[offset + 7] = (byte) (0xFFL & (x));
         bytes[offset + 6] = (byte) (0xFFL & (x >> 8));
@@ -106,4 +137,18 @@ public class UuidCodec implements Codec<UUID> {
         bytes[offset + 1] = (byte) (0xFFL & (x >> 48));
         bytes[offset] = (byte) (0xFFL & (x >> 56));
     }
+
+    private static long readLongFromArrayBigEndian(final byte[] bytes, final int offset) {
+        long x = 0;
+        x |= (0xFFL & bytes[offset + 7]);
+        x |= (0xFFL & bytes[offset + 6]) << 8;
+        x |= (0xFFL & bytes[offset + 5]) << 16;
+        x |= (0xFFL & bytes[offset + 4]) << 24;
+        x |= (0xFFL & bytes[offset + 3]) << 32;
+        x |= (0xFFL & bytes[offset + 2]) << 40;
+        x |= (0xFFL & bytes[offset + 1]) << 48;
+        x |= (0xFFL & bytes[offset]) << 56;
+        return x;
+    }
+
 }
