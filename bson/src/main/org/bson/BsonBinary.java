@@ -127,4 +127,12 @@ public class BsonBinary extends BsonValue implements Serializable {
         result = 31 * result + Arrays.hashCode(data);
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "BsonBinary{"
+               + "type=" + type
+               + ", data=" + Arrays.toString(data)
+               + '}';
+    }
 }
