@@ -110,10 +110,11 @@ public class PowerOfTwoBufferPool implements BufferProvider {
         }
 
         @Override
-        public void close() {
-            if (asNIO() != null) {
-                release(asNIO());
-                super.close();
+        public void release() {
+            ByteBuffer wrapped = asNIO();
+            super.release();
+            if (getReferenceCount() == 0) {
+                PowerOfTwoBufferPool.this.release(wrapped);
             }
         }
     }

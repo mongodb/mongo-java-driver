@@ -16,7 +16,6 @@
 
 package org.bson;
 
-import java.io.Closeable;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -28,7 +27,7 @@ import java.nio.ByteOrder;
  *
  * @since 3.0
  */
-public interface ByteBuf extends Closeable {
+public interface ByteBuf  {
 
     /**
      * Returns this buffer's capacity.
@@ -340,6 +339,23 @@ public interface ByteBuf extends Closeable {
      */
     ByteBuffer asNIO();
 
-    @Override
-    void close();
+    /**
+     * Gets the current reference count, which starts at 0.
+     *
+     * @return the current count, which must be greater than or equal to 0
+     */
+    int getReferenceCount();
+
+    /**
+     * Retain an additional reference to this object.  All retained references must be released, or there will be a leak.
+     *
+     * @return this
+     */
+    ByteBuf retain();
+
+    /**
+     * Release a reference to this object.
+     * @throws java.lang.IllegalStateException if the reference count is already 0
+     */
+    void release();
 }

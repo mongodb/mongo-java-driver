@@ -185,10 +185,18 @@ final class NettyByteBuf implements ByteBuf {
     }
 
     @Override
-    public void close() {
-        if (proxied != null) {
-            proxied.release();
-            proxied = null;
-        }
+    public int getReferenceCount() {
+        return proxied.refCnt();
+    }
+
+    @Override
+    public ByteBuf retain() {
+        proxied.retain();
+        return this;
+    }
+
+    @Override
+    public void release() {
+        proxied.release();
     }
 }

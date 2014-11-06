@@ -156,7 +156,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
         while (bufferList.size() > bufferPositionPair.bufferIndex + 1) {
             ByteBuf buffer = bufferList.remove(bufferList.size() - 1);
-            buffer.close();
+            buffer.release();
         }
 
         curBufferIndex = bufferPositionPair.bufferIndex;
@@ -166,7 +166,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
     @Override
     public void close() {
         for (final ByteBuf cur : bufferList) {
-            cur.close();
+            cur.release();
         }
         bufferList.clear();
         closed = true;

@@ -62,7 +62,7 @@ class ResponseBuffers implements Closeable {
     public void close() {
         if (!isClosed) {
             if (bodyByteBuffer != null) {
-                bodyByteBuffer.close();
+                bodyByteBuffer.release();
             }
             isClosed = true;
         }

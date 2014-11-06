@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection.netty
+package com.mongodb.connection
 
-import com.mongodb.connection.SimpleBufferProvider
+import com.mongodb.connection.netty.NettyBufferProvider
 import spock.lang.Specification
 
-class NettyByteBufSpecification extends Specification {
+class ByteBufSpecification extends Specification {
     def 'should put a byte'() {
         given:
         def buffer = provider.getBuffer(1024)
@@ -174,5 +174,44 @@ class NettyByteBufSpecification extends Specification {
 
         where:
         provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
+    }
+
+    def 'should enforce reference counts'() {
+        when:
+        def buffer = provider.getBuffer(1024)
+        buffer.put((byte) 1)
+
+        then:
+        buffer.referenceCount == 1
+
+        when:
+        buffer.retain()
+        buffer.put((byte) 1)
+
+        then:
+        buffer.referenceCount == 2
+
+        when:
+        buffer.release()
+        buffer.put((byte) 1)
+
+        then:
+        buffer.referenceCount == 1
+
+        when:
+        buffer.release()
+
+        then:
+        buffer.referenceCount == 0
+
+        when:
+        buffer.put((byte) 1)
+
+        then:
+        thrown(Exception)
+
+        where:
+        provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
+
     }
 }

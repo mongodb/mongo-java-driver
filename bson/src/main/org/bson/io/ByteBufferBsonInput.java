@@ -167,7 +167,7 @@ public class ByteBufferBsonInput implements BsonInput {
 
     @Override
     public void close() {
-        buffer.close();
+        buffer.release();
         buffer = null;
     }
 

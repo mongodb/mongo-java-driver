@@ -18,6 +18,7 @@ package org.bson;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Implementation of {@code ByteBuf} which simply wraps an NIO {@code ByteBuffer} and forwards all calls to it.
@@ -26,6 +27,7 @@ import java.nio.ByteOrder;
  */
 public class ByteBufNIO implements ByteBuf {
     private ByteBuffer buf;
+    private final AtomicInteger referenceCount = new AtomicInteger(1);
 
     /**
      * Creates a new instance.
@@ -37,8 +39,28 @@ public class ByteBufNIO implements ByteBuf {
     }
 
     @Override
-    public void close() {
-        buf = null;
+    public int getReferenceCount() {
+        return referenceCount.get();
+    }
+
+    @Override
+    public ByteBufNIO retain() {
+        if (referenceCount.incrementAndGet() == 1) {
+            referenceCount.decrementAndGet();
+            throw new IllegalStateException("Attempted to increment the reference count when it is already 0");
+        }
+        return this;
+    }
+
+    @Override
+    public void release() {
+        if (referenceCount.decrementAndGet() < 0) {
+            referenceCount.incrementAndGet();
+            throw new IllegalStateException("Attempted to decrement the reference count below 0");
+        }
+        if (referenceCount.get() == 0) {
+            buf = null;
+        }
     }
 
     @Override

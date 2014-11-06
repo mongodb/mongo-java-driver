@@ -49,7 +49,7 @@ public class PowerOfTwoBufferPoolTest {
     public void testReuse() {
         ByteBuf buf = pool.getBuffer((int) Math.pow(2, 10));
         ByteBuffer byteBuffer = buf.asNIO();
-        buf.close();
+        buf.release();
         assertSame(byteBuffer, pool.getBuffer((int) Math.pow(2, 10)).asNIO());
     }
 
@@ -59,7 +59,7 @@ public class PowerOfTwoBufferPoolTest {
         assertEquals((int) Math.pow(2, 10) + 1, buf.capacity());
         assertEquals((int) Math.pow(2, 10) + 1, buf.limit());
 
-        buf.close();
+        buf.release();
         assertNotSame(buf, pool.getBuffer((int) Math.pow(2, 10) + 1));
     }
 }
