@@ -96,7 +96,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
      * @param bsonTypeClassMap the non-null BsonTypeClassMap
      */
     public DBObjectCodec(final CodecRegistry codecRegistry, final BsonTypeClassMap bsonTypeClassMap) {
-        this(codecRegistry, bsonTypeClassMap, new BasicDBObjectFactory(), null);
+        this(codecRegistry, bsonTypeClassMap, new BasicDBObjectFactory());
     }
 
     /**
@@ -105,11 +105,8 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
      * @param codecRegistry the non-null codec registry
      * @param bsonTypeClassMap the non-null BsonTypeClassMap
      * @param objectFactory the non-null object factory used to create empty DBObject instances when decoding
-     * @param db the DB
      */
-    public DBObjectCodec(final CodecRegistry codecRegistry, final BsonTypeClassMap bsonTypeClassMap, final DBObjectFactory objectFactory,
-                         final DB db) {
-        this.db = db;
+    public DBObjectCodec(final CodecRegistry codecRegistry, final BsonTypeClassMap bsonTypeClassMap, final DBObjectFactory objectFactory) {
         this.objectFactory = notNull("objectFactory", objectFactory);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.bsonTypeClassMap = notNull("bsonTypeClassMap", bsonTypeClassMap);

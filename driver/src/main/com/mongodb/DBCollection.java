@@ -1969,7 +1969,7 @@ public class DBCollection {
     DBObjectCodec getDefaultDBObjectCodec() {
         return new DBObjectCodec(MongoClient.getDefaultCodecRegistry(),
                                  DBObjectCodec.getDefaultBsonTypeClassMap(),
-                                 getObjectFactory(), getDB());
+                                 getObjectFactory());
     }
 
     private <T> T convertOptionsToType(final DBObject options, final String field, final Class<T> clazz) {
