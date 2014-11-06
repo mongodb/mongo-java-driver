@@ -64,7 +64,6 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
 
     private final CodecRegistry codecRegistry;
     private final BsonTypeClassMap bsonTypeClassMap;
-    private final DB db;
     private final DBObjectFactory objectFactory;
     private final IdGenerator idGenerator = new ObjectIdGenerator();
 
