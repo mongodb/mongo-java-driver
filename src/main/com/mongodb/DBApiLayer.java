@@ -83,10 +83,16 @@ public class DBApiLayer extends DB {
         try {
             if (isServerVersionAtLeast(asList(2, 6, 0))) {
                 CommandResult userInfoResult = command(new BasicDBObject("usersInfo", username));
-                userInfoResult.throwOnError();
-                DBObject userCommandDocument = getUserCommandDocument(username, passwd, readOnly,
-                                                                      ((List) userInfoResult.get("users")).isEmpty()
-                                                                      ? "createUser" : "updateUser");
+                try {
+                    userInfoResult.throwOnError();
+                } catch (MongoException e) {
+                    if (e.getCode() != 13) {
+                        throw e;
+                    }
+                }
+                String operationType = (!userInfoResult.containsField("users") ||
+                        ((List) userInfoResult.get("users")).isEmpty()) ? "createUser" : "updateUser";
+                DBObject userCommandDocument = getUserCommandDocument(username, passwd, readOnly, operationType);
                 CommandResult commandResult = command(userCommandDocument);
                 commandResult.throwOnError();
                 return new WriteResult(commandResult, getWriteConcern());
