@@ -98,4 +98,12 @@ public class BsonDbPointer extends BsonValue implements Serializable {
         result = 31 * result + id.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+        return "BsonDbPointer{"
+               + "namespace='" + namespace + '\''
+               + ", id=" + id
+               + '}';
+    }
 }

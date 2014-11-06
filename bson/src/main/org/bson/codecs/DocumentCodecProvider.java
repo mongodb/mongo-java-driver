@@ -17,11 +17,14 @@
 package org.bson.codecs;
 
 import org.bson.Document;
+import org.bson.Transformer;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.CodeWithScope;
 
 import java.util.List;
+
+import static org.bson.assertions.Assertions.notNull;
 
 /**
  * A {@code CodecProvider} for the Document class and all the default Codec implementations on which it depends.
@@ -30,6 +33,7 @@ import java.util.List;
  */
 public class DocumentCodecProvider implements CodecProvider {
     private final BsonTypeClassMap bsonTypeClassMap;
+    private final Transformer valueTransformer;
 
     /**
      * Construct a new instance with a default {@code BsonTypeClassMap}.
@@ -39,13 +43,36 @@ public class DocumentCodecProvider implements CodecProvider {
     }
 
     /**
+     * Construct a new instance with a default {@code BsonTypeClassMap} and the given {@code Transformer}.  The transformer is used by the
+     * DocumentCodec as a last step when decoding values.
+     *
+     * @param valueTransformer the value transformer for decoded values
+     * @see org.bson.codecs.DocumentCodec#DocumentCodec(org.bson.codecs.configuration.CodecRegistry, BsonTypeClassMap, org.bson.Transformer)
+     */
+    public DocumentCodecProvider(final Transformer valueTransformer) {
+        this(new BsonTypeClassMap(), valueTransformer);
+    }
+
+    /**
      * Construct a new instance with the given instance of {@code BsonTypeClassMap}.
      *
-     * @param bsonTypeClassMap the {@code BsonTypeClassMap} with which to construct instances of {@code DocumentCodec} and {@code
+     * @param bsonTypeClassMap the non-null {@code BsonTypeClassMap} with which to construct instances of {@code DocumentCodec} and {@code
      *                         ListCodec}
      */
     public DocumentCodecProvider(final BsonTypeClassMap bsonTypeClassMap) {
-        this.bsonTypeClassMap = bsonTypeClassMap;
+        this(bsonTypeClassMap, null);
+    }
+
+    /**
+     * Construct a new instance with the given instance of {@code BsonTypeClassMap}.
+     *
+     * @param bsonTypeClassMap the non-null {@code BsonTypeClassMap} with which to construct instances of {@code DocumentCodec} and {@code
+     *                         ListCodec}.
+     * @param valueTransformer the value transformer for decoded values
+     */
+    public DocumentCodecProvider(final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
+        this.bsonTypeClassMap = notNull("bsonTypeClassMap", bsonTypeClassMap);
+        this.valueTransformer = valueTransformer;
     }
 
     @Override
@@ -56,7 +83,7 @@ public class DocumentCodecProvider implements CodecProvider {
         }
 
         if (clazz == Document.class) {
-            return (Codec<T>) new DocumentCodec(registry, bsonTypeClassMap);
+            return (Codec<T>) new DocumentCodec(registry, bsonTypeClassMap, valueTransformer);
         }
 
         if (List.class.isAssignableFrom(clazz)) {
@@ -80,12 +107,17 @@ public class DocumentCodecProvider implements CodecProvider {
         if (!bsonTypeClassMap.equals(that.bsonTypeClassMap)) {
             return false;
         }
+        if (valueTransformer != null ? !valueTransformer.equals(that.valueTransformer) : that.valueTransformer != null) {
+            return false;
+        }
 
         return true;
     }
 
     @Override
     public int hashCode() {
-        return bsonTypeClassMap.hashCode();
+        int result = bsonTypeClassMap.hashCode();
+        result = 31 * result + (valueTransformer != null ? valueTransformer.hashCode() : 0);
+        return result;
     }
 }

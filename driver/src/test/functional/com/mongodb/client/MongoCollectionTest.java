@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.DBRef;
 import com.mongodb.Function;
 import com.mongodb.client.model.FindOptions;
 import org.bson.Document;
@@ -127,5 +128,19 @@ public class MongoCollectionTest extends DatabaseTestCase {
         // then
         assertEquals(new Name("Pete", 2), result.get(0));
         assertEquals(new Name("Sam", 1), result.get(1));
+    }
+
+    // This is really a test that the default registry created in MongoClient and passed down to MongoCollection has been constructed
+    // properly to handle DBRef encoding and decoding
+    @Test
+    public void testDBRefEncodingAndDecoding() {
+        // given
+        Document doc = new Document("_id", 1).append("ref", new DBRef("foo", 5));
+
+        // when
+        collection.insertOne(doc);
+
+        // then
+        assertEquals(doc, collection.find().first());
     }
 }

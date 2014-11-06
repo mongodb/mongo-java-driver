@@ -18,9 +18,6 @@ package org.bson;
 
 /**
  * Transforms objects that can be converted to BSON into other Java types, and vice versa.
- *
- * @see BSON#addDecodingHook(Class, Transformer)
- * @see BSON#addEncodingHook(Class, Transformer)
  */
 public interface Transformer {
     /**

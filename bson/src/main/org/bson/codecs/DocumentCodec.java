@@ -24,6 +24,7 @@ import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.Document;
+import org.bson.Transformer;
 import org.bson.assertions.Assertions;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.configuration.RootCodecRegistry;
@@ -50,12 +51,13 @@ public class DocumentCodec implements CollectibleCodec<Document> {
     private final BsonTypeClassMap bsonTypeClassMap;
     private final CodecRegistry registry;
     private final IdGenerator idGenerator;
+    private final Transformer valueTransformer;
 
     /**
      * Construct a new instance with a default {@code CodecRegistry} and
      */
     public DocumentCodec() {
-        this(DEFAULT_REGISTRY, DEFAULT_BSON_TYPE_CLASS_MAP, new ObjectIdGenerator());
+        this(DEFAULT_REGISTRY, DEFAULT_BSON_TYPE_CLASS_MAP);
     }
 
     /**
@@ -65,20 +67,28 @@ public class DocumentCodec implements CollectibleCodec<Document> {
      * @param bsonTypeClassMap the BSON type class map
      */
     public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap) {
-        this(registry, bsonTypeClassMap, new ObjectIdGenerator());
+        this(registry, bsonTypeClassMap, null);
     }
 
     /**
-     * Construct a new instance with the given registry and BSON type class map.
+     * Construct a new instance with the given registry and BSON type class map. The transformer is applied as a last step when decoding
+     * values, which allows users of this codec to control the decoding process.  For example, a user of this class could substitute a
+     * value decoded as a Document with an instance of a special purpose class (e.g., one representing a DBRef in MongoDB).
      *
      * @param registry         the registry
      * @param bsonTypeClassMap the BSON type class map
-     * @param idGenerator the idGenerator to use when generating a value for _id
+     * @param valueTransformer the value transformer to use as a final step when decoding the value of any field in the document
      */
-    public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final IdGenerator idGenerator) {
+    public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
         this.registry = Assertions.notNull("registry", registry);
         this.bsonTypeClassMap = Assertions.notNull("bsonTypeClassMap", bsonTypeClassMap);
-        this.idGenerator = Assertions.notNull("idGenerator", idGenerator);
+        this.idGenerator = Assertions.notNull("idGenerator", new ObjectIdGenerator());
+        this.valueTransformer = valueTransformer != null ? valueTransformer : new Transformer() {
+            @Override
+            public Object transform(final Object value) {
+                return value;
+            }
+        };
     }
 
     @Override
@@ -181,6 +191,6 @@ public class DocumentCodec implements CollectibleCodec<Document> {
                 return registry.get(UUID.class).decode(reader, decoderContext);
             }
         }
-        return registry.get(bsonTypeClassMap.get(bsonType)).decode(reader, decoderContext);
+        return valueTransformer.transform(registry.get(bsonTypeClassMap.get(bsonType)).decode(reader, decoderContext));
     }
 }

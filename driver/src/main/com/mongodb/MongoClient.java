@@ -74,10 +74,12 @@ import static java.util.Arrays.asList;
  */
 public class MongoClient extends Mongo {
 
-    private static final RootCodecRegistry DEFAULT_CODEC_REGISTRY = new RootCodecRegistry(asList(new ValueCodecProvider(),
-                                                                                                 new DocumentCodecProvider(),
-                                                                                                 new DBObjectCodecProvider(),
-                                                                                                 new BsonValueCodecProvider()));
+    private static final RootCodecRegistry DEFAULT_CODEC_REGISTRY =
+    new RootCodecRegistry(asList(new ValueCodecProvider(),
+                                 new DBRefCodecProvider(),
+                                 new DocumentCodecProvider(new DocumentToDBRefTransformer()),
+                                 new DBObjectCodecProvider(),
+                                 new BsonValueCodecProvider()));
 
     /**
      * Gets the default codec registry.  It includes the following providers:

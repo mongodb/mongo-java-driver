@@ -22,6 +22,7 @@ import org.bson.BsonDbPointer
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.BsonInt32
 import org.bson.BsonReader
 import org.bson.BsonRegularExpression
 import org.bson.BsonTimestamp
@@ -29,6 +30,7 @@ import org.bson.BsonUndefined
 import org.bson.BsonWriter
 import org.bson.ByteBufNIO
 import org.bson.Document
+import org.bson.codecs.configuration.RootCodecRegistry
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.ByteBufferBsonInput
 import org.bson.json.JsonReader
@@ -47,10 +49,12 @@ import java.nio.ByteBuffer
 import static java.util.Arrays.asList
 
 class DocumentCodecSpecification extends Specification {
-    @Shared BsonDocument bsonDoc = new BsonDocument()
-    @Shared StringWriter stringWriter = new StringWriter()
+    @Shared
+    BsonDocument bsonDoc = new BsonDocument()
+    @Shared
+    StringWriter stringWriter = new StringWriter()
 
-    def 'should encode and decode all default types with all readers and writers' (BsonWriter writer) {
+    def 'should encode and decode all default types with all readers and writers'(BsonWriter writer) {
         given:
         def originalDocument = new Document()
         originalDocument.with {
@@ -149,5 +153,17 @@ class DocumentCodecSpecification extends Specification {
         encodedDocument.keySet() as List == ['x', '_id', 'nested', 'array']
         encodedDocument.getDocument('nested').keySet() as List == ['x', '_id']
         encodedDocument.getArray('array').get(0).asDocument().keySet() as List == ['x', '_id']
+    }
+
+    def 'should apply transformer to decoded values'() {
+        given:
+        def codec = new DocumentCodec(new RootCodecRegistry([new ValueCodecProvider(), new DocumentCodecProvider()]),
+                                      new BsonTypeClassMap(),
+                                      { Object value -> 5 })
+        when:
+        def doc = codec.decode(new BsonDocumentReader(new BsonDocument('_id', new BsonInt32(1))), DecoderContext.builder().build())
+
+        then:
+        doc['_id'] == 5
     }
 }
