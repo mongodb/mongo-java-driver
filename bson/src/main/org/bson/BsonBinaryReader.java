@@ -93,9 +93,8 @@ public class BsonBinaryReader extends AbstractBsonReader {
                     setState(State.END_OF_DOCUMENT);
                     return BsonType.END_OF_DOCUMENT;
                 default:
-                    String message = format("BSONType EndOfDocument is not valid when ContextType is %s.",
-                                            getContext().getContextType());
-                    throw new BsonSerializationException(message);
+                    throw new BsonSerializationException(format("BSONType EndOfDocument is not valid when ContextType is %s.",
+                                                                getContext().getContextType()));
             }
         } else {
             switch (getContext().getContextType()) {
@@ -395,8 +394,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
         Context popContext(final int position) {
             int actualSize = position - startPosition;
             if (actualSize != size) {
-                String message = format("Expected size to be %d, not %d.", size, actualSize);
-                throw new BsonSerializationException(message);
+                throw new BsonSerializationException(format("Expected size to be %d, not %d.", size, actualSize));
             }
             return getParentContext();
         }

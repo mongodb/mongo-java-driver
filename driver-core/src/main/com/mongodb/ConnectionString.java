@@ -314,7 +314,9 @@ public class ConnectionString {
     private void warnOnUnsupportedOptions(final Map<String, List<String>> optionsMap) {
         for (final String key : optionsMap.keySet()) {
             if (!ALL_KEYS.contains(key)) {
-                LOGGER.warn(format("Unsupported option '%s' on URI '%s'.", key, uri));
+                if (LOGGER.isWarnEnabled()) {
+                    LOGGER.warn(format("Unsupported option '%s' on URI '%s'.", key, uri));
+                }
             }
         }
     }

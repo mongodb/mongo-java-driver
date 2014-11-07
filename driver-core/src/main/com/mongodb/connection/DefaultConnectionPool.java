@@ -216,8 +216,10 @@ class DefaultConnectionPool implements ConnectionPool {
      */
     private void incrementGenerationOnSocketException(final InternalConnection connection, final MongoException e) {
         if (e instanceof MongoSocketException && !(e instanceof MongoSocketReadTimeoutException)) {
-            LOGGER.warn(format("Got socket exception on connection [%s] to %s. All connections to %s will be closed.",
-                               getId(connection), serverId.getAddress(), serverId.getAddress()));
+            if (LOGGER.isWarnEnabled()) {
+                LOGGER.warn(format("Got socket exception on connection [%s] to %s. All connections to %s will be closed.",
+                                   getId(connection), serverId.getAddress(), serverId.getAddress()));
+            }
             invalidate();
         }
     }
@@ -346,7 +348,9 @@ class DefaultConnectionPool implements ConnectionPool {
             if (!closed) {
                 connectionPoolListener.connectionRemoved(new ConnectionEvent(getId(connection)));
             }
-            LOGGER.info(format("Closed connection [%s] to %s because %s.", getId(connection), serverId.getAddress(), reason));
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info(format("Closed connection [%s] to %s because %s.", getId(connection), serverId.getAddress(), reason));
+            }
             connection.close();
         }
 

@@ -25,6 +25,8 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
 
+import static java.lang.String.format;
+
 /**
  * A BSON output stream that stores the output in a single, un-pooled byte array.
  */
@@ -77,10 +79,10 @@ public class BasicOutputBuffer extends OutputBuffer {
         ensureOpen();
 
         if (absolutePosition < 0) {
-            throw new IllegalArgumentException(String.format("position must be >= 0 but was %d", absolutePosition));
+            throw new IllegalArgumentException(format("position must be >= 0 but was %d", absolutePosition));
         }
         if (absolutePosition > position - 1) {
-            throw new IllegalArgumentException(String.format("position must be <= %d but was %d", position - 1, absolutePosition));
+            throw new IllegalArgumentException(format("position must be <= %d but was %d", position - 1, absolutePosition));
         }
 
         buffer[absolutePosition] = (byte) (0xFF & value);

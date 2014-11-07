@@ -645,7 +645,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, S
     @Override
     public BsonValue put(final String key, final BsonValue value) {
         if (value == null) {
-            throw new IllegalArgumentException(String.format("The value for key %s can not be null", key));
+            throw new IllegalArgumentException(format("The value for key %s can not be null", key));
         }
         if (key.contains("\0")) {
             throw new BSONException(format("BSON cstring '%s' is not valid because it contains a null character at index %d", key,

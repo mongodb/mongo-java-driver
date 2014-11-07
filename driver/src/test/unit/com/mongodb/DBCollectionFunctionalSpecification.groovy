@@ -105,7 +105,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setObjectClass(ClassA)
 
         when:
-        DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument, 'c'  : 1])
+        DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument, 'c': 1])
 
         then:
         document instanceof ClassA
@@ -118,7 +118,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.setInternalClass('b', ClassB);
 
         when:
-        DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument, 'c'  : 1])
+        DBObject document = collection.findAndModify(null, ~['_id': idOfExistingDocument, 'c': 1])
 
         then:
         document.get('a') instanceof ClassA

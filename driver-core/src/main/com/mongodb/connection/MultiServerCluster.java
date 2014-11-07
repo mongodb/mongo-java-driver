@@ -65,8 +65,10 @@ final class MultiServerCluster extends BaseCluster {
         clusterType = settings.getRequiredClusterType();
         replicaSetName = settings.getRequiredReplicaSetName();
 
-        LOGGER.info(format("Cluster created with settings %s", settings.getShortDescription()));
-
+        if (LOGGER.isInfoEnabled()) {
+            LOGGER.info(format("Cluster created with settings %s", settings.getShortDescription()));
+        }
+        
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {
@@ -131,7 +133,9 @@ final class MultiServerCluster extends BaseCluster {
             if (event.getNewValue().isOk()) {
                 if (clusterType == UNKNOWN && newDescription.getType() != REPLICA_SET_GHOST) {
                     clusterType = newDescription.getClusterType();
-                    LOGGER.info(format("Discovered cluster type of %s", clusterType));
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info(format("Discovered cluster type of %s", clusterType));
+                    }
                 }
 
                 switch (clusterType) {
@@ -164,7 +168,9 @@ final class MultiServerCluster extends BaseCluster {
         }
 
         if (newDescription.getType() == REPLICA_SET_GHOST) {
-            LOGGER.info(format("Server %s does not appear to be a member of an initiated replica set.", newDescription.getAddress()));
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info(format("Server %s does not appear to be a member of an initiated replica set.", newDescription.getAddress()));
+            }
             return;
         }
 
@@ -214,7 +220,9 @@ final class MultiServerCluster extends BaseCluster {
 
     private void addServer(final ServerAddress serverAddress) {
         if (!addressToServerTupleMap.containsKey(serverAddress)) {
-            LOGGER.info(format("Adding discovered server %s to client view of cluster", serverAddress));
+            if (LOGGER.isInfoEnabled()) {
+                LOGGER.info(format("Adding discovered server %s to client view of cluster", serverAddress));
+            }
             ClusterableServer server = createServer(serverAddress, new DefaultServerStateListener());
             addressToServerTupleMap.put(serverAddress, new ServerTuple(server, getConnectingServerDescription(serverAddress)));
         }
@@ -227,7 +235,9 @@ final class MultiServerCluster extends BaseCluster {
     private void invalidateOldPrimaries(final ServerAddress newPrimary) {
         for (final ServerTuple serverTuple : addressToServerTupleMap.values()) {
             if (!serverTuple.description.getAddress().equals(newPrimary) && serverTuple.description.isPrimary()) {
-                LOGGER.info(format("Rediscovering type of existing primary %s", serverTuple.description.getAddress()));
+                if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info(format("Rediscovering type of existing primary %s", serverTuple.description.getAddress()));
+                }
                 serverTuple.server.invalidate();
             }
         }
@@ -281,8 +291,10 @@ final class MultiServerCluster extends BaseCluster {
         Set<ServerAddress> allServerAddresses = getAllServerAddresses(serverDescription);
         for (final ServerTuple cur : addressToServerTupleMap.values()) {
             if (!allServerAddresses.contains(cur.description.getAddress())) {
-                LOGGER.info(format("Server %s is no longer a member of the replica set.  Removing from client view of cluster.",
-                                   cur.description.getAddress()));
+                if (LOGGER.isInfoEnabled()) {
+                    LOGGER.info(format("Server %s is no longer a member of the replica set.  Removing from client view of cluster.",
+                                       cur.description.getAddress()));
+                }
                 removeServer(cur.description.getAddress());
             }
         }
