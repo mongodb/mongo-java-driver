@@ -25,6 +25,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * @deprecated This class will be removed in a future release.  There is no replacement.
+ */
+@Deprecated
 public class LazyWriteableDBObject extends LazyDBObject {
 
     /**

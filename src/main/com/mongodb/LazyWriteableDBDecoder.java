@@ -18,8 +18,9 @@ package com.mongodb;
 
 
 /**
- *
+ * @deprecated This class will be removed in a future release.  There is no replacement.
  */
+@Deprecated
 public class LazyWriteableDBDecoder extends LazyDBDecoder {
     static class LazyDBDecoderFactory implements DBDecoderFactory {
         @Override

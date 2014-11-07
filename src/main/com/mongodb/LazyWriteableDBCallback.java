@@ -20,8 +20,9 @@ import java.util.Iterator;
 import java.util.logging.Logger;
 
 /**
- *
+ * @deprecated This class will be removed in a future release.  There is no replacement.
  */
+@Deprecated
 public class LazyWriteableDBCallback extends LazyDBCallback {
 
     public LazyWriteableDBCallback( DBCollection coll ){
