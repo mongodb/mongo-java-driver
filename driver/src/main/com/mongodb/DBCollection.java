@@ -718,45 +718,6 @@ public class DBCollection {
     }
 
     /**
-     * Template method pattern. Please extend DBCollection and override {@link #doapply(DBObject)} if you need to add specific fields before
-     * saving object to collection.
-     *
-     * @param document document to be passed to {@code doapply()}
-     * @return '_id' of the document
-     */
-    public Object apply(final DBObject document) {
-        return apply(document, true);
-    }
-
-    /**
-     * Template method pattern. Please extend DBCollection and override {@link #doapply(DBObject)} if you need to add specific fields before
-     * saving object to collection.
-     *
-     * @param document document to be passed to {@code doapply()}
-     * @param ensureId specifies if '_id' field needs to be added to the document in case of absence.
-     * @return '_id' of the document
-     */
-    public Object apply(final DBObject document, final boolean ensureId) {
-        Object id = document.get("_id");
-        if (ensureId && id == null) {
-            id = ObjectId.get();
-            document.put("_id", id);
-        }
-
-        doapply(document);
-
-        return id;
-    }
-
-    /**
-     * Method to be overridden if you need to add any fields to a given document before saving it to the collection.
-     *
-     * @param document object to which to add the fields
-     */
-    protected void doapply(final DBObject document) {
-    }
-
-    /**
      * Same as {@link #getCount()}
      *
      * @return the number of documents in collection
