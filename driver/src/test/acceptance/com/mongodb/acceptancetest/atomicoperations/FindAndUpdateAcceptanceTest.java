@@ -67,7 +67,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
         Document updateOperation = new Document("$inc", new Document("someNumber", 1));
         Document updatedDocument = collection.findOneAndUpdate(new Document(KEY, VALUE_TO_CARE_ABOUT),
                                                                updateOperation,
-                                                               new FindOneAndUpdateOptions().returnOriginal(true));
+                                                               new FindOneAndUpdateOptions().returnOriginal(false));
 
         assertThat("Document returned from updateOneAndGet should be the updated document",
                    (Integer) updatedDocument.get("someNumber"), equalTo(12));
@@ -88,7 +88,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
 
         Document updateOperation = new Document("$inc", new Document("numberOfJobs", 1));
         Worker updatedDocument = collection.findOneAndUpdate(new Document("name", "Pat"), updateOperation,
-                                                             new FindOneAndUpdateOptions().returnOriginal(true));
+                                                             new FindOneAndUpdateOptions().returnOriginal(false));
 
         assertThat("Worker returned from updateOneAndGet should have the",
                    updatedDocument.getNumberOfJobs(), equalTo(8));
@@ -118,7 +118,7 @@ public class FindAndUpdateAcceptanceTest extends DatabaseTestCase {
         Document updateOperation = new Document("$inc", new Document("someNumber", 1));
         Document document = collection.findOneAndUpdate(new Document(KEY, newValueThatDoesNotMatchAnythingInDatabase),
                                                         updateOperation,
-                                                        new FindOneAndUpdateOptions().upsert(true).returnOriginal(true));
+                                                        new FindOneAndUpdateOptions().upsert(true).returnOriginal(false));
 
         assertThat(collection.count(), is(2L));
         assertThat("Document retrieved from updateOneAndGet and upsert true should have the new values",

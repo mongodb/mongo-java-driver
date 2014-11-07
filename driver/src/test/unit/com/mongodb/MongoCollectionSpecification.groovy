@@ -717,8 +717,8 @@ class MongoCollectionSpecification extends Specification {
         operation.getReplacement() == new BsonDocument('hot', new BsonBoolean(false))
         operation.getProjection() == new BsonDocument('field', new BsonInt32(1))
         operation.getSort() == new BsonDocument('sort', new BsonInt32(-1))
+        operation.isReturnOriginal()
         !operation.isUpsert()
-        !operation.isReturnOriginal()
 
         result == returnedDocument
 
@@ -727,12 +727,12 @@ class MongoCollectionSpecification extends Specification {
                                      new FindOneAndReplaceOptions().projection(new Document('field', 1))
                                                                    .sort(new Document('sort', -1))
                                                                    .upsert(true)
-                                                                   .returnOriginal(true))
+                                                                   .returnOriginal(false))
 
         then:
         def operation2 = executor.getWriteOperation() as FindAndReplaceOperation
         operation2.isUpsert()
-        operation2.isReturnOriginal()
+        !operation2.isReturnOriginal()
     }
 
     def 'findOneAndUpdate should use FindOneAndUpdateOperation correctly'() {
@@ -752,8 +752,8 @@ class MongoCollectionSpecification extends Specification {
         operation.getUpdate() == new BsonDocument('hot', new BsonBoolean(false))
         operation.getProjection() == new BsonDocument('field', new BsonInt32(1))
         operation.getSort() == new BsonDocument('sort', new BsonInt32(-1))
+        operation.isReturnOriginal()
         !operation.isUpsert()
-        !operation.isReturnOriginal()
 
         result == returnedDocument
 
@@ -762,12 +762,12 @@ class MongoCollectionSpecification extends Specification {
                                     new FindOneAndUpdateOptions().projection(new Document('field', 1))
                                                                  .sort(new Document('sort', -1))
                                                                  .upsert(true)
-                                                                 .returnOriginal(true))
+                                                                 .returnOriginal(false))
 
         then:
         def operation2 = executor.getWriteOperation() as FindAndUpdateOperation
         operation2.isUpsert()
-        operation2.isReturnOriginal()
+        !operation2.isReturnOriginal()
     }
 
     def 'dropCollection should use DropCollectionOperation properly'() {

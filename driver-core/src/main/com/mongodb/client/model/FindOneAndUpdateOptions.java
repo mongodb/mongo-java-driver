@@ -26,7 +26,7 @@ public class FindOneAndUpdateOptions {
     private Object projection;
     private Object sort;
     private boolean upsert;
-    private boolean returnOriginal;
+    private boolean returnOriginal = true;
 
      /**
      * Gets a document describing the fields to return for all matching documents.
@@ -96,18 +96,18 @@ public class FindOneAndUpdateOptions {
     }
 
     /**
-     * When true, returns the updated document rather than the original. The default is false.
+     * When true, return the original document from before it was updated. The default is true.
      *
-     * @return true if the updated document should be returned, otherwise false
+     * @return true if the original document should be returned
      */
     public boolean getReturnOriginal() {
         return returnOriginal;
     }
 
     /**
-     * Set true to return the updated document rather than the original.
+     * Set whether to return the original document from before it was updated.
      *
-     * @param returnOriginal set true to return the updated document rather than the original.
+     * @param returnOriginal set whether to return the original document from before it was updated
      * @return this
      */
     public FindOneAndUpdateOptions returnOriginal(final boolean returnOriginal) {

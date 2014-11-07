@@ -469,8 +469,7 @@ public interface MongoCollection<T> {
      * {@code Codec} is registered
      * @param update a document describing the update, which may not be null. The update to apply must include only update
      * operators. This can be of any type for which a {@code Codec} is registered
-     * @return the document that was updated.  Depending on the value of the {@code returnOriginal} property,
-     * this will either be the document as it was before the update or as it is after the update.  If no documents matched the query filter,
+     * @return the document that was updated before the update was applied.  If no documents matched the query filter,
      * then null will be returned
      */
     T findOneAndUpdate(Object filter, Object update);

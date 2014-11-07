@@ -54,6 +54,16 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         returnedDocument.getInteger('numberOfJobs') == 3
         helper.find().size() == 2;
         helper.find().get(0).getInteger('numberOfJobs') == 4
+
+        when:
+        update = new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1)))
+        operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update)
+                .filter(new BsonDocument('name', new BsonString('Pete')))
+                .returnOriginal(false)
+        returnedDocument = operation.execute(getBinding())
+
+        then:
+        returnedDocument.getInteger('numberOfJobs') == 5
     }
 
     @Category(Async)
@@ -69,12 +79,23 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         def update = new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1)))
         FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update)
                 .filter(new BsonDocument('name', new BsonString('Pete')))
+                .returnOriginal(true)
         Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
 
         then:
         returnedDocument.getInteger('numberOfJobs') == 3
         helper.find().size() == 2;
         helper.find().get(0).getInteger('numberOfJobs') == 4
+
+        when:
+        update = new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1)))
+        operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update)
+                .filter(new BsonDocument('name', new BsonString('Pete')))
+                .returnOriginal(false)
+        returnedDocument = operation.executeAsync(getAsyncBinding()).get()
+
+        then:
+        returnedDocument.getInteger('numberOfJobs') == 5
     }
 
     def 'should update single document when using custom codecs'() {
@@ -95,6 +116,16 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         returnedDocument.numberOfJobs == 3
         helper.find().size() == 2;
         helper.find().get(0).numberOfJobs == 4
+
+        when:
+        update = new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1)))
+        operation = new FindAndUpdateOperation<Worker>(getNamespace(), workerCodec, update)
+                .filter(new BsonDocument('name', new BsonString('Pete')))
+                .returnOriginal(false)
+        returnedDocument = operation.execute(getBinding())
+
+        then:
+        returnedDocument.numberOfJobs == 5
     }
 
     @Category(Async)
@@ -116,8 +147,40 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         returnedDocument.numberOfJobs == 3
         helper.find().size() == 2;
         helper.find().get(0).numberOfJobs == 4
+
+        when:
+        update = new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1)))
+        operation = new FindAndUpdateOperation<Worker>(getNamespace(), workerCodec, update)
+                .filter(new BsonDocument('name', new BsonString('Pete')))
+                .returnOriginal(false)
+        returnedDocument = operation.executeAsync(getAsyncBinding()).get()
+
+        then:
+        returnedDocument.numberOfJobs == 5
     }
 
+    def 'should return null if query fails to match'() {
+        when:
+        def update = new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1)))
+        FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update)
+                .filter(new BsonDocument('name', new BsonString('Pete')))
+        Document returnedDocument = operation.execute(getBinding())
+
+        then:
+        returnedDocument == null
+    }
+
+    @Category(Async)
+    def 'should return null if query fails to match asynchronously'() {
+        when:
+        def update = new BsonDocument('$inc', new BsonDocument('numberOfJobs', new BsonInt32(1)))
+        FindAndUpdateOperation<Document> operation = new FindAndUpdateOperation<Document>(getNamespace(), documentCodec, update)
+                .filter(new BsonDocument('name', new BsonString('Pete')))
+        Document returnedDocument = operation.executeAsync(getAsyncBinding()).get()
+
+        then:
+        returnedDocument == null
+    }
 
     def 'should throw an exception if update contains fields that are not update operators'() {
         when:

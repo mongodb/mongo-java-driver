@@ -417,8 +417,7 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void findAndUpdateAndReturnNew() {
-        collection.insert(new BasicDBObject("_id", 1).append("x", true));
-        DBObject newDoc = collection.findAndModify(new BasicDBObject("x", false),
+        DBObject newDoc = collection.findAndModify(new BasicDBObject("x", true),
                                                    null,
                                                    null,
                                                    false,

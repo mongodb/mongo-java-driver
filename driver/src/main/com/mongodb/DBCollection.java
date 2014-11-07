@@ -1602,7 +1602,7 @@ public class DBCollection {
                                 .filter(wrap(query))
                                 .projection(wrapAllowNull(fields))
                                 .sort(wrapAllowNull(sort))
-                                .returnOriginal(returnNew)
+                                .returnOriginal(!returnNew)
                                 .upsert(upsert)
                                 .maxTime(maxTime, maxTimeUnit);
             } else {
@@ -1610,7 +1610,7 @@ public class DBCollection {
                                 .filter(wrapAllowNull(query))
                                 .projection(wrapAllowNull(fields))
                                 .sort(wrapAllowNull(sort))
-                                .returnOriginal(returnNew)
+                                .returnOriginal(!returnNew)
                                 .upsert(upsert)
                                 .maxTime(maxTime, maxTimeUnit);
             }

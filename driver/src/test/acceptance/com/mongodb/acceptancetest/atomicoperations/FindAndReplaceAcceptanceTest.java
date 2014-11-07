@@ -98,7 +98,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
 
         Worker jordan = new Worker(pat.getId(), "Jordan", "Engineer", new Date(), 7);
         Worker returnedDocument = collection.findOneAndReplace(new Document("name", "Pat"), jordan,
-                                                               new FindOneAndReplaceOptions().returnOriginal(true));
+                                                               new FindOneAndReplaceOptions().returnOriginal(false));
 
         assertThat("Worker retrieved from replaceOneAndGet should match the updated Worker",
                    returnedDocument, equalTo(jordan));
@@ -114,7 +114,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
         assertThat(collection.count(), is(1L));
 
         Document document = collection.findOneAndReplace(new Document(KEY, VALUE_TO_CARE_ABOUT), documentReplacement,
-                                                         new FindOneAndReplaceOptions().returnOriginal(true));
+                                                         new FindOneAndReplaceOptions().returnOriginal(false));
 
 
         assertThat("Document, retrieved from replaceAndGet after change applied should match the document used as replacement",
@@ -158,7 +158,7 @@ public class FindAndReplaceAcceptanceTest extends DatabaseTestCase {
                                                          replacementDocument,
                                                          new FindOneAndReplaceOptions()
                                                              .upsert(true)
-                                                             .returnOriginal(true));
+                                                             .returnOriginal(false));
 
         assertThat(collection.count(), is(2L));
         assertThat("Document retrieved from replaceOneAndGet with filter that doesn't match should match the replacement document",
