@@ -16,6 +16,9 @@ classes:
 - org.bson.util.annotations.NotThreadSafe          # JAVA-874
 - org.bson.util.annotations.ThreadSafe             # JAVA-874
 - com.mongodb.DBRefBase                            # JAVA-1505
+- com.mongodb.LazyWriteableDBObject                # JAVA-1536
+- com.mongodb.LazyWriteableDBDecoder               # JAVA-1536
+- com.mongodb.LazyWriteableDBCallback              # JAVA-1536
 - com.mongodb.util.Args                            # JAVA-874
 - com.mongodb.util.Base64Codec                     # JAVA-874
 - com.mongodb.util.FastStack                       # JAVA-874
